@@ -12,7 +12,8 @@
 -- defect they found lay between two pieces that each passed their own tests.
 module Syntax.ImporterCallTests where
 
-import           CRes                 (CRes (..), prettyCNotes, runCResT)
+import           CRes                 (CRes (..), asCResT, prettyCNotes,
+                                       runCResT)
 import           CtConstants          (runtimeArgKey)
 import           CtService            (CTSS, ctssBaseFiles, ctssBuildFrom,
                                        ctssCached, ctssEvaluableFrom,
@@ -49,12 +50,10 @@ callWith dest path = do
   ctss <- ctssBaseFiles testCtssConfig [importerPage] :: IO CTSS
   name <- mkDesCanonicalImportStr testCtssConfig importerPage
   ctssBuildFrom ctss name
-  built <- runCResT $ ctssEvaluableFrom ssfTPrgm (Just name) ctss
-  return $ case built of
-    CErr notes -> CErr notes
-    CRes _ graph -> do
-      prgm <- prgmFromGraphData name graph
-      evalCallTo (evalBaseEnv prgm) dest "/Spike/mkResult" [("path", StrVal path)]
+  runCResT $ do
+    graph <- ctssEvaluableFrom ssfTPrgm (Just name) ctss
+    prgm <- asCResT $ prgmFromGraphData name graph
+    evalCallTo (evalBaseEnv prgm) dest "/Spike/mkResult" [("path", StrVal path)]
 
 -- | Building toward the declared return type is what a caller would reach for first.
 --
@@ -156,6 +155,7 @@ testPyImportReadsAsTheSyntaxDoes = testCase "the Python primitive reads what the
     pyImportPrim = case pyImport of
       EPrim _ f    -> f
       EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
+      EIOPrim _ _  -> const $ Left "the Python importer is not an IO primitive"
 
 -- | A file that is not there is reported, rather than raised out of the evaluation.
 testPyImportReportsAMissingFile :: TestTree
@@ -167,6 +167,7 @@ testPyImportReportsAMissingFile = testCase "a Python file that is not there is r
     pyImportPrim = case pyImport of
       EPrim _ f    -> f
       EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
+      EIOPrim _ _  -> const $ Left "the Python importer is not an IO primitive"
 
 -- | An importer declared in Catln, used by the line after the one that imports it.
 --

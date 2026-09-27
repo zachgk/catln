@@ -39,7 +39,6 @@ import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
                                           reachesHasCutSubtypeOf,
                                           reachesPartials, reachesTo)
 import           Syntax.HsBuiltins.Types (oneFileResult, valResultFiles)
-import           System.IO.Unsafe        (unsafePerformIO)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -102,13 +101,13 @@ evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ fl
 -- The annotation is taken as well as the value it evaluated to, because an annotation reporting on
 -- where it is written cannot be told that from its value: an evaluated annotation is a tuple of what
 -- its arguments came to, with nothing left of the expression it was.
-evalCompAnnot :: TExpr EvalMetaDat -> Val -> StateT Env CRes ()
+evalCompAnnot :: TExpr EvalMetaDat -> Val -> EvalM ()
 
 evalCompAnnot _ (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
   (Just b, Just (StrVal _)) | b == true -> return ()
-  (Just b, Just (StrVal msg)) | b == false -> lift $ CErr [MkCNote $ AssertCErr msg]
+  (Just b, Just (StrVal msg)) | b == false -> liftCRes $ CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return ()
-  (Just b, Nothing) | b == false -> lift $ CErr [MkCNote $ AssertCErr "Failed assertion"]
+  (Just b, Nothing) | b == false -> liftCRes $ CErr [MkCNote $ AssertCErr "Failed assertion"]
   _ -> evalError $ printf "Invalid assertion with unexpected args %s" (show args)
 -- A @#debug@ records its argument against the call it was reached in. The position is the
 -- annotation's own rather than its argument's, since an operator apply carries none (see
@@ -120,19 +119,12 @@ evalCompAnnot annot (TupleVal n args) | n == debugAnnot = case H.lookup debugAnn
 evalCompAnnot _ TupleVal{} = return ()
 evalCompAnnot _ _ = evalError "Eval: Invalid compiler annotation type"
 
-evalGuards :: Env -> Val -> EObjArr -> CRes (Bool, Env)
-evalGuards = undefined
-  -- case cond' of
-  --   b | b == true -> evalPopVal <$> evalCallTree (evalPush env4 $ "then for " ++ show ifObj) m ifThenTree
-  --   b | b == false -> evalPopVal <$> evalCallTree (evalPush env4 $ "else for " ++ show ifObj) m (TCCond resType restIfTrees elseTree)
-  --   _ -> error "Non-Bool eval resArrowCond"
-
-evalObjArr :: Val -> AnyObjArr -> StateT Env CRes Val
+evalObjArr :: Val -> AnyObjArr -> EvalM Val
 evalObjArr = evalObjArrCaptured H.empty
 
 -- | 'evalObjArr' for a closure ('ObjArrVal'): the captured creation-site args underlay the
 -- closure's own parameters, so body references to enclosing args resolve lexically.
-evalObjArrCaptured :: Args -> Val -> AnyObjArr -> StateT Env CRes Val
+evalObjArrCaptured :: Args -> Val -> AnyObjArr -> EvalM Val
 evalObjArrCaptured captured input oa = do
   let newArrArgs = H.union (buildArrArgs oa input) captured
   -- The src partial seeds the arm-body rebuild's var/arg environment, where a function-typed
@@ -177,7 +169,7 @@ simplifyArgKeys t = t
 -- the forwarded argument as a VALUE, carrying the output its own creation site gave it, which is
 -- the instantiation the bound stands in for. A closure body that forwards nothing keeps its
 -- spelling.
-closureOutInstantiated :: ObjArr TExpr EvalMetaDat -> StateT Env CRes (ObjArr TExpr EvalMetaDat)
+closureOutInstantiated :: ObjArr TExpr EvalMetaDat -> EvalM (ObjArr TExpr EvalMetaDat)
 closureOutInstantiated oa = do
   Env{evArgs} <- get
   return $ case oaArr oa of
@@ -198,7 +190,7 @@ closureOutInstantiated oa = do
           return $ getMetaType innerArrM
         _ -> Nothing
 
-evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
+evalCallTree :: Val -> TCallTree -> EvalM Val
 -- evalCallTree v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree v TCTId = return v
 evalCallTree  m (TCMatch destType opts) = do
@@ -282,6 +274,18 @@ evalCallTree input (TCPrim oa (EEnvPrim _ f)) = do
       Right val -> return val
       Left err  -> evalError err
     _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
+-- An effect, which only an IO value can ask for: the primitive is handed the handle of the IO value
+-- it was called on, and a call on anything else is refused rather than given some other handle.
+evalCallTree input (TCPrim oa (EIOPrim name f)) = do
+  case input of
+    (TupleVal _ args) -> case H.lookup "/this" args of
+      Just (IOVal _ handle) -> do
+        res <- liftIO $ f handle args
+        case res of
+          Right val -> return val
+          Left err  -> evalError err
+      _ -> evalError $ printf "The IO primitive %s can only be called as a method of an IO value, but was called with %s" name (show args)
+    _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
 -- | Checks the implicit equality of a non-linear pattern's shared argument positions. For an
@@ -290,7 +294,7 @@ evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it shoul
 -- @m@ pairwise. Equality goes through the argument type's 'Eq' (the @==@ operator over the two
 -- values as constants), not Haskell structural equality, so a type with a custom equality behaves
 -- as the user expects. If a value's type has no 'Eq', that surfaces as a build error here.
-evalNonLinearEq :: Val -> EObjArr -> StateT Env CRes Bool
+evalNonLinearEq :: Val -> EObjArr -> EvalM Bool
 evalNonLinearEq (TupleVal _ tupleArgs) ifObj = allM
   [ evalValEq va vb
   | grp <- exprNonLinearArgGroups (oaObjExpr ifObj)
@@ -304,14 +308,14 @@ evalNonLinearEq _ _ = return True
 
 -- | Whether two runtime values are equal under their type's 'Eq', by building and evaluating
 -- @l == r@ over the values as constants.
-evalValEq :: Val -> Val -> StateT Env CRes Bool
+evalValEq :: Val -> Val -> EvalM Bool
 evalValEq v1 v2 = do
   Env{evTbEnv} <- get
   let eqExpr = eVal operatorEq `eApply` (operatorArgL, valToEExpr v1) `eApply` (operatorArgR, valToEExpr v2)
-  tree <- lift $ buildRoot evTbEnv eqExpr (getExprPartialType eqExpr) boolType
+  tree <- liftCRes $ buildRoot evTbEnv eqExpr (getExprPartialType eqExpr) boolType
   (== true) <$> evalExpr tree
 
-evalExpr :: TExpr EvalMetaDat -> StateT Env CRes Val
+evalExpr :: TExpr EvalMetaDat -> EvalM Val
 -- evalExpr e | trace (printf "eval %s" (show e)) False = undefined
 evalExpr (TCExpr _ v) = return v
 evalExpr (TValue m _) = do
@@ -322,7 +326,7 @@ evalExpr (TValue m _) = do
           UnionType Nothing leafs [] -> head $ splitUnionType leafs
           _ -> error $ printf "TValue with unexpected type %s" (show tp)
   return $ TupleVal (nameStr ptName) H.empty
-evalExpr (THoleExpr m h) = lift $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
+evalExpr (THoleExpr m h) = liftCRes $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr (TAliasExpr b _) = evalExpr b
 evalExpr (TWhere _ b _) = evalExpr b
 evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
@@ -445,7 +449,7 @@ evalBuildPrgm input srcType destType prgm = do
 -- | Build and evaluate a single annotation expression to the value it renders to through the
 -- @DShow@ class (the same path used to display @#print@ values in webdocs). Returns @Nothing@
 -- when the annotation cannot reach @DShow@ and so is not renderable.
-evalDShowAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> CRes (Maybe Val)
+evalDShowAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> CResT IO (Maybe Val)
 evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
   | isPrint = do
       -- A @#print@ displays a runtime VALUE. Evaluate @p@ to its concrete value (built toward
@@ -460,13 +464,14 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
       -- Render the value as a @String@ through @/Data/toString@ when it is @ToString@ (the only
       -- form a golden can check); a @DShow@ value that is not @ToString@ (a webdocs visualization)
       -- keeps its raw value, so it is displayed but not golden-checked.
-      return $ Just $ fromMaybe pVal $ renderValText env pVal
+      text <- lift $ renderValText env pVal
+      return $ Just $ fromMaybe pVal text
   -- Whether THIS program can display the annotation: a question about the program as written,
   -- whose classes have exactly the members it declares — the closed-world view TreeBuild then
   -- builds the display in ('tePrgmEnv'). Asked open-world, every annotation could still become a
   -- @DShow@ member in some later file, so each one would be sent to a build with no arm to take.
   | reachesTo evTypeEnv{tePrgmEnv=True} H.empty (getExprType $ showAnnot annot) destType = do
-      tree <- toTExprDest evTbEnv os (showAnnot annot) destM
+      tree <- asCResT $ toTExprDest evTbEnv os (showAnnot annot) destM
       val <- evalStateT (evalExpr tree) env
       return (Just val)
   | otherwise = return Nothing
@@ -489,7 +494,7 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
     -- displayability and yields the value itself). @p@ is declared @-> DShow@, so this resolves for
     -- every valid print.
     evalToValue a = do
-      tree <- toTExprDest evTbEnv os a destM
+      tree <- asCResT $ toTExprDest evTbEnv os a destM
       evalStateT (evalExpr tree) env
     destType = dshowDestType
     destM = emptyMetaT destType
@@ -501,17 +506,19 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
 -- dispatches: a value an interface-typed expression computed renders by what it is — a @ConsList@ of
 -- @Integer@s — rather than by what the expression said it would be. 'Nothing' for a runtime-only
 -- value ('displayableVal') and for one that is not @ToString@.
-renderValText :: Env -> Val -> Maybe Val
-renderValText env v = fst $ renderValTextIn env v
+renderValText :: Env -> Val -> IO (Maybe Val)
+renderValText env v = fst <$> renderValTextIn env v
 
 -- | 'renderValText', also handing back the arrows the evaluation built ('evExEnv'), so that rendering
 -- many values can share them ('showRunValues').
-renderValTextIn :: Env -> Val -> (Maybe Val, ResExEnv)
+renderValTextIn :: Env -> Val -> IO (Maybe Val, ResExEnv)
 renderValTextIn env@Env{evExEnv} v
-  | displayableVal v = case callOnVal env (TupleVal "/Data/toString" (H.singleton "/this" v)) of
-      Just (str@StrVal{}, built) -> (Just str, built)
-      _                          -> (Nothing, evExEnv)
-  | otherwise = (Nothing, evExEnv)
+  | displayableVal v = do
+      called <- callOnVal env (TupleVal "/Data/toString" (H.singleton "/this" v))
+      return $ case called of
+        Just (str@StrVal{}, built) -> (Just str, built)
+        _                          -> (Nothing, evExEnv)
+  | otherwise = return (Nothing, evExEnv)
 
 -- | A value's display: what @/Catln/Doc/dshow@ makes of it, and that rendered as text when it is
 -- @ToString@ ('renderValText').
@@ -532,13 +539,16 @@ renderValTextIn env@Env{evExEnv} v
 -- and the tails of a list are the tails of every list it is a tail of, so 'showRunValues' carries
 -- these from one value to the next rather than building each tail's arrows again for every list it
 -- ends.
-dshowVal :: Env -> Val -> (Maybe Val, ResExEnv)
+dshowVal :: Env -> Val -> IO (Maybe Val, ResExEnv)
 dshowVal env@Env{evTypeEnv, evExEnv} v
-  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ getValPartialType input) dshowDestType = case callOnVal env input of
-      Just (shown, built) -> case renderValTextIn env{evExEnv=built} shown of
-        (text, built') -> (Just $ fromMaybe shown text, built')
-      Nothing -> (Nothing, evExEnv)
-  | otherwise = (Nothing, evExEnv)
+  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ getValPartialType input) dshowDestType = do
+      called <- callOnVal env input
+      case called of
+        Just (shown, built) -> do
+          (text, built') <- renderValTextIn env{evExEnv=built} shown
+          return (Just $ fromMaybe shown text, built')
+        Nothing -> return (Nothing, evExEnv)
+  | otherwise = return (Nothing, evExEnv)
   where input = TupleVal dshowName (H.singleton ('/' : dshowArg) v)
 
 -- | A call of a function on runtime values, evaluated toward @DShow@: the call's tree built from the
@@ -548,11 +558,14 @@ dshowVal env@Env{evTypeEnv, evExEnv} v
 -- expression is compiled whole, one level of the tree per level of the value, and a list of forty
 -- elements is forty nested constructions compiled again for every list a debugger shows -- nearly
 -- all of what rendering a run cost. The value's type says the same thing and is dispatched on once.
-callOnVal :: Env -> Val -> Maybe (Val, ResExEnv)
-callOnVal env@Env{evTbEnv} input = do
-  tree <- valCallTree evTbEnv input
-  (val, Env{evExEnv}) <- cresToMaybe $ runStateT (evalCallTree input tree) env
-  return (val, evExEnv)
+callOnVal :: Env -> Val -> IO (Maybe (Val, ResExEnv))
+callOnVal env@Env{evTbEnv} input = case valCallTree evTbEnv input of
+  Nothing -> return Nothing
+  Just tree -> do
+    res <- runCResT $ runStateT (evalCallTree input tree) env
+    return $ do
+      (val, Env{evExEnv}) <- cresToMaybe res
+      return (val, evExEnv)
 
 -- | The call tree a runtime value takes toward @DShow@, from the first of its type's two spellings
 -- that builds one.
@@ -623,7 +636,7 @@ callShowFuns Prgm{prgmObjMap=ObjectMap objMap} = case H.lookup (mkName dshowCall
 -- shown four times. The inner calls keep their nodes and their children — nothing is dropped from the
 -- tree — they simply have no display of their own, and whatever is showing the outermost decides what
 -- to do with what is underneath it.
-attachCallShows :: EPrgm -> [EvalTreebugClosed] -> CRes [EvalTreebugClosed]
+attachCallShows :: EPrgm -> [EvalTreebugClosed] -> CResT IO [EvalTreebugClosed]
 attachCallShows prgm nodes
   | S.null funs = return nodes
   | otherwise = mapM (go Nothing) nodes
@@ -648,11 +661,13 @@ attachCallShows prgm nodes
         -- that render text, and a mapping over elements that render none is a mapping it does not
         -- describe. So the call keeps the display every other call gets, and nothing is said about it.
         Nothing -> return Nothing
-        Just tree -> case evalStateT (evalCallTree showInput tree) env of
-          -- Built and then failed to run, which is the opposite case and is worth saying: an arm was
-          -- found for this call and could not produce what it promised.
-          CErr notes -> CRes [MkCNote $ GenCErr Nothing $ printf "The display of a call of %s could not be evaluated: %s" (nameStr fun) (prettyCNotes notes)] Nothing
-          CRes _ v -> return $ Just v
+        Just tree -> do
+          res <- lift $ runCResT $ evalStateT (evalCallTree showInput tree) env
+          asCResT $ case res of
+            -- Built and then failed to run, which is the opposite case and is worth saying: an arm
+            -- was found for this call and could not produce what it promised.
+            CErr notes -> CRes [MkCNote $ GenCErr Nothing $ printf "The display of a call of %s could not be evaluated: %s" (nameStr fun) (prettyCNotes notes)] Nothing
+            CRes _ v -> return $ Just v
 
 -- | Build and evaluate a call to a named function of the program, with arguments supplied as runtime
 -- values, to the value it displays as through the @DShow@ class.
@@ -668,9 +683,9 @@ attachCallShows prgm nodes
 -- cannot be built from reaching 'TreeBuild': tree building a call it cannot resolve is an @error@
 -- rather than a note, and an @error@ raised answering a request is a failed connection rather than
 -- something the reader can be shown.
-evalDShowCall :: Env -> String -> [(String, Val)] -> CRes Val
+evalDShowCall :: Env -> String -> [(String, Val)] -> CResT IO Val
 evalDShowCall env@Env{evTypeEnv} fun args = do
-  fun' <- evalCallName env fun
+  fun' <- asCResT $ evalCallName env fun
   let input = foldl (\base (argName, argVal) -> eApply base ('/' : argName, valToEExpr argVal)) (eVal fun') args
   unless (reachesTo evTypeEnv H.empty (getExprType input) dshowDestType) $
     fail $ printf "Calling %s with %s does not reach %s, so it is not something the webdocs can show" fun' (show $ map fst args) dshowClassName
@@ -696,11 +711,11 @@ evalCallName Env{evTypeEnv} fun = case maybeGetSingleton $ expandRelPartial evTy
 -- responsibility — see 'dshowDestType': a tree built toward the expression's OWN type comes back as
 -- the unevaluated application. A caller wanting the value of a function declared to return @T@ must
 -- therefore ask for something @T@ resolves to rather than for @T@.
-evalCallTo :: Env -> Type -> String -> [(String, Val)] -> CRes Val
+evalCallTo :: Env -> Type -> String -> [(String, Val)] -> CResT IO Val
 evalCallTo env@Env{evTbEnv} dest fun args = do
-  fun' <- evalCallName env fun
+  fun' <- asCResT $ evalCallName env fun
   let input = foldl (\base (argName, argVal) -> eApply base ('/' : argName, valToEExpr argVal)) (eVal fun') args
-  tree <- toTExprDest evTbEnv [] input (emptyMetaT dest)
+  tree <- asCResT $ toTExprDest evTbEnv [] input (emptyMetaT dest)
   evalStateT (evalExpr tree) env
 
 -- | Evaluate the annotations a page WRITES, in the program that page COMPILES TO. The two scopes
@@ -712,10 +727,10 @@ evalCallTo env@Env{evTbEnv} dest fun args = do
 -- read. Evaluating the imports' annotations too would compute a whole library's worth of values for
 -- every page, and then discard them — @WebDocs.docApiBase@ keys the results back onto the page's own
 -- source by meta ID, which no imported annotation can match.
-evalAnnots :: Maybe EvalService -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalAnnots :: Maybe EvalService -> FileImport -> EPrgmGraphData -> CResT IO [(EExpr, Val)]
 evalAnnots service prgmName prgmGraphData = do
-  prgm <- prgmFromGraphData prgmName prgmGraphData
-  Prgm objMap _ globalAnnots <- case graphLookup prgmName prgmGraphData of
+  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
+  Prgm objMap _ globalAnnots <- asCResT $ case graphLookup prgmName prgmGraphData of
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the annotations of" (show $ impRaw prgmName)]
   let env = evalBaseEnvService service prgm
@@ -741,11 +756,13 @@ evalAnnots service prgmName prgmGraphData = do
 -- broken annotation still be shown the rest of them. The failure is not swallowed — it is reported
 -- as an error note, so a consumer that must reject any failure (the integration tests, via
 -- 'failOnErrorNotes') still fails on it.
-buildDisplays :: Env -> [(PartialType, EObjArr)] -> String -> [EExpr] -> CRes [(EExpr, Val)]
+buildDisplays :: Env -> [(PartialType, EObjArr)] -> String -> [EExpr] -> CResT IO [(EExpr, Val)]
 buildDisplays env os what exprs = do
-    results <- forM exprs $ \e -> case fmap (e,) <$> evalDShowAnnot env os e of
-      CRes notes r -> CRes notes r
-      CErr notes   -> CRes (displayFailedNote e : notes) Nothing
+    results <- forM exprs $ \e -> do
+      res <- lift $ runCResT $ evalDShowAnnot env os e
+      asCResT $ case fmap (e,) <$> res of
+        CRes notes r -> CRes notes r
+        CErr notes   -> CRes (displayFailedNote e : notes) Nothing
     return $ catMaybes results
   where
     displayFailedNote e = MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "Failed to evaluate the %s %s" what (show e)
@@ -764,9 +781,9 @@ buildDisplays env os what exprs = do
 --
 -- Several types at once rather than one at a time, so that what comes back is in the order the page
 -- wrote it however many types were asked for. Two gatherings joined would be two runs of that order.
-evalPageValues :: [Name] -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalPageValues :: [Name] -> FileImport -> EPrgmGraphData -> CResT IO [(EExpr, Val)]
 evalPageValues names prgmName prgmGraphData = do
-  Prgm objMap _ _ <- case graphLookup prgmName prgmGraphData of
+  Prgm objMap _ _ <- asCResT $ case graphLookup prgmName prgmGraphData of
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the declarations of" (show $ impRaw prgmName)]
   case filter declaresOne (flatObjectMap objMap) of
@@ -774,7 +791,7 @@ evalPageValues names prgmName prgmGraphData = do
     -- server about a type most of them never mention costs no evaluation environments.
     [] -> return []
     oas -> do
-      prgm <- prgmFromGraphData prgmName prgmGraphData
+      prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
       -- Neither the stages nor the service: a declared value is the declaration itself and reports
       -- on no other stage of the program. That is also what keeps an annotation which gathers such
       -- values from re-entering the gathering — this evaluation is one the service started, and an
@@ -805,7 +822,7 @@ evalPageValues names prgmName prgmGraphData = do
 -- An asker is handed back rather than an answer, as 'CtServiceApi.csValues' hands back a gatherer and
 -- for the same reason: the page's program is what answering costs, and it is one program however
 -- many of the page's values are asked.
-evalPageAsk :: Name -> FileImport -> EPrgmGraphData -> CRes (Val -> CRes Val)
+evalPageAsk :: Name -> FileImport -> EPrgmGraphData -> CRes (Val -> CResT IO Val)
 evalPageAsk method prgmName prgmGraphData = do
   prgm <- prgmFromGraphData prgmName prgmGraphData
   -- No service, as 'evalPageValues' takes none and for its reason: this evaluation is one the
@@ -813,19 +830,18 @@ evalPageAsk method prgmName prgmGraphData = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   return $ \val -> do
     let e = eVal (nameStr method) `eApply` ("/this", valToEExpr val)
-    tree <- buildRoot evTbEnv e (getExprPartialType e) dshowDestType
+    tree <- asCResT $ buildRoot evTbEnv e (getExprPartialType e) dshowDestType
     evalStateT (evalExpr tree) env
 
 -- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
--- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates
--- writes to stdout where a 'MockIOVal' accumulates writes to a buffer.
+-- That handle is the only difference between a real run and a mocked one: its 'IOHandle' says
+-- whether the run's effects reach the process's stdin and stdout or a buffer.
 --
--- Everything here is pure. The program's accumulated IO action is returned unperformed alongside its
--- exit code, so it is the caller that decides whether the run's effects happen at all — which is what
--- lets a caller wanting only the evaluation tree take it without them.
-evalRunPrgm :: Val -> String -> EPrgm -> CRes (Integer, IO (), EvalResult)
+-- The run's effects happen as it is evaluated, each when the IO method asking for it is reached, so
+-- what comes back is only the exit code the run ended with.
+evalRunPrgm :: Val -> String -> EPrgm -> CResT IO (Integer, EvalResult)
 evalRunPrgm ioVal function prgm = do
-  input <- case evalPrgmTargetMode function prgm of
+  input <- asCResT $ case evalPrgmTargetMode function prgm of
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
@@ -836,55 +852,48 @@ evalRunPrgm ioVal function prgm = do
         _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
   let src = getExprPartialType input
   let dest = ioType
-  (expr, env) <- evalBuildPrgm input src dest prgm
+  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
   let env2 = evalSetArgs (H.singleton "/io" ioVal) env
   (res, env') <- runStateT (evalExpr expr) env2
   case res of
-    (IOVal r io)       -> return (r, io, evalResult env')
-    (MockIOVal r io _) -> return (r, io, evalResult env')
-    _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
+    (IOVal r _) -> return (r, evalResult env')
+    _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
 evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRun function prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  (r, io, res) <- asCResT $ evalRunPrgm (IOVal 0 $ pure ()) function prgm
-  lift (io >> pure (r, res))
+  evalRunPrgm (IOVal 0 realIOHandle) function prgm
 
 -- | Like 'evalRun' but captures the program's output into the given 'MockIO' buffer instead of
 -- writing it to real stdout.
 evalRunMock :: MockIO -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRunMock mockIO function prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  (r, io, res) <- asCResT $ evalRunPrgm (MockIOVal 0 (pure ()) (mockIORef mockIO)) function prgm
-  lift (io >> pure (r, res))
+  evalRunPrgm (IOVal 0 (mockIOHandle mockIO)) function prgm
 
 -- | Runs a function of a program for a debugger reporting on it: its exit code, its captured output,
 -- and the tree of what it evaluated.
 --
--- The 'unsafePerformIO' is what lets a pure caller ask for this at all, and the mock is what makes
--- that defensible: every effect is a 'modifyIORef' on a handle created in this call and dropped when
--- it returns, so nothing outside can observe that the run happened. The same code over 'evalRun'
--- would write the debugged program's output to the enclosing process's stdout and could block it
--- forever in 'Eval.Runtime.ioInput' — effects a pure caller cannot be asked to tolerate.
--- 'Eval.Runtime.ioInput' makes the same trade for the same reason.
-evalDebugPrgm :: String -> EPrgm -> CRes DebugRun
-evalDebugPrgm function prgm = unsafePerformIO $ do
-  mockIO <- newMockIO
-  case evalRunPrgm (MockIOVal 0 (pure ()) (mockIORef mockIO)) function prgm of
-    CErr notes -> return $ CErr notes
-    CRes notes (code, io, res) -> do
-      io
-      out <- getMockIOOutput mockIO
-      return $ CRes notes (\res' -> showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty emptySyntaxRun) <*> withCallShows prgm res
+-- The run is given a mock handle ('mockIOHandle'), so its effects are captured rather than
+-- performed: every write is to a buffer created in this call and dropped when it returns, and a
+-- read finds no input rather than waiting on the enclosing process's stdin. A debugger reporting on
+-- a run from inside the doc server must not write to the server's stdout or block it on a line
+-- nobody will type.
+evalDebugPrgm :: String -> EPrgm -> CResT IO DebugRun
+evalDebugPrgm function prgm = do
+  mockIO <- lift newMockIO
+  (code, res) <- evalRunPrgm (IOVal 0 (mockIOHandle mockIO)) function prgm
+  out <- lift $ getMockIOOutput mockIO
+  res' <- withCallShows prgm res
+  lift $ showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty emptySyntaxRun
 
 -- | Runs one expression of a program for a debugger reporting on it: the value it evaluated to, and
 -- the tree of what it evaluated on the way.
 --
--- Unlike 'evalDebugPrgm' this is a plain 'CRes' with no 'unsafePerformIO' and no mock, because there
--- is nothing here to capture. An expression is not given an @\/io@ handle the way 'evalRunPrgm' gives
--- one to a program, so it cannot print, and an expression whose value /is/ an unperformed 'IOVal' is
--- reported as that value rather than performed: running a page's effects because a reader opened a
--- debugger on one of its expressions is not what was asked for.
+-- Unlike 'evalDebugPrgm' there is no mock, because there is nothing here to capture. An expression is
+-- not given an @\/io@ handle the way 'evalRunPrgm' gives one to a program, and an effect can only be
+-- performed through one, so an expression cannot print or read: running a page's effects because a
+-- reader opened a debugger on one of its expressions is not what was asked for.
 --
 -- Built exactly the way a @#print@'s @p@ is ('evalDShowAnnot'): toward @DShow@, and from no enclosing
 -- object. The destination is what makes the expression evaluate at all — a tree built toward the
@@ -897,17 +906,18 @@ evalDebugPrgm function prgm = unsafePerformIO $ do
 -- annotation is evaluated in, which is what this is. Building it this way is also why no source
 -- partial is needed, and so why 'getExprPartialType' — which raises on a type that is not exactly one,
 -- as a bare string literal's is not — is not on this path at all.
-evalDebugExprPrgm :: EExpr -> EPrgm -> CRes DebugRun
+evalDebugExprPrgm :: EExpr -> EPrgm -> CResT IO DebugRun
 evalDebugExprPrgm input prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
-  tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
+  tree <- asCResT $ toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
-  (\res -> showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty emptySyntaxRun) <$> withCallShows prgm (evalResult env')
+  res <- withCallShows prgm (evalResult env')
+  lift $ showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty emptySyntaxRun
 
 -- | An evaluation's result with the display filled in for each call that has one
 -- ('attachCallShows'). Both debugger entry points go through this, since which of them ran a
 -- program is not something a display of one of its calls depends on.
-withCallShows :: EPrgm -> EvalResult -> CRes EvalResult
+withCallShows :: EPrgm -> EvalResult -> CResT IO EvalResult
 withCallShows prgm res@EvalResult{erTreebug} = do
   treebug' <- attachCallShows prgm erTreebug
   return res{erTreebug = treebug'}
@@ -929,8 +939,8 @@ withCallShows prgm res@EvalResult{erTreebug} = do
 -- they are, since they already read as their text. Each distinct value is rendered once, as a run
 -- passes the same lists down a recursion many times over, and the arrows one rendering builds are
 -- kept for the next (see 'dshowVal').
-showRunValues :: EPrgm -> DebugRun -> DebugRun
-showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs, erExprs, erAnnots}} = evalState go (H.empty, evExEnv env)
+showRunValues :: EPrgm -> DebugRun -> IO DebugRun
+showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs, erExprs, erAnnots}} = evalStateT go (H.empty, evExEnv env)
   where
     env = evalBaseEnv prgm
     go = do
@@ -952,7 +962,7 @@ showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDe
       case H.lookup v cache of
         Just shown -> return shown
         Nothing -> do
-          let (display, built') = dshowVal env{evExEnv=built} v
+          (display, built') <- lift $ dshowVal env{evExEnv=built} v
           modify $ \(c, _) -> (c, built')
           shown <- case display of
             Just display' | display' /= v -> return display'
@@ -981,7 +991,7 @@ evalBuild function prgmName prgmGraphData = do
   let src = getExprPartialType input
   let dest = resultType
   (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
-  (res, env') <- asCResT $ runStateT (evalExpr expr) env
+  (res, env') <- runStateT (evalExpr expr) env
   case res of
     (LLVMVal _) -> do
       -- llvmStr <- codegenExInit toCodegen

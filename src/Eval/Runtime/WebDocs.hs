@@ -556,6 +556,19 @@ orNotes :: CRes a -> Either String a
 orNotes (CRes _ r)   = Right r
 orNotes (CErr notes) = Left $ prettyCNotes notes
 
+-- | Each of a list run through a step that can fail, stopping at the first that does.
+--
+-- What 'traverse' is over 'Either', for a step that has to evaluate to answer — gathering a page's
+-- values or asking one of them something — and so runs in 'IO'. It stops where 'traverse' would, so
+-- a failure costs no evaluation of whatever came after it.
+traverseUntilLeft :: (a -> IO (Either String b)) -> [a] -> IO (Either String [b])
+traverseUntilLeft _ [] = return $ Right []
+traverseUntilLeft f (x:xs) = do
+  r <- f x
+  case r of
+    Left err -> return $ Left err
+    Right y  -> fmap (y:) <$> traverseUntilLeft f xs
+
 -- | What a primitive says when it was given no compilation service to ask.
 --
 -- Said rather than answered around: an evaluation with nothing to report on cannot answer, and

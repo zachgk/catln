@@ -23,7 +23,6 @@ import           Semantics.Types
 -- import           Emit                (codegenPrgm)
 import           CtConstants
 import           Data.Char             (chr, ord)
-import           Data.IORef            (modifyIORef)
 import           Data.Maybe            (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
@@ -33,8 +32,6 @@ import           Eval.Runtime.Prgm     (prgmPrims)
 import           Eval.Runtime.Tasks    (tasksPrims)
 import           Eval.Runtime.WebDocs  (webDocsPrims)
 import           Numeric               (showHex, showOct)
-import           System.IO             (hFlush, stdout)
-import           System.IO.Unsafe      (unsafePerformIO)
 import           Text.Printf
 
 type Op = (String, Either EPrim MacroFunction)
@@ -279,28 +276,25 @@ ioExit :: EPrim
 ioExit = EPrim "ioExit" prim
   where
     prim args = case (H.lookup "/this" args, H.lookup "/val" args) of
-      (Just (IOVal _ io),         Just (IntVal val)) -> Right $ IOVal val io
-      (Just (MockIOVal _ io ref), Just (IntVal val)) -> Right $ MockIOVal val io ref
+      (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
       _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
 
+-- | Writes a line through the IO value's handle, as it is evaluated, and answers with the same IO
+-- value so later effects are sequenced after this one.
 println :: EPrim
-println = EPrim "println" prim
+println = EIOPrim "println" prim
   where
-    prim args = case (H.lookup "/this" args, H.lookup "/msg" args) of
-      (Just (IOVal r io),         Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
-      (Just (MockIOVal r io ref), Just (StrVal msg)) -> Right $ MockIOVal r (io >> modifyIORef ref (msg:)) ref
-      _ -> Left "Invalid println signature"
+    prim handle args = case (H.lookup "/this" args, H.lookup "/msg" args) of
+      (Just io@IOVal{}, Just (StrVal msg)) -> do
+        iohPutLine handle msg
+        return $ Right io
+      _ -> return $ Left "Invalid println signature"
 
--- | Read a line from stdin, flushing any accumulated IO output first.
--- Uses unsafePerformIO because EPrim is pure, but the sequencing is correct:
--- the accumulated IO actions (e.g. prior printlns) run before getLine.
+-- | Reads a line through the IO value's handle.
 ioInput :: EPrim
-ioInput = EPrim "ioInput" prim
+ioInput = EIOPrim "ioInput" prim
   where
-    prim args = case H.lookup "/this" args of
-      Just (IOVal _ io)       -> Right $ StrVal $ unsafePerformIO (io >> hFlush stdout >> getLine)
-      Just (MockIOVal _ io _) -> Right $ StrVal $ unsafePerformIO (io >> hFlush stdout >> getLine)
-      _ -> Left "Invalid ioInput signature"
+    prim handle _ = fmap StrVal <$> iohGetLine handle
 
 arrExists :: Op
 arrExists = ("arrExists", Right (MacroFunction macroBuild))

@@ -47,10 +47,11 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           evalPageValues, evalRun, evalRunMock,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
-                                          DebugRun, EvalMetaDat, MockIO,
-                                          SSF (..), TExpr, TestResult, Val,
-                                          esAsks, joinedStage, newEvalService,
-                                          oaTestId, withRunSources)
+                                          DebugRun, EExpr, EPrgm, EvalMetaDat,
+                                          MockIO, SSF (..), TExpr, TestResult,
+                                          Val, esAsks, joinedStage,
+                                          newEvalService, oaTestId,
+                                          withRunSources)
 import           Eval.SyntaxTree         (withRunSyntax)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
@@ -1291,7 +1292,7 @@ getEvalBuild ctss prgmName fun = do
 getTestResults :: CTSS -> CResT IO [TestDesc]
 getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
-  asCResT $ evalTest base
+  evalTest base
 
 -- | The tests a page wrote, run and kept.
 --
@@ -1314,7 +1315,7 @@ ctssTestsFrom ctss prgmName = do
     Just tests -> asCResT tests
     Nothing -> do
       tprgms <- ctssTestPages ctss prgmName
-      descs <- asCResT $ evalTest tprgms
+      descs <- evalTest tprgms
       let owners = pageOwners tprgms
       -- Every test comes from a definition and every definition was written in a page, so a test
       -- that cannot be placed is reported rather than dropped — dropped, it would be a test that
@@ -1366,7 +1367,7 @@ pageOwners tprgms = H.fromList
 getPrintGoldens :: CTSS -> CResT IO [(CodeRangeDat, String)]
 getPrintGoldens ctss = do
   base <- ctssGet ssfTPrgm ctss
-  asCResT $ evalPrints $ mconcat $ map fst3 $ graphToNodes base
+  evalPrints $ mconcat $ map fst3 $ graphToNodes base
 
 -- | The annotations a page writes, evaluated to the values they display as.
 --
@@ -1385,17 +1386,15 @@ getEvalAnnots ctss prgmName = do
       -- merely writes one — which is the same set of pages, decided by the thing that needs them
       -- rather than guessed at in advance.
       svc <- lift $ newEvalService ctss (Just prgmName) =<< serviceToday ctss
-      let annots = evalAnnots (Just svc) prgmName tprgms
       -- An evaluation is a program the reader wrote, so there is no count of what it has left to do
       -- and none is invented. What can be said is whose annotations are being evaluated. Said after
       -- 'ctssGetFrom' above, which is what did the building, so this does not overwrite the report of
       -- a build it was waiting on.
       lift $ ctssReport ctss StepEvaluating 0 0 (impDisp prgmName)
       -- Evaluated here rather than left for whoever displays it, because what it asked the service
-      -- about is only known once it has asked, and that record is kept with it. It is the same work
-      -- either way and it is done once: what is kept is the value that was forced, not a second
-      -- computation of it.
-      asks <- lift $ annots `seq` esAsks svc
+      -- about is only known once it has asked, and that record is kept with it.
+      annots <- lift $ runCResT $ evalAnnots (Just svc) prgmName tprgms
+      asks <- lift $ esAsks svc
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots, ssfAnnotAsks = asks}) ctss
       asCResT annots
 
@@ -1422,7 +1421,7 @@ ctssCallDShow ctss scope fun args = do
   -- Nothing keeps what this answers, so nothing reads what it asked: a call is answered and
   -- forgotten, and there is no kept value to be dropped when the answer changes.
   svc <- lift $ newEvalService ctss scope =<< serviceToday ctss
-  asCResT $ evalDShowCall (evalBaseEnvService (Just svc) prgm) fun args
+  evalDShowCall (evalBaseEnvService (Just svc) prgm) fun args
 
 -- | The service, as a read asks it about importers written in Catln.
 --
@@ -1510,9 +1509,9 @@ ctssImporterEnv (CTSS ssmv _) = noImporters{ieDeclared, ieExtensions, ieReady, i
         Nothing -> return $ Left $ ImportBlocked page "has not been read"
         Just prgmName -> do
           let scope = graphToNodes $ graphFilterReaches prgmName ctssData
-          let called = do
-                tprgms <- evaluablePages ssfTPrgm True scope
-                prgm <- prgmFromGraphData prgmName tprgms
+          called <- runCResT $ do
+                tprgms <- asCResT $ evaluablePages ssfTPrgm True scope
+                prgm <- asCResT $ prgmFromGraphData prgmName tprgms
                 -- No 'EvalService'. An importer must not be able to ask the service anything: every
                 -- way of asking reaches 'ctssBuildAll' and so 'ctssReadOf', which is the deadlock
                 -- above. It is the same reason 'Eval.evalPageValues' takes none.
@@ -1662,7 +1661,7 @@ instance CtServiceApi CTSS where
     ssfs <- scopeSSFs ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    return $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs)
+    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm fun =<< asCResT (joinedStage ssfTPrgm ssfs))
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
@@ -1673,7 +1672,7 @@ instance CtServiceApi CTSS where
     ctssBuildFrom ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    return $ withRunSyntax (scopeRaws scopeNodes) . withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun prgmName scopeNodes src
+    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun prgmName scopeNodes src
 
   -- 'pageValues' partially applied, which is what shares the scope's typechecked programs across
   -- every page the gatherer is then asked about. Applying it per page instead is the quadratic
@@ -1719,10 +1718,17 @@ scopeSSFs ctss@(CTSS ssmv _) prgmName = do
 -- the call that ran. So the expression is compiled against the page the same way the page's own
 -- statements were, which is also what makes the names in it mean what they mean on that page.
 --
--- Pure, so that it can be handed to an evaluation, which has no 'IO' to run: every step of the
--- compile is a rewrite of a program that is already read and already built.
-debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CRes DebugRun
+debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CResT IO DebugRun
 debugExprRun prgmName scopeNodes src = do
+  (expr, prgm) <- asCResT $ debugExprCompile prgmName scopeNodes src
+  evalDebugExprPrgm expr prgm
+
+-- | The expression a debugger was asked to run, compiled against a page, with the program it is run
+-- in.
+--
+-- Pure: every step of the compile is a rewrite of a program that is already read and already built.
+debugExprCompile :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CRes (EExpr, EPrgm)
+debugExprCompile prgmName scopeNodes src = do
   parsed <- case runParser pExpr debugExprFile src of
     Left err     -> fail $ errorBundlePretty err
     Right parsed -> return parsed
@@ -1753,7 +1759,7 @@ debugExprRun prgmName scopeNodes src = do
       Just (Just (_, Just p)) -> return p
       _ -> fail $ printf "The debugger's #print of %s compiled without the expression it prints" src
     annots -> fail $ printf "The debugger was given %d expressions to run in %s rather than one" (length annots) (show prgmName)
-  evalDebugExprPrgm expr prgm
+  return (expr, prgm)
 
 -- | The values one page declares of one type, evaluated to the values they display as. This is the
 -- 'CtServiceApi.csValues' of a set of pages: what a value gathered across pages means, without any
@@ -1772,7 +1778,7 @@ debugExprRun prgmName scopeNodes src = do
 --
 -- Every type asked about is gathered in the one pass, and the order below is what makes that matter:
 -- asking twice and joining the answers would be two runs of the page's order rather than one.
-pageValues :: GraphData SSF FileImport -> [Name] -> FileImport -> CRes [(Expr EvalMetaDat, Val)]
+pageValues :: GraphData SSF FileImport -> [Name] -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 pageValues graph = valuesOf
   where
     computed = graphFromEdges $ filter (isJust . ssfTPrgm . fst3) $ graphToNodes graph
@@ -1786,8 +1792,8 @@ pageValues graph = valuesOf
       -- gathering across pages is never quietly short of the ones nobody has looked at yet.
       (Nothing, _) -> fail $ printf "The page %s has not been read, so what it declares is not known" (show $ impRaw prgmName)
       (_, Just ssf) -> do
-        values <- evalPageValues names prgmName =<< tprgms
-        written <- rawStatementExprIds <$> requireComputed (ssfRaw ssf)
+        values <- evalPageValues names prgmName =<< asCResT tprgms
+        written <- asCResT $ rawStatementExprIds <$> requireComputed (ssfRaw ssf)
         return $ sortOn (writtenAt written . fst) values
 
     -- A value the page does not write is one the page was rebuilt without, so it goes after the ones
@@ -1805,7 +1811,7 @@ pageValues graph = valuesOf
 -- the pages nobody has looked at yet. Unlike there, a page built without a typechecked program is
 -- reported too — a value was gathered from it, so it has a program, and being asked about a page
 -- that declared nothing is a caller's mistake rather than an empty answer.
-pageAsk :: GraphData SSF FileImport -> Name -> FileImport -> CRes (Val -> CRes Val)
+pageAsk :: GraphData SSF FileImport -> Name -> FileImport -> CRes (Val -> CResT IO Val)
 pageAsk graph method prgmName = case graphLookup prgmName graph of
   Nothing -> fail $ printf "The page %s has not been read, so its values cannot be asked about" (show $ impRaw prgmName)
   Just _ -> do

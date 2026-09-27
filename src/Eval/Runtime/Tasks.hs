@@ -21,6 +21,7 @@
 
 module Eval.Runtime.Tasks where
 
+import           CRes                     (runCResT)
 import           CtConstants              (falsePrim, noteObsidianTaskPath,
                                            noteSimpleTaskPath, noteTaskContents,
                                            noteTaskDescription, noteTaskDue,
@@ -35,7 +36,8 @@ import           Data.Maybe               (fromMaybe, isJust)
 import qualified Data.UUID                as UUID
 import           Eval.Common
 import           Eval.Runtime.WebDocs     (askService, encodeJsonText,
-                                           noService, orNotes)
+                                           noService, orNotes,
+                                           traverseUntilLeft)
 import           GHC.Generics             (Generic)
 import           Semantics.Prgm
 import           Semantics.Types          (mkName)
@@ -95,10 +97,13 @@ taskList = EEnvPrim "taskList" prim
         -- page — over a vault of notes, quadratic in the notes.
         gather <- esValues svc scope
         let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
-        return $ encodeJsonText . concat <$> traverse (pageTasks gather) (sortOn impDisp pages)
+        fmap (encodeJsonText . concat) <$> traverseUntilLeft (pageTasks gather) (sortOn impDisp pages)
 
     pageTasks pageValues prgmName = do
-      tasks <- orNotes $ pageValues (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName
+      gathered <- runCResT $ pageValues (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName
+      return $ orNotes gathered >>= pageTasksOf prgmName
+
+    pageTasksOf prgmName tasks =
       case (tasks, impDisp prgmName) of
         ([], _) -> return []
         -- As in 'Eval.Runtime.WebDocs.sidebar', a page with no display path is reported rather than
@@ -175,11 +180,11 @@ tasksQuery = EEnvPrim "tasksQuery" prim
       let pages = sortOn (\(_, _, within) -> within) [(page, disp, within) | page <- map snd3 (graphToNodes graph)
                                                     , Just disp <- [impDisp page]
                                                     , Just within <- [underVault vault disp]]
-      return $ concat <$> traverse (pageQueryTasks gatherer) pages
+      fmap concat <$> traverseUntilLeft (pageQueryTasks gatherer) pages
 
     pageQueryTasks gatherer (prgmName, disp, within) = do
-      tasks <- orNotes $ gatherer (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName
-      traverse (asked within disp) tasks
+      gathered <- runCResT $ gatherer (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName
+      return $ orNotes gathered >>= traverse (asked within disp)
 
     asked within disp (e, task) = (, pageTask disp (e, task)) <$> queryTask within task
     pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaId $ getExprMeta e) task

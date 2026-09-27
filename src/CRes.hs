@@ -17,21 +17,22 @@
 
 module CRes where
 
-import           Data.List             (intercalate, nub)
-import           Data.Maybe            (fromMaybe)
-import           GHC.Generics          (Generic)
+import           Data.List              (intercalate, nub)
+import           Data.Maybe             (fromMaybe)
+import           GHC.Generics           (Generic)
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
 import           Text.Printf
 
 import           Control.Monad
-import           Control.Monad.Trans   (MonadTrans (lift))
+import           Control.Monad.IO.Class (MonadIO (liftIO))
+import           Control.Monad.Trans    (MonadTrans (lift))
 import           Data.Aeson
-import           Data.String.Builder   (Builder, build, literal)
+import           Data.String.Builder    (Builder, build, literal)
 import           Semantics.Prgm
-import           Text.Megaparsec       (pstateSourcePos)
+import           Text.Megaparsec        (pstateSourcePos)
 import           Text.Megaparsec.Error
-import           Utils                 (withIndent)
+import           Utils                  (withIndent)
 
 data CNoteType
   = CNoteError
@@ -191,6 +192,11 @@ instance Monad m => MonadFail (CResT m) where
 
 instance MonadTrans CResT where
   lift = CResT . fmap (CRes [])
+
+-- | An evaluation runs in 'CResT' over 'IO', so that an effect a Catln program performs through its
+-- IO object happens when it is evaluated rather than being collected and run afterwards.
+instance MonadIO m => MonadIO (CResT m) where
+  liftIO = lift . liftIO
 
 asCResT :: (Monad m) => CRes r -> CResT m r
 asCResT = CResT . return

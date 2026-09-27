@@ -303,7 +303,7 @@ annotResp ctss scope' annot = do
     -- the annotation route take, which on a doc server that has just started is the slowest thing a
     -- reader waits at.
     lift $ ctssReport ctss StepEvaluating 0 0 (impDisp =<< scope')
-    maybeAnnots <- asCResT $ evalAnnots (Just svc) annotPrgmName joinedTprgms
+    maybeAnnots <- evalAnnots (Just svc) annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaId . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 

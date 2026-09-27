@@ -28,7 +28,7 @@ import           Semantics.Types
 import           Text.Printf
 import           TreeBuild           (buildArrow)
 
-evalStartEArrow :: PartialType -> AnyObjArr -> Args -> StateT Env CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
+evalStartEArrow :: PartialType -> AnyObjArr -> Args -> EvalM (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
 evalStartEArrow srcType oa newArgs = do
   env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugClosed, evTreebugClaimed, evTreebugNextId} <- get
   let env' = env{
@@ -51,7 +51,7 @@ evalStartEArrow srcType oa newArgs = do
           put env''
           return (tree, annots', evArgs)
         Nothing -> do
-          maybeArrow' <- lift $ buildArrow evTbEnv srcType oa'
+          maybeArrow' <- liftCRes $ buildArrow evTbEnv srcType oa'
           case maybeArrow' of
             Just (_, arrow'@(tree, annots')) -> do
               let env''' = env'' {evExEnv = H.insert (srcType, oa') arrow' evExEnv}
@@ -115,10 +115,10 @@ evalRecordAnnot (Just node, before) m val env@Env{evAnnotRuns} = env{
   evAnnotRuns = EvalAnnotRun node (getMetaId m) (getMetaPos m) val (evalClosedSince before env) : evAnnotRuns
                                                                     }
 
-evalError :: String -> StateT Env CRes v
+evalError :: String -> EvalM v
 evalError msg = do
   stack <- gets evCallStack
-  lift $ CErr [MkCNote $ EvalCErr stack msg]
+  liftCRes $ CErr [MkCNote $ EvalCErr stack msg]
 
 evalSetArgs :: Args -> Env -> Env
 evalSetArgs args' env = env{evArgs=args'}
@@ -131,7 +131,7 @@ evalPop env@Env{evCallStack} = case evCallStack of
   (_:stack') -> env{evCallStack=stack'}
   _          -> error "Popped empty evCallStack"
 
-withEvalPush :: String -> StateT Env CRes v -> StateT Env CRes v
+withEvalPush :: String -> EvalM v -> EvalM v
 withEvalPush c f = do
   modify $ evalPush c
   res <- f

@@ -40,6 +40,7 @@ import           Data.Aeson                 hiding (Object)
 import           Data.IORef
 import           Data.Time.Calendar         (Day)
 import           Data.UUID                  (UUID)
+import           System.IO                  (hFlush, isEOF, stdout)
 -- import qualified LLVM.AST            as AST
 import           MapMeta
 import           Semantics
@@ -218,7 +219,7 @@ class CtServiceApi s where
   -- rather than one that knows what a note is. Several types are asked for at once because what
   -- comes back is in the order the page wrote it, and two gatherings joined would be two runs of
   -- that order rather than one.
-  csValues :: s -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
+  csValues :: s -> Maybe FileImport -> IO ([Name] -> FileImport -> CResT IO [(EExpr, Val)])
 
   -- | Asks a method of a page's program about a value, and gives back what the answer evaluates to.
   --
@@ -235,7 +236,7 @@ class CtServiceApi s where
   -- costs and a value is answered about in the program of the page that declared it. That is the
   -- same program 'csValues' built to gather it; asking is a second build of it, which is a cost
   -- worth naming and is why the asker is taken once per page rather than once per value.
-  csAsk :: s -> Maybe FileImport -> IO (Name -> FileImport -> CRes (Val -> CRes Val))
+  csAsk :: s -> Maybe FileImport -> IO (Name -> FileImport -> CRes (Val -> CResT IO Val))
 
 -- | What a display asked the compilation service about, as what would have to change for its answer
 -- to stop being its answer.
@@ -341,13 +342,13 @@ esRunExpr svc@(EvalService s _ _ _) prgmName src = recordAsk svc (Just prgmName)
 
 -- | 'CtServiceApi.csValues' over a scope, recorded as asked about. The gatherer that comes back can
 -- only be asked about pages of that scope, so recording the scope covers every page it will gather
--- from — which a pure gatherer could not record for itself.
-esValues :: EvalService -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
+-- from — which the gatherer could not record for itself.
+esValues :: EvalService -> Maybe FileImport -> IO ([Name] -> FileImport -> CResT IO [(EExpr, Val)])
 esValues svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csValues s scope
 
 -- | 'CtServiceApi.csAsk' over a scope, recorded as 'esValues' is and for its reason: the asker that
 -- comes back can only be asked about pages of that scope, and cannot record for itself.
-esAsk :: EvalService -> Maybe FileImport -> IO (Name -> FileImport -> CRes (Val -> CRes Val))
+esAsk :: EvalService -> Maybe FileImport -> IO (Name -> FileImport -> CRes (Val -> CResT IO Val))
 esAsk svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csAsk s scope
 
 -- | Write down a scope a display asked about. An unscoped ask is about every page there is, which is
@@ -368,11 +369,17 @@ data EPrim
   -- TreeBuild, which would bake the program into every built arm ('evalBuildAll') instead of
   -- computing it per evaluation.
   | EEnvPrim String (Env -> H.HashMap String Val -> Either String Val)
+  -- | A primitive that performs an effect: a method of the Catln @IO@ object. It is handed the
+  -- 'IOHandle' of the IO value it was called on, and is the only kind of primitive that runs in
+  -- 'IO' — so an effect can only happen where a program holds an IO value and calls a method of it.
+  -- 'Eval.evalCallTree' refuses one called on anything else.
+  | EIOPrim String (IOHandle -> H.HashMap String Val -> IO (Either String Val))
   deriving (Generic)
 
 ePrimName :: EPrim -> String
 ePrimName (EPrim n _)    = n
 ePrimName (EEnvPrim n _) = n
+ePrimName (EIOPrim n _)  = n
 
 instance Eq EPrim where
   a == b = ePrimName a == ePrimName b
@@ -383,6 +390,7 @@ instance Hashable EPrim where
 instance ToJSON EPrim where
   toJSON EPrim{}    = object ["type".=("EPrim" :: String)]
   toJSON EEnvPrim{} = object ["type".=("EEnvPrim" :: String)]
+  toJSON EIOPrim{}  = object ["type".=("EIOPrim" :: String)]
 
 
 -- | An arrow the evaluation is inside: the id of the node it will close as, the arrow itself, and
@@ -502,6 +510,18 @@ data EvalAnnotRun = EvalAnnotRun { eaNode  :: String
                                  , eaValue :: Val
                                  , eaCalls :: [String]
                                  } deriving (Eq, Generic, ToJSON)
+
+-- | The monad an evaluation runs in.
+--
+-- Over 'IO' because an evaluation performs the effects a program asks for as it reaches them: a
+-- method of the Catln IO object ('EIOPrim') runs its effect when it is evaluated, and what it
+-- answers with is a value the rest of the evaluation goes on to use. Only those methods reach the
+-- 'IO'; every other part of an evaluation is as pure as it was.
+type EvalM = StateT Env (CResT IO)
+
+-- | A result of the compiler's own, as a step of an evaluation.
+liftCRes :: CRes a -> EvalM a
+liftCRes = lift . asCResT
 
 -- | One @#debug@ of a run: where it is written, what it evaluated to there, and which node of the
 -- evaluation tree it was recorded in.
@@ -695,9 +715,35 @@ data TestResult = TestResult
 oaTestId :: EObjArr -> UUID
 oaTestId = getMetaId . getExprMeta . oaObjExpr
 
+-- | What an IO value performs its effects through.
+--
+-- An evaluation performs an effect at the moment it evaluates the IO method asking for it, so a
+-- program's effects happen in the order its IO values are threaded through its calls. The handle is
+-- what decides where those effects go: 'realIOHandle' is the process's own stdin and stdout, and
+-- 'mockIOHandle' is a buffer, for a run whose output is read back rather than shown (a test, or a
+-- debugger reporting on a run from inside the doc server).
+data IOHandle = IOHandle
+  { iohPutLine :: String -> IO ()
+  -- | The next line of input, or why there is none.
+  , iohGetLine :: IO (Either String String)
+  }
+
+-- | The process's own stdin and stdout.
+--
+-- Output is flushed before a line is read, so a prompt printed just before asking is on screen by
+-- the time the program waits for the answer.
+realIOHandle :: IOHandle
+realIOHandle = IOHandle putStrLn getLine'
+  where
+    getLine' = do
+      hFlush stdout
+      eof <- isEOF
+      if eof
+        then return $ Left "There is no more input to read"
+        else Right <$> getLine
+
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
--- stdout. It lives beside 'MockIOVal', the value that carries the same buffer through an evaluation.
--- Create with 'newMockIO', pass to 'Eval.evalRunMock', then read captured output with
+-- stdout. Create with 'newMockIO', pass to 'Eval.evalRunMock', then read captured output with
 -- 'getMockIOOutput'.
 newtype MockIO = MockIO (IORef [String])
 
@@ -709,9 +755,16 @@ newMockIO = MockIO <$> newIORef []
 getMockIOOutput :: MockIO -> IO String
 getMockIOOutput (MockIO ref) = unlines . reverse <$> readIORef ref
 
--- | The buffer a 'MockIO' captures into, for seeding an evaluation's 'MockIOVal'.
-mockIORef :: MockIO -> IORef [String]
-mockIORef (MockIO ref) = ref
+-- | The handle a 'MockIO' captures through, for seeding an evaluation's 'IOVal'.
+--
+-- It has no input. A mocked run is one whose caller reads its output back, and a caller doing that
+-- is not a person at a terminal: reading the process's real stdin from inside one would block a doc
+-- server on a line nobody is going to type.
+mockIOHandle :: MockIO -> IOHandle
+mockIOHandle (MockIO ref) = IOHandle
+  { iohPutLine = \msg -> modifyIORef ref (msg:)
+  , iohGetLine = return $ Left "A mocked run has no input to read"
+  }
 
 -- | The arms of a 'Semantics.Val.Val' only an evaluation knows the inside of.
 --
@@ -725,8 +778,8 @@ data EvalRuntime
   -- creation site, so body references to enclosing args (@fn(v)= fn(v= v)@'s inner @fn@)
   -- resolve lexically at application.
   = ObjArrRV (ObjArr TExpr EvalMetaDat) Args
-  | IORV Integer (IO ())
-  | MockIORV Integer (IO ()) (IORef [String])
+  -- | An IO value: the exit code the run will end with, and the handle its effects go through.
+  | IORV Integer IOHandle
   | LLVMRV (LLVM ())
   | LLVMQueueRV [(TExpr EvalMetaDat, EObjArr)]
   -- | LLVMOperandRV Type (Codegen AST.Operand)
@@ -743,11 +796,8 @@ type Args = SV.Args EvalRuntime
 pattern ObjArrVal :: ObjArr TExpr EvalMetaDat -> Args -> Val
 pattern ObjArrVal oa as = RuntimeVal (ObjArrRV oa as)
 
-pattern IOVal :: Integer -> IO () -> Val
+pattern IOVal :: Integer -> IOHandle -> Val
 pattern IOVal i io = RuntimeVal (IORV i io)
-
-pattern MockIOVal :: Integer -> IO () -> IORef [String] -> Val
-pattern MockIOVal i io ref = RuntimeVal (MockIORV i io ref)
 
 pattern LLVMVal :: LLVM () -> Val
 pattern LLVMVal l = RuntimeVal (LLVMRV l)
@@ -761,7 +811,7 @@ pattern LLVMIO c = RuntimeVal (LLVMIORV c)
 -- | The arms above are every 'Semantics.Val.RuntimeVal' there is, so a match listing them together
 -- with the data arms is total. Without this every existing @case@ over a value would be read as
 -- missing the 'Semantics.Val.RuntimeVal' case and @-Wall@ would report it.
-{-# COMPLETE IntVal, FloatVal, StrVal, CharVal, TupleVal, ObjArrVal, IOVal, MockIOVal, LLVMVal, LLVMQueue, LLVMIO, NoVal #-}
+{-# COMPLETE IntVal, FloatVal, StrVal, CharVal, TupleVal, ObjArrVal, IOVal, LLVMVal, LLVMQueue, LLVMIO, NoVal #-}
 
 -- | What an evaluation says about its own values.
 --
@@ -769,27 +819,23 @@ pattern LLVMIO c = RuntimeVal (LLVMIORV c)
 -- what a comparison of one would mean is the question, and answering it False would be answering
 -- it. That is why 'SV.rvEqVal' is given the whole other value.
 instance RuntimeValue EvalRuntime where
-  rvEqVal IORV{} _     = error "Can't determine equality with IOVal"
-  rvEqVal MockIORV{} _ = error "Can't determine equality with MockIOVal"
-  rvEqVal _ _          = False
+  rvEqVal IORV{} _ = error "Can't determine equality with IOVal"
+  rvEqVal _ _      = False
 
   rvShow (ObjArrRV oa _) = printf "(ObjArrVal %s)" (show oa)
   rvShow IORV{}          = "IOVal"
-  rvShow MockIORV{}      = "MockIOVal"
   rvShow LLVMRV{}        = "LLVMVal"
   rvShow LLVMQueueRV{}   = "LLVMQueue"
   rvShow LLVMIORV{}      = "LLVMIO"
 
-  rvHash s (ObjArrRV oa _)  = s `hashWithSalt` oa
-  rvHash s (IORV i _)       = s `hashWithSalt` i
-  rvHash s (MockIORV i _ _) = s `hashWithSalt` i
-  rvHash s LLVMRV{}         = s
-  rvHash s LLVMQueueRV{}    = s
-  rvHash s LLVMIORV{}       = s
+  rvHash s (ObjArrRV oa _) = s `hashWithSalt` oa
+  rvHash s (IORV i _)      = s `hashWithSalt` i
+  rvHash s LLVMRV{}        = s
+  rvHash s LLVMQueueRV{}   = s
+  rvHash s LLVMIORV{}      = s
 
   rvToJSON ObjArrRV{}    = object ["tag" .= ("ObjArrVal" :: String)]
   rvToJSON IORV{}        = object ["tag" .= ("IOVal" :: String)]
-  rvToJSON MockIORV{}    = object ["tag" .= ("MockIOVal" :: String)]
   rvToJSON LLVMRV{}      = object ["tag" .= ("LLVMVal" :: String)]
   rvToJSON LLVMQueueRV{} = object ["tag" .= ("LLVMQueue" :: String)]
   rvToJSON LLVMIORV{}    = object ["tag" .= ("LLVMIO" :: String)]
@@ -823,7 +869,6 @@ getValType (TupleVal name args) = singletonType (partialVal (mkName name)){ptArg
   where fromArg (argName, argVal) = (partialKey (mkName argName), getValType argVal)
 getValType (ObjArrVal oa _) = getExprType $ oaObjExpr oa
 getValType IOVal{}     = singletonType ioLeaf
-getValType MockIOVal{} = singletonType ioLeaf
 getValType LLVMVal{}   = singletonType resultLeaf
 getValType LLVMQueue{} = singletonType queueLeaf
 getValType LLVMIO{}    = singletonType ioLeaf
@@ -841,7 +886,6 @@ getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fro
   where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialType argVal)
 getValPartialType (ObjArrVal oa _) = getSingleton $ getExprType $ oaObjExpr oa
 getValPartialType IOVal{}     = ioLeaf
-getValPartialType MockIOVal{} = ioLeaf
 getValPartialType LLVMVal{} = resultLeaf
 getValPartialType LLVMQueue{} = queueLeaf
 -- getValPartialType (LLVMOperand t _) = case t of

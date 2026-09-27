@@ -27,7 +27,7 @@ import           Control.Concurrent         (forkIO, killThread, newEmptyMVar,
                                              putMVar, takeMVar)
 import           Control.Monad              (forM)
 import           Control.Monad.IO.Class     (liftIO)
-import           Control.Monad.State        (runStateT)
+import           Control.Monad.State        (lift, runStateT)
 import           CtConstants
 import           Data.IORef                 (IORef, modifyIORef', newIORef,
                                              readIORef)
@@ -301,19 +301,23 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
         soloEnv dropOa = evalBaseEnv prgm{prgmObjMap = ObjectMap (H.adjust (withoutClause dropOa) (oaObjPath oaA) om)}
         envA = soloEnv oaB
         envB = soloEnv oaA
-        runClause env input = do
+        runClause env input = runCResT $ do
           let inputE = valToEExpr input
-          tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
+          tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
           fst <$> runStateT (evalExpr tree) env
         prop :: RecordCase -> Hedgehog.Property
         prop record = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
           record (showTestInput input)
-          case (runClause envA input, runClause envB input) of
-            (CRes _ va, CRes _ vb) -> case runStateT (evalValEq va vb) envA of
-              CRes _ (True, _)  -> Hedgehog.success
-              CRes _ (False, _) -> Hedgehog.footnote (printf "Overlapping definitions disagree on %s:\n  %s\n  %s" (show input) (show va) (show vb)) >> Hedgehog.failure
-              CErr ns           -> Hedgehog.footnote (printf "Eq compare of results failed (%s vs %s): %s" (show va) (show vb) (prettyCNotes ns)) >> Hedgehog.failure
+          resA <- liftIO $ runClause envA input
+          resB <- liftIO $ runClause envB input
+          case (resA, resB) of
+            (CRes _ va, CRes _ vb) -> do
+              eqRes <- liftIO $ runCResT $ runStateT (evalValEq va vb) envA
+              case eqRes of
+                CRes _ (True, _)  -> Hedgehog.success
+                CRes _ (False, _) -> Hedgehog.footnote (printf "Overlapping definitions disagree on %s:\n  %s\n  %s" (show input) (show va) (show vb)) >> Hedgehog.failure
+                CErr ns           -> Hedgehog.footnote (printf "Eq compare of results failed (%s vs %s): %s" (show va) (show vb) (prettyCNotes ns)) >> Hedgehog.failure
             (ra, rb) -> Hedgehog.footnote (printf "eval failed:\n  %s\n  %s" (errOf ra) (errOf rb)) >> Hedgehog.failure
         errOf (CErr ns) = prettyCNotes ns
         errOf _         = "ok"
@@ -391,7 +395,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
       UnionType (Just (PredsOne (PredExpr p), _, _)) _ _ -> evalPredPartial thisVal p
       _ -> case maybeGetSingleton t of
         Just p  -> evalPredPartial thisVal p
-        Nothing -> CErr [MkCNote $ GenCErr Nothing $ printf "Unsupported refinement predicate operand %s" (show t)]
+        Nothing -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Unsupported refinement predicate operand %s" (show t)]
     -- Reduce a symbolic predicate partial to a concrete value. @$this@ becomes the candidate value;
     -- a nullary partial (a value such as @True@) becomes that value; an application has its argument
     -- types reduced to values first (bottom-up, so the argument types are concrete), then it is
@@ -405,7 +409,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
           let nm = resolveName (ptName p)
           let input = TupleVal (nameStr nm) (H.fromList argVals)
           let inputE = valToEExpr input
-          tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) (funcRetDest nm)
+          tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) (funcRetDest nm)
           fst <$> runStateT (evalExpr tree) env
 
     typePreds (UnionType (Just (preds, _, _)) _ _) = preds
@@ -463,25 +467,29 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
         -- for the generated input.
         runDef input = do
           let inputE = valToEExpr input
-          tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
+          tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
           fst <$> runStateT (evalExpr tree) env
         prop :: RecordCase -> Hedgehog.Property
         prop record = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
           record (showTestInput input)
-          case runDef input of
-            CRes _ outV -> case valMatchesType outV refRet of
-              CRes _ True  -> Hedgehog.success
-              CRes _ False -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not matching the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
-              CErr ns      -> Hedgehog.footnote (printf "Refinement predicate eval failed on %s = %s: %s" (show input) (show outV) (prettyCNotes ns)) >> Hedgehog.failure
+          res <- liftIO $ runCResT $ runDef input
+          case res of
+            CRes _ outV -> do
+              matches <- liftIO $ runCResT $ valMatchesType outV refRet
+              case matches of
+                CRes _ True  -> Hedgehog.success
+                CRes _ False -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not matching the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
+                CErr ns      -> Hedgehog.footnote (printf "Refinement predicate eval failed on %s = %s: %s" (show input) (show outV) (prettyCNotes ns)) >> Hedgehog.failure
             CErr ns -> Hedgehog.footnote (printf "eval failed: %s" (prettyCNotes ns)) >> Hedgehog.failure
 
-evalTest :: EPrgmGraphData -> CRes [TestDesc]
+evalTest :: EPrgmGraphData -> CResT IO [TestDesc]
 evalTest prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm ++ derivePrintTests prgm
+  printTests <- lift $ derivePrintTests prgm
+  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm ++ printTests
   where
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
     partitionTest oa (simple, props)
@@ -490,10 +498,10 @@ evalTest prgmGraphData = do
 
     runSimpleTest p oa =
       let testName = nameStr (oaObjPath oa)
-          action = asCResT $ do
+          action = do
             let input = eVal testName
             let src = getExprPartialType input
-            (expr, env) <- evalBuildPrgm input src intType p
+            (expr, env) <- asCResT $ evalBuildPrgm input src intType p
             fst <$> runStateT (evalExpr expr) env
       in TestDesc testName testName (oaTestId oa) TestSimple (EvalCheck action)
 
@@ -587,9 +595,11 @@ evalTest prgmGraphData = do
 
             case evalBuildPrgm input src intType p of
               CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
-              CRes _ (expr, env) -> case runStateT (evalExpr expr) env of
-                CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
-                CRes _ _   -> Hedgehog.success
+              CRes _ (expr, env) -> do
+                res <- liftIO $ runCResT $ runStateT (evalExpr expr) env
+                case res of
+                  CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
+                  CRes _ _   -> Hedgehog.success
 
           -- A type variable with no concrete instances (an open class not yet inhabited in this
           -- file) makes the law vacuously true: there is nothing to quantify over, so pass without
@@ -635,7 +645,7 @@ printGolden _          = Nothing
 -- | Build and evaluate every @#print@ reachable in the program to its rendered value, keeping
 -- only the string-serializable ones, paired with the source range of the print's @p@ argument
 -- (used by @catln test --update@ to locate and write goldens back).
-evalPrints :: EPrgm -> CRes [(CodeRangeDat, String)]
+evalPrints :: EPrgm -> CResT IO [(CodeRangeDat, String)]
 evalPrints prgm = do
   let env = evalBaseEnv prgm
   results <- forM (collectPrintAnnots prgm) $ \(os, annot) -> do
@@ -647,14 +657,19 @@ evalPrints prgm = do
 -- @#print@ whose value renders to a string is checked against its stored @#result@ golden; one
 -- without a golden fails with a hint to run @catln test --update@. A @#print@ that renders to a
 -- non-string DShow value is skipped entirely (produces no test).
-derivePrintTests :: EPrgm -> [TestDesc]
-derivePrintTests prgm = mapMaybe mkTest (collectPrintAnnots prgm)
+--
+-- Each print is evaluated here, as the tests are derived, rather than when its test is run: whether
+-- a print has a test at all is decided by what it evaluates to.
+derivePrintTests :: EPrgm -> IO [TestDesc]
+derivePrintTests prgm = catMaybes <$> mapM mkTest (collectPrintAnnots prgm)
   where
     env = evalBaseEnv prgm
-    mkTest (os, annot) = case evalDShowAnnot env os annot of
-      CRes _ (Just (StrVal actual)) -> Just (desc $ checkAction actual)
-      CRes _ _                      -> Nothing
-      CErr notes                    -> Just (desc $ CResT $ return $ CErr notes)
+    mkTest (os, annot) = do
+      shown <- runCResT $ evalDShowAnnot env os annot
+      return $ case shown of
+        CRes _ (Just (StrVal actual)) -> Just (desc $ checkAction actual)
+        CRes _ _                      -> Nothing
+        CErr notes                    -> Just (desc $ CResT $ return $ CErr notes)
       where
         crange = printRange annot
         testName = printf "%s :: print-golden" (maybe "<print>" showCodeRange crange)

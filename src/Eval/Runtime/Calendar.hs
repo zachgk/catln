@@ -22,6 +22,7 @@
 
 module Eval.Runtime.Calendar where
 
+import           CRes                 (runCResT)
 import           CtConstants          (calendarDayMethod, calendarEntryClass,
                                        ctMaybeNothing, ctMaybeSome,
                                        ctMaybeSomeValue)
@@ -34,7 +35,7 @@ import           Data.Time.Calendar   (Day)
 import qualified Data.UUID            as UUID
 import           Eval.Common
 import           Eval.Runtime.WebDocs (askService, encodeJsonText, noService,
-                                       orNotes)
+                                       orNotes, traverseUntilLeft)
 import           GHC.Generics         (Generic)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -106,27 +107,31 @@ calendarEntries = EEnvPrim "calendarEntries" prim
       ask <- esAsk svc scope
       let members = entryMembers evTypeEnv
       let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
-      return $ answered today <$> traverse (pageEntries members gather ask) (sortOn impDisp pages)
+      fmap (answered today) <$> traverseUntilLeft (pageEntries members gather ask) (sortOn impDisp pages)
 
     answered today found = encodeJsonText $ CalendarResult Nothing today (concat found)
 
     -- A class nobody joined is a calendar with nothing on it rather than a failure, as
     -- 'docPageAnnots' answers a program which never reached its class with no pages.
-    pageEntries [] _ _ _ = return []
+    pageEntries [] _ _ _ = return $ Right []
     pageEntries members gather ask prgmName = do
-      values <- orNotes $ gather members prgmName
-      case (values, impDisp prgmName) of
-        ([], _) -> return []
-        -- As in 'Eval.Runtime.Tasks.taskList', an entry with no page to be written back to is
-        -- reported rather than dropped.
-        (_, Nothing) -> Left $ printf "calendarEntries has no file path for %s, so its entries have nothing to be written back to" (show prgmName)
-        (_, Just disp) -> do
-          asked <- orNotes $ ask (mkName calendarDayMethod) prgmName
-          traverse (entry asked disp) values
+      gathered <- runCResT $ gather members prgmName
+      case orNotes gathered of
+        Left err -> return $ Left err
+        Right values -> case (values, impDisp prgmName) of
+          ([], _) -> return $ Right []
+          -- As in 'Eval.Runtime.Tasks.taskList', an entry with no page to be written back to is
+          -- reported rather than dropped.
+          (_, Nothing) -> return $ Left $ printf "calendarEntries has no file path for %s, so its entries have nothing to be written back to" (show prgmName)
+          (_, Just disp) -> case orNotes $ ask (mkName calendarDayMethod) prgmName of
+            Left err    -> return $ Left err
+            Right asked -> traverseUntilLeft (entry asked disp) values
 
     entry asked disp (e, value) = do
-      day <- valDay =<< orNotes (asked value)
-      return $ CalendarItem disp (UUID.toString $ getMetaId $ getExprMeta e) day value
+      dayOf <- runCResT $ asked value
+      return $ do
+        day <- valDay =<< orNotes dayOf
+        return $ CalendarItem disp (UUID.toString $ getMetaId $ getExprMeta e) day value
 
 -- | The types a calendar can show: the members of @\/Data\/Calendar\/CalendarEntry@, and the members
 -- of any of those which is itself a class, down to the types a value is actually declared as.
