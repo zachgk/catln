@@ -11,6 +11,7 @@ import foldlResponse from '../../../test/fixtures/debugger-foldl-response.json'
 import foldrResponse from '../../../test/fixtures/debugger-foldr-response.json'
 import mapValuesResponse from '../../../test/fixtures/debugger-mapvalues-response.json'
 import foldEntriesResponse from '../../../test/fixtures/debugger-foldentries-response.json'
+import syntaxResponse from '../../../test/fixtures/debugger-syntax-response.json'
 
 const theme = createTheme()
 
@@ -547,5 +548,79 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       }
       cleanup()
     }
+  })
+
+  // A run read by the functions its page writes: debugNested.ct's `total(a= 1, b= 2)`, whose `total` is
+  // written as intermediate lines (`sum`, `unused`), a nested `helper`, an #assert and a #debug, and a
+  // result calling `scale`, `helper` and `sign`.
+  describe('read by the functions its page writes', () => {
+    function syntaxRun() {
+      return {
+        '/run': { tag: 'StrVal', contents: JSON.stringify(syntaxResponse) },
+        '/fun': { tag: 'StrVal', contents: 'total(a= 1, b= 2)' },
+      }
+    }
+
+    // The line a statement is shown on, found by what it is written as.
+    function lineOf(container, text) {
+      const lines = [...container.querySelectorAll('.catln-debug-function [data-stmt]')]
+      return lines.find(line => line.firstChild.textContent.startsWith(text))
+    }
+
+    function callItems() {
+      return within(screen.getByRole('heading', { name: 'Calls' }).parentElement).getAllByRole('treeitem')
+    }
+
+    it('shows the calls of functions as the tree, starting from the function called', () => {
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      // total, and the functions of the page it called, in the order it called them.
+      expect(callItems().map(c => c.firstChild.textContent)).toEqual([
+        expect.stringMatching(/^\/total.* => 63$/),
+        expect.stringMatching(/^\/total\.helper.* => 6$/),
+        expect.stringMatching(/^\/scale.* => 60$/),
+        expect.stringMatching(/^\/sign.* => 1$/),
+      ])
+    })
+
+    it('shows each line of the function with what it came to', () => {
+      const { container } = render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      // The result, as what the call came to rather than the operator+ its arrow rewrote to.
+      expect(lineOf(container, 'scale').firstChild).toHaveTextContent(/=> 63$/)
+      // Used five times, by the #assert, the #debug, the helper and the result, and 3 every time.
+      expect(lineOf(container, 'sum').firstChild).toHaveTextContent(/=> 3 ×5$/)
+      // Never used, so desugar never evaluated it.
+      expect(lineOf(container, 'unused').firstChild).toHaveTextContent('not evaluated')
+      // The helper is a function of its own, whose lines are shown in its calls rather than here.
+      expect(lineOf(container, 'helper').firstChild).not.toHaveTextContent('not evaluated')
+    })
+
+    it('breaks a line down into what it was evaluated through, leading on to the calls it made', async () => {
+      const user = userEvent.setup()
+      const { container } = render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      const result = lineOf(container, 'scale')
+      await user.click(within(result.firstChild).getByRole('button'))
+
+      // The calls the result made are each shown where they are shown in full: a line of total, or a
+      // call of a function in the tree above.
+      expect(within(result).getAllByRole('button', { name: /↑ line/ }).length).toBeGreaterThan(0)
+      const toHelper = within(result).getAllByRole('button', { name: /→ call/ })[0]
+      await user.click(toHelper)
+
+      // Following it shows the helper, with what its own line came to.
+      expect(lineOf(container, 'helper').firstChild).toHaveTextContent(/=> 6$/)
+    })
+
+    it('shows the arm a branch took, and the one it did not as not evaluated', async () => {
+      const user = userEvent.setup()
+      const { container } = render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      await user.click(callItems()[3].firstChild)
+
+      expect(lineOf(container, 'Then').firstChild).toHaveTextContent(/=> 1$/)
+      expect(lineOf(container, 'Else').firstChild).toHaveTextContent('not evaluated')
+    })
   })
 })

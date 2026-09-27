@@ -23,20 +23,18 @@ function RawObjArr(props) {
     showObj = <RawExpr expr={roaObj} updateExpr={updateExpr} />;
   }
 
-  let showArr;
+  // The declared type is written before the `=` and the expression after it: `f(x) -> Integer = x`.
+  let showArrExpr;
+  let showArrM;
   if (roaArr) {
     // A Haskell pair, which is an array however its neighbours are serialized.
     const [roaArrExpr,roaArrMExpr] = roaArr;
-    let showArrExpr;
     if (roaArrExpr) {
       showArrExpr = <RawExpr expr={roaArrExpr}/>;
     }
-
-    let showArrM;
     if (roaArrMExpr) {
       showArrM = <span> -&gt; <RawExpr expr={roaArrMExpr} /></span>;
     }
-    showArr = <span>{showArrM}{showArrExpr}</span>;
   }
 
   let showEq;
@@ -49,7 +47,7 @@ function RawObjArr(props) {
     showDef = <span> ? <RawExpr expr={roaDef}/></span>;
   }
 
-  return <span>{showObj}{showEq}{showArr}{showDef}</span>;
+  return <span>{showObj}{showArrM}{showEq}{showArrExpr}{showDef}</span>;
 }
 
 // What a constant holds, named per kind for the reason the expressions are.

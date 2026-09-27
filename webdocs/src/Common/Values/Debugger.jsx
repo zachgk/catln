@@ -1,16 +1,18 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 
 import {SimpleTreeView} from '@mui/x-tree-view/SimpleTreeView';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import Link from '@mui/material/Link';
+import Box from '@mui/material/Box';
 
 import {ExprStyleContext, exprContents, runStyle} from '../Semantics';
 import {PTypeName} from '../Common';
 import {InlineValue, Value} from '../Value';
 import {CallStepsContext} from './Steps';
 import {SourceButton, SourceContext, SourcePanel} from './DebugSource';
+import {CallTree, DebugNavContext, FunctionPanel, StopLabel, syntaxIndex} from './DebugSyntax';
 
 function Debugger(props) {
   const fun = props["/fun"].contents;
@@ -18,7 +20,7 @@ function Debugger(props) {
 
   // The run rides on the compiled value, so nothing is fetched. It was made under a mock IO handle,
   // which is why the output below is here to show rather than on the doc server's own stdout.
-  const {drExit, drOutput, drValue, drResult, drSources} = useMemo(() => JSON.parse(run.contents), [run]);
+  const {drExit, drOutput, drValue, drResult, drSources, drSyntax} = useMemo(() => JSON.parse(run.contents), [run]);
 
   // An empty tree means the run never entered an arrow, which a program that failed before its first
   // call can do. Say so rather than rendering an undefined node.
@@ -35,6 +37,10 @@ function Debugger(props) {
   // handled rather than only ours -- revealing a node adds to what they have open instead of
   // replacing it.
   const [expanded, setExpanded] = useState([]);
+  // The evaluation tree is the whole run, arrow by arrow, which for a program is thousands of calls
+  // mostly inside the library. Where the run is read by its functions it is kept closed, and only
+  // drawn once opened, so it is not what a page opened on a run waits on.
+  const [evaluatedOpen, setEvaluatedOpen] = useState(() => !JSON.parse(run.contents).drSyntax?.srCalls?.length);
   const [selected, setSelected] = useState(null);
   const nodeRefs = useRef({});
 
@@ -46,13 +52,65 @@ function Debugger(props) {
   }, []);
   const sourceContext = useMemo(() => ({open: source, toggle: toggleSource, sources: drSources ?? {}}), [source, toggleSource, drSources]);
 
-  const reveal = useCallback(node => {
+  const revealEvaluated = useCallback(node => {
+    setEvaluatedOpen(true);
     setExpanded(open => {
       const closed = (ancestorNodes(drResult.erTreebug, node) || []).filter(id => !open.includes(id));
       return closed.length ? [...open, ...closed] : open;
     });
     setSelected(node);
   }, [drResult.erTreebug]);
+
+  // The run read by the functions its pages write: the calls of each function as the main tree, and
+  // the function a selected call is of shown line by line with what each line came to in it.
+  const syntax = useMemo(() => syntaxIndex(drSyntax, drResult), [drSyntax, drResult]);
+  const nodes = useMemo(() => indexNodes(drResult.erTreebug), [drResult.erTreebug]);
+  const rootCalls = drSyntax?.srCalls ?? [];
+  // Opened at first down to the calls of functions written in the pages the run started in, and not
+  // into the library those call, which is most of a run and rarely what it was opened to read.
+  const [callsExpanded, setCallsExpanded] = useState(() => initialCallsExpanded(rootCalls, syntax.statements));
+  const [selectedCall, setSelectedCall] = useState(rootCalls[0]?.scNode ?? null);
+  const [focused, setFocused] = useState(null);
+
+  const selectCall = useCallback(callNode => {
+    const above = [];
+    for (let p = syntax.parents[callNode]; p; p = syntax.parents[p]) {
+      above.push(p);
+    }
+    setCallsExpanded(open => [...open, ...above.filter(id => !open.includes(id))]);
+    setSelectedCall(callNode);
+    setFocused(null);
+  }, [syntax]);
+  const focusLine = useCallback((callNode, stmt) => {
+    selectCall(callNode);
+    setFocused(stmt);
+  }, [selectCall]);
+  const nav = useMemo(() => ({stops: syntax.stops, resolved: syntax.resolved, selectCall, focusLine}), [syntax, selectCall, focusLine]);
+
+  // A #debug record names the call it was recorded in, which the syntax reads either as a call of a
+  // function or as a line of one. A run the syntax could not read is revealed in the evaluation tree.
+  const reveal = useCallback(node => {
+    const stop = syntax.stops[node];
+    if (stop) {
+      stop.stmt ? focusLine(stop.call, stop.stmt) : selectCall(stop.call);
+    } else {
+      revealEvaluated(node);
+    }
+  }, [syntax, focusLine, selectCall, revealEvaluated]);
+
+  // After the line is on screen, since it is drawn when its call is selected.
+  useEffect(() => {
+    if (focused) {
+      document.querySelector(`[data-stmt="${focused}"]`)?.scrollIntoView?.({block: 'nearest'});
+    }
+  }, [focused, selectedCall]);
+
+  const selected_ = selectedCall && syntax.calls[selectedCall];
+  const innerTree = useCallback(({roots: inner}) => (
+    <SimpleTreeView slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}>
+      {inner.map(id => nodes[id] ? <TreebugNode data={nodes[id]} nodeRefs={innerRefs} key={id} /> : null)}
+    </SimpleTreeView>
+  ), [nodes]);
 
   // After the ancestors are open, since a node inside a collapsed one has nothing on screen to
   // bring into view. Optional chained because jsdom implements no scrolling at all.
@@ -66,6 +124,7 @@ function Debugger(props) {
   // trees the tree below already shows as calls: see ExprStyleContext.
   return (
     <ExprStyleContext.Provider value={runStyle}>
+      <DebugNavContext.Provider value={nav}>
       <SourceContext.Provider value={sourceContext}>
         <div>
           {/* What the run ended with, which is not the same question for the two kinds of run.
@@ -84,8 +143,25 @@ function Debugger(props) {
               <p>Exited with {drExit}.</p>
             </>
           )}
+          {rootCalls.length ? (
+            <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, marginTop: 2}}>
+              <Box sx={{flex: '1 1 18em', minWidth: 0}}>
+                <h3>Calls</h3>
+                <CallTree calls={rootCalls} nodes={nodes} TreeItem={TreeItem}
+                  expanded={callsExpanded} setExpanded={setCallsExpanded}
+                  selected={selectedCall} setSelected={selectCall} />
+              </Box>
+              <Box sx={{flex: '3 1 30em', minWidth: 0}}>
+                {selected_ ? (
+                  <FunctionPanel call={selected_} statement={syntax.statements[selected_.scStmt]} InnerTree={innerTree} focused={focused} />
+                ) : null}
+              </Box>
+            </Box>
+          ) : null}
           {roots.length ? (
-            <SimpleTreeView
+            <details open={evaluatedOpen} onToggle={event => setEvaluatedOpen(event.currentTarget.open)}>
+              <summary>Evaluation tree</summary>
+            {evaluatedOpen ? <SimpleTreeView
               slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
               sx={{marginTop: 2}}
               expandedItems={expanded}
@@ -93,8 +169,9 @@ function Debugger(props) {
               selectedItems={selected}
               onSelectedItemsChange={(event, item) => setSelected(item)}
             >
-              {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
-            </SimpleTreeView>
+              {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} unstopped />)}
+            </SimpleTreeView> : null}
+            </details>
           ) : <p>Evaluated no arrows.</p>}
           {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
               however many definitions and however many calls they came from. Each says where it is
@@ -122,8 +199,38 @@ function Debugger(props) {
           <SourcePanel />
         </div>
       </SourceContext.Provider>
+      </DebugNavContext.Provider>
     </ExprStyleContext.Provider>
   );
+}
+
+// The inner trees of lines keep no refs: nothing reveals a node inside one.
+const innerRefs = {current: {}};
+
+// Every node of a run by its id.
+function indexNodes(roots) {
+  const byId = {};
+  const walk = node => {
+    byId[node[4]] = node;
+    node[3].forEach(walk);
+  };
+  roots.forEach(walk);
+  return byId;
+}
+
+// The calls to open at first: every call of a function written in a file one of the run's first calls
+// is written in, with the calls above it.
+function initialCallsExpanded(rootCalls, statements) {
+  const files = new Set(rootCalls.map(c => statements[c.scStmt]?.ssFile));
+  const open = [];
+  const walk = call => {
+    if (files.has(statements[call.scStmt]?.ssFile) && call.scCalls.length) {
+      open.push(call.scNode);
+      call.scCalls.forEach(walk);
+    }
+  };
+  rootCalls.forEach(walk);
+  return open;
 }
 
 // Where a #debug is written, as the file and line it is on. The file is shown by its name alone: a
@@ -248,7 +355,8 @@ function levelSteps(node, fun) {
 
 function TreebugNode(props) {
   let [eitherOa, input, val, children, id, show] = props.data;
-  const {nodeRefs} = props;
+  const {nodeRefs, unstopped} = props;
+  const {stops, resolved} = useContext(DebugNavContext);
 
   let oa;
   if ("Left" in eitherOa) {
@@ -267,7 +375,7 @@ function TreebugNode(props) {
   if (show) {
     const fun = nodeFun(props.data);
     const steps = chainSteps(props.data, fun).map(
-      level => level.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} />)
+      level => level.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} unstopped={unstopped} />)
     );
     // Named rather than written out. The generic label spells the whole definition because that is
     // all it has to say about the call; this one has the display below it saying what the call did,
@@ -284,10 +392,23 @@ function TreebugNode(props) {
   // What the call was given and what it gave back. The definition it was a call of is behind the
   // book, as where it is written: spelled out here it was most of the line, and the input already
   // names the call.
-  let label = <span><SourceButton id={id} oa={oa} /><InlineValue data={input} /> =&gt; <InlineValue data={val} /></span>;
+  //
+  // Where the expression the call was written as went on being rewritten after the call returned --
+  // an arrow returns the term its body rewrites to, and the caller applies what is left -- what it
+  // came to follows, which is the step a line's value is reached by.
+  const came = resolved[id];
+  const cameTo = came && JSON.stringify(came) !== JSON.stringify(val) ? <> ⇒ <InlineValue data={came} /></> : null;
+  let label = <span><SourceButton id={id} oa={oa} /><InlineValue data={input} /> =&gt; <InlineValue data={val} />{cameTo}</span>;
+
+  // Inside a line's breakdown, a call of a function or a line of one is where that is shown, so it is
+  // a link there rather than a second copy of it.
+  const stop = !unstopped && stops[id];
+  if (stop) {
+    return <TreeItem itemId={id} label={<StopLabel stop={stop}>{label}</StopLabel>} />;
+  }
   return (
     <TreeItem itemId={id} label={label} ref={el => {nodeRefs.current[id] = el}}>
-      {children.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} />)}
+      {children.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} unstopped={unstopped} />)}
     </TreeItem>
   );
 }

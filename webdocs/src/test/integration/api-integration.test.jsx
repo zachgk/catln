@@ -3,7 +3,7 @@
  *
  * Prerequisites:
  *   Start the backend API servers before running these tests:
- *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct -- --api
+ *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct test/Integration/code/debugNested.ct -- --api
  *     stack exec catln doc test/Integration/code/id.ct -- --readonly
  *   The second serves the same API on the serve port (8080) and is only there to
  *   check that --readonly refuses writes.
@@ -521,6 +521,48 @@ describe('Backend API contract', () => {
     const collect = ([, , , children, id]) => { nodes.add(id); children.forEach(collect) }
     run.drResult.erTreebug.forEach(collect)
     expect(run.drResult.erDebugs.every(d => nodes.has(d.edNode))).toBe(true)
+  })
+
+  // The same run read by the functions the page writes, which is what the debugger's tree is of. The
+  // page writes total over intermediate lines, one of them never used, and sign as an if.
+  it('/api/annot reads a run by the functions its page writes', async () => {
+    const page = await pageNameEnding('/test/Integration/code/debugNested.ct')
+    const val = await annotValue('#debugger(fun= "/main")', page)
+    const run = JSON.parse(val.args['/run'].contents)
+    expect(run.drExit).toBe(0)
+
+    // Each statement of the functions called, by the name it is written with.
+    const names = {}
+    const name = expr => {
+      switch (expr.tag) {
+      case 'RawValue': return expr.rvName
+      case 'RawTupleApply': return name(expr.rtaBase[1])
+      case 'RawContextApply': return name(expr.rcaBase[1])
+      default: return null
+      }
+    }
+    const collectNames = tree => {
+      const body = statementBody(tree.rstStatement)
+      const expr = tree.rstStatement.tag === 'RawAnnot' ? body : body.roaObj
+      names[rawExprMeta(expr).getMetaId] = name(expr)
+      tree.rstChildren.forEach(collectNames)
+    }
+    run.drSyntax.srStatements.forEach(s => collectNames(s.ssTree))
+    const callOf = (calls, fun) => calls.find(c => names[c.scStmt] === fun)
+    const runsOf = (call, line) => call.scLines.filter(l => names[l.slStmt] === line).flatMap(l => l.slRuns)
+
+    const main = callOf(run.drSyntax.srCalls, 'main')
+    expect(main).toBeDefined()
+    const total = callOf(main.scCalls, 'total')
+    // What total came to, rather than the operator+ its arrow rewrote to.
+    expect(runsOf(total, 'total').map(r => r.lrValue)).toEqual([{tag: 'IntVal', contents: 63}])
+    // sum is used five times and evaluated each time; unused is never used and never evaluated.
+    expect(runsOf(total, 'sum').map(r => r.lrValue)).toEqual(Array(5).fill({tag: 'IntVal', contents: 3}))
+    expect(runsOf(total, 'unused')).toEqual([])
+
+    const sign = callOf(total.scCalls, 'sign')
+    expect(runsOf(sign, 'Then').map(r => r.lrValue)).toEqual([{tag: 'IntVal', contents: 1}])
+    expect(runsOf(sign, 'Else')).toEqual([])
   })
 
   it('/api/annot reports #debugger with no page to be scoped to as an error note', async () => {

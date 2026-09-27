@@ -100,7 +100,9 @@ echo "Starting Catln backend on port ${API_PORT}..."
 # debug.ct is loaded for the same kind of reason: it is the page that writes a #debug, so it is what
 # gives a debugger run any records to report. id.ct is left as it is, since what a run of a page with
 # no #debug reports is also worth checking and is what every other page here is.
-stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct --api &
+# debugNested.ct is the page whose functions are written over several lines -- intermediate lines, a
+# nested helper, a branch and a bind -- which is what a run read by the functions it wrote regroups.
+stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct test/Integration/code/debugNested.ct --api &
 BACKEND_PIDS+=($!)
 await_backend "$API_PORT" "${BACKEND_PIDS[0]}"
 warm_backend "$API_PORT"
