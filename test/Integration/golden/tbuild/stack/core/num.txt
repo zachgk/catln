@@ -134,6 +134,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/toFloat"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/toFloat
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Primitive/FloatOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/FloatOrdering ]
@@ -648,6 +660,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Primitive/Integer
@@ -938,6 +951,21 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Floats"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Float =
+                    ( /Data/Primitive/toFloat
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/Primitive/Integer = 3 }
+                        ) ↦ /Data/Primitive/Float
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3.0"
                 }
             )
         , /Catln/#md

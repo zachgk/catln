@@ -120,6 +120,12 @@ module(Data/Primitive)
   (_ :: Float // _ :: Float) -> Float
     #runtime("float//")
 
+  :Integer.toFloat -> Float
+    # [toFloat] is the [Float] with the same value as the [Integer].
+    #runtime("intToFloat")
+
+  > 3.toFloat
+    >>> 3.0
   (_ :: Float <= _ :: Float) -> Boolean
     #runtime("float<=")
 
