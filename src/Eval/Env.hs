@@ -21,6 +21,7 @@ import qualified Data.HashSet        as S
 import           Control.Monad.State
 import           CRes
 import           Data.Maybe          (listToMaybe)
+import           Data.UUID           (UUID)
 import           Eval.Common
 import           Semantics.Prgm
 import           Semantics.Types
@@ -97,13 +98,13 @@ evalClosedSince before Env{evTreebugClosed} = map (\(EvalTreebugClosed _ _ _ _ c
 
 -- | Records an expression rewritten through calls ('EvalExprRun'), from the mark taken before its
 -- call tree was run. Its steps are the calls made since then that no expression evaluated inside it
--- has already claimed ('evTreebugClaimed'). One rewritten by no call is left unrecorded.
-evalRecordExpr :: (Maybe String, Int) -> CodeRange -> Val -> Env -> Env
-evalRecordExpr (node, before) pos val env@Env{evExprRuns, evTreebugClaimed} = case filter (not . (`S.member` evTreebugClaimed)) (evalClosedSince before env) of
-  []    -> env
-  steps -> env{ evExprRuns = EvalExprRun node pos steps val : evExprRuns
-              , evTreebugClaimed = foldr S.insert evTreebugClaimed steps
-              }
+-- has already claimed ('evTreebugClaimed').
+evalRecordExpr :: (Maybe String, Int) -> CodeRange -> [UUID] -> Val -> Env -> Env
+evalRecordExpr (node, before) pos ids val env@Env{evExprRuns, evTreebugClaimed} = env{
+    evExprRuns = EvalExprRun node pos ids steps val : evExprRuns
+  , evTreebugClaimed = foldr S.insert evTreebugClaimed steps
+  }
+  where steps = filter (not . (`S.member` evTreebugClaimed)) (evalClosedSince before env)
 
 -- | Records an annotation of the call being evaluated ('EvalAnnotRun'), from the mark taken before
 -- it was evaluated. There is always a call open, as for 'evalRecordDebug': an annotation of a

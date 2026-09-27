@@ -361,7 +361,9 @@ evalExpr (TCalls m b callTree) = do
   -- calls this expression's own call tree made (see 'EvalExprRun').
   mark <- gets evalTreebugMark
   v <- evalCallTree b' callTree
-  modify $ evalRecordExpr mark (getMetaPos m <|> getMetaPos (getExprMeta b)) v
+  -- By what the expression was written as: the tree's own meta is the destination's.
+  let ids = getMetaId (getExprMeta b) : maybe [] (pure . getMetaId . snd) (maybeExprPathM b)
+  modify $ evalRecordExpr mark (getMetaPos m <|> getMetaPos (getExprMeta b)) ids v
   return v
 
 -- | An 'Env' with nothing of the pipeline around it: no other stage of the program, and no service

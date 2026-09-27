@@ -210,11 +210,11 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
         Just (ArrowLine si) -> owned stack si $ \c -> segmentRuns c si nid (Just nid) body >> annotRuns c annots
         Just (ArrowArm si) -> owned stack si $ \c -> segmentRuns c si nid (Just nid) body >> annotRuns c annots
         Just (ArrowBindCont si@StmtInfo{siId, siParent}) -> owned stack si $ \c -> do
-          addRun c siId (LineRun (boundValue oa input) [] (Just nid))
+          addRun c siId (LineRun (boundValue oa input) [] (Just nid) Nothing)
           -- The rest of the statement the bind is written under is this continuation, so the
           -- statement's result is reached here when no later bind continues it further.
           case siParent >>= (`H.lookup` ixStmts) of
-            Just parent | lastBind parent == Just siId, Just r <- resultStmt parent -> addRun c r (LineRun (resolved nid) body Nothing)
+            Just parent | lastBind parent == Just siId, Just r <- resultStmt parent -> addRun c r (LineRun (resolved nid) body Nothing (Just nid))
             _ -> return ()
           annotRuns c annots
         Just (ArrowFallthrough si) -> owned stack si $ \c -> annotRuns c annots
@@ -246,12 +246,12 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
     segmentRuns :: String -> StmtInfo -> String -> Maybe String -> [String] -> State Acc ()
     segmentRuns c si@StmtInfo{siId} nid lineNode body = do
       let result = if hasBind si then Nothing else resultStmt si
-      addRun c siId (LineRun (resolved nid) (if result == Just siId || hasBind si then body else []) lineNode)
+      addRun c siId (LineRun (resolved nid) (if result == Just siId || hasBind si then body else []) lineNode (Just nid))
       case result of
-        Just r | r /= siId -> addRun c r (LineRun (resolved nid) body Nothing)
+        Just r | r /= siId -> addRun c r (LineRun (resolved nid) body Nothing (Just nid))
         _                  -> return ()
 
-    annotRuns c annots = forM_ annots $ \EvalAnnotRun{eaAnnot, eaValue, eaCalls} -> addRun c eaAnnot (LineRun (Just eaValue) eaCalls Nothing)
+    annotRuns c annots = forM_ annots $ \EvalAnnotRun{eaNode, eaAnnot, eaValue, eaCalls} -> addRun c eaAnnot (LineRun (Just eaValue) eaCalls Nothing (Just eaNode))
 
     addRun :: String -> UUID -> LineRun -> State Acc ()
     addRun c sid r = modify $ \acc@Acc{acCalls} -> acc{acCalls = H.adjust (\ca@CallAcc{caRuns} -> ca{caRuns = (sid, r) : caRuns}) c acCalls}

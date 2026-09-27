@@ -473,13 +473,19 @@ data Env = Env { evObjMap         :: EObjectMap
 -- 'exSteps' are the calls entered running the expression's call tree, in the order they were
 -- entered, and not those of its arguments, which are expressions of their own and are recorded as
 -- such. So the first step is the call the expression was written as, and the rest are the calls that
--- rewrote what it returned. An expression rewritten by no call (a primitive applied to constants) is
--- not recorded, as there is no call for it to say anything about.
+-- rewrote what it returned. An expression rewritten by no call -- a primitive applied to values,
+-- such as @sum * sign(x= a)@ once its arguments are in hand -- has none, and is recorded for its value.
 --
 -- 'exNode' is the call it was evaluated inside, as 'edNode' is: 'Nothing' for an expression run
 -- inside no definition, which is what an expression a debugger was asked about is.
+--
+-- 'exIds' are the ids of the expression as written: its own meta's, and that of the name it applies,
+-- which is all that is left of a written reference to a line once desugar has applied the enclosing
+-- function's arguments to it (@sum@ becomes @total.sum(a= a, b= b)@). They are how a debugger finds
+-- each part of a line it shows among what the line evaluated.
 data EvalExprRun = EvalExprRun { exNode  :: Maybe String
                                , exPos   :: CodeRange
+                               , exIds   :: [UUID]
                                , exSteps :: [String]
                                , exValue :: Val
                                } deriving (Eq, Generic, ToJSON)
@@ -606,9 +612,15 @@ data SyntaxLine = SyntaxLine { slStmt :: UUID
 -- appears inside the breakdown of whatever used the line, which is where a reader is led back to the
 -- line from. A result or an annotation is evaluated in the arrow of the function it is written in,
 -- and has none of its own.
+--
+-- 'lrIn' is the node the line's expression was evaluated in -- the line's own arrow, or the arrow of
+-- the function a result or an annotation is written in -- which is the 'exNode' of each part of the
+-- line that was evaluated ('EvalExprRun'). A bind has none: what it binds is evaluated as part of
+-- the function's result, and the run of the bind is the value it bound.
 data LineRun = LineRun { lrValue :: Maybe Val
                        , lrInner :: [String]
                        , lrNode  :: Maybe String
+                       , lrIn    :: Maybe String
                        } deriving (Eq, Generic, ToJSON)
 
 emptySyntaxRun :: SyntaxRun
