@@ -872,7 +872,7 @@ evalDebugPrgm function prgm = unsafePerformIO $ do
     CRes notes (code, io, res) -> do
       io
       out <- getMockIOOutput mockIO
-      return $ CRes notes (\res' -> showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty) <*> withCallShows prgm res
+      return $ CRes notes (\res' -> showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty emptySyntaxRun) <*> withCallShows prgm res
 
 -- | Runs one expression of a program for a debugger reporting on it: the value it evaluated to, and
 -- the tree of what it evaluated on the way.
@@ -899,7 +899,7 @@ evalDebugExprPrgm input prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
-  (\res -> showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty) <$> withCallShows prgm (evalResult env')
+  (\res -> showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty emptySyntaxRun) <$> withCallShows prgm (evalResult env')
 
 -- | An evaluation's result with the display filled in for each call that has one
 -- ('attachCallShows'). Both debugger entry points go through this, since which of them ran a

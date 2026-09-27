@@ -49,7 +49,8 @@ import           Semantics.Types
 import qualified Semantics.Val              as SV
 import           Semantics.Val              hiding (Args, Val)
 import           Syntax.Ct.Parser.Syntax    (ParseMetaDat)
-import           Syntax.Ct.Prgm             (RawPrgm, ReadPage)
+import           Syntax.Ct.Prgm             (RawExpr, RawPrgm, RawStatementTree,
+                                             ReadPage)
 import           Text.Megaparsec            (sourceName)
 import           Text.Printf
 import           TypeCheck.Common           (InstrumentResults, TPrgm, VPrgm)
@@ -539,7 +540,62 @@ data DebugRun = DebugRun { drExit    :: Maybe Integer
                          , drValue   :: Maybe Val
                          , drResult  :: EvalResult
                          , drSources :: H.HashMap String String
+                         -- | The run read by the page that was written rather than by the arrows it
+                         -- was compiled to ('Eval.SyntaxTree.withRunSyntax'). Filled by whoever holds
+                         -- the pages, as 'drSources' is; a run is made with none.
+                         , drSyntax  :: SyntaxRun
                          } deriving (Eq, Generic, ToJSON)
+
+-- | A run read by the functions its pages write: a tree of the calls of each function as written,
+-- each holding what each of that function's lines came to in it.
+--
+-- The evaluation tree ('erTreebug') is of arrows, and desugar writes a function as several: each
+-- intermediate line of a definition is an arrow of its own, called wherever the line is used, and a
+-- bind or a branch is continued in an arrow of its own. This regroups those back into the function
+-- they were written as. The arrows' nodes are still what a line is broken down by, so a line points
+-- at them by id rather than holding a copy.
+--
+-- 'srStatements' holds the written statement of each function 'srCalls' calls, so a reader has the
+-- functions it is shown without every page they came from.
+data SyntaxRun = SyntaxRun { srCalls      :: [SyntaxCall]
+                           , srStatements :: [SyntaxStatement]
+                           } deriving (Eq, Generic, ToJSON)
+
+-- | A statement of a page that a run called, by the id its object's meta has
+-- ('Syntax.Ct.MapRawMeta.rawStatementExprIds'), with the lines written under it.
+data SyntaxStatement = SyntaxStatement { ssId   :: UUID
+                                       , ssFile :: String
+                                       , ssTree :: RawStatementTree RawExpr ()
+                                       } deriving (Eq, Generic, ToJSON)
+
+-- | One call of a function as written: its statement, the node of the arrow that was entered for
+-- it, what each of its lines came to in it, and the calls of functions it made, in the order made.
+--
+-- A line with no run was not evaluated in this call. Desugar evaluates a line wherever it is used
+-- rather than once, so a line used twice has two runs, and one never used has none.
+data SyntaxCall = SyntaxCall { scStmt  :: UUID
+                             , scNode  :: String
+                             , scLines :: [SyntaxLine]
+                             , scCalls :: [SyntaxCall]
+                             } deriving (Eq, Generic, ToJSON)
+
+-- | The runs of one statement written in a function: a line of it, an annotation of it, its result,
+-- or the function's own statement, whose run is what the call came to.
+data SyntaxLine = SyntaxLine { slStmt :: UUID
+                             , slRuns :: [LineRun]
+                             } deriving (Eq, Generic, ToJSON)
+
+-- | One evaluation of a line: what it came to, and the nodes of the evaluation tree it was
+-- evaluated through, which break it down.
+--
+-- The value is 'Nothing' where the run recorded nothing the line came to, rather than being filled
+-- with something else: a node's output is the term its arrow rewrote to, which is not the value.
+data LineRun = LineRun { lrValue :: Maybe Val
+                       , lrInner :: [String]
+                       } deriving (Eq, Generic, ToJSON)
+
+emptySyntaxRun :: SyntaxRun
+emptySyntaxRun = SyntaxRun [] []
 
 -- | The files a run's positions name: those of every arrow it entered and of every @#debug@ it
 -- recorded.

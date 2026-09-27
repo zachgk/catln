@@ -51,6 +51,7 @@ import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           SSF (..), TExpr, TestResult, Val,
                                           esAsks, joinedStage, newEvalService,
                                           oaTestId, withRunSources)
+import           Eval.SyntaxTree         (withRunSyntax)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -1660,8 +1661,8 @@ instance CtServiceApi CTSS where
   csRunFun ctss@(CTSS ssmv _) prgmName fun = do
     ssfs <- scopeSSFs ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
-    let sources = scopeSources $ graphToNodes $ graphFilterReaches prgmName ctssData
-    return $ withRunSources sources <$> (evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs)
+    let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
+    return $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs)
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
@@ -1672,7 +1673,7 @@ instance CtServiceApi CTSS where
     ctssBuildFrom ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    return $ withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun prgmName scopeNodes src
+    return $ withRunSyntax (scopeRaws scopeNodes) . withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun prgmName scopeNodes src
 
   -- 'pageValues' partially applied, which is what shares the scope's typechecked programs across
   -- every page the gatherer is then asked about. Applying it per page instead is the quadratic
@@ -1691,6 +1692,11 @@ instance CtServiceApi CTSS where
 -- the path it was read from, which is what a page's syntax hands its parser ('Syntax.Ct.Parser').
 scopeSources :: [(SSF, FileImport, a)] -> [(String, String)]
 scopeSources nodes = [(file, src) | (SSF{ssfSource=Just src}, imp, _) <- nodes, Just file <- [importPath imp]]
+
+-- | The parsed pages of a scope, under the same names as 'scopeSources' gives their text. A page
+-- whose parse failed has nothing to read a run by and is left out.
+scopeRaws :: [(SSF, FileImport, a)] -> [(String, RawPrgm ())]
+scopeRaws nodes = [(file, raw) | (SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
 
 -- | The name a debugged expression is parsed under, which its positions carry in place of a page's.
 debugExprFile :: String

@@ -16,6 +16,7 @@ import           Data.Maybe
 import qualified Data.Text.Lazy          as T
 import           Eval
 import           Eval.Common             (SSF (..), getMockIOOutput, newMockIO)
+import           Eval.SyntaxTreeTests    (syntaxTreeTests)
 import           Semantics
 import           Semantics.Prgm
 import           Syntax.Ct.Formatter     (formatRootPrgm)
@@ -201,7 +202,8 @@ integrationTests = do
     testGroup "Integration" [
       testGroup "Tests" $ map (runTest True getCtss) ctFiles,
       testGroup "Python" $ map (runPyTest True getCtss) pyFiles,
-      testGroup "Json" $ map (runTest True getCtss) jsonFiles
+      testGroup "Json" $ map (runTest True getCtss) jsonFiles,
+      testGroup "Debugger" [syntaxTreeTests getCtss]
     ]
 
 mtFileName :: String -> IO String

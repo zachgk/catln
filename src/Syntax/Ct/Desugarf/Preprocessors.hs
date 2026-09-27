@@ -267,7 +267,7 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
       return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just bindapCall, oaReturnMeta)}) (reverse accStmts ++ [contDef])]
       where
         contName = "$" ++ take 6 (printf "%08x" (hash roa))
-        contArgName = contName ++ "-arg"
+        contArgName = bindContArgName contName
         -- @cont(contArg\@objExpr)= <restStmt>@ — a nested declaration so its body is preprocessed. The
         -- bind's pattern is aliased onto the parameter (as the working inline form does) rather than
         -- destructured in the parameter position, which would match it as a type and leave it 'TopType'.
@@ -278,6 +278,17 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
         fnHead = applyRawBareParams (rawVal bindApFn) [rawVal bindApV]
         bindapCall = rawVal bindApName `applyRawEArgs` [(Just (rawVal bindApM), arrExpr), (Just fnHead, contCall)]
     aux _ s = fail $ printf "Unsupported subDeclStatemnt type: %s" (show s)
+
+-- | The bodies a declaration is written as a choice between the statements under it: each of those
+-- is an arm, which desugar makes an arrow of its own ('MapMeta.DerivedBranchArm'). They are the
+-- names 'declPreprocessorList' gives the if, match and case preprocessors.
+branchDeclNames :: [String]
+branchDeclNames = ["if", "match", "case"]
+
+-- | The parameter of the continuation desugar writes for a bind, named from the continuation's own
+-- name: the bound value is passed to the continuation as this argument.
+bindContArgName :: String -> String
+bindContArgName contName = contName ++ "-arg"
 
 declPreprocessorList :: H.HashMap String DeclPreprocessor
 declPreprocessorList = H.fromList [

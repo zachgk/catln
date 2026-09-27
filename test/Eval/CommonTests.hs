@@ -10,7 +10,8 @@ module Eval.CommonTests where
 import qualified Data.HashMap.Strict as H
 import           Eval.Common         (DebugRun (..), EvalDebug (..),
                                       EvalResult (..), EvalTreebugClosed (..),
-                                      TExpr (..), Val, withRunSources)
+                                      TExpr (..), Val, emptySyntaxRun,
+                                      withRunSources)
 import           Semantics.Prgm
 import           Semantics.Val       hiding (Val)
 import           Test.Tasty
@@ -35,7 +36,7 @@ metaIn file m = m{getMetaPos = Just (initialPos file, initialPos file)}
 -- | A run that entered one arrow of the program, written in @prog.ct@, and within it one arrow built
 -- for the call, written in the debugged expression; and that recorded one @#debug@ in @lib.ct@.
 sampleRun :: DebugRun
-sampleRun = DebugRun Nothing "" (Just NoVal) result H.empty
+sampleRun = DebugRun Nothing "" (Just NoVal) result H.empty emptySyntaxRun
   where
     result = EvalResult H.empty [node (Left progArrow) [node (Right builtArrow) []]] [EvalDebug (getMetaPos (metaIn "lib.ct" emptyMetaN :: Meta ())) NoVal "1"] [] []
     node oa children = EvalTreebugClosed oa NoVal NoVal children "0" Nothing
