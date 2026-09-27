@@ -12,6 +12,7 @@ import foldrResponse from '../../../test/fixtures/debugger-foldr-response.json'
 import mapValuesResponse from '../../../test/fixtures/debugger-mapvalues-response.json'
 import foldEntriesResponse from '../../../test/fixtures/debugger-foldentries-response.json'
 import syntaxResponse from '../../../test/fixtures/debugger-syntax-response.json'
+import syntaxClosureResponse from '../../../test/fixtures/debugger-syntax-closure-response.json'
 
 const theme = createTheme()
 
@@ -705,6 +706,34 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
 
       expect(container.querySelectorAll('[role=tree]')).toHaveLength(1)
       expect(screen.queryByText('Evaluation tree')).not.toBeInTheDocument()
+    })
+  })
+
+  // `fmap(lst= [1, 2, 3], fn(v)= v + 1)` compiled against list.ct, whose fmap arm is written
+  // `Cons(head= fn(v= head), tail= fmap(lst= tail, fn(v)= fn(v= v)))`. The part `fn(v= head)` is a
+  // call of the closure fmap was given, which is no function of any page and has no block to open.
+  describe('a line calling a closure', () => {
+    function closureRun() {
+      return {
+        '/run': { tag: 'StrVal', contents: JSON.stringify(syntaxClosureResponse) },
+        '/fun': { tag: 'StrVal', contents: 'fmap(lst= [1, 2, 3], fn(v)= v + 1)' },
+      }
+    }
+
+    it('opens the call the closure made, named as the closure', async () => {
+      const user = userEvent.setup()
+      render(<Providers><Debugger {...closureRun()} /></Providers>)
+
+      const part = [...document.querySelectorAll('.catln-debug-part')].find(p => p.textContent.startsWith('fn(v = head)'))
+      expect(part).toHaveTextContent(/=> 2/)
+      const opener = within(part).getByRole('button')
+      expect(opener).toHaveTextContent('/fn')
+
+      await user.click(opener)
+      // The closure's call, drawn as the step it is rather than as a block of source.
+      const call = part.nextElementSibling.querySelector('[role=treeitem]')
+      expect(call).toHaveClass('catln-debug-step')
+      expect(call).toHaveTextContent('=> 2')
     })
   })
 })

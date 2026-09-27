@@ -110,8 +110,10 @@ function buildTree(roots, syntax) {
     return it;
   };
 
-  // Where a part of a line leads: the call of a function it was, opened in place; the line it was a
-  // use of; or nowhere, for a part evaluated without either.
+  // Where a part of a line leads: the call it made, opened in place; the line it was a use of; or
+  // nowhere, for a part evaluated without either. The call opened is whatever item its node is: the
+  // block of a function, or, for a call with a display of its own (an fmap over a list), that display,
+  // which speaks for the whole call.
   const targetOf = records => {
     const first = records.find(r => r.exSteps.length)?.exSteps[0];
     if (first === undefined || !syntax.nodes[first]) {
@@ -122,10 +124,8 @@ function buildTree(roots, syntax) {
       return {kind: 'line', stop};
     }
     const it = stepItem(syntax.nodes[first]);
-    if (it.kind === 'call') {
-      it.inLine = true;
-    }
-    return {kind: 'call', item: it};
+    it.inLine = true;
+    return {kind: 'open', item: it};
   };
 
   // The breakdown of one run of a statement: the rows for the parts of `expr` evaluated in the run's
@@ -203,7 +203,7 @@ function buildTree(roots, syntax) {
 
   // The items a statement's breakdowns hold, which are the items under it.
   const breakdownItems = breakdowns => breakdowns.flatMap(b => [
-    ...b.rows.flatMap(r => r.target?.kind === 'call' ? [r.target.item] : []),
+    ...b.rows.flatMap(r => r.target?.kind === 'open' ? [r.target.item] : []),
     ...b.rest,
   ]);
 

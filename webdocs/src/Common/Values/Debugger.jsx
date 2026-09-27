@@ -397,13 +397,17 @@ function BreakdownRow(props) {
 
   let action = null;
   let opened = null;
-  if (target?.kind === 'call') {
+  if (target?.kind === 'open') {
+    // Named by where a function's block is written, and otherwise by the function the call is of.
     const {item} = target;
     const open = isOpen(item.id);
+    // A closure has no name of its own, and is named as what it is.
+    const fun = item.kind === 'call' ? null : nodeFun(item.node);
+    const name = item.kind === 'call' ? <FileTag statement={item.statement} /> : (fun ? <PTypeName name={fun} /> : "closure");
     action = (
       <Link component="button" type="button" underline="hover" onClick={() => toggleOpen(item.id)}
         aria-expanded={open} title={open ? "Close the call" : "Open the call"} className="catln-debug-open">
-        {open ? "▾" : "▸"} <FileTag statement={item.statement} />
+        {open ? "▾" : "▸"} {name}
       </Link>
     );
     opened = open ? <div style={{marginLeft: `${depth * 1.5}em`}}><DebugItem item={item} /></div> : null;
