@@ -36,8 +36,9 @@ import           Syntax.Ct.Prgm          (RawExpr (RawCExpr), mkRawFileImport)
 import           Text.Printf
 import           Utils
 
--- | A fixed pool of variable names shared by the type-var generators (and, later, a
--- 'TypeVarArgEnv' generator), so a bound fraction of generated variables actually collide.
+-- | A fixed pool of variable names shared by every generator that writes or binds a variable
+-- ('genTypeVar', 'genWithTVExtOn', 'genVaenv'), so a good fraction of the generated references
+-- name a variable that some generated environment actually binds.
 varNamePool :: [Name]
 varNamePool = map mkName ["a", "b", "c"]
 
@@ -48,9 +49,10 @@ genTypeVar prgm = do
   n   <- HG.element varNamePool
   aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
   loc <- HG.element [TVInt, TVExt]
-  -- The occurrence-local INNER (read as var ∩ inner): ⊤ (knowledge-free) two thirds of the
-  -- time, else a small concrete-ish type — never a bare var (closed-inner producer
-  -- discipline), never ⊤ (that is the explicit branch) nor ⊥ (would trivialize every law).
+  -- The occurrence-local INNER (the occurrence denotes var ∩ inner): ⊤, carrying no knowledge,
+  -- two thirds of the time, else a small concrete-ish type ('concreteishInner'). Producers of an
+  -- inner install only closed values, so a bare variable is never drawn; ⊤ is the other branch;
+  -- and a ⊥ inner would make the occurrence empty and every law about it trivial.
   inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
   return $ TypeVar aux loc inner
 
@@ -69,8 +71,8 @@ concreteishInner _          = True
 -- The fully-unbounded mode (lb=False, ub=False) is excluded for partials with args: its
 -- intersection with a lower-bounded partial of the same name is "required x, optional typed y,
 -- extras allowed", which provably cannot be expressed as positive partials (it needs a negative
--- partial). The exclusion is REPRESENTATIONAL rather than positional, so it holds wherever a leaf
--- sits — a top's exclusions included.
+-- partial). The limit is a property of the representation, not of where a leaf sits, so it
+-- applies to every leaf position, a top's exclusions included.
 safeArgModes :: [PtArgMode]
 safeArgModes = [PtArgExact, PtArgAny, PtArgMode False True]
 
@@ -98,40 +100,63 @@ genConstant = HG.choice [ CInt <$> HG.integral (linear (-100) 100)
 nubConsts :: [Constant] -> [Constant]
 nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
 
+-- | A class-graph node's name as a positive LEAF spells it. The desugarer keys some class-graph
+-- nodes by the source's relative name (@Point@ — 'desMultiTypeDef', 'desClassDecl') while the
+-- object map holds the absolute one (@/Point@), and the compiler resolves every type-position name
+-- before the algebra sees it. A relatively-spelled leaf is therefore a form the algebra never
+-- receives, and it judges one as OUTSIDE the universe ('relNameAdmits' admits only universe
+-- names), so laws such as @~Point ∩ Point = Point@ would fail on the spelling alone. A node name
+-- that exactly one object resolves is drawn under that object's spelling; relation and class atoms
+-- keep the node's own spelling, which the compiler does produce.
+leafSpelling :: Prgm Expr () -> TypeName -> TypeName
+leafSpelling (Prgm objMap _ _) n = case relativeNameFilter n (map oaObjPath (flatObjectMap objMap)) of
+  [absolute] -> absolute
+  _          -> n
+
 -- | Partition the class graph's nodes. 'graphToNodes' returns BOTH the classes ('CGClass') and the
 -- data types that are instances of one ('CGType'), and the two are not interchangeable in a type:
 --
 --   * a CLASS name in type position resolves to a @PredClass@ top, never a positive leaf, and
 --   * a DATA-TYPE name resolves to a positive leaf, never a @PredClass@
 --
--- — the rule 'resolveRelPartial' implements and 'genType.genCG'\/'genType.genPreds' already follow.
--- A 'PredClass' over a data type errors out of 'expandPartial' (@Unknown class \/aaaaa@), and a
--- class drawn as a bare 'PartialType' is a leaf the compiler never produces. A 'PredRel' is
--- well-formed over either, which is why 'genCGRel' draws from all nodes.
--- | A class-graph node's name as a positive LEAF spells it. The desugarer keys some class-graph
--- nodes by the source's relative name (@Point@, @#noCore@ — 'desMultiTypeDef', 'desClassDecl')
--- while the object map holds the absolute one (@/Point@, @/#noCore@), and the compiler resolves
--- every type-position name before the algebra sees it. A relatively-spelled leaf is therefore a
--- form the algebra never receives, and it judges it as OUTSIDE the universe (the relation route,
--- 'relNameAdmits', admits only universe names): drawing one produced laws failing on spelling
--- alone (@#noCore ∩ ¬~#noCore@, @~Point ∩ Point@). A node name a single object resolves is drawn
--- under that object's spelling; relation and class atoms keep the node's own spelling, which
--- the compiler does produce.
-leafSpelling :: Prgm Expr () -> TypeName -> TypeName
-leafSpelling (Prgm objMap _ _) n = case relativeNameFilter n (map oaObjPath (flatObjectMap objMap)) of
-  [absolute] -> absolute
-  _          -> n
-
+-- — the rule 'resolveRelPartial' implements. A 'PredClass' over a data type errors out of
+-- 'expandPartial' (@Unknown class@), and a class drawn as a bare 'PartialType' is a leaf the
+-- compiler never produces. A 'PredRel' is well-formed over either kind of node.
 classNodeNames, dataNodeNames :: ClassGraph -> [TypeName]
 classNodeNames (ClassGraph cg) = [fromPartialName k | (CGClass{}, k, _) <- graphToNodes cg]
 dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes cg, notClass n]
   where notClass CGClass{} = False
         notClass _         = True
 
+-- | Whether a declaration has a usable (binder, payload-slot) placement for
+-- 'genOwnVarBoundPair': at least one type parameter, and either a field or a second parameter.
+--
+-- Callers select declarations with this BEFORE drawing, so that a program whose declarations are
+-- mostly nullary still yields a usable partial on every draw. Filtering the drawn partials instead
+-- would spend the property's discard budget, and a property that exhausts it reports a give-up
+-- failure that says nothing about the algebra.
+declHasPlacement :: Expr () -> Bool
+declHasPlacement = go (0 :: Int) (0 :: Int)
+  where
+    go nv na (TupleApply _ (_, b) (EAppVar _ _)) = go (nv + 1) na b
+    go nv na (TupleApply _ (_, b) (EAppArg _))   = go nv (na + 1) b
+    go nv na _                                   = nv >= 1 && (na >= 1 || nv >= 2)
+
+-- | A program carrying at least one such declaration.
+prgmHasPlacement :: Prgm Expr () -> Bool
+prgmHasPlacement (Prgm om _ _) = any (maybe False declHasPlacement . oaObj) (flatObjectMap om)
+
+-- | A program 'genPartialType' can draw from at all. With neither a data node nor an object
+-- declaration there is nothing to build a positive leaf out of, and every draw would be a
+-- discard charged to the property rather than a retry inside the generator.
+prgmHasPartial :: Prgm Expr () -> Bool
+prgmHasPartial (Prgm om cg _) = not (null (dataNodeNames cg)) || not (nullObjectMap om)
+
 -- | A pair of types that MUST be indistinguishable to every operation: the same partial, binding
 -- one of its own type variables to a ground bound, holding at one nested position either a
--- reference to that variable (spelled by its position — see 'genOwnVarBoundPair'.'bareSlot') or the
--- bound itself.
+-- reference to that variable or the bound itself:
+--
+-- > B[/v=K](slot = $v)   ≡   B[/v=K](slot = K)
 --
 -- 'ptVars' is a BINDER — inside the partial that declares it, @$v@ denotes its binding (the rule
 -- 'isSubPartialOfWithEnv'.'readOwnScope' implements). A traversal that descends into a partial
@@ -149,45 +174,17 @@ dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes 
 --     leaf reaches the binding through 'intersectPartialsBase' instead.
 --   * the POSITION of the reference within the slot — the whole slot, a nested positive partial's
 --     dimension, or a class predicate's dimension.
--- | Whether a declaration has a usable (binder, payload-slot) placement for
--- 'genOwnVarBoundPair': at least one type parameter, and either a field or a second parameter.
 --
--- Drawn through 'HG.filter' at the PROGRAM level this retries inside the generator instead of
--- spending the property's discard budget. Without it, a program whose declarations are all
--- nullary — common, and more so now that generated class members are nullary by construction —
--- rejects EVERY draw, and the property gave up on discards at ~37% acceptance while a real
--- counterexample sat past the cap.
-declHasPlacement :: Expr () -> Bool
-declHasPlacement = go (0 :: Int) (0 :: Int)
-  where
-    go nv na (TupleApply _ (_, b) (EAppVar _ _)) = go (nv + 1) na b
-    go nv na (TupleApply _ (_, b) (EAppArg _))   = go nv (na + 1) b
-    go nv na _                                   = nv >= 1 && (na >= 1 || nv >= 2)
-
--- | A program carrying at least one such declaration.
-prgmHasPlacement :: Prgm Expr () -> Bool
-prgmHasPlacement (Prgm om _ _) = any (maybe False declHasPlacement . oaObj) (flatObjectMap om)
-
--- | A program 'genPartialType' can draw from at all. With neither a data node nor an object
--- declaration it has nothing to build a positive leaf out of and discards every draw, spending
--- the property's budget instead of the generator's retries — the give-up FAIL
--- propSubtypeUnionVarSplit reported once the test count reached 10000.
-prgmHasPartial :: Prgm Expr () -> Bool
-prgmHasPartial (Prgm om cg _) = not (null (dataNodeNames cg)) || not (nullObjectMap om)
-
+-- Every key written is one the base's DECLARATION already has. A partial's 'ptVars' and 'ptArgs'
+-- keys are its declaration's parameters and fields (declaration-boundedness), so a binder under an
+-- invented name — @/Cons[/T=K, /extra=K](/head=$/extra)@ where @/Cons@ declares only @/T@ — is a
+-- leaf no value carries, and the operations may legitimately disagree about it.
+--
 -- The sibling generator that places the nested reference as a 'TVParent' — reaching the enclosing
 -- parameter THROUGH a shadowing inner scope rather than avoiding one — is 'genParentVarBoundPair'.
 genOwnVarBoundPair :: Prgm Expr () -> Gen (Type, Type)
 genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   when (nullObjectMap objMap && graphEmpty cg) HG.discard
-  -- Every key written below is one the base's DECLARATION already has. A partial's 'ptVars' and
-  -- 'ptArgs' keys ARE its declaration's parameters and fields (declaration-boundedness, the rule
-  -- 'genWithTVExt' follows), so inventing a binder name — this generator used to insert its own
-  -- @own1@\/@own2@ into whatever partial it drew — builds a leaf no value ever carries. The
-  -- operations then legitimately disagree about it, and the law reports a compiler defect that is
-  -- really a malformed input: @/Cons[/T=…, /own1=/Cons](/head=$/own1)@ (@/Cons@ declares only
-  -- @/T@) failed @sub ⊆ ref@, while the identical shape keyed on the declared @/T@ passes both
-  -- directions and both differences.
   base    <- HG.filter (not . null . binderPlacements) (genPlacement prgm)
   (varName, slot) <- HG.element (binderPlacements base)
   bound   <- genGroundBound prgm
@@ -200,19 +197,16 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
     -- The reference's SCOPE CLASS is decided by where it is placed, as the desugarer decides it
     -- ('tagParentVarRefs'): directly in the base's slot it names the base's own parameter and is
     -- 'TVInt'; inside a nested partial's (or class atom's) PARAMETER value it sits at that nested
-    -- partial's level, one level inside the base, and is the 'TVParent' @$^v@. It used to be
-    -- 'TVInt' in every position, which only worked because the readers resolved a 'TVInt' the
-    -- nested partial does not spell against the enclosing scope BY NAME — the rescue that let a
-    -- like-named class parameter capture an element's own reference (propParamClassCovariant),
-    -- now gone. A nested placement is drawn only when the payload slot is a FIELD: held in a
-    -- second PARAMETER of the base, the nested partial sits at the base's own level and a one-level
-    -- parent reference would name the base's parent ('genParentVarBoundPair' records the same).
+    -- partial's level, one level inside the base, and is the 'TVParent' @$^v@. A nested placement
+    -- is drawn only when the payload slot is a FIELD: held in a second PARAMETER of the base, the
+    -- nested partial sits at the base's own level and a one-level parent reference would name the
+    -- base's parent instead ('genParentVarBoundPair' explains the same register rule).
     nestedPlacements varName (Left _) = nestedDim varName : [classPredDim varName | any ((/= [varName]) . snd) classDims]
     nestedPlacements _ (Right _)      = []
     -- The payload IS the slot.
     bareSlot = return (TVInt, id)
-    -- The payload is a dimension of a nested positive partial — again one the nested partial
-    -- DECLARES, not an invented @T@\/@K@\/@V@.
+    -- The payload is a dimension of a nested positive partial, again one the nested partial
+    -- declares.
     nestedDim varName = do
       p <- HG.filter (\q -> not (H.null (ptVars q)) && not (H.member varName (ptVars q))) (genPartialType prgm)
       dim <- HG.element (H.keys (ptVars p))
@@ -230,9 +224,8 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
 
 -- | Where a binder-and-payload pair can go in a partial: both DECLARED keys of the same partial
 -- and necessarily distinct. The payload prefers a declared FIELD ('Left'); when the declaration
--- has none it takes a SECOND declared parameter ('Right'). Requiring a field outright rejected
--- most draws — plenty of declarations are nullary — and the property then gave up on discards
--- instead of testing anything.
+-- has none it takes a SECOND declared parameter ('Right'), so declarations without fields still
+-- contribute.
 binderPlacements :: PartialType -> [(TypeVarName, Either ArgName TypeVarName)]
 binderPlacements b =
   [ (v, Left k)  | v <- H.keys (ptVars b), k <- H.keys (ptArgs b) ] ++
@@ -277,8 +270,8 @@ declaredVars _                                   = []
 
 -- | The sibling of 'genOwnVarBoundPair' for the PARENT scope: a pair that must be indistinguishable
 -- to every operation, where the reference reaches the enclosing partial's parameter THROUGH a
--- nested partial that declares the SAME name — the spelling @/Cons@'s own declaration uses for
--- @/tail -> ∀/ConsList[/T=$^/T]@:
+-- nested partial that declares the SAME name — the spelling a recursive declaration uses for its
+-- recursive field, as in @/Cons@'s @/tail -> ∀/ConsList[/T=$^/T]@:
 --
 -- > B[/v=K](slot = N[/v=$^/v])   ≡   B[/v=K](slot = N[/v=K])
 --
@@ -294,50 +287,29 @@ declaredVars _                                   = []
 --
 -- The nested partial is placed in a FIELD of the base only. Held in a second PARAMETER of the
 -- base instead (@Pair[/A=Pair[/B=$^/B]]@), the same register rule puts the nested partial at
--- the base's own level, so its parent reference reaches past the base to the base's parent —
--- at a fragment's top, no definite scope — and the reference is read as a flexible slot:
--- @ref ⊆ alt@ held where @sub ⊆ alt@ did not (seed 16335697364997014974 15371164498158892649,
--- path 27:a13Da6Ba7, 2026-09-18). That shape is not the idiom and asserts nothing.
+-- the base's own level, so its parent reference reaches past the base to the base's parent, which
+-- at the top of a generated type does not exist. That shape is not the idiom and has no single
+-- denotation to assert.
 --
 -- Returns a THIRD member too — the same shape with an unrelated ground bound in the nested
 -- parameter — and the parameter's name. The identity alone cannot tell a reference resolved to
 -- the parent's binding from one not resolved at all: an unbound variable slot is read as FLEXIBLE
 -- (bindable per value — 'isFlexibleVar') and matches anything, so a reader that lost the parent
 -- would still pass both directions. Against the third member the reference must answer exactly
--- as its binding does. The name lets the law bind it in the ambient env to a decoy and assert
--- the reference is not captured.
---
--- The third member is what found e08a01df: the prover judged @Cons[/T=Cons](tail=Cons[/T=Cons])@
--- and @Cons[/T=Cons](tail=Cons[/T=#noCore])@ EQUAL — a list of lists and a list of annotations —
--- because the class expansion completed the element bound to its field form on one side of the
--- declaration clamp and not the other, and the empty meet proved the field vacuously. The
--- reference itself answered correctly throughout.
+-- as its binding does. It also checks the two bounds are compared as the sets they are: with
+-- @K = Cons@ and an unrelated @K' = Nil@, @B[/v=Cons](slot = N[/v=Cons])@ (a list of lists) and
+-- @B[/v=Cons](slot = N[/v=Nil])@ are different types and no operation may equate them. The name
+-- lets the law bind it in the ambient env to a decoy and assert the reference is not captured.
 --
 -- The bound and the decoy are ground positive LEAF unions ('genGroundLeafBound'): data leafs,
--- bare names included, no relation or predicate top and no constants. Widening them to any
--- ground type (2026-09-19) found, in order: three readers that resolved a partial's own
--- parameter or a parent reference by NAME against the ambient env ('partialHasEmptySlot',
--- 'isSubPartialOfWithEnv'.'subVarEff', the 'TVInt' clause of 'substituteTVExtScoped' and the
--- predicate partials of its 'Just'-top clause — each one the decoy binding's capture); two
--- open-world enumerations proving a subtype from a class's CURRENT members ('expandedSub' in
--- the positive-partials subtype, now gated on 'predsPositiveSealed'; and the engine's
--- 'checkCandLeaf' polarity, left as the documented D4 audit because the materialized meet
--- still expands open classes — task #51); the linked split ('subLinked': splitting a var slot
--- a nested parent reference links to reads only the diagonal of the sub); and the fold
--- livelock on a bare-name element ('hasExplicitRecursion' read a @Cons@ ELEMENT in a @Cons@'s
--- @head@ as an unrolling). All of those are fixed (repros in build/scratch/parentrefrepro.hs).
--- The two shapes still excluded: a CLASS or RELATION bound, where the algebra decides
--- membership of a leaf in an open class closed-world along some routes and open-world along
--- others (the two provers disagree until #51 lands — e.g. @Cons[/T=∀OrdCO] ⊆ Cons[/T=∀EqCO]@
--- through the engine, seed 11827421994225018972 4430736466915993151 "304:bA12kA5"); and a
--- CONSTANT-only element bound, where @Cons[/T={-100}](head=Cons[/T={-100}](..)) ⊆
--- Cons[/T={-100}](head=Cons[/T=#noCore](..))@ does not terminate (seed 3197102935274890048
--- 7663213626623012835 "5:bA16b2A12", recursiveClassBounds.ct) — an open livelock.
+-- bare names included, no relation or predicate top and no constants. Two wider shapes are not
+-- drawn: a CLASS or RELATION bound, whose membership questions must be decided open-world on every
+-- route for the law to hold, and a CONSTANT-only bound, where comparing a recursive declaration
+-- whose element is a constant (@Cons[/T={c}](head=Cons[/T={c}](..))@) does not terminate.
 --
--- A BARE top-level 'TVParent' is deliberately not generated anywhere: a fragment's top has no
--- enclosing partial, and which layer stands in for the missing parent depends on which walker
--- reads the fragment ('substituteKeep' seeds the ambient env, 'substituteTVExt' seeds nothing —
--- the two fragment kinds of 2d1d1b1e), so there is no one denotation for a law to assert.
+-- A BARE top-level 'TVParent' is not generated anywhere: a fragment's top has no enclosing
+-- partial, so a parent reference there is unbound. An unbound parent reference is an erroneous
+-- state, not a value with a denotation for a law to assert.
 genParentVarBoundPair :: Prgm Expr () -> Gen (Type, Type, Type, TypeVarName)
 genParentVarBoundPair prgm@(Prgm objMap _ _) = do
   when (nullObjectMap objMap) HG.discard
@@ -361,29 +333,20 @@ genParentVarBoundPair prgm@(Prgm objMap _ _) = do
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
 -- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
 -- exercises 'vaenvLookup' (a bound variable reads as its value rather than ⊤), 'substituteTVExt'\/
--- 'substituteKeep' (external variables inside partial slots — added by 'genWithTVExt' from the same
--- pool — resolve), and 'applyTypeVarOverrides'.
+-- 'substituteKeep' (external variables inside partial slots — added by 'genWithTVExtOn' from the
+-- same pool — resolve), and 'applyTypeVarOverrides'.
 --
--- Each pool name is bound (with ~2/3 probability, so unbound variables still occur and read as ⊤)
--- under either a 'TVVar' or 'TVArg' key. The bound values are concrete-ish: drawn from 'genType' but
--- never another bare variable (so the environment is acyclic — 'vaenvLookup' does no recursive
--- resolution and a variable bound to another variable could loop the variable-rewriting clauses of
--- the operations) and never ⊤ or ∅ (a variable bound to ⊤ is indistinguishable from an unbound one,
--- and ∅ is not a value a program's type variable resolves to).
+-- Each pool name is bound with ~2/3 probability, so unbound variables (read as ⊤) still occur,
+-- under either a 'TVVar' or 'TVArg' key. The bound values pass 'concreteishInner' and are
+-- acyclic, as the environment of a real program is.
 genVaenv :: Prgm Expr () -> Gen TypeVarArgEnv
 genVaenv prgm = go [] varNamePool
   where
-    -- Acyclicity, enforced at every depth rather than only at the top. A value may reference
-    -- only pool names bound EARLIER, so by induction no binding reaches itself. Checking just
-    -- the top level ('concreteish' alone) let a self-reference hide one slot down —
-    -- @/b ↦ /Pair[/A=$_/b∩{~#noCore}]..@ — and resolving that unfolds forever: it is a
-    -- recursive equation, not a value, which is exactly what 'comparedPartialsEnv' refuses to
-    -- install when the algebra builds env entries itself. Found by
-    -- propUnionDistributesIntersection (seed 11880809058551452694 14904440901166778199,
-    -- containers.ct), as a 5s timeout forcing @b∩c@; it hangs identically on the pre-change
-    -- compiler, so the ALGEBRA's missing occurs-check when resolving an ambient binding is a
-    -- real and separate gap — this only stops the generator from writing an env no legal
-    -- program produces.
+    -- Acyclicity at every depth, not only at the top: a value may reference only pool names
+    -- bound EARLIER, so by induction no binding reaches itself. A self-reference nested inside a
+    -- slot (@b ↦ Pair[/A=$_b]@) is a recursive equation rather than a value, and resolving it
+    -- unfolds without end. No program's environment holds one — the algebra keeps such an
+    -- equation on the occurrence instead of installing it ('comparedPartialsEnv').
     go acc [] = return $ H.fromList acc
     go acc (n:ns) = do
       bind <- HG.frequency [(2, return True), (1, return False)]
@@ -393,8 +356,6 @@ genVaenv prgm = go [] varNamePool
           aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
           v   <- HG.filter (acyclicUnder (map fst acc)) (genType prgm)
           go ((aux, v) : acc) ns
-    -- 'concreteishInner' is exactly this generator's local rule (no bare variable, no ⊤, no ⊥),
-    -- which is why the two share it rather than each spelling it out.
     acyclicUnder bound t = concreteishInner t && HS.null (HS.difference (poolRefs t) (boundNames bound))
     -- Only POOL names matter: a reference to a declaration's own parameter (@$/T@) is not an
     -- environment edge at all.
@@ -426,12 +387,9 @@ genTypeFromExpr = genTypeFromExprWith False
 -- The coin flips are what a general draw wants: a partial that spells only some of its
 -- declaration's slots is a legitimate value (an unspelled parameter is ⊤), and generating those
 -- is most of the point. But a caller that needs a partial of a PARTICULAR SHAPE — 'genPlacement'
--- below needs a binder plus a payload slot — cannot get it from a coin flip: a declaration with
--- one parameter and one field yields the shape only when both flips land, so three draws in four
--- are unusable. Filtering those out afterwards spends the property's discard budget rather than
--- the generator's own retries, which is how propOwnVarBindingRespected came to report
--- "gave up after 1000 discards" once the test count reached 10000 — a FAIL that says nothing
--- about the algebra.
+-- needs a binder plus a payload slot — cannot get it from a coin flip: a declaration with one
+-- parameter and one field yields the shape only when both flips land, so three draws in four
+-- would be unusable, and filtering them out afterwards spends the property's discard budget.
 genTypeFromExprWith :: Bool -> Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExprWith _ _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExprWith _ _ (Value _ n) = return $ partialVal n
@@ -461,30 +419,19 @@ genTypeFromExprWith _ _ e = error $ printf "Unimplemented genTypeFromExpr for %s
 -- | Generates a 'Type' from the program.
 --
 -- 'Type' has two constructors, so this has two cases — the 'UnionType' product ('genUnionType')
--- and the 'TypeVar' occurrence ('genTypeVar') — and one more for the two EXTREMA.
+-- and the 'TypeVar' occurrence ('genTypeVar') — and one more for the two EXTREMA. Every slot of
+-- the product is drawn independently from shared sources, so any combination of slots can occur:
+-- a predicate top whose exclusions carry a 'TVExt' slot, an unrolled recursive union inside a
+-- subtraction, a leaf slot holding two differently-sourced leafs.
 --
--- It used to have twelve, one per shape someone wanted in the corpus: @genBasic@, @genCG@,
--- @genCGRel@, @genObjM@, @genObj@, @genConst@, @genMultiConst@, @genPredShape@, @genMixed@,
--- 'genTypeVar', 'genPartialType' and @genUnrolledRecursive@ (the last only for a program with a
--- sealed recursive class, so the list was twelve or thirteen depending on the fixture). Ten of
--- those were points of the one 'UnionType' product, each pinning the slots it did not care about,
--- and what the pinning cost was COVERAGE: a slot an arm pins is a slot that arm can never vary,
--- so no predicate top ever carried a 'TVExt' slot in its exclusions, no unrolled recursive union
--- ever appeared inside a subtraction, no leaf slot ever held two differently-sourced leafs, and
--- (until the re-moding moves into 'genLeafs') no leaf outside a plain positive union ever carried
--- an argument mode. Drawing the slots independently from shared sources puts the product in the
--- corpus instead of ten of its points.
---
--- ⊤ and ⊥ stay explicit rather than falling out of a degenerate 'genUnionType' draw. Four
--- 'HG.filter's in this module screen this generator's output, and the one they share
--- ('concreteishInner') rejects exactly a bare variable, ⊤ and ⊥ — so its acceptance is
--- @1 − P(var) − P(⊤) − P(⊥)@, which pinned here is a constant (measured 0.8475 on containers.ct,
--- 0.7695 on the mixture the properties actually draw). Left to emerge from a degenerate draw it
--- would be a product of presence weights AND of which slot sources the program happens to offer —
--- the empty program would emit ⊥ constantly — and a filter whose acceptance sags reports a
--- Hedgehog GIVE-UP FAIL that says nothing about the algebra. That is the failure mode recorded at
--- 'declHasPlacement', 'prgmHasPartial', 'genTypeFromExprWith' and 'genPlacement'. Keeping the
--- extrema out of the product is also what lets 'genUnionType' hold its non-degeneracy invariant.
+-- ⊤ and ⊥ are drawn explicitly rather than falling out of a degenerate 'genUnionType' draw. The
+-- filters that screen this generator's output share 'concreteishInner', which rejects exactly a
+-- bare variable, ⊤ and ⊥, so its acceptance is @1 − P(var) − P(⊤) − P(⊥)@ — a constant when the
+-- three are drawn here at fixed weights. Left to emerge from a degenerate draw, the rate would
+-- depend on which slot sources a program happens to offer (the empty program would emit ⊥
+-- constantly), and a filter whose acceptance sags ends in a give-up failure that says nothing
+-- about the algebra. Keeping the extrema out of the product is also what lets 'genUnionType' hold
+-- its non-degeneracy invariant.
 --
 -- A bare argument-less reference like @/Cons@ (exact mode, no fields) is a legitimate standalone
 -- value — the partial-application form a @/Cons@ has before its args are applied (arg-set @{}@,
@@ -508,19 +455,15 @@ genType prgm = HG.frequency
 -- their rate — and therefore every filter's acceptance — independent of the program and the size.
 --
 -- EVERY SHAPE DECISION IS SIZE-INDEPENDENT. The runner sweeps size 0..99 across the test count,
--- and @Range.linear 0 n@ has an upper bound of 0 for every size below @99\/n@ — measured,
--- @HG.list (linear 0 2)@ yields nothing at all below size 50, and @linear 1 3@ pins to exactly 1
--- below size 25. A composite whose slot presence came from a size-parameterised range would
--- therefore be a different generator in the first half of the sweep, and because four 'HG.filter's
--- screen this output, the drop shows up as retry cost and eventually as a give-up FAIL rather than
--- as anything legible. So presence and count are drawn with 'HG.frequency' over explicit values;
--- only constant MAGNITUDES keep a size-parameterised range.
+-- and @Range.linear 0 n@ has an upper bound of 0 for every size below @99\/n@: @HG.list (linear 0
+-- 2)@ yields nothing at all below size 50, and @linear 1 3@ pins to exactly 1 below size 25. A
+-- composite whose slot presence came from a size-parameterised range would therefore be a
+-- different generator in the first half of the sweep. So presence and count are drawn with
+-- 'HG.frequency' over explicit values; only constant MAGNITUDES keep a size-parameterised range.
 --
 -- What a program cannot supply is absent from the weight list rather than branched around, which
--- is how the empty program (@mempty@ — an eighth of every draw the properties see) takes the same
--- code path as every other: its only surviving rows are the constant ones, so it yields constant
--- unions and @⊤ − {c}@ tops, the shape 'Semantics.TypesTests.propExcludedConstantIrrelevantToData'
--- pins by hand.
+-- is how the empty program takes the same code path as every other: its only surviving rows are
+-- the constant ones, so it yields constant unions and @⊤ − {c}@ tops.
 genUnionType :: Prgm Expr () -> Gen Type
 genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
   where
@@ -553,8 +496,7 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       , [ (1,  (,) <$> genLeafs <*> genConsts) | canLeaf ]
       ]
 
-    -- 1-3 constants, size-independently. @HG.list (linear 1 3)@ draws exactly one below size 25,
-    -- so a third of the sweep never saw a multi-constant union at all.
+    -- 1-3 constants, size-independently (see 'genUnionType').
     genConsts :: Gen [Constant]
     genConsts = nubConsts <$> (count >>= \n -> replicateM n genConstant)
       where count = HG.frequency [(6, return 1), (3, return 2), (1, return 3)]
@@ -567,38 +509,31 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
     leafSources :: [(Int, Gen [PartialType])]
     leafSources = concat
       -- 'genPartialType' is the one partial generator: a bare data name, a declaration partial
-      -- with its slots drawn, or either carrying a 'TVExt' slot. It was once a DISJOINT family
-      -- from this one — both had their own genCG\/genObj\/genWithTVExt — and reaching it from
-      -- here is what first put its TVExt-carrying slots in front of the laws.
+      -- with its slots drawn, or either carrying a 'TVExt' slot.
       [ [ (8, pure <$> genLeaf)   | prgmHasPartial prgm       ]
       , [ (4, genStoredMetaLeafs) | not (nullObjectMap objMap) ]
-      -- Depressed relative to the others: an unrolled expansion is the deepest and slowest type
-      -- here and carries the livelock documented on 'genParentVarBoundPair'. At 1\/13 per group
-      -- its absolute rate stays near the 1-in-13 it had as a case of its own, while now also
-      -- reaching the negative and mixed positions.
+      -- Weighted low: an unrolled expansion is the deepest and slowest type drawn here, and a
+      -- small share is enough to reach every leaf position, negative and mixed included.
       , [ (1, recLeafs)                     | not (null recExpansions)  ]
       ]
       -- TODO: a fourth source, a declaration refined by one of the program's type PROPERTIES
-      -- (@:Animal.fluffy@) as a 'PredExpr' on the leaf. The arm that used to sit in @genObj@ was
-      -- disabled from the day it was written — "the current implementation doesn't actually make
-      -- sense or produce valid PredExpr" — and is gone rather than carried dead. A 'PredExpr'
-      -- still reaches the corpus from a declaration's own @where@ clause ('genTypeFromExprWith').
+      -- (@:Animal.fluffy@) as a 'PredExpr' on the leaf. A 'PredExpr' reaches the corpus today
+      -- only from a declaration's own @where@ clause ('genTypeFromExprWith').
 
     -- | One synthesized leaf, carrying an argument mode. Every leaf position fills from here, so
-    -- a mode reaches a top's EXCLUSIONS and a mixed type's halves, not only a plain positive
-    -- union as it did while the re-moding was a post-pass on 'genType''s result.
+    -- a mode reaches a top's EXCLUSIONS and a mixed type's halves as well as a plain positive
+    -- union.
     --
     -- Re-mode what we synthesize; keep what we borrow. 'genStoredMetaLeafs' holds the mode the
     -- DECLARATION has and 'recLeafs' the one 'expandClassPartial' produced; overwriting those
-    -- makes a leaf the program does not have, which is the declaration-boundedness rule the
-    -- TVExt slots of 'genWithTVExtOn' already follow.
+    -- makes a leaf the program does not have (declaration-boundedness, as in 'genWithTVExtOn').
     genLeaf :: Gen PartialType
     genLeaf = genPartialType prgm >>= remodePartial
 
     -- A union of one to three source groups. Drawing more than one is the only way a leaf slot
-    -- ever holds two DIFFERENTLY-SOURCED leafs — a bare data name beside a fully-slotted partial
-    -- of the same name, say, which is the disjointness 'genType' claims for the argument-less
-    -- form and which no single source draw could produce.
+    -- holds two DIFFERENTLY-SOURCED leafs — for example a bare data name beside a fully-slotted
+    -- partial of the same name, which exercises the disjointness of the argument-less form from
+    -- the field forms ('genType').
     genLeafs :: Gen PartialLeafs
     genLeafs = do
       n      <- HG.frequency [(7, return 1), (2, return 2), (1, return 3)]
@@ -659,8 +594,7 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
     -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
     -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of
     -- the union/intersection/complement paths for non-atomic predicates. A one-atom non-negated
-    -- draw is the @∀C@ \/ @isa C@ shape that used to be two cases of its own (@genCG@'s class half
-    -- and @genCGRel@).
+    -- draw is the plain @∀C@ \/ @isa C@ shape.
     --
     -- Atom kinds mirror the compiler's name resolution ('resolveRelPartial'): a CLASS name
     -- resolves to a 'PredClass' (or stays a 'PredRel' while relative), while a data-TYPE name in
@@ -671,10 +605,7 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       n     <- HG.frequency [(4, return 1), (1, return 2)]
       atoms <- replicateM n genAtom
       let conj = foldr1 predsAnd (map PredsOne atoms)
-      -- A quarter negated. @genPredShape@ and @genMixed@ negated half of what they drew, but the
-      -- @∀C@ and @isa C@ cases beside them were never negated, and the net over all draws was a
-      -- quarter; routing every predicate top through here would otherwise double it at the
-      -- expense of positive class membership, which is the commoner real shape.
+      -- A quarter negated: positive class membership is the commoner shape in real programs.
       HG.frequency [(3, return conj), (1, return (predsNot conj))]
       where
         genAtom = do
@@ -698,10 +629,8 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
 --
 -- The mutated leaf is returned AS-IS, exactly as 'genType' returns its own: a bare argument-less
 -- reference is a legitimate standalone value (the partial-application form before its args are
--- applied), and restoring its declared fields onto it would map that form to a DIFFERENT type
--- (the completion that once did so is gone for that reason). It would also overwrite the very
--- 'ptArgMode' a mutation had just chosen, erasing the arg-mode dimension this generator exists
--- to exercise.
+-- applied), and restoring its declared fields onto it would map that form to a DIFFERENT type.
+-- It would also overwrite the 'ptArgMode' a mutation had just chosen.
 genRelatedType :: Prgm Expr () -> Type -> Gen Type
 genRelatedType prgm a = case a of
   UnionType Nothing leafs [] | not (H.null leafs) -> do
@@ -721,9 +650,8 @@ genRelatedType prgm a = case a of
 -- its 'ptVars'. This exercises the external variable resolution path in
 -- substitution\/intersection. The external variable name is drawn from 'varNamePool' (shared with
 -- 'genTypeVar' and 'genVaenv') so a bound fraction of these slots actually resolve when a
--- generated 'TypeVarArgEnv' is threaded through the operations.
---
--- Top-level so callers other than 'genPartialType' — 'genPlacement' — keep this coverage.
+-- generated 'TypeVarArgEnv' is threaded through the operations. Shared by 'genPartialType' and
+-- 'genPlacement'.
 genWithTVExtOn :: Prgm Expr () -> Gen PartialType -> Gen PartialType
 genWithTVExtOn prgm baseGen = do
   base <- baseGen
@@ -734,9 +662,8 @@ genWithTVExtOn prgm baseGen = do
   let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
   -- Fill a DECLARED type parameter; never invent one. A partial's 'ptVars' keys are the
   -- parameters its declaration has — @Cons[$T -> $_T]@ fills @Cons@'s own @/T@ — and a key no
-  -- declaration mentions is not a slot any value carries (declaration-boundedness). Inventing
-  -- one produced leaves like @\/Dog[xyz=$_a]@; harmless while these partials only appeared
-  -- nested, and 5 law failures the moment 'genType' drew from this generator.
+  -- declaration mentions (@Dog[xyz=$_a]@) is not a slot any value carries
+  -- (declaration-boundedness).
   if H.null (ptVars base)
     then return base
     else do
@@ -744,13 +671,9 @@ genWithTVExtOn prgm baseGen = do
       return base{ptVars = H.insert varName extVar (ptVars base)}
 
 -- | A partial that is GUARANTEED to offer a (binder, payload-slot) placement: drawn from the
--- declarations 'declHasPlacement' accepts, with every declared slot forced in.
---
--- This replaces @HG.filter (not . null . placements) (genPartialType prgm)@. That filter drew
--- from ALL declarations — most are nullary — and then coin-flipped each slot, so a qualifying
--- shape needed a qualifying declaration AND every flip to land. Hedgehog\'s filter retries a
--- bounded number of times and then discards, which at 10000 tests exhausted the property\'s
--- 1000-discard budget and reported a give-up FAIL carrying no information about the algebra.
+-- declarations 'declHasPlacement' accepts, with every declared slot forced in. Choosing the
+-- declaration first, rather than filtering arbitrary partials, keeps the draw from depending on
+-- how many declarations are nullary and on every slot's coin flip landing.
 genPlacement :: Prgm Expr () -> Gen PartialType
 genPlacement prgm@(Prgm objMap _ _) =
   case [oe | oa <- flatObjectMap objMap, Just oe <- [oaObj oa], declHasPlacement oe] of
@@ -772,9 +695,7 @@ genPartialType prgm@(Prgm objMap _ _) = do
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
     -- DATA-TYPE nodes only. A 'PartialType' IS a positive leaf, and a class name in type position
     -- resolves to a 'PredClass' top instead — a 'PartialType' cannot represent a class at all
-    -- ('classNodeNames'\/'dataNodeNames'). Drawing class nodes here produced leaves the compiler
-    -- never emits, which is why they never reached the laws until 'genType' began drawing from
-    -- this generator.
+    -- ('classNodeNames'\/'dataNodeNames').
     dataNodes = map (leafSpelling prgm) (dataNodeNames (ClassGraph cg))
     genCG :: Gen PartialType
     genCG = partialVal <$> HG.element dataNodes
@@ -785,12 +706,6 @@ genPartialType prgm@(Prgm objMap _ _) = do
       let objExpr = fromJust $ oaObj oa
       genTypeFromExpr prgm objExpr
 
-    -- | Wraps a base partial generator and randomly adds a 'TVExt'-tagged
-    -- type variable to one of its 'ptVars'.  This exercises the external
-    -- variable resolution path in substitution/intersection. The external
-    -- variable name is drawn from 'varNamePool' (shared with 'genTypeVar' and
-    -- 'genVaenv') so a bound fraction of these slots actually resolve when a
-    -- generated 'TypeVarArgEnv' is threaded through the operations.
     genWithTVExt :: Gen PartialType -> Gen PartialType
     genWithTVExt = genWithTVExtOn prgm
 
@@ -830,18 +745,6 @@ genInputExpr = do
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())
 genOutputExpr (Value _ n) _ = return $ Value emptyMetaN n
 genOutputExpr (TupleApply _ (_, b) _) input = genOutputExpr b input
--- genOutputExpr (TupleApply _ (_, b) arg@ObjArr{oaArr}) input = do
---   b' <- genOutputExpr b input
---   oaArr' <- case oaArr of
---     (Just e, _) -> do
---       e' <- genOutputExpr e input
---       return (Just e', emptyMetaN)
---     (Nothing, _) -> return (Just (HoleExpr emptyMetaN (HoleActive Nothing)), emptyMetaN)
---   return $ TupleApply emptyMetaN (emptyMetaN, b') arg{oaArr=oaArr'}
--- genOutputExpr (VarApply _ b _ _) input = genOutputExpr b input
--- genOutputExpr (VarApply _ b varName _) input = do
---   b' <- genOutputExpr b input
---   return $ VarApply emptyMetaN b' varName emptyMetaN
 genOutputExpr e _ = error $ printf "Not yet implemented getOutputExpr for %s" (show e)
 
 
@@ -869,23 +772,16 @@ genPrgm = do
 
 -- | Well-formed class-graph nodes, plus the nullary data objects that are their members.
 --
--- Without this, a generated program has NO classes at all: 'genPrgm' built its whole class graph
--- from 'classGraphFromObjs', which emits @CGType@ nodes exclusively (see @Semantics.hs@). That
--- silently emptied the class corpus for EVERY law, not just the class-specific ones —
--- 'genType'.'genAtom' can only build a 'PredClass' from a 'PClassName' node, so generated
--- programs produced 'PredRel' atoms exclusively, and 'classNodeNames' being empty meant no
--- @∀C@ shape was ever drawn. All class\/negation coverage came from the three hand-written
--- files in @test\/Semantics\/code\/@, and the properties CONDITIONED on a class being present
--- ('propClassExpansionLeafSubtype', 'propClassGraphMatchesPredClass') spent their entire
--- discard budget on draws that were structurally incapable of satisfying them.
+-- 'classGraphFromObjs' emits only @CGType@ nodes, so these are the generated program's only
+-- classes. They are what lets 'genUnionType'.'genPreds' build a 'PredClass' atom and draw a @∀C@
+-- shape, and what the properties conditioned on a class being present draw from.
 --
 -- Well-formedness is by construction, mirroring what the desugarer emits:
 --
 --   * Members are FRESH NULLARY data types, so a member's stored type is exactly
---     @singletonType (partialVal name)@ — the @class(C, [A, B])@ shape of @Animals.ct@. A member
---     with declared fields would have to carry them here (as @containers.ct@'s
---     @Some[$T -> $_T](value -> $T)@ does), and inventing that spelling is how malformed
---     partials get into the corpus.
+--     @singletonType (partialVal name)@ — the @class(C, [A, B])@ shape. A member with declared
+--     fields would have to carry them here (@Some[$T -> $_T](value -> $T)@), and inventing that
+--     spelling is how malformed partials would get into the corpus.
 --   * A SEALED class always has at least one member, because a sealed class can only be written
 --     @class(C, [..])@; the memberless form @class(C)@ is unsealed ('desClassDecl' builds it with
 --     @sealed=False@).
@@ -894,8 +790,7 @@ genPrgm = do
 --     class name in type position is a 'PredClass' top and a data name is a positive leaf — the
 --     distinction 'classNodeNames'\/'dataNodeNames' exists to keep.
 --
--- Zero classes stays in the distribution, so the class-free programs that were previously the
--- only kind are still generated.
+-- Zero classes stays in the distribution, so class-free programs are still generated.
 genClasses :: Gen ([ObjArr Expr ()], [(CGNode, PartialName, [PartialName])])
 genClasses = do
   nClasses <- HG.int (linear 0 2)
