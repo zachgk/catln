@@ -1,0 +1,51 @@
+import "core"
+import "core"
+
+
+# A [match] or [case] arm written as a constructor selects only the values of that constructor.
+  This is a regression test for a gap that made every such arm answer for every value: the last
+  arm of a [match] over a [Comparison] was taken whatever the comparison was.
+  The branch preprocessors (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrite each arm into an arm
+  of a generated function, and the [match] and [case] ones put the arm's pattern there as the ALIAS
+  of a hole. @TypeCheck/Encode@ bounds an alias's base by the argument variable the alias names
+  rather than by the pattern, so a constructor arm constrained nothing and the arms shared one ⊤
+  domain. The [if] preprocessor had the same gap and was fixed by putting the pattern in the
+  argument position (see @ifNonAgreeingBranches.ct@); [match] and [case] now do the same.
+  Every arm is run below, since a test that only reaches one arm cannot tell them apart.
+rank(c -> /Data/Algebra/Comparison) -> Integer= match(c)
+  c -> /Data/Algebra/LessThan= 1
+  c -> /Data/Algebra/Equal= 2
+  c -> /Data/Algebra/GreaterThan= 3
+
+> rank(c= /Data/Algebra/LessThan)
+  >>> 1
+> rank(c= /Data/Algebra/Equal)
+  >>> 2
+> rank(c= /Data/Algebra/GreaterThan)
+  >>> 3
+# The scrutinee may be computed, and the enclosing definition may be generic.
+rankOf[$T -> /Data/Algebra/Ord](a -> $T, b -> $T) -> Integer
+rankOf(a, b)= match(a.compareTo(other= b))
+  c -> /Data/Algebra/LessThan= 1
+  c -> /Data/Algebra/Equal= 2
+  c -> /Data/Algebra/GreaterThan= 3
+
+> rankOf(a= 1, b= 2)
+  >>> 1
+> rankOf(a= 2, b= 2)
+  >>> 2
+> rankOf(a= 3, b= 2)
+  >>> 3
+# A [case] tries its arms in order, and a constructor arm is skipped for another constructor.
+caseRank(c -> /Data/Algebra/Comparison) -> Integer= case(c)
+  c -> /Data/Algebra/LessThan= 1
+  c -> /Data/Algebra/Equal= 2
+  c -> /Data/Algebra/GreaterThan= 3
+
+> caseRank(c= /Data/Algebra/LessThan)
+  >>> 1
+> caseRank(c= /Data/Algebra/Equal)
+  >>> 2
+> caseRank(c= /Data/Algebra/GreaterThan)
+  >>> 3
+main{io -> IO}= io.exit(val= 0)

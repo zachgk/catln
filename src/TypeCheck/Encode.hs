@@ -344,6 +344,17 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         Just p  -> not $ S.member (makeAbsoluteName $ ptName p) definedNames
         Nothing -> False
   oaObj' <- case oaObj of
+    -- An argument KEY renamed with an alias (@field\@name@): the base is the name of the field the
+    -- argument fills, not a pattern the value is matched against, and the value is bound under the
+    -- alias through the argument's slot ('exprVarArgs' keys the alias by it). So the alias is not a
+    -- bound on the base, as it is for a pattern alias in 'fromExpr': read that way, the field name's
+    -- own nominal type (@/c@) was bounded by the argument's declared type, which it is never in, and
+    -- a typed renamed argument (@f(c\@x -> T)@) emptied to ∅. An untyped one only escaped because
+    -- its alias is ⊤.
+    Just (AliasExpr key@Value{} alias) | isJust oaArr -> do
+      key' <- fromExpr (asEncodeIn est) key
+      alias' <- fromExpr (asEncodeIn est) alias
+      return $ Just (AliasExpr key' alias')
     Just inExpr -> do
       inExpr' <- fromExpr (asEncodeIn est) inExpr
       modify $ addConstraints $ topArgPropEqs definedNames inExpr'

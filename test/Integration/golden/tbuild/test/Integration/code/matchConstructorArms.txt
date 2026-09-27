@@ -1,0 +1,380 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/caseRank.$78f633-1"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /caseRank.$78f633-1
+                            ( EAppArg
+                                { eaaArg = Value /$78f633-arg@Value /c -> /Data/Algebra/Equal }
+                            ) -> /Data/Primitive/Integer = 2
+                        , /caseRank.$78f633-1
+                            ( EAppArg
+                                { eaaArg = Value /$78f633-arg }
+                            ) ->
+                            ( /caseRank.$78f633-2
+                                ( /$78f633-arg=TopType ) + /Data/Primitive/Integer
+                            ) =
+                            ( /caseRank.$78f633-2
+                                ( EAppArg
+                                    { eaaArg = Value /$78f633-arg -> TVArg /$78f633-arg =
+                                        ( Value /$78f633-arg ↦ TVArg /$78f633-arg )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/rankOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /rankOf
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /a -> $/T } )
+                            ( EAppArg { eaaArg = Value /b -> $/T } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /rankOf
+                            ( EAppArg { eaaArg = Value /a -> ∀/Data/Algebra/Ord } )
+                            ( EAppArg { eaaArg = Value /b -> ∀/Data/Algebra/Ord } ) -> /Data/Primitive/Integer =
+                            ( /rankOf.$37487c
+                                ( EAppArg
+                                    { eaaArg = Value /$37487c-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                        ( /Data/Algebra/compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/rank"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /rank
+                            ( EAppArg { eaaArg = Value /c -> ∀/Data/Algebra/Comparison } ) ->
+                            ( /rank.$942401
+                                ( /$942401-arg=∀/Data/Algebra/Comparison ) + /Data/Primitive/Integer
+                            ) =
+                            ( /rank.$942401
+                                ( EAppArg
+                                    { eaaArg = Value /$942401-arg -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/rank.$942401"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /rank.$942401
+                            ( EAppArg
+                                { eaaArg = Value /$942401-arg@Value /c -> /Data/Algebra/LessThan }
+                            ) -> /Data/Primitive/Integer = 1
+                        , /rank.$942401
+                            ( EAppArg
+                                { eaaArg = Value /$942401-arg@Value /c -> /Data/Algebra/Equal }
+                            ) -> /Data/Primitive/Integer = 2
+                        , /rank.$942401
+                            ( EAppArg
+                                { eaaArg = Value /$942401-arg@Value /c -> /Data/Algebra/GreaterThan }
+                            ) -> /Data/Primitive/Integer = 3
+                        ]
+                    }
+                )
+            ,
+                ( "/caseRank"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /caseRank
+                            ( EAppArg { eaaArg = Value /c -> ∀/Data/Algebra/Comparison } ) ->
+                            ( /caseRank.$78f633-1
+                                ( /$78f633-arg=TopType ) + /caseRank.$78f633-2
+                                ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /caseRank.$78f633-0
+                                ( /$78f633-arg=∀/Data/Algebra/Comparison ) + /Data/Primitive/Integer
+                            ) =
+                            ( /caseRank.$78f633-0
+                                ( EAppArg
+                                    { eaaArg = Value /$78f633-arg -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                ) ↦
+                                ( /caseRank.$78f633-1
+                                    ( /$78f633-arg=TopType ) + /caseRank.$78f633-2
+                                    ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /Data/Primitive/Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/caseRank.$78f633-2"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /caseRank.$78f633-2
+                            ( EAppArg
+                                { eaaArg = Value /$78f633-arg@Value /c -> /Data/Algebra/GreaterThan }
+                            ) -> /Data/Primitive/Integer = 3
+                        ]
+                    }
+                )
+            ,
+                ( "/caseRank.$78f633-0"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /caseRank.$78f633-0
+                            ( EAppArg
+                                { eaaArg = Value /$78f633-arg@Value /c -> /Data/Algebra/LessThan }
+                            ) -> /Data/Primitive/Integer = 1
+                        , /caseRank.$78f633-0
+                            ( EAppArg
+                                { eaaArg = Value /$78f633-arg }
+                            ) ->
+                            ( /caseRank.$78f633-1
+                                ( /$78f633-arg=TopType ) + /caseRank.$78f633-2
+                                ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /Data/Primitive/Integer
+                            ) =
+                            ( /caseRank.$78f633-1
+                                ( EAppArg
+                                    { eaaArg = Value /$78f633-arg -> TVArg /$78f633-arg =
+                                        ( Value /$78f633-arg ↦ TVArg /$78f633-arg )
+                                    }
+                                ) ↦
+                                ( /caseRank.$78f633-2
+                                    ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /Data/Primitive/Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/rankOf.$37487c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /rankOf.$37487c
+                            ( EAppArg
+                                { eaaArg = Value /$37487c-arg@Value /c -> /Data/Algebra/LessThan }
+                            ) -> /Data/Primitive/Integer = 1
+                        , /rankOf.$37487c
+                            ( EAppArg
+                                { eaaArg = Value /$37487c-arg@Value /c -> /Data/Algebra/Equal }
+                            ) -> /Data/Primitive/Integer = 2
+                        , /rankOf.$37487c
+                            ( EAppArg
+                                { eaaArg = Value /$37487c-arg@Value /c -> /Data/Algebra/GreaterThan }
+                            ) -> /Data/Primitive/Integer = 3
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [match] or [case] arm written as a constructor selects only the values of that constructor.
+                This is a regression test for a gap that made every such arm answer for every value: the last
+                arm of a [match] over a [Comparison] was taken whatever the comparison was.
+                The branch preprocessors (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrite each arm into an arm
+                of a generated function, and the [match] and [case] ones put the arm's pattern there as the ALIAS
+                of a hole. @TypeCheck/Encode@ bounds an alias's base by the argument variable the alias names
+                rather than by the pattern, so a constructor arm constrained nothing and the arms shared one ⊤
+                domain. The [if] preprocessor had the same gap and was fixed by putting the pattern in the
+                argument position (see @ifNonAgreeingBranches.ct@); [match] and [case] now do the same.
+                Every arm is run below, since a test that only reaches one arm cannot tell them apart." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /rank
+                        ( EAppArg { eaaArg = Value /c -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan } ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /rank
+                        ( EAppArg { eaaArg = Value /c -> /Data/Algebra/Equal = Value /Data/Algebra/Equal } ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "2" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /rank
+                        ( EAppArg { eaaArg = Value /c -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan } ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "3" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The scrutinee may be computed, and the enclosing definition may be generic." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /rankOf
+                        ( EAppArg
+                            { eaaArg = Value /a -> /Data/Primitive/Integer = 1 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /rankOf
+                        ( EAppArg
+                            { eaaArg = Value /a -> /Data/Primitive/Integer = 2 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "2" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /rankOf
+                        ( EAppArg
+                            { eaaArg = Value /a -> /Data/Primitive/Integer = 3 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "3" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /caseRank
+                        ( EAppArg { eaaArg = Value /c -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan } ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /caseRank
+                        ( EAppArg { eaaArg = Value /c -> /Data/Algebra/Equal = Value /Data/Algebra/Equal } ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "2" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /caseRank
+                        ( EAppArg { eaaArg = Value /c -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan } ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "3" }
+            )
+        ]
+    }

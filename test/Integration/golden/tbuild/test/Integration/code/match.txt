@@ -11,7 +11,7 @@ Prgm
                         [ /abs.$490dbb
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$490dbb-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 }
+                                { eaaArg = Value /$490dbb-arg@Value /x2 }
                             ) | /operator>=
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
@@ -22,7 +22,7 @@ Prgm
                         , /abs.$490dbb
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$490dbb-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 }
+                                { eaaArg = Value /$490dbb-arg@Value /x2 }
                             ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer

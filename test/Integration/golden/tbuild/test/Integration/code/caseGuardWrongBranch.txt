@@ -9,9 +9,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$bfef16-1
-                            ( EAppArg
-                                { eaaArg = Value /$bfef16-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 }
-                            ) ->
+                            ( EAppArg { eaaArg = Value /$bfef16-arg@Value /x2 } ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=TopType
@@ -69,22 +67,16 @@ Prgm
                     , omiDefs =
                         [ /abs
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
-                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0
-                                ( /x=/Data/Primitive/Integer
-                                , /$bfef16-arg=/Data/Primitive/Integer
-                                ) + /operator*
+                            ( /abs.$bfef16-1( /$bfef16-arg=TopType ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) =
                             ( /abs.$bfef16-0
                                 ( EAppArg
-                                    { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                )
-                                ( EAppArg
                                     { eaaArg = Value /$bfef16-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                 ) ↦
-                                ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*
+                                ( /abs.$bfef16-1( /$bfef16-arg=TopType ) + /operator*
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Primitive/Integer
@@ -101,10 +93,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$bfef16-0
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /$bfef16-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 }
-                            ) | /operator>=
+                            ( EAppArg { eaaArg = Value /$bfef16-arg@Value /x2 } ) | /operator>=
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 ) }
                             )
@@ -112,18 +101,15 @@ Prgm
                                 { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
                             ) -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 )
                         , /abs.$bfef16-0
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /$bfef16-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 }
-                            ) ->
-                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*
+                            ( EAppArg { eaaArg = Value /$bfef16-arg } ) ->
+                            ( /abs.$bfef16-1( /$bfef16-arg=TopType ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) =
                             ( /abs.$bfef16-1
                                 ( EAppArg
-                                    { eaaArg = Value /$bfef16-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                    { eaaArg = Value /$bfef16-arg -> TVArg /$bfef16-arg = ( Value /$bfef16-arg ↦ TVArg /$bfef16-arg ) }
                                 ) ↦
                                 ( /operator*
                                     ( /r=/Data/Primitive/Integer
