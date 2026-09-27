@@ -42,12 +42,14 @@ systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup 
   [ testEnvReadsTheMockEnvironment getCtss
   , testHttpPostSendsThroughTheHandle getCtss
   , testMockRefusesTheNetwork getCtss
+  , testLlmAsksTheConfiguredModel getCtss
+  , testLlmWithoutAModelAsksNothing getCtss
   , testRealHttpPost
   ]
   where
     -- One service for every fixture, so the library they import is built once rather than once
     -- per test.
-    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct"] :: IO CTSS
+    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct", fixture "llm.ct"] :: IO CTSS
 
 fixture :: String -> FilePath
 fixture name = "test/Integration/code/artifacts/system/" ++ name
@@ -98,6 +100,38 @@ testMockRefusesTheNetwork getCtss = testCase "a run with the default mock makes 
   case res of
     CRes _ _ -> assertFailure "the request was answered, so something was sent"
     CErr notes -> assertBool ("the refusal is what failed the run: " ++ prettyCNotes notes) ("makes no network requests" `isInfixOf` prettyCNotes notes)
+
+-- | @IO.llm@ end to end: the environment it is configured by, the request it sends, and the reply
+-- it reads back out of the response. The response is a chat completion as the API answers one.
+testLlmAsksTheConfiguredModel :: IO CTSS -> TestTree
+testLlmAsksTheConfiguredModel getCtss = testCase "IO.llm asks the configured model and prints its reply" $ do
+  sent <- newIORef []
+  let answer :: HttpPost
+      answer url headers reqBody = do
+        modifyIORef sent ((url, headers, reqBody):)
+        return $ Right "{\"id\": \"x\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Hi there!\"}}]}"
+  let env = H.fromList [("OPENAI_BASE_URL", "http://model.test/v1"), ("OPENAI_MODEL", "m-1"), ("OPENAI_API_KEY", "sk-test")]
+  mockIO <- newMockIOWith env answer
+  (res, out) <- runWith getCtss (fixture "llm.ct") mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ _ -> do
+      assertEqual "one request, to the chat completions of the configured address, as JSON and with the key"
+        [ ( "http://model.test/v1/chat/completions"
+          , [("Content-Type", "application/json"), ("Authorization", "Bearer sk-test")]
+          , "{\"model\":\"m-1\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hi\"}]}" ) ]
+        requests
+      assertEqual "and the reply is what the model said" "Hi there!\n" out
+
+-- | Without a model to ask there is nothing to send, and the answer says there is no reply.
+testLlmWithoutAModelAsksNothing :: IO CTSS -> TestTree
+testLlmWithoutAModelAsksNothing getCtss = testCase "IO.llm without OPENAI_MODEL sends nothing" $ do
+  mockIO <- newMockIOWith (H.singleton "OPENAI_BASE_URL" "http://model.test/v1") (\_ _ _ -> return $ Left "no request should be sent")
+  (res, out) <- runWith getCtss (fixture "llm.ct") mockIO
+  case res of
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ _   -> assertEqual "no reply" "no reply\n" out
 
 -- | The transport, against a server answering on a port of this machine: the header and the UTF-8
 -- body arrive as sent, and a status that is not a success is reported with the body it came with.

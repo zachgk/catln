@@ -1,0 +1,80 @@
+import "core"
+import "env"
+import "http"
+import "json/json.ct"
+import "json/encode.ct"
+import "json/decode.ct"
+
+
+module(Llm)
+  # # Asking a language model
+    [llm] sends a prompt to a language model and answers with its reply. It speaks the chat
+    completions API that OpenAI serves and that most other model servers copy, so where it sends is
+    configured rather than fixed, by environment variables:
+    - `OPENAI_BASE_URL` is the address of the API, up to and not including `/chat/completions`:
+      `https://api.openai.com/v1`, or `http://localhost:11434/v1` for a model served locally.
+    - `OPENAI_MODEL` is the model to ask.
+    - `OPENAI_API_KEY` is the key to ask with, sent as a bearer token. It may be left unset, for a
+      server that asks for none.
+    It is a method of [/Catln/IO] because everything it does reaches outside the program: it reads
+    the environment and it sends a request.
+    This is not part of the standard library. A program which asks no model has no use for it, and
+    one that does writes `import "llm"`.
+  :IO.llm(input -> String) -> /Data/Maybe[$T -> String]
+    # [llm] is the reply of the configured model to the prompt [input], or [/Data/Maybe/Nothing]
+      where there is none to give: `OPENAI_BASE_URL` or `OPENAI_MODEL` is unset, or the response
+      holds no reply at `choices[0].message.content`.
+      A request that could not be made, or that was answered with a failure, fails the evaluation
+      with what went wrong, as [/Http/httpPost] does.
+      TODO: Answer with a Result that says which of those it was, once Catln has one. As a
+      [/Data/Maybe] the reason is lost, and an unset variable reads the same as a model that
+      answered with nothing.
+  :IO.llm(input)= llmWith(io= this, input= input, base= this.env(name= "OPENAI_BASE_URL"), model= this.env(name= "OPENAI_MODEL"), key= this.env(name= "OPENAI_API_KEY"))
+
+  llmWith(io -> IO, input -> String, base -> /Data/Maybe[$T -> String], model -> /Data/Maybe[$T -> String], key -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]
+    # [llmWith] asks the model [model] at [base] about [input], where both are configured.
+  llmWith(io, input, base= /Data/Maybe/Nothing, model, key)= /Data/Maybe/Nothing
+  llmWith(io, input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Maybe/Nothing
+  llmWith(io, input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key)= llmReply(response= /Data/jsonParse(text= io.httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))))
+
+  # ## The request
+  llmRequest(model -> String, input -> String) -> String
+    # [llmRequest] is the body asking [model] about [input]: one message, from the user.
+  llmRequest(model, input)= /Data/jsonEncode(value= /Data/Json/Object(entries= [/Data/Json/Member(key= "model", value= /Data/Json/Str(value= model)), /Data/Json/Member(key= "messages", value= /Data/Json/Array(entries= [/Data/Json/Object(entries= [/Data/Json/Member(key= "role", value= /Data/Json/Str(value= "user")), /Data/Json/Member(key= "content", value= /Data/Json/Str(value= input))])]))]))
+
+  > llmRequest(model= "m", input= "Say \"hi\"")
+    >>> {"model":"m","messages":[{"role":"user","content":"Say \"hi\""}]}
+  llmHeaders(key -> /Data/Maybe[$T -> String]) -> /Data/List/ConsList[$T -> /Http/Header(name -> String, value -> String)]
+    # [llmHeaders] are the headers the request is sent with: that its body is JSON, and the key to
+      ask with where there is one.
+  llmHeaders(key= /Data/Maybe/Nothing)= [/Http/Header(name= "Content-Type", value= "application/json")]
+  llmHeaders(key= /Data/Maybe/Some(value@k))= [/Http/Header(name= "Content-Type", value= "application/json"), /Http/Header(name= "Authorization", value= "Bearer " ++ k)]
+
+  # ## The reply
+    The reply is the text at `choices[0].message.content` of the response, read one step at a
+    time. Each step answers [/Data/Maybe/Nothing] where the part it reads is not there, and the
+    steps after it pass that on.
+  llmReply(response -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
+  llmReply(response= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  llmReply(response= /Data/Maybe/Some(value))= llmChoice(choices= /Data/jsonMember(value= value, key= "choices"))
+
+  llmChoice(choices -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
+  llmChoice(choices= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  llmChoice(choices= /Data/Maybe/Some(value))= llmMessage(choice= /Data/jsonIndex(value= value, i= 0))
+
+  llmMessage(choice -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
+  llmMessage(choice= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  llmMessage(choice= /Data/Maybe/Some(value))= llmContent(message= /Data/jsonMember(value= value, key= "message"))
+
+  llmContent(message -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
+  llmContent(message= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  llmContent(message= /Data/Maybe/Some(value))= llmText(content= /Data/jsonMember(value= value, key= "content"))
+
+  llmText(content -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
+  llmText(content= /Data/Maybe/Some(value= /Data/Json/Str(value@s)))= /Data/Maybe/Some(value= s)
+  llmText(content) else = /Data/Maybe/Nothing
+
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": [{\"message\": {\"role\": \"assistant\", \"content\": \"Hello!\"}}]}")) == /Data/Maybe/Some(value= "Hello!")
+    >>> True
+  > llmReply(response= /Data/jsonParse(text= "{\"error\": \"no\"}")) == /Data/Maybe/Nothing
+    >>> True
