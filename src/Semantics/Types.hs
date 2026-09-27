@@ -7591,9 +7591,12 @@ mergeVarEnvs typeEnv = H.unionWith mergeVarEnvVal
     -- external var returns the var (recording the binding in the returned env), so plain
     -- 'intersectTypes' - which discards that env - would keep the wider var-form and lose the
     -- concrete. Apply the intersection's own bindings back to the meet so the resolved
-    -- (narrower) type is what the merged env stores.
+    -- (narrower) type is what the merged env stores. Those bindings are ALL that is applied: no
+    -- ambient env is in view here, so a reference they do not bind is unknown rather than the ⊤
+    -- an ambient miss denotes, and it is kept ('substituteKeep') — an env value naming another
+    -- env entry (@/c ↦ Pair[/B=$_/a]..@) otherwise lost @$_/a@ to ⊤ on every merge.
     mergeVarEnvVal a b = let (venv, t) = intersectTypesWithVarEnv typeEnv H.empty a b
-                         in substituteTVExt typeEnv venv t
+                         in substituteKeep typeEnv venv t
 
 
 -- | Applies 'mergeVarEnvs' to many 'TypeVarEnv'
