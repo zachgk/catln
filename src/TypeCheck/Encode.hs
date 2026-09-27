@@ -392,8 +392,59 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         }
   return oa'
 
+-- | A definition's references to its own arguments, spelled by the argument's absolute name.
+--
+-- A name written in a definition's body or guards that is one of the definition's arguments means
+-- that argument, whatever else the program calls it: @count@ in a definition taking a parameter
+-- @count@ is the parameter, and not @\/Data\/List\/count@. A relative name resolves to every
+-- name it matches, and the parameter — which names no object — is the candidate the object bounds
+-- then prune away, so the body would read the function where it wrote its argument. Spelled by
+-- its absolute name, the reference matches only the argument.
+--
+-- Only a reference the argument can BE is taken as it: one whose applied arguments the argument's
+-- own keys cover. A plain parameter takes none, and @fn(v)@ takes @v@, so a method call such as
+-- @lst.count(fn(v)= ..)@ beside an Integer parameter @count@ still reaches the other names.
+--
+-- Rewritten before encoding rather than resolved during inference, because only here is it known
+-- which values are references: a name in a pattern is a key or a binding, and the same relative
+-- expansion reads both. The keys of an application's arguments are left as written for the same
+-- reason — they name the slot filled, not the argument in scope.
+scopeArgRefs :: [ArgName] -> PExpr -> PExpr
+scopeArgRefs keys = go
+  where
+    go e@Value{}       = spine S.empty e
+    go e@CExpr{}       = e
+    go e@HoleExpr{}    = e
+    go (AliasExpr b a) = AliasExpr (go b) a
+    go (EWhere m b c)  = EWhere m (go b) (go c)
+    go e@TupleApply{}  = spine (H.keysSet $ exprAppliedArgsMap e) e
+
+    -- An application's spine, with the argument keys applied along the whole of it: the value at
+    -- its root is what those arguments are applied to.
+    spine applied (TupleApply m (bm, b) arg) = TupleApply m (bm, spine applied b) (goArg arg)
+    spine applied e@(Value m n) = case [ k | k <- keys
+                                           , relativeNameMatches n (pkName k)
+                                           , applied `S.isSubsetOf` pkArgs k ] of
+      [k] -> Value (mWithType (relTypeVal (pkName k)) m) (pkName k)
+      _   -> e
+    spine _ e = go e
+
+    goArg (EAppArg a)    = EAppArg a{oaArr = fmap (first (fmap go)) (oaArr a)}
+    goArg a@EAppVar{}    = a
+    goArg (EAppSpread e) = EAppSpread (go e)
+
+-- | 'scopeArgRefs' over the guard conditions of an object, which read its arguments as its body does.
+scopeArgRefsInConds :: [ArgName] -> PExpr -> PExpr
+scopeArgRefsInConds keys (EWhere m b c) = EWhere m (scopeArgRefsInConds keys b) (scopeArgRefs keys c)
+scopeArgRefsInConds keys (AliasExpr b a) = AliasExpr (scopeArgRefsInConds keys b) a
+scopeArgRefsInConds _ e = e
+
 fromObjectMap :: PObjArr -> StateT FEnv TypeCheckResult VObjArr
-fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
+fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
+  let argKeys = [ k | TVArg k <- H.keys (exprVarArgs obj0) ]
+  let obj = scopeArgRefsInConds argKeys obj0
+  let oaAnnots = map (scopeArgRefs argKeys) oaAnnots0
+  let oaArr = fmap (first (fmap (scopeArgRefs argKeys))) oaArr0
   let inEst = EncodeIn
   modify startConstrainBlock
   obj' <- fromExpr inEst obj

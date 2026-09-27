@@ -1,0 +1,15 @@
+import "core"
+
+
+# A parameter named the same as a function the program imports.
+  [step] takes a parameter called [count], and @core/list.ct@ declares a function [/Data/List/count].
+  Inside [step], `count` is the parameter: a definition's own arguments shadow every other name they
+  match. Were the function a candidate too, the parameter — which names no object — would be the one
+  pruned, and the body would read the function where it wrote its argument.
+  A call of the name with arguments the parameter cannot take still reaches the function, which is
+  what `count(lst= [1, 2, 3], fn(v)= v > 1)` is here.
+step(count -> Integer, more -> Boolean) -> Integer
+step(count, more= False)= count
+step(count, more= True)= count + count(lst= [1, 2, 3], fn(v)= v > 1)
+
+main{io -> IO}= io.println(msg= step(count= 1, more= True).toString).exit(val= 0)

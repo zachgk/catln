@@ -1,0 +1,156 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Catln/IO =
+                                        ( /Catln/println
+                                            ( EAppArg
+                                                { eaaArg = Value /msg -> ∀/Data/String =
+                                                    ( /Data/toString
+                                                        ( EAppArg
+                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                ( /step
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /count -> /Data/Primitive/Integer = 1 }
+                                                                    )
+                                                                    ( EAppArg { eaaArg = Value /more -> /Data/Primitive/True = Value /Data/Primitive/True } ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Catln/IO
+                                        )
+                                    }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/step"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /step
+                            ( EAppArg { eaaArg = Value /count -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /more -> ∀/Data/Primitive/Boolean } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /step
+                            ( EAppArg { eaaArg = Value /count -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /more -> /Data/Primitive/False = Value /Data/Primitive/False } ) -> /Data/Primitive/Integer = ( Value /count ↦ /Data/Primitive/Integer )
+                        , /step
+                            ( EAppArg { eaaArg = Value /count -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /more -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /count = ( Value /count ↦ TVArg /count ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /Data/List/count
+                                            ( EAppArg
+                                                { eaaArg = Value /lst -> /Data/List/Cons
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                        ( /head=/Data/Primitive/Integer
+                                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                            ( /head=/Data/Primitive/Integer
+                                                            , /tail=/Data/List/Nil
+                                                            )
+                                                        )
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                            ( /head=/Data/Primitive/Integer
+                                                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                ( /head=/Data/Primitive/Integer
+                                                                , /tail=/Data/List/Nil
+                                                                )
+                                                            ) = /Data/List/Cons
+                                                            ( EAppArg
+                                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                                            )
+                                                            ( EAppArg
+                                                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                    ( /head=/Data/Primitive/Integer
+                                                                    , /tail=/Data/List/Nil
+                                                                    ) = /Data/List/Cons
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
+                                                                    )
+                                                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                }
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = /fn
+                                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                                                    ( /operator>
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ ∀/Data/Primitive/Boolean
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A parameter named the same as a function the program imports.
+                  [step] takes a parameter called [count], and @core/list.ct@ declares a function [/Data/List/count].
+                  Inside [step], `count` is the parameter: a definition's own arguments shadow every other name they
+                  match. Were the function a candidate too, the parameter — which names no object — would be the one
+                  pruned, and the body would read the function where it wrote its argument.
+                  A call of the name with arguments the parameter cannot take still reaches the function, which is
+                  what `count(lst= [1, 2, 3], fn(v)= v > 1)` is here."
+                }
+            )
+        ]
+    }

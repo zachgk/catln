@@ -726,9 +726,25 @@ exprAppliedVars = H.fromList . exprAppliedOrdVars
 getExprType :: (ExprClass e) => e m -> Type
 getExprType = getMetaType . getExprMeta
 
+-- | The key an argument written as this expression is filled under.
+--
+-- A plain name (@count@ in @f(count -> Integer)@, or in the call @f(count= 1)@) is keyed by the name
+-- written, made absolute. It is a KEY and not a reference, so what that name would resolve to as a
+-- reference is not what it means: were it read off the name's inferred type, a parameter sharing its
+-- name with a function (@\/Data\/List\/count@) would be keyed by that function, and the declaration,
+-- the definition, and the body's references to the parameter would all look it up there.
+--
+-- Any other form is keyed by its inferred type where that is one partial, and by its path otherwise.
 inExprSingleton :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ArgName
-inExprSingleton e = maybe
-  (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
+inExprSingleton e
+  | exprIsName e = partialKey $ makeAbsoluteName $ exprPath e
+  | otherwise = maybe
+      (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
+
+-- | Whether an expression is only a name: a base value with nothing applied to it, no arguments and
+-- no type variables (an alias @head\@h@ is its base name, @head@).
+exprIsName :: (ExprClass e, MetaDat m, Show m) => e m -> Bool
+exprIsName e = isJust (maybeExprPath e) && Prelude.null (exprAppliedArgs e) && Prelude.null (exprAppliedOrdVars e)
 
 maybeExprPath :: (ExprClass e) => e m -> Maybe TypeName
 maybeExprPath = fmap fst . maybeExprPathM

@@ -1,0 +1,104 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> ∀/Data/String = /Data/toString
+                                    ( Value /this -> /Data/Primitive/Integer = /step
+                                        ( Value /count -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 1 }
+                                        )( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )
+                                    )
+                                )( Value /this -> TVArg /io = Value /io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/step"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /step( Value /count -> /Data/Primitive/Integer )( Value /more -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /step( Value /count -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Primitive/Integer = Value /count
+                        , /step( Value /count -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /count = Value /count )
+                            ( Value /r -> /Data/Primitive/Integer = /Data/List/count
+                                ( Value /lst -> /Data/List/Cons
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( Value /head -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( Value /head -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 2 }
+                                        )
+                                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 3 }
+                                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A parameter named the same as a function the program imports.
+                [step] takes a parameter called [count], and @core/list.ct@ declares a function [/Data/List/count].
+                Inside [step], `count` is the parameter: a definition's own arguments shadow every other name they
+                match. Were the function a candidate too, the parameter — which names no object — would be the one
+                pruned, and the body would read the function where it wrote its argument.
+                A call of the name with arguments the parameter cannot take still reaches the function, which is
+                what `count(lst= [1, 2, 3], fn(v)= v > 1)` is here." }
+            )
+        ]
+    }
