@@ -121,6 +121,18 @@ pStringConst = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
+-- | A character literal: @'a'@, or an escape such as @'\n'@, written as a Haskell one is.
+--
+-- Tried before a name, because a quote is a character a name may hold: @'a'@ was a name before there
+-- were character literals. Only a quote, one character or escape, and a closing quote is taken as a
+-- literal, so a name with a quote elsewhere in it is still read as the name it was.
+pCharConst :: Parser PExpr
+pCharConst = do
+  pos1 <- getSourcePos
+  c <- char '\'' *> L.charLiteral <* char '\''
+  pos2 <- getSourcePos
+  return $ RawCExpr (emptyMeta pos1 pos2) (CChar c)
+
 parenExpr ::  Parser PExpr
 parenExpr = do
   pos1 <- getSourcePos
@@ -318,6 +330,7 @@ term :: Parser PExpr
 term = do
   e1 <- parenExpr
        <|> pStringConst
+       <|> try pCharConst
        <|> try pFloat
        <|> pInt
        <|> pList

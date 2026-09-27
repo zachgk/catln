@@ -185,6 +185,44 @@ intToChar = EPrim "intToChar" prim
       Just (IntVal n) -> Right $ StrVal [chr (fromIntegral n)]
       _               -> Left "Invalid intToChar signature"
 
+charEq :: EPrim
+charEq = EPrim "charEq" prim
+  where
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+      (Just (CharVal l), Just (CharVal r)) -> Right $ bool $ l == r
+      _                                    -> Left "Invalid charEq signature"
+
+charLt :: EPrim
+charLt = EPrim "charLt" prim
+  where
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+      (Just (CharVal l), Just (CharVal r)) -> Right $ bool $ l < r
+      _                                    -> Left "Invalid charLt signature"
+
+-- | A character's Unicode code point.
+charCode :: EPrim
+charCode = EPrim "charCode" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (CharVal c) -> Right $ IntVal $ fromIntegral $ ord c
+      _                -> Left "Invalid charCode signature"
+
+-- | The character at a Unicode code point, refusing a number that is not one.
+charFromCode :: EPrim
+charFromCode = EPrim "charFromCode" prim
+  where
+    prim args = case H.lookup "/code" args of
+      Just (IntVal n) | n >= 0 && n <= fromIntegral (ord maxBound) -> Right $ CharVal $ chr $ fromIntegral n
+      Just (IntVal n) -> Left $ printf "%d is not a Unicode code point" n
+      _ -> Left $ printf "Invalid charFromCode signature with args %s" (show args)
+
+charToString :: EPrim
+charToString = EPrim "charToString" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (CharVal c) -> Right $ StrVal [c]
+      _                -> Left "Invalid charToString signature"
+
 strToOrd :: EPrim
 strToOrd = EPrim "strToOrd" prim
   where
@@ -379,6 +417,11 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatToBool
             , intToChar
             , strToOrd
+            , charEq
+            , charLt
+            , charCode
+            , charFromCode
+            , charToString
             , intToHex
             , intToOct
             , intToBin

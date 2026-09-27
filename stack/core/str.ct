@@ -1,5 +1,7 @@
 import "core/bool.ct"
 import "core/eq.ct"
+import "core/ord.ct"
+import "core/cons.ct"
 
 
 module(Data)
@@ -14,10 +16,58 @@ module(Data)
       type was already being handed to programs and read back from them; what was missing was the
       declaration saying so, and until it was written the name `/Data/Char` referred to nothing and
       was open to the world.
-      Nothing in Catln can write one yet. There is no character literal in the language, so a [Char]
-      arrives only from the compiler, and a [String] is not yet a list of [Char] but a primitive of
-      its own — which is why [String] is declared above rather than as `/Data/List[$T -> Char]`.
+      A [Char] is written as a literal between single quotes: `'a'`, or an escape such as `'\n'`.
+      A [String] is not yet a list of [Char] but a primitive of its own — which is why [String] is
+      declared above rather than as `/Data/List[$T -> Char]`.
 
+  # ## Characters
+    A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
+    primitives comparing two are named functions, so [CharOrdering] can build a [Comparison] from
+    them the way [/Data/Primitive/IntOrdering] does from the integer ones.
+  charLt(l -> Char, r -> Char) -> Boolean
+    #runtime("charLt")
+
+  charEq(l -> Char, r -> Char) -> Boolean
+    #runtime("charEq")
+
+  every(Char, isa= [/Data/Algebra/Ord])
+
+  data(CharOrdering, isa= [/Data/Algebra/Ordering[$T -> Char]])
+
+  :CharOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/charLt(l= a, r= b), eq= /Data/charEq(l= a, r= b))
+
+  :Char.ord= CharOrdering
+
+  :Char.compareTo(other)= this.ord.compare(a= this, b= other)
+
+  :Char.eq= CharOrdering
+
+  :Char.equal(other)= this.eq.rel(a= this, b= other)
+
+  :Char.code -> Integer
+    # [code] is the character's Unicode code point.
+    #runtime("charCode")
+
+  fromCode(code -> Integer) -> Char
+    # [fromCode] is the character at the Unicode code point [code]. A number that is no code point
+      fails the evaluation rather than answering with some other character.
+    #runtime("charFromCode")
+
+  every(Char, isa= [/Data/ToString])
+
+  :Char.toString -> String
+    #runtime("charToString")
+
+  > ('a' == 'a')
+    >>> True
+  > ('a' == 'b')
+    >>> False
+  > 'a'.compareTo(other= 'b').isLess
+    >>> True
+  > 'a'.code
+    >>> 97
+  > fromCode(code= 98)
+    >>> b
   strEqual(l -> String, r -> String) -> Boolean
     #runtime("strEq")
 
