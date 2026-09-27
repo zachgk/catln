@@ -1,0 +1,15 @@
+import "core"
+
+
+# Arms that match a constant, directly and inside a constructor.
+  [isZero] answers for the one Integer [0] by its own arm, and [startsA] for a list whose first item is
+  the character @a@. Each arm must be chosen for exactly the value it names and for no other.
+isZero(x -> Integer) -> Boolean
+isZero(x= 0)= True
+isZero(x) else = False
+
+startsA(cs -> /Data/List/ConsList[$T -> Char]) -> Boolean
+startsA(cs= /Data/List/Cons(head= 'a', tail))= True
+startsA(cs) else = False
+
+main{io -> IO}= io.println(msg= isZero(x= 0).toString).println(msg= isZero(x= 5).toString).println(msg= startsA(cs= ['a', 'b']).toString).println(msg= startsA(cs= ['b']).toString).exit(val= 0)

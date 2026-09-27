@@ -952,7 +952,15 @@ getValDispatchPartial typeEnv out d v@(TupleVal name args)
   where
     fromArg (argName, argVal@(ObjArrVal oa _)) | out, Just (_, arrM) <- oaArr oa =
       ((partialToKey (getValPartialType argVal)){pkName=mkName argName}, getMetaType arrM)
+    -- A primitive argument is typed as the constant it is (@{0}@), not as its primitive (@Integer@):
+    -- an arm matching a constant (@isZero(x= 0)@) asks whether the value is that constant, and the
+    -- primitive is not within it. The constant is within an arm's primitive all the same.
+    fromArg (argName, argVal) | isConstantVal argVal = (partialKey (mkName argName), getValType argVal)
     fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValDispatchPartial typeEnv out (d - 1) argVal)
+    isConstantVal IntVal{}   = True
+    isConstantVal FloatVal{} = True
+    isConstantVal CharVal{}  = True
+    isConstantVal _          = False
     boundVars dp = H.fromList
       [ (k, singletonType $ getValDispatchPartial typeEnv out 0 argVal)
       | (argName, argVal) <- H.toList args

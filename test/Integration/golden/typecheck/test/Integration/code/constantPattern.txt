@@ -1,0 +1,158 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> ∀/Data/String = /Data/toString
+                                    ( Value /this -> ∀/Data/Primitive/Boolean = /startsA
+                                        ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( Value /head -> /Data/Char = CChar
+                                                { chValue = 'b' }
+                                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( Value /this -> /Catln/IO = /Catln/println
+                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                        ( Value /this -> ∀/Data/Primitive/Boolean = /startsA
+                                            ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                    ( /head=/Data/Char
+                                                    , /tail=/Data/List/Nil
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( Value /head -> /Data/Char = CChar
+                                                    { chValue = 'a' }
+                                                )
+                                                ( Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                    ( /head=/Data/Char
+                                                    , /tail=/Data/List/Nil
+                                                    ) = /Data/List/Cons
+                                                    ( Value /head -> /Data/Char = CChar
+                                                        { chValue = 'b' }
+                                                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                    ( Value /this -> /Catln/IO = /Catln/println
+                                        ( Value /msg -> ∀/Data/String = /Data/toString
+                                            ( Value /this -> ∀/Data/Primitive/Boolean = /isZero
+                                                ( Value /x -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 5 }
+                                                )
+                                            )
+                                        )
+                                        ( Value /this -> /Catln/IO = /Catln/println
+                                            ( Value /msg -> ∀/Data/String = /Data/toString
+                                                ( Value /this -> ∀/Data/Primitive/Boolean = /isZero
+                                                    ( Value /x -> /Data/Primitive/Integer = CInt
+                                                        { ciValue = 0 }
+                                                    )
+                                                )
+                                            )( Value /this -> TVArg /io = Value /io )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/startsA"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /startsA
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /startsA
+                            ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CChar
+                                            { chValue = 'a' }
+                                        ]
+                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons
+                                ( Value /head -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CChar
+                                            { chValue = 'a' }
+                                        ]
+                                    ) = CChar
+                                    { chValue = 'a' }
+                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /startsA
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/isZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /isZero( Value /x -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isZero
+                            ( Value /x -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CInt
+                                        { ciValue = 0 }
+                                    ]
+                                ) = CInt
+                                { ciValue = 0 }
+                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /isZero( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Arms that match a constant, directly and inside a constructor.
+                [isZero] answers for the one Integer [0] by its own arm, and [startsA] for a list whose first item is
+                the character @a@. Each arm must be chosen for exactly the value it names and for no other." }
+            )
+        ]
+    }
