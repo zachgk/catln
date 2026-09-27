@@ -5654,9 +5654,14 @@ compactType typeEnv vaenv (UnionType (Just topData) pos cs)
       -- Recurse into each leaf's nested arg/var types (as the Nothing-pos branch does), so a nested
       -- bound like @Cons[/T=(Ord∧Eq)]@ canonicalises (→ @Cons[/T=∀Ord]@) instead of re-deriving an
       -- un-reduced form each epoch and blocking convergence.
+      -- A changed pos re-enters: the clauses above read the pos (the pure-top respellings need
+      -- it empty, absorption and overlap cancellation read its leafs), so a leaf that compacts
+      -- to ∅ or to another spelling must be seen by them, or a second compaction would.
       let argCompacted = joinUnionType $ map (compactPartialArgs typeEnv vaenv) $ splitUnionType pos
           pos' = compactSettleMerged typeEnv vaenv argCompacted
-      in UnionType (Just topData) pos' cs
+      in if pos' /= pos
+           then compactType typeEnv vaenv (UnionType (Just topData) pos' cs)
+           else UnionType (Just topData) pos' cs
 compactType _ _ t@(UnionType (Just _) _ _) = t
 -- TypeVar: an occurrence denotes @var ∩ inner@, so compact the inner and reduce the whole
 -- occurrence to ⊥ whenever that meet is empty — either because the inner alone is, or because
