@@ -6,7 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/showEntrySteps
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep ] ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -15,28 +15,14 @@ Prgm
                             { csValue = "" }
                         , /Data/Map/showEntrySteps
                             ( Value /steps -> /Data/List/Cons
-                                [ /T=/Catln/Doc/Show/EntryStep
-                                    ( /output=TopType
-                                    , /input=TopType
-                                    , /key=TopType
-                                    , /index=TopType
-                                    )
-                                ]
                                 ( /head=/Catln/Doc/Show/EntryStep
                                     ( /output=/Data/String
                                     , /input=/Data/String
                                     , /key=/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/EntryStep
-                                        ( /output=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                ) = /Data/List/Cons
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/EntryStep
                                     ( /output=/Data/String
                                     , /input=/Data/String
@@ -44,15 +30,7 @@ Prgm
                                     , /index=/Data/Primitive/Integer
                                     ) = /Catln/Doc/Show/EntryStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/EntryStep
-                                        ( /output=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/String = /operator++
                             ( Value /l -> /Data/String = /operator++
                                 ( Value /l -> /Data/String = /operator++
@@ -95,13 +73,13 @@ Prgm
                                 , /V=∀/Data/ToString
                                 ]
                             )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ]
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/ascending( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] = Value /rest
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = Value /rest
                         , /Data/Map/ascending
                             ( Value /m -> /Data/Map/Node
                                 [ /K=∀/Data/ToString
@@ -129,60 +107,20 @@ Prgm
                                     ]
                                 )
                             )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List/ConsList[ /T=/Data/Map/Entry ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons
-                                [ /T=/Data/Map/Entry
-                                    ( /value=∀/Data/ToString
-                                    , /key=∀/Data/ToString
-                                    )
-                                ]
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = /Data/Map/ascending( Value /m -> TVArg /left = Value /left )
+                            ( Value /rest -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
                                 ( /head=/Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    ]
-                                )
-                            , []
-                            ) = /Data/Map/ascending( Value /m -> TVArg /left = Value /left )
-                            ( Value /rest -> /Data/List/Cons
-                                [ /T=/Data/Map/Entry
-                                    ( /value=∀/Data/ToString
-                                    , /key=∀/Data/ToString
-                                    )
-                                ]
-                                ( /head=/Data/Map/Entry
-                                    ( /value=∀/Data/ToString
-                                    , /key=∀/Data/ToString
-                                    )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    ]
+                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     ) = /Data/Map/Entry( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    ] = /Data/Map/ascending( Value /m -> TVArg /right = Value /right )( Value /rest -> TVArg /rest = Value /rest )
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = /Data/Map/ascending( Value /m -> TVArg /right = Value /right )( Value /rest -> TVArg /rest = Value /rest ) )
                             )
                         ]
                     }
@@ -192,8 +130,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/mapValuesSteps
-                            ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] )
-                            ( /fn( Value /v -> $_/A ) -> $_/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep ]
+                            ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
+                            ( /fn( Value /v -> $_/A ) -> $_/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -201,59 +139,38 @@ Prgm
                         [ /Data/Map/mapValuesSteps( Value /entries -> /Data/List/Nil = Value /Data/List/Nil )
                             ( /fn( Value /v ) )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Map/mapValuesSteps
-                            ( Value /entries -> /Data/List/Cons
-                                [ /T=/Data/Map/Entry
-                                    ( /value=TopType
-                                    , /key=TopType
-                                    )
-                                ]
+                            ( Value /entries -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
                                 ( /head=/Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     ) = /Data/Map/Entry( Value /key -> ∀/Data/ToString )( Value /value -> ∀/Data/ToString )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
                             )
                             ( /fn( Value /v ) )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
-                            [ /T=/Catln/Doc/Show/EntryStep
-                                ( /output=TopType
-                                , /input=TopType
-                                , /key=TopType
-                                , /index=TopType
-                                )
-                            ]
                             ( /head=/Catln/Doc/Show/EntryStep
                                 ( /output=/Data/String
                                 , /input=/Data/String
                                 , /key=/Data/String
                                 , /index=/Data/Primitive/Integer
                                 )
-                            , /tail=∀/Data/List/ConsList
-                                [ /T=/Catln/Doc/Show/EntryStep
-                                    ( /output=TopType
-                                    , /input=TopType
-                                    , /key=TopType
-                                    , /index=TopType
-                                    )
-                                ]
-                            ) = /Data/List/Cons
+                            , /tail=
+                                ( TopType | PredClass /Data/List/ConsList
+                                    [ /T=/Catln/Doc/Show/EntryStep
+                                        ( /output=/Data/String
+                                        , /input=/Data/String
+                                        , /key=/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
+                                )
+                            )| PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] = /Data/List/Cons
                             ( Value /head -> /Catln/Doc/Show/EntryStep
                                 ( /output=/Data/String
                                 , /input=/Data/String
@@ -266,43 +183,15 @@ Prgm
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /v -> TVArg /value = Value /value ) )
                                 )
                             )
-                            ( Value /tail -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep ] && PredClass /Data/List/ConsList
-                                        [ /T=/Catln/Doc/Show/EntryStep
-                                            ( /output=TopType
-                                            , /input=TopType
-                                            , /key=TopType
-                                            , /index=TopType
-                                            )
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons
+                            ( Value /tail ->
+                                ( TopType | PredClass /Data/List/ConsList
                                     [ /T=/Catln/Doc/Show/EntryStep
-                                        ( /output=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                    ( /head=/Catln/Doc/Show/EntryStep
                                         ( /output=/Data/String
                                         , /input=/Data/String
                                         , /key=/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    , /tail=∀/Data/List/ConsList
-                                        [ /T=/Catln/Doc/Show/EntryStep
-                                            ( /output=TopType
-                                            , /input=TopType
-                                            , /key=TopType
-                                            , /index=TopType
-                                            )
-                                        ]
-                                    )
-                                , []
+                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
                                 ) = /Data/Map/mapValuesSteps( Value /entries -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
@@ -324,13 +213,13 @@ Prgm
                                 , /V=∀/Data/ToString
                                 ]
                             )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ]
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/descending( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] = Value /rest
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = Value /rest
                         , /Data/Map/descending
                             ( Value /m -> /Data/Map/Node
                                 [ /K=∀/Data/ToString
@@ -358,60 +247,20 @@ Prgm
                                     ]
                                 )
                             )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List/ConsList[ /T=/Data/Map/Entry ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons
-                                [ /T=/Data/Map/Entry
-                                    ( /value=∀/Data/ToString
-                                    , /key=∀/Data/ToString
-                                    )
-                                ]
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = /Data/Map/descending( Value /m -> TVArg /right = Value /right )
+                            ( Value /rest -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
                                 ( /head=/Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    ]
-                                )
-                            , []
-                            ) = /Data/Map/descending( Value /m -> TVArg /right = Value /right )
-                            ( Value /rest -> /Data/List/Cons
-                                [ /T=/Data/Map/Entry
-                                    ( /value=∀/Data/ToString
-                                    , /key=∀/Data/ToString
-                                    )
-                                ]
-                                ( /head=/Data/Map/Entry
-                                    ( /value=∀/Data/ToString
-                                    , /key=∀/Data/ToString
-                                    )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    ]
+                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     ) = /Data/Map/Entry( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    ] = /Data/Map/descending( Value /m -> TVArg /left = Value /left )( Value /rest -> TVArg /rest = Value /rest )
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = /Data/Map/descending( Value /m -> TVArg /left = Value /left )( Value /rest -> TVArg /rest = Value /rest ) )
                             )
                         ]
                     }
@@ -421,7 +270,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/showEntryFoldSteps
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ] ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -430,14 +279,6 @@ Prgm
                             { csValue = "" }
                         , /Data/Map/showEntryFoldSteps
                             ( Value /steps -> /Data/List/Cons
-                                [ /T=/Catln/Doc/Show/EntryFoldStep
-                                    ( /output=TopType
-                                    , /acc=TopType
-                                    , /input=TopType
-                                    , /key=TopType
-                                    , /index=TopType
-                                    )
-                                ]
                                 ( /head=/Catln/Doc/Show/EntryFoldStep
                                     ( /output=/Data/String
                                     , /acc=/Data/String
@@ -445,16 +286,8 @@ Prgm
                                     , /key=/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=TopType
-                                        , /acc=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                ) = /Data/List/Cons
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/EntryFoldStep
                                     ( /output=/Data/String
                                     , /acc=/Data/String
@@ -463,16 +296,7 @@ Prgm
                                     , /index=/Data/Primitive/Integer
                                     ) = /Catln/Doc/Show/EntryFoldStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=TopType
-                                        , /acc=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/String = /operator++
                             ( Value /l -> /Data/String = /operator++
                                 ( Value /l -> /Data/String = /operator++
@@ -517,14 +341,14 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/foldEntriesShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/EntryFoldSteps..
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/EntryFoldSteps..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/foldEntriesShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/EntryFoldSteps
-                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ]
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/EntryFoldSteps
+                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                             , /init=/Data/String
                             , /result=/Data/String
                             , /fromRight=/Data/Primitive/False
@@ -579,43 +403,11 @@ Prgm
                                 )
                                 ( /fn( Value /v ) )
                             ) -> /Catln/Doc/Show/EntrySteps
-                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/EntryStep ] ) = /Catln/Doc/Show/EntrySteps
-                            ( Value /steps -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons
-                                    [ /T=/Catln/Doc/Show/EntryStep
-                                        ( /output=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                    ( /head=/Catln/Doc/Show/EntryStep
-                                        ( /output=/Data/String
-                                        , /input=/Data/String
-                                        , /key=/Data/String
-                                        , /index=/Data/Primitive/Integer
-                                        )
-                                    , /tail=
-                                        ( TopType | PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep ] && PredClass /Data/List/ConsList
-                                            [ /T=/Catln/Doc/Show/EntryStep
-                                                ( /output=TopType
-                                                , /input=TopType
-                                                , /key=TopType
-                                                , /index=TopType
-                                                )
-                                            ]
-                                        )
-                                    )
-                                , []
-                                ) = /Data/Map/mapValuesSteps
+                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] ) = /Catln/Doc/Show/EntrySteps
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] = /Data/Map/mapValuesSteps
                                 ( Value /entries -> UnionType
                                     ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=/Data/Map/Entry ]
+                                        ( PredClass /Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                                         , fromList []
                                         , []
                                         )
@@ -629,12 +421,7 @@ Prgm
                                             ( /value=∀/Data/ToString
                                             , /key=∀/Data/ToString
                                             )
-                                        , /tail=∀/Data/List/ConsList
-                                            [ /T=/Data/Map/Entry
-                                                ( /value=∀/Data/ToString
-                                                , /key=∀/Data/ToString
-                                                )
-                                            ]
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                                         )
                                     , []
                                     ) = /Data/Map/ascending( Value /m -> TVArg /m = Value /m )( Value /rest -> /Data/List/Nil = Value /Data/List/Nil )
@@ -663,46 +450,11 @@ Prgm
                                     ]
                                 )
                                 ( /fn( Value /acc )( Value /k )( Value /v ) )( Value /init -> ∀/Data/ToString )
-                            ) -> /Catln/Doc/Show/EntryFoldSteps..?? = /Data/Map/foldEntriesShow
-                            ( Value /steps -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons
-                                    [ /T=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=TopType
-                                        , /acc=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                    ( /head=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=/Data/String
-                                        , /acc=/Data/String
-                                        , /input=/Data/String
-                                        , /key=/Data/String
-                                        , /index=/Data/Primitive/Integer
-                                        )
-                                    , /tail=
-                                        ( TopType | PredClass /Data/List/ConsList
-                                            [ /T=/Catln/Doc/Show/EntryFoldStep
-                                                ( /output=TopType
-                                                , /acc=TopType
-                                                , /input=TopType
-                                                , /key=TopType
-                                                , /index=TopType
-                                                )
-                                            ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ]
-                                        )
-                                    )
-                                , []
-                                ) = /Data/Map/foldEntriesSteps
+                            ) -> /Catln/Doc/Show/EntryFoldSteps.. = /Data/Map/foldEntriesShow
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] = /Data/Map/foldEntriesSteps
                                 ( Value /entries -> UnionType
                                     ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=/Data/Map/Entry ]
+                                        ( PredClass /Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                                         , fromList []
                                         , []
                                         )
@@ -716,12 +468,7 @@ Prgm
                                             ( /value=∀/Data/ToString
                                             , /key=∀/Data/ToString
                                             )
-                                        , /tail=∀/Data/List/ConsList
-                                            [ /T=/Data/Map/Entry
-                                                ( /value=∀/Data/ToString
-                                                , /key=∀/Data/ToString
-                                                )
-                                            ]
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                                         )
                                     , []
                                     ) = /Data/Map/descending( Value /m -> TVArg /m = Value /m )( Value /rest -> /Data/List/Nil = Value /Data/List/Nil )
@@ -762,7 +509,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/lastEntryOutput
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ] )( Value /prev -> /Data/String ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value /prev -> /Data/String ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -770,14 +517,6 @@ Prgm
                         [ /Data/Map/lastEntryOutput( Value /steps -> /Data/List/Nil = Value /Data/List/Nil )( Value /prev -> /Data/String ) -> /Data/String = Value /prev
                         , /Data/Map/lastEntryOutput
                             ( Value /steps -> /Data/List/Cons
-                                [ /T=/Catln/Doc/Show/EntryFoldStep
-                                    ( /output=TopType
-                                    , /acc=TopType
-                                    , /input=TopType
-                                    , /key=TopType
-                                    , /index=TopType
-                                    )
-                                ]
                                 ( /head=/Catln/Doc/Show/EntryFoldStep
                                     ( /output=/Data/String
                                     , /acc=/Data/String
@@ -785,16 +524,8 @@ Prgm
                                     , /key=/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=TopType
-                                        , /acc=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                ) = /Data/List/Cons
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/EntryFoldStep
                                     ( /output=/Data/String
                                     , /acc=/Data/String
@@ -803,16 +534,7 @@ Prgm
                                     , /index=/Data/Primitive/Integer
                                     ) = /Catln/Doc/Show/EntryFoldStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=TopType
-                                        , /acc=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )( Value /prev -> /Data/String ) -> /Data/String = /Data/Map/lastEntryOutput( Value /steps -> TVArg /tail = Value /tail )( Value /prev -> TVArg /output = Value /output )
                         ]
                     }
@@ -822,8 +544,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/foldEntriesSteps
-                            ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry ] )
-                            ( /fn( Value /acc -> $_/B )( Value /k -> $_/K )( Value /v -> $_/V ) -> $_/B )( Value /acc -> $_/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ]
+                            ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
+                            ( /fn( Value /acc -> $_/B )( Value /k -> $_/K )( Value /v -> $_/V ) -> $_/B )( Value /acc -> $_/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -831,45 +553,21 @@ Prgm
                         [ /Data/Map/foldEntriesSteps( Value /entries -> /Data/List/Nil = Value /Data/List/Nil )
                             ( /fn( Value /acc )( Value /k )( Value /v ) )( Value /acc )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Map/foldEntriesSteps
-                            ( Value /entries -> /Data/List/Cons
-                                [ /T=/Data/Map/Entry
-                                    ( /value=TopType
-                                    , /key=TopType
-                                    )
-                                ]
+                            ( Value /entries -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
                                 ( /head=/Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Data/Map/Entry
                                     ( /value=∀/Data/ToString
                                     , /key=∀/Data/ToString
                                     ) = /Data/Map/Entry( Value /key -> ∀/Data/ToString )( Value /value -> ∀/Data/ToString )
                                 )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Data/Map/Entry
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
                             )
                             ( /fn( Value /acc )( Value /k )( Value /v ) )( Value /acc )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
-                            [ /T=/Catln/Doc/Show/EntryFoldStep
-                                ( /output=TopType
-                                , /acc=TopType
-                                , /input=TopType
-                                , /key=TopType
-                                , /index=TopType
-                                )
-                            ]
                             ( /head=/Catln/Doc/Show/EntryFoldStep
                                 ( /output=/Data/String
                                 , /acc=/Data/String
@@ -877,16 +575,18 @@ Prgm
                                 , /key=/Data/String
                                 , /index=/Data/Primitive/Integer
                                 )
-                            , /tail=∀/Data/List/ConsList
-                                [ /T=/Catln/Doc/Show/EntryFoldStep
-                                    ( /output=TopType
-                                    , /acc=TopType
-                                    , /input=TopType
-                                    , /key=TopType
-                                    , /index=TopType
-                                    )
-                                ]
-                            ) = /Data/List/Cons
+                            , /tail=
+                                ( TopType | PredClass /Data/List/ConsList
+                                    [ /T=/Catln/Doc/Show/EntryFoldStep
+                                        ( /output=/Data/String
+                                        , /acc=/Data/String
+                                        , /input=/Data/String
+                                        , /key=/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
+                                )
+                            )| PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] = /Data/List/Cons
                             ( Value /head -> /Catln/Doc/Show/EntryFoldStep
                                 ( /output=/Data/String
                                 , /acc=/Data/String
@@ -901,47 +601,16 @@ Prgm
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
                                 )
                             )
-                            ( Value /tail -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList
-                                        [ /T=/Catln/Doc/Show/EntryFoldStep
-                                            ( /output=TopType
-                                            , /acc=TopType
-                                            , /input=TopType
-                                            , /key=TopType
-                                            , /index=TopType
-                                            )
-                                        ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons
+                            ( Value /tail ->
+                                ( TopType | PredClass /Data/List/ConsList
                                     [ /T=/Catln/Doc/Show/EntryFoldStep
-                                        ( /output=TopType
-                                        , /acc=TopType
-                                        , /input=TopType
-                                        , /key=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
-                                    ( /head=/Catln/Doc/Show/EntryFoldStep
                                         ( /output=/Data/String
                                         , /acc=/Data/String
                                         , /input=/Data/String
                                         , /key=/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    , /tail=∀/Data/List/ConsList
-                                        [ /T=/Catln/Doc/Show/EntryFoldStep
-                                            ( /output=TopType
-                                            , /acc=TopType
-                                            , /input=TopType
-                                            , /key=TopType
-                                            , /index=TopType
-                                            )
-                                        ]
-                                    )
-                                , []
+                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                                 ) = /Data/Map/foldEntriesSteps( Value /entries -> TVArg /tail = Value /tail )
                                 ( /fn( Value /acc )( Value /k )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /acc= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )

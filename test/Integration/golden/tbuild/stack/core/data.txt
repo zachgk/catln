@@ -36,6 +36,8 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Data/toString
                             ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
+                        , /Data/toString
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
@@ -151,6 +153,7 @@ Prgm
             , cgcExtends =
                 [ /Data/String
                 , /Data/Primitive/Integer
+                , /Data/Primitive/Float
                 ]
             , cgcDoc = Just "[ToString] is the class of types that can render themselves as a [String]. Defining
               [toString] for a type makes its values printable and, more importantly, lets generic
@@ -187,6 +190,13 @@ Prgm
             )
             ( EAppArg
                 { eaaArg = Value /result -> /Data/String = "42" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Float = 1.5 }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1.5" }
             )
         , /Catln/#md
             ( EAppArg

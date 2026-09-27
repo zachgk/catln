@@ -58,16 +58,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Python/Builtins/toString"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/toString( Value /this -> /Data/Primitive/Float.. ) -> /Data/String ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/operator+"
                 , ObjectMapItem
                     { omiDecls = []
@@ -178,7 +168,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
         , CGType
         , CGType
         , CGType

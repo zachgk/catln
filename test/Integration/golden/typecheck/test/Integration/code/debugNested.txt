@@ -29,7 +29,7 @@ Prgm
                         [ /bump
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) ->
                             ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /bump.$9471e8
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /bump.$9471e8
                                 ( Value /$9471e8-arg -> TVArg /v = Value /v )
                             )
                         ]
@@ -170,7 +170,7 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Functor/fmap
+                                ( /Data/Maybe/Nothing + /Data/Maybe/Some( /value=TopType ) + /Data/Functor/fmap
                                     ( /fn( /v=TopType )=/Data/Primitive/Integer
                                     , /lst=∀/Data/List[ /T=/Data/Primitive/Integer ]
                                     ) + /Data/List/Cons
@@ -203,7 +203,7 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Functor/fmap
+                                ( /Data/Maybe/Nothing + /Data/Maybe/Some( /value=TopType ) + /Data/Functor/fmap
                                     [ /F=
                                         ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] )
                                     , /B=/Data/Primitive/Integer

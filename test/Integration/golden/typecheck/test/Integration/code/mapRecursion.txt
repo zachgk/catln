@@ -74,10 +74,10 @@ Prgm
                             ) = /RNode
                             ( Value /left -> UnionType
                                 ( Just
-                                    ( PredClass /RTree
+                                    ( PredClass /RIMap
                                         [ /K=∀/ROrd
                                         , /V=$_/MV
-                                        ] && PredClass /RIMap
+                                        ] && PredClass /RTree
                                         [ /K=∀/ROrd
                                         , /V=$_/MV
                                         ]
@@ -90,12 +90,17 @@ Prgm
                                     ]
                                     ( /value=$/V
                                     , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
+                                    , /right=
+                                        ( TopType | PredClass /RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$_/V
+                                            ] && PredClass /RIMap
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ]
+                                        )
                                     , /left=∀/RTree
-                                        [ /K=$_/K
+                                        [ /K=∀/ROrd
                                         , /V=$_/V
                                         ]
                                     )
@@ -131,10 +136,10 @@ Prgm
                             ) = /RNode( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )
                             ( Value /right -> UnionType
                                 ( Just
-                                    ( PredClass /RTree
+                                    ( PredClass /RIMap
                                         [ /K=∀/ROrd
                                         , /V=$_/MV
-                                        ] && PredClass /RIMap
+                                        ] && PredClass /RTree
                                         [ /K=∀/ROrd
                                         , /V=$_/MV
                                         ]
@@ -147,12 +152,17 @@ Prgm
                                     ]
                                     ( /value=$/V
                                     , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
+                                    , /right=
+                                        ( TopType | PredClass /RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$_/V
+                                            ] && PredClass /RIMap
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ]
+                                        )
                                     , /left=∀/RTree
-                                        [ /K=$_/K
+                                        [ /K=∀/ROrd
                                         , /V=$_/V
                                         ]
                                     )
@@ -421,18 +431,20 @@ Prgm
                                         , /V=TopType
                                         ]
                                     ) + /RNode
-                                    [ /K=∀/ROrd
-                                    , /V=$_/MV
-                                    ]
-                                    ( /value=$/V
+                                    ( /value=TopType
                                     , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
+                                    , /right=
+                                        ( TopType | PredClass /RTree
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ] && PredClass /RIMap
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ]
+                                        )
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$_/V
+                                        , /V=TopType
                                         ]
                                     )
                                 )

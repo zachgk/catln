@@ -19,7 +19,9 @@ Prgm
                     { omiDecls =
                         [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> /Data/String ]
                     , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String ]
+                        [ /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String
+                        , /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> /Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString( Value /this -> /Data/String.. ) -> /Data/String = Value /this ]
@@ -90,6 +92,7 @@ Prgm
             , cgcExtends =
                 [ /Data/String
                 , /Data/Primitive/Integer
+                , /Data/Primitive/Float
                 ]
             , cgcDoc = Just "[ToString] is the class of types that can render themselves as a [String]. Defining
               [toString] for a type makes its values printable and, more importantly, lets generic
@@ -126,6 +129,13 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr
                 { csValue = "42" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Float = CFloat
+                { cfValue = 1.5 }
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "1.5" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr

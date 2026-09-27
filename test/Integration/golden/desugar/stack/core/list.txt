@@ -96,7 +96,7 @@ Prgm
                                     )
                                     ( Value /r= toString( Value /this= Value h ) )
                                 )
-                                ( Value /r= restToString( Value /t= Value /t )( Value /h= Value /h )( Value lst= Value t ) )
+                                ( Value /r= restToString( Value lst= Value t ) )
                             )
                             ( Value /r= CStr
                                 { csValue = "]" }
@@ -169,7 +169,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/filter( Value lst )
                             ( fn( Value v ) )= /Data/Monad/mmap( Value m= Value lst )
-                            ( fn( Value v )= keepIf( Value /fn= Value /fn )( Value /lst= Value /lst )( Value v= Value v )
+                            ( fn( Value v )= keepIf( Value v= Value v )
                                 ( Value keep= fn( Value v= Value v ) )
                             )
                         ]
@@ -201,20 +201,20 @@ Prgm
                 ( "/sorted./Data/List/insert"
                 , ObjectMapItem
                     { omiDecls =
-                        [ sorted./Data/List/insert( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
+                        [ sorted./Data/List/insert[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ sorted./Data/List/insert( Value /t )( Value /h )( Value x )( Value lst= Value Nil )= Cons( Value head= Value x )( Value tail= Value Nil )
-                        , sorted./Data/List/insert( Value /t )( Value /h )( Value x )
+                        [ sorted./Data/List/insert( Value x )( Value lst= Value Nil )= Cons( Value head= Value x )( Value tail= Value Nil )
+                        , sorted./Data/List/insert( Value x )
                             ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) | isLessEq
                             ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )= Cons( Value head= Value x )
                             ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
-                        , sorted./Data/List/insert( Value /t )( Value /h )( Value x )
+                        , sorted./Data/List/insert( Value x )
                             ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) )= Cons( Value head= Value head )
-                            ( Value tail= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value x )( Value lst= Value tail ) )
+                            ( Value tail= insert( Value x= Value x )( Value lst= Value tail ) )
                         ]
                     }
                 )
@@ -294,7 +294,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/sorted( Value lst= Value Nil )= Value Nil
                         , /Data/List/sorted
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) )= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value h )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) )= insert( Value x= Value h )
                             ( Value lst= sorted( Value lst= Value t ) )
                         ]
                     }
@@ -322,12 +322,12 @@ Prgm
                 ( "/filter./Data/List/keepIf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ filter./Data/List/keepIf( Value /fn )( Value /lst )( Value v -> $_/A )( Value keep -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ] ]
+                        [ filter./Data/List/keepIf( Value v -> $_/A )( Value keep -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ filter./Data/List/keepIf( Value /fn )( Value /lst )( Value v )( Value keep= Value /Data/Primitive/True )= /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil )
-                        , filter./Data/List/keepIf( Value /fn )( Value /lst )( Value v )( Value keep= Value /Data/Primitive/False )= Value /Data/List/Nil
+                        [ filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/True )= /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil )
+                        , filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/False )= Value /Data/List/Nil
                         ]
                     }
                 )
@@ -432,15 +432,15 @@ Prgm
                 ( "/toString./Data/List/restToString"
                 , ObjectMapItem
                     { omiDecls =
-                        [ toString./Data/List/restToString( Value /t )( Value /h )
+                        [ toString./Data/List/restToString
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ toString./Data/List/restToString( Value /t )( Value /h )( Value lst= Value Nil ) -> /Data/String = CStr
+                        [ toString./Data/List/restToString( Value lst= Value Nil ) -> /Data/String = CStr
                             { csValue = "" }
-                        , toString./Data/List/restToString( Value /t )( Value /h )
+                        , toString./Data/List/restToString
                             ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> /Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= CStr
@@ -448,7 +448,7 @@ Prgm
                                 )
                                 ( Value /r= toString( Value /this= Value head ) )
                             )
-                            ( Value /r= restToString( Value /t= Value /t )( Value /h= Value /h )( Value lst= Value tail ) )
+                            ( Value /r= restToString( Value lst= Value tail ) )
                         ]
                     }
                 )
