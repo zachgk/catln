@@ -34,7 +34,7 @@ module(Data/Map)
 
   # The rows of that table, walking the map's entries in ascending key order and applying [fn] to
     each value as it goes.
-  mapValuesSteps(entries -> /Data/List/ConsList[$T -> Entry], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/EntryStep]
+  mapValuesSteps(entries -> /Data/List/ConsList[$T -> Entry..], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/EntryStep..]
   mapValuesSteps(entries= /Data/List/Nil, fn(v), index)= /Data/List/Nil
   mapValuesSteps(entries= /Data/List/Cons(head= Entry(key, value), tail), fn(v), index)= /Data/List/Cons(head= /Catln/Doc/Show/EntryStep(index= index, key= key.toString, input= value.toString, output= fn(v= value).toString), tail= mapValuesSteps(entries= tail, fn(v)= fn(v= v), index= index + 1))
 
@@ -53,17 +53,17 @@ module(Data/Map)
 
   # The display around a fold's rows. Its result is the last row's output, read off the rows for the
     reason [/Data/List/foldlShow] gives. A fold over no entries hands [init] straight on.
-  foldEntriesShow(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep], init -> String) -> /Catln/Doc/Show/EntryFoldSteps..
+  foldEntriesShow(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..], init -> String) -> /Catln/Doc/Show/EntryFoldSteps..
   foldEntriesShow(steps, init)= /Catln/Doc/Show/EntryFoldSteps(init= init, steps= steps, result= lastEntryOutput(steps= steps, prev= init), fromRight= /Data/Primitive/False)
 
   # The output of the last row, or [prev] where there are none.
-  lastEntryOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep], prev -> String) -> String
+  lastEntryOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..], prev -> String) -> String
   lastEntryOutput(steps= /Data/List/Nil, prev)= prev
   lastEntryOutput(steps= /Data/List/Cons(head= /Catln/Doc/Show/EntryFoldStep(index, key, acc, input, output), tail), prev)= lastEntryOutput(steps= tail, prev= output)
 
   # The rows of a fold, walking the map's entries in the order [foldEntries] visits them and carrying
     the accumulator forward as it does.
-  foldEntriesSteps(entries -> /Data/List/ConsList[$T -> Entry], fn(acc -> $_B, k -> $_K, v -> $_V) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep]
+  foldEntriesSteps(entries -> /Data/List/ConsList[$T -> Entry..], fn(acc -> $_B, k -> $_K, v -> $_V) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..]
   foldEntriesSteps(entries= /Data/List/Nil, fn(acc, k, v), acc, index)= /Data/List/Nil
   foldEntriesSteps(entries= /Data/List/Cons(head= Entry(key, value), tail), fn(acc, k, v), acc, index)= /Data/List/Cons(head= /Catln/Doc/Show/EntryFoldStep(index= index, key= key.toString, acc= acc.toString, input= value.toString, output= fn(acc= acc, k= key, v= value).toString), tail= foldEntriesSteps(entries= tail, fn(acc, k, v)= fn(acc= acc, k= k, v= v), acc= fn(acc= acc, k= key, v= value), index= index + 1))
 
@@ -77,19 +77,19 @@ module(Data/Map)
 
   # The entries of [m] in ascending key order, in front of [rest]: the left subtree's, then the
     node's own, then the right subtree's, which is the order [mapValues] makes its calls of [fn] in.
-  ascending(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], rest -> /Data/List/ConsList[$T -> Entry]) -> /Data/List/ConsList[$T -> Entry]
+  ascending(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], rest -> /Data/List/ConsList[$T -> Entry..]) -> /Data/List/ConsList[$T -> Entry..]
   ascending(m= Leaf, rest)= rest
   ascending(m= Node(left, key, value, right), rest)= ascending(m= left, rest= /Data/List/Cons(head= Entry(key= key, value= value), tail= ascending(m= right, rest= rest)))
 
   # The entries of [m] in descending key order, in front of [rest]: [ascending] with the subtrees
     the other way round, which is the order [foldEntries] visits them in.
-  descending(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], rest -> /Data/List/ConsList[$T -> Entry]) -> /Data/List/ConsList[$T -> Entry]
+  descending(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], rest -> /Data/List/ConsList[$T -> Entry..]) -> /Data/List/ConsList[$T -> Entry..]
   descending(m= Leaf, rest)= rest
   descending(m= Node(left, key, value, right), rest)= descending(m= right, rest= /Data/List/Cons(head= Entry(key= key, value= value), tail= descending(m= left, rest= rest)))
 
   # The rows written out as text, which is how this page checks the ones it builds, as
     [/Data/List/showSteps] does for a list's.
-  showEntrySteps(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryStep]) -> String
+  showEntrySteps(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryStep..]) -> String
   showEntrySteps(steps= /Data/List/Nil)= ""
   showEntrySteps(steps= /Data/List/Cons(head= /Catln/Doc/Show/EntryStep(index, key, input, output), tail))= index.toString ++ ":" ++ key ++ "=" ++ input ++ "->" ++ output ++ ";" ++ showEntrySteps(steps= tail)
 
@@ -103,7 +103,7 @@ module(Data/Map)
     0
 
   # The rows of a fold written out as text, as [showEntrySteps] writes a mapping's.
-  showEntryFoldSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep]) -> String
+  showEntryFoldSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..]) -> String
   showEntryFoldSteps(steps= /Data/List/Nil)= ""
   showEntryFoldSteps(steps= /Data/List/Cons(head= /Catln/Doc/Show/EntryFoldStep(index, key, acc, input, output), tail))= index.toString ++ ":" ++ key ++ ":" ++ acc ++ "+" ++ input ++ "=" ++ output ++ ";" ++ showEntryFoldSteps(steps= tail)
 

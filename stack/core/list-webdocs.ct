@@ -65,7 +65,7 @@ module(Data/List)
   /Catln/Doc/dshowCall(s= /Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v)))= /Catln/Doc/Show/Steps(steps= mmapSteps(m= m, fn(v)= fn(v= v), index= 0))
 
   # The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does.
-  mmapSteps(m -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step]
+  mmapSteps(m -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
   mmapSteps(m= Nil, fn(v), index)= Nil
   mmapSteps(m= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= mmapSteps(m= tail, fn(v)= fn(v= v), index= index + 1))
 
@@ -83,16 +83,16 @@ module(Data/List)
   # The display around a left fold's rows. Its result is the last row's output, read off the rows
     rather than worked out by folding again: the rows already hold every accumulator the fold made.
     A fold over nothing hands [init] straight on.
-  foldlShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep], init -> String) -> /Catln/Doc/Show/FoldSteps..
+  foldlShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> /Catln/Doc/Show/FoldSteps..
   foldlShow(steps, init)= /Catln/Doc/Show/FoldSteps(init= init, steps= steps, result= lastOutput(steps= steps, prev= init), fromRight= /Data/Primitive/False)
 
   # The output of the last row, or [prev] where there are none.
-  lastOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep], prev -> String) -> String
+  lastOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], prev -> String) -> String
   lastOutput(steps= Nil, prev)= prev
   lastOutput(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail), prev)= lastOutput(steps= tail, prev= output)
 
   # The rows of a left fold, carrying the accumulator forward as [foldl] does.
-  foldlSteps(lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep]
+  foldlSteps(lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
   foldlSteps(lst= Nil, fn(acc, v), acc, index)= Nil
   foldlSteps(lst= Cons(head, tail), fn(acc, v), acc, index)= Cons(head= /Catln/Doc/Show/FoldStep(index= index, acc= acc.toString, input= head.toString, output= fn(acc= acc, v= head).toString), tail= foldlSteps(lst= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), index= index + 1))
 
@@ -111,11 +111,11 @@ module(Data/List)
     [foldr] for it: built from the arm, where the step is a function of unknown result, [foldr]'s
     [Cons] arm returns what the step returns and so is not known to render as text. Only its [Nil]
     arm is, and the call then fails on any list that is not empty.
-  foldrShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep], init -> String) -> /Catln/Doc/Show/FoldSteps..
+  foldrShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> /Catln/Doc/Show/FoldSteps..
   foldrShow(steps, init)= /Catln/Doc/Show/FoldSteps(init= init, steps= steps, result= firstOutput(steps= steps, init= init), fromRight= /Data/Primitive/True)
 
   # The output of the first row, or [init] where there are none.
-  firstOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep], init -> String) -> String
+  firstOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> String
   firstOutput(steps= Nil, init)= init
   firstOutput(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail), init)= output
 
@@ -124,7 +124,7 @@ module(Data/List)
     [stack], and each row is then consed on in front of the rows already made, so they come out in
     element order with the fold's order still in the accumulators. [index] counts down from the
     last element's.
-  foldrSteps(lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep]
+  foldrSteps(lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
   foldrSteps(lst, fn(acc, v), init, index)= foldrWalk(stack= onto(lst= lst, stack= Nil), fn(acc, v)= fn(acc= acc, v= v), acc= init, index= index + lst.length - 1, rows= Nil)
 
   # [lst] turned around onto [stack], so the last element is on top.
@@ -133,7 +133,7 @@ module(Data/List)
   onto(lst= Cons(head, tail), stack)= onto(lst= tail, stack= Cons(head= head, tail= stack))
 
   # The walk over that stack: each element combined into the accumulator the elements after it made.
-  foldrWalk(stack -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer, rows -> /Data/List[$T -> /Catln/Doc/Show/FoldStep]) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep]
+  foldrWalk(stack -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer, rows -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
   foldrWalk(stack= Nil, fn(acc, v), acc, index, rows)= rows
   foldrWalk(stack= Cons(head, tail), fn(acc, v), acc, index, rows)= foldrWalk(stack= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), index= index - 1, rows= Cons(head= /Catln/Doc/Show/FoldStep(index= index, acc= acc.toString, input= head.toString, output= fn(acc= acc, v= head).toString), tail= rows))
 
@@ -162,7 +162,7 @@ module(Data/List)
     0
 
   # The rows of a fold written out as text, as [showSteps] writes a mapping's.
-  showFoldSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep]) -> String
+  showFoldSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]) -> String
   showFoldSteps(steps= Nil)= ""
   showFoldSteps(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail))= index.toString ++ ":" ++ acc ++ "+" ++ input ++ "=" ++ output ++ ";" ++ showFoldSteps(steps= tail)
 

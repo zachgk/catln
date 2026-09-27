@@ -72,7 +72,7 @@ module(Catln/Doc)
     # One row of a fold: which step it is, the accumulator it was handed, the element it combined
       into it, and the accumulator it handed on. The ends are rendered text for the reason
       [Show/Step]'s are.
-  data(Show/FoldSteps(init -> String, steps -> /Data/List[$T -> Show/FoldStep], result -> String, fromRight -> Boolean))
+  data(Show/FoldSteps(init -> String, steps -> /Data/List[$T -> Show/FoldStep..], result -> String, fromRight -> Boolean))
     # A fold shown as what it did: its rows, in element order, between the accumulator it started
       from and the one it ended with.
       A second display rather than [Show/Steps] with a column more. A step of a fold has three ends
@@ -99,7 +99,7 @@ module(Catln/Doc)
   data(Show/EntryStep(index -> Integer, key -> String, input -> String, output -> String))
     # One row over an entry: which step it is, the entry's key, what the step was handed, and what
       came back. Rendered text on every end, for the reason [Show/Step]'s are.
-  data(Show/EntrySteps(steps -> /Data/List[$T -> Show/EntryStep]))
+  data(Show/EntrySteps(steps -> /Data/List[$T -> Show/EntryStep..]))
     # The rows, in the order the call took them, as [Show/Steps]'s are.
 
   every(Show/EntrySteps.., isa= [/Catln/Doc/DShow])
@@ -107,7 +107,7 @@ module(Catln/Doc)
   data(Show/EntryFoldStep(index -> Integer, key -> String, acc -> String, input -> String, output -> String))
     # One row of a fold over an entry: which step it is, the entry's key, the accumulator it was
       handed, the value it combined into it, and the accumulator it handed on.
-  data(Show/EntryFoldSteps(init -> String, steps -> /Data/List[$T -> Show/EntryFoldStep], result -> String, fromRight -> Boolean))
+  data(Show/EntryFoldSteps(init -> String, steps -> /Data/List[$T -> Show/EntryFoldStep..], result -> String, fromRight -> Boolean))
     # A fold over a map's entries shown as [Show/FoldSteps] shows one over a list's elements: its rows
       between the accumulator it started from and the one it ended with, and [fromRight] saying which
       way the accumulator runs between them.
