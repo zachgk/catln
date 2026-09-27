@@ -7300,7 +7300,7 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v loc inner) t
                        | isSubtypeOfWithEnv typeEnv vaenv l wNew = (TypeVar v loc, bothInners)
                        | otherwise = (TypeVar v loc, meetInner typeEnv vaenv bothInners wNew)
                  in if isBottomType bound then (vaenv, BottomType) else (H.insert v i e, occ bound)
-           _ | recursive i -> (e, onOccurrence)
+           _ | recursive i || innerSelf -> (e, onOccurrence)
            _ -> (H.insert v i e, tv)
   | innerRejects t = (vaenv, BottomType)
   -- An UNBOUND @v@ against a different variable: @⟦v⟧ = ⊤ ⊇ ⟦w⟧@, so the meet is @w@'s
@@ -7312,7 +7312,7 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v loc inner) t
   | TypeVar w lw j <- t, w /= v =
       let bound = meetInner typeEnv vaenv inner j
       in if isBottomType bound then (vaenv, BottomType) else (H.insert v t vaenv, TypeVar w lw bound)
-  | recursive t = (vaenv, onOccurrence)
+  | recursive t || innerSelf = (vaenv, onOccurrence)
   | otherwise = (H.insert v t vaenv, tv)
   where isSelfVar var (TypeVar var' _ _) = var' == var
         isSelfVar _   _                  = False
@@ -7327,6 +7327,13 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v loc inner) t
         -- names that partial's own parameter, and treating it as recursive kept ordinary
         -- bindings out of the env and stalled inference on the core.
         recursive x = S.member v (typeExtVarAuxes x)
+        -- The occurrence's own inner reading @v@ back is the same equation from the other side: a
+        -- binding installed for @v@ is then read at the inner's position too, where the other
+        -- operand does not apply. @$_/c∩{wweygjml[/cjprym=$_/c∩{~ulrea}]..}@ met with
+        -- @wweygjml[/cjprym=~ulrea]..@ bound @c@ to the whole @wweygjml@, read the inner's
+        -- @$_/c∩{~ulrea}@ as @wweygjml ∩ ~ulrea = ∅@ and emptied the meet
+        -- (propIntersectByDifference, 1899: Seed 17089864093210056445 7642955504044175743).
+        innerSelf = S.member v (typeExtVarAuxes inner)
         onOccurrence = TypeVar v loc (meetInner typeEnv vaenv inner t)
         -- The meet can only narrow @w@'s binding, so "unchanged" is the reverse inclusion.
         -- Compared as SETS: the meet may respell an equal binding (@X..@ as @X[/p=⊤]@).
