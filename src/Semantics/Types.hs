@@ -8028,11 +8028,12 @@ typeExtVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs
 
 -- | The names of all OUTER type-VARIABLE references ('TVParent' or 'TVExt' — a reference to a
 -- variable outside the position it sits at, whichever scope binds it) occurring anywhere in a
--- type: var\/arg slot values of every positive and negative leaf, and predicate partials. Used
+-- type: var\/arg slot values of every positive and negative leaf, predicate partials, and an
+-- occurrence's inner (it is part of what the occurrence denotes). Used
 -- by 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
 -- enclosing partial's scope.
 typeOuterVarRefs :: Type -> S.HashSet TypeVarName
-typeOuterVarRefs t@TypeVar{} = maybe S.empty S.singleton (outerVarName t)
+typeOuterVarRefs t@(TypeVar _ _ i) = maybe id S.insert (outerVarName t) (typeOuterVarRefs i)
 typeOuterVarRefs PTopType = S.empty
 typeOuterVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
   where
