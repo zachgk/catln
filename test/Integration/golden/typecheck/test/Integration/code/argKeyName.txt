@@ -1,0 +1,78 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Lib/exp"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Lib/exp( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Lib/exp( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /this = Value /this )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 10 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> /Data/String = /Data/toString
+                                    ( Value /this -> /Data/Primitive/Integer = /Lib/power
+                                        ( Value /exp -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 3 }
+                                        )
+                                        ( Value /this -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 2 }
+                                        )
+                                    )
+                                )( Value /this -> TVArg /io = Value /io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Lib/power"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Lib/power( Value /exp -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "An argument named the same as a function of the module it is declared in.
+                [power] takes an argument called [exp], and [exp] is also a method declared beside it. A call's
+                arguments are keyed by the names they are given, so `2.power(exp= 3)` fills the argument [exp]
+                whatever else is called that — the method is not what the key refers to. [power] is a runtime
+                primitive, which reads its argument by the key @/exp@, so a key named after the method instead is
+                an argument the primitive never finds." }
+            )
+        ]
+    }

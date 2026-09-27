@@ -165,6 +165,15 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
               -- The argument slot takes the pattern's own (resolved) type, mirroring the named
               -- form @b= Box(v)@ where the arr slot is unified with the arr value's type.
               return (Just $ mkArgValue argName, Just (Just joaObj', getExprMeta joaObj'))
+        -- An explicit object that is only a name (@code= 98@, a parameter @code -> Integer@) is the
+        -- argument's KEY, not a reference: it names the slot it fills, and is written into the
+        -- tuple under that name. So its name is the one written, made absolute, rather than
+        -- whatever the name resolves to as a reference — which, for a key sharing its name with a
+        -- declared function (@fromCode(code)@ beside @:Char.code@), is that function.
+        (Just (Value km kn), _) -> do
+          km' <- toMeta km
+          arr' <- decodeArr oaArr
+          return (Just $ Value km' (makeAbsoluteName kn), arr')
         -- An explicit object (named argument, or a pattern whose head already names the arg).
         (Just joaObj, _) -> do
           joaObj' <- toExpr joaObj
