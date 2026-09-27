@@ -40,14 +40,22 @@ function syntaxIndex(drSyntax, drResult) {
 
   // What each expression came to, keyed by the call it was written as: a node's own output is the
   // term its arrow rewrote to, which a caller then goes on rewriting (see `EvalExprRun`).
+  //
+  // And each expression by where it was evaluated and what it is written as, which is how a line's
+  // parts are found among what its run evaluated (`breakdownOf`).
   const resolved = {};
+  const exprsAt = {};
   (drResult.erExprs ?? []).forEach(e => {
     if (e.exSteps.length) {
       resolved[e.exSteps[0]] = e.exValue;
     }
+    (e.exIds ?? []).forEach(id => {
+      const key = `${e.exNode}|${id}`;
+      (exprsAt[key] = exprsAt[key] ?? []).push(e);
+    });
   });
 
-  return {calls, stops, statements, resolved};
+  return {calls, stops, statements, resolved, exprsAt};
 }
 
 // The item a statement of a call is shown as.
@@ -60,21 +68,28 @@ function stmtItemId(call, stmt) {
 // are the same tree: `parents` is read off the items rather than worked out again.
 //
 //   call    -- a call of a function, shown as the function's statements
-//   stmt    -- a statement of a function in one call of it, opening onto the steps it was evaluated
-//              through and then onto the statements written under it
-//   run     -- one of several evaluations of a line, which desugar makes each time the line is used
+//   stmt    -- a statement of a function in one call of it, opening onto its breakdown and then
+//              onto the statements written under it
 //   step    -- a node of the evaluation tree that is no call of a function or line of one
 //   lineref -- a node that is a line of a function shown elsewhere in the tree, leading to it
 //
+// A statement's breakdown (`breakdownOf`) is not items but rows: the parts of the line as written,
+// one under another, each with what it came to. A part that was a call of a function holds that
+// call's item, which the reader opens in place under the part (`inLine`); a part that was a use of
+// another line leads to it. What the line evaluated that no part of it accounts for -- a call made
+// while dispatching one, say -- follows the rows as items.
+//
 // A step and a call keep the id of their node, which is what a #debug record names.
 function buildTree(roots, syntax) {
-  const {calls, stops, statements} = syntax;
+  const {calls, stops, statements, exprsAt} = syntax;
   const parents = {};
   const byNode = {};
+  const byId = {};
 
   const item = (fields, children) => {
     const it = {...fields, children};
     children.forEach(c => {parents[c.id] = it.id;});
+    byId[it.id] = it;
     return it;
   };
 
@@ -95,27 +110,110 @@ function buildTree(roots, syntax) {
     return it;
   };
 
-  // The steps a run of a line was evaluated through. Every one is a node of the run, which the server
-  // guarantees by building both from the same evaluation.
-  const innerItems = run => run.lrInner.map(n => stepItem(syntax.nodes[n]));
-  // A line evaluated several times opens onto each evaluation, unless none of them called anything, in
-  // which case there is nothing under the line but the values its label already shows.
-  const runItems = (callNode, sid, runs) => {
-    if (runs.every(run => !run.lrInner.length)) {
-      return [];
+  // Where a part of a line leads: the call of a function it was, opened in place; the line it was a
+  // use of; or nowhere, for a part evaluated without either.
+  const targetOf = records => {
+    const first = records.find(r => r.exSteps.length)?.exSteps[0];
+    if (first === undefined || !syntax.nodes[first]) {
+      return null;
     }
-    if (runs.length === 1) {
-      return innerItems(runs[0]);
+    const stop = stops[first];
+    if (stop?.stmt) {
+      return {kind: 'line', stop};
     }
-    return runs.map((run, i) => item({kind: 'run', id: `r:${callNode}:${sid}:${i}`, run, index: i}, innerItems(run)));
+    const it = stepItem(syntax.nodes[first]);
+    if (it.kind === 'call') {
+      it.inLine = true;
+    }
+    return {kind: 'call', item: it};
   };
+
+  // The breakdown of one run of a statement: the rows for the parts of `expr` evaluated in the run's
+  // node, and the items for what the run evaluated that none of them accounts for.
+  const breakdownOf = (expr, run) => {
+    const recordsOf = id => (run.lrIn != null && exprsAt[`${run.lrIn}|${id}`]) || [];
+    const rows = [];
+    const claimed = new Set();
+    const row = (depth, part, records) => {
+      records.forEach(r => r.exSteps.forEach(s => claimed.add(s)));
+      rows.push({depth, expr: part, records, target: targetOf(records)});
+    };
+    const walk = (e, depth, top) => {
+      if (!e) {
+        return;
+      }
+      switch (e.tag) {
+      case "RawTupleApply": {
+        // The whole line is the statement's own label, so its parts start at the top of the rows.
+        const records = top ? [] : recordsOf(rawExprMeta(e).getMetaId);
+        const inner = records.length ? depth + 1 : depth;
+        if (records.length) {
+          row(depth, e, records);
+        }
+        // The name applied is the call itself rather than a part of it; a base that is an expression
+        // of its own (a call applied again) is a part.
+        const base = e.rtaBase[1];
+        if (base.tag !== "RawValue") {
+          walk(base, inner, false);
+        }
+        e.rtaArgs.forEach(([, arg]) => walk(arg.roaArr?.[0] ?? arg.roaObj, inner, false));
+        break;
+      }
+      case "RawValue": {
+        // A name is a part worth a row only where using it called something -- a line, or a function
+        // taking no arguments -- rather than reading an argument.
+        const records = top ? [] : recordsOf(rawExprMeta(e).getMetaId).filter(r => r.exSteps.length);
+        if (records.length) {
+          row(depth, e, records);
+        }
+        break;
+      }
+      case "RawMethod":
+        walk(e.rmBase, depth, false);
+        walk(e.rmValue, depth, top);
+        break;
+      case "RawParen":
+        walk(e.rpnExpr, depth, top);
+        break;
+      case "RawWhere":
+        walk(e.rwBase, depth, top);
+        walk(e.rwCond, depth, false);
+        break;
+      case "RawAliasExpr":
+        walk(e.raliasBase, depth, top);
+        break;
+      case "RawList":
+        e.rlValues.forEach(v => walk(v, depth, false));
+        break;
+      default:
+        break;
+      }
+    };
+    walk(expr, 0, true);
+    const rest = run.lrInner.filter(n => !claimed.has(n) && syntax.nodes[n]).map(n => stepItem(syntax.nodes[n]));
+    return {run, rows, rest};
+  };
+
+  // The breakdowns of the runs of a statement, leaving out any with nothing to show.
+  const breakdownsOf = (statement, runs) => {
+    const expr = evaluatedExpr(statement);
+    return runs.map((run, index) => ({...breakdownOf(expr, run), index}))
+      .filter(b => b.rows.length || b.rest.length);
+  };
+
+  // The items a statement's breakdowns hold, which are the items under it.
+  const breakdownItems = breakdowns => breakdowns.flatMap(b => [
+    ...b.rows.flatMap(r => r.target?.kind === 'call' ? [r.target.item] : []),
+    ...b.rest,
+  ]);
 
   const stmtItem = (call, lines, own, tree) => {
     const sid = statementId(tree.rstStatement);
     const runs = lines[sid] ?? [];
+    const breakdowns = breakdownsOf(tree.rstStatement, runs);
     return item(
-      {kind: 'stmt', id: stmtItemId(call.scNode, sid), call, sid, tree, runs, own: own.has(sid)},
-      [...runItems(call.scNode, sid, runs), ...tree.rstChildren.map(t => stmtItem(call, lines, own, t))]
+      {kind: 'stmt', id: stmtItemId(call.scNode, sid), call, sid, tree, runs, breakdowns, own: own.has(sid)},
+      [...breakdownItems(breakdowns), ...tree.rstChildren.map(t => stmtItem(call, lines, own, t))]
     );
   };
 
@@ -125,14 +223,35 @@ function buildTree(roots, syntax) {
     call.scLines.forEach(line => {lines[line.slStmt] = line.slRuns;});
     const own = new Set(statement.ssLines ?? []);
     const head = lines[call.scStmt] ?? [];
+    const breakdowns = breakdownsOf(statement.ssTree.rstStatement, head);
     return item(
-      {kind: 'call', id: call.scNode, call, node, statement, runs: head},
-      [...runItems(call.scNode, call.scStmt, head), ...statement.ssTree.rstChildren.map(t => stmtItem(call, lines, own, t))]
+      {kind: 'call', id: call.scNode, call, node, statement, runs: head, breakdowns},
+      [...breakdownItems(breakdowns), ...statement.ssTree.rstChildren.map(t => stmtItem(call, lines, own, t))]
     );
   }
 
   const items = roots.map(stepItem);
-  return {items, parents, byNode};
+  return {items, parents, byNode, byId};
+}
+
+// The expression a statement evaluates: what a declaration is defined as, the expression a result is
+// written as, or an annotation. None for a declaration written over several lines, whose lines are
+// what it evaluates, or for a bind, whose value is what it bound.
+function evaluatedExpr(statement) {
+  const body = statementBody(statement);
+  switch (statement.tag) {
+  case "RawDeclStatement": {
+    const arrExpr = body.roaArr?.[0];
+    if (arrExpr) {
+      return rawPath(arrExpr) === NESTED_DECLARATION ? null : arrExpr;
+    }
+    return body.roaArr ? null : body.roaObj;
+  }
+  case "RawAnnot":
+    return body;
+  default:
+    return null;
+  }
 }
 
 // The name an expression is written under, reading through what is applied to it.

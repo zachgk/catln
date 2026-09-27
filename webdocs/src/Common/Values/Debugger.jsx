@@ -15,7 +15,13 @@ import {LineNumber, RunValues, StatementText, buildTree, isComment, statementLin
 
 // How an item of the tree reaches the rest of it: what each node's expression came to, the items by
 // the node they stand for, and how to go to another item.
-const DebugTreeContext = createContext({resolved: {}, byNode: {}, goTo: () => {}, nodeRefs: {current: {}}});
+const DebugTreeContext = createContext({resolved: {}, byNode: {}, byId: {}, goTo: () => {}, nodeRefs: {current: {}}, isOpen: () => false, toggleOpen: () => {}});
+
+// What marks a call of a function opened in place under the part of a line it was, among the tree's
+// expanded items: the call's own id says whether its lines are shown, and this whether it is.
+function openKey(id) {
+  return `open:${id}`;
+}
 
 function Debugger(props) {
   const fun = props["/fun"].contents;
@@ -61,10 +67,14 @@ function Debugger(props) {
   }, []);
   const sourceContext = useMemo(() => ({open: source, toggle: toggleSource, sources: drSources ?? {}}), [source, toggleSource, drSources]);
 
+  // An item inside a call opened under the part of a line it was is shown only once that call is,
+  // so going to it opens each such call above it as well as expanding it.
   const goTo = useCallback(itemId => {
     const above = [];
+    const opened = id => tree.byId[id]?.inLine ? [openKey(id)] : [];
+    above.push(...opened(itemId));
     for (let p = tree.parents[itemId]; p !== undefined; p = tree.parents[p]) {
-      above.push(p);
+      above.push(p, ...opened(p));
     }
     setExpanded(open => {
       const closed = above.filter(id => !open.includes(id));
@@ -80,7 +90,15 @@ function Debugger(props) {
     goTo(stop?.stmt ? stmtItemId(stop.call, stop.stmt) : node);
   }, [tree, goTo]);
 
-  const treeContext = useMemo(() => ({resolved: tree.resolved, byNode: tree.byNode, goTo, nodeRefs}), [tree, goTo]);
+  // Opening a call in place shows it with its lines, since its lines are what it was opened to read.
+  const toggleOpen = useCallback(id => {
+    setExpanded(open => open.includes(openKey(id))
+      ? open.filter(i => i !== openKey(id))
+      : [...open, openKey(id), ...(open.includes(id) ? [] : [id])]);
+  }, []);
+  const isOpen = useCallback(id => expanded.includes(openKey(id)), [expanded]);
+  const treeContext = useMemo(() => ({resolved: tree.resolved, byNode: tree.byNode, byId: tree.byId, goTo, nodeRefs, isOpen, toggleOpen}),
+                              [tree, goTo, isOpen, toggleOpen]);
 
   // After the ancestors are open, since an item inside a collapsed one has nothing on screen to
   // bring into view. Optional chained because jsdom implements no scrolling at all.
@@ -342,12 +360,90 @@ function FileTag(props) {
   );
 }
 
+// The breakdown of a statement: for each run of it, the parts of the line as written, one under
+// another and indented under the part they are part of, each with what it came to. A part that was a
+// call of a function opens that function's block in place, under it; a part that was a use of
+// another line leads to that line. What the run evaluated that no part accounts for follows.
+//
+// Rows rather than items of the tree: they are the one line read closely, not further steps of the
+// evaluation, and only the blocks opened among them are the tree again.
+function Breakdown(props) {
+  const {breakdowns, runCount} = props;
+  return (
+    // A click in here is the breakdown's: without stopping it, the statement it is under takes the mouse
+    // down as a click on its own row, and the link pressed is re-rendered from under the click.
+    <div className="catln-debug-breakdown" style={{margin: '2px 0 6px 2.2em', paddingLeft: '0.75em', borderLeft: '2px solid rgba(127, 127, 127, 0.35)'}}
+      onMouseDown={event => event.stopPropagation()} onClick={event => event.stopPropagation()}>
+      {breakdowns.map(b => (
+        <div key={b.index}>
+          {runCount > 1 ? <div style={{fontSize: '0.8em', opacity: 0.7, marginTop: '2px'}}>run {b.index + 1}<RunValues runs={[b.run]} /></div> : null}
+          {b.rows.map((row, i) => <BreakdownRow row={row} key={i} />)}
+          {b.rest.length ? (
+            <div style={{marginTop: '2px'}}>
+              <div style={{fontSize: '0.75em', opacity: 0.6}}>also evaluated</div>
+              {b.rest.map(child => <DebugItem item={child} key={child.id} />)}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BreakdownRow(props) {
+  const {row} = props;
+  const {byId, goTo, isOpen, toggleOpen} = useContext(DebugTreeContext);
+  const {depth, expr, records, target} = row;
+
+  let action = null;
+  let opened = null;
+  if (target?.kind === 'call') {
+    const {item} = target;
+    const open = isOpen(item.id);
+    action = (
+      <Link component="button" type="button" underline="hover" onClick={() => toggleOpen(item.id)}
+        aria-expanded={open} title={open ? "Close the call" : "Open the call"} className="catln-debug-open">
+        {open ? "▾" : "▸"} <FileTag statement={item.statement} />
+      </Link>
+    );
+    opened = open ? <div style={{marginLeft: `${depth * 1.5}em`}}><DebugItem item={item} /></div> : null;
+  } else if (target?.kind === 'line') {
+    const stmtId = stmtItemId(target.stop.call, target.stop.stmt);
+    const line = byId[stmtId] ? statementLine(byId[stmtId].tree.rstStatement) : null;
+    action = (
+      <Link component="button" type="button" onClick={() => goTo(stmtId)} title="Go to the line">
+        ↑ line{line ? ` ${line}` : ""}
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <div className="catln-debug-part" style={{paddingLeft: `${depth * 1.5}em`, display: 'flex', alignItems: 'baseline', gap: '0.75em', lineHeight: 1.7}}>
+        <StatementText statement={{tag: "RawAnnot", ranAnnot: expr}} />
+        <RunValues runs={records.map(r => ({lrValue: r.exValue}))} />
+        {action}
+      </div>
+      {opened}
+    </>
+  );
+}
+
 // One item of the run's tree (see `buildTree` in DebugSyntax for the kinds).
 function DebugItem(props) {
   const {item} = props;
   const {goTo, nodeRefs} = useContext(DebugTreeContext);
   const ref = el => {nodeRefs.current[item.id] = el};
-  const children = item.children.map(child => <DebugItem item={child} key={child.id} />);
+  // A statement's breakdown holds the items opened in it, so only the statements under it, and a
+  // step's own children, are items of their own here.
+  const itemChildren = item.breakdowns
+    ? item.children.filter(child => child.kind === 'stmt')
+    : item.children;
+  const children = [
+    // Only a breakdown with something in it, since any child at all makes the row one that opens.
+    ...(item.breakdowns?.length ? [<Breakdown key="breakdown" breakdowns={item.breakdowns} runCount={item.runs.length} />] : []),
+    ...itemChildren.map(child => <DebugItem item={child} key={child.id} />),
+  ];
 
   switch (item.kind) {
   case 'call': {
@@ -390,8 +486,6 @@ function DebugItem(props) {
     );
     return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-stmt" data-stmt={item.sid}>{children}</TreeItem>;
   }
-  case 'run':
-    return <TreeItem itemId={item.id} label={<span>run {item.index + 1}<RunValues runs={[item.run]} /></span>} ref={ref} sx={stepSx}>{children}</TreeItem>;
   case 'lineref': {
     // A line of a function shown elsewhere in the tree, where it opens onto how it was evaluated.
     const {stop, node} = item;

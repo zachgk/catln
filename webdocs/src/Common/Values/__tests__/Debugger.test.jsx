@@ -601,18 +601,56 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       expect(labelOf(itemOf('scale(v = helper'))).toHaveTextContent(/=> 63$/)
     })
 
-    it('opens a line onto its steps, with each function it called shown as that function', async () => {
+    // The parts of the result line, as written, each under the part it is part of.
+    function parts() {
+      return [...document.querySelectorAll('.catln-debug-part')].map(p => ({
+        text: p.textContent,
+        depth: parseFloat(p.style.paddingLeft) || 0,
+      }))
+    }
+
+    // The button a part of a line opens the call it made with.
+    function opener(text) {
+      const part = [...document.querySelectorAll('.catln-debug-part')].find(p => p.textContent.startsWith(text))
+      return within(part).getByRole('button')
+    }
+
+    it('opens a line onto its parts as written, with what each came to', async () => {
       const user = userEvent.setup()
       render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
       await open(user, itemOf('scale(v = helper'))
 
-      // The functions the result called, each as it is written with what the call came to.
-      expect(itemOf(/^helper\(y.*=> 6/)).toBeInTheDocument()
-      expect(itemOf(/^scale\(v -> .*=> 60/)).toBeInTheDocument()
-      expect(itemOf(/^sign\(x -> .*=> 1/)).toBeInTheDocument()
-      // A use of a line of total is not the line again, but a way back to it.
-      expect(screen.getAllByRole('button', { name: '↑ line' }).length).toBeGreaterThan(0)
+      // `scale(v = helper(y = sum)) + sum * sign(x = a)`: the two sides of the +, and within each
+      // what it is made of. The + itself is the line's own label.
+      expect(parts()).toEqual([
+        {text: expect.stringMatching(/^scale\(v = helper\(y = sum\)\)\s*=> 60/), depth: 0},
+        {text: expect.stringMatching(/^helper\(y = sum\)\s*=> 6/), depth: 1.5},
+        {text: expect.stringMatching(/^sum\s*=> 3\s*↑ line 15$/), depth: 3},
+        {text: expect.stringMatching(/^sum \* sign\(x = a\)\s*=> 3$/), depth: 0},
+        {text: expect.stringMatching(/^sum\s*=> 3\s*↑ line 15$/), depth: 1.5},
+        {text: expect.stringMatching(/^sign\(x = a\)\s*=> 1/), depth: 1.5},
+      ])
+      // The functions called are closed until asked for, each named by where it is written.
+      expect(opener('scale(v = helper')).toHaveTextContent('debugNested.ct:7')
+      expect(screen.queryByText(/^scale\(v -> /)).not.toBeInTheDocument()
+    })
+
+    it('opens a call a part made in place, under the part', async () => {
+      const user = userEvent.setup()
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      await open(user, itemOf('scale(v = helper'))
+      await user.click(opener('helper(y = sum)'))
+
+      // The helper's block, with its line, straight after the part that called it.
+      const helper = itemOf(/^helper\(y.*=> 6/)
+      expect(helper).toHaveClass('catln-debug-call')
+      const helperPart = [...document.querySelectorAll('.catln-debug-part')].find(p => p.textContent.startsWith('helper(y = sum)'))
+      expect(helperPart.nextElementSibling.contains(helper)).toBe(true)
+
+      await user.click(opener('helper(y = sum)'))
+      expect(screen.queryAllByRole('treeitem').filter(i => i.classList.contains('catln-debug-call') && /^helper\(y/.test(labelText(i)))).toHaveLength(0)
     })
 
     it('leads from a use of a line back to the line', async () => {
@@ -620,7 +658,7 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
       await open(user, itemOf('scale(v = helper'))
-      await user.click(screen.getAllByRole('button', { name: '↑ line' })[0])
+      await user.click(screen.getAllByRole('button', { name: '↑ line 15' })[0])
 
       expect(itemOf('sum = a + b')).toHaveAttribute('aria-selected', 'true')
     })
@@ -630,7 +668,7 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
       await open(user, itemOf('scale(v = helper'))
-      await open(user, itemOf(/^sign\(x -> /))
+      await user.click(opener('sign(x = a)'))
 
       expect(labelOf(itemOf('Then'))).toHaveTextContent(/=> 1$/)
       expect(labelOf(itemOf('Else'))).toHaveTextContent('not evaluated')
@@ -657,11 +695,8 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       expect(labelOf(itemOf('sum = a + b')).querySelector('.catln-debug-lineno')).toHaveTextContent('15')
 
       await user.click(labelOf(itemOf('scale(v = helper')))
+      await user.click(opener('scale(v = helper'))
       expect(labelOf(itemOf(/^scale\(v -> /)).querySelector('.catln-debug-file')).toHaveTextContent('debugNested.ct:7')
-      // A use of a line is a step between blocks, drawn as one rather than as source.
-      const use = screen.getAllByRole('button', { name: '↑ line' })[0].closest('[role=treeitem]')
-      expect(use).toHaveClass('catln-debug-step')
-      expect(labelOf(use).querySelector('.catln-debug-file')).toBeNull()
     })
 
     // The whole run is this tree: there is no second tree of calls, nor of arrows.
