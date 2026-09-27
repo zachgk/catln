@@ -23,24 +23,11 @@ Prgm
                             , /V=TopType
                             ] = Value Leaf
                         , /Data/Map/remove
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) | isLess
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
-                            [ /K=TopType
-                            , /V=TopType
-                            ] = Node
-                            ( Value left= remove( Value m= Value left )( Value key= Value key ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
-                        , /Data/Map/remove
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) | isGreater
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
-                            [ /K=TopType
-                            , /V=TopType
-                            ] = Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
-                            ( Value right= remove( Value m= Value right )( Value key= Value key ) )
-                        , /Data/Map/remove
                             ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) -> ∀/Data/Map
                             [ /K=TopType
                             , /V=TopType
-                            ] = graft( Value from= Value left )( Value into= Value right )
+                            ] = $b74ebc( Value /nk= Value /nk )( Value /key= Value /key )( Value /nv= Value /nv )( Value /right= Value /right )( Value /left= Value /left )
+                            ( Value /$b74ebc-arg= compareTo( Value other= Value nk )( Value /this= Value key ) )
                         ]
                     }
                 )
@@ -130,6 +117,34 @@ Prgm
                     }
                 )
             ,
+                ( "/remove./Data/Map/$b74ebc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ remove./Data/Map/$b74ebc( Value /nk )( Value /key )( Value /nv )( Value /right )( Value /left )( Value /$b74ebc-arg@Value c -> /Data/Algebra/LessThan )= Node
+                            ( Value left= remove( Value m= Value left )( Value key= Value key ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
+                        , remove./Data/Map/$b74ebc( Value /nk )( Value /key )( Value /nv )( Value /right )( Value /left )( Value /$b74ebc-arg@Value c -> /Data/Algebra/GreaterThan )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value right= remove( Value m= Value right )( Value key= Value key ) )
+                        , remove./Data/Map/$b74ebc( Value /nk )( Value /key )( Value /nv )( Value /right )( Value /left )( Value /$b74ebc-arg@Value c -> /Data/Algebra/Equal )= graft( Value from= Value left )( Value into= Value right )
+                        ]
+                    }
+                )
+            ,
+                ( "/get./Data/Map/$bc95bf"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ get./Data/Map/$bc95bf( Value /value )( Value /key )( Value /right )( Value /left )( Value /$bc95bf-arg@Value c -> /Data/Algebra/Equal )= /Data/Maybe/Some( Value value= Value value )
+                        , get./Data/Map/$bc95bf( Value /value )( Value /key )( Value /right )( Value /left )( Value /$bc95bf-arg@Value c -> /Data/Algebra/LessThan )= get( Value m= Value left )( Value key= Value key )
+                        , get./Data/Map/$bc95bf( Value /value )( Value /key )( Value /right )( Value /left )( Value /$bc95bf-arg@Value c -> /Data/Algebra/GreaterThan )= get( Value m= Value right )( Value key= Value key )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Map/keys"
                 , ObjectMapItem
                     { omiDecls =
@@ -164,13 +179,8 @@ Prgm
                     , omiDefs =
                         [ /Data/Map/get( Value m= Value Leaf )( Value key ) -> ∀/Data/Maybe[ /T=TopType ] = Value /Data/Maybe/Nothing
                         , /Data/Map/get
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) | isEq
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Maybe[ /T=TopType ] = /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Map/get
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) | isLess
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Maybe[ /T=TopType ] = get( Value m= Value left )( Value key= Value key )
-                        , /Data/Map/get
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) -> ∀/Data/Maybe[ /T=TopType ] = get( Value m= Value right )( Value key= Value key )
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) -> ∀/Data/Maybe[ /T=TopType ] = $bc95bf( Value /value= Value /value )( Value /key= Value /key )( Value /right= Value /right )( Value /left= Value /left )
+                            ( Value /$bc95bf-arg= compareTo( Value other= Value nk )( Value /this= Value key ) )
                         ]
                     }
                 )
@@ -281,24 +291,11 @@ Prgm
                             , /V=TopType
                             ] = Node( Value left= Value Leaf )( Value key= Value key )( Value value= Value value )( Value right= Value Leaf )
                         , /Data/Map/insert
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) | isEq
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
-                            [ /K=TopType
-                            , /V=TopType
-                            ] = Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
-                        , /Data/Map/insert
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) | isLess
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
-                            [ /K=TopType
-                            , /V=TopType
-                            ] = Node
-                            ( Value left= insert( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
-                        , /Data/Map/insert
                             ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) -> ∀/Data/Map
                             [ /K=TopType
                             , /V=TopType
-                            ] = Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
-                            ( Value right= insert( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
+                            ] = $5a3188( Value /nk= Value /nk )( Value /value= Value /value )( Value /key= Value /key )( Value /nv= Value /nv )( Value /right= Value /right )( Value /left= Value /left )
+                            ( Value /$5a3188-arg= compareTo( Value other= Value nk )( Value /this= Value key ) )
                         ]
                     }
                 )
@@ -379,6 +376,24 @@ Prgm
                     }
                 )
             ,
+                ( "/insert./Data/Map/$5a3188"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ insert./Data/Map/$5a3188( Value /nk )( Value /value )( Value /key )( Value /nv )( Value /right )( Value /left )
+                            ( Value /$5a3188-arg@Value c -> /Data/Algebra/Equal )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
+                        , insert./Data/Map/$5a3188( Value /nk )( Value /value )( Value /key )( Value /nv )( Value /right )( Value /left )
+                            ( Value /$5a3188-arg@Value c -> /Data/Algebra/LessThan )= Node
+                            ( Value left= insert( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
+                        , insert./Data/Map/$5a3188( Value /nk )( Value /value )( Value /key )( Value /nv )( Value /right )( Value /left )
+                            ( Value /$5a3188-arg@Value c -> /Data/Algebra/GreaterThan )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value right= insert( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -415,6 +430,9 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -627,6 +645,134 @@ Prgm
                         { ciValue = 9 }
                     )
                 )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Each branch of the [match] is taken: the lookups below descend left, find the root, and descend" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  right." }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= insert
+                        ( Value m= insert
+                            ( Value m= insert( Value m= Value Leaf )
+                                ( Value key= CInt
+                                    { ciValue = 2 }
+                                )
+                                ( Value value= CInt
+                                    { ciValue = 20 }
+                                )
+                            )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
+                        )
+                        ( Value key= CInt
+                            { ciValue = 3 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 30 }
+                        )
+                    )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= insert
+                        ( Value m= insert
+                            ( Value m= insert( Value m= Value Leaf )
+                                ( Value key= CInt
+                                    { ciValue = 2 }
+                                )
+                                ( Value value= CInt
+                                    { ciValue = 20 }
+                                )
+                            )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
+                        )
+                        ( Value key= CInt
+                            { ciValue = 3 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 30 }
+                        )
+                    )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 20 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= insert
+                        ( Value m= insert
+                            ( Value m= insert( Value m= Value Leaf )
+                                ( Value key= CInt
+                                    { ciValue = 2 }
+                                )
+                                ( Value value= CInt
+                                    { ciValue = 20 }
+                                )
+                            )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
+                        )
+                        ( Value key= CInt
+                            { ciValue = 3 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 30 }
+                        )
+                    )
+                    ( Value key= CInt
+                        { ciValue = 3 }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 30 }
+                    )
+                )
             )
             ( Value /result= CStr
                 { csValue = "True" }

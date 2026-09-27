@@ -139,10 +139,9 @@ abs(x -> Integer) | x >= 0= x     # arrow guards — test/Integration/code/cond.
 abs(x -> Integer) else = x
 ```
 
-- **Arrow guards are the default choice.** They are the form that works inside generic,
-  recursive definitions, and they keep the decision on the function it belongs to. Examples in
-  `stack/core/`: `Data/Map/insert`, `Data/Map/remove`, `Data/List/range`, `Data/List/sorted`,
-  `Data/Set/intersectInto`.
+- **Arrow guards are the default for testing a value**, and keep the decision on the function it
+  belongs to: `Data/List/range`, `Data/List/sorted`, `Data/Set/intersectInto`. When the decision
+  is a constructor (a `Comparison`), `match` on it instead: `Data/Map/get`, `insert`, `remove`.
 - **A branch is a declaration, not an expression** (`stack/rss/main.ct`). It is a whole arm
   body — you cannot put an `if` inside an argument list or join one into a string
   mid-expression. `mmap(m= lst, fn(v)= if(...) ...)` is a *parse error*.
@@ -151,15 +150,13 @@ abs(x -> Integer) else = x
 - **Prefer dispatching on constructors over testing a value** where the shape allows it. Arms
   that pattern-match `Nil`/`Cons`, `Leaf`/`Node`, `True`/`False`, or `Equal`/`LessThan`/
   `GreaterThan` need no guard at all, and they are checked for coverage.
-- **Frontier — a `match`/`case` arm written as a constructor does not select.** The `match` and
-  `case` preprocessors put each arm's pattern in as the alias of a hole (`_@pattern`), which
-  constrains nothing, so constructor arms (`/Data/Algebra/Equal= …`) share one ⊤ domain: the
-  last arm answers for every value, and in a generic definition the arms' derived overlap test
-  fails with "eval failed". (`if` was fixed by moving the pattern to the argument position; doing
-  the same for `match`/`case` currently breaks binder arms like `x2 | x >= 0= …`, because a bare
-  binder in an argument-value position is not bounded by anything.) Also note `x -> Type= …` in
-  a match arm is a binder with a declared *result* type, not a type pattern. Use arrow guards —
-  that is why `Data/Map/get`/`insert`/`remove` are guarded.
+- **A `match`/`case` arm's role is decided by position, as a function argument's is.** A bare
+  name is a binder (`x2 | x2 >= 0= …`, like `f(x)`), and its `-> T` is the binder's type — so a
+  constructor arm is a typed binder: `c -> /Data/Algebra/Equal= …`. Anything structured
+  (`Cons(head, tail)`, a hole, a constant) is a pattern the scrutinee is matched against. A bare
+  constructor name (`/Data/Algebra/Equal= …`) is therefore a *binder* named after it, matching
+  everything — write the `c -> …` form. `Data/Map/get`/`insert`/`remove` match this way on a
+  `Comparison`.
 - **Test a branch by running the branch that is not taken.** All four branching forms were
   silently broken — a guarded arm was taken whether or not its guard held — while `case.ct`,
   `match.ct`, `ifThenElse.ct` and `cond.ct` all passed, because each only ever evaluated a point

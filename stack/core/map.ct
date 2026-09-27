@@ -50,18 +50,26 @@ module(Data/Map)
     >>> 0
   # ## Lookup
   get[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Maybe[$T -> $_MV]
-    # [get] finds the [value] stored under [key], or [Nothing] if the key is absent. Guards on its
-      own arms carry the [key <=> nodeKey] decision, as in [insert] and [remove] below: the node's
-      [value] on equal keys, and otherwise the lookup continued in the [left] (smaller) or [right]
-      (larger) subtree.
+    # [get] finds the [value] stored under [key], or [Nothing] if the key is absent. A [match] on
+      the [key <=> nodeKey] [Comparison] makes the decision: the node's [value] on [Equal], and
+      otherwise the lookup continued in the [left] (smaller) or [right] (larger) subtree.
   get(m= Leaf, key)= /Data/Maybe/Nothing
-  get(m= Node(left, key@nk, value, right), key) | key.compareTo(other= nk).isEq= /Data/Maybe/Some(value= value)
-  get(m= Node(left, key@nk, value, right), key) | key.compareTo(other= nk).isLess= get(m= left, key= key)
-  get(m= Node(left, key@nk, value, right), key) else = get(m= right, key= key)
+  get(m= Node(left, key@nk, value, right), key)= match(key.compareTo(other= nk))
+    c -> /Data/Algebra/Equal= /Data/Maybe/Some(value= value)
+    c -> /Data/Algebra/LessThan= get(m= left, key= key)
+    c -> /Data/Algebra/GreaterThan= get(m= right, key= key)
 
   > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 2) == /Data/Maybe/Some(value= 20)
     >>> True
   > get(m= insert(m= Leaf, key= 1, value= 10), key= 9) == /Data/Maybe/Nothing
+    >>> True
+  # Each branch of the [match] is taken: the lookups below descend left, find the root, and descend
+  #   right.
+  > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 1) == /Data/Maybe/Some(value= 10)
+    >>> True
+  > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2) == /Data/Maybe/Some(value= 20)
+    >>> True
+  > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 3) == /Data/Maybe/Some(value= 30)
     >>> True
   # ## Membership
   containsKey[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> Boolean
@@ -82,37 +90,31 @@ module(Data/Map)
   # ## Insertion
   insert[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [insert] adds an entry, or replaces the value if the key is already present, returning the
-      updated map. Guards on its own arms carry the [key <=> nodeKey] decision: on equal keys the
-      node keeps its key but takes the new [value]; otherwise the entry is inserted into the
+      updated map. A [match] on the [key <=> nodeKey] [Comparison] makes the decision: on [Equal]
+      the node keeps its key but takes the new [value]; otherwise the entry is inserted into the
       [left]/[right] subtree and the node is rebuilt around the result.
-    # TODO: a `match` over the [Comparison] would avoid repeating the [Node] destructure on three
-      arms. Written with typed arms ([c -> /Data/Algebra/Equal= ...]) it still fails two ways: it
-      selects the wrong arm (inserting 2, 1, 3, 4 gives [keys] of [[2, 1, 3, 4]], and re-inserting
-      a key does not replace its value), and the branch's generated function fails its derived
-      overlap-agreement test with "eval failed", since its generated inputs are all metavariables
-      and it has no declaration of its own.
   insert(m= Leaf, key, value)= Node(left= Leaf, key= key, value= value, right= Leaf)
-  insert(m= Node(left, key@nk, value@nv, right), key, value) | key.compareTo(other= nk).isEq= Node(left= left, key= nk, value= value, right= right)
-  insert(m= Node(left, key@nk, value@nv, right), key, value) | key.compareTo(other= nk).isLess= Node(left= insert(m= left, key= key, value= value), key= nk, value= nv, right= right)
-  insert(m= Node(left, key@nk, value@nv, right), key, value) else = Node(left= left, key= nk, value= nv, right= insert(m= right, key= key, value= value))
+  insert(m= Node(left, key@nk, value@nv, right), key, value)= match(key.compareTo(other= nk))
+    c -> /Data/Algebra/Equal= Node(left= left, key= nk, value= value, right= right)
+    c -> /Data/Algebra/LessThan= Node(left= insert(m= left, key= key, value= value), key= nk, value= nv, right= right)
+    c -> /Data/Algebra/GreaterThan= Node(left= left, key= nk, value= nv, right= insert(m= right, key= key, value= value))
 
   > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 1, value= 99), key= 1) == /Data/Maybe/Some(value= 99)
     >>> True
   # ## Removal
   remove[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [remove] deletes the entry for [key], returning the updated map (unchanged if the key is
-      absent). Guards on its own arms carry the [key <=> nodeKey] decision: a smaller or larger key
-      rebuilds the node with [key] removed from the [left]/[right] subtree, and an equal key drops
-      this node, replacing it with the merge of its two subtrees — [graft]ing all of the [left]
-      subtree's entries into the [right] one. (Because the map is order-independent, any tree
-      holding exactly the surviving entries is a correct result; this merge avoids promoting a
-      synthesized successor key.)
-    # TODO: a `match` over the [Comparison] would avoid repeating the [Node] destructure on three
-      arms — blocked by the same two gaps as [insert]'s.
+      absent). A [match] on the [key <=> nodeKey] [Comparison] makes the decision: a smaller or
+      larger key rebuilds the node with [key] removed from the [left]/[right] subtree, and an equal
+      key drops this node, replacing it with the merge of its two subtrees — [graft]ing all of the
+      [left] subtree's entries into the [right] one. (Because the map is order-independent, any
+      tree holding exactly the surviving entries is a correct result; this merge avoids promoting
+      a synthesized successor key.)
   remove(m= Leaf, key)= Leaf
-  remove(m= Node(left, key@nk, value@nv, right), key) | key.compareTo(other= nk).isLess= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
-  remove(m= Node(left, key@nk, value@nv, right), key) | key.compareTo(other= nk).isGreater= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
-  remove(m= Node(left, key@nk, value@nv, right), key) else = graft(from= left, into= right)
+  remove(m= Node(left, key@nk, value@nv, right), key)= match(key.compareTo(other= nk))
+    c -> /Data/Algebra/LessThan= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
+    c -> /Data/Algebra/GreaterThan= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
+    c -> /Data/Algebra/Equal= graft(from= left, into= right)
 
   graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $_MK, $V -> $_MV], into -> /Data/Map[$K -> $_MK, $V -> $_MV]) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [graft] inserts every entry of the [from] tree into the [into] map: [foldEntries] over [from]
