@@ -193,13 +193,26 @@ data TypePredicate
   = PredExpr { peType :: PartialType }
   | PredClass { pcType :: PartialType } -- A hasClass predicate
   | PredRel { prType :: PartialType } -- a isa predicate. Represented by val : classOrModuleOrType
+  -- | The value IS the constant. Its use is the negation: a leaf minus the points of a constant
+  -- exclusion, @/Integer − {-51}@ = @/Integer|¬PredConstEq(-51)@, which neither a positive union
+  -- (a constant cannot be carved out of a leaf) nor a 'Just'-top (it re-adds its positive leafs
+  -- whole) can otherwise spell — a meet against @⊤ − {-51}@ used to drop the exclusion and widen
+  -- (propComplementInverse, 8048: Seed 16485207855937109884 2066315092332606395).
+  --
+  -- A stand-in. What it states is a refinement of the value, and the long-term home for it is a
+  -- 'PredExpr' refinement type — @Integer__neq(-51)@, or @(Integer | $this != -51)@ — once the
+  -- 'PredExpr' and refinement machinery can decide one. Until then a predicate atom of its own is
+  -- the closer substitute: its meaning is exactly "the value equals this constant", decided
+  -- against constants and nothing else, and it should not grow into a refinement language.
+  | PredConstEq { pceConst :: Constant }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 -- | One condition a type is filtered by, read as a Catln type.
 instance CtType TypePredicate where
   ctDoc _ = [
     "One condition a type is filtered by, each written over the [type] it is about.",
-    "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
+    "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`.",
+    "A [PredConstEq] says the value is that constant. It is how a type says \"these values except that one\" — a leaf with the constant excluded — and stands in for a refinement written with [PredExpr] until those can be decided."
             ]
 
 data TypePredicates
@@ -261,9 +274,10 @@ instance Hashable TypePredicates where
   hashWithSalt s (PredsNot p)  = s `hashWithSalt` (2 :: Int) `hashWithSalt` p
 
 instance Hashable TypePredicate where
-  hashWithSalt s (PredExpr  p) = s `hashWithSalt` (0 :: Int) `hashWithSalt` p
-  hashWithSalt s (PredClass p) = s `hashWithSalt` (1 :: Int) `hashWithSalt` p
-  hashWithSalt s (PredRel   p) = s `hashWithSalt` (2 :: Int) `hashWithSalt` p
+  hashWithSalt s (PredExpr  p)   = s `hashWithSalt` (0 :: Int) `hashWithSalt` p
+  hashWithSalt s (PredConstEq c) = s `hashWithSalt` (3 :: Int) `hashWithSalt` c
+  hashWithSalt s (PredClass p)   = s `hashWithSalt` (1 :: Int) `hashWithSalt` p
+  hashWithSalt s (PredRel   p)   = s `hashWithSalt` (2 :: Int) `hashWithSalt` p
 
 -- |
 -- A particle type describes a simple set of types.
@@ -534,9 +548,10 @@ forceTypePredicates (PredsAnd ps) = foldl' (\acc x -> acc `seq` forceTypePredica
 forceTypePredicates (PredsNot p)  = forceTypePredicates p
 
 forceTypePredicate :: TypePredicate -> ()
-forceTypePredicate (PredExpr p)  = forcePartialType p
-forceTypePredicate (PredClass p) = forcePartialType p
-forceTypePredicate (PredRel p)   = forcePartialType p
+forceTypePredicate (PredExpr p)    = forcePartialType p
+forceTypePredicate (PredConstEq c) = c `seq` ()
+forceTypePredicate (PredClass p)   = forcePartialType p
+forceTypePredicate (PredRel p)     = forcePartialType p
 
 -- | Force a list's spine, leaving its elements at WHNF.
 forceSpine :: [a] -> ()
@@ -890,9 +905,10 @@ showPredsD d (PredsNot p)  = "!(" ++ showPredsD d p ++ ")"
 -- | Render a single 'TypePredicate', preserving the derived-style output but
 -- routing the nested 'PartialType' through the depth-bounded renderer.
 showPartialPredD :: Int -> TypePredicate -> String
-showPartialPredD d (PredExpr p)  = "PredExpr "  ++ showPartialD (d - 1) p
-showPartialPredD d (PredClass p) = "PredClass " ++ showPartialD (d - 1) p
-showPartialPredD d (PredRel p)   = "PredRel "   ++ showPartialD (d - 1) p
+showPartialPredD d (PredExpr p)    = "PredExpr "  ++ showPartialD (d - 1) p
+showPartialPredD _ (PredConstEq c) = "PredConstEq " ++ show c
+showPartialPredD d (PredClass p)   = "PredClass " ++ showPartialD (d - 1) p
+showPartialPredD d (PredRel p)     = "PredRel "   ++ showPartialD (d - 1) p
 
 instance Show PartialType where
   show = boundedTypeStr . showPartialD maxShowDepth
@@ -1066,9 +1082,10 @@ instance ToJSON ClassGraph where
   toJSON classGraph = toJSON $ asClassMap classGraph
 
 mapTypePred :: (PartialType -> PartialType) -> TypePredicate -> TypePredicate
-mapTypePred f (PredExpr p)  = PredExpr (f p)
-mapTypePred f (PredClass p) = PredClass (f p)
-mapTypePred f (PredRel p)   = PredRel (f p)
+mapTypePred f (PredExpr p)    = PredExpr (f p)
+mapTypePred _ p@PredConstEq{} = p
+mapTypePred f (PredClass p)   = PredClass (f p)
+mapTypePred f (PredRel p)     = PredRel (f p)
 
 mapTypePreds :: (TypePredicate -> TypePredicate) -> TypePredicates -> TypePredicates
 mapTypePreds f (PredsOne p)  = PredsOne (f p)
@@ -1199,9 +1216,10 @@ predsHasRecNegAtom typeEnv = goPos
     goNeg (PredsAnd ps) = any goNeg ps
     goNeg (PredsNot p)  = goPos p
     goNeg (PredsOne a)  = case a of
-      PredClass p -> classRecursiveMembership typeEnv (ptName p)
-      PredRel p   -> classRecursiveMembership typeEnv (ptName p)
-      PredExpr _  -> False
+      PredClass p   -> classRecursiveMembership typeEnv (ptName p)
+      PredRel p     -> classRecursiveMembership typeEnv (ptName p)
+      PredExpr _    -> False
+      PredConstEq _ -> False
 
 -- | Whether a formula mentions an unsealed class (outside the closed-world 'tePrgmEnv') at any
 -- polarity: a class\/rel atom whose class is open. Its current members do not bound it, so a
@@ -1215,9 +1233,10 @@ predsHasOpenAtom typeEnv
     go (PredsNot p)  = go p
     go PredsNone     = False
     go (PredsOne a)  = case a of
-      PredClass c -> openClass c
-      PredRel r   -> any openClass (relMatchingClasses typeEnv r)
-      PredExpr _  -> False
+      PredClass c   -> openClass c
+      PredRel r     -> any openClass (relMatchingClasses typeEnv r)
+      PredExpr _    -> False
+      PredConstEq _ -> False
     openClass c = not (predsSealed typeEnv (PredsOne (PredClass c)))
 
 -- | Whether class @c@'s membership structure is recursive: the class-reference graph
@@ -1244,9 +1263,10 @@ classRecursiveMembership typeEnv = go S.empty
     predsRefNames (PredsAnd ps) = S.unions (map predsRefNames ps)
     predsRefNames (PredsNot p)  = predsRefNames p
     predsRefNames (PredsOne a)  = partialRefNames (predAtomPartial a)
-    predAtomPartial (PredClass p) = p
-    predAtomPartial (PredRel p)   = p
-    predAtomPartial (PredExpr p)  = p
+    predAtomPartial (PredClass p)   = p
+    predAtomPartial (PredRel p)     = p
+    predAtomPartial (PredExpr p)    = p
+    predAtomPartial (PredConstEq c) = constantPartialType c
 
 -- | Returns True if the predicates are syntactically contradictory, i.e. contain both p and ¬p.
 -- Uses iterative unit propagation: ¬(A∧B) with A known → derives ¬B, allowing multi-step
@@ -1403,9 +1423,10 @@ typeContainsTypeVar (UnionType mPreds leafs _) = predsPart || any partialHas (sp
     predsHas (PredsAnd ps) = any predsHas ps
     predsHas (PredsOne p)  = predHas p
     predsHas (PredsNot p)  = predsHas p
-    predHas (PredExpr p)  = partialHas p
-    predHas (PredClass p) = partialHas p
-    predHas (PredRel p)   = partialHas p
+    predHas (PredExpr p)    = partialHas p
+    predHas (PredClass p)   = partialHas p
+    predHas (PredRel p)     = partialHas p
+    predHas (PredConstEq _) = False
     partialHas PartialType{ptVars, ptArgs, ptPreds} =
       any typeContainsTypeVar ptVars || any typeContainsTypeVar ptArgs || predsHas ptPreds
 
@@ -1603,9 +1624,10 @@ classConstituentNames TypeEnv{teClassGraph=ClassGraph cg} = go S.empty
     topAtomNames (UnionType (Just (preds, _, _)) _ _) =
       S.fromList $ mapMaybe atomName $ fromMaybe [] (tryPredsToList preds)
     topAtomNames _ = S.empty
-    atomName (PredClass p) = Just (ptName p)
-    atomName (PredRel p)   = Just (ptName p)
-    atomName (PredExpr _)  = Nothing
+    atomName (PredClass p)   = Just (ptName p)
+    atomName (PredRel p)     = Just (ptName p)
+    atomName (PredExpr _)    = Nothing
+    atomName (PredConstEq _) = Nothing
 
 -- | Splits a partial type by expanding any union-typed vars or args into separate partials.
 -- For example, P[$T=(A + B)] splits into [P[$T=A], P[$T=B]].
@@ -1795,6 +1817,8 @@ expandPredicates typeEnv vaenv (PredsNot p)  = complementTypeEnv typeEnv vaenv $
 expandPredicate :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> Type
 expandPredicate typeEnv vaenv (PredClass clss) = expandClassPartial typeEnv vaenv clss
 expandPredicate typeEnv vaenv (PredRel rel)    = expandRelPartial typeEnv vaenv rel
+-- A constant equality holds of exactly that constant.
+expandPredicate _ _ (PredConstEq c) = constantType c
 expandPredicate typeEnv vaenv (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (\ps -> UnionType Nothing (joinUnionType ps) []) (typeGraphExpandPredExpr typeEnv vaenv e)
 
 -- | 'expandPredicates' under the restricted-intersection-operand contract of
@@ -1807,6 +1831,7 @@ expandPredicatesWithinNames _       _     _  PredsNone    = PTopType
 expandPredicatesWithinNames typeEnv vaenv ns (PredsOne (PredClass clss)) = expandClassPartialWithinNames typeEnv vaenv ns clss
 expandPredicatesWithinNames typeEnv vaenv ns (PredsOne (PredRel rel))    = expandRelPartialWithinNames typeEnv vaenv ns rel
 expandPredicatesWithinNames typeEnv vaenv _  p@(PredsOne PredExpr{})     = expandPredicates typeEnv vaenv p
+expandPredicatesWithinNames typeEnv vaenv _  p@(PredsOne PredConstEq{})  = expandPredicates typeEnv vaenv p
 expandPredicatesWithinNames typeEnv vaenv ns (PredsAnd ps) = case map (expandPredicatesWithinNames typeEnv vaenv ns) ps of
   [] -> BottomType
   ts -> foldr1 (intersectTypesEnv typeEnv vaenv) ts
@@ -1906,6 +1931,7 @@ predsPositiveSealed typeEnv = go
     atomEnumerable (PredExpr _)    = False
     atomEnumerable p@(PredClass c) = enumerableName (ptName c) p
     atomEnumerable p@(PredRel c)   = enumerableName (ptName c) p
+    atomEnumerable (PredConstEq _) = False
     enumerableName n p = not (nameIsClass n) || predsSealed typeEnv (PredsOne p)
     nameIsClass n = any (relativeNameMatches n) (listClassNames typeEnv)
 
@@ -1919,9 +1945,10 @@ predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
     go (PredsOne p)  = atomSealed p
     go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False
     go (PredsNot p)  = go p
-    atomSealed (PredClass c) = classSealed (ptName c)
-    atomSealed (PredRel c)   = classSealed (ptName c)
-    atomSealed (PredExpr _)  = False
+    atomSealed (PredClass c)   = classSealed (ptName c)
+    atomSealed (PredRel c)     = classSealed (ptName c)
+    atomSealed (PredExpr _)    = False
+    atomSealed (PredConstEq _) = False
     -- In the program-as-written ('tePrgmEnv') environment every class is closed to its declared
     -- members, so any class predicate may be soundly expanded to its declared constituents.
     classSealed _ | tePrgmEnv typeEnv = True
@@ -2263,6 +2290,8 @@ expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negP
           (H.filterWithKey (\k _ -> S.member k allowedNames) leafs,
            any (\k -> not $ S.member k allowedNames) (H.keys leafs))
         t -> expandTypesWithNamesFullAux visited typeEnv vaenv t allowedNames
+    -- A constant is no named leaf: the atom's one value lies outside every name listing.
+    expandPredsWithNamesFull (PredsOne (PredConstEq _)) = (H.empty, True)
     expandPredsWithNamesFull (PredsOne (PredExpr e)) =
       case typeGraphExpandPredExpr typeEnv vaenv e of
         Nothing ->
@@ -2659,9 +2688,10 @@ satDNFConj = foldl step (Just [SatGoal [] []])
 predsSatDNF :: Bool -> TypePredicates -> Maybe [SatGoal]
 predsSatDNF pol (PredsOne p) = do
   a <- case p of
-    PredClass c -> Just (SatClass c)
-    PredRel r   -> Just (SatRel r)
-    PredExpr _  -> Nothing
+    PredClass c   -> Just (SatClass c)
+    PredRel r     -> Just (SatRel r)
+    PredExpr _    -> Nothing
+    PredConstEq _ -> Nothing
   Just [if pol then SatGoal [a] [] else SatGoal [] [a]]
 predsSatDNF pol (PredsNot p) = predsSatDNF (not pol) p
 predsSatDNF True (PredsAnd ps) = mapM (predsSatDNF True) ps >>= satDNFConj
@@ -3158,9 +3188,10 @@ typeTVIntRefs (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (split
     predsRefs (PredsOne p)  = leafRefs (predPartial p)
     predsRefs (PredsAnd ps) = S.unions $ map predsRefs ps
     predsRefs (PredsNot p)  = predsRefs p
-    predPartial (PredExpr p)  = p
-    predPartial (PredClass p) = p
-    predPartial (PredRel p)   = p
+    predPartial (PredExpr p)    = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredConstEq c) = constantPartialType c
 typeTVIntRefs _ = S.empty
 
 -- | The FREE partial-local references of a type: a 'TVInt' at a position where no partial in
@@ -3187,9 +3218,10 @@ typeFreeTVIntRefs = go S.empty
     predsRefs bound (PredsOne p)  = leafRefs bound (predPartial p)
     predsRefs bound (PredsAnd ps) = S.unions $ map (predsRefs bound) ps
     predsRefs bound (PredsNot p)  = predsRefs bound p
-    predPartial (PredExpr p)  = p
-    predPartial (PredClass p) = p
-    predPartial (PredRel p)   = p
+    predPartial (PredExpr p)    = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredConstEq c) = constantPartialType c
 
 -- | The value SET a partial's value denotes standalone: read via 'substituteTVExt' under
 -- the partial's OWN var\/arg scope over the ambient env — the codebase's canonical reading
@@ -4497,7 +4529,77 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
 
 -- | Whether a constant's parent partial type is covered by the given positive leafs.
 constantCoveredByLeafs :: Constant -> PartialLeafs -> Bool
-constantCoveredByLeafs c leafs = isSubtypeOfWithEnv emptyTypeEnv' H.empty (singletonType $ constantPartialType c) (UnionType Nothing leafs [])
+constantCoveredByLeafs c leafs = isSubtypeOfWithEnv emptyTypeEnv' H.empty (singletonType $ constantPartialType c) (UnionType Nothing leafsAtC [])
+  where
+    -- A leaf's 'PredConstEq' atoms are decided for this one constant first: @/Integer|¬PredConstEq(-51)@
+    -- holds @5@ and not @-51@, which the primitive-leaf test alone cannot tell apart.
+    leafsAtC
+      | any (predsHasConstEq . ptPreds) (splitUnionType leafs) =
+          joinUnionType [l{ptPreds = ps} | l <- splitUnionType leafs, Just ps <- [predsAtConst c (ptPreds l)]]
+      | otherwise = leafs
+
+-- | A predicate formula read at one constant: each 'PredConstEq' atom is decided (the value is that
+-- constant or it is not), giving 'Nothing' when the formula is then false and otherwise the formula
+-- of the atoms left ('PredsNone' when none are).
+predsAtConst :: Constant -> TypePredicates -> Maybe TypePredicates
+predsAtConst c (PredsOne (PredConstEq c')) = if c == c' then Just PredsNone else Nothing
+predsAtConst _ p@(PredsOne _)              = Just p
+predsAtConst c (PredsAnd ps)               = mkAnd . filter (/= PredsNone) <$> mapM (predsAtConst c) ps
+predsAtConst c (PredsNot p)                = case predsAtConst c p of
+  Nothing        -> Just PredsNone
+  Just PredsNone -> Nothing
+  Just q         -> Just (PredsNot q)
+
+-- | Takes constants out of a type: each is dropped from the listed constants, a leaf that holds it
+-- keeps every point but it (@l|¬PredConstEq c@), and a predicate top excludes it as a point.
+excludeConstants :: [Constant] -> Type -> Type
+excludeConstants [] t = t
+excludeConstants cs (UnionType mtop leafs consts) =
+  UnionType (fmap onTop mtop) (joinUnionType (map onLeaf (splitUnionType leafs))) (filter (`notElem` cs) consts)
+  where
+    onTop (preds, negLeafs, negConsts) = (preds, negLeafs, L.nub (negConsts ++ cs))
+    onLeaf l = foldl (\l' c -> if constantCoveredByLeafs c (joinUnionType [l'])
+                                  then l'{ptPreds = predsAnd (ptPreds l') (PredsNot (PredsOne (PredConstEq c)))}
+                                  else l') l cs
+excludeConstants _ t = t
+
+-- | Whether a formula holds a 'PredConstEq' atom anywhere.
+predsHasConstEq :: TypePredicates -> Bool
+predsHasConstEq (PredsOne PredConstEq{}) = True
+predsHasConstEq (PredsOne _)             = False
+predsHasConstEq (PredsAnd ps)            = any predsHasConstEq ps
+predsHasConstEq (PredsNot p)             = predsHasConstEq p
+
+-- | Canonicalises the 'PredConstEq' conjuncts of a union's leafs, returning the leafs and the
+-- constants they became:
+--
+--   * a leaf conjoining @PredConstEq c@ is at most the one value @c@: it becomes that constant
+--     when the rest of the leaf holds it, and nothing otherwise;
+--   * a @¬PredConstEq c@ conjunct excludes nothing from a leaf that cannot hold @c@, and nothing
+--     from a union that lists @c@ itself (@(l − {c}) ∪ {c} = l@), so it drops.
+--
+-- So the same set has one spelling: a constant is a constant, and an exclusion is spelled only
+-- where it removes a point.
+compactConstEqLeafs :: [Constant] -> PartialLeafs -> (PartialLeafs, [Constant])
+compactConstEqLeafs consts leafs
+  | not (any (predsHasConstEq . ptPreds) ls) = (leafs, [])
+  | otherwise = (joinUnionType [l | Left l <- res], [c | Right c <- res])
+  where
+    ls = splitUnionType leafs
+    res = mapMaybe onLeaf ls
+    onLeaf l = case [c | PredsOne (PredConstEq c) <- conjs (ptPreds l)] of
+      c:_ | Just ps <- predsAtConst c (ptPreds l)
+          , constantCoveredByLeafs c (joinUnionType [l{ptPreds = ps}]) -> Just (Right c)
+          | otherwise -> Nothing
+      [] -> Just (Left l{ptPreds = rebuild (filter (not . vacuous l) (conjs (ptPreds l)))})
+    vacuous l (PredsNot (PredsOne (PredConstEq c))) =
+      c `elem` consts || not (constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}]))
+    vacuous _ _ = False
+    conjs (PredsAnd xs) = concatMap conjs xs
+    conjs x             = [x]
+    rebuild []  = PredsNone
+    rebuild [q] = q
+    rebuild qs  = mkAnd qs
 
 -- | Checks if a constant value is a member of a type.
 -- A constant is in a type if it appears in the constant list, or its parent partial type is in the type.
@@ -5294,9 +5396,10 @@ typeContainsBareTop (UnionType mtop pos _) = topContains || any partialContains 
     predsContains (PredsOne p)  = partialContains (predPartial p)
     predsContains (PredsAnd ps) = any predsContains ps
     predsContains (PredsNot p)  = predsContains p
-    predPartial (PredExpr p')  = p'
-    predPartial (PredClass p') = p'
-    predPartial (PredRel p')   = p'
+    predPartial (PredExpr p')   = p'
+    predPartial (PredClass p')  = p'
+    predPartial (PredRel p')    = p'
+    predPartial (PredConstEq c) = constantPartialType c
     partialContains PartialType{ptVars, ptArgs, ptPreds} =
       any typeContainsBareTop (H.elems ptVars ++ H.elems ptArgs) || predsContains ptPreds
 
@@ -5437,11 +5540,12 @@ compactModedPredLeafs typeEnv = concatMap decompose
 -- | Whether a predicate formula holds a class\/rel membership atom anywhere (the decidable
 -- fragment of the per-leaf predicate rules; a pure-'PredExpr' formula is undecidable either way).
 predsHasClassRelAtom :: TypePredicates -> Bool
-predsHasClassRelAtom (PredsOne (PredClass _)) = True
-predsHasClassRelAtom (PredsOne (PredRel _))   = True
-predsHasClassRelAtom (PredsOne (PredExpr _))  = False
-predsHasClassRelAtom (PredsAnd ps)            = any predsHasClassRelAtom ps
-predsHasClassRelAtom (PredsNot q)             = predsHasClassRelAtom q
+predsHasClassRelAtom (PredsOne (PredClass _))   = True
+predsHasClassRelAtom (PredsOne (PredRel _))     = True
+predsHasClassRelAtom (PredsOne (PredExpr _))    = False
+predsHasClassRelAtom (PredsOne (PredConstEq _)) = False
+predsHasClassRelAtom (PredsAnd ps)              = any predsHasClassRelAtom ps
+predsHasClassRelAtom (PredsNot q)               = predsHasClassRelAtom q
 
 -- | Canonicalizes leafs carrying a NEGATED predicate conjunct (the symbolic refinement the
 -- ¬-over-recursive-class meet attaches — see 'intersectTypesWithVarEnv'). Each top-level
@@ -5851,6 +5955,9 @@ compactType typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
 -- holds structurally: different union orderings that mix Just and Nothing forms produce
 -- equivalent pos components after compaction).
 compactType typeEnv vaenv (UnionType (Just topData) pos cs)
+  | (pos', eqCs@(_:_)) <- compactConstEqLeafs cs pos = compactType typeEnv vaenv (UnionType (Just topData) pos' (L.nub (cs ++ eqCs)))
+  | (pos', []) <- compactConstEqLeafs cs pos, pos' /= pos = compactType typeEnv vaenv (UnionType (Just topData) pos' cs)
+compactType typeEnv vaenv (UnionType (Just topData) pos cs)
   | not (H.null pos) =
       -- Recurse into each leaf's nested arg/var types (as the Nothing-pos branch does), so a nested
       -- bound like @Cons[/T=(Ord∧Eq)]@ canonicalises (→ @Cons[/T=∀Ord]@) instead of re-deriving an
@@ -5887,8 +5994,10 @@ compactType typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i o
           isBottomType $ intersectTypesEnv typeEnv vaenv l i'
       | otherwise = False
 -- PosPartials with constants: compact leafs, remove constants covered by leafs
-compactType typeEnv vaenv (UnionType Nothing partials consts) =
-  let -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
+compactType typeEnv vaenv (UnionType Nothing partials0 consts0) =
+  let (partials, eqConsts) = compactConstEqLeafs consts0 partials0
+      consts = L.nub (consts0 ++ eqConsts)
+      -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
       -- in canonical predicate form is recognised one level up.
       argCompacted = joinUnionType $ map (compactPartialArgs typeEnv vaenv) $ splitUnionType partials
       compactedLeafs = compactSettleMerged typeEnv vaenv argCompacted
@@ -6109,9 +6218,10 @@ typeHasVars (UnionType mtop pos _) =
     predsHasVars (PredsOne pr) = predHasVars pr
     predsHasVars (PredsAnd ps) = any predsHasVars ps
     predsHasVars (PredsNot ps) = predsHasVars ps
-    predHasVars (PredExpr q)  = partialHasVars q
-    predHasVars (PredClass q) = partialHasVars q
-    predHasVars (PredRel q)   = partialHasVars q
+    predHasVars (PredExpr q)    = partialHasVars q
+    predHasVars (PredClass q)   = partialHasVars q
+    predHasVars (PredRel q)     = partialHasVars q
+    predHasVars (PredConstEq _) = False
     partialHasVars PartialType{ptVars=vs, ptArgs=as, ptPreds=prs} =
       any typeHasVars vs || any typeHasVars as || predsHasVars prs
 
@@ -6771,9 +6881,10 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
       predsPartials (PredsOne p)  = [predPartialOf p]
       predsPartials (PredsAnd ps) = concatMap predsPartials ps
       predsPartials (PredsNot p)  = predsPartials p
-      predPartialOf (PredExpr p)  = p
-      predPartialOf (PredClass p) = p
-      predPartialOf (PredRel p)   = p
+      predPartialOf (PredExpr p)    = p
+      predPartialOf (PredClass p)   = p
+      predPartialOf (PredRel p)     = p
+      predPartialOf (PredConstEq c) = constantPartialType c
   let linkedParamsOf n t = [ pn | pt <- selfPartials t
                            , (pn, TypeVar (TVVar n') TVParent _) <- H.toList (ptVars pt), n' == n ]
   let linkedKsOf n ks = L.nub [ (k, pn) | tmpl <- declTmpls, (k, tv) <- H.toList (ptArgs tmpl)
@@ -7239,9 +7350,14 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2
       -- drops a constant already covered by baseResult's leafs and folds it onto a Just-top's
       -- positive constants when the leafs compacted to a rel-form (an over-unrolled recursive set),
       -- which a bare @baseResult@ return would silently drop.
+          -- The leaf part was met against the top WITHOUT its excluded constants, so they are
+          -- taken out of it again: a leaf holding one keeps every point but it
+          -- ('excludeConstants'). Dropped instead, @/Integer ∩ (⊤ − {-51})@ came back as all of
+          -- @/Integer@ (propComplementInverse, 8048).
+          leafPart = excludeConstants negConsts baseResult
       in if null survivingConsts
-           then (vaenv', baseResult)
-           else (vaenv', unionTypesWithEnv typeEnv vaenv' baseResult (UnionType Nothing H.empty survivingConsts))
+           then (vaenv', leafPart)
+           else (vaenv', unionTypesWithEnv typeEnv vaenv' leafPart (UnionType Nothing H.empty survivingConsts))
 -- PosPartials ∩ Top(negLeafs, PredsNone) when negLeafs non-empty → subtract
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (UnionType (Just (PredsNone, negPartials, [])) (H.null -> True) [])
   | not (H.null negPartials) =
@@ -8124,9 +8240,10 @@ typeHasFreeOuterRef = go Nothing
     predsHas layer (PredsOne p)  = leafHas layer (predPartial p)
     predsHas layer (PredsAnd ps) = any (predsHas layer) ps
     predsHas layer (PredsNot p)  = predsHas layer p
-    predPartial (PredExpr p)  = p
-    predPartial (PredClass p) = p
-    predPartial (PredRel p)   = p
+    predPartial (PredExpr p)    = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredConstEq c) = constantPartialType c
 
 -- | Whether a type refers to the variable @v@ (by name, under any location spelling) anywhere.
 typeMentionsVar :: TypeVarAux -> Type -> Bool
@@ -8145,9 +8262,10 @@ typeMentionsVar v (UnionType mtop leafs _) = any partialHas (splitUnionType leaf
     predsHas (PredsOne p)  = predHas p
     predsHas (PredsAnd ps) = any predsHas ps
     predsHas (PredsNot ps) = predsHas ps
-    predHas (PredClass p) = partialHas p
-    predHas (PredRel p)   = partialHas p
-    predHas (PredExpr p)  = partialHas p
+    predHas (PredClass p)   = partialHas p
+    predHas (PredRel p)     = partialHas p
+    predHas (PredExpr p)    = partialHas p
+    predHas (PredConstEq _) = False
     partialHas PartialType{ptVars, ptArgs, ptPreds} =
       any (typeMentionsVar v) (H.elems ptVars) || any (typeMentionsVar v) (H.elems ptArgs) || predsHas ptPreds
 
@@ -8161,9 +8279,10 @@ typeHasTypeVars (UnionType mtop leafs _) = any partialHas (splitUnionType leafs)
     predsHas (PredsOne p)  = predHas p
     predsHas (PredsAnd ps) = any predsHas ps
     predsHas (PredsNot ps) = predsHas ps
-    predHas (PredClass p) = partialHas p
-    predHas (PredRel p)   = partialHas p
-    predHas (PredExpr p)  = partialHas p
+    predHas (PredClass p)   = partialHas p
+    predHas (PredRel p)     = partialHas p
+    predHas (PredExpr p)    = partialHas p
+    predHas (PredConstEq _) = False
     partialHas PartialType{ptVars, ptArgs, ptPreds} =
       any typeHasTypeVars (H.elems ptVars)
         || any typeHasTypeVars (H.elems ptArgs)
@@ -8184,9 +8303,10 @@ typeHasInnerKnowledge (UnionType mtop leafs _) = topHas || any partialHas (split
     predsHas (PredsOne p)  = partialHas (predPartial p)
     predsHas (PredsAnd ps) = any predsHas ps
     predsHas (PredsNot ps) = predsHas ps
-    predPartial (PredClass p) = p
-    predPartial (PredRel p)   = p
-    predPartial (PredExpr p)  = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredExpr p)    = p
+    predPartial (PredConstEq c) = constantPartialType c
     partialHas PartialType{ptVars, ptArgs, ptPreds} =
       any typeHasInnerKnowledge (H.elems ptVars)
         || any typeHasInnerKnowledge (H.elems ptArgs)
@@ -8271,9 +8391,10 @@ typeExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs 
     predsRefs (PredsOne p')  = partialRefs (predPartial p')
     predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
     predsRefs (PredsNot p')  = predsRefs p'
-    predPartial (PredClass c) = c
-    predPartial (PredRel r)   = r
-    predPartial (PredExpr e)  = e
+    predPartial (PredClass c)   = c
+    predPartial (PredRel r)     = r
+    predPartial (PredExpr e)    = e
+    predPartial (PredConstEq c) = constantPartialType c
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeExtVarRefs (H.elems vs ++ H.elems as)
 
@@ -8290,9 +8411,10 @@ typeExtVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs
     predsRefs (PredsOne p')  = partialRefs (predPartial p')
     predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
     predsRefs (PredsNot p')  = predsRefs p'
-    predPartial (PredClass c) = c
-    predPartial (PredRel r)   = r
-    predPartial (PredExpr e)  = e
+    predPartial (PredClass c)   = c
+    predPartial (PredRel r)     = r
+    predPartial (PredExpr e)    = e
+    predPartial (PredConstEq c) = constantPartialType c
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeExtVarAuxes (H.elems vs ++ H.elems as)
 
@@ -8319,9 +8441,10 @@ typeParentVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialR
     predsRefs (PredsOne p')  = partialRefs (predPartial p')
     predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
     predsRefs (PredsNot p')  = predsRefs p'
-    predPartial (PredClass c) = c
-    predPartial (PredRel r)   = r
-    predPartial (PredExpr e)  = e
+    predPartial (PredClass c)   = c
+    predPartial (PredRel r)     = r
+    predPartial (PredExpr e)    = e
+    predPartial (PredConstEq c) = constantPartialType c
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeParentVarAuxes (H.elems vs ++ H.elems as)
 
@@ -8342,9 +8465,10 @@ typeOuterVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRef
     predsRefs (PredsOne p')  = predRefs p'
     predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
     predsRefs (PredsNot p')  = predsRefs p'
-    predRefs (PredClass c) = partialRefs c
-    predRefs (PredRel r)   = partialRefs r
-    predRefs (PredExpr e)  = partialRefs e
+    predRefs (PredClass c)   = partialRefs c
+    predRefs (PredRel r)     = partialRefs r
+    predRefs (PredExpr e)    = partialRefs e
+    predRefs (PredConstEq _) = S.empty
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeOuterVarRefs (H.elems vs ++ H.elems as)
 
@@ -8672,9 +8796,10 @@ hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     predsHas sc (PredsOne p)  = onLeaf sc (predPartial p)
     predsHas sc (PredsAnd ps) = any (predsHas sc) ps
     predsHas sc (PredsNot p)  = predsHas sc p
-    predPartial (PredExpr p)  = p
-    predPartial (PredClass p) = p
-    predPartial (PredRel p)   = p
+    predPartial (PredExpr p)    = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredConstEq c) = constantPartialType c
     -- Mirrors 'dropOutOfScopeTVExt': the in-scope set is the ambient env's keys at every depth.
     onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
       any (onSlot sc) (H.elems ptVars) || any (onSlot sc) (H.elems ptArgs) || predsHas sc ptPreds
@@ -8699,9 +8824,10 @@ outOfScopeTVExtVars vaenv = onType (S.fromList (H.keys vaenv))
     predsVars sc (PredsOne p)  = onLeaf sc (predPartial p)
     predsVars sc (PredsAnd ps) = S.unions (map (predsVars sc) ps)
     predsVars sc (PredsNot p)  = predsVars sc p
-    predPartial (PredExpr p)  = p
-    predPartial (PredClass p) = p
-    predPartial (PredRel p)   = p
+    predPartial (PredExpr p)    = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredConstEq c) = constantPartialType c
     -- Same in-scope set at every depth as 'dropOutOfScopeTVExt'.
     onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
       S.unions (map (onSlot sc) (H.elems ptVars)) <> S.unions (map (onSlot sc) (H.elems ptArgs)) <> predsVars sc ptPreds
@@ -8844,11 +8970,12 @@ restoreLostTVExtVars = go
             _         -> np
       _ -> new
     predsPartials :: TypePredicates -> [PartialType]
-    predsPartials (PredsOne (PredExpr q))  = [q]
-    predsPartials (PredsOne (PredClass q)) = [q]
-    predsPartials (PredsOne (PredRel q))   = [q]
-    predsPartials (PredsAnd ps)            = concatMap predsPartials ps
-    predsPartials (PredsNot ps)            = predsPartials ps
+    predsPartials (PredsOne (PredExpr q))    = [q]
+    predsPartials (PredsOne (PredClass q))   = [q]
+    predsPartials (PredsOne (PredRel q))     = [q]
+    predsPartials (PredsOne (PredConstEq _)) = []
+    predsPartials (PredsAnd ps)              = concatMap predsPartials ps
+    predsPartials (PredsNot ps)              = predsPartials ps
 
 -- | A slot's value read in the POINT's currency: a var-slot reference to a parameter of the slot's
 -- partial (@∀BinTree[/V=$^/V]@ under @Node[/V=$^/MV]@) is replaced by the partial's binding, which

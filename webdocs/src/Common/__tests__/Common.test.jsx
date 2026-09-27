@@ -549,6 +549,15 @@ describe('Type', () => {
     expect(container.textContent).toBe('∀/Eq')
   })
 
+  it('renders a constant exclusion on a leaf', () => {
+    const notC = { tag: 'PredsNot', pnPred: { tag: 'PredsOne', poPred: { tag: 'PredConstEq', pceConst: { tag: 'CInt', ciValue: -51 }}}}
+    const leafs = { '/Integer': [[[], [], notC, argExact]] }
+    const t = { tag: 'UnionType', utTop: null, utLeafs: leafs, utConsts: []}
+    const { container } = render(<Providers><Type data={t} /></Providers>)
+    expect(container.textContent).toContain('Integer')
+    expect(container.textContent).toContain('!=-51')
+  })
+
   const key = (name) => ({ pkName: name, pkArgs: [], pkVars: [] })
   // The wire format's third TypeVar component: occurrence-local knowledge (var ∩ inner).
   const topJson = { tag: 'UnionType', utTop: [predsNone, {}, []], utLeafs: {}, utConsts: []}

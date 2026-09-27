@@ -59,6 +59,7 @@ typeRefNames (UnionType mtop pos _) = concatMap partialNames (splitUnionType pos
     predNames (PredExpr p)  = partialNames p
     predNames (PredClass p) = partialNames p
     predNames (PredRel p)   = partialNames p
+    predNames PredConstEq{} = []
 
 -- | 'Value' names referenced by an expression, descending into applied
 -- arguments' sub-objects and bodies.

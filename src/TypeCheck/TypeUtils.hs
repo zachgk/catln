@@ -320,6 +320,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
         predPartial (PredClass c) = [c]
         predPartial (PredRel r)   = [r]
         predPartial PredExpr{}    = []
+        predPartial PredConstEq{} = []
 
 -- | Binds a call's declaration-output variable from the call site's destination.
 -- For a declaration whose output is a bare declared variable — @mk[$M -> Mk](v -> V) -> $M@ —

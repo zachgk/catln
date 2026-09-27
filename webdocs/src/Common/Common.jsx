@@ -428,6 +428,8 @@ function TypePredicate(props) {
     return <span>Rel[{<PartialType data={data.prType}/>}]</span>;
   case "PredExpr":
     return <PartialType data={data.peType}/>;
+  case "PredConstEq":
+    return <span>={<Constant data={data.pceConst}/>}</span>;
   default:
     console.error("Unknown TypePredicate", data);
     return "???";

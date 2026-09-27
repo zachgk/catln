@@ -432,6 +432,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
         relClassOf (PredRel c)   = [c]
         relClassOf (PredClass c) = [c]
         relClassOf (PredExpr _)  = []
+        relClassOf PredConstEq{} = []
 
     -- Whether a value matches a (possibly predicated) type: structurally a subtype of the base-type
     -- claim AND every value @PredExpr@ predicate evaluates to @True@ against it.
