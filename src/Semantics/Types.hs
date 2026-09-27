@@ -4529,8 +4529,8 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1, _)) (H.null -> True) 
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> True) []) t2@(UnionType (Just (p2, n2, [])) (H.null -> True) [])
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
   | (isPredsContradictory (predsAnd p1 (predsNot p2)) || predImplies typeEnv vaenv p1 p2)
-    && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 []) = True
-    -- U_p1 ⊆ U_p2 (syntactically: p1 ∧ ¬p2 = ∅, or by 'predImplies') and n2 ⊆ n1, so
+    && n2CoveredInP1 = True
+    -- U_p1 ⊆ U_p2 (syntactically: p1 ∧ ¬p2 = ∅, or by 'predImplies') and U_p1 ∩ n2 ⊆ n1, so
     -- (U_p1 - n1 - nc1) ⊆ (U_p2 - n2). The universe implication alone is NOT sufficient:
     -- an n2 leaf inside U_p1 but not in n1 stays in t1 while t2 excludes it.
   | predsEmpty typeEnv vaenv p1 = True  -- t1 = ∅ by class-graph disjointness ⊆ anything (fallback: expansion is costly)
@@ -4559,7 +4559,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> Tru
   -- overwhelmingly common shape, and enough on its own to take the property suite from 235s to
   -- an OOM kill.
   | not (H.null n1)
-  , H.null n2 || isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
+  , H.null n2 || n2CoveredInP1
   , isSubtypeOfWithEnv typeEnv vaenv
       (UnionType (Just (predsAnd p1 (predsNot p2), H.empty, [])) H.empty [])
       (UnionType Nothing n1 [])
@@ -4574,6 +4574,15 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> Tru
   | otherwise = fromMaybe oldReexpress
       (typeCoveredSymbolic typeEnv vaenv ProveEmpty (UnionType (Just (p1, n1, [])) H.empty []) t2)
   where
+    -- Only the part of @n2@ inside @U_p1@ can exclude a t1 value, so the cover @n1@ owes is
+    -- @U_p1 ∩ n2 ⊆ n1@ — the same-predicates clause's question. Asking @n2 ⊆ n1@ outright
+    -- demanded more: @n1 = fluffy(this=∀Fish − Cat..)|¬~Lizard + fluffy(this=Cat..)@ covers
+    -- @n2 = fluffy(this=∀Fish)@ only inside @¬~Lizard@, which is all of @U_p1@ there, so
+    -- @(⊤|¬~Lizard) − n1 ⊆ ⊤ − n2@ was refused though its difference is ∅
+    -- (propDifferenceSubset, 2828: Seed 12097076103845763024 4500684033991487693). The plain
+    -- test is the cheap sufficient case and goes first.
+    n2CoveredInP1 = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
+      || isSubtypeOfWithEnvComplete typeEnv vaenv (intersectTypesEnv typeEnv vaenv (TopType H.empty p1) (UnionType Nothing n2 [])) (UnionType Nothing n1 [])
     -- Re-express U_p1 - n1 as a positive type and recurse. Guarded on progress: when the predicate
     -- expands to the universe (e.g. p1 = PredsNone) the difference reproduces the same complement,
     -- which would recurse forever, so require the rewrite to differ from t1 (else conservative False).
