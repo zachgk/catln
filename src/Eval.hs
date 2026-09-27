@@ -21,6 +21,7 @@ import qualified Data.HashMap.Strict     as H
 import           Semantics.Prgm
 import           Semantics.Types
 
+import           Control.Applicative     ((<|>))
 import           Control.Monad
 import           Data.Graph
 import           Data.Maybe
@@ -141,7 +142,9 @@ evalObjArrCaptured captured input oa = do
   -- a concrete destination type.
   (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialTypeOut input) oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
+            mark <- gets evalTreebugMark
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
+            modify $ evalRecordAnnot mark (getExprMeta compAnnot) compAnnot'
             evalCompAnnot compAnnot compAnnot'
   res <- withEvalPush (printf "ResEArrow %s" (show oa)) $ evalExpr resArrowTree
   modify $ evalEndEArrow input res oldArgs
@@ -352,9 +355,14 @@ evalExpr (TTupleApply m (_, b) (EAppArg oa)) = do
         Nothing -> n
   return $ TupleVal n' (H.insert (nameStr (oaObjPath oa)) v args)
 evalExpr (TTupleApply _ (_, _) (EAppSpread a)) = error $ printf "Not yet implemented evalExpr %s" (show a)
-evalExpr (TCalls _ b callTree) = do
+evalExpr (TCalls m b callTree) = do
   b' <- evalExpr b
-  evalCallTree b' callTree
+  -- Marked after the base, whose own expressions are recorded as themselves, so the steps are the
+  -- calls this expression's own call tree made (see 'EvalExprRun').
+  mark <- gets evalTreebugMark
+  v <- evalCallTree b' callTree
+  modify $ evalRecordExpr mark (getMetaPos m <|> getMetaPos (getExprMeta b)) v
+  return v
 
 -- | An 'Env' with nothing of the pipeline around it: no other stage of the program, and no service
 -- to ask for one.
@@ -384,7 +392,9 @@ evalBaseEnvService service prgm@Prgm{prgmObjMap} = Env {
         evTreebugOpen = [],
         evTreebugClosed = [],
         evTreebugNextId = 0,
-        evDebugs = []
+        evDebugs = [],
+        evExprRuns = [],
+        evAnnotRuns = []
                 }
 
 -- | Flattens the program reachable from a file into one. It is polymorphic in the program because
@@ -917,14 +927,16 @@ withCallShows prgm res@EvalResult{erTreebug} = do
 -- passes the same lists down a recursion many times over, and the arrows one rendering builds are
 -- kept for the next (see 'dshowVal').
 showRunValues :: EPrgm -> DebugRun -> DebugRun
-showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs}} = evalState go (H.empty, evExEnv env)
+showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs, erExprs, erAnnots}} = evalState go (H.empty, evExEnv env)
   where
     env = evalBaseEnv prgm
     go = do
       treebug' <- mapM showNode erTreebug
       debugs' <- forM erDebugs $ \d@EvalDebug{edValue} -> (\v -> d{edValue = v}) <$> showVal edValue
+      exprs' <- forM erExprs $ \e@EvalExprRun{exValue} -> (\v -> e{exValue = v}) <$> showVal exValue
+      annots' <- forM erAnnots $ \a@EvalAnnotRun{eaValue} -> (\v -> a{eaValue = v}) <$> showVal eaValue
       value' <- mapM showVal drValue
-      return run{drValue = value', drResult = res{erTreebug = treebug', erDebugs = debugs'}}
+      return run{drValue = value', drResult = res{erTreebug = treebug', erDebugs = debugs', erExprs = exprs', erAnnots = annots'}}
     showNode (EvalTreebugClosed oa input val children nodeId callShow) = do
       input' <- showParts input
       val' <- showVal val

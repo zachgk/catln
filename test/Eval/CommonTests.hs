@@ -37,7 +37,7 @@ metaIn file m = m{getMetaPos = Just (initialPos file, initialPos file)}
 sampleRun :: DebugRun
 sampleRun = DebugRun Nothing "" (Just NoVal) result H.empty
   where
-    result = EvalResult H.empty [node (Left progArrow) [node (Right builtArrow) []]] [EvalDebug (getMetaPos (metaIn "lib.ct" emptyMetaN :: Meta ())) NoVal "1"]
+    result = EvalResult H.empty [node (Left progArrow) [node (Right builtArrow) []]] [EvalDebug (getMetaPos (metaIn "lib.ct" emptyMetaN :: Meta ())) NoVal "1"] [] []
     node oa children = EvalTreebugClosed oa NoVal NoVal children "0" Nothing
     progArrow = ObjArr (Just (Value (metaIn "prog.ct" emptyMetaN) "/f")) FunctionObj Nothing [] Nothing
     builtArrow = ObjArr (Just (TValue (metaIn "<debug>" emptyMetaN) "/g")) FunctionObj Nothing [] Nothing

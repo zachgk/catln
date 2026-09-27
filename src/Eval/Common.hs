@@ -446,7 +446,49 @@ data Env = Env { evObjMap        :: EObjectMap
                -- ever grows: what a reader of a run wants is every value it recorded, in the order
                -- it recorded them, however many calls of however many definitions they came from.
                , evDebugs        :: [EvalDebug]
+               -- | Every expression the run rewrote through calls, most recent first ('EvalExprRun').
+               , evExprRuns      :: [EvalExprRun]
+               -- | Every annotation of a definition the run evaluated, most recent first
+               -- ('EvalAnnotRun').
+               , evAnnotRuns     :: [EvalAnnotRun]
                }
+
+-- | One expression of a run that was rewritten through calls: where it is written, the call it was
+-- evaluated inside, the calls that rewrote it, and the value it came to.
+--
+-- Recorded because a call's output is not what the expression making it came to. An arrow's result
+-- is the term its body rewrites to, and the rest of the rewriting belongs to whoever called it: the
+-- body of @total@ is @scale(…) + sum * sign(…)@, so the call of @total@ closes with the output
+-- @operator+(l= 60, r= 3)@, and the @63@ it comes to is reached by the caller applying @operator+@
+-- afterwards, as a primitive, which enters no arrow and has no node. What the expression came to is
+-- only in hand where the whole of its call tree has run, which is here.
+--
+-- 'exSteps' are the calls entered running the expression's call tree, in the order they were
+-- entered, and not those of its arguments, which are expressions of their own and are recorded as
+-- such. So the first step is the call the expression was written as, and the rest are the calls that
+-- rewrote what it returned. An expression rewritten by no call (a primitive applied to constants) is
+-- not recorded, as there is no call for it to say anything about.
+--
+-- 'exNode' is the call it was evaluated inside, as 'edNode' is: 'Nothing' for an expression run
+-- inside no definition, which is what an expression a debugger was asked about is.
+data EvalExprRun = EvalExprRun { exNode  :: Maybe String
+                               , exPos   :: CodeRange
+                               , exSteps :: [String]
+                               , exValue :: Val
+                               } deriving (Eq, Generic, ToJSON)
+
+-- | One annotation of a definition evaluated by a call of it: the call, the annotation by the id and
+-- position it is written with, what it evaluated to, and the calls made evaluating it.
+--
+-- An annotation is evaluated inside the call of the definition it is written on, before the body,
+-- so without this the calls it makes read as calls of the body: an @#assert@ comparing a line's value
+-- would look like the line being used once more than the body uses it.
+data EvalAnnotRun = EvalAnnotRun { eaNode  :: String
+                                 , eaAnnot :: UUID
+                                 , eaPos   :: CodeRange
+                                 , eaValue :: Val
+                                 , eaCalls :: [String]
+                                 } deriving (Eq, Generic, ToJSON)
 
 -- | One @#debug@ of a run: where it is written, what it evaluated to there, and which node of the
 -- evaluation tree it was recorded in.
@@ -470,6 +512,10 @@ data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
                              , erTreebug  :: [EvalTreebugClosed]
                              -- | The run's @#debug@ records, in the order they were recorded.
                              , erDebugs   :: [EvalDebug]
+                             -- | The expressions it rewrote through calls, in the order they finished.
+                             , erExprs    :: [EvalExprRun]
+                             -- | The annotations of definitions it evaluated, in the order evaluated.
+                             , erAnnots   :: [EvalAnnotRun]
                              } deriving (Eq, Generic, ToJSON)
 
 -- | One debugger run, and the tree of what it evaluated. The output is captured through a 'MockIO'

@@ -19,6 +19,7 @@ import qualified Data.HashMap.Strict as H
 
 import           Control.Monad.State
 import           CRes
+import           Data.Maybe          (listToMaybe)
 import           Eval.Common
 import           Semantics.Prgm
 import           Semantics.Types
@@ -79,6 +80,34 @@ evalRecordDebug pos val env@Env{evTreebugOpen, evDebugs} = env {
   evDebugs = EvalDebug pos val ((\(openId, _, _) -> openId) $ head evTreebugOpen) : evDebugs
                                                                }
 
+-- | Where the evaluation is in the tree: the call it is inside, and how many calls have finished in
+-- it so far. Taken before evaluating something whose calls are to be told apart from the ones before
+-- it, and handed back to 'evalClosedSince' afterwards.
+evalTreebugMark :: Env -> (Maybe String, Int)
+evalTreebugMark Env{evTreebugOpen, evTreebugClosed} = ((\(openId, _, _) -> openId) <$> listToMaybe evTreebugOpen, length evTreebugClosed)
+
+-- | The ids of the calls that finished in the current call since a mark was taken, in the order they
+-- were entered. Every call entered in between has closed again by then, and closed into the current
+-- call's level, so those are exactly the ones past the count the mark took.
+evalClosedSince :: Int -> Env -> [String]
+evalClosedSince before Env{evTreebugClosed} = map (\(EvalTreebugClosed _ _ _ _ closedId _) -> closedId) $ drop before evTreebugClosed
+
+-- | Records an expression rewritten through calls ('EvalExprRun'), from the mark taken before its
+-- call tree was run. One rewritten by no call is left unrecorded.
+evalRecordExpr :: (Maybe String, Int) -> CodeRange -> Val -> Env -> Env
+evalRecordExpr (node, before) pos val env@Env{evExprRuns} = case evalClosedSince before env of
+  []    -> env
+  steps -> env{evExprRuns = EvalExprRun node pos steps val : evExprRuns}
+
+-- | Records an annotation of the call being evaluated ('EvalAnnotRun'), from the mark taken before
+-- it was evaluated. There is always a call open, as for 'evalRecordDebug': an annotation of a
+-- definition is evaluated inside a call of it.
+evalRecordAnnot :: (Maybe String, Int) -> Meta EvalMetaDat -> Val -> Env -> Env
+evalRecordAnnot (Nothing, _) _ _ _ = error "Tried to record an annotation with an empty treebug open"
+evalRecordAnnot (Just node, before) m val env@Env{evAnnotRuns} = env{
+  evAnnotRuns = EvalAnnotRun node (getMetaId m) (getMetaPos m) val (evalClosedSince before env) : evAnnotRuns
+                                                                    }
+
 evalError :: String -> StateT Env CRes v
 evalError msg = do
   stack <- gets evCallStack
@@ -103,4 +132,4 @@ withEvalPush c f = do
   return res
 
 evalResult :: Env -> EvalResult
-evalResult Env{evCoverage, evTreebugClosed, evDebugs} = EvalResult evCoverage evTreebugClosed (reverse evDebugs)
+evalResult Env{evCoverage, evTreebugClosed, evDebugs, evExprRuns, evAnnotRuns} = EvalResult evCoverage evTreebugClosed (reverse evDebugs) (reverse evExprRuns) (reverse evAnnotRuns)
