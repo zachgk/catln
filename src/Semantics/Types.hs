@@ -4754,7 +4754,20 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Un
   || leafPredsImplyTop
   || posPartCovers
   || leafwise
+  || disjointFromExcluded
   where
+    -- Against the universe minus leafs alone the question is exactly a meet: @t1 ⊆ ⊤ − n2 ⟺
+    -- t1 ∩ n2 = ∅@, and the meet is exact or wider, so an empty one is proof. The routes above
+    -- compare slot by slot and do not carry a variable-valued slot through
+    -- (@Cons[/T=$_/c∩{X}](/head=$/T)..@ against an excluded @Cons[/T=⊤−X](..)@ is disjoint by the
+    -- slot, which the meet sees and they did not — propComplementInverse, 8048: Seed
+    -- 16485207855937109884 2066315092332606395).
+    disjointFromExcluded = case t2 of
+      UnionType (Just (PredsNone, n2, [])) pos2 [] | H.null pos2, not (H.null n2) ->
+        case intersectTypesEnv typeEnv vaenv t1 (UnionType Nothing n2 []) of
+          m@(UnionType Nothing mLeafs []) -> isBottomType m || positiveLeafsAllUninhabited typeEnv vaenv mLeafs
+          m                               -> isBottomType m
+      _ -> False
     -- The rhs's positive leafs alone, when they cover the sub, prove the cover: they are a
     -- subset of the rhs. The expansion above reads them together with the predicate universe's
     -- members, a mixture in which the positive-union rules (a slot union across leafs) no
