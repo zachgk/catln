@@ -6848,9 +6848,7 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
           -- names as a parent reference: the meet keys a reference by name, so an ambient @/T@
           -- in view would capture a slot's @$^/T@ (the enclosing partial's parameter), the decoy
           -- 'foldDiscovered' documents (propParentVarBindingRespected).
-          extNames = S.union (typeExtVarAuxes a) (typeExtVarAuxes b)
-          parentNames = S.union (typeParentVarAuxes a) (typeParentVarAuxes b)
-          readEnv = H.union inEnv (H.filterWithKey (\k _ -> S.member k extNames && not (S.member k parentNames)) vaenv)
+          readEnv = H.union inEnv (externalReadEnv vaenv [a, b])
           (outEnv, t) = intersectTypesWithVarEnv typeEnv readEnv a b
           newBindings = H.filter (not . isTypeVar) $ H.difference outEnv readEnv
           ambientUnchanged = H.difference vaenv inEnv
@@ -7219,7 +7217,13 @@ foldDiscovered typeEnv vaenv vaenv' t =
         Just b  -> b /= b' && not (isSubtypeOfWithEnv typeEnv vaenv b b')
       foldBack t'
         | H.null narrowedB = t'
-        | otherwise = substituteKeepScoped typeEnv H.empty narrowedB t'
+        | otherwise = substituteKeepScopedR typeEnv readEnv H.empty narrowedB t'
+      -- Folding a binding into an occurrence meets it with the occurrence's inner, and that meet
+      -- reads the references inside both in the ambient scope ('externalReadEnv') — in the
+      -- folded bindings alone, @/c ↦ suvbzkz[/nyjdgdqjr=$_/b]..@ read its @$_/b@ as unbound and
+      -- the slot widened past the operand (propDifferenceShrinks, 7577: Seed
+      -- 14351333555597061189 1215199016988091559).
+      readEnv = externalReadEnv vaenv' (t : H.elems fresh ++ H.elems narrowedB)
   in case t of
       _ | H.null fresh && H.null narrowedB -> t
       -- A meet returned as a bare top-level var IS that var's discovered binding — whatever
@@ -7240,7 +7244,7 @@ foldDiscovered typeEnv vaenv vaenv' t =
       TypeVar v _ i
         | Just b <- H.lookup v fresh ->
             if i == PTopType || innerOpen v i then b else intersectTypesEnv typeEnv vaenv b i
-      _ -> foldBack (if H.null fresh then t else substituteKeep typeEnv fresh t)
+      _ -> foldBack (if H.null fresh then t else substituteKeepReading typeEnv readEnv fresh t)
 
 -- | Meets in flight inside 'innerRejectsMeet', for the re-entry guard it documents. Keyed
 -- WITHOUT the environment: a cycle whose env grows each lap would never re-hit an env-keyed
@@ -8105,6 +8109,16 @@ typeExtVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs
     predPartial (PredExpr e)  = e
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeExtVarAuxes (H.elems vs ++ H.elems as)
+
+-- | The part of an ambient env a meet over @ts@ may READ: the bindings of the names the types
+-- reference externally, and none a type also names as a parent reference. The meet keys a
+-- reference by name, so an ambient @/T@ in view would capture a @$^/T@ naming the enclosing
+-- partial's parameter — the decoy 'foldDiscovered' documents (propParentVarBindingRespected).
+externalReadEnv :: TypeVarArgEnv -> [Type] -> TypeVarArgEnv
+externalReadEnv env ts = H.filterWithKey (\k _ -> S.member k extNames && not (S.member k parentNames)) env
+  where
+    extNames = S.unions (map typeExtVarAuxes ts)
+    parentNames = S.unions (map typeParentVarAuxes ts)
 
 -- | 'typeExtVarAuxes' for the 'TVParent' references: every parent reference's aux, at any
 -- depth, inners included.
