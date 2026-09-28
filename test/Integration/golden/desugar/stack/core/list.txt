@@ -85,10 +85,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/List/Nil.. ) -> /Data/String = CStr
+                        [ /Data/toString( Value /this -> /Data/List/Nil.. ) -> ∀/Data/String = CStr
                             { csValue = "[]" }
                         , /Data/toString
-                            ( Value /this= Cons[ /T : ∀/Data/ToString ]( Value head@Value h )( Value tail@Value t ) ) -> /Data/String = /operator++
+                            ( Value /this= Cons[ /T : ∀/Data/ToString ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= CStr
@@ -127,14 +127,21 @@ Prgm
                 ( "/Data/List/append"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/append
+                        [ /Data/List/append[ /T : TopType ]
+                            ( Value l -> ∀/Data/List/ConsList[ /T=$_/T ] )
+                            ( Value r -> ∀/Data/List/ConsList[ /T=$_/T ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
+                        , /Data/List/append
                             ( Value a -> ∀/Data/List/ConsList[ /T=$_/T ] )
                             ( Value b -> ∀/Data/List/ConsList[ /T=$_/T ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/append( Value a= Value Nil )( Value b )= Value b
+                        [ /Data/List/append( Value l= Value Nil )( Value r )= Value r
+                        , /Data/List/append
+                            ( Value l= Cons( Value head )( Value tail ) )( Value r )= Cons( Value head= Value head )
+                            ( Value tail= append( Value l= Value tail )( Value r= Value r ) )
+                        , /Data/List/append( Value a= Value Nil )( Value b )= Value b
                         , /Data/List/append
                             ( Value a= Cons( Value head )( Value tail ) )( Value b )= Cons( Value head= Value head )
                             ( Value tail= append( Value a= Value tail )( Value b= Value b ) )
@@ -234,15 +241,6 @@ Prgm
                                 { ciValue = 0 }
                             )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/Nil"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/List/Nil ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -387,18 +385,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/Cons"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/List/Cons[ /T : TopType ]( Value /head -> $/T )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$_/T ] )
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/List/all"
                 , ObjectMapItem
                     { omiDecls =
@@ -433,15 +419,15 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ toString./Data/List/restToString
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> /Data/String
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ toString./Data/List/restToString( Value lst= Value Nil ) -> /Data/String = CStr
+                        [ toString./Data/List/restToString( Value lst= Value Nil ) -> ∀/Data/String = CStr
                             { csValue = "" }
                         , toString./Data/List/restToString
-                            ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> /Data/String = /operator++
+                            ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= CStr
                                     { csValue = ", " }
@@ -556,8 +542,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/List/ConsList
@@ -581,27 +565,6 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/List[ /T=TopType ]
-            , cgcExtends =
-                [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , cgcDoc = Just "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
-            }
-        , CGClass
-            { cgcSealed = True
-            , cgcPartial = /Data/List/ConsList[ /T=TopType ]
-            , cgcExtends =
-                [ /Data/List/Cons[ /T=$_/T ]
-                    ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                    )
-                , /Data/List/Nil
-                ]
-            , cgcDoc = Just "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]."
-            }
-        , CGClass
-            { cgcSealed = False
             , cgcPartial = /Data/List/ConsList
             , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
@@ -621,31 +584,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr
-                { csValue = "# Lists
-                A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
-                operations every list supports without fixing how the items are stored. Concrete list types
-                implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
-                be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
-                on one concrete type, every list type reuses those same declarations just by being a [List]. The
-                [List] interface lives here directly under [Data]; the [ConsList] implementation and the
-                operations all live in the [Data/List] namespace it opens." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
                 { csValue = "# The ConsList and the List operations
                 Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
                 so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
                 rather than loose at the top of [/Data]." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-                smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-                [Nil], and a step that consumes the [head] and recurses on the [tail]." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -677,6 +619,31 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "3" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Joining" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/append
+                ( Value l= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+                ( Value r= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 3 }
+                    )( Value /tail= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "[1, 2, 3]" }
             )
         , /Catln/#md
             ( Value /text= CStr

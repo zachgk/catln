@@ -97,7 +97,7 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
                                 ( Value /chars@Value /bc -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             )
-                            ( Value /this -> /Data/StrEqv[ /T=∀/Data/String ] ) -> ∀/Data/Primitive/Boolean = /Data/charsEqual( Value /a -> TVArg /ac = Value /ac )( Value /b -> TVArg /bc = Value /bc )
+                            ( Value /this -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean = /Data/charsEqual( Value /a -> TVArg /ac = Value /ac )( Value /b -> TVArg /bc = Value /bc )
                         ]
                     }
                 )
@@ -108,7 +108,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> /Data/StrEqv[ /T=∀/Data/String ] = Value /Data/StrEqv ]
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/StrEqv ]
                     }
                 )
             ,
@@ -147,7 +147,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> /Data/StrEqv[ /T=∀/Data/String ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )

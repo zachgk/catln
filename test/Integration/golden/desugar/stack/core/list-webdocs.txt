@@ -6,7 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldlShow
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value init -> /Data/String ) -> /Catln/Doc/Show/FoldSteps..
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value init -> ∀/Data/String ) -> /Catln/Doc/Show/FoldSteps..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -33,17 +33,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/showFoldSteps
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/showFoldSteps( Value steps= Value Nil ) -> /Data/String = CStr
+                        [ /Data/List/showFoldSteps( Value steps= Value Nil ) -> ∀/Data/String = CStr
                             { csValue = "" }
                         , /Data/List/showFoldSteps
                             ( Value steps= Cons
                                 ( Value head= /Catln/Doc/Show/FoldStep( Value index )( Value acc )( Value input )( Value output ) )( Value tail )
-                            ) -> /Data/String = /operator++
+                            ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
@@ -113,16 +113,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/lastOutput
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value prev -> /Data/String ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value prev -> ∀/Data/String ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/lastOutput( Value steps= Value Nil )( Value prev ) -> /Data/String = Value prev
+                        [ /Data/List/lastOutput( Value steps= Value Nil )( Value prev ) -> ∀/Data/String = Value prev
                         , /Data/List/lastOutput
                             ( Value steps= Cons
                                 ( Value head= /Catln/Doc/Show/FoldStep( Value index )( Value acc )( Value input )( Value output ) )( Value tail )
-                            )( Value prev ) -> /Data/String = lastOutput( Value steps= Value tail )( Value prev= Value output )
+                            )( Value prev ) -> ∀/Data/String = lastOutput( Value steps= Value tail )( Value prev= Value output )
                         ]
                     }
                 )
@@ -143,16 +143,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/firstOutput
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value init -> /Data/String ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value init -> ∀/Data/String ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/firstOutput( Value steps= Value Nil )( Value init ) -> /Data/String = Value init
+                        [ /Data/List/firstOutput( Value steps= Value Nil )( Value init ) -> ∀/Data/String = Value init
                         , /Data/List/firstOutput
                             ( Value steps= Cons
                                 ( Value head= /Catln/Doc/Show/FoldStep( Value index )( Value acc )( Value input )( Value output ) )( Value tail )
-                            )( Value init ) -> /Data/String = Value output
+                            )( Value init ) -> ∀/Data/String = Value output
                         ]
                     }
                 )
@@ -179,17 +179,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/showSteps
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/showSteps( Value steps= Value Nil ) -> /Data/String = CStr
+                        [ /Data/List/showSteps( Value steps= Value Nil ) -> ∀/Data/String = CStr
                             { csValue = "" }
                         , /Data/List/showSteps
                             ( Value steps= Cons
                                 ( Value head= /Catln/Doc/Show/Step( Value index )( Value input )( Value output ) )( Value tail )
-                            ) -> /Data/String = /operator++
+                            ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
@@ -372,7 +372,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldrShow
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value init -> /Data/String ) -> /Catln/Doc/Show/FoldSteps..
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value init -> ∀/Data/String ) -> /Catln/Doc/Show/FoldSteps..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

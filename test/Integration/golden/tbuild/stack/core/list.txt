@@ -200,7 +200,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/String = "[]"
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[]"
                         , /Data/toString
                             ( EAppArg
                                 { eaaArg = Value /this ->
@@ -220,7 +221,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /head@Value /h } )
                                     ( EAppArg { eaaArg = Value /tail@Value /t } )
                                 }
-                            ) -> /Data/String =
+                            ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
                                     { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
@@ -229,7 +230,9 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String = "[" }
+                                                            { eaaArg = Value /l -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "["
+                                                            }
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
@@ -256,8 +259,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String = "]" }
-                                ) ↦ /Data/String
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "]"
+                                    }
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -332,6 +337,18 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/append
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/List/ConsList[ /T=$_/T ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/List/ConsList[ /T=$_/T ] }
+                            ) -> ∀/Data/List/ConsList[ /T=$_/T ]
+                        , /Data/List/append
                             ( EAppArg
                                 { eaaArg = Value /a -> ∀/Data/List/ConsList[ /T=$_/T ] }
                             )
@@ -343,6 +360,44 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/append
+                            ( EAppArg { eaaArg = Value /l -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/List/ConsList[ /T=TopType ] }
+                            ) -> TVArg /r = ( Value /r ↦ TVArg /r )
+                        , /Data/List/append
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/List/ConsList[ /T=TopType ] }
+                            ) -> /Data/List/Cons
+                            ( /head=TopType
+                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] =
+                                    ( /Data/List/append
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                }
+                            )
+                        , /Data/List/append
                             ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/List/ConsList[ /T=TopType ] }
@@ -808,15 +863,6 @@ Prgm
                                 ) ↦ /Data/Primitive/Integer
                             )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/Nil"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/List/Nil ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -1363,26 +1409,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/Cons"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/List/Cons
-                            ( EAppVar
-                                { eavName = /T
-                                , eavMeta = TopType
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /head -> $/T } )
-                            ( EAppArg
-                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=$_/T ] }
-                            )
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/List/all"
                 , ObjectMapItem
                     { omiDecls =
@@ -1453,13 +1479,14 @@ Prgm
                         [ /toString./Data/List/restToString
                             ( EAppArg
                                 { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
-                            ) -> /Data/String
+                            ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /toString./Data/List/restToString
-                            ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String = ""
+                            ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
                         , /toString./Data/List/restToString
                             ( EAppArg
                                 { eaaArg = Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
@@ -1476,13 +1503,15 @@ Prgm
                                         { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                                     )
                                 }
-                            ) -> /Data/String =
+                            ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
                                     { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String = ", " }
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", "
+                                                }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
@@ -1504,7 +1533,7 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Semigroup
                                         )
                                     }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -1826,8 +1855,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/List/ConsList
@@ -1851,27 +1878,6 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/List[ /T=TopType ]
-            , cgcExtends =
-                [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , cgcDoc = Just "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
-            }
-        , CGClass
-            { cgcSealed = True
-            , cgcPartial = /Data/List/ConsList[ /T=TopType ]
-            , cgcExtends =
-                [ /Data/List/Cons[ /T=$_/T ]
-                    ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                    )
-                , /Data/List/Nil
-                ]
-            , cgcDoc = Just "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]."
-            }
-        , CGClass
-            { cgcSealed = False
             , cgcPartial = /Data/List/ConsList
             , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
@@ -1891,41 +1897,26 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Lists
-                A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
-                operations every list supports without fixing how the items are stored. Concrete list types
-                implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
-                be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
-                on one concrete type, every list type reuses those same declarations just by being a [List]. The
-                [List] interface lives here directly under [Data]; the [ConsList] implementation and the
-                operations all live in the [Data/List] namespace it opens." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# The ConsList and the List operations
+                  Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
+                  so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
+                  rather than loose at the top of [/Data]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# The ConsList and the List operations
-                Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
-                so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
-                rather than loose at the top of [/Data]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Bracket syntax
+                  The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
+                  Nil)))], and [[]] is [Nil]. The examples throughout this file use it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-                smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-                [Nil], and a step that consumes the [head] and recurses on the [tail]." }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below." }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Bracket syntax
-                The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
-                Nil)))], and [[]] is [Nil]. The examples throughout this file use it." }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Length" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Length"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -1975,17 +1966,76 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Folds
-                [foldr] collapses a list from the right: every [Cons] becomes a step function and the [Nil]
-                becomes an initial value, so [foldr(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= b), v=
-                a)]. The accumulator carries its own type variable, so the answer need not be the element type —
-                the examples fold [Integer]s into an [Integer] and into a [String]. The step is passed onward as
-                [fn(acc, v)= fn(acc= acc, v= v)] rather than bare, the re-wrap every higher-order argument needs
-                (see [Data/bind])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Joining"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=$_/T ] ) =
+                    ( /Data/List/append
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/List/Cons
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                        )
+                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=$_/T ] )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1, 2, 3]"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Folds
+                  [foldr] collapses a list from the right: every [Cons] becomes a step function and the [Nil]
+                  becomes an initial value, so [foldr(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= b), v=
+                  a)]. The accumulator carries its own type variable, so the answer need not be the element type —
+                  the examples fold [Integer]s into an [Integer] and into a [String]. The step is passed onward as
+                  [fn(acc, v)= fn(acc= acc, v= v)] rather than bare, the re-wrap every higher-order argument needs
+                  (see [Data/bind])."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2054,7 +2104,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "6" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2084,7 +2136,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "0" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2123,25 +2177,33 @@ Prgm
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /r -> /Data/String = "x" }
+                                        { eaaArg = Value /r -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                        }
                                     ) ↦ ∀/Data/Algebra/Semigroup
                                 )
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /init -> /Data/String = "s" }
+                            { eaaArg = Value /init -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "s"
+                            }
                         ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "sxx" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "sxx"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[foldl] collapses from the left instead, carrying the accumulator forward as it walks, so
-                [foldl(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= a), v= b)]. The two agree when the
-                step is associative and differ when it is not, which the [String] examples show." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[foldl] collapses from the left instead, carrying the accumulator forward as it walks, so
+                  [foldl(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= a), v= b)]. The two agree when the
+                  step is associative and differ when it is not, which the [String] examples show."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2210,7 +2272,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "6" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2240,7 +2304,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "0" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2279,29 +2345,39 @@ Prgm
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /r -> /Data/String = "x" }
+                                        { eaaArg = Value /r -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                        }
                                     ) ↦ ∀/Data/Algebra/Semigroup
                                 )
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /init -> /Data/String = "s" }
+                            { eaaArg = Value /init -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "s"
+                            }
                         ) ↦ ∀/Catln/Doc/DShow
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "sxx" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "sxx"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "TODO: [append] and [reversed] below are folds too and are still their own two-arm recursions.
-                [reversed] is a [foldl] with [Cons] as the step, and [append] is what [mmap] is built on, so
-                rewriting it moves the whole [Monad] instance with it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "TODO: [append] and [reversed] below are folds too and are still their own two-arm recursions.
+                  [reversed] is a [foldl] with [Cons] as the step, and [append] is what [mmap] is built on, so
+                  rewriting it moves the whole [Monad] instance with it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Summing" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Summing"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2317,7 +2393,7 @@ Prgm
                                         , /tail=/Data/List/Nil
                                         )
                                     )
-                                )| PredClass /Data/List[ /T=/Data/Primitive/Integer ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -2351,7 +2427,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "6" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2362,11 +2440,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "0" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Universal and existential quantifiers" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Universal and existential quantifiers"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2379,7 +2461,7 @@ Prgm
                                     ( /head=/Data/Primitive/True
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Data/Primitive/True = Value /Data/Primitive/True } )
                                 ( EAppArg
                                     { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/True ]
@@ -2396,7 +2478,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2406,7 +2490,7 @@ Prgm
                             { eaaArg = Value /lst -> /Data/List/Cons
                                 ( /head=/Data/Primitive/False
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Data/Primitive/False = Value /Data/Primitive/False } )
                                 ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
@@ -2415,7 +2499,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2425,7 +2511,7 @@ Prgm
                             { eaaArg = Value /lst -> /Data/List/Cons
                                 ( /head=/Data/Primitive/True
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Data/Primitive/True = Value /Data/Primitive/True } )
                                 ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
@@ -2434,7 +2520,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2447,7 +2535,7 @@ Prgm
                                     ( /head=/Data/Primitive/False
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Data/Primitive/False = Value /Data/Primitive/False } )
                                 ( EAppArg
                                     { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/False ]
@@ -2464,17 +2552,21 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Quantifying over a predicate
-                [all] and [any] read a list that already holds [Boolean]s. [allBy] and [anyBy] are the
-                higher-order forms: they take the list and a predicate, and ask the question of every element.
-                Both are written by [fmap]ping the predicate across the list and handing the resulting
-                [Boolean] list to [all]/[any] — the elements never have to be [Boolean] themselves, so these
-                work on a list of anything. The predicate is passed onward as [fn(v)= fn(v= v)] rather than
-                bare; a bare [fn] does not typecheck (see [Data/bind] for the same re-wrap)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Quantifying over a predicate
+                  [all] and [any] read a list that already holds [Boolean]s. [allBy] and [anyBy] are the
+                  higher-order forms: they take the list and a predicate, and ask the question of every element.
+                  Both are written by [fmap]ping the predicate across the list and handing the resulting
+                  [Boolean] list to [all]/[any] — the elements never have to be [Boolean] themselves, so these
+                  work on a list of anything. The predicate is passed onward as [fn(v)= fn(v= v)] rather than
+                  bare; a bare [fn] does not typecheck (see [Data/bind] for the same re-wrap)."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2537,7 +2629,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2600,7 +2694,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2624,7 +2720,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2687,7 +2785,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2750,7 +2850,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2774,11 +2876,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Membership" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Membership"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2831,7 +2937,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2884,7 +2992,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2898,16 +3008,20 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Filtering
-                [filter] keeps the elements a predicate accepts, in their original order. It is written over
-                [mmap]: each element becomes a one-element list where the predicate holds and the empty list
-                where it does not, and [mmap] concatenates those — so a rejected element contributes nothing.
-                [keepIf] is local to the definition because it is an artifact of that encoding rather than an
-                operation a caller would want." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Filtering
+                  [filter] keeps the elements a predicate accepts, in their original order. It is written over
+                  [mmap]: each element becomes a one-element list where the predicate holds and the empty list
+                  where it does not, and [mmap] concatenates those — so a rejected element contributes nothing.
+                  [keepIf] is local to the definition because it is an artifact of that encoding rather than an
+                  operation a caller would want."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2991,7 +3105,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[3, 4]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[3, 4]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3000,36 +3116,63 @@ Prgm
                     ( /Data/List/filter
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
-                                ( /head=/Data/String
-                                , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                    ( /head=/Data/String
-                                    , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                        ( /head=/Data/String
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                         , /tail=/Data/List/Nil
                                         )
                                     )
                                 ) = /Data/List/Cons
                                 ( EAppArg
-                                    { eaaArg = Value /head -> /Data/String = "ab" }
+                                    { eaaArg = Value /head -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "ab"
+                                    }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
-                                        ( /head=/Data/String
-                                        , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                            ( /head=/Data/String
+                                    { eaaArg = Value /tail -> /Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /tail=/Data/List/Cons
+                                            [ /T=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ]
+                                            ( /head=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /tail=/Data/List/Nil
                                             )
                                         ) = /Data/List/Cons
                                         ( EAppArg
-                                            { eaaArg = Value /head -> /Data/String = "c" }
+                                            { eaaArg = Value /head -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "c"
+                                            }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
-                                                ( /head=/Data/String
+                                            { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ]
+                                                ( /head=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 , /tail=/Data/List/Nil
                                                 ) = /Data/List/Cons
                                                 ( EAppArg
-                                                    { eaaArg = Value /head -> /Data/String = "de" }
+                                                    { eaaArg = Value /head -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "de"
+                                                    }
                                                 )
                                                 ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                             }
@@ -3040,13 +3183,19 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /v -> /Data/String } ) -> ∀/Data/Primitive/Boolean =
+                                ( EAppArg
+                                    { eaaArg = Value /v -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    }
+                                ) -> ∀/Data/Primitive/Boolean =
                                 ( /operator==
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /r -> /Data/String = "c" }
+                                        { eaaArg = Value /r -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "c"
+                                        }
                                     ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             }
@@ -3056,7 +3205,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[c]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[c]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3082,11 +3233,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Counting matches" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Counting matches"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3168,7 +3323,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3192,23 +3349,29 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "0" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Missing combinators
-                TODO: [concat] — [mmap(m= lst, fn(v)= v)] — still does not compile, and it now fails
-                DIFFERENTLY from how it used to. It exhausts memory during TYPE INFERENCE: [catln epochs] on a
-                file declaring it passes 8GB of RSS in 70s and never reports, where the same file calling
-                [mmap] ordinarily finishes in 36s at 1.0GB over 804 epochs. It previously failed at EVALUATION
-                with [catln: <<loop>>]. Since type inference runs before tree building, any diagnosis resting
-                on a tree-build-time structure cannot explain the current failure and needs re-deriving.
-                The shape to isolate is that [concat] makes the element dimension the same shape as the
-                container — [fn(v)= v] forces both the monad variable and the element variable to [ConsList]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Missing combinators
+                  TODO: [concat] — [mmap(m= lst, fn(v)= v)] — still does not compile, and it now fails
+                  DIFFERENTLY from how it used to. It exhausts memory during TYPE INFERENCE: [catln epochs] on a
+                  file declaring it passes 8GB of RSS in 70s and never reports, where the same file calling
+                  [mmap] ordinarily finishes in 36s at 1.0GB over 804 epochs. It previously failed at EVALUATION
+                  with [catln: <<loop>>]. Since type inference runs before tree building, any diagnosis resting
+                  on a tree-build-time structure cannot explain the current failure and needs re-deriving.
+                  The shape to isolate is that [concat] makes the element dimension the same shape as the
+                  container — [fn(v)= v] forces both the monad variable and the element variable to [ConsList]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Reversing" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Reversing"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3258,7 +3421,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[3, 2, 1]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[3, 2, 1]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3269,11 +3434,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Sorting" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Sorting"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3325,7 +3494,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[1, 2, 3]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1, 2, 3]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3396,11 +3567,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[1, 4, 4, 5]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1, 4, 4, 5]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Counting ranges" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Counting ranges"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3415,7 +3590,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[0, 1, 2]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[0, 1, 2]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3430,18 +3607,24 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Rendering as text" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Rendering as text"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-                rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-                [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-                implement it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+                  rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+                  [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+                  implement it."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3454,7 +3637,7 @@ Prgm
                             , /tail=/Data/List/Nil
                             )
                         )
-                    )| PredClass /Catln/Doc/DShow = /Data/List/Cons
+                    ) = /Data/List/Cons
                     ( EAppArg
                         { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                     )
@@ -3485,35 +3668,49 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[1, 2, 3]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1, 2, 3]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Structural comparison helper" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Structural comparison helper"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# ConsList Functor instance
-                A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
-                list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
-                Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
-                [fmap] generalises." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# ConsList Functor instance
+                  A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
+                  list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
+                  Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
+                  [fmap] generalises."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "written under the declaration's absolute name so the open [Functor] interface need not be" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "written under the declaration's absolute name so the open [Functor] interface need not be"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "totally covered while still resolving for [fmap] calls on a [ConsList]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "totally covered while still resolving for [fmap] calls on a [ConsList]."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3582,25 +3779,33 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[2, 3, 4]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[2, 3, 4]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# ConsList Eq membership
-                Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-                dispatches through the [equal] method. Two lists are equal when they match constructor for
-                constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
-                idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
-                [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
-                the head comparison on the elements typechecks." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# ConsList Eq membership
+                  Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+                  dispatches through the [equal] method. Two lists are equal when they match constructor for
+                  constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
+                  idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
+                  [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
+                  the head comparison on the elements typechecks."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Equal lists compare equal element-wise, and lists that differ in an element or in length do" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Equal lists compare equal element-wise, and lists that differ in an element or in length do"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3613,7 +3818,7 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -3637,7 +3842,7 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -3658,7 +3863,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3671,7 +3878,7 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -3695,7 +3902,7 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -3716,7 +3923,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3729,7 +3938,7 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -3750,7 +3959,7 @@ Prgm
                             { eaaArg = Value /r -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -3761,23 +3970,31 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# ConsList Ord membership
-                Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-                constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
-                the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
-                every [Ord] is an [Eq], which the [Eq] membership already supplies)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# ConsList Ord membership
+                  Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+                  constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
+                  the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
+                  every [Ord] is an [Eq], which the [Eq] membership already supplies)."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Lists order lexicographically: the first differing element decides, and a prefix is ordered" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Lists order lexicographically: the first differing element decides, and a prefix is ordered"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  before its extension ([Nil] before any [Cons])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  before its extension ([Nil] before any [Cons])."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3790,7 +4007,7 @@ Prgm
                                         { eaaArg = Value /other -> /Data/List/Cons
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/List/Nil
-                                            )| PredClass /Data/Algebra/Ord = /Data/List/Cons
+                                            ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
                                             )
@@ -3815,7 +4032,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3831,7 +4050,7 @@ Prgm
                                                 ( /head=/Data/Primitive/Integer
                                                 , /tail=/Data/List/Nil
                                                 )
-                                            )| PredClass /Data/Algebra/Ord = /Data/List/Cons
+                                            ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                             )
@@ -3866,7 +4085,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3882,7 +4103,7 @@ Prgm
                                                 ( /head=/Data/Primitive/Integer
                                                 , /tail=/Data/List/Nil
                                                 )
-                                            )| PredClass /Data/Algebra/Ord = /Data/List/Cons
+                                            ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                             )
@@ -3930,37 +4151,53 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# ConsList Monad instance
-                [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
-                the results are appended in order." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# ConsList Monad instance
+                  [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
+                  the results are appended in order."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[append] joins two lists in order — the recursive structural join (it recurses through itself" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[append] joins two lists in order — the recursive structural join (it recurses through itself"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "so the recursion stays a concrete arrow)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "so the recursion stays a concrete arrow)."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[fmap] instance above, it is written under the declaration's absolute name so the open [Monad]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[fmap] instance above, it is written under the declaration's absolute name so the open [Monad]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "class is not required to be totally covered here." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "class is not required to be totally covered here."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[append] joins two lists end to end." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[append] joins two lists end to end."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3994,19 +4231,27 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[1, 2]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1, 2]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  results are appended in order, so a function ignoring its element repeats a constant list and" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  results are appended in order, so a function ignoring its element repeats a constant list and"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  one reading it can grow the list. Binding the empty list yields the empty list." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  one reading it can grow the list. Binding the empty list yields the empty list."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -4054,7 +4299,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[0, 0]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[0, 0]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -4115,7 +4362,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[1, 1, 2, 2]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1, 1, 2, 2]"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -4138,15 +4387,21 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "this instance (return-type-directed dispatch — see [pure] in [Data/monad])."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -4159,7 +4414,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[1]" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1]"
+                }
             )
         ]
     }

@@ -1468,7 +1468,7 @@ Prgm
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                    ) = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -4286,19 +4286,7 @@ Prgm
                 { csValue = "## Subset" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( /Data/Primitive/True + /Data/List/foldr
-                    [ /B=/Data/Primitive/True
-                    , /A=TopType
-                    ]
-                    ( /fn
-                        ( /acc=TopType
-                        , /v=TopType
-                        )=/Data/Primitive/True
-                    , /init=/Data/Primitive/True
-                    , /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ]
-                    )| PredClass /Catln/Doc/DShow + /Data/Primitive/False
-                ) = /Data/Set/isSubsetOf
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/isSubsetOf
                 ( Value /a -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -4559,19 +4547,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( /Data/Primitive/True + /Data/List/foldr
-                    [ /B=/Data/Primitive/True
-                    , /A=TopType
-                    ]
-                    ( /fn
-                        ( /acc=TopType
-                        , /v=TopType
-                        )=/Data/Primitive/True
-                    , /init=/Data/Primitive/True
-                    , /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ]
-                    )| PredClass /Catln/Doc/DShow + /Data/Primitive/False
-                ) = /Data/Set/isSubsetOf
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/isSubsetOf
                 ( Value /a -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]

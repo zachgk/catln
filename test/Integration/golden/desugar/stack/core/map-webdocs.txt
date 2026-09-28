@@ -6,17 +6,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/showEntrySteps
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/showEntrySteps( Value steps= Value /Data/List/Nil ) -> /Data/String = CStr
+                        [ /Data/Map/showEntrySteps( Value steps= Value /Data/List/Nil ) -> ∀/Data/String = CStr
                             { csValue = "" }
                         , /Data/Map/showEntrySteps
                             ( Value steps= /Data/List/Cons
                                 ( Value head= /Catln/Doc/Show/EntryStep( Value index )( Value key )( Value input )( Value output ) )( Value tail )
-                            ) -> /Data/String = /operator++
+                            ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
@@ -139,17 +139,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/showEntryFoldSteps
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/showEntryFoldSteps( Value steps= Value /Data/List/Nil ) -> /Data/String = CStr
+                        [ /Data/Map/showEntryFoldSteps( Value steps= Value /Data/List/Nil ) -> ∀/Data/String = CStr
                             { csValue = "" }
                         , /Data/Map/showEntryFoldSteps
                             ( Value steps= /Data/List/Cons
                                 ( Value head= /Catln/Doc/Show/EntryFoldStep( Value index )( Value key )( Value acc )( Value input )( Value output ) )( Value tail )
-                            ) -> /Data/String = /operator++
+                            ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
@@ -193,7 +193,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/foldEntriesShow
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value init -> /Data/String ) -> /Catln/Doc/Show/EntryFoldSteps..
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value init -> ∀/Data/String ) -> /Catln/Doc/Show/EntryFoldSteps..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -297,16 +297,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/lastEntryOutput
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value prev -> /Data/String ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value prev -> ∀/Data/String ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/lastEntryOutput( Value steps= Value /Data/List/Nil )( Value prev ) -> /Data/String = Value prev
+                        [ /Data/Map/lastEntryOutput( Value steps= Value /Data/List/Nil )( Value prev ) -> ∀/Data/String = Value prev
                         , /Data/Map/lastEntryOutput
                             ( Value steps= /Data/List/Cons
                                 ( Value head= /Catln/Doc/Show/EntryFoldStep( Value index )( Value key )( Value acc )( Value input )( Value output ) )( Value tail )
-                            )( Value prev ) -> /Data/String = lastEntryOutput( Value steps= Value tail )( Value prev= Value output )
+                            )( Value prev ) -> ∀/Data/String = lastEntryOutput( Value steps= Value tail )( Value prev= Value output )
                         ]
                     }
                 )

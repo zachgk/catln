@@ -332,14 +332,14 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                            { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                 )
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                 )
@@ -358,14 +358,14 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                            { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                 )
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                 )
@@ -399,7 +399,7 @@ Prgm
                             { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /Data/Algebra/compareTo
                                     ( EAppArg
-                                        { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some
+                                        { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                             )
@@ -431,7 +431,7 @@ Prgm
                             { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /Data/Algebra/compareTo
                                     ( EAppArg
-                                        { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some
+                                        { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                             )
@@ -464,7 +464,7 @@ Prgm
                                 ( /Data/Algebra/compareTo
                                     ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some
+                                        { eaaArg = Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
@@ -555,7 +555,7 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                            { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) =
                                 ( /Data/Monad/mmap
                                     ( EAppArg
                                         { eaaArg = Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -571,12 +571,12 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 6 }
                                             )
                                         }
-                                    ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                    ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
                                 )
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 6 }
                                 )
@@ -675,7 +675,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                            { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 5 }
                                 )

@@ -15,16 +15,16 @@ Prgm
                 ( "/nameOf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /nameOf( Value /this -> /Plain.. ) -> /Data/String ]
+                        [ /nameOf( Value /this -> /Plain.. ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /nameOf
                             ( Value /this -> /Plain
-                                ( /name=/Data/String
-                                , /other=/Data/String
-                                ) = /Plain( Value /name -> /Data/String )( Value /other -> /Data/String )
-                            ) -> /Data/String = Value /name
+                                ( /name=∀/Data/String
+                                , /other=∀/Data/String
+                                ) = /Plain( Value /name -> ∀/Data/String )( Value /other -> ∀/Data/String )
+                            ) -> ∀/Data/String = Value /name
                         ]
                     }
                 )
@@ -32,7 +32,7 @@ Prgm
                 ( "/Plain"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Plain( Value /name -> /Data/String )( Value /other -> /Data/String ) ]
+                        [ /Plain( Value /name -> ∀/Data/String )( Value /other -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -47,7 +47,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A declaration naming a data type by its BARE NAME, fulfilled by a definition which destructures
                 that type's fields.
                 The two sides spell the same type differently: the declaration writes @Plain@ and says nothing

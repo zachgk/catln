@@ -12,34 +12,52 @@ Prgm
                             ( EAppArg { eaaArg = Value /s -> ∀/Data/Json } ) -> /Catln/Doc/Show/Rendered
                             ( /value=∀/Data/Json
                             , /assets=/Data/List/Cons
-                                ( /head=/Data/String
-                                , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                    ( /head=/Data/String
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=/Data/String ]
+                                )
                             ) = /Catln/Doc/Show/Rendered
                             ( EAppArg
                                 { eaaArg = Value /value -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                             )
                             ( EAppArg
                                 { eaaArg = Value /assets -> /Data/List/Cons
-                                    ( /head=/Data/String
-                                    , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                        ( /head=/Data/String
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
+                                    ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Data/String = "json/json.js" }
+                                        { eaaArg = Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "json/json.js"
+                                        }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
-                                            ( /head=/Data/String
+                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                            [ /T=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ]
+                                            ( /head=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
-                                                { eaaArg = Value /head -> /Data/String = "json/json.css" }
+                                                { eaaArg = Value /head -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "json/json.css"
+                                                }
                                             )
                                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                         }
@@ -50,34 +68,52 @@ Prgm
                             ( EAppArg { eaaArg = Value /s -> /Data/Json/Member.. } ) -> /Catln/Doc/Show/Rendered
                             ( /value=/Data/Json/Member..
                             , /assets=/Data/List/Cons
-                                ( /head=/Data/String
-                                , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                    ( /head=/Data/String
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=/Data/String ]
+                                )
                             ) = /Catln/Doc/Show/Rendered
                             ( EAppArg
                                 { eaaArg = Value /value -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                             )
                             ( EAppArg
                                 { eaaArg = Value /assets -> /Data/List/Cons
-                                    ( /head=/Data/String
-                                    , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                        ( /head=/Data/String
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
+                                    ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Data/String = "json/json.js" }
+                                        { eaaArg = Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "json/json.js"
+                                        }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
-                                            ( /head=/Data/String
+                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                            [ /T=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ]
+                                            ( /head=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
-                                                { eaaArg = Value /head -> /Data/String = "json/json.css" }
+                                                { eaaArg = Value /head -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "json/json.css"
+                                                }
                                             )
                                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                         }
@@ -92,7 +128,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Json/Member
-                            ( EAppArg { eaaArg = Value /key -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /key -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /value -> ∀/Data/Json } )
                         ]
                     , omiRuntimeDecls = []
@@ -117,31 +153,35 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/typeName
-                            ( EAppArg { eaaArg = Value /value -> ∀/Data/Json } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /value -> ∀/Data/Json } ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/typeName
-                            ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } ) -> /Data/String = "null"
+                            ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "null"
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Bool( /value=∀/Data/Primitive/Boolean ) = /Data/Json/Bool
                                     ( EAppArg { eaaArg = Value /value@Value /b -> ∀/Data/Primitive/Boolean } )
                                 }
-                            ) -> /Data/String = "boolean"
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "boolean"
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Number( /value=∀/Data/Primitive/Number ) = /Data/Json/Number
                                     ( EAppArg { eaaArg = Value /value@Value /n -> ∀/Data/Primitive/Number } )
                                 }
-                            ) -> /Data/String = "number"
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "number"
                         , /Data/typeName
                             ( EAppArg
-                                { eaaArg = Value /value -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
-                                    ( EAppArg { eaaArg = Value /value@Value /s -> /Data/String } )
+                                { eaaArg = Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str
+                                    ( EAppArg { eaaArg = Value /value@Value /s -> ∀/Data/String } )
                                 }
-                            ) -> /Data/String = "string"
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "string"
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Array
@@ -150,7 +190,8 @@ Prgm
                                         { eaaArg = Value /entries -> ∀/Data/List[ /T=∀/Data/Json ] }
                                     )
                                 }
-                            ) -> /Data/String = "array"
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "array"
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Object
@@ -159,7 +200,8 @@ Prgm
                                         { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member.. ] }
                                     )
                                 }
-                            ) -> /Data/String = "object"
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "object"
                         ]
                     }
                 )
@@ -203,7 +245,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Json/Str
-                            ( EAppArg { eaaArg = Value /value -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -243,7 +285,7 @@ Prgm
                 [ /Data/Json/Null
                 , /Data/Json/Bool( /value=∀/Data/Primitive/Boolean )
                 , /Data/Json/Number( /value=∀/Data/Primitive/Number )
-                , /Data/Json/Str( /value=/Data/String )
+                , /Data/Json/Str( /value=∀/Data/String )
                 , /Data/Json/Array
                     ( /entries=∀/Data/List[ /T=∀/Data/Json ] )
                 , /Data/Json/Object
@@ -260,116 +302,145 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# JSON
-                A [Json] is what a JSON file holds, read as a value: the six things JSON says, and nothing else.
-                It is declared here so that a program handed a `.json` file has a type to read it as, in the way
-                [/Data/FileOrDir] is the type a directory is read as.
-                It is not part of the standard library and must not become part of it. This page reaches
-                @core/list.ct@, and a page every program compiles reaching that is the import cycle
-                @core/result.ct@ measures at seven hundred seconds. A program which reads no JSON has no use for
-                the type, and the page a JSON file is read as writes the import itself.
-                The six arms are JSON's own six, so a document read into this and written back out again says
-                what it said. What JSON does not distinguish, this does not either: there is one [Json/Number]
-                rather than an integer and a float, because the format has one." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# JSON
+                  A [Json] is what a JSON file holds, read as a value: the six things JSON says, and nothing else.
+                  It is declared here so that a program handed a `.json` file has a type to read it as, in the way
+                  [/Data/FileOrDir] is the type a directory is read as.
+                  It is not part of the standard library and must not become part of it. This page reaches
+                  @core/list.ct@, and a page every program compiles reaching that is the import cycle
+                  @core/result.ct@ measures at seven hundred seconds. A program which reads no JSON has no use for
+                  the type, and the page a JSON file is read as writes the import itself.
+                  The six arms are JSON's own six, so a document read into this and written back out again says
+                  what it said. What JSON does not distinguish, this does not either: there is one [Json/Number]
+                  rather than an integer and a float, because the format has one."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
-                close together is a reader guessing which of them an arm meant.
-                [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
-                and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
-                because a document's keys are written in an order and shown in it — a map would sort them, and
-                a JSON file shown with its keys rearranged is not the file that was read." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+                  close together is a reader guessing which of them an arm meant.
+                  [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+                  and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+                  because a document's keys are written in an order and shown in it — a map would sort them, and
+                  a JSON file shown with its keys rearranged is not the file that was read."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Which arm a value is" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Which arm a value is"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
-                        ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } ) ↦ /Data/String
+                        ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "null" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "null"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
-                            { eaaArg = Value /value -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
+                            { eaaArg = Value /value -> /Data/Json/Str
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) = /Data/Json/Str
                                 ( EAppArg
-                                    { eaaArg = Value /value -> /Data/String = "catln" }
+                                    { eaaArg = Value /value -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "catln"
+                                    }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "string" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "string"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
                                 ( /entries=/Data/List/Cons
                                     ( /head=/Data/Json/Null
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                    )
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
                                         ( /head=/Data/Json/Null
                                         , /tail=/Data/List/Nil
-                                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
+                                        ) = /Data/List/Cons
                                         ( EAppArg { eaaArg = Value /head -> /Data/Json/Null = Value /Data/Json/Null } )
                                         ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                     }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "array" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "array"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Object
                                 ( /entries=/Data/List/Cons
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Null
-                                        , /key=/Data/String
+                                        , /key=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                         )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
+                                    )
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Null
-                                            , /key=/Data/String
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             )
                                         , /tail=/Data/List/Nil
-                                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
+                                        ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Null
-                                                , /key=/Data/String
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 ) = /Data/Json/Member
                                                 ( EAppArg
-                                                    { eaaArg = Value /key -> /Data/String = "a" }
+                                                    { eaaArg = Value /key -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                                                    }
                                                 )
                                                 ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } )
                                             }
@@ -378,23 +449,29 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "object" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "object"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Containers of several entries
-                An array of one entry and an array of several are not the same thing to check, and neither are an
-                object and an object inside one, so each is written out rather than left to the single-entry
-                cases above to stand for." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Containers of several entries
+                  An array of one entry and an array of several are not the same thing to check, and neither are an
+                  object and an object inside one, so each is written out rather than left to the single-entry
+                  cases above to stand for."
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
@@ -402,42 +479,75 @@ Prgm
                                     ( /head=/Data/Json/Null
                                     , /tail=/Data/List/Cons
                                         [ /T=
-                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            )
                                         ]
                                         ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
                                         , /tail=/Data/List/Cons
-                                            [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                            ( /head=/Data/Json/Str( /value=/Data/String )
+                                            [ /T=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
                                             , /tail=/Data/List/Nil
                                             )
                                         )
-                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                    )
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
                                         ( /head=/Data/Json/Null
                                         , /tail=/Data/List/Cons
                                             [ /T=
-                                                ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
+                                                ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                )
                                             ]
                                             ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
                                             , /tail=/Data/List/Cons
-                                                [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                                ( /head=/Data/Json/Str( /value=/Data/String )
+                                                [ /T=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                ]
+                                                ( /head=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
                                                 , /tail=/Data/List/Nil
                                                 )
                                             )
-                                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
+                                        ) = /Data/List/Cons
                                         ( EAppArg { eaaArg = Value /head -> /Data/Json/Null = Value /Data/Json/Null } )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
                                                 [ /T=
-                                                    ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
+                                                    ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    )
                                                 ]
                                                 ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
                                                 , /tail=/Data/List/Cons
-                                                    [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                                    ( /head=/Data/Json/Str( /value=/Data/String )
+                                                    [ /T=/Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    ]
+                                                    ( /head=/Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
                                                     , /tail=/Data/List/Nil
                                                     )
                                                 ) = /Data/List/Cons
@@ -448,14 +558,26 @@ Prgm
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = Value /tail -> /Data/List/Cons
-                                                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                                        ( /head=/Data/Json/Str( /value=/Data/String )
+                                                        [ /T=/Data/Json/Str
+                                                            ( /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
+                                                        ]
+                                                        ( /head=/Data/Json/Str
+                                                            ( /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
                                                         , /tail=/Data/List/Nil
                                                         ) = /Data/List/Cons
                                                         ( EAppArg
-                                                            { eaaArg = Value /head -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
+                                                            { eaaArg = Value /head -> /Data/Json/Str
+                                                                ( /value=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                ) = /Data/Json/Str
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /value -> /Data/String = "x" }
+                                                                    { eaaArg = Value /value -> /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                                    }
                                                                 )
                                                             }
                                                         )
@@ -467,54 +589,95 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "array" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "array"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    ( /head=/Data/Json/Str( /value=/Data/String )
+                                    ( /head=/Data/Json/Str
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Cons
-                                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                        ( /head=/Data/Json/Str( /value=/Data/String )
+                                        [ /T=/Data/Json/Str
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Str
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                    )
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
-                                        ( /head=/Data/Json/Str( /value=/Data/String )
+                                        ( /head=/Data/Json/Str
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
                                         , /tail=/Data/List/Cons
-                                            [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                            ( /head=/Data/Json/Str( /value=/Data/String )
+                                            [ /T=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
                                             , /tail=/Data/List/Nil
                                             )
-                                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
+                                        ) = /Data/List/Cons
                                         ( EAppArg
-                                            { eaaArg = Value /head -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
+                                            { eaaArg = Value /head -> /Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) = /Data/Json/Str
                                                 ( EAppArg
-                                                    { eaaArg = Value /value -> /Data/String = "x" }
+                                                    { eaaArg = Value /value -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                    }
                                                 )
                                             }
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
-                                                [ /T=/Data/Json/Str( /value=/Data/String ) ]
-                                                ( /head=/Data/Json/Str( /value=/Data/String )
+                                                [ /T=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                ]
+                                                ( /head=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
                                                 , /tail=/Data/List/Nil
                                                 ) = /Data/List/Cons
                                                 ( EAppArg
-                                                    { eaaArg = Value /head -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
+                                                    { eaaArg = Value /head -> /Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ) = /Data/Json/Str
                                                         ( EAppArg
-                                                            { eaaArg = Value /value -> /Data/String = "y" }
+                                                            { eaaArg = Value /value -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "y"
+                                                            }
                                                         )
                                                     }
                                                 )
@@ -524,64 +687,89 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "array" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "array"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Object
                                 ( /entries=/Data/List/Cons
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Null
-                                        , /key=/Data/String
+                                        , /key=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                         )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Member
-                                            ( /value=/Data/Json/Str( /value=/Data/String )
-                                            , /key=/Data/String
+                                            ( /value=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             )
                                         ]
                                         ( /head=/Data/Json/Member
-                                            ( /value=/Data/Json/Str( /value=/Data/String )
-                                            , /key=/Data/String
+                                            ( /value=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
+                                    )
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Null
-                                            , /key=/Data/String
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             )
                                         , /tail=/Data/List/Cons
                                             [ /T=/Data/Json/Member
-                                                ( /value=/Data/Json/Str( /value=/Data/String )
-                                                , /key=/Data/String
+                                                ( /value=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 )
                                             ]
                                             ( /head=/Data/Json/Member
-                                                ( /value=/Data/Json/Str( /value=/Data/String )
-                                                , /key=/Data/String
+                                                ( /value=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 )
                                             , /tail=/Data/List/Nil
                                             )
-                                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
+                                        ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Null
-                                                , /key=/Data/String
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 ) = /Data/Json/Member
                                                 ( EAppArg
-                                                    { eaaArg = Value /key -> /Data/String = "a" }
+                                                    { eaaArg = Value /key -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                                                    }
                                                 )
                                                 ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } )
                                             }
@@ -589,28 +777,47 @@ Prgm
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
                                                 [ /T=/Data/Json/Member
-                                                    ( /value=/Data/Json/Str( /value=/Data/String )
-                                                    , /key=/Data/String
+                                                    ( /value=/Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    , /key=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     )
                                                 ]
                                                 ( /head=/Data/Json/Member
-                                                    ( /value=/Data/Json/Str( /value=/Data/String )
-                                                    , /key=/Data/String
+                                                    ( /value=/Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    , /key=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 ) = /Data/List/Cons
                                                 ( EAppArg
                                                     { eaaArg = Value /head -> /Data/Json/Member
-                                                        ( /value=/Data/Json/Str( /value=/Data/String )
-                                                        , /key=/Data/String
+                                                        ( /value=/Data/Json/Str
+                                                            ( /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
+                                                        , /key=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                         ) = /Data/Json/Member
                                                         ( EAppArg
-                                                            { eaaArg = Value /key -> /Data/String = "b" }
+                                                            { eaaArg = Value /key -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "b"
+                                                            }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /value -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
+                                                            { eaaArg = Value /value -> /Data/Json/Str
+                                                                ( /value=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                ) = /Data/Json/Str
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /value -> /Data/String = "x" }
+                                                                    { eaaArg = Value /value -> /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                                    }
                                                                 )
                                                             }
                                                         )
@@ -622,16 +829,20 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "object" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "object"
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Object
@@ -645,12 +856,13 @@ Prgm
                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Nil
                                                     )
-                                                )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                                )
                                             )
-                                        , /key=/Data/String
+                                        , /key=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                         )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
+                                    )
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
@@ -663,12 +875,13 @@ Prgm
                                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Nil
                                                         )
-                                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                                    )
                                                 )
-                                            , /key=/Data/String
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             )
                                         , /tail=/Data/List/Nil
-                                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
+                                        ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Array
@@ -679,12 +892,15 @@ Prgm
                                                             ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Nil
                                                             )
-                                                        )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                                        )
                                                     )
-                                                , /key=/Data/String
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 ) = /Data/Json/Member
                                                 ( EAppArg
-                                                    { eaaArg = Value /key -> /Data/String = "outer" }
+                                                    { eaaArg = Value /key -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "outer"
+                                                    }
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = Value /value -> /Data/Json/Array
@@ -695,7 +911,7 @@ Prgm
                                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Nil
                                                                 )
-                                                            )| PredClass /Data/List[ /T=∀/Data/Json ]
+                                                            )
                                                         ) = /Data/Json/Array
                                                         ( EAppArg
                                                             { eaaArg = Value /entries -> /Data/List/Cons
@@ -705,7 +921,7 @@ Prgm
                                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                     , /tail=/Data/List/Nil
                                                                     )
-                                                                )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
+                                                                ) = /Data/List/Cons
                                                                 ( EAppArg
                                                                     { eaaArg = Value /head -> /Data/Json/Number( /value=/Data/Primitive/Float ) = /Data/Json/Number
                                                                         ( EAppArg
@@ -739,12 +955,15 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "object" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "object"
+                }
             )
         ]
     }

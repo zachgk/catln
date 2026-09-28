@@ -32,9 +32,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Tagged
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
                             ( EAppArg
-                                { eaaArg = Value /tags -> ∀/Data/List[ /T=/Data/String ] }
+                                { eaaArg = Value /tags -> ∀/Data/List[ /T=∀/Data/String ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -61,7 +61,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Mixed/Labelled
-                            ( EAppArg { eaaArg = Value /value -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -99,7 +99,7 @@ Prgm
             , cgcPartial = /Mixed
             , cgcExtends =
                 [ /Mixed/Plain
-                , /Mixed/Labelled( /value=/Data/String )
+                , /Mixed/Labelled( /value=∀/Data/String )
                 ]
             , cgcDoc = Just ""
             }
@@ -107,59 +107,84 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A list of two or more held in a FIELD, built and evaluated rather than only declared.
-                The printed face of @listFieldMultiple.ct@, which declares these same two cells and stops short
-                of printing them: printing is what builds a value, so a list field that typechecks and a list
-                field that can be evaluated are two different things to hold. The pair below the two of them is
-                @listField.ct@, which prints a field holding nothing and a field holding one.
-                Two shapes, because they say different things. [Tagged] holds two BARE CONSTANTS, where the
-                spine's element type is read from the cells themselves and the field's declared bound is what it
-                has to agree with — the two were once spelled in different currencies, the declaration's
-                [/Data/Primitive/String] against the join over the literals, and no arrow carried a value spelled
-                one way into a slot spelled the other. [Holder] holds two DIFFERING ARMS of a class, one carrying
-                a field and one not, which is the same question one level in. @listHeterogeneous.ct@ reaches
-                differing arms as an ARGUMENT, where the call bounds them; a field has only its declaration.
-                The arm is [Mixed/Labelled] and not @Mixed/Tagged@: a class arm sharing its last name with a data
-                type in the same page makes @every(Tagged.., ...)@ ambiguous between the two, which is a question
-                about how a relative name resolves and not about what a field may hold." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A list of two or more held in a FIELD, built and evaluated rather than only declared.
+                  The printed face of @listFieldMultiple.ct@, which declares these same two cells and stops short
+                  of printing them: printing is what builds a value, so a list field that typechecks and a list
+                  field that can be evaluated are two different things to hold. The pair below the two of them is
+                  @listField.ct@, which prints a field holding nothing and a field holding one.
+                  Two shapes, because they say different things. [Tagged] holds two BARE CONSTANTS, where the
+                  spine's element type is read from the cells themselves and the field's declared bound is what it
+                  has to agree with — the two were once spelled in different currencies, the declaration's
+                  [/Data/Primitive/String] against the join over the literals, and no arrow carried a value spelled
+                  one way into a slot spelled the other. [Holder] holds two DIFFERING ARMS of a class, one carrying
+                  a field and one not, which is the same question one level in. @listHeterogeneous.ct@ reaches
+                  differing arms as an ARGUMENT, where the call bounds them; a field has only its declaration.
+                  The arm is [Mixed/Labelled] and not @Mixed/Tagged@: a class arm sharing its last name with a data
+                  type in the same page makes @every(Tagged.., ...)@ ambiguous between the two, which is a question
+                  about how a relative name resolves and not about what a field may hold."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Printed so that the values are built and not only declared, which is the whole of what this adds." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Printed so that the values are built and not only declared, which is the whole of what this adds."
+                }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Tagged
-                    ( /name=/Data/String
+                    ( /name=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /tags=/Data/List/Cons
-                        ( /head=/Data/String
-                        , /tail=/Data/List/Cons[ /T=/Data/String ]
-                            ( /head=/Data/String
+                        ( /head=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /tail=/Data/List/Cons
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             , /tail=/Data/List/Nil
                             )
-                        )| PredClass /Data/List[ /T=/Data/String ]
+                        )
                     ) = /Tagged
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "two different" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "two different"
+                        }
                     )
                     ( EAppArg
                         { eaaArg = Value /tags -> /Data/List/Cons
-                            ( /head=/Data/String
-                            , /tail=/Data/List/Cons[ /T=/Data/String ]
-                                ( /head=/Data/String
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /tail=/Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Nil
                                 )
-                            )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
+                            ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String = "x" }
+                                { eaaArg = Value /head -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                }
                             )
                             ( EAppArg
-                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
-                                    ( /head=/Data/String
+                                { eaaArg = Value /tail -> /Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Data/String = "y" }
+                                        { eaaArg = Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "y"
+                                        }
                                     )
                                     ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                 }
@@ -174,32 +199,58 @@ Prgm
                     ( /items=/Data/List/Cons
                         ( /head=/Mixed/Plain
                         , /tail=/Data/List/Cons
-                            [ /T=/Mixed/Labelled( /value=/Data/String ) ]
-                            ( /head=/Mixed/Labelled( /value=/Data/String )
+                            [ /T=/Mixed/Labelled
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            ]
+                            ( /head=/Mixed/Labelled
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
                             , /tail=/Data/List/Nil
                             )
-                        )| PredClass /Data/List[ /T=∀/Mixed ]
+                        )
                     ) = /Holder
                     ( EAppArg
                         { eaaArg = Value /items -> /Data/List/Cons
                             ( /head=/Mixed/Plain
                             , /tail=/Data/List/Cons
-                                [ /T=/Mixed/Labelled( /value=/Data/String ) ]
-                                ( /head=/Mixed/Labelled( /value=/Data/String )
+                                [ /T=/Mixed/Labelled
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
+                                ( /head=/Mixed/Labelled
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
                                 , /tail=/Data/List/Nil
                                 )
-                            )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
+                            ) = /Data/List/Cons
                             ( EAppArg { eaaArg = Value /head -> /Mixed/Plain = Value /Mixed/Plain } )
                             ( EAppArg
                                 { eaaArg = Value /tail -> /Data/List/Cons
-                                    [ /T=/Mixed/Labelled( /value=/Data/String ) ]
-                                    ( /head=/Mixed/Labelled( /value=/Data/String )
+                                    [ /T=/Mixed/Labelled
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /head=/Mixed/Labelled
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Mixed/Labelled( /value=/Data/String ) = /Mixed/Labelled
+                                        { eaaArg = Value /head -> /Mixed/Labelled
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Mixed/Labelled
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Data/String = "x" }
+                                                { eaaArg = Value /value -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                }
                                             )
                                         }
                                     )

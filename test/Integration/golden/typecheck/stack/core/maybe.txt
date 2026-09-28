@@ -196,12 +196,12 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -213,12 +213,12 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
                     )
@@ -241,7 +241,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
                 ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo
-                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some
+                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
                         )
@@ -260,7 +260,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
                 ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo
-                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some
+                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
                         )
@@ -279,7 +279,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isGreater
                 ( Value /this -> /Data/Algebra/GreaterThan = /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                    ( Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some
+                    ( Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
                         )
@@ -352,7 +352,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/mmap
+                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Monad/mmap
                     ( Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 5 }
@@ -364,7 +364,7 @@ Prgm
                         )
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 6 }
                     )
@@ -416,7 +416,7 @@ Prgm
                         { ciValue = 5 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 5 }
                     )

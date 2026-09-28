@@ -2744,7 +2744,7 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
@@ -8307,19 +8307,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( /Data/Primitive/True + /Data/List/foldr
-                        [ /B=/Data/Primitive/True
-                        , /A=TopType
-                        ]
-                        ( /fn
-                            ( /acc=TopType
-                            , /v=TopType
-                            )=/Data/Primitive/True
-                        , /init=/Data/Primitive/True
-                        , /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ]
-                        )| PredClass /Catln/Doc/DShow + /Data/Primitive/False
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /Data/Set/isSubsetOf
                         ( EAppArg
                             { eaaArg = Value /a -> UnionType
@@ -8829,19 +8817,7 @@ Prgm
                                     )
                                 )
                             }
-                        ) ↦
-                        ( /Data/Primitive/True + /Data/List/foldr
-                            [ /B=/Data/Primitive/True
-                            , /A=TopType
-                            ]
-                            ( /fn
-                                ( /acc=TopType
-                                , /v=TopType
-                                )=/Data/Primitive/True
-                            , /init=/Data/Primitive/True
-                            , /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ]
-                            )| PredClass /Catln/Doc/DShow + /Data/Primitive/False
-                        )
+                        ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )
@@ -8852,19 +8828,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( /Data/Primitive/True + /Data/List/foldr
-                        [ /B=/Data/Primitive/True
-                        , /A=TopType
-                        ]
-                        ( /fn
-                            ( /acc=TopType
-                            , /v=TopType
-                            )=/Data/Primitive/True
-                        , /init=/Data/Primitive/True
-                        , /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ]
-                        )| PredClass /Catln/Doc/DShow + /Data/Primitive/False
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /Data/Set/isSubsetOf
                         ( EAppArg
                             { eaaArg = Value /a -> UnionType
@@ -9533,19 +9497,7 @@ Prgm
                                     )
                                 )
                             }
-                        ) ↦
-                        ( /Data/Primitive/True + /Data/List/foldr
-                            [ /B=/Data/Primitive/True
-                            , /A=TopType
-                            ]
-                            ( /fn
-                                ( /acc=TopType
-                                , /v=TopType
-                                )=/Data/Primitive/True
-                            , /init=/Data/Primitive/True
-                            , /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ]
-                            )| PredClass /Catln/Doc/DShow + /Data/Primitive/False
-                        )
+                        ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )

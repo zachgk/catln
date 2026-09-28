@@ -40,7 +40,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/length( Value /this -> /Data/String.. ) -> /Data/Primitive/Integer ]
+                        [ /Python/Builtins/length( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -63,8 +63,8 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /operator+
-                            ( Value /l -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } )
-                            ( Value /r -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } ) -> /Data/String
+                            ( Value /l -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -75,7 +75,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/hex( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String ]
+                        [ /Python/Builtins/hex( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -93,21 +93,11 @@ Prgm
                     }
                 )
             ,
-                ( "/Python/Builtins/toFloat"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/toFloat( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/Float ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Python/Builtins/oct"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/oct( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String ]
+                        [ /Python/Builtins/oct( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -117,7 +107,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> /Data/String ]
+                        [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -127,7 +117,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/ord( Value /this -> /Data/String.. ) -> /Data/Primitive/Integer ]
+                        [ /Python/Builtins/ord( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -149,7 +139,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/input( Value /this -> /Catln/IO.. ) -> /Data/String ]
+                        [ /Python/Builtins/input( Value /this -> /Catln/IO.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -159,7 +149,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Python/Builtins/bin( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String ]
+                        [ /Python/Builtins/bin( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -181,27 +171,31 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## IO built-ins" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Python built-in abs and pow mapped to methods" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Type conversions" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## String operations" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Numeric min/max" }
             )
         ]

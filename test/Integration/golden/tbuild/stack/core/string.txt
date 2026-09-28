@@ -181,7 +181,7 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /this -> /Data/StrEqv[ /T=∀/Data/String ] }
+                                { eaaArg = Value /this -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/charsEqual
                                 ( EAppArg
@@ -202,7 +202,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/StrEqv[ /T=∀/Data/String ] = Value /Data/StrEqv
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/StrEqv
                         ]
                     }
                 )
@@ -281,11 +281,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> /Data/StrEqv[ /T=∀/Data/String ] =
+                                    { eaaArg = Value /this -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ /Data/StrEqv[ /T=∀/Data/String ]
+                                            ) ↦ /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean

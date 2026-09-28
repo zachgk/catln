@@ -18,24 +18,26 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow
-                            ( Value /s -> /Data/Note/Page( /title=/Data/String ) = /Data/Note/Page( Value /title -> /Data/String ) ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
-                            ( Value /contents -> /Data/String = /operator++
-                                ( Value /l -> /Data/String = /operator++
-                                    ( Value /l -> /Data/String = CStr
+                            ( Value /s -> /Data/Note/Page( /title=∀/Data/String ) = /Data/Note/Page( Value /title -> ∀/Data/String ) ) -> /Catln/Doc/Show/Html( /contents=∀/Data/String ) = /Catln/Doc/Show/Html
+                            ( Value /contents -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                         { csValue = "<h1>" }
                                     )( Value /r -> TVArg /title = Value /title )
                                 )
-                                ( Value /r -> /Data/String = CStr
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "</h1>" }
                                 )
                             )
-                        , /Catln/Doc/dshow( Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=/Data/String ) = /Data/Note/Show/TaskList
-                            ( Value /tasks -> /Data/String = /Catln/Doc/dshow./Data/Note/taskList( Value /annot -> /s = Value /s ) )
+                        , /Catln/Doc/dshow( Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=∀/Data/String ) = /Data/Note/Show/TaskList
+                            ( Value /tasks -> ∀/Data/String = /Catln/Doc/dshow./Data/Note/taskList( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow
-                            ( Value /s -> /Data/Note/#tasks( /query=/Data/String ) = /Data/Note/#tasks( Value /query -> /Data/String ) ) -> /Data/Note/Show/TaskQuery( /result=/Data/String ) = /Data/Note/Show/TaskQuery
-                            ( Value /result -> /Data/String = /Catln/Doc/dshow./Data/Note/tasksQuery( Value /query -> TVArg /query = Value /query ) )
+                            ( Value /s -> /Data/Note/#tasks( /query=∀/Data/String ) = /Data/Note/#tasks( Value /query -> ∀/Data/String ) ) -> /Data/Note/Show/TaskQuery( /result=∀/Data/String ) = /Data/Note/Show/TaskQuery
+                            ( Value /result -> ∀/Data/String = /Catln/Doc/dshow./Data/Note/tasksQuery( Value /query -> TVArg /query = Value /query ) )
                         , /Catln/Doc/dshow
-                            ( Value /s -> /Data/Note/#properties( /text=/Data/String ) = /Data/Note/#properties( Value /text -> /Data/String ) ) -> /Data/Note/Show/Properties( /text=/Data/String ) = /Data/Note/Show/Properties( Value /text -> TVArg /text = Value /text )
+                            ( Value /s -> /Data/Note/#properties( /text=∀/Data/String ) = /Data/Note/#properties( Value /text -> ∀/Data/String ) ) -> /Data/Note/Show/Properties( /text=∀/Data/String ) = /Data/Note/Show/Properties( Value /text -> TVArg /text = Value /text )
                         ]
                     }
                 )
@@ -70,11 +72,11 @@ Prgm
                 ( "/Data/Note/Task/Obsidian"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Task/Obsidian( Value /contents -> /Data/String )( Value /symbol -> /Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> /Data/String )( Value /priority -> ∀/Data/Note/Priority )
-                            ( Value /start -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /recurrence -> ∀/Data/Maybe[ /T=/Data/String ] )( Value /rest -> /Data/String )
+                        [ /Data/Note/Task/Obsidian( Value /contents -> ∀/Data/String )( Value /symbol -> ∀/Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> ∀/Data/String )( Value /priority -> ∀/Data/Note/Priority )
+                            ( Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /rest -> ∀/Data/String )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -85,7 +87,7 @@ Prgm
                 ( "/Data/Note/#tasks"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/#tasks( Value /query -> /Data/String ) ]
+                        [ /Data/Note/#tasks( Value /query -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -104,7 +106,7 @@ Prgm
                 ( "/Data/Note/Show/TaskQuery"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Show/TaskQuery( Value /result -> /Data/String ) ]
+                        [ /Data/Note/Show/TaskQuery( Value /result -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -115,7 +117,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/taskList( Value /annot ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/Note/taskList( Value /annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -139,7 +141,7 @@ Prgm
                         [ /Data/Calendar/calendarDay
                             ( Value /this ->
                                 ( /Data/Note/Task/Simple
-                                    ( /contents=/Data/String
+                                    ( /contents=∀/Data/String
                                     , /state=∀/Data/Primitive/Boolean
                                     ) + /Task/Simple
                                     ( /contents=TopType
@@ -161,19 +163,19 @@ Prgm
                                     , /symbol=TopType
                                     , /rest=TopType
                                     )| PredClass /Data/Calendar/CalendarEntry + /Data/Note/Task/Obsidian
-                                    ( /recurrence=∀/Data/Maybe[ /T=/Data/String ]
-                                    , /due=∀/Data/Maybe[ /T=/Data/String ]
-                                    , /start=∀/Data/Maybe[ /T=/Data/String ]
+                                    ( /recurrence=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /due=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /start=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /priority=∀/Data/Note/Priority
-                                    , /scheduled=∀/Data/Maybe[ /T=/Data/String ]
+                                    , /scheduled=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /statusType=∀/Data/Note/StatusType
-                                    , /description=/Data/String
-                                    , /contents=/Data/String
-                                    , /symbol=/Data/String
-                                    , /rest=/Data/String
+                                    , /description=∀/Data/String
+                                    , /contents=∀/Data/String
+                                    , /symbol=∀/Data/String
+                                    , /rest=∀/Data/String
                                     )
                                 ) = /Task/Obsidian( Value /contents )( Value /symbol )( Value /statusType )( Value /description )( Value /priority )( Value /start )( Value /scheduled )( Value /due )( Value /recurrence )( Value /rest )
-                            ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Note/firstDay( Value /a -> TVArg /start = Value /start )( Value /b -> TVArg /scheduled = Value /scheduled )( Value /c -> TVArg /due = Value /due )
+                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Note/firstDay( Value /a -> TVArg /start = Value /start )( Value /b -> TVArg /scheduled = Value /scheduled )( Value /c -> TVArg /due = Value /due )
                         ]
                     }
                 )
@@ -181,7 +183,7 @@ Prgm
                 ( "/Data/Note/Show/Properties"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Show/Properties( Value /text -> /Data/String ) ]
+                        [ /Data/Note/Show/Properties( Value /text -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -200,7 +202,7 @@ Prgm
                 ( "/Data/Note/#properties"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/#properties( Value /text -> /Data/String ) ]
+                        [ /Data/Note/#properties( Value /text -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -211,22 +213,22 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/firstDay
-                            ( Value /a -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> ∀/Data/Maybe[ /T=/Data/String ]
+                            ( Value /a -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Note/firstDay
-                            ( Value /a -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some( Value /value -> /Data/String ) )
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
+                            ( Value /a -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) )
+                            ( Value /b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
                         , /Data/Note/firstDay( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /b -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some( Value /value -> /Data/String ) )
-                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
+                            ( Value /b -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) )
+                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
                         , /Data/Note/firstDay( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value /c
+                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /c
                         ]
                     }
                 )
@@ -243,7 +245,7 @@ Prgm
                 ( "/Data/Note/Task/Simple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Task/Simple( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
+                        [ /Data/Note/Task/Simple( Value /contents -> ∀/Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -262,7 +264,7 @@ Prgm
                 ( "/Data/Note/Show/TaskList"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Show/TaskList( Value /tasks -> /Data/String ) ]
+                        [ /Data/Note/Show/TaskList( Value /tasks -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -273,7 +275,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/tasksQuery( Value /query -> /Data/String ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/Note/tasksQuery( Value /query -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -309,7 +311,7 @@ Prgm
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Page( Value /title -> /Data/String ) ]
+                        [ /Data/Note/Page( Value /title -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -445,7 +447,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Notes
                 A note is a piece of writing that names itself and links to other notes. Each note is a page of
                 its own and each link between two notes is an import between their pages, so the graph a set of
@@ -455,7 +458,8 @@ Prgm
                 reaching the notes it names." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
                 the writing of the note holding it: the comment ends where the checkbox was written, the task
                 is declared in its place, and the writing goes on after it as another comment. So the tasks of
@@ -468,14 +472,16 @@ Prgm
                 the plugin's writing as writing of the note." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
                 into: a box to check and the writing beside it. It is the value itself that is shown, with no
                 display type standing in for it, which is what lets checking the box in a doc server write the
                 change back to the note the task was read from." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
                 of them. Which character is which kind is the vault's to say and not markdown's: a vault may
                 write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
@@ -483,13 +489,15 @@ Prgm
                 the kind is the reading." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
                 medium and low rather than at either end, because that is where a task nobody gave a priority
                 to sorts among ones somebody did." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
                 of each of its two readings, because it is true of a checkbox however the vault it was written
                 in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
@@ -500,135 +508,232 @@ Prgm
                 would name a second class of that name rather than the one meant." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A checkbox read as a checkbox sits on no day, whichever way its box is written." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Nothing = /calendarDay
                     ( Value /this -> /Data/Note/Task/Simple
-                        ( /contents=/Data/String
+                        ( /contents=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /state=/Data/Primitive/False
                         ) = /Data/Note/Task/Simple
-                        ( Value /contents -> /Data/String = CStr
+                        ( Value /contents -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "read it" }
                         )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                     )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  the day it may be begun." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/String ] = /calendarDay
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                    , []
+                    ) = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
-                        , /due=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
-                        , /start=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
+                        , /due=/Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        , /start=/Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
                         , /priority=/Data/Note/Priority/None
                         , /scheduled=/Data/Maybe/Nothing
                         , /statusType=/Data/Note/StatusType/Todo
-                        , /description=/Data/String
-                        , /contents=/Data/String
-                        , /symbol=/Data/String
-                        , /rest=/Data/String
+                        , /description=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /contents=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /symbol=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /rest=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         ) = /Data/Note/Task/Obsidian
-                        ( Value /contents -> /Data/String = CStr
+                        ( Value /contents -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "Water the plants" }
                         )
-                        ( Value /symbol -> /Data/String = CStr
+                        ( Value /symbol -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = " " }
                         )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                        ( Value /description -> /Data/String = CStr
+                        ( Value /description -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "Water the plants" }
                         )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
-                        ( Value /start -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/String = CStr
+                        ( Value /start -> /Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "2026-01-02" }
                             )
                         )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /due -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/String = CStr
+                        ( Value /due -> /Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "2026-01-04" }
                             )
                         )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /rest -> /Data/String = CStr
+                        ( Value /rest -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "{}" }
                         )
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/String )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
-                    ( Value /value -> /Data/String = CStr
+                ( Value /r -> /Data/Maybe/Some
+                    ( /value=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "2026-01-02" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A task naming only the day it is due sits on that day, the two before it being absent." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/String ] = /calendarDay
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                    , []
+                    ) = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
-                        , /due=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
+                        , /due=/Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
                         , /start=/Data/Maybe/Nothing
                         , /priority=/Data/Note/Priority/None
                         , /scheduled=/Data/Maybe/Nothing
                         , /statusType=/Data/Note/StatusType/Todo
-                        , /description=/Data/String
-                        , /contents=/Data/String
-                        , /symbol=/Data/String
-                        , /rest=/Data/String
+                        , /description=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /contents=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /symbol=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /rest=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         ) = /Data/Note/Task/Obsidian
-                        ( Value /contents -> /Data/String = CStr
+                        ( Value /contents -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "Ship it" }
                         )
-                        ( Value /symbol -> /Data/String = CStr
+                        ( Value /symbol -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = " " }
                         )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                        ( Value /description -> /Data/String = CStr
+                        ( Value /description -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "Ship it" }
                         )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /due -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/String = CStr
+                        ( Value /due -> /Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "2026-01-04" }
                             )
                         )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /rest -> /Data/String = CStr
+                        ( Value /rest -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "{}" }
                         )
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/String )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
-                    ( Value /value -> /Data/String = CStr
+                ( Value /r -> /Data/Maybe/Some
+                    ( /value=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "2026-01-04" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A task naming none of the three sits on no day, which is an answer and not a task left out." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/String ] = /calendarDay
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                    , []
+                    ) = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /due=/Data/Maybe/Nothing
@@ -636,27 +741,36 @@ Prgm
                         , /priority=/Data/Note/Priority/None
                         , /scheduled=/Data/Maybe/Nothing
                         , /statusType=/Data/Note/StatusType/Todo
-                        , /description=/Data/String
-                        , /contents=/Data/String
-                        , /symbol=/Data/String
-                        , /rest=/Data/String
+                        , /description=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /contents=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /symbol=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /rest=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         ) = /Data/Note/Task/Obsidian
-                        ( Value /contents -> /Data/String = CStr
+                        ( Value /contents -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "Book" }
                         )
-                        ( Value /symbol -> /Data/String = CStr
+                        ( Value /symbol -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = " " }
                         )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                        ( Value /description -> /Data/String = CStr
+                        ( Value /description -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "Book" }
                         )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /rest -> /Data/String = CStr
+                        ( Value /rest -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "{}" }
                         )
                     )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         ]

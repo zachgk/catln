@@ -6,13 +6,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Lib/exp
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Lib/exp
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer =
                             ( /operator*
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -81,7 +81,7 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Lib/power
                             ( EAppArg { eaaArg = Value /exp -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

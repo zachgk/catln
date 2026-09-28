@@ -17,14 +17,14 @@ Prgm
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> /Data/String ]
+                        [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> ∀/Data/String ]
                     , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String
-                        , /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> /Data/String
+                        [ /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String
+                        , /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/String.. ) -> /Data/String = Value /this ]
+                        [ /Data/toString( Value /this -> ∀/Data/String ) -> ∀/Data/String = Value /this ]
                     }
                 )
             ,
@@ -90,7 +90,7 @@ Prgm
             { cgcSealed = False
             , cgcPartial = /Data/ToString
             , cgcExtends =
-                [ /Data/String
+                [ ∀/Data/String
                 , /Data/Primitive/Integer
                 , /Data/Primitive/Float
                 ]
@@ -101,97 +101,118 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Catln Core Data Types
                 These define the basic data types used in the language. [String] and its equality live in
                 [Data/str]; the conversions and collection types below build on it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Rendering as text" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[ToString] is the class of types that can render themselves as a [String]. Defining
                 [toString] for a type makes its values printable and, more importantly, lets generic
                 containers such as [List] render their contents by rendering each element." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = CStr
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "hello" }
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "hello" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = CInt
                 { ciValue = 42 }
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "42" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Float = CFloat
                 { cfValue = 1.5 }
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "1.5" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Context" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Collections" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[Option] defines a type that might have a value or [None].
                 It can be used to handle operations that are uncertain if they can produce a response." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "type-variable member interacts poorly with expanding the open [Functor] class during" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "collection and its [ConsList] implementation live in [Data/list.ct]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "class(Enum)" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  # [Enum] represents a type which can be enumerated." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "    It defines a single function [enum] which lists all of the values in the type." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  enum[$T -> Enum] -> Set[$T]" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "    # [enum] lists all of the values in a type." }
             )
         ]

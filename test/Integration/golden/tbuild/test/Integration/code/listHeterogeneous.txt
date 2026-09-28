@@ -6,7 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Mixed/Tagged
-                            ( EAppArg { eaaArg = Value /value -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -103,7 +103,7 @@ Prgm
             , cgcPartial = /Mixed
             , cgcExtends =
                 [ /Mixed/Plain
-                , /Mixed/Tagged( /value=/Data/String )
+                , /Mixed/Tagged( /value=∀/Data/String )
                 ]
             , cgcDoc = Just ""
             }
@@ -111,25 +111,31 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A list literal whose elements are DIFFERENT arms of the class the list is bounded by.
-                @listFieldMultiple.ct@ holds two of one type; this holds one of each. The two are not the same
-                check: a spine binds its element parameter once for the whole of itself, so a literal of two
-                strings settles on a parameter its head alone would have given, while a literal of a [Mixed/Plain]
-                and a [Mixed/Tagged] only settles if every cell is read. What makes it reachable at all is that the elements
-                agree on the CLASS the list is declared over even though they disagree on the arm.
-                This is the shape a JSON document is — an array holding a null, a boolean and a string is three
-                arms of one class in one list — so @json/json.ct@'s own examples are the same check written over
-                a library type, and this is it written over the smallest class that shows it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A list literal whose elements are DIFFERENT arms of the class the list is bounded by.
+                  @listFieldMultiple.ct@ holds two of one type; this holds one of each. The two are not the same
+                  check: a spine binds its element parameter once for the whole of itself, so a literal of two
+                  strings settles on a parameter its head alone would have given, while a literal of a [Mixed/Plain]
+                  and a [Mixed/Tagged] only settles if every cell is read. What makes it reachable at all is that the elements
+                  agree on the CLASS the list is declared over even though they disagree on the arm.
+                  This is the shape a JSON document is — an array holding a null, a boolean and a string is three
+                  arms of one class in one list — so @json/json.ct@'s own examples are the same check written over
+                  a library type, and this is it written over the smallest class that shows it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Named [countMixed] rather than [count] because [/Data/List/count] is declared in the imported
-                standard library, and an unqualified [count] here would resolve to it and be checked against its
-                signature. The name is incidental to what this file checks." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Named [countMixed] rather than [count] because [/Data/List/count] is declared in the imported
+                  standard library, and an unqualified [count] here would resolve to it and be checked against its
+                  signature. The name is incidental to what this file checks."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Homogeneous first, as the floor: this passed on the head-alone rule too." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Homogeneous first, as the floor: this passed on the head-alone rule too."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -142,7 +148,7 @@ Prgm
                                     ( /head=/Mixed/Plain
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Mixed/Plain = Value /Mixed/Plain } )
                                 ( EAppArg
                                     { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Mixed/Plain ]
@@ -159,12 +165,16 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
-                spine starts from or one it reaches through the tail." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
+                  spine starts from or one it reaches through the tail."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -174,22 +184,41 @@ Prgm
                             { eaaArg = Value /ks -> /Data/List/Cons
                                 ( /head=/Mixed/Plain
                                 , /tail=/Data/List/Cons
-                                    [ /T=/Mixed/Tagged( /value=/Data/String ) ]
-                                    ( /head=/Mixed/Tagged( /value=/Data/String )
+                                    [ /T=/Mixed/Tagged
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /head=/Mixed/Tagged
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Mixed/Plain = Value /Mixed/Plain } )
                                 ( EAppArg
                                     { eaaArg = Value /tail -> /Data/List/Cons
-                                        [ /T=/Mixed/Tagged( /value=/Data/String ) ]
-                                        ( /head=/Mixed/Tagged( /value=/Data/String )
+                                        [ /T=/Mixed/Tagged
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
+                                        ( /head=/Mixed/Tagged
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
                                         , /tail=/Data/List/Nil
                                         ) = /Data/List/Cons
                                         ( EAppArg
-                                            { eaaArg = Value /head -> /Mixed/Tagged( /value=/Data/String ) = /Mixed/Tagged
+                                            { eaaArg = Value /head -> /Mixed/Tagged
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) = /Mixed/Tagged
                                                 ( EAppArg
-                                                    { eaaArg = Value /value -> /Data/String = "x" }
+                                                    { eaaArg = Value /value -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                    }
                                                 )
                                             }
                                         )
@@ -202,7 +231,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -210,16 +241,24 @@ Prgm
                     ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons
-                                ( /head=/Mixed/Tagged( /value=/Data/String )
+                                ( /head=/Mixed/Tagged
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
                                 , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                                     ( /head=/Mixed/Plain
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
-                                    { eaaArg = Value /head -> /Mixed/Tagged( /value=/Data/String ) = /Mixed/Tagged
+                                    { eaaArg = Value /head -> /Mixed/Tagged
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ) = /Mixed/Tagged
                                         ( EAppArg
-                                            { eaaArg = Value /value -> /Data/String = "x" }
+                                            { eaaArg = Value /value -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                            }
                                         )
                                     }
                                 )
@@ -238,7 +277,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -249,31 +290,50 @@ Prgm
                                 ( /head=/Mixed/Plain
                                 , /tail=/Data/List/Cons
                                     [ /T=
-                                        ( /Mixed/Tagged( /value=/Data/String ) + /Mixed/Plain )
+                                        ( /Mixed/Tagged
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) + /Mixed/Plain
+                                        )
                                     ]
-                                    ( /head=/Mixed/Tagged( /value=/Data/String )
+                                    ( /head=/Mixed/Tagged
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                                         ( /head=/Mixed/Plain
                                         , /tail=/Data/List/Nil
                                         )
                                     )
-                                )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Mixed/Plain = Value /Mixed/Plain } )
                                 ( EAppArg
                                     { eaaArg = Value /tail -> /Data/List/Cons
                                         [ /T=
-                                            ( /Mixed/Tagged( /value=/Data/String ) + /Mixed/Plain )
+                                            ( /Mixed/Tagged
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) + /Mixed/Plain
+                                            )
                                         ]
-                                        ( /head=/Mixed/Tagged( /value=/Data/String )
+                                        ( /head=/Mixed/Tagged
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
                                         , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                                             ( /head=/Mixed/Plain
                                             , /tail=/Data/List/Nil
                                             )
                                         ) = /Data/List/Cons
                                         ( EAppArg
-                                            { eaaArg = Value /head -> /Mixed/Tagged( /value=/Data/String ) = /Mixed/Tagged
+                                            { eaaArg = Value /head -> /Mixed/Tagged
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) = /Mixed/Tagged
                                                 ( EAppArg
-                                                    { eaaArg = Value /value -> /Data/String = "x" }
+                                                    { eaaArg = Value /value -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                    }
                                                 )
                                             }
                                         )
@@ -294,12 +354,16 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
-                arms held in a FIELD, which has only its declaration to bound them, are @listFieldEval.ct@." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
+                  arms held in a FIELD, which has only its declaration to bound them, are @listFieldEval.ct@."
+                }
             )
         ]
     }

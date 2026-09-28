@@ -18,27 +18,31 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/www( Value /html -> /Data/String ) -> /Catln/CatlnResult
+                        [ /Catln/www( Value /html -> ∀/Data/String ) -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=∀/Data/String
                                     )
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=/Catln/BuildFile.. ]
+                                )
                             ) = /Catln/CatlnResult
                             ( Value /files -> /Data/List/Cons
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=∀/Data/String
                                     )
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=/Catln/BuildFile.. ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( Value /head -> /Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=∀/Data/String
                                     ) = /Catln/BuildFile
-                                    ( Value /path -> /Data/String = CStr
+                                    ( Value /path -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                         { csValue = "index.html" }
                                     )( Value /contents -> TVArg /html = Value /html )
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -76,7 +80,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Build Results
                 What a build produces, and the ways of producing one.
                 This is declared apart from @core/compile.ct@, where it was, and the separation is load-bearing

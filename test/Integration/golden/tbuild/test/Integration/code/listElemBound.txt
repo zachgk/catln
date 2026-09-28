@@ -190,17 +190,19 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A list whose element parameter is bounded by a CONCRETE DATA TYPE, destructured.
-                Every list in the checked standard library bounds its element by a CLASS — [/Data/ToString],
-                [/Data/Algebra/Ord], [/Data/Algebra/Eq] — so a bound naming a data type directly was never
-                exercised by it, and the two read differently. A bare data name is the argument-less value
-                ([Item] alone) and the spread is every value of the type ([Item..]), the two being disjoint; a
-                bound over the elements of a list means the latter, so it is written so. The class expansion once
-                rewrote a bare bound into its field form on one side of a comparison and not the other — one
-                type written two ways, which meets at nothing — and a bound written bare passed only through
-                that. A class has no fields, so it reads the same both ways and never showed the difference.
-                Written over the [/Data/List] interface and over the [/Data/List/ConsList] the bracket literal
-                builds, as @listField.ct@ is, so that a failure says which of the two it is." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A list whose element parameter is bounded by a CONCRETE DATA TYPE, destructured.
+                  Every list in the checked standard library bounds its element by a CLASS — [/Data/ToString],
+                  [/Data/Algebra/Ord], [/Data/Algebra/Eq] — so a bound naming a data type directly was never
+                  exercised by it, and the two read differently. A bare data name is the argument-less value
+                  ([Item] alone) and the spread is every value of the type ([Item..]), the two being disjoint; a
+                  bound over the elements of a list means the latter, so it is written so. The class expansion once
+                  rewrote a bare bound into its field form on one side of a comparison and not the other — one
+                  type written two ways, which meets at nothing — and a bound written bare passed only through
+                  that. A class has no fields, so it reads the same both ways and never showed the difference.
+                  Written over the [/Data/List] interface and over the [/Data/List/ConsList] the bracket literal
+                  builds, as @listField.ct@ is, so that a failure says which of the two it is."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -211,7 +213,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "0" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -225,7 +229,7 @@ Prgm
                                     ( /head=/Item( /n=/Data/Primitive/Integer )
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=/Item.. ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
                                         ( EAppArg
@@ -255,7 +259,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -266,7 +272,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "0" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -311,12 +319,16 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
-                even while the bound above did not. Held beside it so a regression says which of the two broke." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
+                  even while the bound above did not. Held beside it so a regression says which of the two broke."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -329,7 +341,7 @@ Prgm
                                     ( /head=/Bare
                                     , /tail=/Data/List/Nil
                                     )
-                                )| PredClass /Data/List[ /T=/Bare ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg { eaaArg = Value /head -> /Bare = Value /Bare } )
                                 ( EAppArg
                                     { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Bare ]
@@ -346,7 +358,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         ]
     }

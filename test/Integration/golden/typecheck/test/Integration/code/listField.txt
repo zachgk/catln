@@ -24,49 +24,25 @@ Prgm
                 ( "/Tagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Tagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        [ /Tagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
                         , /Tagged
-                            ( Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "none" }
-                                    ]
-                                ) = CStr
+                            ( Value /name -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "none" }
                             )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /Tagged
-                            ( Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "one" }
-                                    ]
-                                ) = CStr
+                            ( Value /name -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "one" }
                             )
                             ( Value /tags -> /Data/List/Cons
-                                ( /head=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    )
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
-                                ( Value /head -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    ) = CStr
+                                ) = /Data/List/Cons
+                                ( Value /head -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "x" }
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
@@ -80,49 +56,25 @@ Prgm
                 ( "/ConsTagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ConsTagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List/ConsList[ /T=/Data/String ] )
+                        [ /ConsTagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
                         , /ConsTagged
-                            ( Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "none" }
-                                    ]
-                                ) = CStr
+                            ( Value /name -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "none" }
                             )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /ConsTagged
-                            ( Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "one" }
-                                    ]
-                                ) = CStr
+                            ( Value /name -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "one" }
                             )
                             ( Value /tags -> /Data/List/Cons
-                                ( /head=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    )
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
-                                ( Value /head -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    ) = CStr
+                                ( Value /head -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "x" }
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
@@ -152,7 +104,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A field of a data type may hold a list of a concrete element.
                 The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
                 they were written as. Nothing in the checked standard library gives a list-typed field to anything
@@ -168,58 +121,62 @@ Prgm
                 there." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Shown as the values they are, with no display type standing in for them, as a task is." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Printed so that the values are evaluated and not only built." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "none" }
                 )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "one" }
                 )
                 ( Value /tags -> /Data/List/Cons
-                    ( /head=/Data/String
+                    ( /head=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /tail=/Data/List/Nil
-                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
-                    ( Value /head -> /Data/String = CStr
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "x" }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "none" }
                 )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "one" }
                 )
                 ( Value /tags -> /Data/List/Cons
-                    [ /T=UnionType
-                        ( Nothing
-                        , ∅
-                        ,
-                            [ CStr
-                                { csValue = "x" }
-                            ]
-                        )
+                    [ /T=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     ]
-                    ( /head=/Data/String
+                    ( /head=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/String = CStr
+                    ( Value /head -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "x" }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )

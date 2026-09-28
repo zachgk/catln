@@ -51,7 +51,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/length
-                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -78,11 +78,11 @@ Prgm
                     , omiRuntimeDecls =
                         [ /operator+
                             ( EAppArg
-                                { eaaArg = Value /l -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } }
+                                { eaaArg = Value /l -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } }
-                            ) -> /Data/String
+                                { eaaArg = Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
+                            ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -94,7 +94,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/hex
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -115,24 +115,12 @@ Prgm
                     }
                 )
             ,
-                ( "/Python/Builtins/toFloat"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/toFloat
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Float
-                        ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Python/Builtins/oct"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/oct
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -144,7 +132,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/chr
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -156,7 +144,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/ord
-                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -184,7 +172,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/input
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -196,7 +184,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/bin
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -219,28 +207,37 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## IO built-ins" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## IO built-ins"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Python built-in abs and pow mapped to methods" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Python built-in abs and pow mapped to methods"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Type conversions" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Type conversions"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## String operations" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## String operations"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Numeric min/max" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Numeric min/max"
+                }
             )
         ]
     }

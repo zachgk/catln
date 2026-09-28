@@ -5,20 +5,20 @@ Prgm
                 ( "/Test/emptyObjArr"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/emptyObjArr( Value /name -> /Data/String ) -> /Catln/RawObjArr.. ]
+                        [ /Test/emptyObjArr( Value /name -> ∀/Data/String ) -> /Catln/RawObjArr.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/emptyObjArr( Value /name -> /Data/String.. ) -> /Catln/RawObjArr
+                        [ /Test/emptyObjArr( Value /name -> ∀/Data/String ) -> /Catln/RawObjArr
                             ( /arr=/Data/Maybe/Nothing
                             , /obj=/Data/Maybe/Some
                                 [ /T=/Catln/RawExpr/RawValue
-                                    ( /name=/Data/String..
+                                    ( /name=∀/Data/String
                                     , /meta=/Catln/Meta..
                                     )
                                 ]
                                 ( /value=/Catln/RawExpr/RawValue
-                                    ( /name=/Data/String..
+                                    ( /name=∀/Data/String
                                     , /meta=/Catln/Meta..
                                     )
                                 )
@@ -29,17 +29,17 @@ Prgm
                             ) = /Catln/RawObjArr
                             ( Value /obj -> /Data/Maybe/Some
                                 [ /T=/Catln/RawExpr/RawValue
-                                    ( /name=/Data/String..
+                                    ( /name=∀/Data/String
                                     , /meta=/Catln/Meta..
                                     )
                                 ]
                                 ( /value=/Catln/RawExpr/RawValue
-                                    ( /name=/Data/String..
+                                    ( /name=∀/Data/String
                                     , /meta=/Catln/Meta..
                                     )
                                 ) = /Data/Maybe/Some
                                 ( Value /value -> /Catln/RawExpr/RawValue
-                                    ( /name=/Data/String..
+                                    ( /name=∀/Data/String
                                     , /meta=/Catln/Meta..
                                     ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )( Value /name -> TVArg /name = Value /name )
                                 )
@@ -91,9 +91,9 @@ Prgm
                             ( Value /r -> /Catln/ImportResult
                                 ( /prgm=/Catln/RawPrgm..
                                 , /reads=/Data/Maybe/Nothing
-                                , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                                 ) = /Catln/ImportResult( Value /prgm -> /Catln/RawPrgm.. )
-                                ( Value /source -> ∀/Data/Maybe[ /T=/Data/String.. ] )( Value /reads -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                                ( Value /source -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /reads -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /Test/readsCount
@@ -101,9 +101,9 @@ Prgm
                                 ( /prgm=/Catln/RawPrgm..
                                 , /reads=/Data/Maybe/Some
                                     [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]( /value=$/T )
-                                , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                                 ) = /Catln/ImportResult( Value /prgm -> /Catln/RawPrgm.. )
-                                ( Value /source -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                                ( Value /source -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                                 ( Value /reads -> /Data/Maybe/Some
                                     [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]( /value=$/T ) = /Data/Maybe/Some
                                     ( Value /value -> ∀/Data/List[ /T=∀/Catln/ReadPath ] )
@@ -125,7 +125,7 @@ Prgm
                                 , /def=TopType
                                 , /basis=TopType
                                 )
-                            ) -> /Data/String
+                            ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -140,12 +140,12 @@ Prgm
                                     ]
                                 , /obj=/Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T )
                                 , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
+                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
                                 , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                 , /basis=∀/Catln/ObjectBasis
                                 ) = /Catln/RawObjArr
                                 ( Value /obj -> /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> ∀/Catln/RawExpr ) )( Value /basis -> ∀/Catln/ObjectBasis )
-                                ( Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                                ( Value /doc -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                                 ( Value /annots -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
                                 ( Value /arr -> ∀/Data/Maybe
                                     [ /T=/Catln/Pair
@@ -155,7 +155,7 @@ Prgm
                                     ]
                                 )
                                 ( Value /def -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] )
-                            ) -> /Data/String = /Test/rawValueName( Value /e -> TVArg /value = Value /value )
+                            ) -> ∀/Data/String = /Test/rawValueName( Value /e -> TVArg /value = Value /value )
                         , /Test/objArrName
                             ( Value /oa -> /Catln/RawObjArr
                                 ( /arr=∀/Data/Maybe
@@ -166,11 +166,11 @@ Prgm
                                     ]
                                 , /obj=/Data/Maybe/Nothing
                                 , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
+                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
                                 , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                 , /basis=∀/Catln/ObjectBasis
                                 ) = /Catln/RawObjArr( Value /obj -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /basis -> ∀/Catln/ObjectBasis )
-                                ( Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                                ( Value /doc -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                                 ( Value /annots -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
                                 ( Value /arr -> ∀/Data/Maybe
                                     [ /T=/Catln/Pair
@@ -180,7 +180,8 @@ Prgm
                                     ]
                                 )
                                 ( Value /def -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         ]
                     }
@@ -205,9 +206,9 @@ Prgm
                                 ( /prgm=/Catln/RawPrgm..
                                 , /reads=∀/Data/Maybe
                                     [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                                 ) = /Catln/ImportResult( Value /prgm -> /Catln/RawPrgm.. )
-                                ( Value /source -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                                ( Value /source -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                                 ( Value /reads -> ∀/Data/Maybe
                                     [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
                                 )
@@ -219,18 +220,18 @@ Prgm
                 ( "/Test/onePrgm"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/onePrgm( Value /name -> /Data/String ) -> /Catln/RawPrgm.. ]
+                        [ /Test/onePrgm( Value /name -> ∀/Data/String ) -> /Catln/RawPrgm.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/onePrgm( Value /name -> /Data/String ) -> /Catln/RawPrgm
+                        [ /Test/onePrgm( Value /name -> ∀/Data/String ) -> /Catln/RawPrgm
                             ( /statements=/Data/List/Cons
                                 ( /head=/Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=/Catln/RawStatementTree.. ]
+                                )
                             , /imports=/Data/List/Nil
                             ) = /Catln/RawPrgm( Value /imports -> /Data/List/Nil = Value /Data/List/Nil )
                             ( Value /statements -> /Data/List/Cons
@@ -239,7 +240,7 @@ Prgm
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=/Catln/RawStatementTree.. ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( Value /head -> /Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
@@ -266,7 +267,8 @@ Prgm
                                 , /leafs=/Data/List/Nil
                                 )
                             , /dat=/Catln/Unit
-                            , /id=/Data/String
+                            , /id=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             , /pos=/Data/Maybe/Nothing
                             ) = /Catln/Meta
                             ( Value /type -> /Catln/Type/UnionType
@@ -275,7 +277,8 @@ Prgm
                                 , /leafs=/Data/List/Nil
                                 ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )( Value /consts -> /Data/List/Nil = Value /Data/List/Nil )
                             )( Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /id -> /Data/String = CStr
+                            ( Value /id -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "" }
                             )( Value /dat -> /Catln/Unit = Value /Catln/Unit )
                         ]
@@ -298,7 +301,7 @@ Prgm
                                 { ciValue = 0 }
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> /Data/String = /Data/toString
+                                ( Value /msg -> ∀/Data/String = /Data/toString
                                     ( Value /this -> UnionType
                                         ( Just
                                             ( PredExpr /operator==
@@ -315,16 +318,17 @@ Prgm
                                             ( /prgm=/Catln/RawPrgm..
                                             , /reads=∀/Data/Maybe
                                                 [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                            , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                                            , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                                             ) = /Test/oneResult
-                                            ( Value /name -> /Data/String = CStr
+                                            ( Value /name -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                 { csValue = "myFn" }
                                             )
                                         )
                                     )
                                 )
                                 ( Value /this -> /Catln/IO = /Catln/println
-                                    ( Value /msg -> /Data/String = /Data/toString
+                                    ( Value /msg -> ∀/Data/String = /Data/toString
                                         ( Value /this -> UnionType
                                             ( Just
                                                 ( PredExpr /operator==
@@ -341,16 +345,17 @@ Prgm
                                                 ( /prgm=/Catln/RawPrgm..
                                                 , /reads=∀/Data/Maybe
                                                     [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                                                 ) = /Test/oneResult
-                                                ( Value /name -> /Data/String = CStr
+                                                ( Value /name -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                     { csValue = "myFn" }
                                                 )
                                             )
                                         )
                                     )
                                     ( Value /this -> /Catln/IO = /Catln/println
-                                        ( Value /msg -> /Data/String = /Data/toString
+                                        ( Value /msg -> ∀/Data/String = /Data/toString
                                             ( Value /this -> UnionType
                                                 ( Just
                                                     ( PredExpr /operator==
@@ -367,24 +372,27 @@ Prgm
                                                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                                                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
                                                     ) = /Test/onePrgm
-                                                    ( Value /name -> /Data/String = CStr
+                                                    ( Value /name -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                         { csValue = "myFn" }
                                                     )
                                                 )
                                             )
                                         )
                                         ( Value /this -> /Catln/IO = /Catln/println
-                                            ( Value /msg -> /Data/String = /Test/statementKind
+                                            ( Value /msg -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/statementKind
                                                 ( Value /s -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement
                                                     ( Value /objArr -> /Catln/RawObjArr.. = /Test/emptyObjArr
-                                                        ( Value /name -> /Data/String = CStr
+                                                        ( Value /name -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                             { csValue = "myFn" }
                                                         )
                                                     )
                                                 )
                                             )
                                             ( Value /this -> /Catln/IO = /Catln/println
-                                                ( Value /msg -> /Data/String.. = /Test/objArrName
+                                                ( Value /msg -> ∀/Data/String = /Test/objArrName
                                                     ( Value /oa -> /Catln/RawObjArr
                                                         ( /arr=∀/Data/Maybe
                                                             [ /T=/Catln/Pair
@@ -394,17 +402,19 @@ Prgm
                                                             ]
                                                         , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                         , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                        , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
+                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
                                                         , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                         , /basis=∀/Catln/ObjectBasis
                                                         ) = /Test/emptyObjArr
-                                                        ( Value /name -> /Data/String = CStr
+                                                        ( Value /name -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                             { csValue = "myFn" }
                                                         )
                                                     )
                                                 )
                                                 ( Value /this -> /Catln/IO = /Catln/println
-                                                    ( Value /msg -> /Data/String = /Test/exprKind
+                                                    ( Value /msg -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                                                         ( Value /e -> /Catln/RawExpr/RawList
                                                             ( /values=/Data/List/Nil
                                                             , /meta=/Catln/Meta..
@@ -412,39 +422,55 @@ Prgm
                                                         )
                                                     )
                                                     ( Value /this -> /Catln/IO = /Catln/println
-                                                        ( Value /msg -> /Data/String = /Test/rawValueName
+                                                        ( Value /msg -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/rawValueName
                                                             ( Value /e -> /Catln/RawExpr/RawValue
-                                                                ( /name=/Data/String
+                                                                ( /name=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                                 , /meta=/Catln/Meta..
                                                                 ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
-                                                                ( Value /name -> /Data/String = CStr
+                                                                ( Value /name -> /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                                     { csValue = "foo" }
                                                                 )
                                                             )
                                                         )
                                                         ( Value /this -> /Catln/IO = /Catln/println
-                                                            ( Value /msg -> /Data/String = /Test/exprKind
+                                                            ( Value /msg -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                                                                 ( Value /e -> /Catln/RawExpr/RawValue
-                                                                    ( /name=/Data/String
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                                     , /meta=/Catln/Meta..
                                                                     ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
-                                                                    ( Value /name -> /Data/String = CStr
+                                                                    ( Value /name -> /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                                         { csValue = "foo" }
                                                                     )
                                                                 )
                                                             )
                                                             ( Value /this -> /Catln/IO = /Catln/println
-                                                                ( Value /msg -> /Data/String = /Test/readKind
-                                                                    ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
-                                                                        ( Value /path -> /Data/String = CStr
+                                                                ( Value /msg -> /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/readKind
+                                                                    ( Value /r -> /Catln/ReadPath/ReadDir
+                                                                        ( /path=/Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                        ) = /Catln/ReadPath/ReadDir
+                                                                        ( Value /path -> /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                                             { csValue = "src" }
                                                                         )
                                                                     )
                                                                 )
                                                                 ( Value /this -> /Catln/IO = /Catln/println
-                                                                    ( Value /msg -> /Data/String = /Test/pathOf
-                                                                        ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
-                                                                            ( Value /path -> /Data/String = CStr
+                                                                    ( Value /msg -> /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/pathOf
+                                                                        ( Value /r -> /Catln/ReadPath/ReadFile
+                                                                            ( /path=/Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                            ) = /Catln/ReadPath/ReadFile
+                                                                            ( Value /path -> /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                                                 { csValue = "a.ct" }
                                                                             )
                                                                         )
@@ -466,7 +492,7 @@ Prgm
                 ( "/Test/exprKind"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/exprKind( Value /e -> ∀/Catln/RawExpr ) -> /Data/String ]
+                        [ /Test/exprKind( Value /e -> ∀/Catln/RawExpr ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
@@ -475,53 +501,61 @@ Prgm
                                 ( /const=∀/Catln/Constant
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawCExpr( Value /meta -> /Catln/Meta.. )( Value /const -> ∀/Catln/Constant )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "const" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawValue
-                                ( /name=/Data/String..
+                                ( /name=∀/Data/String
                                 , /meta=/Catln/Meta..
-                                ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )
-                            ) -> /Data/String = CStr
+                                ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "value" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawHoleExpr
                                 ( /hole=∀/Catln/Hole
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawHoleExpr( Value /meta -> /Catln/Meta.. )( Value /hole -> ∀/Catln/Hole )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "hole" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawMacroValue
-                                ( /name=/Data/String..
+                                ( /name=∀/Data/String
                                 , /meta=/Catln/Meta..
-                                ) = /Catln/RawExpr/RawMacroValue( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )
-                            ) -> /Data/String = CStr
+                                ) = /Catln/RawExpr/RawMacroValue( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "macro" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawApplyExpr
                                 ( /apply=/Catln/RawApply..
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawApplyExpr( Value /meta -> /Catln/Meta.. )( Value /apply -> /Catln/RawApply.. )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "apply" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawFmtStrExpr
-                                ( /str=/Data/String..
-                                , /name=/Data/String..
+                                ( /str=∀/Data/String
+                                , /name=∀/Data/String
                                 , /meta=/Catln/Meta..
-                                ) = /Catln/RawExpr/RawFmtStrExpr( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )( Value /str -> /Data/String.. )
-                            ) -> /Data/String = CStr
+                                ) = /Catln/RawExpr/RawFmtStrExpr( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )( Value /str -> ∀/Data/String )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "fmtStr" }
                         , /Test/exprKind
-                            ( Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            ( Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "the" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawAliasExpr
                                 ( /base=∀/Catln/RawExpr
                                 , /alias=∀/Catln/RawExpr
                                 ) = /Catln/RawExpr/RawAliasExpr( Value /base -> ∀/Catln/RawExpr )( Value /alias -> ∀/Catln/RawExpr )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "alias" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawTupleApply
@@ -549,7 +583,8 @@ Prgm
                                         ]..
                                     ]
                                 )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "tupleApply" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawVarsApply
@@ -558,7 +593,8 @@ Prgm
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawVarsApply( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )
                                 ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr.. ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "varsApply" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawContextApply
@@ -575,7 +611,8 @@ Prgm
                                     ]..
                                 )
                                 ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr.. ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "contextApply" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawWhere
@@ -583,10 +620,12 @@ Prgm
                                 , /cond=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawWhere( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )( Value /cond -> ∀/Catln/RawExpr )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "where" }
                         , /Test/exprKind
-                            ( Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            ( Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "paren" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawMethod
@@ -594,7 +633,8 @@ Prgm
                                 , /value=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawMethod( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )( Value /value -> ∀/Catln/RawExpr )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "method" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawList
@@ -602,7 +642,8 @@ Prgm
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawList( Value /meta -> /Catln/Meta.. )
                                 ( Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "list" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawTypeProp
@@ -610,7 +651,8 @@ Prgm
                                 , /base=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawTypeProp( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )( Value /prop -> ∀/Catln/TypeProperty )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "typeProp" }
                         ]
                     }
@@ -633,48 +675,80 @@ Prgm
                 ( "/Test/oneResult"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/oneResult( Value /name -> /Data/String ) -> /Catln/ImportResult.. ]
+                        [ /Test/oneResult( Value /name -> ∀/Data/String ) -> /Catln/ImportResult.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/oneResult( Value /name -> /Data/String ) -> /Catln/ImportResult
+                        [ /Test/oneResult( Value /name -> ∀/Data/String ) -> /Catln/ImportResult
                             ( /prgm=/Catln/RawPrgm..
                             , /reads=/Data/Maybe/Some
                                 [ /T=/Data/List/Cons
-                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    ( /head=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
+                                    )
                                 ]
                                 ( /value=/Data/List/Cons
-                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    ( /head=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
+                                    )
                                 )
-                            , /source=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
+                            , /source=/Data/Maybe/Some
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
                             ) = /Catln/ImportResult
                             ( Value /prgm -> /Catln/RawPrgm.. = /Test/onePrgm( Value /name -> TVArg /name = Value /name ) )
-                            ( Value /source -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/String = CStr
+                            ( Value /source -> /Data/Maybe/Some
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "src" }
                                 )
                             )
                             ( Value /reads -> /Data/Maybe/Some
                                 [ /T=/Data/List/Cons
-                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    ( /head=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
+                                    )
                                 ]
                                 ( /value=/Data/List/Cons
-                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    ( /head=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
+                                    )
                                 ) = /Data/Maybe/Some
                                 ( Value /value -> /Data/List/Cons
-                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    ( /head=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
-                                    ( Value /head -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
-                                        ( Value /path -> /Data/String = CStr
+                                    ( Value /head -> /Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ) = /Catln/ReadPath/ReadFile
+                                        ( Value /path -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                             { csValue = "a.py" }
                                         )
                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -687,21 +761,25 @@ Prgm
                 ( "/Test/readKind"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/readKind( Value /r -> ∀/Catln/ReadPath ) -> /Data/String ]
+                        [ /Test/readKind( Value /r -> ∀/Catln/ReadPath ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/readKind
-                            ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String.. ) = /Catln/ReadPath/ReadFile( Value /path -> /Data/String.. ) ) -> /Data/String = CStr
+                            ( Value /r -> /Catln/ReadPath/ReadFile( /path=∀/Data/String ) = /Catln/ReadPath/ReadFile( Value /path -> ∀/Data/String ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "file" }
                         , /Test/readKind
-                            ( Value /r -> /Catln/ReadPath/ReadExists( /path=/Data/String.. ) = /Catln/ReadPath/ReadExists( Value /path -> /Data/String.. ) ) -> /Data/String = CStr
+                            ( Value /r -> /Catln/ReadPath/ReadExists( /path=∀/Data/String ) = /Catln/ReadPath/ReadExists( Value /path -> ∀/Data/String ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "exists" }
                         , /Test/readKind
-                            ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String.. ) = /Catln/ReadPath/ReadDir( Value /path -> /Data/String.. ) ) -> /Data/String = CStr
+                            ( Value /r -> /Catln/ReadPath/ReadDir( /path=∀/Data/String ) = /Catln/ReadPath/ReadDir( Value /path -> ∀/Data/String ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "dir" }
                         , /Test/readKind
-                            ( Value /r -> /Catln/ReadPath/ReadTree( /path=/Data/String.. ) = /Catln/ReadPath/ReadTree( Value /path -> /Data/String.. ) ) -> /Data/String = CStr
+                            ( Value /r -> /Catln/ReadPath/ReadTree( /path=∀/Data/String ) = /Catln/ReadPath/ReadTree( Value /path -> ∀/Data/String ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "tree" }
                         ]
                     }
@@ -710,61 +788,68 @@ Prgm
                 ( "/Test/rawValueName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/rawValueName( Value /e -> ∀/Catln/RawExpr ) -> /Data/String ]
+                        [ /Test/rawValueName( Value /e -> ∀/Catln/RawExpr ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawValue
-                                ( /name=/Data/String..
+                                ( /name=∀/Data/String
                                 , /meta=/Catln/Meta..
-                                ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )
-                            ) -> /Data/String = Value /name
+                                ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )
+                            ) -> ∀/Data/String = Value /name
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawCExpr
                                 ( /const=∀/Catln/Constant
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawCExpr( Value /meta -> /Catln/Meta.. )( Value /const -> ∀/Catln/Constant )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawHoleExpr
                                 ( /hole=∀/Catln/Hole
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawHoleExpr( Value /meta -> /Catln/Meta.. )( Value /hole -> ∀/Catln/Hole )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawMacroValue
-                                ( /name=/Data/String..
+                                ( /name=∀/Data/String
                                 , /meta=/Catln/Meta..
-                                ) = /Catln/RawExpr/RawMacroValue( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )
-                            ) -> /Data/String = CStr
+                                ) = /Catln/RawExpr/RawMacroValue( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawApplyExpr
                                 ( /apply=/Catln/RawApply..
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawApplyExpr( Value /meta -> /Catln/Meta.. )( Value /apply -> /Catln/RawApply.. )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawFmtStrExpr
-                                ( /str=/Data/String..
-                                , /name=/Data/String..
+                                ( /str=∀/Data/String
+                                , /name=∀/Data/String
                                 , /meta=/Catln/Meta..
-                                ) = /Catln/RawExpr/RawFmtStrExpr( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )( Value /str -> /Data/String.. )
-                            ) -> /Data/String = CStr
+                                ) = /Catln/RawExpr/RawFmtStrExpr( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )( Value /str -> ∀/Data/String )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
-                            ( Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            ( Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawAliasExpr
                                 ( /base=∀/Catln/RawExpr
                                 , /alias=∀/Catln/RawExpr
                                 ) = /Catln/RawExpr/RawAliasExpr( Value /base -> ∀/Catln/RawExpr )( Value /alias -> ∀/Catln/RawExpr )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawTupleApply
@@ -792,7 +877,8 @@ Prgm
                                         ]..
                                     ]
                                 )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawVarsApply
@@ -801,7 +887,8 @@ Prgm
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawVarsApply( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )
                                 ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr.. ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawContextApply
@@ -818,7 +905,8 @@ Prgm
                                     ]..
                                 )
                                 ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr.. ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawWhere
@@ -826,10 +914,12 @@ Prgm
                                 , /cond=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawWhere( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )( Value /cond -> ∀/Catln/RawExpr )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
-                            ( Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            ( Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawMethod
@@ -837,7 +927,8 @@ Prgm
                                 , /value=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawMethod( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )( Value /value -> ∀/Catln/RawExpr )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawList
@@ -845,7 +936,8 @@ Prgm
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawList( Value /meta -> /Catln/Meta.. )
                                 ( Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawTypeProp
@@ -853,7 +945,8 @@ Prgm
                                 , /base=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/RawExpr/RawTypeProp( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/RawExpr )( Value /prop -> ∀/Catln/TypeProperty )
-                            ) -> /Data/String = CStr
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         ]
                     }
@@ -862,18 +955,18 @@ Prgm
                 ( "/Test/pathOf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/pathOf( Value /r -> ∀/Catln/ReadPath ) -> /Data/String ]
+                        [ /Test/pathOf( Value /r -> ∀/Catln/ReadPath ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/pathOf
-                            ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String.. ) = /Catln/ReadPath/ReadFile( Value /path -> /Data/String.. ) ) -> /Data/String = Value /path
+                            ( Value /r -> /Catln/ReadPath/ReadFile( /path=∀/Data/String ) = /Catln/ReadPath/ReadFile( Value /path -> ∀/Data/String ) ) -> ∀/Data/String = Value /path
                         , /Test/pathOf
-                            ( Value /r -> /Catln/ReadPath/ReadExists( /path=/Data/String.. ) = /Catln/ReadPath/ReadExists( Value /path -> /Data/String.. ) ) -> /Data/String = Value /path
+                            ( Value /r -> /Catln/ReadPath/ReadExists( /path=∀/Data/String ) = /Catln/ReadPath/ReadExists( Value /path -> ∀/Data/String ) ) -> ∀/Data/String = Value /path
                         , /Test/pathOf
-                            ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String.. ) = /Catln/ReadPath/ReadDir( Value /path -> /Data/String.. ) ) -> /Data/String = Value /path
+                            ( Value /r -> /Catln/ReadPath/ReadDir( /path=∀/Data/String ) = /Catln/ReadPath/ReadDir( Value /path -> ∀/Data/String ) ) -> ∀/Data/String = Value /path
                         , /Test/pathOf
-                            ( Value /r -> /Catln/ReadPath/ReadTree( /path=/Data/String.. ) = /Catln/ReadPath/ReadTree( Value /path -> /Data/String.. ) ) -> /Data/String = Value /path
+                            ( Value /r -> /Catln/ReadPath/ReadTree( /path=∀/Data/String ) = /Catln/ReadPath/ReadTree( Value /path -> ∀/Data/String ) ) -> ∀/Data/String = Value /path
                         ]
                     }
                 )
@@ -881,18 +974,21 @@ Prgm
                 ( "/Test/statementKind"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/statementKind( Value /s -> ∀/Catln/RawStatement ) -> /Data/String ]
+                        [ /Test/statementKind( Value /s -> ∀/Catln/RawStatement ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/statementKind
-                            ( Value /s -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement( Value /objArr -> /Catln/RawObjArr.. ) ) -> /Data/String = CStr
+                            ( Value /s -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement( Value /objArr -> /Catln/RawObjArr.. ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "decl" }
                         , /Test/statementKind
-                            ( Value /s -> /Catln/RawStatement/RawBindStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawBindStatement( Value /objArr -> /Catln/RawObjArr.. ) ) -> /Data/String = CStr
+                            ( Value /s -> /Catln/RawStatement/RawBindStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawBindStatement( Value /objArr -> /Catln/RawObjArr.. ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "bind" }
                         , /Test/statementKind
-                            ( Value /s -> /Catln/RawStatement/RawAnnot( /annot=∀/Catln/RawExpr ) = /Catln/RawStatement/RawAnnot( Value /annot -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            ( Value /s -> /Catln/RawStatement/RawAnnot( /annot=∀/Catln/RawExpr ) = /Catln/RawStatement/RawAnnot( Value /annot -> ∀/Catln/RawExpr ) ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "annot" }
                         ]
                     }
@@ -918,7 +1014,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Reading a program as it was written
                 The page @hsrawprgm()@ reads declares the compiler's types for a program as the parser produced
                 it, before desugaring reduces what was written to what it means. This file is what typechecks
@@ -928,126 +1025,162 @@ Prgm
                 an importer does not read a program — it builds one." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## What a reading looked at" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/pathOf
-                ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
-                    ( Value /path -> /Data/String = CStr
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/pathOf
+                ( Value /r -> /Catln/ReadPath/ReadFile
+                    ( /path=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ) = /Catln/ReadPath/ReadFile
+                    ( Value /path -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "a.ct" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "a.ct" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/readKind
-                ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
-                    ( Value /path -> /Data/String = CStr
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/readKind
+                ( Value /r -> /Catln/ReadPath/ReadDir
+                    ( /path=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ) = /Catln/ReadPath/ReadDir
+                    ( Value /path -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "src" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "dir" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## The metadata every piece carries" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## An expression as it was written" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/exprKind
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                 ( Value /e -> /Catln/RawExpr/RawValue
-                    ( /name=/Data/String
+                    ( /name=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /meta=/Catln/Meta..
                     ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
-                    ( Value /name -> /Data/String = CStr
+                    ( Value /name -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "foo" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "value" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/rawValueName
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/rawValueName
                 ( Value /e -> /Catln/RawExpr/RawValue
-                    ( /name=/Data/String
+                    ( /name=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /meta=/Catln/Meta..
                     ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
-                    ( Value /name -> /Data/String = CStr
+                    ( Value /name -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "foo" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "foo" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A method call is sugar that survives to this stage and not to the next one, which is the whole" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  difference between this page and @core/hsprgm.ct@." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/exprKind
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                 ( Value /e -> /Catln/RawExpr/RawMethod
                     ( /base=/Catln/RawExpr/RawValue
-                        ( /name=/Data/String
+                        ( /name=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /meta=/Catln/Meta..
                         )
                     , /value=/Catln/RawExpr/RawValue
-                        ( /name=/Data/String
+                        ( /name=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /meta=/Catln/Meta..
                         )
                     , /meta=/Catln/Meta..
                     ) = /Catln/RawExpr/RawMethod( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
                     ( Value /base -> /Catln/RawExpr/RawValue
-                        ( /name=/Data/String
+                        ( /name=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /meta=/Catln/Meta..
                         ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
-                        ( Value /name -> /Data/String = CStr
+                        ( Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "io" }
                         )
                     )
                     ( Value /value -> /Catln/RawExpr/RawValue
-                        ( /name=/Data/String
+                        ( /name=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /meta=/Catln/Meta..
                         ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
-                        ( Value /name -> /Data/String = CStr
+                        ( Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "println" }
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "method" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/exprKind
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                 ( Value /e -> /Catln/RawExpr/RawList
                     ( /values=/Data/List/Nil
                     , /meta=/Catln/Meta..
                     ) = /Catln/RawExpr/RawList( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "list" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## What a page holds" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String.. = /Test/objArrName
+            ( Value /p -> ∀/Data/String = /Test/objArrName
                 ( Value /oa -> /Catln/RawObjArr
                     ( /arr=∀/Data/Maybe
                         [ /T=/Catln/Pair
@@ -1057,33 +1190,39 @@ Prgm
                         ]
                     , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                     , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                    , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
+                    , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
                     , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                     , /basis=∀/Catln/ObjectBasis
                     ) = /Test/emptyObjArr
-                    ( Value /name -> /Data/String = CStr
+                    ( Value /name -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "myFn" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "myFn" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/statementKind
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/statementKind
                 ( Value /s -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement
                     ( Value /objArr -> /Catln/RawObjArr.. = /Test/emptyObjArr
-                        ( Value /name -> /Data/String = CStr
+                        ( Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "myFn" }
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "decl" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## A whole page, and the result of reading one" }
             )
         , /Catln/#print
@@ -1105,7 +1244,8 @@ Prgm
                     ) = Value /Test/emptyPrgm
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
@@ -1125,12 +1265,14 @@ Prgm
                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
                     ) = /Test/onePrgm
-                    ( Value /name -> /Data/String = CStr
+                    ( Value /name -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "myFn" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "1" }
             )
         , /Catln/#print
@@ -1150,14 +1292,16 @@ Prgm
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe
                         [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                    , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                    , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                     ) = /Test/oneResult
-                    ( Value /name -> /Data/String = CStr
+                    ( Value /name -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "myFn" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "1" }
             )
         , /Catln/#print
@@ -1177,18 +1321,21 @@ Prgm
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe
                         [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                    , /source=∀/Data/Maybe[ /T=/Data/String.. ]
+                    , /source=∀/Data/Maybe[ /T=∀/Data/String ]
                     ) = /Test/oneResult
-                    ( Value /name -> /Data/String = CStr
+                    ( Value /name -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "myFn" }
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "1" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## What the suite checks
                 The `>` examples above are checked by `catln test`, and the integration suite typechecks and
                 builds this file without comparing what they evaluate to — only a page under @stack/@ has its

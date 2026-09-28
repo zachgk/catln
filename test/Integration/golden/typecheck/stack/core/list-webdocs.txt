@@ -6,19 +6,19 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldlShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/FoldSteps..
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> ∀/Data/String ) -> /Catln/Doc/Show/FoldSteps..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/foldlShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/FoldSteps
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> ∀/Data/String ) -> /Catln/Doc/Show/FoldSteps
                             ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
-                            , /init=/Data/String
-                            , /result=/Data/String
+                            , /init=∀/Data/String
+                            , /result=∀/Data/String
                             , /fromRight=/Data/Primitive/False
                             ) = /Catln/Doc/Show/FoldSteps( Value /init -> TVArg /init = Value /init )( Value /steps -> TVArg /steps = Value /steps )
-                            ( Value /result -> /Data/String = /Data/List/lastOutput( Value /steps -> TVArg /steps = Value /steps )( Value /prev -> TVArg /init = Value /init ) )( Value /fromRight -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( Value /result -> ∀/Data/String = /Data/List/lastOutput( Value /steps -> TVArg /steps = Value /steps )( Value /prev -> TVArg /init = Value /init ) )( Value /fromRight -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
                 )
@@ -39,56 +39,61 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/showFoldSteps
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/showFoldSteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = CStr
+                        [ /Data/List/showFoldSteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Data/List/showFoldSteps
                             ( Value /steps -> /Data/List/Cons
                                 ( /head=/Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )| PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
-                                    ) = /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String )
+                                    ) = /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> ∀/Data/String )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String )
                                 )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ) -> /Data/String = /operator++
-                            ( Value /l -> /Data/String = /operator++
-                                ( Value /l -> /Data/String = /operator++
-                                    ( Value /l -> /Data/String = /operator++
-                                        ( Value /l -> /Data/String = /operator++
-                                            ( Value /l -> /Data/String = /operator++
-                                                ( Value /l -> /Data/String = /operator++
-                                                    ( Value /l -> /Data/String = /operator++
-                                                        ( Value /l -> /Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
-                                                        ( Value /r -> /Data/String = CStr
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> ∀/Data/String = /operator++
+                                        ( Value /l -> ∀/Data/String = /operator++
+                                            ( Value /l -> ∀/Data/String = /operator++
+                                                ( Value /l -> ∀/Data/String = /operator++
+                                                    ( Value /l -> ∀/Data/String = /operator++
+                                                        ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
+                                                        ( Value /r -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                             { csValue = ":" }
                                                         )
                                                     )( Value /r -> TVArg /acc = Value /acc )
                                                 )
-                                                ( Value /r -> /Data/String = CStr
+                                                ( Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                     { csValue = "+" }
                                                 )
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String = CStr
+                                        ( Value /r -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                             { csValue = "=" }
                                         )
                                     )( Value /r -> TVArg /output = Value /output )
                                 )
-                                ( Value /r -> /Data/String = CStr
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = ";" }
                                 )
                             )
@@ -118,25 +123,53 @@ Prgm
                             )
                             ( /fn( Value /v ) )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/Step
-                                ( /output=/Data/String
-                                , /input=/Data/String
+                                ( /output=∀/Data/String
+                                , /input=∀/Data/String
                                 , /index=/Data/Primitive/Integer
                                 )
-                            , /tail=
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] )
-                            )| PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/Cons
+                            , /tail=UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
+                                )
+                            ) = /Data/List/Cons
                             ( Value /head -> /Catln/Doc/Show/Step
-                                ( /output=/Data/String
-                                , /input=/Data/String
+                                ( /output=∀/Data/String
+                                , /input=∀/Data/String
                                 , /index=/Data/Primitive/Integer
                                 ) = /Catln/Doc/Show/Step( Value /index -> TVArg /index = Value /index )
-                                ( Value /input -> /Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
-                                ( Value /output -> /Data/String = /Data/toString
+                                ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
+                                ( Value /output -> ∀/Data/String = /Data/toString
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /v -> TVArg /head = Value /head ) )
                                 )
                             )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Data/List/fmapSteps( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
+                                ) = /Data/List/fmapSteps( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
@@ -152,31 +185,31 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/lastOutput
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /prev -> /Data/String ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /prev -> ∀/Data/String ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/lastOutput( Value /steps -> /Data/List/Nil = Value /Data/List/Nil )( Value /prev -> /Data/String ) -> /Data/String = Value /prev
+                        [ /Data/List/lastOutput( Value /steps -> /Data/List/Nil = Value /Data/List/Nil )( Value /prev -> ∀/Data/String ) -> ∀/Data/String = Value /prev
                         , /Data/List/lastOutput
                             ( Value /steps -> /Data/List/Cons
                                 ( /head=/Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )| PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
-                                    ) = /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String )
+                                    ) = /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> ∀/Data/String )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String )
                                 )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            )( Value /prev -> /Data/String ) -> /Data/String = /Data/List/lastOutput( Value /steps -> TVArg /tail = Value /tail )( Value /prev -> TVArg /output = Value /output )
+                            )( Value /prev -> ∀/Data/String ) -> ∀/Data/String = /Data/List/lastOutput( Value /steps -> TVArg /tail = Value /tail )( Value /prev -> TVArg /output = Value /output )
                         ]
                     }
                 )
@@ -197,31 +230,31 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/firstOutput
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> /Data/String ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> ∀/Data/String ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/firstOutput( Value /steps -> /Data/List/Nil = Value /Data/List/Nil )( Value /init -> /Data/String ) -> /Data/String = Value /init
+                        [ /Data/List/firstOutput( Value /steps -> /Data/List/Nil = Value /Data/List/Nil )( Value /init -> ∀/Data/String ) -> ∀/Data/String = Value /init
                         , /Data/List/firstOutput
                             ( Value /steps -> /Data/List/Cons
                                 ( /head=/Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )| PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
-                                    ) = /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String )
+                                    ) = /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> ∀/Data/String )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String )
                                 )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            )( Value /init -> /Data/String ) -> /Data/String = Value /output
+                            )( Value /init -> ∀/Data/String ) -> ∀/Data/String = Value /output
                         ]
                     }
                 )
@@ -259,47 +292,51 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/showSteps
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) -> /Data/String
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/showSteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = CStr
+                        [ /Data/List/showSteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "" }
                         , /Data/List/showSteps
                             ( Value /steps -> /Data/List/Cons
                                 ( /head=/Catln/Doc/Show/Step
-                                    ( /output=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )| PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/Step
-                                    ( /output=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
-                                    ) = /Catln/Doc/Show/Step( Value /index -> /Data/Primitive/Integer )( Value /input -> /Data/String )( Value /output -> /Data/String )
+                                    ) = /Catln/Doc/Show/Step( Value /index -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String )
                                 )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ) -> /Data/String = /operator++
-                            ( Value /l -> /Data/String = /operator++
-                                ( Value /l -> /Data/String = /operator++
-                                    ( Value /l -> /Data/String = /operator++
-                                        ( Value /l -> /Data/String = /operator++
-                                            ( Value /l -> /Data/String = /operator++
-                                                ( Value /l -> /Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
-                                                ( Value /r -> /Data/String = CStr
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> ∀/Data/String = /operator++
+                                        ( Value /l -> ∀/Data/String = /operator++
+                                            ( Value /l -> ∀/Data/String = /operator++
+                                                ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
+                                                ( Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                     { csValue = ":" }
                                                 )
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String = CStr
+                                        ( Value /r -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                             { csValue = "->" }
                                         )
                                     )( Value /r -> TVArg /output = Value /output )
                                 )
-                                ( Value /r -> /Data/String = CStr
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = ";" }
                                 )
                             )
@@ -392,43 +429,57 @@ Prgm
                             )
                             ( /fn( Value /acc )( Value /v ) )( Value /acc )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/FoldStep
-                                ( /output=/Data/String
-                                , /acc=/Data/String
-                                , /input=/Data/String
+                                ( /output=∀/Data/String
+                                , /acc=∀/Data/String
+                                , /input=∀/Data/String
                                 , /index=/Data/Primitive/Integer
                                 )
-                            , /tail=
-                                ( TopType | PredClass /Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/FoldStep
-                                        ( /output=/Data/String
-                                        , /acc=/Data/String
-                                        , /input=/Data/String
+                            , /tail=UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=/Catln/Doc/Show/FoldStep
+                                        ( /output=∀/Data/String
+                                        , /acc=∀/Data/String
+                                        , /input=∀/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
                                 )
-                            )| PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/Cons
+                            ) = /Data/List/Cons
                             ( Value /head -> /Catln/Doc/Show/FoldStep
-                                ( /output=/Data/String
-                                , /acc=/Data/String
-                                , /input=/Data/String
+                                ( /output=∀/Data/String
+                                , /acc=∀/Data/String
+                                , /input=∀/Data/String
                                 , /index=/Data/Primitive/Integer
                                 ) = /Catln/Doc/Show/FoldStep( Value /index -> TVArg /index = Value /index )
-                                ( Value /acc -> /Data/String = /Data/toString( Value /this -> TVArg /acc = Value /acc ) )
-                                ( Value /input -> /Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
-                                ( Value /output -> /Data/String = /Data/toString
+                                ( Value /acc -> ∀/Data/String = /Data/toString( Value /this -> TVArg /acc = Value /acc ) )
+                                ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
+                                ( Value /output -> ∀/Data/String = /Data/toString
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /head = Value /head ) )
                                 )
                             )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList
-                                    [ /T=/Catln/Doc/Show/FoldStep
-                                        ( /output=/Data/String
-                                        , /acc=/Data/String
-                                        , /input=/Data/String
+                            ( Value /tail -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=/Catln/Doc/Show/FoldStep
+                                        ( /output=∀/Data/String
+                                        , /acc=∀/Data/String
+                                        , /input=∀/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
                                 ) = /Data/List/foldlSteps( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /acc )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /acc= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /head = Value /head ) )
@@ -519,13 +570,45 @@ Prgm
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /acc )( Value /v ) )( Value /init -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/FoldSteps.. = /Data/List/foldlShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldlSteps( Value /lst -> TVArg /lst = Value /lst )
+                            ( Value /steps -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons
+                                    ( /head=/Catln/Doc/Show/FoldStep
+                                        ( /output=∀/Data/String
+                                        , /acc=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons[ /T=TopType ]
+                                            ( /head=/Catln/Doc/Show/FoldStep
+                                                ( /output=∀/Data/String
+                                                , /acc=∀/Data/String
+                                                , /input=∀/Data/String
+                                                , /index=/Data/Primitive/Integer
+                                                )
+                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                            )
+                                        , []
+                                        )
+                                    )
+                                , []
+                                ) = /Data/List/foldlSteps( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /acc )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /acc -> TVArg /init = Value /init )
                                 ( Value /index -> /Data/Primitive/Integer = CInt
                                     { ciValue = 0 }
                                 )
                             )
-                            ( Value /init -> /Data/String = /Data/toString( Value /this -> TVArg /init = Value /init ) )
+                            ( Value /init -> ∀/Data/String = /Data/toString( Value /this -> TVArg /init = Value /init ) )
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/List/foldr
                                 ( /fn
@@ -538,13 +621,30 @@ Prgm
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /acc )( Value /v ) )( Value /init -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/FoldSteps.. = /Data/List/foldrShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldrSteps( Value /lst -> TVArg /lst = Value /lst )
+                            ( Value /steps -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons
+                                    ( /head=/Catln/Doc/Show/FoldStep
+                                        ( /output=∀/Data/String
+                                        , /acc=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
+                                    )
+                                , []
+                                ) = /Data/List/foldrSteps( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /acc )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
                                 ( Value /index -> /Data/Primitive/Integer = CInt
                                     { ciValue = 0 }
                                 )
                             )
-                            ( Value /init -> /Data/String = /Data/toString( Value /this -> TVArg /init = Value /init ) )
+                            ( Value /init -> ∀/Data/String = /Data/toString( Value /this -> TVArg /init = Value /init ) )
                         ]
                     }
                 )
@@ -565,19 +665,19 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldrShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/FoldSteps..
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> ∀/Data/String ) -> /Catln/Doc/Show/FoldSteps..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/foldrShow
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> /Data/String ) -> /Catln/Doc/Show/FoldSteps
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /init -> ∀/Data/String ) -> /Catln/Doc/Show/FoldSteps
                             ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
-                            , /init=/Data/String
-                            , /result=/Data/String
+                            , /init=∀/Data/String
+                            , /result=∀/Data/String
                             , /fromRight=/Data/Primitive/True
                             ) = /Catln/Doc/Show/FoldSteps( Value /init -> TVArg /init = Value /init )( Value /steps -> TVArg /steps = Value /steps )
-                            ( Value /result -> /Data/String = /Data/List/firstOutput( Value /steps -> TVArg /steps = Value /steps )( Value /init -> TVArg /init = Value /init ) )( Value /fromRight -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ( Value /result -> ∀/Data/String = /Data/List/firstOutput( Value /steps -> TVArg /steps = Value /steps )( Value /init -> TVArg /init = Value /init ) )( Value /fromRight -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]
                     }
                 )
@@ -603,25 +703,53 @@ Prgm
                             )
                             ( /fn( Value /v ) )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/Step
-                                ( /output=/Data/String
-                                , /input=/Data/String
+                                ( /output=∀/Data/String
+                                , /input=∀/Data/String
                                 , /index=/Data/Primitive/Integer
                                 )
-                            , /tail=
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] )
-                            )| PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/Cons
+                            , /tail=UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
+                                )
+                            ) = /Data/List/Cons
                             ( Value /head -> /Catln/Doc/Show/Step
-                                ( /output=/Data/String
-                                , /input=/Data/String
+                                ( /output=∀/Data/String
+                                , /input=∀/Data/String
                                 , /index=/Data/Primitive/Integer
                                 ) = /Catln/Doc/Show/Step( Value /index -> TVArg /index = Value /index )
-                                ( Value /input -> /Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
-                                ( Value /output -> /Data/String = /Data/toString
+                                ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
+                                ( Value /output -> ∀/Data/String = /Data/toString
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /v -> TVArg /head = Value /head ) )
                                 )
                             )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Data/List/mmapSteps( Value /m -> TVArg /tail = Value /tail )
+                            ( Value /tail -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
+                                ) = /Data/List/mmapSteps( Value /m -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
@@ -667,23 +795,23 @@ Prgm
                             )
                             ( Value /rows -> /Data/List/Cons
                                 ( /head=/Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
                                 , /tail=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
-                                )| PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/FoldStep
-                                    ( /output=/Data/String
-                                    , /acc=/Data/String
-                                    , /input=/Data/String
+                                    ( /output=∀/Data/String
+                                    , /acc=∀/Data/String
+                                    , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     ) = /Catln/Doc/Show/FoldStep( Value /index -> TVArg /index = Value /index )
-                                    ( Value /acc -> /Data/String = /Data/toString( Value /this -> TVArg /acc = Value /acc ) )
-                                    ( Value /input -> /Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
-                                    ( Value /output -> /Data/String = /Data/toString
+                                    ( Value /acc -> ∀/Data/String = /Data/toString( Value /this -> TVArg /acc = Value /acc ) )
+                                    ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
+                                    ( Value /output -> ∀/Data/String = /Data/toString
                                         ( Value /this -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /head = Value /head ) )
                                     )
                                 )( Value /tail -> TVArg /rows = Value /rows )
@@ -746,7 +874,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# The list library's displays of its own calls
                 A display of a call says what a function did, where a display of a value says what the function left
                 behind. @core/list.ct@'s combinators are the case for it: each of them returns a list, and a list is
@@ -760,7 +889,8 @@ Prgm
                 rows and would say so in a page of its own." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Why this is a page of its own
                 The arms name [/Catln/Doc/dshowCall], so this page reaches @core/webdoc.ct@, and @core/list.ct@ is
                 reached by nearly every page there is. Writing them there would put the doc server's vocabulary
@@ -768,7 +898,8 @@ Prgm
                 same arrangement: it reaches @core/list.ct@ freely, and nothing in the library reaches it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[fmap] over a [ConsList] shown as the table of what each element became: a row per element, the
                 element on the left and the result of applying [fn] to it on the right.
                 This is the display of the call and not of the list it returns. The recursion that @core/list.ct@'s
@@ -780,14 +911,16 @@ Prgm
                 shown the way it was before there was one." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A mapping over a [ConsList] of things that render text is a call with a display, which is what
                 joining [/Catln/Doc/DShowCall] says. The bound on the elements is the whole of which mappings this
                 is claimed for: a mapping over elements that render no text is not a member and keeps the display
                 every other call gets." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The rows of that table, walking the list and applying [fn] to each element as it goes.
                 It applies [fn] rather than being handed what [fn] already returned. An arm of
                 [/Catln/Doc/dshowCall] is given the call's arguments and nothing else, so working the outputs out is
@@ -797,7 +930,8 @@ Prgm
                 sits, and the rows are wanted numbered from the front." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[/Data/Monad/mmap] over a [ConsList] shown as the same table as a mapping: a row per element, the
                 element on the left and the list [fn] made of it on the right.
                 The result of the call is those lists joined end to end, and joined they no longer say which
@@ -812,15 +946,18 @@ Prgm
                 [/Data/Maybe] bound over keeps the display of any other call." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A binding over a [ConsList] of things that render text is a call with a display." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[foldl] over a [ConsList] shown as the steps it took: a row per element, each with the
                 accumulator it was handed, the element it combined in, and the accumulator it handed on to the
                 next row. The table starts at [init] and ends at the fold's result.
@@ -829,36 +966,43 @@ Prgm
                 [init] that is one as well, which is what an accumulator's cell can hold." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A left fold over a [ConsList] of things that render text is a call with a display." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The display around a left fold's rows. Its result is the last row's output, read off the rows
                 rather than worked out by folding again: the rows already hold every accumulator the fold made.
                 A fold over nothing hands [init] straight on." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The output of the last row, or [prev] where there are none." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The rows of a left fold, carrying the accumulator forward as [foldl] does." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[foldr] over a [ConsList] shown the same way, with the accumulator running the other way: the
                 last element is combined into [init] first, and each row hands its output to the row above it.
                 The rows are still one per element in element order, which is the order the fold's calls are
                 nested in and so the order a debugger finds them in." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A right fold over a [ConsList] of things that render text is a call with a display." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The display around a right fold's rows, whose result is the FIRST row's output: the head is the
                 element combined last.
                 Read off the rows for the reason [foldlShow] gives, and for one more. The arm cannot call
@@ -867,11 +1011,13 @@ Prgm
                 arm is, and the call then fails on any list that is not empty." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The output of the first row, or [init] where there are none." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The rows of a right fold, worked out the way the fold runs: from the last element back to the
                 first, carrying the accumulator as [foldlSteps] does. The list is first turned around onto
                 [stack], and each row is then consed on in front of the rows already made, so they come out in
@@ -879,15 +1025,18 @@ Prgm
                 last element's." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[lst] turned around onto [stack], so the last element is on top." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The walk over that stack: each element combined into the accumulator the elements after it made." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The rows written out as text, which is how this page checks the ones it builds.
                 It is not an arm of [/Data/toString] and [/Catln/Doc/Show/Steps] is not a [/Data/ToString]: a value
                 that renders text is shown as that text, so making these rows one would replace the display they
@@ -897,21 +1046,25 @@ Prgm
                 everything the arm does beyond handing it over — so that is what is asserted." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The rows of a fold written out as text, as [showSteps] writes a mapping's." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A sum reads the same from either end, but the rows do not: a left fold's first row is handed
                 [init], and a right fold's last row is." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The result a display gives is read off its rows: the last row's for a left fold, the first row's
                 for a right one, and [init] for a fold over nothing." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Joining text is where the two ends differ in what they make, not only in how." }
             )
         ]

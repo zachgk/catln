@@ -31,18 +31,18 @@ Prgm
                                 , eavMeta = ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /this -> $/T } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> $/T } ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         , /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/String = ( Value /this ↦ /Data/String )
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String = ( Value /this ↦ ∀/Data/String )
                         ]
                     }
                 )
@@ -151,7 +151,7 @@ Prgm
             { cgcSealed = False
             , cgcPartial = /Data/ToString
             , cgcExtends =
-                [ /Data/String
+                [ ∀/Data/String
                 , /Data/Primitive/Integer
                 , /Data/Primitive/Float
                 ]
@@ -163,97 +163,139 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Catln Core Data Types
-                These define the basic data types used in the language. [String] and its equality live in
-                [Data/str]; the conversions and collection types below build on it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Catln Core Data Types
+                  These define the basic data types used in the language. [String] and its equality live in
+                  [Data/str]; the conversions and collection types below build on it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Rendering as text" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Rendering as text"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[ToString] is the class of types that can render themselves as a [String]. Defining
-                [toString] for a type makes its values printable and, more importantly, lets generic
-                containers such as [List] render their contents by rendering each element." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[ToString] is the class of types that can render themselves as a [String]. Defining
+                  [toString] for a type makes its values printable and, more importantly, lets generic
+                  containers such as [List] render their contents by rendering each element."
+                }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String = "hello" }
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hello"
+                }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "hello" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hello"
+                }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer = 42 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "42" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Float = 1.5 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1.5" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.5"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Context" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Context"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Collections" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Collections"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Option] defines a type that might have a value or [None].
-                It can be used to handle operations that are uncertain if they can produce a response." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Option] defines a type that might have a value or [None].
+                  It can be used to handle operations that are uncertain if they can produce a response."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "type-variable member interacts poorly with expanding the open [Functor] class during" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "type-variable member interacts poorly with expanding the open [Functor] class during"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "collection and its [ConsList] implementation live in [Data/list.ct]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "collection and its [ConsList] implementation live in [Data/list.ct]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "class(Enum)" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "class(Enum)"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  # [Enum] represents a type which can be enumerated." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  # [Enum] represents a type which can be enumerated."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "    It defines a single function [enum] which lists all of the values in the type." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "    It defines a single function [enum] which lists all of the values in the type."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  enum[$T -> Enum] -> Set[$T]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  enum[$T -> Enum] -> Set[$T]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "    # [enum] lists all of the values in a type." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "    # [enum] lists all of the values in a type."
+                }
             )
         ]
     }

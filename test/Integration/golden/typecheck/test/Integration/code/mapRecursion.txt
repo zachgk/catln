@@ -86,19 +86,14 @@ Prgm
                                     )
                                 , /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$_/MV
+                                    , /V=TopType
                                     ]
                                     ( /value=$/V
                                     , /key=∀/ROrd
-                                    , /right=
-                                        ( TopType | PredClass /RTree
-                                            [ /K=∀/ROrd
-                                            , /V=$_/V
-                                            ] && PredClass /RIMap
-                                            [ /K=∀/ROrd
-                                            , /V=TopType
-                                            ]
-                                        )
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
                                         , /V=$_/V
@@ -148,19 +143,14 @@ Prgm
                                     )
                                 , /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$_/MV
+                                    , /V=TopType
                                     ]
                                     ( /value=$/V
                                     , /key=∀/ROrd
-                                    , /right=
-                                        ( TopType | PredClass /RTree
-                                            [ /K=∀/ROrd
-                                            , /V=$_/V
-                                            ] && PredClass /RIMap
-                                            [ /K=∀/ROrd
-                                            , /V=TopType
-                                            ]
-                                        )
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
                                         , /V=$_/V

@@ -30,11 +30,11 @@ Prgm
                 ( "/Lib/foo"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value this )( Value /r= Value this ) ]
+                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/Integer = /operator+( Value /l= Value this )( Value /r= Value this ) ]
                     }
                 )
             ,

@@ -15,12 +15,12 @@ Prgm
                 ( "/nameOf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ nameOf( Value /this -> /Plain.. ) -> /Data/String ]
+                        [ nameOf( Value /this -> /Plain.. ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ nameOf
-                            ( Value /this= /Plain( Value name )( Value other ) ) -> /Data/String = Value name
+                            ( Value /this= /Plain( Value name )( Value other ) ) -> ∀/Data/String = Value name
                         ]
                     }
                 )
@@ -28,7 +28,7 @@ Prgm
                 ( "/Plain"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Plain( Value /name -> /Data/String )( Value /other -> /Data/String ) ]
+                        [ Plain( Value /name -> ∀/Data/String )( Value /other -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []

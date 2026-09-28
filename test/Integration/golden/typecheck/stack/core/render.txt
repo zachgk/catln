@@ -5,8 +5,8 @@ Prgm
                 ( "/Catln/Doc/Show/EntryFoldSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/EntryFoldSteps( Value /init -> /Data/String )
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value /result -> /Data/String )( Value /fromRight -> ∀/Data/Primitive/Boolean )
+                        [ /Catln/Doc/Show/EntryFoldSteps( Value /init -> ∀/Data/String )
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] )( Value /result -> ∀/Data/String )( Value /fromRight -> ∀/Data/Primitive/Boolean )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -17,7 +17,7 @@ Prgm
                 ( "/Catln/Doc/Show/FoldStep"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                        [ /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> ∀/Data/String )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -27,7 +27,7 @@ Prgm
                 ( "/Catln/Doc/Show/EntryStep"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/EntryStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                        [ /Catln/Doc/Show/EntryStep( Value /index -> /Data/Primitive/Integer )( Value /key -> ∀/Data/String )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -49,7 +49,7 @@ Prgm
                 ( "/Catln/Doc/Show/EntryFoldStep"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/EntryFoldStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                        [ /Catln/Doc/Show/EntryFoldStep( Value /index -> /Data/Primitive/Integer )( Value /key -> ∀/Data/String )( Value /acc -> ∀/Data/String )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -59,8 +59,8 @@ Prgm
                 ( "/Catln/Doc/Show/FoldSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/FoldSteps( Value /init -> /Data/String )
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /result -> /Data/String )( Value /fromRight -> ∀/Data/Primitive/Boolean )
+                        [ /Catln/Doc/Show/FoldSteps( Value /init -> ∀/Data/String )
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )( Value /result -> ∀/Data/String )( Value /fromRight -> ∀/Data/Primitive/Boolean )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -72,7 +72,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/Show/Rendered[ /V : TopType ]( Value /value -> $/V )
-                            ( Value /assets -> ∀/Data/List[ /T=/Data/String ] )
+                            ( Value /assets -> ∀/Data/List[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -83,7 +83,7 @@ Prgm
                 ( "/Catln/Doc/Show/Step"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/Step( Value /index -> /Data/Primitive/Integer )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                        [ /Catln/Doc/Show/Step( Value /index -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /output -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -128,7 +128,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# A display a library renders for itself
                 A [Show/Rendered] is a value together with the files that draw it. It is the third way a library
                 says what one of its types looks like, and the first that can say what one *does*.
@@ -145,7 +146,8 @@ Prgm
                 knowing what they are for." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# A call shown as what it did, step by step
                 A [Show/Steps] is a call displayed as a row per step of it: what the step was handed, and what the
                 call made of that. It is the first display in this file that is of a call rather than of a value,
@@ -166,7 +168,8 @@ Prgm
                 behind, and it is why an arm needs no cooperation from whatever is showing it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# A call over the entries of a map
                 A step of a call over a map is a step over one of its entries, and an entry is a key as well as
                 the value the step was handed. The key is not the step's input, since the step was never handed
@@ -179,7 +182,8 @@ Prgm
                 every list's table would draw empty. See [/Data/Map] in @core/map-webdocs.ct@, which writes them." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Why this is not written in core/webdoc.ct
                 [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
                 @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
@@ -188,7 +192,8 @@ Prgm
                 @core/main.ct@ reaches it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# What a doc server does not do with these files
                 A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
                 read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited

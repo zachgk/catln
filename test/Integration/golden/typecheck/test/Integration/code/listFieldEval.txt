@@ -24,8 +24,8 @@ Prgm
                 ( "/Tagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Tagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        [ /Tagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -48,7 +48,7 @@ Prgm
                 ( "/Mixed/Labelled"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Mixed/Labelled( Value /value -> /Data/String ) ]
+                        [ /Mixed/Labelled( Value /value -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -85,14 +85,15 @@ Prgm
             , cgcPartial = /Mixed
             , cgcExtends =
                 [ /Mixed/Plain
-                , /Mixed/Labelled( /value=/Data/String )
+                , /Mixed/Labelled( /value=∀/Data/String )
                 ]
             , cgcDoc = Just ""
             }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A list of two or more held in a FIELD, built and evaluated rather than only declared.
                 The printed face of @listFieldMultiple.ct@, which declares these same two cells and stops short
                 of printing them: printing is what builds a value, so a list field that typechecks and a list
@@ -110,38 +111,57 @@ Prgm
                 about how a relative name resolves and not about what a field may hold." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Printed so that the values are built and not only declared, which is the whole of what this adds." }
             )
         , /Catln/#print
             ( Value /p -> /Tagged
-                ( /name=/Data/String
+                ( /name=/Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                 , /tags=/Data/List/Cons
-                    ( /head=/Data/String
-                    , /tail=/Data/List/Cons[ /T=/Data/String ]
-                        ( /head=/Data/String
+                    ( /head=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    , /tail=/Data/List/Cons
+                        [ /T=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ]
+                        ( /head=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/List[ /T=/Data/String ]
+                    )
                 ) = /Tagged
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "two different" }
                 )
                 ( Value /tags -> /Data/List/Cons
-                    ( /head=/Data/String
-                    , /tail=/Data/List/Cons[ /T=/Data/String ]
-                        ( /head=/Data/String
+                    ( /head=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    , /tail=/Data/List/Cons
+                        [ /T=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ]
+                        ( /head=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
-                    ( Value /head -> /Data/String = CStr
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "x" }
                     )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/String ]
-                        ( /head=/Data/String
+                    ( Value /tail -> /Data/List/Cons
+                        [ /T=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ]
+                        ( /head=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/String = CStr
+                        ( Value /head -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "y" }
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
@@ -152,27 +172,52 @@ Prgm
                 ( /items=/Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
-                        [ /T=/Mixed/Labelled( /value=/Data/String ) ]
-                        ( /head=/Mixed/Labelled( /value=/Data/String )
+                        [ /T=/Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
+                        ( /head=/Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/List[ /T=∀/Mixed ]
+                    )
                 ) = /Holder
                 ( Value /items -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
-                        [ /T=/Mixed/Labelled( /value=/Data/String ) ]
-                        ( /head=/Mixed/Labelled( /value=/Data/String )
+                        [ /T=/Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
+                        ( /head=/Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
+                    ) = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
                     ( Value /tail -> /Data/List/Cons
-                        [ /T=/Mixed/Labelled( /value=/Data/String ) ]
-                        ( /head=/Mixed/Labelled( /value=/Data/String )
+                        [ /T=/Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
+                        ( /head=/Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Mixed/Labelled( /value=/Data/String ) = /Mixed/Labelled
-                            ( Value /value -> /Data/String = CStr
+                        ( Value /head -> /Mixed/Labelled
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Mixed/Labelled
+                            ( Value /value -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "x" }
                             )
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )

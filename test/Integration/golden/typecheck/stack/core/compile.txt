@@ -14,7 +14,7 @@ Prgm
                 ( "/Catln/#md"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#md( Value /text -> /Data/String ) ]
+                        [ /Catln/#md( Value /text -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -69,7 +69,7 @@ Prgm
                 ( "/Catln/#name"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#name( Value /name -> /Data/String ) ]
+                        [ /Catln/#name( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -113,7 +113,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
-                        , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
+                        , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> ∀/Data/String )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -125,7 +125,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )
-                        , /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )( Value /result -> /Data/String )
+                        , /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )( Value /result -> ∀/Data/String )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -145,7 +145,7 @@ Prgm
                 ( "/Catln/#runtime"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#runtime( Value /k -> /Data/String ) ]
+                        [ /Catln/#runtime( Value /k -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -155,7 +155,7 @@ Prgm
                 ( "/Catln/#eximport"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#eximport( Value /name -> /Data/String ) ]
+                        [ /Catln/#eximport( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -187,7 +187,7 @@ Prgm
                 ( "/Catln/#importer"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#importer( Value /name -> /Data/String )( Value /extensions -> /Data/String ) ]
+                        [ /Catln/#importer( Value /name -> ∀/Data/String )( Value /extensions -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -208,7 +208,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO.. ) -> /Catln/IO ]
+                        [ /Catln/println( Value /msg -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> /Catln/IO ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -269,24 +269,29 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Catln Core Compiling Types and Annotations" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## IO" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Core Annotations
                 The core annotations are all of the annotations used by the compiler and the web docs program." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Build-in Type Macros" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Result Classes
                 What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
                 so declaring it here would make this file reach @core/list.ct@ — and this file is one every

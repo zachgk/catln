@@ -70,14 +70,14 @@ Prgm
                                         ) =
                                         ( /operator==
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                                { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                                     ( EAppArg
                                                         { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                                { eaaArg = Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                                     ( EAppArg
                                                         { eaaArg = Value /value -> TVArg /probe = ( Value /probe ↦ TVArg /probe ) }
                                                     )
@@ -89,7 +89,10 @@ Prgm
                                                 , []
                                                 )
                                             ,
-                                                ( /operator&&
+                                                ( /Data/charsEqual
+                                                    ( /a=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                    , /b=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                    ) + /operator&&
                                                     ( /r=∀/Data/Primitive/Boolean
                                                     , /l=∀/Data/Primitive/Boolean
                                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
@@ -220,30 +223,34 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
-                A declaration's function-typed argument keeps only its result — @headTo@'s own object type reads
-                @/fn(/w=TopType)=$/B@, with @w -> $_A@ gone — so the parameter's declared type is recovered at the
-                call by reading the declaration back ('TypeCheck.TypeUtils.fnArgInputBound'). Two things stopped
-                that here, and each needs its own row below to see.
-                A parameter left at Top is not fatal on its own; a body that never needs the bound runs fine on
-                one. It bites when the body BUILDS something whose own declaration requires the bound, since a
-                Top argument cannot meet it:
-                  Failed to build arrow tree from /Data/Maybe/Some(/value=TopType)
-                    to /Data/Maybe/Some[/T=∀/Data/Algebra/Eq](/value=$/T)
-                Both examples for each function below are the same call; only the lambda's body differs, and the
-                one that does not need the bound is what says the traversal was never the problem." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
+                  A declaration's function-typed argument keeps only its result — @headTo@'s own object type reads
+                  @/fn(/w=TopType)=$/B@, with @w -> $_A@ gone — so the parameter's declared type is recovered at the
+                  call by reading the declaration back ('TypeCheck.TypeUtils.fnArgInputBound'). Two things stopped
+                  that here, and each needs its own row below to see.
+                  A parameter left at Top is not fatal on its own; a body that never needs the bound runs fine on
+                  one. It bites when the body BUILDS something whose own declaration requires the bound, since a
+                  Top argument cannot meet it:
+                    Failed to build arrow tree from /Data/Maybe/Some(/value=TopType)
+                      to /Data/Maybe/Some[/T=∀/Data/Algebra/Eq](/value=$/T)
+                  Both examples for each function below are the same call; only the lambda's body differs, and the
+                  one that does not need the bound is what says the traversal was never the problem."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Bound through a container's class parameter
-                @$A@ is pinned only by @lst@, and it is pinned through a class PARAMETER rather than by being the
-                argument's whole type. A parameter that points at a variable is not itself one, so meeting
-                @List[$T -> $_A]@ against a @Cons(head= 3, ..)@ bound nothing: the value's own vars are empty
-                until the meet fills them. The meet's RESULT does carry @Cons[/T=Integer]@ — materialized through
-                the data definition's @head -> $T@ tie — and the spelling says which variable that parameter
-                names, so the two are matched up by parameter name.
-                Contrast @useEq@ further down, where the same variable is the whole type of an argument: that
-                binds directly and always worked." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Bound through a container's class parameter
+                  @$A@ is pinned only by @lst@, and it is pinned through a class PARAMETER rather than by being the
+                  argument's whole type. A parameter that points at a variable is not itself one, so meeting
+                  @List[$T -> $_A]@ against a @Cons(head= 3, ..)@ bound nothing: the value's own vars are empty
+                  until the meet fills them. The meet's RESULT does carry @Cons[/T=Integer]@ — materialized through
+                  the data definition's @head -> $T@ tie — and the spelling says which variable that parameter
+                  names, so the two are matched up by parameter name.
+                  Contrast @useEq@ further down, where the same variable is the whole type of an argument: that
+                  binds directly and always worked."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -253,7 +260,7 @@ Prgm
                             { eaaArg = Value /lst -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
                                 )
@@ -265,14 +272,14 @@ Prgm
                                 ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
                                 ( /operator==
                                     ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
                                             )
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                        { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
                                             )
@@ -286,7 +293,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -298,14 +307,14 @@ Prgm
                                 ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
                                 ( /operator==
                                     ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
                                             )
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                        { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
                                             )
@@ -319,7 +328,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -329,7 +340,7 @@ Prgm
                             { eaaArg = Value /lst -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
                                 )
@@ -356,16 +367,20 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "4" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Called from inside a generic definition
-                The same call made where the element type is not yet concrete. In @viaGeneric@'s frame @$_A@
-                reads as its own bound @∀Eq@, and the parameter was refused because it was not FULLY CONCRETE.
-                A bound is resolved knowledge, not a symbolic variable: no value of @$_A@ can fall outside its
-                own class, so @∀Eq@ holds at every epoch and is enough to build a @Some@ that meets the @Maybe@
-                instance. What stays out is a symbolic variable, which may still resolve to anything." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Called from inside a generic definition
+                  The same call made where the element type is not yet concrete. In @viaGeneric@'s frame @$_A@
+                  reads as its own bound @∀Eq@, and the parameter was refused because it was not FULLY CONCRETE.
+                  A bound is resolved knowledge, not a symbolic variable: no value of @$_A@ can fall outside its
+                  own class, so @∀Eq@ holds at every epoch and is enough to build a @Some@ that meets the @Maybe@
+                  instance. What stays out is a symbolic variable, which may still resolve to anything."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -375,7 +390,7 @@ Prgm
                             { eaaArg = Value /lst -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
                                 )
@@ -389,7 +404,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -399,7 +416,7 @@ Prgm
                             { eaaArg = Value /lst -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 4 }
                                 )
@@ -413,7 +430,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -421,30 +440,39 @@ Prgm
                     ( /viaGeneric
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
-                                ( /head=/Data/String
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Nil
-                                )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg
-                                    { eaaArg = Value /head -> /Data/String = "a" }
+                                    { eaaArg = Value /head -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                                    }
                                 )
                                 ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /probe -> /Data/String = "a" }
+                            { eaaArg = Value /probe -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                            }
                         ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## The control: the variable IS the argument's type
-                Nothing points anywhere, so @$A@ binds directly from @x@. This passed before either fix and is
-                the passing half of the pair that pinned the cause on how the variable is bound rather than on
-                the class bound itself." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## The control: the variable IS the argument's type
+                  Nothing points anywhere, so @$A@ binds directly from @x@. This passed before either fix and is
+                  the passing half of the pair that pinned the cause on how the variable is bound rather than on
+                  the class bound itself."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -458,14 +486,14 @@ Prgm
                                 ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
                                 ( /operator==
                                     ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                                        { eaaArg = Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
                                             )
@@ -478,7 +506,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         ]
     }

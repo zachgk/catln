@@ -9,9 +9,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/True.. } ) -> /Data/String = "True"
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/True.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
                         , /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/False.. } ) -> /Data/String = "False"
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/False.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
                         ]
                     }
                 )
@@ -344,17 +346,23 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Booleans
-                [Boolean] is the type of truth values — [True] and [False] — with the standard logical
-                operators. Its equality is defined here alongside the type." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Booleans
+                  [Boolean] is the type of truth values — [True] and [False] — with the standard logical
+                  operators. Its equality is defined here alongside the type."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  on it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  on it."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -365,7 +373,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -377,7 +387,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -389,7 +401,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -401,7 +415,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -413,7 +429,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -425,7 +443,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -437,20 +457,28 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "every(Boolean, isa= [/Data/Enum])" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "every(Boolean, isa= [/Data/Enum])"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Equality
-                [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Equality
+                  [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -462,7 +490,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -474,25 +504,35 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Rendering as text" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Rendering as text"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [Boolean] renders as the text of its constructor." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Boolean] renders as the text of its constructor."
+                }
             )
         , /Catln/#print
             ( EAppArg { eaaArg = Value /p -> /Data/Primitive/True = Value /Data/Primitive/True } )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg { eaaArg = Value /p -> /Data/Primitive/False = Value /Data/Primitive/False } )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         ]
     }

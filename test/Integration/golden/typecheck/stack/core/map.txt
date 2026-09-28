@@ -299,7 +299,7 @@ Prgm
                                     ( Value /l ->
                                         ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Maybe[ /T=$_/MV ] ) = /Data/Map/get( Value /m -> TVArg /b = Value /b )( Value /key -> TVArg /k = Value /k )
                                     )
-                                    ( Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
+                                    ( Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
                                 )
                             )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]
@@ -1465,7 +1465,7 @@ Prgm
                         { ciValue = 2 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 20 }
                     )
@@ -1652,7 +1652,7 @@ Prgm
                         { ciValue = 1 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 99 }
                     )
@@ -2239,7 +2239,7 @@ Prgm
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                    ) = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -2360,7 +2360,7 @@ Prgm
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                    ) = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -2472,7 +2472,7 @@ Prgm
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
-                    )| PredClass /Data/Algebra/Eq = /Data/List/Cons
+                    ) = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 10 }
                     )
@@ -2787,7 +2787,7 @@ Prgm
                         { ciValue = 1 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 11 }
                     )
@@ -2852,7 +2852,7 @@ Prgm
                         { ciValue = 2 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 21 }
                     )

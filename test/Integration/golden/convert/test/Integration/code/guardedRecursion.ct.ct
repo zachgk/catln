@@ -18,7 +18,7 @@ digs(acc, cs= /Data/List/Nil)= Digits(v= acc, k= 0)
 digs(acc, cs= /Data/List/Cons(head, tail)) | head < 10= digs(acc= acc * 10 + head, cs= tail)
 digs(acc, cs= /Data/List/Cons(head, tail)) else = Digits(v= acc, k= 1)
 
-showD(d -> Digits) -> String
+showD(d -> Digits..) -> String
 showD(d= Digits(v, k))= v.toString ++ "/" ++ k.toString
 
 main{io -> IO}= io.println(msg= showD(d= digs(acc= 0, cs= [1, 2, 30]))).exit(val= 0)

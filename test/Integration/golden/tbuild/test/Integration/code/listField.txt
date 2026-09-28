@@ -32,56 +32,32 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Tagged
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
                             ( EAppArg
-                                { eaaArg = Value /tags -> ∀/Data/List[ /T=/Data/String ] }
+                                { eaaArg = Value /tags -> ∀/Data/List[ /T=∀/Data/String ] }
                             )
                         , /Tagged
                             ( EAppArg
-                                { eaaArg = Value /name -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "none" }
-                                        ]
-                                    ) = "none"
+                                { eaaArg = Value /name -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "none"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
                         , /Tagged
                             ( EAppArg
-                                { eaaArg = Value /name -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "one" }
-                                        ]
-                                    ) = "one"
+                                { eaaArg = Value /name -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = Value /tags -> /Data/List/Cons
-                                    ( /head=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "x" }
-                                            ]
-                                        )
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     , /tail=/Data/List/Nil
-                                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
+                                    ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "x" }
-                                                ]
-                                            ) = "x"
+                                        { eaaArg = Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
                                         }
                                     )
                                     ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
@@ -98,56 +74,32 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ConsTagged
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
                             ( EAppArg
-                                { eaaArg = Value /tags -> ∀/Data/List/ConsList[ /T=/Data/String ] }
+                                { eaaArg = Value /tags -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
                             )
                         , /ConsTagged
                             ( EAppArg
-                                { eaaArg = Value /name -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "none" }
-                                        ]
-                                    ) = "none"
+                                { eaaArg = Value /name -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "none"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
                         , /ConsTagged
                             ( EAppArg
-                                { eaaArg = Value /name -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "one" }
-                                        ]
-                                    ) = "one"
+                                { eaaArg = Value /name -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = Value /tags -> /Data/List/Cons
-                                    ( /head=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "x" }
-                                            ]
-                                        )
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "x" }
-                                                ]
-                                            ) = "x"
+                                        { eaaArg = Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
                                         }
                                     )
                                     ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
@@ -180,33 +132,41 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A field of a data type may hold a list of a concrete element.
-                The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
-                they were written as. Nothing in the checked standard library gives a list-typed field to anything
-                but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
-                Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
-                bracket literal builds, so that a failure says which of the two it is rather than only that a list
-                in a field did not work. And written as values declared and never defined, for the reason
-                [/Dated] is in @maybeField.ct@.
-                What is checked here is a field with nothing in it and a field with one thing in it. A field
-                holding TWO OR MORE is @listFieldMultiple.ct@, and one whose elements carry a field of their own,
-                two lists further down, is @listFieldNested.ct@ — both of which this file's cases are the floor
-                of, since a rule that reads a spine's element type from its head alone passes here and fails
-                there." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A field of a data type may hold a list of a concrete element.
+                  The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
+                  they were written as. Nothing in the checked standard library gives a list-typed field to anything
+                  but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+                  Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
+                  bracket literal builds, so that a failure says which of the two it is rather than only that a list
+                  in a field did not work. And written as values declared and never defined, for the reason
+                  [/Dated] is in @maybeField.ct@.
+                  What is checked here is a field with nothing in it and a field with one thing in it. A field
+                  holding TWO OR MORE is @listFieldMultiple.ct@, and one whose elements carry a field of their own,
+                  two lists further down, is @listFieldNested.ct@ — both of which this file's cases are the floor
+                  of, since a rule that reads a spine's element type from its head alone passes here and fails
+                  there."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Shown as the values they are, with no display type standing in for them, as a task is." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Shown as the values they are, with no display type standing in for them, as a task is."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Printed so that the values are evaluated and not only built."
+                }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Tagged
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "none" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "none"
+                        }
                     )
                     ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
                 }
@@ -215,15 +175,20 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Tagged
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "one" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
+                        }
                     )
                     ( EAppArg
                         { eaaArg = Value /tags -> /Data/List/Cons
-                            ( /head=/Data/String
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             , /tail=/Data/List/Nil
-                            )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
+                            ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String = "x" }
+                                { eaaArg = Value /head -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                }
                             )
                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                         }
@@ -234,7 +199,9 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "none" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "none"
+                        }
                     )
                     ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
                 }
@@ -243,24 +210,23 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "one" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
+                        }
                     )
                     ( EAppArg
                         { eaaArg = Value /tags -> /Data/List/Cons
-                            [ /T=UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "x" }
-                                    ]
-                                )
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ]
-                            ( /head=/Data/String
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String = "x" }
+                                { eaaArg = Value /head -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                }
                             )
                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                         }

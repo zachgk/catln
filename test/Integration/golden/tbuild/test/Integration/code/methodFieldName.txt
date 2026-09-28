@@ -59,13 +59,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Lib/foo
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Lib/foo
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /this = ( Value /this ↦ TVArg /this ) }

@@ -5,11 +5,11 @@ Prgm
                 ( "/Lib/exp"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Lib/exp( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ /Lib/exp( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Lib/exp( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /this = Value /this )
+                        [ /Lib/exp( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /this = Value /this )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 10 }
                             )
@@ -52,7 +52,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Lib/power( Value /exp -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ /Lib/power( Value /exp -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
