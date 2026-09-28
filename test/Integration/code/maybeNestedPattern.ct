@@ -7,7 +7,7 @@ import "core"
   its [value] field holds, so it is a [/Data/Maybe] of [Pair]s and inside the declaration.
 data(Pair(a -> Integer, b -> Integer))
 
-sumOf(m -> /Data/Maybe[$T -> Pair]) -> Integer
+sumOf(m -> /Data/Maybe[$T -> Pair..]) -> Integer
 sumOf(m= /Data/Maybe/Nothing)= 0
 sumOf(m= /Data/Maybe/Some(value= Pair(a, b)))= a + b
 

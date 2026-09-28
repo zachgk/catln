@@ -12,7 +12,7 @@ module(Http)
   data(Header(name -> String, value -> String))
     # One header of a request: its name, and what it is set to.
 
-  :IO.httpPost(url -> String, headers -> /Data/List[$T -> Header], body -> String) -> String
+  :IO.httpPost(url -> String, headers -> /Data/List[$T -> Header..], body -> String) -> String
     # [httpPost] sends [body] to [url] as the body of a POST request with [headers] set, and answers
       with the body of the response. The body is sent and read as UTF-8.
       A request that cannot be made — a URL that is not one, a host that does not answer — and a
