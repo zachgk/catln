@@ -27,7 +27,7 @@
 module Semantics.Types where
 
 import           Control.Exception   (evaluate)
-import           Control.Monad       (foldM)
+import           Control.Monad       (foldM, when)
 import           CtConstants
 import           Data.Aeson
 import           Data.Aeson.Types    (contramapToJSONKeyFunction)
@@ -3808,7 +3808,7 @@ satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
       Nothing -> do
         inFlight <- readIORef satInFlightRef
         if key `S.member` inFlight
-          then return False -- in-flight re-entry: a cyclic derivation, no finite witness
+          then noteCycleCut False -- in-flight re-entry: a cyclic derivation, no finite witness
           else do
             atomicModifyIORef' satInFlightRef $ \s -> (S.insert key s, ())
             r <- evaluate (satGoalRaw typeEnv vaenv satUse hyps goal)
@@ -4271,12 +4271,26 @@ type SubPartialKey = (Bool, Bool, [(TypeVarAux, Type)], PartialType, PartialType
 subPartialInFlightRef :: IORef (S.HashSet SubPartialKey)
 subPartialInFlightRef = unsafePerformIO (newIORef S.empty)
 
+-- | How many in-flight re-entries have answered early so far: the cycle cuts of
+-- 'subPartialInFlightRef', 'satInFlightRef', 'innerRejectsInFlightRef' and
+-- 'negPredDecideInFlightRef'. A cut answers for the derivation path it happened on, so an
+-- answer computed while one fired may depend on which goals were in flight above it; the
+-- result memos compare this counter before and after a computation and store only answers
+-- no cut touched.
+{-# NOINLINE cycleCutCountRef #-}
+cycleCutCountRef :: IORef Int
+cycleCutCountRef = unsafePerformIO (newIORef 0)
+
+-- | Record a cycle cut and answer with it.
+noteCycleCut :: a -> IO a
+noteCycleCut r = atomicModifyIORef' cycleCutCountRef (\n -> (n + 1, ())) >> return r
+
 isSubPartialOfWithEnvN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnvN typeEnv vaenv sub super = unsafePerformIO $ do
   let k = (tePrgmEnv typeEnv, teArgModeProjection typeEnv, L.sort (H.toList vaenv), sub, super)
   inflight <- readIORef subPartialInFlightRef
   if S.member k inflight
-    then return False
+    then noteCycleCut False
     else do
       modifyIORef' subPartialInFlightRef (S.insert k)
       r <- evaluate (isSubPartialOfWithEnvNRaw typeEnv vaenv sub super)
@@ -4545,7 +4559,10 @@ constantInType _ _ _ _ = False
 -- linear in the depth.
 --
 -- A re-entrant query is not served its own answer, because none is published until it has
--- been computed: it recomputes, as it did before, and only a finished 'Bool' is ever stored.
+-- been computed: it recomputes, and only a finished 'Bool' is ever stored. And only an answer
+-- no cycle cut touched ('cycleCutCountRef'): a cut answers for the derivation path it happened
+-- on, so an answer computed while one fired may depend on which questions were in flight above
+-- it, and storing it would let the path it was first reached on decide it for every later one.
 -- Traced ('teDebug') queries bypass it so the trace shows every question asked.
 type SubtypeMemoKey = (Int, (Bool, Bool, Bool), [(TypeVarAux, Type)], Type, Type)
 
@@ -4567,11 +4584,14 @@ isSubtypeOfWithEnv typeEnv vaenv t1 t2 = case teQueryCacheKey typeEnv of
     case lookup tok gens >>= H.lookup key of
       Just r -> return r
       Nothing -> do
+        cutsBefore <- readIORef cycleCutCountRef
         r <- evaluate (isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2)
-        atomicModifyIORef' subtypeMemoRef $ \gens2 ->
-          let mTok = fromMaybe H.empty (lookup tok gens2)
-              rest = filter ((/= tok) . fst) gens2
-          in ((tok, H.insert key r mTok) : take 2 rest, ())
+        cutsAfter <- readIORef cycleCutCountRef
+        when (cutsAfter == cutsBefore) $
+          atomicModifyIORef' subtypeMemoRef $ \gens2 ->
+            let mTok = fromMaybe H.empty (lookup tok gens2)
+                rest = filter ((/= tok) . fst) gens2
+            in ((tok, H.insert key r mTok) : take 2 rest, ())
         return r
 
 isSubtypeOfWithEnvRaw :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
@@ -5584,7 +5604,7 @@ decideInFlight :: (PartialType, TypePredicates) -> Maybe Bool -> Maybe Bool
 decideInFlight k decision = unsafePerformIO $ do
   inflight <- readIORef negPredDecideInFlightRef
   if S.member k inflight
-    then return Nothing
+    then noteCycleCut Nothing
     else do
       modifyIORef' negPredDecideInFlightRef (S.insert k)
       r <- evaluate decision
@@ -7455,7 +7475,7 @@ innerRejectsMeet typeEnv vaenv v inner other
       let k = (v, inner, other)
       inflight <- readIORef innerRejectsInFlightRef
       if S.member k inflight
-        then return False
+        then noteCycleCut False
         else do
           modifyIORef' innerRejectsInFlightRef (S.insert k)
           r <- evaluate (isBottomType (intersectTypesEnv typeEnv vaenv inner other))
