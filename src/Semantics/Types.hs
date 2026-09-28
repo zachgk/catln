@@ -3268,11 +3268,18 @@ partialUninhabitedByDecl typeEnv vaenv p@PartialType{ptName, ptArgs}
 -- walker's top-level fallback for a pointer no scope binds is the ambient env, the encoder's
 -- sentinel rule), @Some[/T=~Nil](value=$/T)@ under an env binding @/T@ to an empty type would
 -- read its @value@ as that type and be judged uninhabited — and so a subtype of everything.
+--
+-- The scope is every parameter the partial BINDS ('partialBindsParam'), spelled or not: an
+-- unspelled declared parameter is ⊤ (see 'PartialType'), and a pointer to it reads ⊤, not a
+-- like-named ambient binding. A spread's declared floor ('spreadFloor') writes @head=$/T@ into a
+-- @Cons..@ that spells no @/T@; read through an ambient @/T@ whose value holds @Cons..@ again,
+-- the emptiness test would compact that value, whose absorb check asks about @Cons..@, and the
+-- question would never settle.
 partialHasEmptySlot :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
-partialHasEmptySlot typeEnv vaenv PartialType{ptVars, ptArgs} =
+partialHasEmptySlot typeEnv vaenv p@PartialType{ptVars, ptArgs} =
   any slotEmpty (H.elems ptVars ++ H.elems ptArgs)
   where
-    ownScope = joinVarArgEnv ptVars H.empty
+    ownScope = joinVarArgEnv (H.union ptVars (declaredParamsAtTop typeEnv p)) H.empty
     slotEmpty v = isBottomType (compactType typeEnv vaenv (substituteTVExtScoped typeEnv ownScope vaenv v))
 
 -- | A partial that denotes ∅ for either reason: a field disjoint from its declared bound
@@ -3360,6 +3367,11 @@ partialBindsParam typeEnv p n =
   H.member n (ptVars p)
   || any (H.member n . ptVars) (typeGraphData typeEnv (ptName p))
   || maybe False (H.member n . ptVars) (classDeclPartial typeEnv (ptName p))
+
+-- | The parameters a partial's declaration (data or class) has, each at the ⊤ an unspelled
+-- parameter denotes.
+declaredParamsAtTop :: TypeGraph tg => TypeEnv tg -> PartialType -> H.HashMap TypeVarName Type
+declaredParamsAtTop typeEnv p = PTopType <$ H.unions (map ptVars (typeGraphData typeEnv (ptName p) ++ maybe [] pure (classDeclPartial typeEnv (ptName p))))
 
 -- | The declaration partial of a class name, when the name is a class.
 classDeclPartial :: TypeEnv tg -> TypeName -> Maybe PartialType
@@ -4166,7 +4178,21 @@ looseArgModeRejects sub@PartialType{ptArgs=subArgs, ptArgMode=subMode} super@Par
 comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> TypeVarArgEnv
 comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable merged) (shadowBoundParams typeEnv [a, b] vaenv)
   where
-    merged = H.mapWithKey installValue $ H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)
+    merged = H.union
+      (fmap installVar $ H.unionWith (intersectTypesEnv typeEnv vaenv) (fst (splitVarArgs a)) (fst (splitVarArgs b)))
+      (H.unionWith (intersectTypesEnv typeEnv argEnv) (readArgs a) (readArgs b))
+    splitVarArgs p = (joinVarArgEnv (ptVars p) H.empty, joinVarArgEnv H.empty (ptArgs p))
+    -- An ARGUMENT value sits one level inside its partial, so its references name that partial's
+    -- parameters: a pointer (@head=$/T@) or a parent reference in a class atom (the declared
+    -- @tail=∀ConsList[/T=$^/T]@) reads the partial's own parameter value, and a parameter it
+    -- declares but does not spell is the ⊤ an unspelled parameter denotes. Each side is read in
+    -- its OWN scope before the two meet, and the meet runs with every parameter the partials
+    -- bind shadowed ('shadowBoundParams'), as the arguments themselves are compared. Read as a
+    -- fragment of the object instead ('substituteTVExt'), a like-named ambient binding would
+    -- capture the reference, and the installed binding would carry the ambient value.
+    argEnv = shadowBoundParams typeEnv [a, b] vaenv
+    readArgs p = fmap (substituteTVExtScoped typeEnv (ownScope p) argEnv) (snd (splitVarArgs p))
+    ownScope p = joinVarArgEnv (H.union (fmap installVar (ptVars p)) (declaredParamsAtTop typeEnv p)) H.empty
     -- Rule one at the binder. The bindings installed here are what the partials' ARGUMENTS are
     -- compared under, one level in; a var slot's own value sits at the partial's level, so a parent
     -- reference in it names the scope the partial sits in, which is the incoming env. That scope is
@@ -4176,8 +4202,7 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
     -- there — a nested partial's like-named parameter — and a chain of such bindings can close
     -- on itself: @/MV ↦ $^/V@ beside @/V ↦ $^/MV@ would send 'isSubtypeOfWithEnv' round the
     -- pair forever.
-    installValue (TVVar _) v = detachLevelParentRefs (substituteTVExtScoped typeEnv vaenv vaenv v)
-    installValue _ v         = substituteTVExt typeEnv vaenv v
+    installVar v = detachLevelParentRefs (substituteTVExtScoped typeEnv vaenv vaenv v)
     -- A binding whose VALUE still mentions the name being bound is a recursive equation, not a
     -- value, and installing it changes the operands mid-comparison: the slot value here is derived
     -- from @a@ and @b@ themselves, so an occurrence of the same name INSIDE @a@ then resolves to a
@@ -4202,7 +4227,7 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
     --
     -- A 'TVParent' mention is NOT a self-reference: it names the ENCLOSING partial's variable, a
     -- different variable that happens to share the name (@Pair[/A=$^/A]@ nested in an outer
-    -- @Pair@), and 'installValue' has already replaced it with that variable's value from the
+    -- @Pair@), and 'installVar' has already replaced it with that variable's value from the
     -- incoming env, so the binding is installable.
     installable k@(TVVar n) _ = not $ any mentions $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
       where mentions v = S.member n (typeExtVarRefs v) || S.member n (typeFreeTVIntRefs v)
@@ -4983,14 +5008,37 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
           -- @Cons[/T=~Integer](…) + Cons[/T=⊤−Integer](…) + Cons[/T=⊤](head=⊤−Integer, …)@ through
           -- its first two leafs, though the third does not cover its own piece.
           | otherwise =
-              isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv supVals)
-              && isSubtypeOfWithEnv typeEnv vaenv sv
-                   (unionAllTypesWithEnv typeEnv vaenv [v | (supP, v) <- Prelude.zip sup supVals, pieceCovered supP])
+              isSubtypeOfWithEnv typeEnv env sv (unionAllTypesWithEnv typeEnv env supVals)
+              && isSubtypeOfWithEnv typeEnv env sv
+                   (unionAllTypesWithEnv typeEnv env [v | (supP, v) <- Prelude.zip sup supVals, pieceCovered supP])
           where
-            sv = H.lookupDefault PTopType k (get sub)
-            supVals = [H.lookupDefault PTopType k (get supP) | supP <- sup]
+            -- Each slot value is read in the scope it sits in before it is cut, as every other
+            -- slot comparison here reads it:
+            --
+            --   * a PARAMETER value sits at the scope containing its partial, so its outer
+            --     references are read there ('substituteKeepScoped' under the incoming env, the
+            --     reading 'comparedPartialsEnv' gives a var slot): @Cons[/T=$^/T]@ inside an
+            --     enclosing @/T=X@ partitions the slot as @X@ does. Cut as written, the piece
+            --     @v ∩ $^/T@ would be the bare reference — the meet keeps a variable symbolic and
+            --     records the narrowing only in its env — which reads as all of @X@;
+            --   * an ARG value sits one level inside its partial, so a parent reference in it (the
+            --     declared @tail=∀ConsList[/T=$^/T]@) names THAT partial's parameter and is read
+            --     through its own slots ('partialCoversSat'.'resolveSelfRefs'), and the values are
+            --     compared with every parameter the partials bind shadowed ('shadowBoundParams').
+            --     Read under the incoming env instead, a like-named ambient binding would capture
+            --     the reference.
+            --
+            -- A partial-local ('TVInt') spelling names the partial itself and is kept.
+            slotVal p
+              | isVars    = substituteKeepScoped typeEnv vaenv vaenv raw
+              | otherwise = substituteKeepScoped typeEnv (joinVarArgEnv (ptVars p) H.empty) H.empty raw
+              where raw = H.lookupDefault PTopType k (get p)
+            env | isVars    = vaenv
+                | otherwise = shadowBoundParams typeEnv (sub : sup) vaenv
+            sv = slotVal sub
+            supVals = map slotVal sup
             pieceCovered supP =
-              let piece = intersectTypesEnv typeEnv vaenv sv (H.lookupDefault PTopType k (get supP))
+              let piece = intersectTypesEnv typeEnv env sv (slotVal supP)
               in isBottomType piece
                  || isSubPartialOfWithEnv typeEnv vaenv (set sub (H.insert k piece (get sub))) supP
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType Nothing subPartials []) (show $ UnionType Nothing superPartials []) (show result)
@@ -7966,7 +8014,11 @@ substitutePartialTVExtScoped typeEnv scope vaenv partial@PartialType{ptVars, ptA
     ptVars' = fmap (substituteTVExtScoped typeEnv scope vaenv) ptVars
     -- Its arguments are one level in, where its own bindings are the scope. REPLACED, not unioned:
     -- the layer names exactly one partial, and the hop that reaches further out was already taken.
-    innerScope = joinVarArgEnv ptVars' H.empty
+    -- The layer is every parameter the partial BINDS, an unspelled declared one at the ⊤ it
+    -- denotes ('declaredParamsAtTop'): a @Cons..@ spells no @/T@ yet its @tail=∀ConsList[/T=$^/T]@
+    -- names Cons's own, and an empty layer would read as the walker's entry, where the fragment
+    -- rule resolves the reference against a like-named ambient binding.
+    innerScope = joinVarArgEnv (H.union ptVars' (declaredParamsAtTop typeEnv partial)) H.empty
 
 -- | Substitute vars within a predicate partial, but *only* when the env resolves an external
 -- ('TVExt') var to a concrete (non-Top) type. An external var absent from the env — or bound only
