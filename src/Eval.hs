@@ -546,7 +546,7 @@ renderValTextIn env@Env{evExEnv} v
 -- ends.
 dshowVal :: Env -> Val -> IO (Maybe Val, ResExEnv)
 dshowVal env@Env{evTypeEnv, evExEnv} v
-  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ getValPartialType input) dshowDestType = do
+  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ displayPartial evTypeEnv False input) dshowDestType = do
       called <- callOnVal env input
       case called of
         Just (shown, built) -> do
@@ -586,8 +586,20 @@ callOnVal env@Env{evTbEnv} input = case valCallTree evTbEnv input of
 -- 'MustCall' rather than 'MayHold': the point is to reach the arm, and a source that already
 -- satisfies the destination would otherwise be handed back as it stands.
 valCallTree :: TBEnv -> Val -> Maybe TCallTree
-valCallTree tbEnv input = listToMaybe $ mapMaybe build [getValPartialType input, getValPartialTypeOut input]
+valCallTree tbEnv@TBEnv{tbTypeEnv} input = listToMaybe $ mapMaybe build [displayPartial tbTypeEnv False input, displayPartial tbTypeEnv True input]
   where build src = cresToMaybe $ buildCallTree tbEnv [] S.empty PTopType MustCall (singletonType src) dshowDestType
+
+-- | A value's type for building its display, read only as deep as the value's own shape: the call
+-- the display is asked through (@toString@'s or @dshow@'s argument), the value, and the value's
+-- fields. Deeper than that the value is its constructors' declared forms ('getValDispatchPartial').
+--
+-- Building a display from the whole value asks the tree builder about a type as deep as the value,
+-- and a value holding strings is a @Cons@ per character: printing a build result holding a page of
+-- HTML did not finish. What the display's arms need deeper than the value's fields is read off the
+-- value when the tree runs, by the dispatch that chooses among them ('evalCallTree').
+displayPartial :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat) -> Bool -> Val -> PartialType
+displayPartial typeEnv out = getValDispatchPartial typeEnv out [] displayDepth
+  where displayDepth = 3
 
 -- | Whether a value is data all the way down: no closure, IO handle, or other runtime-only value in
 -- it, none of which is @ToString@ or has a display.
