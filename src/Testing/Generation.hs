@@ -107,8 +107,9 @@ nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
 -- before the algebra sees it. A relatively-spelled leaf is therefore a form the algebra never
 -- receives, and it judges one as OUTSIDE the universe ('relNameAdmits' admits only universe
 -- names), so laws such as @~Point ∩ Point = Point@ would fail on the spelling alone. A node name
--- that resolves to exactly one object path (a name may carry several declarations) is drawn under that object's spelling; relation and class atoms
--- keep the node's own spelling, which the compiler does produce.
+-- that resolves to exactly one object path (a name may carry several declarations) is drawn
+-- under that path's spelling; relation and class atoms keep the node's own spelling, which the
+-- compiler does produce.
 leafSpelling :: Prgm Expr () -> TypeName -> TypeName
 leafSpelling (Prgm objMap _ _) n = case L.nub (relativeNameFilter n (map oaObjPath (flatObjectMap objMap))) of
   [absolute] -> absolute
@@ -253,13 +254,15 @@ relPartial p = TopType H.empty (PredsOne (PredRel p))
 genGroundBound :: Prgm Expr () -> Gen Type
 genGroundBound prgm = HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
 
--- | A ground bound that is a positive LEAF union — no predicate or relation top, no constants.
--- 'genParentVarBoundPair' binds its parent parameter with one of these, and the law binds its
--- decoy with one; see 'genParentVarBoundPair' for what the other shapes still hit.
+-- | A ground, constant-free bound: a positive leaf union or a predicate top (a class or
+-- relation bound, possibly beside leafs). 'genParentVarBoundPair' binds its parent parameter
+-- with one of these, and the law binds its decoy with one; see 'genParentVarBoundPair' for
+-- the one shape left out.
 genGroundLeafBound :: Prgm Expr () -> Gen Type
 genGroundLeafBound prgm = HG.small (HG.filter groundLeaf (genType prgm))
   where
     groundLeaf t@(UnionType Nothing leafs []) = not (H.null leafs) && not (typeHasTypeVars t)
+    groundLeaf t@(UnionType (Just (_, _, [])) _ []) = concreteishInner t && not (typeHasTypeVars t)
     groundLeaf _                               = False
 
 -- | The type parameters an object expression declares, in application order.
@@ -302,11 +305,12 @@ declaredVars _                                   = []
 -- @B[/v=Cons](slot = N[/v=Nil])@ are different types and no operation may equate them. The name
 -- lets the law bind it in the ambient env to a decoy and assert the reference is not captured.
 --
--- The bound and the decoy are ground positive LEAF unions ('genGroundLeafBound'): data leafs,
--- bare names included, no relation or predicate top and no constants. Two wider shapes are not
--- drawn: a CLASS or RELATION bound, whose membership questions must be decided open-world on every
--- route for the law to hold, and a CONSTANT-only bound, where comparing a recursive declaration
--- whose element is a constant (@Cons[/T={c}](head=Cons[/T={c}](..))@) does not terminate.
+-- The bound and the decoy are ground and constant-free ('genGroundLeafBound'): data leafs, bare
+-- names included, and CLASS or RELATION bounds, whose membership questions must be decided
+-- open-world on every route for the law to hold. A decoy that is a predicate top is what reaches
+-- a reader resolving a partial's own parameter through the ambient env. One shape is not drawn:
+-- a CONSTANT-only bound, where comparing a recursive declaration whose element is a constant
+-- (@Cons[/T={c}](head=Cons[/T={c}](..))@) does not terminate.
 --
 -- A BARE top-level 'TVParent' is not generated anywhere: a fragment's top has no enclosing
 -- partial, so a parent reference there is unbound. An unbound parent reference is an erroneous
