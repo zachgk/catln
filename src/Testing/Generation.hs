@@ -21,6 +21,7 @@ import           Data.Graph              (graphFromEdges)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as HS
 import           Data.List               (partition)
+import qualified Data.List               as L
 import           Data.Maybe
 import qualified Data.Set                as S
 import           Eval.Common             (Val)
@@ -106,10 +107,10 @@ nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
 -- before the algebra sees it. A relatively-spelled leaf is therefore a form the algebra never
 -- receives, and it judges one as OUTSIDE the universe ('relNameAdmits' admits only universe
 -- names), so laws such as @~Point ∩ Point = Point@ would fail on the spelling alone. A node name
--- that exactly one object resolves is drawn under that object's spelling; relation and class atoms
+-- that resolves to exactly one object path (a name may carry several declarations) is drawn under that object's spelling; relation and class atoms
 -- keep the node's own spelling, which the compiler does produce.
 leafSpelling :: Prgm Expr () -> TypeName -> TypeName
-leafSpelling (Prgm objMap _ _) n = case relativeNameFilter n (map oaObjPath (flatObjectMap objMap)) of
+leafSpelling (Prgm objMap _ _) n = case L.nub (relativeNameFilter n (map oaObjPath (flatObjectMap objMap))) of
   [absolute] -> absolute
   _          -> n
 
