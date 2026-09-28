@@ -943,8 +943,8 @@ typePatternDepth _ = 0
 --
 -- A tuple with no data declaration (a call, a context) is read whole, as there is no declared form
 -- to stand for it.
-getValDispatchPartial :: (TypeGraph tg) => TypeEnv tg -> Bool -> Int -> Val -> PartialType
-getValDispatchPartial typeEnv out d v@(TupleVal name args)
+getValDispatchPartial :: (TypeGraph tg) => TypeEnv tg -> Bool -> [Type] -> Int -> Val -> PartialType
+getValDispatchPartial typeEnv out pats d v@(TupleVal name args)
   | d > 0 = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   | otherwise = case typeGraphData typeEnv (mkName name) of
       (dp:_) -> dp{ptVars = H.union (boundVars dp) (ptVars dp)}
@@ -952,20 +952,29 @@ getValDispatchPartial typeEnv out d v@(TupleVal name args)
   where
     fromArg (argName, argVal@(ObjArrVal oa _)) | out, Just (_, arrM) <- oaArr oa =
       ((partialToKey (getValPartialType argVal)){pkName=mkName argName}, getMetaType arrM)
-    -- A primitive argument is typed as the constant it is (@{0}@), not as its primitive (@Integer@):
-    -- an arm matching a constant (@isZero(x= 0)@) asks whether the value is that constant, and the
-    -- primitive is not within it. The constant is within an arm's primitive all the same.
-    fromArg (argName, argVal) | isConstantVal argVal = (partialKey (mkName argName), getValType argVal)
-    fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValDispatchPartial typeEnv out (d - 1) argVal)
+    -- A primitive argument is typed as the constant it is (@{0}@) where an arm names a constant in
+    -- its slot (@isZero(x= 0)@): that arm asks whether the value is that constant, and the
+    -- primitive is not within it. Elsewhere it stays its primitive, as reading a value no more
+    -- precisely than the arms ask is what the depth above does too — and a constant inside a record
+    -- is not read as a member of a class bounding that record ('Semantics.Types' does not place
+    -- @Node(key={1}, ..)@ in @Map[K=Ord]@), so a constant nobody asked for loses arms that apply.
+    fromArg (argName, argVal) | isConstantVal argVal, any hasConsts (slotPats argName) = (partialKey (mkName argName), getValType argVal)
+    fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValDispatchPartial typeEnv out (slotPats argName) (d - 1) argVal)
+    -- The arms' types for one argument of this tuple: its slot in each arm leaf of this name.
+    slotPats argName = [ t | UnionType _ leafs _ <- pats, p <- splitUnionType leafs
+                           , relativeNameMatches (ptName p) (mkName name)
+                           , (k, t) <- H.toList (ptArgs p), pkName k == mkName argName ]
+    hasConsts (UnionType _ _ cs) = not (null cs)
+    hasConsts _                  = False
     isConstantVal IntVal{}   = True
     isConstantVal FloatVal{} = True
     isConstantVal CharVal{}  = True
     isConstantVal _          = False
     boundVars dp = H.fromList
-      [ (k, singletonType $ getValDispatchPartial typeEnv out 0 argVal)
+      [ (k, singletonType $ getValDispatchPartial typeEnv out [] 0 argVal)
       | (argName, argVal) <- H.toList args
       , Just (TypeVar (TVVar k) TVInt _) <- [H.lookup (partialKey (mkName argName)) (ptArgs dp)] ]
-getValDispatchPartial _ out _ v = if out then getValPartialTypeOut v else getValPartialType v
+getValDispatchPartial _ out _ _ v = if out then getValPartialTypeOut v else getValPartialType v
 
 --- ResArrowTree
 data MacroData = MacroData {
