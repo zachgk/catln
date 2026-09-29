@@ -1,0 +1,20 @@
+annot(#noCore)
+
+# Overloaded declarations with a higher-order argument, mirroring core's [bindap] arms
+# (stack/core/bind.ct): each arm's parameter slots point at the arm's OWN type parameters
+# ([m -> $M], [fn(v) -> $M]), and the arms name those parameters differently ([$M] vs [$F]).
+# A cover decision must read such a pointer through the arm's own parameter bound — a pattern
+# [bap[/M=∀Mon](fn=$M, ..)] holds only values whose [fn] result is a [Mon] — or a definition
+# whose [fn] result is unconstrained reads as covered by the arm.
+#noCore
+data(Integer)
+
+class(Mon[$T])
+class(Fun[$T])
+class(Box[$T], [Full[$T -> $_T](value -> $T), Empty])
+
+every(Box[$T -> $_T], isa= [/Mon])
+every(Box[$T -> $_T], isa= [/Fun])
+
+bap[$M -> Mon[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+bap[$F -> Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F

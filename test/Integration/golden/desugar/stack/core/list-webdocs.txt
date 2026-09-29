@@ -386,8 +386,8 @@ Prgm
                 ( "/Data/List/mmapSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/mmapSteps
-                            ( Value m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                        [ /Data/List/mmapSteps[ /A : ∀/Data/ToString ]
+                            ( Value m -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []

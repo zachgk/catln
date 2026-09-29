@@ -3562,14 +3562,22 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- exact reading; engine-made member shapes never pass through 'compactType', and a
     -- var-free but predicate-bounded binding is never materialized at all, leaving
     -- field-resolved and param-resolved forms of the SAME value otherwise incomparable —
-    -- the 'verifySchemeActLowers' trap 'compactOwnVarRefs' documents). The sup is the cover
-    -- PATTERN: its pointer slots read as the flexible bounds its author wrote, and resolving
-    -- them would strengthen the escape decisions that the predicate absorption of requirement
-    -- bounds depends on.
+    -- the 'verifySchemeActLowers' trap 'compactOwnVarRefs' documents).
     subSlot t@(TypeVar (TVVar n) TVInt _) = case H.lookup n (ptVars sub) of
       Just b | b /= PTopType, b /= t -> b
       _                              -> t
     subSlot t = t
+    -- A sup-side pointer is the cover PATTERN's own parameter, and the pattern holds a value
+    -- only where that parameter can take it: @bap[/M=∀Mon](fn=$M, m=$M)@ covers a value whose
+    -- @fn@ result is a @Mon@, never one whose result is ⊤. Left symbolic it read as a free
+    -- variable — flexible, covering every value — while 'isSubPartialOfWithEnv' reads it
+    -- through the same bound ('readOwnScope'), so the two provers split: @def ⊆ arm@ was
+    -- refused while @def − arm@ compacted to ∅ (propOwnParamPointerCover). An unbound or
+    -- ⊤-bound parameter stays the flexible variable it is.
+    supSlot t@(TypeVar (TVVar n) TVInt i) = case H.lookup n (ptVars sup) of
+      Just b | b /= PTopType, b /= t -> meetInner typeEnv vaenv b i
+      _                              -> t
+    supSlot t = t
     -- Under projection (matching/dispatch consumers, 'teArgModeProjection'), a Top-valued type
     -- parameter on the value side carries no information — it is equivalent to the parameter
     -- being unspelled. A definition whose element
@@ -3592,7 +3600,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
       | isFlexibleVar env tSub = tSup == PTopType || isFlexibleVar env tSup || teArgModeProjection typeEnv
       | otherwise = not (typesSatDiff typeEnv env satUse hyps tSub tSup)
       where tSub = resolveSelfRefs sub (subSlot tSub0)
-            tSup = resolveSelfRefs sup tSup0
+            tSup = resolveSelfRefs sup (supSlot tSup0)
     -- A parameter value's internal ('TVInt') spelling names a variable of the partial itself —
     -- 'tagParentVarRefs' spells a reference to the enclosing partial 'TVParent' — so it is never
     -- read through the ambient env.

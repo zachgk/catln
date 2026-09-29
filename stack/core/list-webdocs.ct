@@ -65,7 +65,7 @@ module(Data/List)
   /Catln/Doc/dshowCall(s= /Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v)))= /Catln/Doc/Show/Steps(steps= mmapSteps(m= m, fn(v)= fn(v= v), index= 0))
 
   # The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does.
-  mmapSteps(m -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
+  mmapSteps[$A -> /Data/ToString](m -> ConsList[$T -> $_A], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
   mmapSteps(m= Nil, fn(v), index)= Nil
   mmapSteps(m= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= mmapSteps(m= tail, fn(v)= fn(v= v), index= index + 1))
 

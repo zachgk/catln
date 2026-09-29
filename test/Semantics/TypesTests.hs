@@ -41,6 +41,16 @@ findPrgms = do
       return (fileName, mconcat $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
   return (H.insert "empty" mempty $ H.fromList $ fromCRes prgms)
 
+-- | A fixture program read on its own, outside the generator pool of 'findPrgms': a unit
+-- property states its one case against it without every generated law drawing from it too.
+loadUnitPrgm :: String -> IO (Prgm Expr ())
+loadUnitPrgm fileName = do
+  prgm <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [fileName]
+    tprgm <- getTPrgm ctss
+    return $ mconcat $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm)
+  return $ fromCRes prgm
+
 ggPrgm :: Prgms -> GenPrgm
 ggPrgm prgms = HG.choice [genPremade, genPrgm]
   where
@@ -1138,6 +1148,57 @@ propExcludedConstantIrrelevantToData ioPrgms = property $ do
   assertTimed "(EqCO − {-100}) ∪ Cons ≡ (EqCO − {-100}) ∪ Cons|¬EqCO" $
     isEqType typeEnv (unionTypes typeEnv eqcoTopMinus cons) (unionTypes typeEnv eqcoTopMinus consNot)
 
+-- | A cover pattern's pointer slot reads through the pattern's OWN parameter bound, in both
+-- provers: an arm @bap[/M=∀Mon](fn=$M, m=$M)@ holds only values whose @fn@ result is a @Mon@,
+-- so a definition @bap[/M=∀Mon](fn=⊤, m=$M)@ is not inside it. The symbolic cover read the
+-- arm's @fn=$M@ as a flexible (unbound) variable — covering every result — while the
+-- materialized prover read it as @∀Mon@, so @def ⊆ arm@ was refused while @def − arm@ compacted
+-- to ∅ (the leaf's @¬PredRel arm@ refinement was decided "always true"). Surfaced as a
+-- "Definition Outside Declaration" with an empty undeclared part once core's [bindap] carried
+-- a second arm.
+--
+-- The fixture sits outside the generator pool (@test/Semantics/unit/@): the general laws fail
+-- on its overloaded arms in ways this fix does not touch (e.g. @propDifferenceSubset@ keeps a
+-- @/bap[..](fn=/bap[/B=⊤]|¬Mon, ..)@ leaf of @a+b−a@ outside @b@, and meeting the two arms
+-- spells @/m=$/M∩{Fun ∧ Mon}@), pending their own fixes.
+propOwnParamPointerCover :: Property
+propOwnParamPointerCover = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/overloadedHO.ct"
+  let typeEnv = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  arms <- case [omiDecls omi | (n, omi) <- H.toList om, "bap" `isInfixOf` nameStr n] of
+    (ds@(_:_:_):_) -> return $ map (getMetaType . getExprMeta . oaObjExpr) ds
+    _              -> fail "bap does not declare two arms"
+  let monArm = [a | a <- arms, "Mon" `isInfixOf` show a]
+  (monPt, monArmT) <- case monArm of
+    [a@(UnionType Nothing leafs [])] | [pt] <- splitUnionType leafs -> return (pt, a)
+    _ -> fail "no single-leaf Mon arm"
+  -- The definition, spelled as inference completes core's mmap arm definition: only the
+  -- parameter its arguments use (@/M@, its element read as ⊤) and the @fn@ result widened to ⊤.
+  fnKey <- case [k | k <- H.keys (ptArgs monPt), not (S.null (pkArgs k))] of
+    (k:_) -> return k
+    []    -> fail "the Mon arm has no higher-order argument"
+  mKey <- case [k | k <- H.keys (ptVars monPt), "M" `isInfixOf` nameStr (pkName k)] of
+    (k:_) -> return k
+    []    -> fail "the Mon arm has no /M parameter"
+  let monTop = dropOutOfScopeTVExt H.empty <$> H.lookup mKey (ptVars monPt)
+  let defT = singletonType monPt{ptVars = maybe H.empty (H.singleton mKey) monTop, ptArgs = H.insert fnKey PTopType (ptArgs monPt)}
+  let armRel = TopType H.empty (PredsOne (PredRel monPt))
+  let armsT = unionAllTypes typeEnv arms
+  let sub a b = isSubtypeOf typeEnv a b
+  let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
+  annotate $ printf "def = %s" (show defT)
+  annotate $ printf "Mon arm = %s" (show monArmT)
+  forM_ [(False, "open world", typeEnv), (True, "closed world", typeEnv{tePrgmEnv=True})] $ \(_, world, te) -> do
+    let subW a b = isSubtypeOf te a b
+    let diffEmptyW a b = isBottomType $ snd $ differenceTypeWithEnv te H.empty a b
+    assertTimed (printf "def ⊄ Mon arm (%s)" (world :: String)) $ not $ subW defT monArmT
+    assertTimed (printf "def ⊄ ~Mon arm, the arm as a relation (%s)" world) $ not $ subW defT armRel
+    assertTimed (printf "def − Mon arm ≠ ∅ (%s)" world) $ not $ diffEmptyW defT monArmT
+    assertTimed (printf "def ⊆ arms ⇔ def − arms = ∅ (%s)" world) $ subW defT armsT == diffEmptyW defT armsT
+  assertTimed "Mon arm ⊆ Mon arm" $ sub monArmT monArmT
+  assertTimed "Mon arm − Mon arm = ∅" $ diffEmpty monArmT monArmT
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -1173,6 +1234,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propParamIsaEdgeCovariant" (withTests 1 $ propParamIsaEdgeCovariant ioPrgms)
       , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
       , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
+      , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)

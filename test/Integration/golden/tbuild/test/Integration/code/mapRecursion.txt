@@ -761,18 +761,20 @@ Prgm
                                     , []
                                     )
                                 , /RNode
-                                    [ /K=∀/ROrd
-                                    , /V=TopType
-                                    ]
                                     ( /value=TopType
                                     , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/MV
-                                        ]
+                                    , /right=
+                                        ( TopType | PredClass /RTree
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ] && PredClass /RIMap
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ]
+                                        )
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$_/MV
+                                        , /V=TopType
                                         ]
                                     )
                                 , []

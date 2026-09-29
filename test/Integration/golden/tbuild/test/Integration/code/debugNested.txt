@@ -306,7 +306,11 @@ Prgm
                                     , []
                                     )
                                 ,
-                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some( /value=TopType ) )
+                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some( /value=TopType ) + /Data/List/Cons
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    )
                                 , []
                                 )
                             )
@@ -366,6 +370,9 @@ Prgm
                                         ( /fn( /v=TopType )=/Data/Primitive/Integer
                                         , /lst=
                                             ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] )
+                                        ) + /Data/List/Cons
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         )
                                     )
                                 , []

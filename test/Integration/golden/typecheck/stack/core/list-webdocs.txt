@@ -551,7 +551,7 @@ Prgm
                             ) -> /Catln/Doc/Show/Steps
                             ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Catln/Doc/Show/Steps
                             ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/mmapSteps( Value /m -> TVArg /m = Value /m )
-                                ( /fn( Value /v ) ->
+                                ( /fn( Value /v -> ∀/Data/ToString ) ->
                                     ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) = /fn( Value /v -> TVArg /v = Value /v )
                                 )
                                 ( Value /index -> /Data/Primitive/Integer = CInt
@@ -685,8 +685,8 @@ Prgm
                 ( "/Data/List/mmapSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/mmapSteps
-                            ( Value /m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                        [ /Data/List/mmapSteps[ /A : ∀/Data/ToString ]
+                            ( Value /m -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( /fn( Value /v -> $_/A ) -> $_/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []
@@ -750,7 +750,7 @@ Prgm
                                     )
                                 , []
                                 ) = /Data/List/mmapSteps( Value /m -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v -> ∀/Data/ToString )= /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
