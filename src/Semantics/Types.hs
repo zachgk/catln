@@ -3529,13 +3529,14 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- @Has(item=Pair(..))@ is proved inside @Has[/T=Pair](item=$T)@ there and escapes it here,
     -- so a destructuring @Has(item= Pair(a, b))@ is reported outside its declaration
     -- @m -> Opt[$T -> Pair]@ while the undeclared part is ∅.
-    subVarsFull = H.mapWithKey subVarEff subVarsSpelled
+    --
+    -- The reading is 'ptVarEff' itself, shared with the materialized prover rather than copied:
+    -- a field's value is read in the sub's OWN scope, so a parent reference inside it
+    -- (@head=Cons[/T=$^/T](..)@) names the sub's parameter, and the two spellings of one value
+    -- derive the same parameter.
+    subVarsFull = H.mapWithKey (ptVarEff typeEnv vaenv sub) subVarsSpelled
     subVarsSpelled | teArgModeProjection typeEnv = ptVars sub
                    | otherwise                   = H.union (ptVars sub) (PTopType <$ ptVars sup)
-    subVarEff k v = foldr (intersectTypesEnv typeEnv vaenv) v
-      [ av | (ak, av) <- H.toList (ptArgs sub), not (isTypeVar av)
-           , dp <- typeGraphData typeEnv (ptName sub)
-           , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
     -- A sub-side slot holding an internal POINTER (@/head=$T@, an arg or var naming one of
     -- the partial's own parameters, 'TVInt') denotes that parameter's binding: read it
     -- through before deciding (single step, as 'compactOwnVarRefs' materializes). SUB side
@@ -4912,9 +4913,22 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
     subGroupCovered n subs = case H.lookup n supersByName of
       Just sups -> all (isSubPartial sups) subs
       Nothing   -> all (partialUninhabited typeEnv vaenv) subs
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByNegPred
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByDisjuncts || coveredByNegPred
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
+        -- A leaf refined by a DISJUNCTION is the union of the leaf refined by each disjunct:
+        -- @l|¬(q₁ ∧ … ∧ qₙ) = ⋃ᵢ l|¬qᵢ@ (De Morgan, exact), so it is covered when every such leaf
+        -- is. Each is compacted first, which meets a positive relation or class atom into the
+        -- leaf (@Cons|~Cons[/T=A](…)@ is @Cons[/T=A](…)@) and compares it as the plain leaf it is.
+        -- Asked through the negated conjunction whole ('coveredByNegPred'), the complement of
+        -- each atom is materialized into per-slot escapes, and the cover then needs a joint
+        -- partition across several slots that no route finds. Each disjunct is a smaller formula,
+        -- so this does not re-fire on its own subgoals indefinitely.
+        coveredByDisjuncts = case ptPreds sub of
+          PredsNot (PredsAnd qs@(_:_:_)) ->
+            let supT = UnionType Nothing (joinUnionType sup) []
+            in all (\q -> isSubtypeOfWithEnv typeEnv vaenv (compactType typeEnv vaenv (singletonType sub{ptPreds = predsNot q})) supT) qs
+          _ -> False
         -- A leaf with a NEGATED predicate is its bare shape minus the predicate's members:
         -- @l|¬q ⊆ S ⟺ l ⊆ S ∪ (l ∩ q)@, exactly. Compared as written, @l|¬q@ matches no single
         -- super when a difference has already cut @l@ into the pieces outside @q@:
