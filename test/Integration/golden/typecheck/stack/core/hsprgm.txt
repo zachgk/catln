@@ -600,6 +600,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypePredicate/PredConstEq"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicate/PredConstEq( Value /const -> ∀/Catln/Constant ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Expr/AliasExpr"
                 , ObjectMapItem
                     { omiDecls =
@@ -651,6 +661,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -851,8 +862,9 @@ Prgm
                 [ /Catln/TypePredicate/PredExpr( /type=/Catln/PartialType.. )
                 , /Catln/TypePredicate/PredClass( /type=/Catln/PartialType.. )
                 , /Catln/TypePredicate/PredRel( /type=/Catln/PartialType.. )
+                , /Catln/TypePredicate/PredConstEq( /const=∀/Catln/Constant )
                 ]
-            , cgcDoc = Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
+            , cgcDoc = Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`.A [PredConstEq] says the value is that constant. It is how a type says "these values except that one" — a leaf with the constant excluded — and stands in for a refinement written with [PredExpr] until those can be decided."
             }
         , CGClass
             { cgcSealed = True
@@ -1009,6 +1021,11 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A [PredConstEq] says the value is that constant. It is how a type says "these values except that one" — a leaf with the constant excluded — and stands in for a refinement written with [PredExpr] until those can be decided." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
