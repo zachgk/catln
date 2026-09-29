@@ -216,11 +216,21 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
 -- definition at Top. What stays out is a symbolic variable — writing one into a resolving point
 -- oscillates against later epochs — and Top itself, which says nothing.
 -- Declarations only ('omiDecls') — an unannotated definition carries no input contract.
+--
+-- The bound is an UPPER bound, so it is the union over every declaration the call may reach —
+-- each one that ACCEPTS the call (the 'Semantics.objArrGraphQueryRaw' test: the call meets its
+-- object). One accepting declaration whose parameter type cannot be resolved leaves the whole
+-- bound unknown: dropping it instead would claim the parameter never takes that arm's values.
+-- Overloaded arms that disagree on the parameter (@bindap@'s element-typed mmap arm beside its
+-- whole-container ap arm) otherwise bounded the parameter by the resolvable arm alone, and the
+-- lambda's body met that with the other arm's use to ∅. A declaration that does not accept the
+-- call (its result or arguments exclude it) contributes nothing, and as the call narrows fewer
+-- declarations accept, so the bound only narrows across epochs.
 fnArgInputBound :: FEnv -> Type -> ArgName -> ArgName -> Maybe Type
 fnArgInputBound env callAct fnKey inKey = case callAct of
-  UnionType Nothing leafs [] -> case mapMaybe partialBound (splitUnionType leafs) of
-    [] -> Nothing
-    bs -> Just $ unionAllTypes typeEnv bs
+  UnionType Nothing leafs [] -> case concat <$> traverse partialBound (splitUnionType leafs) of
+    Just bs@(_:_) -> Just $ unionAllTypes typeEnv bs
+    _             -> Nothing
   _ -> Nothing
   where
     typeEnv = feReachesTypeEnv env
@@ -228,10 +238,12 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
     -- keys drift between phases in pkVars (see 'typeGetArgLoose'); match name and applied args
     looseKeyMatch a b = a == b || (pkName a == pkName b && pkArgs a == pkArgs b)
     findArg k = find (maybe False (\ob -> looseKeyMatch (inExprSingleton ob) k) . oaObj)
+    -- The bounds of the declarations accepting this leaf; 'Nothing' when one of them has none.
     partialBound partial@PartialType{ptName} =
-      case mapMaybe (oaBound partial) (maybe [] omiDecls (H.lookup ptName tg)) of
-        [] -> Nothing
-        bs -> Just $ unionAllTypes typeEnv bs
+      traverse (oaBound partial) $ filter (accepts partial) $ maybe [] omiDecls (H.lookup ptName tg)
+    -- The call's arguments are still being added here ('AddArg' writes them one by one), so the
+    -- call names only a lower bound on the arguments it will have: read it as admitting the rest.
+    accepts partial oa = not $ isBottomType $ intersectTypes typeEnv (singletonType partial{ptArgMode=PtArgAny}) (getMetaType (getExprMeta (oaObjExpr oa)))
     oaBound partial oa = do
       let objArgs = exprAppliedArgs (oaObjExpr oa)
       fnOa <- findArg fnKey objArgs
