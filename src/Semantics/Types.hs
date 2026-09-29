@@ -4435,9 +4435,19 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     -- (@¬~Cons[T=Eq](…)@ ⟺ @¬EqC@ on @Cons@-shaped values — the difference route's
     -- symbolic-neg attach vs the meet route's class attach — while neither implies the
     -- other universally). Decide coverage of the sub leaf (with its own predicates) by the
-    -- super's predicate universe symbolically; conservative 'False' stays the fallback.
+    -- super's predicate universe symbolically.
+    --
+    -- When the engine cannot encode the LEAF (a constant in a slot: @Cons[/T=3]@ against
+    -- @⊤|~List@), the question is still an ordinary subtype question over predicates that
+    -- expand into leafs, so it goes to the whole subtype relation, which expands them within
+    -- the leaf's name. When the engine cannot encode the PREDICATES (a 'PredExpr'), expansion
+    -- has nothing more to offer: the atom stays attached to every leaf it expands to and the
+    -- question comes back here. It stays unproven ('False').
     leafCtxPredsCover = superPreds /= PredsNone
-      && fromMaybe False (typeCoveredSymbolic typeEnv vaenv' ProveEmpty (singletonType sub) (UnionType (Just (superPreds, H.empty, [])) H.empty []))
+      && case typeCoveredSymbolic typeEnv vaenv' ProveEmpty (singletonType sub) superTop of
+           Just covered -> covered
+           Nothing      -> isJust (predsSatDNF True superPreds) && isSubtypeOfWithEnv typeEnv vaenv' (singletonType sub) superTop
+    superTop = UnionType (Just (superPreds, H.empty, [])) H.empty []
 
     -- @hasAllPreds needed given@: the sub's formula @given@ implies the super's @needed@.
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
