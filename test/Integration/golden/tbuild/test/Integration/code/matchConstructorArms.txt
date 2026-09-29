@@ -243,16 +243,18 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [match] or [case] arm written as a constructor selects only the values of that constructor.
-                This is a regression test for a gap that made every such arm answer for every value: the last
-                arm of a [match] over a [Comparison] was taken whatever the comparison was.
-                The branch preprocessors (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrite each arm into an arm
-                of a generated function, and the [match] and [case] ones put the arm's pattern there as the ALIAS
-                of a hole. @TypeCheck/Encode@ bounds an alias's base by the argument variable the alias names
-                rather than by the pattern, so a constructor arm constrained nothing and the arms shared one ⊤
-                domain. The [if] preprocessor had the same gap and was fixed by putting the pattern in the
-                argument position (see @ifNonAgreeingBranches.ct@); [match] and [case] now do the same.
-                Every arm is run below, since a test that only reaches one arm cannot tell them apart." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [match] or [case] arm written as a constructor selects only the values of that constructor.
+                  This is a regression test for a gap that made every such arm answer for every value: the last
+                  arm of a [match] over a [Comparison] was taken whatever the comparison was.
+                  The branch preprocessors (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrite each arm into an arm
+                  of a generated function, and the [match] and [case] ones put the arm's pattern there as the ALIAS
+                  of a hole. @TypeCheck/Encode@ bounds an alias's base by the argument variable the alias names
+                  rather than by the pattern, so a constructor arm constrained nothing and the arms shared one ⊤
+                  domain. The [if] preprocessor had the same gap and was fixed by putting the pattern in the
+                  argument position (see @ifNonAgreeingBranches.ct@); [match] and [case] now do the same.
+                  Every arm is run below, since a test that only reaches one arm cannot tell them apart."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -263,7 +265,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -274,7 +278,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -285,11 +291,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The scrutinee may be computed, and the enclosing definition may be generic." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The scrutinee may be computed, and the enclosing definition may be generic."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -305,7 +315,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -321,7 +333,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -337,11 +351,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -352,7 +370,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -363,7 +383,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "2" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -374,7 +396,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         ]
     }
