@@ -78,6 +78,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Set/SetEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Set/SetEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Set/isSubsetOf"
                 , ObjectMapItem
                     { omiDecls =
@@ -107,6 +116,33 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/removeAll( Value s )( Value items ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value lst= Value items )
                             ( fn( Value acc )( Value v )= remove( Value s= Value acc )( Value item= Value v ) )( Value init= Value s )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( Value a= /Data/Set/MkSet[ /K : ∀/Data/Algebra/Ord ]( Value map@Value am ) )
+                            ( Value b= /Data/Set/MkSet( Value map@Value bm ) )( Value /this -> /Data/Set/SetEqv.. ) -> ∀/Data/Primitive/Boolean = /Data/Set/setEqual
+                            ( Value a= /Data/Set/MkSet( Value map= Value am ) )
+                            ( Value b= /Data/Set/MkSet( Value map= Value bm ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq
+                            ( Value /this= /Data/Set/MkSet[ /K : ∀/Data/Algebra/Ord ]( Value map ) ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Set/SetEqv
                         ]
                     }
                 )
@@ -274,6 +310,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Set/MapSet
@@ -284,6 +323,13 @@ Prgm
                     ]
                 ]
             , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Set/MapSet ]
+            , cgcExtends =
+                [ /Data/Set/SetEqv[ /T=∀/Data/Set/MapSet ] ]
+            , cgcDoc = Nothing
             }
         , CGClass
             { cgcSealed = False
@@ -895,6 +941,39 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= rel
+                ( Value a= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                    ( Value item= CInt
+                        { ciValue = 2 }
+                    )
+                )
+                ( Value b= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt
+                            { ciValue = 2 }
+                        )
+                    )
+                    ( Value item= CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /this= eq
+                    ( Value /this= add( Value s= Value empty )
+                        ( Value item= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
             )
         ]
     }

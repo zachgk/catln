@@ -161,7 +161,14 @@ module(Data/Set)
       in [b] ([isSubsetOf]). Since the sizes are equal, one-directional containment is enough — [b]
       can hold no extra item [a] lacks.
   setEqual(a, b)= (size(s= a) == size(s= b)) && isSubsetOf(a= a, b= b)
+
+  data(SetEqv, isa= [/Data/Algebra/Eqv[$T -> MapSet]])
+    # [SetEqv] is the equivalence [eq] names for a [MapSet]: [setEqual], order-independent.
 module(Data/Algebra)
+  :/Data/Set/SetEqv.rel(a= /Data/Set/MkSet[$K -> /Data/Algebra/Ord](map@am), b= /Data/Set/MkSet(map@bm))= /Data/Set/setEqual(a= /Data/Set/MkSet(map= am), b= /Data/Set/MkSet(map= bm))
+
+  :/Data/Set/MkSet[$K -> /Data/Algebra/Ord](map).eq= /Data/Set/SetEqv
+
   :/Data/Set/MkSet[$K -> /Data/Algebra/Ord](map@m).equal(other)= /Data/Set/setEqual(a= /Data/Set/MkSet(map= m), b= other)
 module(Data/Set)
   # Two sets with the same items are equal even when built in different orders; sets differing in an
@@ -172,3 +179,5 @@ module(Data/Set)
     >>> False
   > (add(s= empty, item= 1) == add(s= empty, item= 2))
     >>> False
+  > add(s= empty, item= 1).eq.rel(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 1))
+    >>> True

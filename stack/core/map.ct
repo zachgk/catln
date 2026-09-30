@@ -176,7 +176,15 @@ module(Data/Map)
       [foldEntries] traversal, whose step looks each key up in [b] ([get]) and checks the result
       equals [Some(value)] through the [Maybe] [Eq] instance, [and]ing that into the accumulator.
   containedIn(a, b)= foldEntries(m= a, fn(acc, k, v)= acc && (get(m= b, key= k) == /Data/Maybe/Some(value= v)), init= /Data/Primitive/True)
+
+  data(MapEqv, isa= [/Data/Algebra/Eqv[$T -> BinTree]])
+    # [MapEqv] is the equivalence [eq] names for a [BinTree]: [mapEqual], order-independent.
 module(Data/Algebra)
+  :/Data/Map/MapEqv.rel(a -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq], b -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= a, b= b)
+
+  :/Data/Map/Leaf.eq= /Data/Map/MapEqv
+  :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).eq= /Data/Map/MapEqv
+
   :/Data/Map/Leaf.equal(other)= /Data/Map/mapEqual(a= /Data/Map/Leaf, b= other)
   :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).equal(other)= /Data/Map/mapEqual(a= /Data/Map/Node(left= left, key= key, value= value, right= right), b= other)
 module(Data/Map)
@@ -184,6 +192,8 @@ module(Data/Map)
   #   shapes); maps differing in a value are not.
   > (insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20) == insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10))
     >>> True
+  > Leaf.eq.rel(a= Leaf, b= insert(m= Leaf, key= 1, value= 10))
+    >>> False
   > (insert(m= Leaf, key= 1, value= 10) == insert(m= Leaf, key= 1, value= 99))
     >>> False
 

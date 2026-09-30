@@ -518,6 +518,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/ConsEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/List/ConsEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/List/foldr"
                 , ObjectMapItem
                     { omiDecls =
@@ -769,6 +778,111 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
+                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/rel
+                            ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /b -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                    ( /head=∀/Data/Algebra/Eq
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                    ) = /Data/List/Cons
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /head@Value /ah -> ∀/Data/Algebra/Eq } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head@Value /bh } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( /operator&&
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                        ( /operator==
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) }
+                                            ) ↦ ∀/Data/Primitive/Boolean
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                                        ( /Data/Algebra/equal
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                            ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    }
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/pureConsInt"
                 , ObjectMapItem
                     { omiDecls =
@@ -836,6 +950,44 @@ Prgm
                                 )
                                 ( EAppArg { eaaArg = Value /init -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/ConsOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/List/ConsOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/List/ConsEqv
+                        , /Data/Algebra/eq
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                    ( /head=∀/Data/Algebra/Eq
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                    ) = /Data/List/Cons
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Eq } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] }
+                                    )
+                                }
+                            ) -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/List/ConsEqv
                         ]
                     }
                 )
@@ -1334,6 +1486,111 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/compare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compare
+                            ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] }
+                            ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
+                        , /Data/Algebra/compare
+                            ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] }
+                            ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                        , /Data/Algebra/compare
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /b -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] }
+                            ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
+                        , /Data/Algebra/compare
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    ) = /Data/List/Cons
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Ord
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /head@Value /ah -> ∀/Data/Algebra/Ord } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head@Value /bh } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] }
+                            ) -> ∀/Data/Algebra/Comparison =
+                            ( /Data/List/consThen
+                                ( EAppArg
+                                    { eaaArg = Value /first -> ∀/Data/Algebra/Comparison =
+                                        ( /Data/Algebra/compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) }
+                                            ) ↦ ∀/Data/Algebra/Comparison
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /second -> ∀/Data/Algebra/Comparison =
+                                        ( /Data/Algebra/compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                            ) ↦ ∀/Data/Algebra/Comparison
+                                        )
+                                    }
+                                ) ↦ ∀/Data/Algebra/Comparison
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/all"
                 , ObjectMapItem
                     { omiDecls =
@@ -1612,6 +1869,35 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] = Value /Data/List/ConsOrdering
+                        , /Data/Algebra/ord
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    ) = /Data/List/Cons
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Ord
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Ord } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
+                                    )
+                                }
+                            ) -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] = Value /Data/List/ConsOrdering
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/consThen"
                 , ObjectMapItem
                     { omiDecls =
@@ -1757,6 +2043,12 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/List/ConsList
@@ -1766,10 +2058,24 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/List/ConsList ]
+            , cgcExtends =
+                [ /Data/List/ConsEqv[ /T=∀/Data/List/ConsList ] ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
             , cgcPartial = /Data/List/ConsList
             , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ]
             , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/List/ConsList ]
+            , cgcExtends =
+                [ /Data/List/ConsOrdering[ /T=∀/Data/List/ConsList ] ]
+            , cgcDoc = Nothing
             }
         , CGClass
             { cgcSealed = False
@@ -3686,7 +3992,9 @@ Prgm
                   constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
                   idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
                   [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
-                  the head comparison on the elements typechecks."
+                  the head comparison on the elements typechecks.
+                  As for every [Eq] type, the comparison is also an equivalence relation that [eq] names
+                  ([ConsEqv]), and [equal] repeats it for the reason [/Data/Maybe]'s does."
                 }
             )
         , /Catln/#md
@@ -3868,6 +4176,96 @@ Prgm
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
                 }
             )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                    ( /Data/Algebra/rel
+                        ( EAppArg
+                            { eaaArg = Value /a -> /Data/List/Cons
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                        )
+                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /b -> /Data/List/Cons
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                        )
+                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] =
+                                ( /Data/Algebra/eq
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                ( /head=/Data/Primitive/Integer
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/Data/List/Nil
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                                    )
+                                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                }
+                                            )
+                                        }
+                                    ) ↦ /Data/List/ConsEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                )
+                            }
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
@@ -3875,7 +4273,9 @@ Prgm
                   Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
                   constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
                   the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
-                  every [Ord] is an [Eq], which the [Eq] membership already supplies)."
+                  every [Ord] is an [Eq], which the [Eq] membership already supplies).
+                  As for every [Ord] type, the ordering is also an [Ordering] that [ord] names ([ConsOrdering]),
+                  and [compareTo] repeats it for the reason [equal] does."
                 }
             )
         , /Catln/#md
@@ -4035,6 +4435,76 @@ Prgm
                                                     )
                                                     ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                                 }
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/Algebra/Comparison
+                                )
+                            }
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                    ( /Data/Algebra/isLess
+                        ( EAppArg
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /Data/Algebra/compare
+                                    ( EAppArg
+                                        { eaaArg = Value /a -> /Data/List/Cons
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /b -> /Data/List/Cons
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                ( /head=/Data/Primitive/Integer
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/Data/List/Nil
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                                    )
+                                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] =
+                                            ( /Data/Algebra/ord
+                                                ( EAppArg
+                                                    { eaaArg = Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                        ( /head=/Data/Primitive/Integer
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                ) ↦ /Data/List/ConsOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ]
                                             )
                                         }
                                     ) ↦ ∀/Data/Algebra/Comparison

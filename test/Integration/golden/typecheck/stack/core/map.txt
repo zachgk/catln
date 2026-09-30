@@ -165,6 +165,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Map/MapEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Map/MapEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/remove./Data/Map/$b74ebc"
                 , ObjectMapItem
                     { omiDecls = []
@@ -404,6 +413,28 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( Value /a -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )
+                            ( Value /b -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )
+                            ( Value /this -> /Data/Map/MapEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Map/graft"
                 , ObjectMapItem
                     { omiDecls =
@@ -520,6 +551,44 @@ Prgm
                                     ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
                                 )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/Map/Leaf.. ) -> /Data/Map/MapEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Map/MapEqv
+                        , /Data/Algebra/eq
+                            ( Value /this -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                                ( /value=∀/Data/Algebra/Eq
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                ) = /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]
+                                ( Value /left -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                )( Value /key -> ∀/Data/Algebra/Ord )( Value /value -> ∀/Data/Algebra/Eq )
+                                ( Value /right -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                )
+                            ) -> /Data/Map/MapEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Map/MapEqv
                         ]
                     }
                 )
@@ -986,6 +1055,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Map/BinTree
@@ -996,6 +1068,13 @@ Prgm
                     ]
                 ]
             , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Map/BinTree ]
+            , cgcExtends =
+                [ /Data/Map/MapEqv[ /T=∀/Data/Map/BinTree ] ]
+            , cgcDoc = Nothing
             }
         , CGClass
             { cgcSealed = False
@@ -2386,6 +2465,30 @@ Prgm
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/rel( Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                ( Value /b ->
+                    ( TopType | PredClass /Data/Map/BinTree
+                        [ /K=/Data/Primitive/Integer
+                        , /V=/Data/Primitive/Integer
+                        ] && PredClass /Data/Map
+                        [ /K=/Data/Primitive/Integer
+                        , /V=/Data/Primitive/Integer
+                        ]
+                    ) = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                    ( Value /key -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 10 }
+                    )
+                )
+                ( Value /this -> /Data/Map/MapEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = /Data/Algebra/eq( Value /this -> /Data/Map/Leaf = Value /Data/Map/Leaf ) )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "False" }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==

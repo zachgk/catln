@@ -117,6 +117,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Map/MapEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Map/MapEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/remove./Data/Map/$b74ebc"
                 , ObjectMapItem
                     { omiDecls = []
@@ -211,6 +220,27 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( Value a -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )
+                            ( Value b -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )( Value /this -> /Data/Map/MapEqv.. ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value a= Value a )( Value b= Value b )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Map/graft"
                 , ObjectMapItem
                     { omiDecls =
@@ -266,6 +296,19 @@ Prgm
                                     ( fn( Value acc )( Value k )( Value v )= fn( Value acc= Value acc )( Value k= Value k )( Value v= Value v ) )( Value init= Value init )
                                 )( Value k= Value key )( Value v= Value value )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/Map/Leaf.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Map/MapEqv
+                        , /Data/Algebra/eq
+                            ( Value /this= /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]( Value left )( Value key )( Value value )( Value right ) ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Map/MapEqv
                         ]
                     }
                 )
@@ -448,6 +491,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Map/BinTree
@@ -458,6 +504,13 @@ Prgm
                     ]
                 ]
             , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Map/BinTree ]
+            , cgcExtends =
+                [ /Data/Map/MapEqv[ /T=∀/Data/Map/BinTree ] ]
+            , cgcDoc = Nothing
             }
         , CGClass
             { cgcSealed = False
@@ -1160,6 +1213,21 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= rel( Value a= Value Leaf )
+                ( Value b= insert( Value m= Value Leaf )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
+                )
+                ( Value /this= eq( Value /this= Value Leaf ) )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
             )
         , /Catln/#print
             ( Value /p= /operator==

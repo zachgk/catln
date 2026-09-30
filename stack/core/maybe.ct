@@ -30,29 +30,65 @@ module(Data/Maybe)
     >>> True
 
 # # Maybe Eq membership
-  Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-  dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
-  are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list].
+  Makes a [Maybe] of any [Eq] element a proper member of [Eq]. Two [Maybe]s are equal when both
+  are [Nothing], or both are [Some] of equal values. As for every [Eq] type, the comparison is an
+  equivalence relation that [eq] names ([MaybeEqv]).
+  TODO [equal] repeats the comparison rather than asking [eq] for it, as [String] does. Written as
+  @:/Data/Maybe/Some(value).equal(other)= this.eq.rel(a= this, b= other)@, the untyped [other] of
+  an arm on this page is not narrowed by the declaration on @core/eq.ct@ and reads as ⊤, which
+  falls outside the declaration; the constructor pairs below give it a type.
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+
+  data(MaybeEqv, isa= [/Data/Algebra/Eqv[$T -> /Data/Maybe]])
+    # [MaybeEqv] compares two [Maybe]s of [Eq] elements arm by arm.
 module(Data/Algebra)
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= True
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value))= False
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= False
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@av), b= /Data/Maybe/Some(value@bv))= av == bv
+
+  :/Data/Maybe/Nothing.eq= /Data/MaybeEqv
+  :/Data/Maybe/Some[$T -> /Data/Algebra/Eq](value).eq= /Data/MaybeEqv
+
   :/Data/Maybe/Nothing.equal(other= /Data/Maybe/Nothing)= True
   :/Data/Maybe/Nothing.equal(other= /Data/Maybe/Some(value))= False
   :/Data/Maybe/Some(value).equal(other= /Data/Maybe/Nothing)= False
   :/Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@av).equal(other= /Data/Maybe/Some(value@bv))= av == bv
+module(Data/Maybe)
+  > /Data/Maybe/Some(value= 1).eq.rel(a= /Data/Maybe/Some(value= 1), b= /Data/Maybe/Some(value= 1))
+    >>> True
+  > /Data/Maybe/Nothing.eq.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 1))
+    >>> False
 
 # # Maybe Ord membership
-  Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-  constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
-  [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
-  [Eq], which the [Eq] membership already supplies).
+  Makes a [Maybe] of any [Ord] element a proper member of [Ord]. A [Maybe] of [Ord] elements is
+  ordered with [Nothing] before any [Some], and two [Some]s ordered by their wrapped values. As for
+  every [Ord] type, the ordering is an [Ordering] that [ord] names ([MaybeOrdering]). [compareTo]
+  repeats it for the reason [equal] does above.
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
+
+  data(MaybeOrdering, isa= [/Data/Algebra/Ordering[$T -> /Data/Maybe]])
+    # [MaybeOrdering] orders two [Maybe]s of [Ord] elements arm by arm.
 module(Data/Algebra)
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= /Data/Algebra/Equal
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value))= /Data/Algebra/LessThan
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= /Data/Algebra/GreaterThan
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@av), b= /Data/Maybe/Some(value@bv))= av.compareTo(other= bv)
+
+  :/Data/Maybe/Nothing.ord= /Data/MaybeOrdering
+  :/Data/Maybe/Some[$T -> /Data/Algebra/Ord](value).ord= /Data/MaybeOrdering
+
   :/Data/Maybe/Nothing.compareTo(other= /Data/Maybe/Nothing)= /Data/Algebra/Equal
   :/Data/Maybe/Nothing.compareTo(other= /Data/Maybe/Some(value))= /Data/Algebra/LessThan
   :/Data/Maybe/Some(value).compareTo(other= /Data/Maybe/Nothing)= /Data/Algebra/GreaterThan
   :/Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@av).compareTo(other= /Data/Maybe/Some(value@bv))= av.compareTo(other= bv)
+module(Data/Maybe)
+  > /Data/Maybe/Nothing.ord.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 2)).isLess
+    >>> True
+  > /Data/Maybe/Some(value= 3).ord.compare(a= /Data/Maybe/Some(value= 3), b= /Data/Maybe/Some(value= 2)).isGreater
+    >>> True
 
 # # Maybe Functor instance
   Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and

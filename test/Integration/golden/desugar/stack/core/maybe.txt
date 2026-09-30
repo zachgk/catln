@@ -23,6 +23,24 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/MaybeOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/MaybeOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/MaybeEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/MaybeEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Maybe/Some"
                 , ObjectMapItem
                     { omiDecls =
@@ -30,6 +48,37 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/rel( Value a= Value /Data/Maybe/Nothing )
+                            ( Value b= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/rel
+                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b= Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/rel
+                            ( Value a= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value@Value av ) )
+                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/MaybeEqv
+                        , /Data/Algebra/eq
+                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/MaybeEqv
+                        ]
                     }
                 )
             ,
@@ -64,6 +113,24 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/compare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compare( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
+                        , /Data/Algebra/compare( Value a= Value /Data/Maybe/Nothing )
+                            ( Value b= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
+                        , /Data/Algebra/compare
+                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b= Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
+                        , /Data/Algebra/compare
+                            ( Value a= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value@Value av ) )
+                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = compareTo( Value other= Value bv )( Value /this= Value av )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Maybe/pureSomeInt"
                 , ObjectMapItem
                     { omiDecls =
@@ -89,6 +156,19 @@ Prgm
                         , /Data/Algebra/equal
                             ( Value other= /Data/Maybe/Some( Value value@Value bv ) )
                             ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value@Value av ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value /Data/MaybeOrdering
+                        , /Data/Algebra/ord
+                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value /Data/MaybeOrdering
                         ]
                     }
                 )
@@ -121,6 +201,12 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Maybe
@@ -130,10 +216,24 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Maybe ]
+            , cgcExtends =
+                [ /Data/MaybeEqv[ /T=∀/Data/Maybe ] ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
             , cgcPartial = /Data/Maybe
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
             , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/Maybe ]
+            , cgcExtends =
+                [ /Data/MaybeOrdering[ /T=∀/Data/Maybe ] ]
+            , cgcDoc = Nothing
             }
         , CGClass
             { cgcSealed = False
@@ -276,17 +376,95 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "# Maybe Eq membership
-                Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-                dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
-                are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list]." }
+                Makes a [Maybe] of any [Eq] element a proper member of [Eq]. Two [Maybe]s are equal when both
+                are [Nothing], or both are [Some] of equal values. As for every [Eq] type, the comparison is an
+                equivalence relation that [eq] names ([MaybeEqv]).
+                TODO [equal] repeats the comparison rather than asking [eq] for it, as [String] does. Written as
+                @:/Data/Maybe/Some(value).equal(other)= this.eq.rel(a= this, b= other)@, the untyped [other] of
+                an arm on this page is not narrowed by the declaration on @core/eq.ct@ and reads as ⊤, which
+                falls outside the declaration; the constructor pairs below give it a type." }
+            )
+        , /Catln/#print
+            ( Value /p= rel
+                ( Value a= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value b= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /this= eq
+                    ( Value /this= /Data/Maybe/Some
+                        ( Value value= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= rel( Value a= Value /Data/Maybe/Nothing )
+                ( Value b= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /this= eq( Value /this= Value /Data/Maybe/Nothing ) )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
             )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "# Maybe Ord membership
-                Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-                constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
-                [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
-                [Eq], which the [Eq] membership already supplies)." }
+                Makes a [Maybe] of any [Ord] element a proper member of [Ord]. A [Maybe] of [Ord] elements is
+                ordered with [Nothing] before any [Some], and two [Some]s ordered by their wrapped values. As for
+                every [Ord] type, the ordering is an [Ordering] that [ord] names ([MaybeOrdering]). [compareTo]
+                repeats it for the reason [equal] does above." }
+            )
+        , /Catln/#print
+            ( Value /p= isLess
+                ( Value /this= compare( Value a= Value /Data/Maybe/Nothing )
+                    ( Value b= /Data/Maybe/Some
+                        ( Value value= CInt
+                            { ciValue = 2 }
+                        )
+                    )
+                    ( Value /this= ord( Value /this= Value /Data/Maybe/Nothing ) )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isGreater
+                ( Value /this= compare
+                    ( Value a= /Data/Maybe/Some
+                        ( Value value= CInt
+                            { ciValue = 3 }
+                        )
+                    )
+                    ( Value b= /Data/Maybe/Some
+                        ( Value value= CInt
+                            { ciValue = 2 }
+                        )
+                    )
+                    ( Value /this= ord
+                        ( Value /this= /Data/Maybe/Some
+                            ( Value value= CInt
+                                { ciValue = 3 }
+                            )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
             )
         , /Catln/#md
             ( Value /text= CStr
