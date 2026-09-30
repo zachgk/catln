@@ -3114,7 +3114,7 @@ freeTVExtToTopDeep vaenv = go
 
 -- | All partial-local ('TVInt') references appearing in a type at any depth. Over-collects
 -- through nested scopes (a name a nested partial itself binds is still counted), the safe
--- direction for its consumer ('subtractElems'\'s identical-form skip only becomes rarer).
+-- direction for its consumer ('partialEscapes'\'s identical-form skip only becomes rarer).
 typeTVIntRefs :: Type -> S.HashSet TypeVarAux
 typeTVIntRefs (TypeVar v TVInt _) = S.singleton v
 typeTVIntRefs (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (splitUnionType pos)
@@ -3468,6 +3468,24 @@ ptVarEff typeEnv vaenv p k v = foldr (intersectTypesEnv typeEnv vaenv) v
   | (ak, av) <- H.toList (ptArgs p), not (isTypeVar av)
   , dp <- typeGraphData typeEnv (ptName p)
   , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
+
+-- | Whether a type parameter of a name is tied to SEVERAL of its values' positions. A type is the
+-- set of its possible values, and a parameter such a declaration ties to several fields
+-- (@Cons[T](head -> $T, tail -> ConsList[$T])@) constrains every one of them: @Cons[/T=X]@ is the
+-- lists whose EVERY element is in @X@. It is not a coordinate each value has one point of, so
+-- @Cons[/T=⊤] − Cons[/T=K]@ is the lists with SOME element outside @K@, not @Cons[/T=⊤−K]@ (the
+-- lists with every element outside it), and narrowing one of its fields narrows only that field.
+-- A parameter tied to a single field (@Some(value -> $T)@) is that field's value, a coordinate.
+paramSharedByPositions :: (TypeGraph tg) => TypeEnv tg -> TypeName -> TypeVarName -> Bool
+paramSharedByPositions typeEnv name n = S.size (paramPositions typeEnv name n) > 1
+
+-- | The fields a name's declarations tie a type parameter to: a field declared as the parameter
+-- itself (@head -> $T@) or as a type referencing it (@tail -> ConsList[$T]@).
+paramPositions :: (TypeGraph tg) => TypeEnv tg -> TypeName -> TypeVarName -> S.HashSet ArgName
+paramPositions typeEnv name n = S.fromList [k | d <- typeGraphData typeEnv name, (k, v) <- H.toList (ptArgs d), refs v]
+  where
+    refs (TypeVar (TVVar n') TVInt _) = n' == n
+    refs v                            = S.member n (typeOuterVarRefs v)
 
 -- | The partial re-spelled with its effective parameters ('ptVarEff'). This is the spelling a
 -- DECLARED FIELD BOUND must be instantiated in: the bound is a template over the partial's own
@@ -3940,9 +3958,11 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
     -- on exactly the leaf the compaction deletes: @Some[/T=$_b∩{X}](value=$/T)@ with @$_b@ bound
     -- to a type disjoint from @X@ has an empty element and compacts to ∅, so a union containing
     -- it must read as covered wherever its other leafs are.
-    checkCandLeaf r m = not (partialUninhabited typeEnv vaenv mR)
-                     && all (satAdmits typeEnv vaenv satUse hyps' mR) (sgPos r)
-                     && all (satEscapes typeEnv vaenv satUse hyps' mR) (sgNeg r)
+    checkCandLeaf r m = case foldM refineByPos m (sgPos r) of
+        Nothing -> False
+        Just mR -> not (partialUninhabited typeEnv vaenv mR)
+                   && all (satAdmits typeEnv vaenv satUse hyps' mR) (sgPos r)
+                   && all (satEscapes typeEnv vaenv satUse hyps' mR) (sgNeg r)
       where
         -- Refine the witness by each co-occurring positive atom it must ALSO satisfy: meeting a
         -- @Cons@ witness with @Monad[Integer]@'s same-named member @Cons[Integer]@ pins its otherwise
@@ -3956,12 +3976,20 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
         -- others, so a witness broader than the true joint value (e.g. a @fluffy(this=Animal)@ chosen
         -- for @fluffy(this=Fish) ∧ fluffy(this=Animal)@) would escape a negative the refined
         -- (@this=Fish@) value cannot — a false SAT that breaks @A ⊆ A∪B@ (covariance).
-        mR = foldl refineByPos m (sgPos r)
+        --
+        -- A meet with a LEAF atom, or with a relation's shape by its name route, is between
+        -- concrete leafs of the witness's own name, so when it is ∅ no value satisfies both and the
+        -- candidate is no witness ('Nothing'). Only the SLOTS would otherwise be checked, one at a
+        -- time: @Cons[/T=⊤](tail=X)@ overlaps @Cons[/T=K]@ on @/T@, yet a tail outside
+        -- @ConsList[K]@ has no value in @Cons[/T=K]@, whose declared tail is bounded by its @/T@.
+        -- A CLASS expansion is the class's current members, which the open world may extend, so
+        -- its empty meet concludes nothing and leaves the witness for 'satAdmits'.
+        --
         -- Witness refinement only ever accepts a single-leaf meet named @ptName acc@
         -- ('refineMeet'), so the class expansion is restricted to that one name — the
         -- dropped members could only meet to ∅.
-        refineByPos acc (SatClass c) = refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c)
-        refineByPos acc (SatLeafs ls) = refineMeet acc (UnionType Nothing (joinUnionType ls) [])
+        refineByPos acc (SatClass c) = Just (refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c))
+        refineByPos acc (SatLeafs ls) = refineMeetExact acc (UnionType Nothing (joinUnionType ls) [])
         -- A relation is satisfied through its name route OR a matching class (a disjunction),
         -- so the witness may only be refined when a SINGLE route is available: name route
         -- only (refine by the relation's shape at the witness's name — @~Cons[T=Eq](…)@
@@ -3969,13 +3997,15 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
         -- inapplicable. Refining through a live disjunction would over-constrain the
         -- witness towards a false UNSAT.
         refineByPos acc (SatRel r') = case (relNameAdmits typeEnv r' acc, relMatchingClasses typeEnv r') of
-          (True, [])   -> refineMeet acc (singletonType r'{ptName = ptName acc})
-          (False, [c]) -> refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c)
-          _            -> acc
-        refineMeet acc other =
+          (True, [])   -> refineMeetExact acc (singletonType r'{ptName = ptName acc})
+          (False, [c]) -> Just (refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c))
+          _            -> Just acc
+        refineMeet acc other = fromMaybe acc (refineMeetExact acc other)
+        refineMeetExact acc other =
           case snd $ intersectTypesWithVarEnv typeEnv vaenv (singletonType acc) other of
-            UnionType Nothing leafs [] | [acc'] <- splitUnionType leafs, ptName acc' == ptName acc -> acc'
-            _ -> acc
+            met | isBottomType met -> Nothing
+            UnionType Nothing leafs [] | [acc'] <- splitUnionType leafs, ptName acc' == ptName acc -> Just acc'
+            _ -> Just acc
 
 -- | Engine-backed emptiness of a predicate conjunction ('predsEmpty' fast path):
 -- @Just isEmpty@ when the predicates are within the decidable fragment.
@@ -4923,7 +4953,7 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
     subGroupCovered n subs = case H.lookup n supersByName of
       Just sups -> all (isSubPartial sups) subs
       Nothing   -> all (partialUninhabited typeEnv vaenv) subs
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByDisjuncts || coveredByNegPred
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByDisjuncts || coveredByNegPred || coveredByNegRelEscapes
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
         -- A leaf refined by a DISJUNCTION is the union of the leaf refined by each disjunct:
@@ -4946,6 +4976,26 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
         -- @isa@ only shrinks @¬q@, so the cover stays valid in the open world, while a
         -- POSITIVE predicate's expansion is exactly the closed-world read 'predsPositiveSealed'
         -- forbids. The subgoal's sub is predicate-free, so this route does not re-fire on it.
+        -- A leaf outside a relation's SAME-NAMED shape (@l|¬~n@, the spelling a difference gives
+        -- @l − n@ when its pieces carry a recursive negation) IS the difference @l − n@, whose
+        -- pieces are the values leaving @n@ at one of its positions ('partialEscapes'). Each piece
+        -- covered covers the leaf: @Cons|¬~Cons[/T=K]@ is the lists with a head outside @K@ or a
+        -- tail outside @ConsList[K]@, and a super spelling those two cases covers it though no
+        -- single super leaf does. Exact under the conditions the difference itself decomposes on:
+        -- the relation names no class (whose class route would widen what it excludes), and its
+        -- arg-set interval covers the leaf's, which is lower-bounded.
+        coveredByNegRelEscapes = case ptPreds sub of
+          PredsNot (PredsOne (PredRel n))
+            | ptName n == ptName sub
+            , ptName n `notElem` listClassNames typeEnv
+            , argModeCovers nN bareN
+            , ptArgLb (ptArgMode bareN) ->
+                isSubPartialOfWithEnv typeEnv vaenv bareN nN
+                || all (\e -> isSubtypeOfWithEnv typeEnv vaenv (singletonType e) (UnionType Nothing (joinUnionType sup) []))
+                       (partialEscapes typeEnv vaenv bareN nN)
+            where bareN = normalizePtArgMode typeEnv sub{ptPreds = PredsNone}
+                  nN = normalizePtArgMode typeEnv n
+          _ -> False
         coveredByNegPred = case ptPreds sub of
           PredsNot q ->
             let bare = singletonType sub{ptPreds = PredsNone}
@@ -6741,7 +6791,7 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   -- 'detachForeignParentRefs'). Class expansion still relocates a class parameter's value into
   -- the member's arg slots one level deeper than it was written ('substitutePartialExit'),
   -- which is the remaining producer of such a spelling.
-  let exactNamesAt k = S.unions $ map typeOuterVarRefs $ origValuesAt k
+  let exactNamesAt k = S.unions $ map (\v -> typeLayerVarRefs v `S.union` typeExtVarRefs v) $ origValuesAt k
   let pointerNamesAt k = S.fromList [n | TypeVar (TVVar n) TVInt _ <- origValuesAt k]
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
   -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
@@ -7557,7 +7607,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     --   * identical or contained pos ⟹ ∅;
     --   * disjoint intervals ('argModesOverlap' fails) ⟹ pos unchanged;
     --   * neg interval covering the whole pos interval ('argModeCovers'), pos
-    --     lower-bounded ⟹ only the per-arg\/var value escapes remain ('subtractElems').
+    --     lower-bounded ⟹ only the per-arg\/var value escapes remain ('partialEscapes').
     --     Lower-bounded pos only: escaping via an arg's value requires the arg PRESENT,
     --     which a lower bound guarantees; a lower-unbounded pos admits arg-sets missing
     --     the arg (vacuously inside neg), so it enumerates instead;
@@ -7575,7 +7625,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- this also cancels a partial contained in the neg up to variable renaming or field widening —
         -- e.g. a @Cons[/T=$_a](head=$x, tail=…)@ minus the class member @Cons[/T=$_b](head=$y, tail=…)@,
         -- whose free element\/field variables all read as ⊤, so the pos IS the member. Without this the
-        -- per-field 'subtractElems' produces spurious variable-vs-variable escape leafs (@$x − $y@ never
+        -- per-field 'partialEscapes' produces spurious variable-vs-variable escape leafs (@$x − $y@ never
         -- proves ∅) and the difference wrongly keeps a partial its own subtype relation calls covered.
         -- Uses the precise partial subtype (this env has 'teArgModeProjection' False).
         go p1 p2 | isSubPartialOfWithEnv typeEnv vaenv p1 p2 = []
@@ -7612,180 +7662,223 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- not doubling as a class name, where the relation's class route would widen the
         -- excluded set.
         go p1 p2 | argModeCovers p2 p1, ptArgLb (ptArgMode p1) =
-          let escapes = subtractElems p1 p2
+          let escapes = partialEscapes typeEnv vaenv p1 p2
           in if ptName p2 `notElem` listClassNames typeEnv && any escapeHasRecNeg escapes
                then [partialAddPreds p1 (predsNot (PredsOne (PredRel p2)))]
                else escapes
         go p1 p2 | Just kss <- ptIntervalArgKeys typeEnv p1 = concatMap ((`go` p2) . ptAtArgKeys p1) kss
         go p1 _ = [p1]
 
-    -- The pos instances escaping neg on some per-arg\/var type: for each neg arg\/var, the
-    -- pos partial with that element narrowed to its difference from neg's. A ⊤-valued neg
-    -- element excludes nothing; a neg arg that pos does not constrain is skipped.
-    subtractElems :: PartialType -> PartialType -> [PartialType]
-    subtractElems p1 p2@PartialType{ptArgs=negArgs, ptVars=negVars} =
-      mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
-      where
-        -- A neg value subtracts as the value SET it denotes: its own-scope references read
-        -- through the NEG partial's slots ('resolveOwnScopeRefs' — @head=$/T@ under the
-        -- neg's @/T=X@ excludes @X@, not the ambient reading of a bare @$/T@).
-        negValSet = resolveOwnScopeRefs typeEnv vaenv p2
-        -- The pos side must denote its value SET the same way the neg side does, or the two
-        -- spellings of one set compare unequal and the subtraction invents an escape. The two
-        -- positions a reference can sit in want DIFFERENT treatment, though:
-        --
-        --   TOP LEVEL (@/head=$/T@, the arg value IS the reference). Kept as a pointer, and
-        --   deliberately: this is the dimension 'subtractVar' subtracts on, and 'narrowPiece'
-        --   folds the discovered narrowing back onto the var slot. Resolving it here would
-        --   subtract on the arg instead and lose that machinery.
-        --
-        --   NESTED (@/second=/Pair[/B=$/A]@, the reference is inside a nested partial). No
-        --   var-slot machinery reaches it, so leaving it symbolic while the neg side spells it
-        --   concretely would be pure asymmetry, and the difference of the two spellings a
-        --   spurious escape: @/Pair[/A=X](/second=/Pair[/B=$/A])@ minus the same partial writing
-        --   that nested slot as @X@ must be empty — the nested @/Pair@ does not spell @/A@, so its
-        --   @$/A@ reads against the enclosing @/A=X@, and the two operands denote one set.
-        --
-        -- So a bare reference is kept as a pointer, and anything else resolves through the pos
-        -- partial's OWN slots at depth.
-        --
-        -- Own slots and NOT the ambient env: resolving ambient vars at every depth would
-        -- materialise the whole nesting at a large cost, and the asymmetry this corrects is
-        -- entirely about the partial's own parameters.
-        posValSet v@TypeVar{} = freeTVIntToTop p1 (substituteKeep typeEnv (ptVarArg p1) v)
-        posValSet v           = substituteTVExtScoped typeEnv (ptVarArg p1) H.empty v
-        subtractArg (argName, negArgValRaw) = case H.lookup argName (ptArgs p1) of
-          Nothing -> Nothing
-          -- IDENTICAL linked forms on both sides (@tail=∀ConsList[/T=$/T]@) whose every
-          -- reference the POS partial itself binds differ only through the two partials'
-          -- own var scopes; those dimensions are exactly what 'subtractVar' subtracts, so
-          -- the arg contributes no separate escape (emitting one duplicates the var escape
-          -- as an unrecognizable symbolic residue). A reference the pos does NOT bind
-          -- reads as ⊤ on the pos side only — a real per-arg escape — so it must subtract.
-          Just posArgVal | posArgVal == negArgValRaw
-                         , all (`H.member` ptVarArg p1) (S.toList (typeTVIntRefs posArgVal)) -> Nothing
-          -- The pos value subtracts as the value SET it denotes: a free reference reads as
-          -- ⊤ ('freeTVIntToTop' — @Cons(head=$/T)@ with no @/T@ slot escapes on @⊤ − neg@),
-          -- while a DECLARED-var reference subtracts on the var slot via 'narrowPiece'.
-          -- A reference NESTED in the value is instead read through the pos partial's own
-          -- slots ('posValSet'), the same reading the neg side gets: both sides must spell a
-          -- bound parameter the same way or the slot difference cannot cancel. A recursive
-          -- @tail -> ∀ConsList[/T=$^/T]@ under @/T=$_a@ otherwise leaves the pos at @$^/T@
-          -- while the neg reads @$_a@, and the difference of the two spellings is a ¬-formula
-          -- over the class rather than the plain type they both denote — which then trips the
-          -- symbolic-attach gate below and loses the exact answer entirely.
-          Just posArgVal -> case negValSet negArgValRaw of
-            PTopType  -> Nothing -- a ⊤-valued neg element excludes nothing
-            negArgVal -> case differenceTypeWithEnv typeEnv vaenv (posValSet posArgVal) negArgVal of
-              (_, BottomType)    -> Nothing
-              (outEnv, argVal')  -> narrowPieceAt (Just argName) p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
-        -- An arg valued by a var reference (@head=$/T@) subtracts on the partial's own var
-        -- slot: the escape's narrowing comes back only as an env binding (the env-dropping
-        -- wrappers return the bare var — the same resolve-meets-back rule as
-        -- 'intersectTypesEnv'), so fold the discovered CONCRETE bindings onto the piece's
-        -- DECLARED 'ptVars' (a name the partial does not declare is another scope's var and
-        -- is dropped). A var slot narrowed to ∅ makes the escape piece uninhabited.
-        -- The stamp obeys the same occurrence-support rule as the intersect's pointer-join
-        -- ('varStampSupported'): a binding whose declared occurrences still hold bare-⊤
-        -- content is withheld from 'ptVars', and its narrowing stays ON the subtracted
-        -- slot instead (the bare pointer resolves to the discovered value) — the two op
-        -- families then spell the unsupported case identically, keeping @A∩B = A−(A−B)@.
-        -- Subtracting an ARG stamps only the variables that arg holds as a DIRECT pointer
-        -- occurrence (@head -> $T@). A LINKED occurrence (@tail -> ConsList[$T]@) contributes to
-        -- a variable by joining with the direct ones and never starts a binding on its own — the
-        -- intersection's pointer join ('pointerJoinFor') withholds on an unresolved direct
-        -- occurrence exactly so — so its narrowing stays on the subtracted slot. Stamped here, a
-        -- tail narrowed to Integer lists would pin @/T=Integer@ and with it the head, which the
-        -- meet of the same operands leaves free.
-        narrowPiece = narrowPieceAt Nothing
-        narrowPieceAt mArg piece outEnv
-          | H.null varBindings = Just piece
-          | any isBottomType (H.elems vars') = Nothing
-          | otherwise = Just piece{ptVars=vars', ptArgs=fmap resolveWithheld (ptArgs piece)}
-          where
-            newBindings = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
-            varBindings = H.filterWithKey (\k _ -> k `H.member` ptVars piece && directAt k) $ fst $ splitVarArgEnv newBindings
-            directAt n = case mArg of
-              Nothing -> True
-              Just argName -> any (\args -> case H.lookup argName args of
-                                       Just (TypeVar (TVVar n') TVInt _) -> n' == n
-                                       _                                 -> False)
-                                  (ptArgs p1 : map ptArgs (typeGraphData typeEnv (ptName p1) ++ typeGraphArrowTemplates typeEnv (ptName p1)))
-            supported n = varStampSupported typeEnv (ptName piece) [ptArgs piece] (H.keysSet (ptArgs piece)) (ptArgs piece) (TVVar n)
-            (stamped, withheld) = (H.filterWithKey (\n _ -> supported n) varBindings, H.filterWithKey (\n _ -> not (supported n)) varBindings)
-            vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) stamped
-            resolveWithheld t@(TypeVar (TVVar n) TVInt _) = fromMaybe t (H.lookup n withheld)
-            resolveWithheld t = t
-        -- A neg type-parameter the pos partial does not spell still subtracts: the pos side is ⊤
-        -- on that dimension (see 'PartialType') and escapes any neg slot that is a proper subset.
-        -- Skipping it would make @P − P[/T=X]@ empty for every X, so @A−(A−B)@ would return A
-        -- where @A∩B@ narrows.
-        --
-        -- Two conditions keep the subtraction honest, and both are load-bearing.
-        --
-        -- The neg slot must denote a PROPER subset. A neg slot that itself denotes ⊤ — a bare
-        -- @$T@ that is unbound, ⊤-bound or var-valued — leaves no escape on that dimension, and
-        -- subtracting it anyway manufactures a bottom-element leaf: the universe @Cons{}@ minus
-        -- the class member @Cons(…, /T=$T)@ gives @Cons[/T = ⊤−$T = ∅]@, which then empties every
-        -- intersection against it (a partial-application subset @Cons(head)@ reading as ⊆ its
-        -- class by difference while intersect/subtype correctly read it as disjoint). The test is
-        -- the same "only a CONCRETE binding resolves" one 'partialCoversSat'.'ambientRef' and
-        -- 'isSubPartialOfWithEnv'.'flexibleVar' use.
-        --
-        -- The parameter must be one the pos partial's DECLARATION has ('declaresVar'). This also
-        -- bounds the cost: only declared dimensions can produce an escape piece, and the pieces
-        -- multiply per dimension.
-        subtractVar (_, PTopType) = Nothing
-        subtractVar (varName, negVarVal) = case H.lookup varName (ptVars p1) of
-          -- A var-valued pos slot (a flexible self-entry @/T=$/T@) subtracts like a
-          -- var-referencing arg: the difference returns the bare var and records the
-          -- narrowing only in the env, so fold it back via 'narrowPiece' (@$/T − (⊤−X)@
-          -- narrows the piece to @/T=X@ rather than keeping the full flexible piece).
-          Just posVarVal -> case differenceTypeWithEnv typeEnv vaenv posVarVal negVarVal of
+-- | The pos instances escaping neg on some per-arg\/var type — @p1 − p2@ as a union of pieces, one
+-- per position of @p2@ that a value of @p1@ can leave (see 'differencePartialLeafs', which spells the
+-- difference with them). The pos instances escaping neg on some per-arg\/var type: for each neg arg\/var, the
+-- pos partial with that element narrowed to its difference from neg's. A ⊤-valued neg
+-- element excludes nothing; a neg arg that pos does not constrain is skipped.
+partialEscapes :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> [PartialType]
+partialEscapes typeEnv vaenv p1 p2Spelled@PartialType{ptVars=negVars} =
+  mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
+  where
+    -- A parameter tied to several positions ('paramSharedByPositions') subtracts through
+    -- those positions, not as a coordinate: the neg excludes the values whose every position
+    -- lies in its bound, so a value escapes it at whichever position leaves the bound. The
+    -- neg's positions it does not spell hold the declaration's template, read at the neg's own
+    -- parameter (@Cons[/T=K]..@ has @head@ in @K@ and @tail@ in @ConsList[K]@).
+    --
+    -- Only where the pos has EVERY position of the parameter. A partial application missing
+    -- some (@Cons[/T=X](head=..)@ before its @tail@, or a bare @Cons[/T=X]@) still carries the
+    -- parameter as a bound on what it will accept there, so on that dimension the parameter is
+    -- subtracted as written.
+    shared n = paramSharedByPositions typeEnv (ptName p1) n
+               && all (`H.member` ptArgs p1) (S.toList (paramPositions typeEnv (ptName p1) n))
+    sharedAux (TVVar n) = shared n
+    sharedAux _         = False
+    sharedArg x y = any sharedRefs [x, y]
+    sharedRefs t = any sharedAux (S.toList (typeTVIntRefs t)) || any shared (S.toList (typeOuterVarRefs t))
+    sharedNegVars = [n | (n, v) <- H.toList negVars, v /= PTopType, shared n]
+    p2 = p2Spelled{ptArgs = H.union (ptArgs p2Spelled) declaredPositions}
+    negArgs = ptArgs p2
+    declaredPositions = H.fromList
+      [ (k, v)
+      | not (null sharedNegVars)
+      , d <- take 1 (typeGraphData typeEnv (ptName p1))
+      , (k, v) <- H.toList (ptArgs d)
+      , H.member k (ptArgs p1)
+      , any (\n -> case v of
+                    TypeVar (TVVar n') TVInt _ -> n' == n
+                    _                          -> S.member n (typeOuterVarRefs v)) sharedNegVars ]
+    -- A neg value subtracts as the value SET it denotes: its own-scope references read
+    -- through the NEG partial's slots ('resolveOwnScopeRefs' — @head=$/T@ under the
+    -- neg's @/T=X@ excludes @X@, not the ambient reading of a bare @$/T@).
+    negValSet = resolveOwnScopeRefs typeEnv vaenv p2
+    -- The pos side must denote its value SET the same way the neg side does, or the two
+    -- spellings of one set compare unequal and the subtraction invents an escape. The two
+    -- positions a reference can sit in want DIFFERENT treatment, though:
+    --
+    --   TOP LEVEL (@/head=$/T@, the arg value IS the reference). Kept as a pointer, and
+    --   deliberately: this is the dimension 'subtractVar' subtracts on, and 'narrowPiece'
+    --   folds the discovered narrowing back onto the var slot. Resolving it here would
+    --   subtract on the arg instead and lose that machinery.
+    --
+    --   NESTED (@/second=/Pair[/B=$/A]@, the reference is inside a nested partial). No
+    --   var-slot machinery reaches it, so leaving it symbolic while the neg side spells it
+    --   concretely would be pure asymmetry, and the difference of the two spellings a
+    --   spurious escape: @/Pair[/A=X](/second=/Pair[/B=$/A])@ minus the same partial writing
+    --   that nested slot as @X@ must be empty — the nested @/Pair@ does not spell @/A@, so its
+    --   @$/A@ reads against the enclosing @/A=X@, and the two operands denote one set.
+    --
+    -- So a bare reference is kept as a pointer, and anything else resolves through the pos
+    -- partial's OWN slots at depth.
+    --
+    -- Own slots and NOT the ambient env: resolving ambient vars at every depth would
+    -- materialise the whole nesting at a large cost, and the asymmetry this corrects is
+    -- entirely about the partial's own parameters.
+    posValSet v@TypeVar{} = freeTVIntToTop p1 (substituteKeep typeEnv (ptVarArg p1) v)
+    posValSet v           = substituteTVExtScoped typeEnv (ptVarArg p1) H.empty v
+    subtractArg (argName, negArgValRaw) = case H.lookup argName (ptArgs p1) of
+      Nothing -> Nothing
+      -- IDENTICAL linked forms on both sides (@tail=∀ConsList[/T=$/T]@) whose every
+      -- reference the POS partial itself binds differ only through the two partials'
+      -- own var scopes; those dimensions are exactly what 'subtractVar' subtracts, so
+      -- the arg contributes no separate escape (emitting one duplicates the var escape
+      -- as an unrecognizable symbolic residue). A reference the pos does NOT bind
+      -- reads as ⊤ on the pos side only — a real per-arg escape — so it must subtract.
+      Just posArgVal | posArgVal == negArgValRaw
+                     , all (`H.member` ptVarArg p1) (S.toList (typeTVIntRefs posArgVal))
+                     , not (sharedRefs posArgVal) -> Nothing
+      -- The pos value subtracts as the value SET it denotes: a free reference reads as
+      -- ⊤ ('freeTVIntToTop' — @Cons(head=$/T)@ with no @/T@ slot escapes on @⊤ − neg@),
+      -- while a DECLARED-var reference subtracts on the var slot via 'narrowPiece'.
+      -- A reference NESTED in the value is instead read through the pos partial's own
+      -- slots ('posValSet'), the same reading the neg side gets: both sides must spell a
+      -- bound parameter the same way or the slot difference cannot cancel. A recursive
+      -- @tail -> ∀ConsList[/T=$^/T]@ under @/T=$_a@ otherwise leaves the pos at @$^/T@
+      -- while the neg reads @$_a@, and the difference of the two spellings is a ¬-formula
+      -- over the class rather than the plain type they both denote — which then trips the
+      -- symbolic-attach gate below and loses the exact answer entirely.
+      -- A position of a SHARED parameter ('paramSharedByPositions') is not subtracted on the
+      -- parameter, so no var-slot machinery reads its references: each side is read as the
+      -- value set it denotes under its own partial ('freeTVIntToTopDeep'), a parameter the
+      -- partial binds to ⊤ reading as ⊤ at any depth — @tail=∀ConsList[/T=$^/T]@ under
+      -- @/T=⊤@ is every list, and left symbolic it would be free to take the neg's @K@.
+      Just posArgVal | sharedArg posArgVal negArgValRaw ->
+        case freeTVIntToTopDeep typeEnv vaenv p2 negArgValRaw of
+          PTopType  -> Nothing
+          negArgVal -> case differenceTypeWithEnv typeEnv vaenv (freeTVIntToTopDeep typeEnv vaenv p1 posArgVal) negArgVal of
             (_, BottomType)   -> Nothing
-            -- ...and a var the env ALREADY binds narrows there too, not only a fresh one
-            -- ('foldDiscovered'): @Pair[/B=$_a](/second=$/B) − Pair[/B=X](…)@ with @a@ bound must
-            -- narrow the piece below @a@'s binding, not keep it and subtract nothing.
-            -- Resolve the narrowing back into the SLOT, the same resolve-meets-back rule
-            -- 'intersectTypesEnv' applies: a slot holding an EXTERNAL occurrence (@/T=$_b@)
-            -- comes back as the bare var with its narrowing only in the env, recorded under
-            -- the AMBIENT name @/b@ — which is not one of this partial's own parameters, so
-            -- 'narrowPiece' below (which folds only the partial's own names) drops it and the
-            -- escape piece reads exactly as the unsubtracted original. Folding the discovered
-            -- CONCRETE bindings into the slot keeps the narrowing where the piece can carry it;
-            -- a binding to another variable stays a link, as everywhere else.
-            (outEnv, varVal') ->
-              narrowPiece p1{ptVars=H.insert varName (foldDiscovered typeEnv vaenv outEnv varVal') (ptVars p1)} outEnv
-          Nothing
-            | declaresVar varName, negProperSubset negVarVal ->
-                case differenceTypeWithEnv typeEnv vaenv PTopType (negValSet negVarVal) of
-                  (_, BottomType)   -> Nothing
-                  (outEnv, varVal') -> narrowPiece p1{ptVars=H.insert varName varVal' (ptVars p1)} outEnv
-            | otherwise -> Nothing
-        -- Only a parameter the pos partial's declaration has is a dimension of its values. A neg
-        -- spelling can carry names the pos name never declares (a class member's own binder, an
-        -- enclosing scope's parameter); those are not unspelled-at-⊤ but not dimensions of @p1@
-        -- at all, as @/Nil@ has no element dimension inside @ConsList[$T]@.
-        --
-        -- With NO declaration in the graph the name's dimensions are unknown, and the neg's own
-        -- spelling is the only evidence there is. Both partials carry the SAME name here (the
-        -- leafs subtract name-grouped), so a parameter the neg spells IS a dimension of that
-        -- name; reading "no declaration" as "no dimensions" instead drops every escape and
-        -- makes @a − b@ empty for a @b@ that is a proper subset of @a@. Declarations are what
-        -- bound the cost, so the enumeration stays bounded wherever the graph has one.
-        declaresVar n = case typeGraphData typeEnv (ptName p1) of
-          []    -> True
-          decls -> any (H.member n . ptVars) decls
-        -- Does the neg parameter denote a proper subset of ⊤? A knowledge-carrying occurrence
-        -- (@$_a∩{X}@) always does; a bare variable does only when the env binds it to a concrete
-        -- value — a ⊤-bound, self-bound or var-valued entry stays bindable per value, i.e. ⊤.
-        negProperSubset t0 = case negValSet t0 of
-          PTopType                 -> False
-          t@(TypeVar v _ PTopType) -> case vaenvLookup vaenv v of
-            PTopType                  -> False
-            b | b == t || isTypeVar b -> False
-              | otherwise             -> True
-          _                        -> True
+            (outEnv, argVal') -> narrowPieceAt (Just argName) p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
+      Just posArgVal -> case negValSet negArgValRaw of
+        PTopType  -> Nothing -- a ⊤-valued neg element excludes nothing
+        negArgVal -> case differenceTypeWithEnv typeEnv vaenv (posValSet posArgVal) negArgVal of
+          (_, BottomType)    -> Nothing
+          (outEnv, argVal')  -> narrowPieceAt (Just argName) p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
+    -- An arg valued by a var reference (@head=$/T@) subtracts on the partial's own var
+    -- slot: the escape's narrowing comes back only as an env binding (the env-dropping
+    -- wrappers return the bare var — the same resolve-meets-back rule as
+    -- 'intersectTypesEnv'), so fold the discovered CONCRETE bindings onto the piece's
+    -- DECLARED 'ptVars' (a name the partial does not declare is another scope's var and
+    -- is dropped). A var slot narrowed to ∅ makes the escape piece uninhabited.
+    -- The stamp obeys the same occurrence-support rule as the intersect's pointer-join
+    -- ('varStampSupported'): a binding whose declared occurrences still hold bare-⊤
+    -- content is withheld from 'ptVars', and its narrowing stays ON the subtracted
+    -- slot instead (the bare pointer resolves to the discovered value) — the two op
+    -- families then spell the unsupported case identically, keeping @A∩B = A−(A−B)@.
+    -- Subtracting an ARG stamps only the variables that arg holds as a DIRECT pointer
+    -- occurrence (@head -> $T@). A LINKED occurrence (@tail -> ConsList[$T]@) contributes to
+    -- a variable by joining with the direct ones and never starts a binding on its own — the
+    -- intersection's pointer join ('pointerJoinFor') withholds on an unresolved direct
+    -- occurrence exactly so — so its narrowing stays on the subtracted slot. Stamped here, a
+    -- tail narrowed to Integer lists would pin @/T=Integer@ and with it the head, which the
+    -- meet of the same operands leaves free.
+    narrowPiece = narrowPieceAt Nothing
+    narrowPieceAt mArg piece outEnv
+      | H.null varBindings = Just piece
+      | any isBottomType (H.elems vars') = Nothing
+      | otherwise = Just piece{ptVars=vars', ptArgs=fmap resolveWithheld (ptArgs piece)}
+      where
+        newBindings = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
+        varBindings = H.filterWithKey (\k _ -> k `H.member` ptVars piece && directAt k) $ fst $ splitVarArgEnv newBindings
+        directAt n = case mArg of
+          Nothing -> True
+          Just argName -> any (\args -> case H.lookup argName args of
+                                   Just (TypeVar (TVVar n') TVInt _) -> n' == n
+                                   _                                 -> False)
+                              (ptArgs p1 : map ptArgs (typeGraphData typeEnv (ptName p1) ++ typeGraphArrowTemplates typeEnv (ptName p1)))
+        supported n = not (shared n) && varStampSupported typeEnv (ptName piece) [ptArgs piece] (H.keysSet (ptArgs piece)) (ptArgs piece) (TVVar n)
+        (stamped, withheld) = (H.filterWithKey (\n _ -> supported n) varBindings, H.filterWithKey (\n _ -> not (supported n)) varBindings)
+        vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) stamped
+        resolveWithheld t@(TypeVar (TVVar n) TVInt _) = fromMaybe t (H.lookup n withheld)
+        resolveWithheld t = t
+    -- A neg type-parameter the pos partial does not spell still subtracts: the pos side is ⊤
+    -- on that dimension (see 'PartialType') and escapes any neg slot that is a proper subset.
+    -- Skipping it would make @P − P[/T=X]@ empty for every X, so @A−(A−B)@ would return A
+    -- where @A∩B@ narrows.
+    --
+    -- Two conditions keep the subtraction honest, and both are load-bearing.
+    --
+    -- The neg slot must denote a PROPER subset. A neg slot that itself denotes ⊤ — a bare
+    -- @$T@ that is unbound, ⊤-bound or var-valued — leaves no escape on that dimension, and
+    -- subtracting it anyway manufactures a bottom-element leaf: the universe @Cons{}@ minus
+    -- the class member @Cons(…, /T=$T)@ gives @Cons[/T = ⊤−$T = ∅]@, which then empties every
+    -- intersection against it (a partial-application subset @Cons(head)@ reading as ⊆ its
+    -- class by difference while intersect/subtype correctly read it as disjoint). The test is
+    -- the same "only a CONCRETE binding resolves" one 'partialCoversSat'.'ambientRef' and
+    -- 'isSubPartialOfWithEnv'.'flexibleVar' use.
+    --
+    -- The parameter must be one the pos partial's DECLARATION has ('declaresVar'). This also
+    -- bounds the cost: only declared dimensions can produce an escape piece, and the pieces
+    -- multiply per dimension.
+    subtractVar (_, PTopType) = Nothing
+    subtractVar (n, _) | shared n = Nothing
+    subtractVar (varName, negVarVal) = case H.lookup varName (ptVars p1) of
+      -- A var-valued pos slot (a flexible self-entry @/T=$/T@) subtracts like a
+      -- var-referencing arg: the difference returns the bare var and records the
+      -- narrowing only in the env, so fold it back via 'narrowPiece' (@$/T − (⊤−X)@
+      -- narrows the piece to @/T=X@ rather than keeping the full flexible piece).
+      Just posVarVal -> case differenceTypeWithEnv typeEnv vaenv posVarVal negVarVal of
+        (_, BottomType)   -> Nothing
+        -- ...and a var the env ALREADY binds narrows there too, not only a fresh one
+        -- ('foldDiscovered'): @Pair[/B=$_a](/second=$/B) − Pair[/B=X](…)@ with @a@ bound must
+        -- narrow the piece below @a@'s binding, not keep it and subtract nothing.
+        -- Resolve the narrowing back into the SLOT, the same resolve-meets-back rule
+        -- 'intersectTypesEnv' applies: a slot holding an EXTERNAL occurrence (@/T=$_b@)
+        -- comes back as the bare var with its narrowing only in the env, recorded under
+        -- the AMBIENT name @/b@ — which is not one of this partial's own parameters, so
+        -- 'narrowPiece' below (which folds only the partial's own names) drops it and the
+        -- escape piece reads exactly as the unsubtracted original. Folding the discovered
+        -- CONCRETE bindings into the slot keeps the narrowing where the piece can carry it;
+        -- a binding to another variable stays a link, as everywhere else.
+        (outEnv, varVal') ->
+          narrowPiece p1{ptVars=H.insert varName (foldDiscovered typeEnv vaenv outEnv varVal') (ptVars p1)} outEnv
+      Nothing
+        | declaresVar varName, negProperSubset negVarVal ->
+            case differenceTypeWithEnv typeEnv vaenv PTopType (negValSet negVarVal) of
+              (_, BottomType)   -> Nothing
+              (outEnv, varVal') -> narrowPiece p1{ptVars=H.insert varName varVal' (ptVars p1)} outEnv
+        | otherwise -> Nothing
+    -- Only a parameter the pos partial's declaration has is a dimension of its values. A neg
+    -- spelling can carry names the pos name never declares (a class member's own binder, an
+    -- enclosing scope's parameter); those are not unspelled-at-⊤ but not dimensions of @p1@
+    -- at all, as @/Nil@ has no element dimension inside @ConsList[$T]@.
+    --
+    -- With NO declaration in the graph the name's dimensions are unknown, and the neg's own
+    -- spelling is the only evidence there is. Both partials carry the SAME name here (the
+    -- leafs subtract name-grouped), so a parameter the neg spells IS a dimension of that
+    -- name; reading "no declaration" as "no dimensions" instead drops every escape and
+    -- makes @a − b@ empty for a @b@ that is a proper subset of @a@. Declarations are what
+    -- bound the cost, so the enumeration stays bounded wherever the graph has one.
+    declaresVar n = case typeGraphData typeEnv (ptName p1) of
+      []    -> True
+      decls -> any (H.member n . ptVars) decls
+    -- Does the neg parameter denote a proper subset of ⊤? A knowledge-carrying occurrence
+    -- (@$_a∩{X}@) always does; a bare variable does only when the env binds it to a concrete
+    -- value — a ⊤-bound, self-bound or var-valued entry stays bindable per value, i.e. ⊤.
+    negProperSubset t0 = case negValSet t0 of
+      PTopType                 -> False
+      t@(TypeVar v _ PTopType) -> case vaenvLookup vaenv v of
+        PTopType                  -> False
+        b | b == t || isTypeVar b -> False
+          | otherwise             -> True
+      _                        -> True
 
 -- | Difference of two types (t1 − t2 = t1 ∩ ¬t2).
 differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
@@ -8292,6 +8385,31 @@ typeExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs 
     predPartial (PredConstEq c) = constantPartialType c
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeExtVarRefs (H.elems vs ++ H.elems as)
+
+-- | The outer references in a value sitting in a partial's arg slot that name THAT partial's
+-- parameters, or the ambient scope: every external ('TVExt') reference, and a parent ('TVParent')
+-- reference at the slot's own layer. The layer is replaced only at an arg boundary (see
+-- 'substituteTVExtScoped'): a reference at the top of the value, or in the parameter VALUES of a
+-- partial there, names the slot's partial; one inside a nested partial's ARGS names that nested
+-- partial. In @head=Cons(tail=∀ConsList[/T=$^/T])@ the reference names the inner @Cons@'s @/T@,
+-- not the outer one, while in @tail=∀ConsList[/T=$^/T]@ it names the outer @Cons@'s.
+typeLayerVarRefs :: Type -> S.HashSet TypeVarName
+typeLayerVarRefs = go
+  where
+    go t@(TypeVar _ TVParent i) = maybe id S.insert (outerVarName t) (go i)
+    go (TypeVar _ _ i) = go i
+    go (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (splitUnionType pos)
+      where topRefs = case mtop of
+              Just (preds, negLeafs, _) -> predsRefs preds : map leafRefs (splitUnionType negLeafs)
+              Nothing                   -> []
+    leafRefs p@PartialType{ptVars} = S.unions (map go (H.elems ptVars)) `S.union` typeExtVarRefs (singletonType p)
+    predsRefs (PredsOne p)  = leafRefs (predPartial p)
+    predsRefs (PredsAnd ps) = S.unions (map predsRefs ps)
+    predsRefs (PredsNot p)  = predsRefs p
+    predPartial (PredExpr p)    = p
+    predPartial (PredClass p)   = p
+    predPartial (PredRel p)     = p
+    predPartial (PredConstEq c) = constantPartialType c
 
 -- | 'typeExtVarRefs' keyed by the full 'TypeVarAux', so an externally-located 'TVArg' reference
 -- counts too — the key a 'TypeVarArgEnv' binds.
