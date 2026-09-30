@@ -83,7 +83,7 @@ module(Data/Algebra)
     0
 
   # The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /
-  #   [equal] live alongside their types in [Data/bool], [Data/num] and [Data/str]; this file
+  #   [equal] live alongside their types in [Data/bool], [Data/num], [Data/char] and [Data/string]; this file
   #   defines only the abstract [Eqv]/[Eq] classes and the [operator==] / [operator!=] built on them.
   (l :: $T == r :: $T)[$T -> /Data/Algebra/Eq]= l.equal(other= r)
 

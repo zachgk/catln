@@ -321,7 +321,7 @@ searchQueryArg = "/query"
 --
 -- The matching is done here rather than in the webdocs so that what is sent is what was asked for
 -- rather than everything there is to ask about. It is done here rather than in Catln because a
--- [String] is not yet something Catln can look inside — @stack\/core\/str.ct@ has equality and
+-- [String] is not yet something Catln can look inside — @stack\/core\/string.ct@ has equality and
 -- concatenation and no substring — so a search written there could only compare whole paths.
 --
 -- Case-insensitively, and on the path alone, which is what the webdocs matched against when they

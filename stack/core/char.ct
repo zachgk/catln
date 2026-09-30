@@ -1,0 +1,58 @@
+import "core/bool.ct"
+import "core/eq.ct"
+import "core/ord.ct"
+
+
+module(Data)
+  # # Characters
+  data(Char)
+    # A [Char] is a single character. [String] (@core/string.ct@) is a list of them.
+      A [Char] is a primitive: the compiler names it as one, in `Semantics.Types.charLeaf`, and an
+      evaluation carries one as a `CharVal`. A tree build makes a [Char] out of a character
+      constant, and the test generator produces them.
+      A [Char] is written as a literal between single quotes: `'a'`, or an escape such as `'\n'`.
+
+  # ## Ordering
+    A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
+    primitives comparing two are named functions, so [CharOrdering] can build a [Comparison] from
+    them the way [/Data/Primitive/IntOrdering] does from the integer ones.
+  charLt(l -> Char, r -> Char) -> Boolean
+    #runtime("charLt")
+
+  charEq(l -> Char, r -> Char) -> Boolean
+    #runtime("charEq")
+
+  every(Char, isa= [/Data/Algebra/Ord])
+
+  data(CharOrdering, isa= [/Data/Algebra/Ordering[$T -> Char]])
+
+  :CharOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/charLt(l= a, r= b), eq= /Data/charEq(l= a, r= b))
+
+  :Char.ord= CharOrdering
+
+  :Char.compareTo(other)= this.ord.compare(a= this, b= other)
+
+  :Char.eq= CharOrdering
+
+  :Char.equal(other)= this.eq.rel(a= this, b= other)
+
+  > ('a' == 'a')
+    >>> True
+  > ('a' == 'b')
+    >>> False
+  > 'a'.compareTo(other= 'b').isLess
+    >>> True
+  # ## Code points
+  :Char.code -> Integer
+    # [code] is the character's Unicode code point.
+    #runtime("charCode")
+
+  fromCode(code -> Integer) -> Char
+    # [fromCode] is the character at the Unicode code point [code]. A number that is no code point
+      fails the evaluation rather than answering with some other character.
+    #runtime("charFromCode")
+
+  > 'a'.code
+    >>> 97
+  > fromCode(code= 98)
+    >>> b

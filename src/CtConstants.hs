@@ -37,7 +37,7 @@ floatPrim = "/Data/Primitive/Float"
 truePrim = "/Data/Primitive/True"
 falsePrim = "/Data/Primitive/False"
 strPrim = "/Data/String"
--- | Declared in @stack\/core\/str.ct@ beside @\/Data\/String@. Named here rather than written where
+-- | Declared in @stack\/core\/char.ct@, and made into strings by @stack\/core\/string.ct@. Named here rather than written where
 -- it is used, as every primitive beside it is: 'Semantics.Types.charLeaf' spelled it out for itself
 -- while nothing declared the type at all, which is two ways of the same name going unchecked.
 charPrim = "/Data/Char"

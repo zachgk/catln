@@ -71,7 +71,7 @@ ctBuiltinNamespace = "/Catln/"
 -- | The pages of the standard library a derived type's fields can need. Only these, because only
 -- these have 'CtType' instances; a type the core does not declare has nothing to be mapped onto.
 coreStrPage, coreNumPage, coreBoolPage, coreMaybePage, coreListPage :: FilePath
-coreStrPage = "core/str.ct"
+coreStrPage = "core/string.ct"
 coreNumPage = "core/num.ct"
 coreBoolPage = "core/bool.ct"
 coreMaybePage = "core/maybe.ct"
@@ -382,8 +382,8 @@ instance (TypeError ('Text "A Catln argument is named, and this constructor's fi
 fieldNameOf :: forall name p. (KnownSymbol name) => CtOpts -> p name -> String
 fieldNameOf opts = coField opts . symbolVal
 
--- | A 'String' is the primitive @\/Data\/String@, and not a list of characters — the core declares
--- no character type for a list of them to be of.
+-- | A 'String' is @\/Data\/String@ rather than a @\/Data\/List@ of characters: the core declares a
+-- string as a type of its own holding its characters, so that it displays as its text.
 --
 -- Overlapping is what says so: @String@ is @[Char]@, so without it the instance for a list would
 -- claim it.
@@ -461,11 +461,10 @@ instance {-# OVERLAPPABLE #-} (CtType a) => CtType [a] where
 ctElemTypeRef :: (CtType a) => String -> Proxy a -> CtTypeRef
 ctElemTypeRef path p = CtTypeRef path [(ctElemVar, ctTypeRef p)]
 
--- | A character is @\/Data\/Char@, which @stack\/core\/str.ct@ declares beside @\/Data\/String@.
+-- | A character is @\/Data\/Char@, which @stack\/core\/char.ct@ declares.
 --
--- Reached through 'Semantics.Types.Constant', whose @CChar@ arm is the one primitive a program
--- cannot write for itself: the language has no character literal, so a character only ever arrives
--- from the compiler.
+-- Reached through 'Semantics.Types.Constant', whose @CChar@ arm a program writes as a character
+-- literal such as @'a'@.
 instance CtType Char where
   ctPath _ = charPrim
   ctImports _ = [coreStrPage]

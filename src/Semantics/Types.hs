@@ -1323,7 +1323,7 @@ floatLeaf = partialVal "/Data/Primitive/Float"
 trueLeaf = partialVal "/Data/Primitive/True"
 falseLeaf = partialVal "/Data/Primitive/False"
 -- | A string holding any characters: the one member of the @\/Data\/String@ class
--- ('ctStringText'), as @stack\/core\/str.ct@ declares it — its one field the list of characters it
+-- ('ctStringText'), as @stack\/core\/string.ct@ declares it — its one field the list of characters it
 -- is made of, @chars -> ConsList[$T -> Char]@. It is every value of the class, as @String@ says in
 -- Catln, and it is the member's own declared form so that it is a member.
 strLeaf = (partialVal (mkName ctStringText)){ptArgs = H.singleton (partialKey (mkName ctStringChars)) charList}

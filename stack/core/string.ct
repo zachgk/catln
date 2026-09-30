@@ -1,15 +1,32 @@
-import "core/str.ct"
+import "core/bool.ct"
+import "core/eq.ct"
+import "core/ord.ct"
 import "core/cons.ct"
+import "core/char.ct"
 
 
 module(Data)
-  # # String operations
-    What a [String] does, written over the list of characters it holds. The type itself is
-    declared on @core/str.ct@, one of the pages every program compiles together. These are on a page
-    of their own, outside that group, so that @core/list.ct@ — which builds a list's text out of
-    strings — can import them without the group reaching it (see @core/cons.ct@).
-    They recur over the characters directly rather than through the list operations of
-    @core/list.ct@, which would make the two pages import each other.
+  # # Strings
+    A [String] is a list of characters: a [String/Text], whose one field [chars] holds them in
+    order. So a string is taken apart and built up the way any list is, character by character.
+    It is a type of its own holding a list rather than the list itself. A list is displayed as its
+    items in brackets and a string as its text, and an empty string is not an empty list of
+    anything else — neither of which could be told apart at runtime were a string only its list.
+    [String] is a class with the one member rather than a data type so that [String] written as a
+    type means every string: a data type's bare name means its argument-less form, which a string
+    with characters is not.
+    Everything a string does is written here over the list of its characters. The operations
+    recur over the characters directly rather than through the list operations of @core/list.ct@,
+    which builds a list's text out of strings and so imports this page.
+  class(String, [String/Text(chars -> /Data/List/ConsList[$T -> Char])])
+
+  every(Char, isa= [/Data/ToString])
+
+  :Char.toString -> String
+    #runtime("charToString")
+
+  > 'a'.toString
+    >>> a
   # ## Equality
     Two strings are equal when their characters are, one by one, through [/Data/CharOrdering].
   charsEqual(a -> /Data/List/ConsList[$T -> Char], b -> /Data/List/ConsList[$T -> Char]) -> Boolean

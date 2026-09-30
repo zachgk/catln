@@ -55,7 +55,7 @@ type Args r = H.HashMap String (Val r)
 
 -- | A string: a @\/Data\/String\/Text@ holding the list of characters it is made of.
 --
--- A string is not a primitive of its own. @stack\/core\/str.ct@ declares it as the one member of
+-- A string is not a primitive of its own. @stack\/core\/string.ct@ declares it as the one member of
 -- the @String@ class, @String\/Text(chars -> ConsList[$T -> Char])@, so what an evaluation holds for
 -- one is that tuple, with a
 -- @Cons@ per character — which is what lets a string be taken apart and built up in Catln. This

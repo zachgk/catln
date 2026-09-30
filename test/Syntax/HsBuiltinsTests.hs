@@ -137,7 +137,7 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
         length (filter ((== "/Catln/Pair") . cdPath) (cpDecls $ ctPageOf (Proxy :: Proxy Held))) @?= 1
 
     , testCase "importing the pages the containers are written in terms of" $
-        cpImports (ctPageOf (Proxy :: Proxy Held)) @?= ["core/list.ct", "core/str.ct", "core/num.ct"]
+        cpImports (ctPageOf (Proxy :: Proxy Held)) @?= ["core/list.ct", "core/string.ct", "core/num.ct"]
                                                                     ]
 
   , testGroup "a Haskell value as the value that declaration is read with" [
@@ -213,14 +213,14 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
 
   , testGroup "the page the builtins are declared on" [
       testCase "importing what the types it declares are written in terms of" $
-        cpImports hsBuiltinPage @?= ["core/str.ct"]
+        cpImports hsBuiltinPage @?= ["core/string.ct"]
 
     , testCase "and the compiling types its own comments are written in, ahead of them" $
         -- The lines it writes, and not the blank one 'Syntax.Ct.Formatter.formatPrgm' puts after
         -- them: what is asked here is which pages the page imports, and in what order.
         filter (not . null) (lines (formatRootPrgm (RawPrgm hsBuiltinsImports [] :: RawPrgm ()))) @?= [
           "import \"core/compile.ct\"",
-          "import \"core/str.ct\""
+          "import \"core/string.ct\""
                                                                                                       ]
 
     , testCase "declaring each type once, however many fields reach it" $

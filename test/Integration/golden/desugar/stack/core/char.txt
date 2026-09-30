@@ -11,33 +11,11 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/String/Text"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/Text
-                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/charEq"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Data/charEq( Value l -> /Data/Char )( Value r -> /Data/Char ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/toString"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Char.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -152,8 +130,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Char
@@ -167,42 +143,15 @@ Prgm
                 [ /Data/CharOrdering[ /T=/Data/Char ] ]
             , cgcDoc = Nothing
             }
-        , CGClass
-            { cgcSealed = True
-            , cgcPartial = /Data/String
-            , cgcExtends =
-                [ /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                ]
-            , cgcDoc = Just ""
-            }
-        , CGClass
-            { cgcSealed = False
-            , cgcPartial = /Data/Char
-            , cgcExtends = [ /Data/Char ]
-            , cgcDoc = Just ""
-            }
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr
-                { csValue = "# Strings
-                A [String] is a list of characters: a [String/Text], whose one field [chars] holds them in
-                order. So a string is taken apart and built up the way any list is, character by character.
-                It is a type of its own holding a list rather than the list itself. A list is displayed as its
-                items in brackets and a string as its text, and an empty string is not an empty list of
-                anything else — neither of which could be told apart at runtime were a string only its list.
-                [String] is a class with the one member rather than a data type so that [String] written as a
-                type means every string: a data type's bare name means its argument-less form, which a string
-                with characters is not.
-                Only the type is declared here. What a string does — comparing two, joining two — is written
-                over its characters on @core/string.ct@, a page of its own so that @core/list.ct@, which builds
-                a list's text out of strings, can import it without this page's group reaching
-                @core/list.ct@ (see @core/cons.ct@)." }
+                { csValue = "# Characters" }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "## Characters
+                { csValue = "## Ordering
                 A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
                 primitives comparing two are named functions, so [CharOrdering] can build a [Comparison] from
                 them the way [/Data/Primitive/IntOrdering] does from the integer ones." }
@@ -244,6 +193,10 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Code points" }
             )
         , /Catln/#print
             ( Value /p= code

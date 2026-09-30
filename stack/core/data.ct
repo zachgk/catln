@@ -1,12 +1,12 @@
 import "core/primitives.ct"
 import "core/eq.ct"
-import "core/str.ct"
+import "core/string.ct"
 
 
 module(Data)
   # # Catln Core Data Types
-    These define the basic data types used in the language. [String] and its equality live in
-    [Data/str]; the conversions and collection types below build on it.
+    These define the basic data types used in the language. [String] and what it does live in
+    [Data/string]; the conversions and collection types below build on it.
   # ## Rendering as text
   class(ToString)
     # [ToString] is the class of types that can render themselves as a [String]. Defining
