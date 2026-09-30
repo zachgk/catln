@@ -285,15 +285,25 @@ singleLeaf (UnionType Nothing leafs []) = case splitUnionType leafs of
   _   -> Nothing
 singleLeaf _ = Nothing
 
-verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
-verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
+-- | Checks one name's definitions against its declarations, and its declarations against its
+-- definitions.
+--
+-- The @importedDecls@ are the name's declarations from an earlier solve. They bound this solve's
+-- definitions exactly as its own declarations do: an arm written on one page of a declaration made
+-- on another (a class instance, such as @core\/maybe.ct@'s @compareTo@ arms for the declaration on
+-- @core\/ord.ct@) is inside that declaration or it is an error, wherever the two were compiled.
+-- Without them an arm whose declaration was solved first was checked against nothing. They are
+-- not checked for fulfillment here, since what fulfills them was mostly defined in the solve that
+-- declared them.
+verifyObjMapItem :: TypeName -> [ObjArr Expr TypedMetaDat] -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
+verifyObjMapItem name importedDecls (ObjectMapItem decls runtimeDecls refineDecls defs) = do
   FEnv{feTypeEnv, feLocalDefNames} <- get
   let prgmTypeEnv = feTypeEnv{tePrgmEnv = True}
   -- A runtime declaration has no body, but it behaves like a definition for coverage: it is
   -- bounded by the declarations (checked against declUnion) and contributes to the definition
   -- coverage that fulfills them (part of defUnion).
   let defLikeOAs = defs ++ runtimeDecls
-  case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defLikeOAs) of
+  case (map (getMetaType . getExprMeta . oaObjExpr) (decls ++ importedDecls), map (getMetaType . getExprMeta . oaObjExpr) defLikeOAs) of
     ([], _) -> pure ()
     (_, []) -> pure ()
     (declInputTypes0, defInputTypes0) -> do
@@ -366,6 +376,9 @@ toPrgms vprgms = do
   -- the same name in another module (e.g. the generic Eq @operator==@ declaration in algebra.ct
   -- bounds the @#runtime@ Integer/Float implementations in primitives.ct).
   let ObjectMap mergedObjMap = mconcat (map prgmObjMap tprgms)
-  _ <- H.traverseWithKey verifyObjMapItem mergedObjMap
+  -- The solved dependencies this solve was given hold the declarations made in earlier solves.
+  FEnv{feTTypeGraph = ObjectMap depObjMap} <- get
+  let importedDecls name = maybe [] omiDecls (H.lookup name depObjMap)
+  _ <- H.traverseWithKey (\name -> verifyObjMapItem name (importedDecls name)) mergedObjMap
 
   return tprgms
