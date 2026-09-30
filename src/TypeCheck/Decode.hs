@@ -212,8 +212,10 @@ diagonalVar oa p = case sharedVars of
   _ -> Nothing
   where
     argVar = mapMaybe argToVar (exprAppliedArgs (oaObjExpr oa))
+    -- A higher-order argument (@fn(v) -> $M@) is not typed by its arrow's result: the result
+    -- is the arrow it adds to the body's environment, and its slot holds its input object.
     argToVar a = case (oaObj a, oaArr a) of
-      (Just objE, Just (_, arrM)) -> case getMetaType arrM of
+      (Just objE, Just (_, arrM)) | null (exprAppliedArgs objE) -> case getMetaType arrM of
         TypeVar (TVVar v) _ _ -> Just (inExprSingleton objE, v)
         _                     -> Nothing
       _ -> Nothing
@@ -249,7 +251,8 @@ isClassParamMethodDecl oa = not (null receiverVars) && any isParamArg args
       , Just (TopType _ (PredsOne (PredClass PartialType{ptVars}))) <- [argType a]
       , v <- H.keys ptVars
       ]
-    isParamArg a = not (isThis a) && case argType a of
+    -- As in 'diagonalVar', a higher-order argument's arrow result does not type its slot.
+    isParamArg a = not (isThis a) && maybe True (null . exprAppliedArgs) (oaObj a) && case argType a of
       Just (TypeVar (TVVar v) _ _) -> v `elem` receiverVars
       _                            -> False
 

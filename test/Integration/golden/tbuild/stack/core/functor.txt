@@ -24,7 +24,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /lst -> $/F } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
                                 }
                             ) -> $/F[ /T=$_/B ]
                         ]

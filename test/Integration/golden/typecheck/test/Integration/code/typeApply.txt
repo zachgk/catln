@@ -7,7 +7,7 @@ Prgm
                     { omiDecls =
                         [ /applyInc[ /B : TopType ][ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /lst -> $/F )
-                            ( /fn( Value /v -> $_/A ) -> $/B ) -> $/F[ /T=$_/B ]
+                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -15,19 +15,8 @@ Prgm
                         [ /applyInc
                             [ /F : ∀/Data/Functor[ /T=TopType ] ]
                             ( Value /lst -> ∀/Data/Functor[ /T=TopType ] )
-                            ( /fn( Value /v ) ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Functor[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/Functor/fmap
-                                ( /fn( /v=TopType )=TopType
-                                , /lst=∀/Data/Functor[ /T=TopType ]
-                                )
-                            , []
-                            ) = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v ) ) -> ∀/Data/Functor[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
+                            ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
                         ]
                     }
                 )
@@ -39,27 +28,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /strMaybe
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Functor[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /applyInc
-                                    ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
-                                    , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    ) + /Data/Functor/fmap
-                                    [ /F=∀/Data/Functor[ /T=TopType ]
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/Functor[ /T=TopType ]
-                                    )
-                                )
-                            , []
-                            ) = /applyInc( Value /lst -> TVArg /m = Value /m )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=TopType ] = /applyInc( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v ) -> ∀/Data/Algebra/Semigroup = /Data/toString( Value /this -> TVArg /v = Value /v ) )
                         ]
                     }
@@ -82,27 +51,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /incMaybe
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Functor[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /applyInc
-                                    ( /fn( /v=TopType )=/Data/Primitive/Integer
-                                    , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    ) + /Data/Functor/fmap
-                                    [ /F=∀/Data/Functor[ /T=TopType ]
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/Functor[ /T=TopType ]
-                                    )
-                                )
-                            , []
-                            ) = /applyInc( Value /lst -> TVArg /m = Value /m )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=TopType ] = /applyInc( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }

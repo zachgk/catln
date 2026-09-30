@@ -174,7 +174,14 @@ presentRawResult _ _ t = t
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     (UnionType (Just _) _ _) = ReachesLeaf
-reaches _     (TypeVar v _ _) = error $ printf "reaches with typevar %s" (show v)
+-- A variable destination denotes its binding in the querying scope: an arrow defined in that
+-- scope returns one of its variables (a definition's augmented @fn(v) -> $_B@). A concrete binding
+-- is reached through; a variable the scope has not bound yet is a link with nothing further to
+-- rewrite.
+reaches env (TypeVar v _ _) = case vaenvLookup (rVaenv env) v of
+  PTopType  -> ReachesLeaf
+  TypeVar{} -> ReachesLeaf
+  bound     -> reaches env bound
 reaches env (UnionType Nothing src consts) =
   reachesPartials env $ splitUnionType src ++ map constantPartialType consts
 

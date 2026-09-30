@@ -294,7 +294,7 @@ Prgm
                                 , /V=∀/Data/Algebra/Eq
                                 ]
                             ) -> ∀/Data/Primitive/Boolean = /Data/Map/foldEntries( Value /m -> TVArg /a = Value /a )
-                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /k -> ∀/Data/Algebra/Ord )( Value /v -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )
+                            ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )
                                 ( Value /r -> ∀/Data/Primitive/Boolean = /operator==
                                     ( Value /l ->
                                         ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Maybe[ /T=$_/MV ] ) = /Data/Map/get( Value /m -> TVArg /b = Value /b )( Value /key -> TVArg /k = Value /k )
@@ -380,16 +380,9 @@ Prgm
                                 ]
                             )= /Data/Map/foldEntries( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /acc -> /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
-                                )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/List/Cons
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/List/Cons
                                 ( /head=∀/Data/Algebra/Ord
-                                , /tail=/Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /k = Value /k )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> /Data/List/Nil = Value /Data/List/Nil )
                         ]
@@ -489,7 +482,7 @@ Prgm
                                 , /V=TopType
                                 ]
                             ) -> /Data/Primitive/Integer = /Data/Map/foldEntries( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /acc -> /Data/Primitive/Integer )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )
+                            ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )
@@ -573,7 +566,7 @@ Prgm
                                 , /V=$_/MV
                                 ]
                             )
-                            ( /fn( Value /acc -> $_/B )( Value /k -> $/MK )( Value /v -> $/MV ) -> $/B )( Value /init -> $/B ) -> $_/B
+                            ( /fn( Value /acc -> $_/B )( Value /k -> $/MK )( Value /v -> $/MV ) -> $_/B )( Value /init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -608,10 +601,10 @@ Prgm
                                 )
                             )
                             ( /fn( Value /acc )( Value /k )( Value /v ) )( Value /init )= /Data/Map/foldEntries( Value /m -> TVArg /left = Value /left )
-                            ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
-                            ( Value /init= /fn
+                            ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
+                            ( Value /init -> $_/B = /fn
                                 ( Value /acc= /Data/Map/foldEntries( Value /m -> TVArg /right = Value /right )
-                                    ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
+                                    ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
                                 )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value )
                             )
                         ]
@@ -874,7 +867,7 @@ Prgm
                                 )
                             )
                             ( /fn( Value /v ) ) -> /Data/Map/Node
-                            ( /value=TopType
+                            ( /value=$_/MW
                             , /key=TopType
                             , /right=∀/Data/Map/BinTree
                                 [ /K=TopType
@@ -889,14 +882,14 @@ Prgm
                                 [ /K=TopType
                                 , /V=TopType
                                 ] = /Data/Map/mapValues( Value /m -> TVArg /left = Value /left )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> $_/MW = /fn( Value /v -> TVArg /v = Value /v ) )
                             )( Value /key -> TVArg /key = Value /key )
-                            ( Value /value= /fn( Value /v -> TVArg /value = Value /value ) )
+                            ( Value /value -> $_/MW = /fn( Value /v -> TVArg /value = Value /value ) )
                             ( Value /right -> ∀/Data/Map/BinTree
                                 [ /K=TopType
                                 , /V=TopType
                                 ] = /Data/Map/mapValues( Value /m -> TVArg /right = Value /right )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> $_/MW = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
                     }
@@ -932,8 +925,8 @@ Prgm
                                 ]
                             ) -> ∀/Data/Primitive/Boolean = /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
-                                ( Value /l -> ∀/Data/Algebra/Eq = /Data/Map/size( Value /m -> TVArg /a = Value /a ) )
-                                ( Value /r -> ∀/Data/Algebra/Eq = /Data/Map/size( Value /m -> TVArg /b = Value /b ) )
+                                ( Value /l -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /a = Value /a ) )
+                                ( Value /r -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /b = Value /b ) )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Map/containedIn( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b ) )
                         ]
@@ -1023,16 +1016,9 @@ Prgm
                                 ]
                             )= /Data/Map/foldEntries( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /acc -> /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
-                                )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/List/Cons
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=/Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> /Data/List/Nil = Value /Data/List/Nil )
                         ]
@@ -1240,7 +1226,7 @@ Prgm
                         { ciValue = 20 }
                     )
                 )
-                ( /fn( Value /acc -> /Data/Primitive/Integer )( Value /k -> /Data/Primitive/Integer )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
+                ( /fn( Value /acc )( Value /k -> /Data/Primitive/Integer )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1251,9 +1237,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/Map/foldEntries( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1263,7 +1247,7 @@ Prgm
                 { csValue = "0" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Data/Map/size
+            ( Value /p -> /Data/Primitive/Integer = /Data/Map/size
                 ( Value /m -> UnionType
                     ( Just
                         ( PredClass /Data/Map
@@ -1354,7 +1338,7 @@ Prgm
                 { csValue = "2" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Data/Map/size( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) )
+            ( Value /p -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "0" }
@@ -1895,7 +1879,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Data/Map/size
+            ( Value /p -> /Data/Primitive/Integer = /Data/Map/size
                 ( Value /m -> ∀/Data/Map
                     [ /K=TopType
                     , /V=TopType
@@ -2749,7 +2733,7 @@ Prgm
                     ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Maybe[ /T=$_/MV ] ) = /Data/Map/get
                     ( Value /m ->
                         ( /Data/Map/Node[ /K=/Data/Primitive/Integer ]
-                            ( /value=TopType
+                            ( /value=/Data/Primitive/Integer
                             , /key=/Data/Primitive/Integer
                             , /right=∀/Data/Map/BinTree
                                 [ /K=TopType
@@ -2803,7 +2787,7 @@ Prgm
                     ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Maybe[ /T=$_/MV ] ) = /Data/Map/get
                     ( Value /m ->
                         ( /Data/Map/Node[ /K=/Data/Primitive/Integer ]
-                            ( /value=TopType
+                            ( /value=/Data/Primitive/Integer
                             , /key=/Data/Primitive/Integer
                             , /right=∀/Data/Map/BinTree
                                 [ /K=TopType

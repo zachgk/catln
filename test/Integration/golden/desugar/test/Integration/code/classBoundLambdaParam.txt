@@ -39,7 +39,7 @@ Prgm
                     { omiDecls =
                         [ headTo[ /B : TopType ][ /A : ∀/Data/Algebra/Eq ]
                             ( Value lst -> ∀/Data/List[ /T=$_/A ] )
-                            ( fn( Value w -> $_/A ) -> $/B )( Value dflt -> $/B ) -> $_/B
+                            ( fn( Value w -> $_/A ) -> $_/B )( Value dflt -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -57,7 +57,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ useEq[ /B : TopType ][ /A : ∀/Data/Algebra/Eq ]( Value x -> $/A )
-                            ( fn( Value v -> $_/A ) -> $/B ) -> $_/B
+                            ( fn( Value v -> $_/A ) -> $_/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

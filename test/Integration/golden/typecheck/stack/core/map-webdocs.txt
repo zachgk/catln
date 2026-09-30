@@ -192,7 +192,7 @@ Prgm
                                 ( Value /key -> ∀/Data/String = /Data/toString( Value /this -> TVArg /key = Value /key ) )
                                 ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /value = Value /value ) )
                                 ( Value /output -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> ∀/Data/ToString = /fn( Value /v -> TVArg /value = Value /value ) )
+                                    ( Value /this -> $_/B = /fn( Value /v -> TVArg /value = Value /value ) )
                                 )
                             )
                             ( Value /tail -> UnionType
@@ -212,7 +212,7 @@ Prgm
                                     )
                                 , []
                                 ) = /Data/Map/mapValuesSteps( Value /entries -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
@@ -415,7 +415,7 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Map/mapValues
-                                ( /fn( /v=TopType )=TopType
+                                ( /fn( /v=TopType )=/fn( /v=TopType )
                                 , /m=∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
@@ -462,7 +462,11 @@ Prgm
                                     ( /acc=TopType
                                     , /v=TopType
                                     , /k=TopType
-                                    )=TopType
+                                    )=/fn
+                                    ( /acc=TopType
+                                    , /v=TopType
+                                    , /k=TopType
+                                    )
                                 , /m=∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
@@ -664,7 +668,7 @@ Prgm
                                 ( Value /acc -> ∀/Data/String = /Data/toString( Value /this -> TVArg /acc = Value /acc ) )
                                 ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /value = Value /value ) )
                                 ( Value /output -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
+                                    ( Value /this -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
                                 )
                             )
                             ( Value /tail -> UnionType
@@ -685,8 +689,8 @@ Prgm
                                     )
                                 , []
                                 ) = /Data/Map/foldEntriesSteps( Value /entries -> TVArg /tail = Value /tail )
-                                ( /fn( Value /acc )( Value /k )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
-                                ( Value /acc= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
+                                ( /fn( Value /acc )( Value /k )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
+                                ( Value /acc -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }

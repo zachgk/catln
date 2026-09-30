@@ -380,7 +380,7 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
 outVarBoundSrc _ _ src = src
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
-mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
+mkReachesEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
 
   let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
 
@@ -391,7 +391,38 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
     inExpr' <- showExpr env InputMeta inExpr
     outM' <- showM env ArrMeta outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteTVExt (feTypeEnv env) (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
+  -- The call's own higher-order arguments ('conCallArrs'): each lambda @fn(v)= body@ is an arrow
+  -- from its pattern (the input object @fn(/v=..)@) to its body's result, in scope for this call.
+  callArrs' <- forM [ (inExpr, outM) | ObjArr{oaObj=Just inExpr, oaArr=Just (_, outM)} <- callArrs ] $ \(inExpr, outM) -> do
+    inExpr' <- showExpr env InputMeta inExpr
+    outM' <- showM env ArrMeta outM
+    return (mapMeta clearMetaDat InputMeta inExpr', outM')
+  -- A definition's arguments are read AS AUGMENTED by its declarations (the declaration takes
+  -- precedence, as 'BoundedByObjs' gives it over the definition's object): an unannotated
+  -- higher-order argument @fn(v)@ is the declaration's @fn(v -> $_A) -> $_B@, so the arrow it adds
+  -- to the body's environment returns the declared @$_B@. The declared result is met into the
+  -- argument's own; a declaration variable stays symbolic here and is bound per call at dispatch.
+  let TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap reachesTg)} = feReachesTypeEnv env
+  let declArgResults = H.fromListWith (intersectTypes (feTypeEnv env))
+        [ (inExprSingleton aObj, getMetaType aM)
+        | oa <- maybeConOa
+        , decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName (exprPath (oaObjExpr oa))) reachesTg)
+        , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
+        , not (null (exprAppliedArgs aObj)) ]
+  let declResultFor k = case H.lookup k declArgResults of
+        Just t -> Just t
+        Nothing -> case [t | (k', t) <- H.toList declArgResults, pkName k' == pkName k, pkArgs k' == pkArgs k] of
+          [t] -> Just t
+          _   -> Nothing
+  -- The argument's own result is read through the constraint's bindings; the declared one is
+  -- NOT — it is the link the call binds, and resolving it here would read an in-scope but still
+  -- unbound declaration variable (@$_B@ registered for the definition at ⊤) as the ⊤ it is now.
+  let ownResult outM = substituteTVExt (feTypeEnv env) (fmap snd vaenv) (getMetaType outM)
+  let argResult k inExpr outM
+        | not (null (exprAppliedArgs inExpr)), Just declT <- declResultFor k = intersectTypes (feTypeEnv env) (ownResult outM) declT
+        | otherwise = ownResult outM
+  let argArrows = [ (inExpr, argResult k inExpr outM) | (k, (inExpr, outM)) <- H.toList argVaenv' ]
+  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outT) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT outT))]) $ argArrows ++ [ (inExpr, ownResult outM) | (inExpr, outM) <- callArrs' ]
 
   -- final ReachesEnv. Reuse the per-epoch cached reaches type graph ('feReachesTypeEnv');
   -- it is constraint-independent, so rebuilding it per call would be redundant.
@@ -411,7 +442,7 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   -- one constraint execution and is immutable, so mint it its own token — the same
   -- token-per-immutable-env-value rule as the per-epoch mint in 'runConstraintsIdx'.
   let mergedTypeEnv
-        | H.null argVaenv' = feTypeEnv'
+        | H.null argVaenv' && null callArrs' = feTypeEnv'
         | otherwise        = let m = argTypeEnv <> feTypeEnv'
                              in m{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph m))}
   return $ ReachesEnv mergedTypeEnv (fmap snd vaenv) S.empty
@@ -425,6 +456,10 @@ conOaResolveKey env con =
   [ (tcreToMaybe (showExpr env InputMeta inExpr), tcreToMaybe (showM env ArrMeta outM))
   | oa <- conOs con
   , (inExpr, outM) <- map head $ H.elems $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa ]
+  ++
+  -- The call's own lambda arrows ('conCallArrs') are read the same way.
+  [ (tcreToMaybe (showExpr env InputMeta inExpr), tcreToMaybe (showM env ArrMeta outM))
+  | ObjArr{oaObj=Just inExpr, oaArr=Just (_, outM)} <- conCallArrs con ]
 
 -- | The self-reference guard for an application's BASE link ('TypeCheck.Encode' constraint
 -- @ArrowTo 7@): an arrow does not rewrite the base of its own body.
@@ -457,8 +492,8 @@ dropSelfBaseReach con (ReachesPartialTree children)
   | isBaseLink && not (S.null selfKeys) = ReachesPartialTree $ H.mapWithKey cut children
   where
     isBaseLink = case con of
-      Constraint _ _ (ArrowTo 7 _ _) -> True
-      _                              -> False
+      Constraint _ _ _ (ArrowTo 7 _ _) -> True
+      _                                -> False
     selfKeys = S.fromList [ (makeAbsoluteName (oaObjPath oa), H.keysSet $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa)
                           | oa@ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} <- conOs con ]
     cut PartialType{ptName, ptArgs} sub
@@ -531,8 +566,8 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   --     satisfy it (an Integer requirement picks the Integer-returning arrow out of an
   --     @Integer ∪ Float@ reach), guarded by source coverage ('cutReachesTree').
   let destIsArrowResult = case con of
-        Constraint _ _ (ArrowTo 32 _ _) -> True
-        _                               -> False
+        Constraint _ _ _ (ArrowTo 32 _ _) -> True
+        _                                 -> False
   -- A stored point type may reference only variables its own constraint scope binds: read the
   -- graph presentation's out-of-scope external var spellings (source declarations' own
   -- parameters) as the ⊤ they denote ('dropOutOfScopeTVExt'), so denotationally-equal forms
@@ -611,9 +646,9 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- it rides (through var-linked dims) into values no arrow can ever act on ("no arrows
   -- from Some[/T=raw ∪ …]" at TreeBuild).
   let destIsArgArm = case con of
-        Constraint _ _ (ArrowTo 10 _ _) -> True
-        Constraint _ _ (ArrowTo 15 _ _) -> True
-        _                               -> False
+        Constraint _ _ _ (ArrowTo 10 _ _) -> True
+        Constraint _ _ _ (ArrowTo 15 _ _) -> True
+        _                                 -> False
   let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv' ((partialVal (ptName l)){ptArgMode=PtArgUnbounded})))
                      && (not (reqAdmitsForm reachesTypeEnv vaenv' destReqDecl l)
                           || (destIsArgArm && not (S.member (ptName l) (feInputArrowNames env))))
@@ -627,7 +662,20 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
       dropSettleForcedRaws t = t
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep feTypeEnv newBindings
-  let destFinal0 = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropSettleForcedRaws dest'))))
+  -- A raw form is kept unrewritten only for what it can offer as one: an unsettled form that has
+  -- a meaning elsewhere (a delayed @fmap(..)@ another rule may compose). A call given a lambda
+  -- (an Obj/Arrow pair local to this call, 'conCallArrs') has none: its higher-order slot holds
+  -- an input object whose arrow exists only in this call's environment, so outside it the form
+  -- cannot be rewritten or read — it only carries the call's scope out without its arrows. Such
+  -- a form is what it reaches, never itself. Skipped when dropping would empty the type (the
+  -- reach may still be resolving), as the settle-forcing drop above is.
+  let hasLocalArrowSlot l = not (null (conCallArrs con)) && any (\(k, v) -> isJust (hoSlotInputObject k v)) (H.toList (ptArgs l))
+  let dropLocalArrowRaws t@(UnionType dMTop dLeafs dConsts) = case partition hasLocalArrowSlot (splitUnionType dLeafs) of
+        ([], _) -> t
+        (_, keptLs) | null keptLs && isNothing dMTop && null dConsts -> t
+                    | otherwise -> UnionType dMTop (joinUnionType keptLs) dConsts
+      dropLocalArrowRaws t = t
+  let destFinal0 = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropLocalArrowRaws (dropSettleForcedRaws dest')))))
   -- The same discipline the SOURCE side applies below ('typeVarLost src narrowedAct'), and for the
   -- same reason: a write that drops a type-var spelling the accumulated destination carries is
   -- refused, so 'verifyNoTypeVarLost' cannot fire. The destination is met against a requirement

@@ -58,8 +58,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Monad/mmap
@@ -70,16 +69,13 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) =
+                            ) -> $_/M =
                             ( /fn
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
+                                ) ↦ $_/M
                             )
                         ]
                     }
@@ -108,13 +104,13 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                            ) -> /Data/Maybe/Some( /value=$_/B ) = /Data/Maybe/Some
                             ( EAppArg
-                                { eaaArg = Value /value=
+                                { eaaArg = Value /value -> $_/B =
                                     ( /fn
                                         ( EAppArg
                                             { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                        ) ↦ TopType
+                                        ) ↦ $_/B
                                     )
                                 }
                             )

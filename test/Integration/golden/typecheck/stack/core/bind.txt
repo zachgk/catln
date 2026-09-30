@@ -15,19 +15,17 @@ Prgm
                         [ /Data/bindap
                             [ /M : ∀/Data/Monad[ /T=TopType ] ]
                             ( Value /m -> ∀/Data/Monad[ /T=TopType ] )
-                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Monad[ /T=TopType ]
-                                , fromList []
+                            ( /fn( Value /v ) ) -> ∀/Data/Monad[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /m = Value /m )
+                            ( /fn( Value /v ) -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Monad[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /fn( /v=TopType )
                                 , []
-                                )
-                            , /Data/Monad/mmap
-                                ( /fn( /v=TopType )=∀/Data/Monad[ /T=TopType ]
-                                , /m=∀/Data/Monad[ /T=TopType ]
-                                )
-                            , []
-                            ) = /Data/Monad/mmap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] = /fn( Value /v -> TVArg /v = Value /v ) )
+                                ) = /fn( Value /v -> TVArg /v = Value /v )
+                            )
                         ]
                     }
                 )

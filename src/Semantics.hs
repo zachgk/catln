@@ -197,7 +197,7 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
         -- If none of it is valid, then there is Nothing
         case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
           potentialSrc@(UnionType Nothing potSrcLeafs []) -> if not (isBottomType potentialSrc)
-            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [arrowDestType typeEnv vaenv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
             else []
           _ -> error "Unexpected non-union in TryTArrow"
       tryTArrow ObjArr{oaArr=Nothing} = []
@@ -227,6 +227,11 @@ oaInputTemplates ObjArr{oaArr=Nothing} = []
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
   typeGraphQueryWithReason = objArrGraphQuery True
   typeGraphQueryAllWithReason = objArrGraphQuery False
+  typeGraphDeclaredArgResults TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name =
+    [ (inExprSingleton aObj, getMetaType aM)
+    | decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName name) tg)
+    , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
+    , not (null (exprAppliedArgs aObj)) ]
  -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
   typeGraphExpandPredExpr typeEnv _vaenv partial | nameStr (ptName partial) == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
   typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
@@ -291,7 +296,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       []    -> case [ armDest
                     | oa@ObjArr{oaArr=Just{}} <- omiDefs item
                     , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
-                    , armDest <- arrowDestType typeEnv partial oa ] of
+                    , armDest <- arrowDestType typeEnv vaenv partial oa ] of
                  []       -> PTopType
                  defDests -> unionAllTypes typeEnv (defDests ++ concatMap declResultOfRawLeaves defDests)
     where
@@ -299,14 +304,14 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       declDests = [ dest
                   | oa@ObjArr{oaArr=Just{}} <- omiDecls item
                   , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
-                  , dest <- arrowDestType typeEnv partial oa ]
+                  , dest <- arrowDestType typeEnv vaenv partial oa ]
       -- The declared result of each raw applied leaf in a type (declared functions only — no
       -- recursion into undeclared ones, keeping this bounded).
       declResultOfRawLeaves (UnionType Nothing ls _) =
         [ d | l <- splitUnionType ls, null (typeGraphData typeEnv (ptName l))
             , oa@ObjArr{oaArr=Just{}} <- omiDecls (H.lookupDefault mempty (ptName l) tg)
             , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType l) (getMetaType $ getExprMeta $ oaObjExpr oa)
-            , d <- arrowDestType typeEnv l oa ]
+            , d <- arrowDestType typeEnv vaenv l oa ]
       declResultOfRawLeaves _ = []
 
 data CTSSConfig = CTSSConfig {
@@ -426,7 +431,7 @@ exprVarArgsWithSrcs typeEnv os = joinAllPossVarArgMetaWithSrc typeEnv (map (uncu
 exprVarArgsWithObjSrcs :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> PossArgMetaMapWithSrc m
 exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, obj) -> (oaObjExpr obj, src)) os
 
-arrowDestType :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
+arrowDestType :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
 arrowDestType = arrowDestTypeBase False
 
 -- | 'arrowDestType' for DISPATCH (TreeBuild/Eval arrow selection): additionally resolves
@@ -435,12 +440,38 @@ arrowDestType = arrowDestTypeBase False
 -- src, so the extra resolution is stable there; during typecheck the same read would resolve
 -- differently across epochs as the partial's vars narrow, growing the reached dest union and
 -- violating monotonicity ('verifySchemeActLowers').
-arrowDestTypeDispatch :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
+arrowDestTypeDispatch :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
 arrowDestTypeDispatch = arrowDestTypeBase True
 
-arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
-arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
+arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
+arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . withScope . withDeclaredArgResults . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
+    -- An arrow the querying scope itself adds to its environment — an argument of the enclosing
+    -- definition, or a lambda the call is given ('ArgObj') — is defined IN that scope, so its
+    -- result is read with that scope's variables as well as its own match's: the augmented
+    -- @fn(v) -> $_B@ of a definition returns the definition's @$_B@. A variable the scope has not
+    -- bound concretely yet stays the link it is (bound as itself), rather than the ⊤ an unbound
+    -- reference would read as. A global arrow is defined in its own scope and never sees the
+    -- querying one: a callee's own variable would otherwise be captured by a caller's of the same
+    -- name. The arrow's own bindings take precedence.
+    withScope local
+      | oaBasis oa == ArgObj = H.union local (H.mapWithKey scopeLink ambient)
+      | otherwise            = local
+    scopeLink v PTopType = TypeVar v TVExt PTopType
+    scopeLink _ t        = t
+    -- The arm's higher-order arguments read as its declaration gives them: an unannotated
+    -- @fn(v)@ is the declared @fn(v -> $_A) -> $_B@, so a result variable only the declaration
+    -- spells (@$_B@, which the arm's body result is written in) is bound to what the call's
+    -- argument returns — its input object resolved through the environment's arrows.
+    withDeclaredArgResults vaenv0 = foldr bindResult vaenv0 (typeGraphDeclaredArgResults typeEnv (ptName srcPartial))
+      where
+        bindResult (k, TypeVar v _ _) env
+          | maybe True (== PTopType) (H.lookup v env)
+          , Just slot <- typeGetArgLoose k srcPartial
+          , res <- hoSlotResult typeEnv env k slot
+          , res /= PTopType
+          = H.insert v res env
+        bindResult _ env = env
     srcPartial = case maybeGetSingleton $ substituteTVExt typeEnv H.empty $ singletonType src of
       Just s  -> s
       Nothing -> error $ printf "Non-singleton in arrowDestType"
@@ -474,9 +505,19 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
         -- The body's type is preferred, but a Top body type is not information: an arm returning a
         -- bare declaration variable (@foldl(lst= Nil, ..)= init@) presents one, and an arrow whose
         -- presented dest is Top is refused outright ("Arrow has indeterminate return type").
-        joined = case expr' of
+        joined = case fmap dropLocalArrowCalls expr' of
           Just t | t /= PTopType || not resolveAppFields -> t
           _                                              -> arr'
+        -- A body that is a call given a lambda presents what the call reaches, never the raw call:
+        -- the lambda is an arrow local to that call, so outside it the unrewritten form cannot be
+        -- rewritten or read (the rule 'TypeCheck.TypeUtils.arrowConstrainUbs' applies to the
+        -- call's own result). The arm's result carries what the call reaches; the raw leaves are
+        -- replaced by it.
+        dropLocalArrowCalls t@(UnionType mTop leafs consts) = case partition hasLocalArrowSlot (splitUnionType leafs) of
+          ([], _)     -> t
+          (_, keptLs) -> unionTypes typeEnv (UnionType mTop (joinUnionType keptLs) consts) arr'
+        dropLocalArrowCalls t = t
+        hasLocalArrowSlot l = any (\(k, v) -> isJust (hoSlotInputObject k v)) (H.toList (ptArgs l))
         -- Only rewrite a body that directly CONSTRUCTS a data value (@Cons(head=x)@): its applied
         -- arguments are the constructor's fields. A function/operator body (@a && b@, @f(a=..)@) has
         -- applied arguments that are the callee's parameters, not the result's fields, so leave it.
@@ -541,7 +582,7 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
         -- however, always applies the argument, so at dispatch the field settles to what the
         -- callee's arrows produce.
         reduceApplied = reduceAppliedType typeEnv vaenv
-arrowDestTypeBase _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
+arrowDestTypeBase _ _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
 
 -- | What a term settles to once applied: each leaf the type graph rewrites is replaced by what
 -- its arrows produce; a leaf no arrow accepts (a data construction, a curried partial

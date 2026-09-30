@@ -24,7 +24,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /lst -> $/F } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
                                 }
                             ) -> $/F[ /T=$_/B ]
                         ]
@@ -44,29 +44,18 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Functor[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/Functor/fmap
-                                ( /fn( /v=TopType )=TopType
-                                , /lst=∀/Data/Functor[ /T=TopType ]
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/Functor[ /T=TopType ] =
                             ( /Data/Functor/fmap
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } )=
+                                        ( EAppArg { eaaArg = Value /v } ) -> $_/B =
                                         ( /fn
                                             ( EAppArg
                                                 { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ TopType
+                                            ) ↦ $_/B
                                         )
                                     }
                                 ) ↦ ∀/Data/Functor[ /T=TopType ]
@@ -84,27 +73,7 @@ Prgm
                         [ /strMaybe
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Functor[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /applyInc
-                                    ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
-                                    , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    ) + /Data/Functor/fmap
-                                    [ /F=∀/Data/Functor[ /T=TopType ]
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/Functor[ /T=TopType ]
-                                    )
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/Functor[ /T=TopType ] =
                             ( /applyInc
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -118,22 +87,7 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Semigroup
                                         )
                                     }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Functor[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Functor/fmap
-                                    [ /F=∀/Data/Functor[ /T=TopType ]
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/Functor[ /T=TopType ]
-                                    )
-                                , []
-                                )
+                                ) ↦ ∀/Data/Functor[ /T=TopType ]
                             )
                         ]
                     }
@@ -161,27 +115,7 @@ Prgm
                         [ /incMaybe
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Functor[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /applyInc
-                                    ( /fn( /v=TopType )=/Data/Primitive/Integer
-                                    , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    ) + /Data/Functor/fmap
-                                    [ /F=∀/Data/Functor[ /T=TopType ]
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/Functor[ /T=TopType ]
-                                    )
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/Functor[ /T=TopType ] =
                             ( /applyInc
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -198,22 +132,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Functor[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Functor/fmap
-                                    [ /F=∀/Data/Functor[ /T=TopType ]
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/Functor[ /T=TopType ]
-                                    )
-                                , []
-                                )
+                                ) ↦ ∀/Data/Functor[ /T=TopType ]
                             )
                         ]
                     }

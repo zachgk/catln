@@ -1202,9 +1202,9 @@ instance Show m => Show (TExpr m) where
 type ObjSrc = (PartialType, EObjArr)
 
 resArrowDestType :: (TypeGraph tg) => TypeEnv tg -> PartialType -> TCallTree -> [Type]
-resArrowDestType typeEnv src (TCObjArr oa) = arrowDestTypeDispatch typeEnv src oa
+resArrowDestType typeEnv src (TCObjArr oa) = arrowDestTypeDispatch typeEnv H.empty src oa
 resArrowDestType _ _ (TCPrim oa _) = [getMetaType $ getOaArrM oa]
-resArrowDestType typeEnv src (TCMacro oa _) = arrowDestTypeDispatch typeEnv src oa
+resArrowDestType typeEnv src (TCMacro oa _) = arrowDestTypeDispatch typeEnv H.empty src oa
 -- resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
 resArrowDestType _ _ (TCArg tp _) = [tp]
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)

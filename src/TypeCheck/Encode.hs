@@ -88,6 +88,8 @@ makeBaseFEnv instruments prgm = FEnv{
   feInputArrowNames = S.empty,
   feLocalDefNames = S.empty,
   feEnvStamp = 0,
+  feCallArrs = IM.empty,
+  feBatchDeclVars = H.empty,
   feConMemo = IM.empty,
   feInstruments = instruments
   }
@@ -184,10 +186,14 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       let eqReqActs = [EqReqAct 34 arrM' | EncodeIn <- [est], Just (_, arrM') <- [oaArr arg']]
       let constraints = case (est, oaObj arg', oaArr arg') of
             (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
-              -- Output with (x=x)
+              -- Output with (x=x). A higher-order argument (@fn(v)= body@) is an Obj/Arrow pair
+              -- the call adds to its environment ('attachCallArrs'), so its slot holds the INPUT
+              -- OBJECT — the lambda's pattern @fn(v)@ — and its result is the arrow's: the call's
+              -- requirement on the slot (the callee's declared @fn(v -> $_A)@) reaches the
+              -- pattern, and through it the parameters.
               [
                             AddArg 8 (baseM', TVArg $ inExprSingleton obj) m',
-                            PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
+                            PropEq 11 (m', TVArg $ inExprSingleton obj) (hoSlotPoint obj arrM')
                             ]
               -- A lambda argument (@fn(v)= v@): each of its parameters is typed by the callee's
               -- declared input type for that position (@fn(v -> $_A)@), resolved per call site
@@ -222,10 +228,12 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
               -- Input with (x -> T), and the higher-order parameter pattern @fn(v)@ whose head
               -- names the argument it fills. Both name their argument through their own key
-              -- ('inExprSingleton'), so it is added by that name like any other.
+              -- ('inExprSingleton'), so it is added by that name like any other. A higher-order
+              -- parameter's slot holds its INPUT OBJECT (@fn(/v=$_A)@) — its declared result is
+              -- the arrow the parameter adds to the body's environment ('mkReachesEnv').
               [
                         AddArg 24 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
-                        PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
+                        PropEq 25 (m', TVArg $ inExprSingleton obj) (hoSlotPoint obj arrM')
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
       modify $ addConstraints (constraints ++ eqReqActs)
@@ -258,7 +266,25 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   modify $ addConstraints $ case est of
     EncodeOut{} -> [BoundedByObjs 9 m' PTopType]
     EncodeIn{}  -> [BoundedByObjs 17 m' PTopType]
+  -- The higher-order arguments this call level is given — its own and every level of its base
+  -- (a curried @f(a)(fn(v)= ..)(b)@ is the call at each level) — are Obj/Arrow pairs the call
+  -- adds to its environment: each lambda's pattern is an object whose arrow is its body. Recorded
+  -- against the level's point and attached to the constraints reading it at finalization.
+  case (est, getPnt m') of
+    (EncodeOut{}, Just p) -> do
+      baseArrs <- gets (\e -> maybe [] (\bp -> IM.findWithDefault [] bp (feCallArrs e)) (getPnt (getExprMeta baseExpr')))
+      let ownArrs = [ oa | EAppArg oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} <- [arg''], not (null (exprAppliedArgs obj)) ]
+      unless (null (baseArrs ++ ownArrs)) $ modify $ \e -> e{feCallArrs = IM.insert p (ownArrs ++ baseArrs) (feCallArrs e)}
+    _ -> return ()
   return $ TupleApply m' (baseM', baseExpr') arg''
+
+-- | The point an argument's slot is read from: a higher-order argument (its object applied to
+-- parameters, @fn(v)@) contributes its INPUT OBJECT — the pattern's own point — while any other
+-- argument contributes its value ('arrM').
+hoSlotPoint :: VExpr -> VarMeta -> VarMeta
+hoSlotPoint obj arrM
+  | not (null (exprAppliedArgs obj)) = getExprMeta obj
+  | otherwise                        = arrM
 
 -- | Non-linear matching: when a pattern binds one variable to several argument positions
 -- (e.g. @f(a@x, b@x)@), those positions must share a type. Encode that by equating their type
@@ -289,10 +315,17 @@ annotSeedConstraints = map (\a -> BoundedByKnown 46 (getExprMeta a) (relTypeAppl
 -- (@Node(left, key, value, right)@ resolves only @right@), the definition body reads ⊤
 -- args, and the constructed value fails TreeBuild against its declared slots — the
 -- curried-layer starvation behind the order-independent @==@ examples.
-topArgPropEqs :: VExpr -> [VConstraintDat]
-topArgPropEqs obj' =
-  [ PropEq 47 (getExprMeta obj', TVArg $ inExprSingleton nObj) nArrM
-  | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj' ]
+--
+-- A higher-order argument's slot is its input object, read from its pattern ('hoSlotPoint'); its
+-- result point is the arrow the argument adds to the body's environment, never the slot. A
+-- destructuring pattern (@Box(v)@, whose head names a defined type) is not higher-order: its slot
+-- is its value, as the per-layer handling in 'fromExpr' reads it ('patternHeadIsDefined').
+topArgPropEqs :: S.HashSet Name -> VExpr -> [VConstraintDat]
+topArgPropEqs definedNames obj' =
+  [ PropEq 47 (getExprMeta obj', TVArg $ inExprSingleton nObj) slot
+  | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj'
+  , let slot | S.member (makeAbsoluteName $ exprPath nObj) definedNames = nArrM
+             | otherwise                                             = hoSlotPoint nObj nArrM ]
 
 -- | The absolute names that something in the program defines: the declared types and values of
 -- the typechecked type graph, plus those the batch being encoded is adding ('feLocalDefNames').
@@ -319,7 +352,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- case oaObj of
     Just inExpr -> do
       inExpr' <- fromExpr (asEncodeIn est) inExpr
-      modify $ addConstraints $ topArgPropEqs inExpr'
+      modify $ addConstraints $ topArgPropEqs definedNames inExpr'
       return $ Just inExpr'
     Nothing -> return Nothing
   modify $ addConstraints $ maybe [] nonLinearEqConstraints oaObj'
@@ -355,7 +388,9 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
           -- @m= Node(left, key@nk, ..)@) is an object spine too — its binders need the
           -- complete-form links just like a definition object's.
           case est of
-            EncodeIn -> modify $ addConstraints $ topArgPropEqs argExpr'
+            EncodeIn -> do
+              argDefinedNames <- getDefinedNames
+              modify $ addConstraints $ topArgPropEqs argDefinedNames argExpr'
             _        -> return ()
           return $ Just (Just argExpr', arrM')
         Nothing -> do
@@ -449,7 +484,8 @@ fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
   modify startConstrainBlock
   obj' <- fromExpr inEst obj
   modify $ addConstraints $ nonLinearEqConstraints obj'
-  modify $ addConstraints $ topArgPropEqs obj'
+  objDefinedNames <- getDefinedNames
+  modify $ addConstraints $ topArgPropEqs objDefinedNames obj'
   -- The input arguments' 'EqReqAct' constraints (tying each arg's actual down to its requirement)
   -- are emitted per-argument in 'fromExpr' (the Tuple-arg handling), covering every argument form.
 
@@ -482,7 +518,18 @@ fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
   let annotTys = [getMetaType m | ObjArr{oaArr=Just (_, m)} <- exprAppliedArgs obj']
               ++ [getMetaType m | (_, m) <- maybeToList oaArr']
   let scopeBase = H.fromList [(k, PTopType) | k <- H.keys explicitVaenv]
-  let implicitVs = S.toList $ S.unions $ map (outOfScopeTVExtVars scopeBase) annotTys
+  -- The object is read as its declarations augment it ('BoundedByObjs', the declaration taking
+  -- precedence): a variable its declarations apply that it does not bind itself — the declared
+  -- result of a higher-order argument (@applyInc[.., $B](.., fn(v -> $_A) -> $_B)@'s @$_B@), which
+  -- an unannotated definition's @fn(v)@ arrow returns — is one of its own variables too, so a
+  -- result spelled in it stays a link (bound per call at dispatch) rather than the ⊤ it would
+  -- read as out of scope.
+  let objName = makeAbsoluteName (exprPath obj')
+  batchDeclVars <- gets (H.lookupDefault S.empty objName . feBatchDeclVars)
+  ObjectMap tTg <- gets feTTypeGraph
+  let depDeclVars = S.unions [ declArgResultVars decl | decl@ObjArr{oaObj=Just{}} <- maybe [] omiDecls (H.lookup objName tTg) ]
+  let declVs = S.toList $ S.difference (S.union batchDeclVars depDeclVars) (S.fromList (H.keys explicitVaenv))
+  let implicitVs = S.toList $ S.union (S.fromList declVs) $ S.unions $ map (outOfScopeTVExtVars scopeBase) annotTys
   implicitVaenv <- fmap H.fromList $ forM implicitVs $ \v -> do
     p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
     let vm = Meta PTopType (getMetaPos $ getExprMeta obj') nil (mkVarMetaDat inEst p)
@@ -516,16 +563,56 @@ addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgm
 fromPrgmsFragment :: [PPrgm] -> (TObjectMap, H.HashMap TypeName [Int]) -> StateT FEnv TypeCheckResult ([VPrgm], [VConstraint])
 fromPrgmsFragment pprgms (tobjMapRec, tPrecedenceMap) = do
   accumCons <- gets feCons
-  modify $ \e -> e{feCons=[]}
+  modify $ \e -> e{feCons=[], feBatchDeclVars = H.unionWith S.union (declVarsOf pprgms) (feBatchDeclVars e)}
   vprgms <- mapM fromPrgm pprgms
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tobjMapRec tPrecedenceMap
   -- Last, once every constraint (including the universe's, added just above) is in: hand the
   -- solver the list in the order values flow through it rather than the reverse the O(1)
   -- accumulator built. See 'finalizeConstraints'.
   modify finalizeConstraints
+  modify attachCallArrs
   fragCons <- gets feCons
   modify $ \e -> e{feCons = accumCons ++ fragCons}
   return (vprgms, fragCons)
+
+-- | Give each constraint that reads a call the arrows that call adds to its environment: an
+-- 'ArrowTo' whose source is a call point carries that call's higher-order arguments
+-- ('feCallArrs'), so its reach resolves the call's @fn(v)@ input objects through them. Scoped per
+-- call: two calls in one definition that each pass a @fn(v)@ keep their lambdas apart.
+attachCallArrs :: FEnv -> FEnv
+attachCallArrs env@FEnv{feCons, feCallArrs}
+  | IM.null feCallArrs = env
+  | otherwise = env{feCons = map attach feCons}
+  where
+    attach con@Constraint{conDat=ArrowTo _ src _}
+      | Just p <- getPnt src, Just arrs <- IM.lookup p feCallArrs = con{conCallArrs = arrs}
+    attach con = con
+
+-- | The type variables each name's declarations give their higher-order arguments' RESULTS
+-- (@applyInc[.., $B](.., fn(v -> $_A) -> $_B)@'s @/B@), over the programs being encoded. These are
+-- what a definition reads its unannotated @fn(v)@ arrow as returning, so they join its scope; the
+-- declaration's other variables (a class parameter an argument is typed by) are not the
+-- definition's and are left alone.
+declVarsOf :: [PPrgm] -> H.HashMap TypeName (S.HashSet TypeVarAux)
+declVarsOf pprgms = H.fromListWith S.union
+  [ (makeAbsoluteName name, declArgResultVars decl)
+  | Prgm{prgmObjMap=ObjectMap om} <- pprgms
+  , (name, omi) <- H.toList om
+  , decl@ObjArr{oaObj=Just{}} <- omiDecls omi ]
+
+-- | The variables a declaration's higher-order arguments' declared results reference.
+declArgResultVars :: (MetaDat m, Show m) => ObjArr Expr m -> S.HashSet TypeVarAux
+declArgResultVars decl = S.unions
+  [ typeVarRefs (getMetaType aM)
+  | ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
+  , not (null (exprAppliedArgs aObj)) ]
+  where
+    typeVarRefs t = case t of
+      TypeVar v@TVVar{} _ _                -> S.singleton v
+      TypeVar (TVApplied b@TVVar{} _) _ _  -> S.singleton b
+      _                                    -> S.filter isVar (outOfScopeTVExtVars H.empty t)
+    isVar TVVar{} = True
+    isVar _       = False
 
 fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
 fromPrgms pprgms tprgms = do

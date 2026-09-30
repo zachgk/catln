@@ -99,6 +99,8 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feInputArrowNames    :: S.HashSet Name -- ^ Per-epoch cache of 'typeGraphInputEmbeddedNames' on the reaches env: every name embedded in some arrow object's input spelling — the forms some arrow can accept UNSETTLED. A rewritable form whose name is absent has no consuming arrow anywhere, so deferring it past its own rewrite frontier is meaningless ('arrowConstrainUbs'\'s consumption-dest settle forcing). Recomputed when the per-epoch env inputs change (same guard as 'feUniverseKey').
                  , feLocalDefNames      :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
                  , feEnvStamp           :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feUniverseKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
+                 , feBatchDeclVars      :: H.HashMap TypeName (S.HashSet TypeVarAux) -- ^ The type variables the declarations of each name being encoded apply (@applyInc[$F, $A, $B]@'s @/F@, @/A@, @/B@). A definition is read as its declarations augment it, so a variable only its declaration spells (a higher-order argument's declared result @$_B@) is registered in the definition's own scope ('TypeCheck.Encode.fromObjectMap').
+                 , feCallArrs           :: IM.IntMap [VObjArr] -- ^ Per call point (a 'TupleApply' level encoded in output position), the higher-order arguments given at that level or any level of its base — the lambdas the call adds to its environment. Attached to the constraints reading that call ('conCallArrs') when the fragment's constraints are finalized.
                  , feConMemo            :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
                  , feInstruments        :: [AnyInstrument] -- ^ What is watching this solve, in the order it was asked for. The solve does not read them and behaves identically whichever are attached; what they kept is read off here once it is over ('instrumentResults') or while it is failing ('instrumentDiagnostics'). Empty is a solve nothing is watching.
                  } deriving (Show)
@@ -134,9 +136,13 @@ data ConstraintDat p
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
 data Constraint p = Constraint {
-  conOs    :: [VObjArr],
-  conVaenv :: CVarArgEnv p,
-  conDat   :: ConstraintDat p
+  -- | The arrows this constraint's CALL adds to its environment: each higher-order argument
+  -- the call is given (a lambda @fn(v)= body@) is an Obj/Arrow pair — object the lambda's
+  -- pattern, result its body — in scope for the call alone ('TypeCheck.TypeUtils.mkReachesEnv').
+  conCallArrs :: [VObjArr],
+  conOs       :: [VObjArr],
+  conVaenv    :: CVarArgEnv p,
+  conDat      :: ConstraintDat p
                                }
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 type VConstraintDat = ConstraintDat VarMeta
@@ -147,13 +153,13 @@ type RConstraint = Constraint SType
 type RConstraintDat = ConstraintDat SType
 
 mapMCon :: Monad m => (p1 -> m p2) -> Constraint p1 -> m (Constraint p2)
-mapMCon f (Constraint oas vaenv dat) = do
+mapMCon f (Constraint arrs oas vaenv dat) = do
   vaenv' <- forM vaenv $ \(va, vb) -> do
     va' <- f va
     vb' <- f vb
     return (va', vb')
   dat' <- mapMConDat f dat
-  return $ Constraint oas vaenv' dat'
+  return $ Constraint arrs oas vaenv' dat'
 
 mapMConDat :: Monad m => (p1 -> m p2) -> ConstraintDat p1 -> m (ConstraintDat p2)
 mapMConDat f (EqualsKnown i p t) = do
@@ -335,7 +341,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)
 
 instance (Show p) => Show (Constraint p) where
-  show (Constraint _ _ d) = show d
+  show (Constraint _ _ _ d) = show d
 
 instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult [] r) = show r
@@ -392,10 +398,10 @@ constraintDatMetas conDat = execWriter $ mapMConDat f conDat
         return p
 
 constraintMetas :: Constraint p -> [p]
-constraintMetas (Constraint _ _ d) = constraintDatMetas d
+constraintMetas (Constraint _ _ _ d) = constraintDatMetas d
 
 constraintVarArgEnvIO :: Constraint p -> CVarArgEnv p
-constraintVarArgEnvIO (Constraint _ vaenv _) = vaenv
+constraintVarArgEnvIO (Constraint _ _ vaenv _) = vaenv
 
 constraintVarArgEnv :: Constraint p -> COVarArgEnv p
 constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
@@ -419,7 +425,7 @@ getPnt Meta{getMetaDat=VarMetaDat p _} = p
 -- lands only on the following (reversed) epoch, and every such pair costs an epoch it should
 -- not. A list here reads in flow order and runs in flow order.
 addConstraints :: [VConstraintDat] -> FEnv -> FEnv
-addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (reverse (map (Constraint [] H.empty) newCons) ++ curCons):parentCons}
+addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (reverse (map (Constraint [] [] H.empty) newCons) ++ curCons):parentCons}
 addConstraints _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in addConstraints"
 
 -- | Starts a block of constraints, adding it to the block stack, where each block is associated with an ObjArr and its varargs
@@ -429,8 +435,8 @@ startConstrainBlock env@FEnv{feConsDats} = env{feConsDats=[]:feConsDats}
 
 -- | Ends  the constraint block, popping it off the stack and adding its contents to either the block underneath or to the list of finished constraints
 endConstraintBlock :: Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv -> FEnv
-endConstraintBlock oa vaenv env@FEnv{feConsDats=[newCons], feCons} = env{feConsDats=[], feCons = map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) newCons ++ feCons}
-endConstraintBlock oa vaenv env@FEnv{feConsDats=d1:d2:ds} = env{feConsDats=(map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
+endConstraintBlock oa vaenv env@FEnv{feConsDats=[newCons], feCons} = env{feConsDats=[], feCons = map (\(Constraint arrs oas vaenvs d) -> Constraint arrs (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) newCons ++ feCons}
+endConstraintBlock oa vaenv env@FEnv{feConsDats=d1:d2:ds} = env{feConsDats=(map (\(Constraint arrs oas vaenvs d) -> Constraint arrs (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
 endConstraintBlock _ _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in endConstraintBlock"
 
 -- | Puts the encoded constraints into DATAFLOW ORDER, which is the order 'TypeCheck.Encode'

@@ -99,14 +99,17 @@ syntaxTreeTests getCtss = testCase "a run is read by the functions its page writ
   lineValues names "Then" sign @?= [Just (IntVal 1)]
   lineValues names "Else" sign @?= []
 
-  -- An fmap over a list, whose function is a call of total per element: the calls of total are made
-  -- under the library's fmap, not by totals itself, and each is a call of total all the same.
+  -- An fmap over a list, whose function is a call of total per element. totals returns what can be
+  -- converted into its declared list — the fmap unapplied — and the caller that needs the list
+  -- applies it: the calls of total are made under the library's fmap, made by main rather than by
+  -- totals, and each is a call of total all the same.
   totals <- callOf names "totals" (scCalls mainCall)
   -- Two statements are written as shifted -- the line, and the result reading it -- and each was
-  -- evaluated once, to what the map came to.
+  -- evaluated once.
   length (lineValues names "shifted" totals) @?= 2
   let callsUnder SyntaxCall{scCalls} = scCalls ++ concatMap callsUnder scCalls
-  length [c | c@SyntaxCall{scStmt} <- callsUnder totals, H.lookup scStmt names == Just "total"] @?= 2
+  let named n SyntaxCall{scStmt} = H.lookup scStmt names == Just n
+  length [c | f <- scCalls mainCall, named "/Data/Functor/fmap" f, c <- callsUnder f, named "total" c] @?= 2
 
   -- The bind's continuation is the rest of bump: the bound value, and the lines after it.
   bump <- callOf names "bump" (scCalls mainCall)

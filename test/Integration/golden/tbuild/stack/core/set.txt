@@ -533,23 +533,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /acc -> UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                                    , fromList []
-                                                    , []
-                                                    )
-                                                , /Data/Set/MkSet
-                                                    ( /map=∀/Data/Map
-                                                        [ /K=TopType
-                                                        , /V=TopType
-                                                        ]
-                                                    )
-                                                , []
-                                                )
-                                            }
-                                        )
+                                        ( EAppArg { eaaArg = Value /acc } )
                                         ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
@@ -691,20 +675,20 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
                                         ( /operator==
                                             ( EAppArg
-                                                { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
                                                     ( /size
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                                        ) ↦ ∀/Data/Algebra/Eq
+                                                        ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> ∀/Data/Algebra/Eq =
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
                                                     ( /size
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                                        ) ↦ ∀/Data/Algebra/Eq
+                                                        ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
                                             ) ↦ ∀/Data/Primitive/Boolean
@@ -745,11 +729,11 @@ Prgm
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
                                         ( /size
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                            ) ↦ ∀/Data/Algebra/Eq
+                                            ) ↦ /Data/Primitive/Integer
                                         )
                                     }
                                 )
@@ -1841,7 +1825,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
@@ -2176,7 +2160,7 @@ Prgm
                                     )
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -3581,7 +3565,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -4256,7 +4240,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -4644,7 +4628,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -5160,7 +5144,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -6237,7 +6221,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -6912,7 +6896,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )

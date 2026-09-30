@@ -48,7 +48,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
                                 }
                             )
                             ( EAppArg { eaaArg = Value /init -> $/B } ) -> $_/B
@@ -83,7 +83,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /init } )=
+                            ( EAppArg { eaaArg = Value /init } ) -> $_/B =
                             ( /fn
                                 ( EAppArg
                                     { eaaArg = Value /acc=
@@ -94,14 +94,14 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = /fn
                                                     ( EAppArg { eaaArg = Value /acc } )
-                                                    ( EAppArg { eaaArg = Value /v } )=
+                                                    ( EAppArg { eaaArg = Value /v } ) -> $_/B =
                                                     ( /fn
                                                         ( EAppArg
                                                             { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                        ) ↦ TopType
+                                                        ) ↦ $_/B
                                                     )
                                                 }
                                             )
@@ -113,7 +113,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                ) ↦ TopType
+                                ) ↦ $_/B
                             )
                         ]
                     }
@@ -152,26 +152,7 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /useI
-                            ( EAppArg
-                                { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /a } ) -> /Data/Primitive/Integer
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                            ( /fn
-                                ( EAppArg
-                                    { eaaArg = Value /a -> /Data/Primitive/Integer =
-                                        ( /gidI
-                                            ( EAppArg
-                                                { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                ) ↦ /Data/Primitive/Integer
-                            )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -186,7 +167,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /a -> $_/B } ) -> $/B
+                                    ( EAppArg { eaaArg = Value /a -> $_/B } ) -> $_/B
                                 }
                             )
                             ( EAppArg { eaaArg = Value /x -> $/B } ) -> $_/B
@@ -200,7 +181,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /a } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /x } )=
+                            ( EAppArg { eaaArg = Value /x } ) -> $_/B =
                             ( /fn
                                 ( EAppArg
                                     { eaaArg = Value /a=
@@ -210,7 +191,7 @@ Prgm
                                             ) ↦ TopType
                                         )
                                     }
-                                ) ↦ TopType
+                                ) ↦ $_/B
                             )
                         ]
                     }
@@ -264,7 +245,7 @@ Prgm
                     ( /useG
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                ( EAppArg { eaaArg = Value /a } ) -> /Data/Primitive/Integer =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -373,7 +354,7 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                                ( EAppArg { eaaArg = Value /acc } )
                                 ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
                                 ( /operator+
                                     ( EAppArg
@@ -403,9 +384,7 @@ Prgm
                         ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg
-                                    { eaaArg = Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) }
-                                )
+                                ( EAppArg { eaaArg = Value /acc } )
                                 ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
                                 ( /operator+
                                     ( EAppArg
@@ -464,7 +443,7 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /acc -> ∀/Data/Algebra/Semigroup } )
+                                ( EAppArg { eaaArg = Value /acc } )
                                 ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Algebra/Semigroup =
                                 ( /operator++
                                     ( EAppArg

@@ -292,22 +292,7 @@ Prgm
                         [ /Data/Set/removeAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )= /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
-                            ( /fn
-                                ( Value /acc -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Set/MkSet
-                                        ( /map=∀/Data/Map
-                                            [ /K=TopType
-                                            , /V=TopType
-                                            ]
-                                        )
-                                    , []
-                                    )
-                                )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
+                            ( /fn( Value /acc )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
@@ -382,8 +367,8 @@ Prgm
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
-                                ( Value /l -> ∀/Data/Algebra/Eq = /size( Value /s -> TVArg /a = Value /a ) )
-                                ( Value /r -> ∀/Data/Algebra/Eq = /size( Value /s -> TVArg /b = Value /b ) )
+                                ( Value /l -> /Data/Primitive/Integer = /size( Value /s -> TVArg /a = Value /a ) )
+                                ( Value /r -> /Data/Primitive/Integer = /size( Value /s -> TVArg /b = Value /b ) )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Set/isSubsetOf( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b ) )
                         ]
@@ -401,7 +386,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/isEmpty
                             ( Value /s -> ∀/Data/Set[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean = /operator==
-                            ( Value /l -> ∀/Data/Algebra/Eq = /size( Value /s -> TVArg /s = Value /s ) )
+                            ( Value /l -> /Data/Primitive/Integer = /size( Value /s -> TVArg /s = Value /s ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )
@@ -1013,7 +998,7 @@ Prgm
                 { csValue = "Adding the same item twice leaves the size at one — a set holds each item at most once." }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /size
+            ( Value /p -> /Data/Primitive/Integer = /size
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1912,7 +1897,7 @@ Prgm
                 { csValue = "## Union" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /size
+            ( Value /p -> /Data/Primitive/Integer = /size
                 ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/union
                     ( Value /a -> UnionType
                         ( Just
@@ -2446,7 +2431,7 @@ Prgm
                 { csValue = "## Difference" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /size
+            ( Value /p -> /Data/Primitive/Integer = /size
                 ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/difference
                     ( Value /a -> UnionType
                         ( Just
@@ -3246,7 +3231,7 @@ Prgm
                 { csValue = "## Intersection" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /size
+            ( Value /p -> /Data/Primitive/Integer = /size
                 ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/intersection
                     ( Value /a -> UnionType
                         ( Just

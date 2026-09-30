@@ -38,11 +38,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/Monad/mmap
                                     [ /M=
-                                        ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                        ( TopType | PredClass /Data/Box[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
                                     , /A=TopType
                                     ]
-                                    ( /fn( /v=TopType )=
-                                        ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                    ( /fn( /v=TopType )=/fn( /v=TopType )
                                     , /m=
                                         ( TopType | PredClass /Data/Box[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
                                     ) =
@@ -50,11 +49,9 @@ Prgm
                                         ( EAppArg { eaaArg = Value /m -> ∀/Data/Box } )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } ) ->
-                                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                                ( EAppArg { eaaArg = Value /v } )
                                             }
-                                        ) ↦
-                                        ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                        ) ↦ TopType
                                     )
                                 }
                             ) -> /Show/Shown = Value /Show/Shown
@@ -125,8 +122,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Monad/mmap
@@ -137,16 +133,13 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) =
+                            ) -> $_/M =
                             ( /fn
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
+                                ) ↦ $_/M
                             )
                         , /Data/Monad/mmap
                             ( EAppArg
@@ -156,16 +149,13 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) ->
-                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) ->
-                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] ) =
+                            ) -> $_/M =
                             ( /fn
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                ) ↦
-                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                ) ↦ $_/M
                             )
                         ]
                     }
@@ -261,12 +251,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( /Data/Maybe/Some( /value=/Data/Primitive/Integer ) + /Data/Monad/mmap
-                        ( /fn( /v=TopType )=/Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                        , /m=/Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                        )
-                    ) =
+                { eaaArg = Value /p -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) =
                     ( /Data/Monad/mmap
                         ( EAppArg
                             { eaaArg = Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -282,7 +267,7 @@ Prgm
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 6 }
                                 )
                             }
-                        ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
                     )
                 }
             )

@@ -207,13 +207,13 @@ updateCOVarArgEnvAct :: TypeVarArgEnv -> CVarArgEnv SType -> CVarArgEnv SType
 updateCOVarArgEnvAct oVaenv' ioVaenv = H.intersectionWith (\(si, so) oAct' -> (si, so{stypeAct=oAct'})) ioVaenv oVaenv'
 
 computeConstraint :: FEnv -> RConstraint -> (Bool, RConstraint)
-computeConstraint env con@(Constraint _ vaenv (EqualsKnown i p tp)) = (True, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqualsKnown i stype' tp})
+computeConstraint env con@(Constraint _ _ vaenv (EqualsKnown i p tp)) = (True, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqualsKnown i stype' tp})
   where
     (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p, SType tp tp tp Nothing "")
-computeConstraint env con@(Constraint _ vaenv (EqPoints i p1 p2)) = (False, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqPoints i stype' stype'})
+computeConstraint env con@(Constraint _ _ vaenv (EqPoints i p1 p2)) = (False, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqPoints i stype' stype'})
   where
     (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p1, p2)
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@SType{stypeAct=act, stypeReq=req, stypeReqDecl=reqDecl} boundTp)) = (True, con{conDat=BoundedByKnown i (p{stypeAct=act', stypeReq=req', stypeReqDecl=reqDecl'}) boundTp})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (BoundedByKnown i p@SType{stypeAct=act, stypeReq=req, stypeReqDecl=reqDecl} boundTp)) = (True, con{conDat=BoundedByKnown i (p{stypeAct=act', stypeReq=req', stypeReqDecl=reqDecl'}) boundTp})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     boundTp' = relaxNameBoundArgs act $ case boundTp of
@@ -235,8 +235,8 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req (boundFor req)
     -- A known bound is a spelled type (annotation seeds enter here), so it is decl-origin.
     reqDecl' = intersectTypesEnv feTypeEnv (fmap (stypeReqDecl . snd) vaenv) reqDecl (boundFor reqDecl)
-computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
+computeConstraint _ con@(Constraint _ _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
@@ -293,12 +293,12 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@STy
     -- reuse the req result only when BOTH inputs match, so no cross-channel contamination.
     pReqDecl' | pReqDecl == pReq && declChanVaenv == reqChanVaenv = pReq'
               | otherwise = narrowChannel declChanVaenv pReqDecl
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
     (vaenv'', act') = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=UnionType (Just topData) posLeafs consts}))
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (NoReturnArg i p@SType{stypeAct=UnionType (Just topData) posLeafs consts}))
   | not (H.null posLeafs) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
@@ -308,7 +308,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
       UnionType Nothing pos' _ -> pos'
       _                        -> posLeafs
     act' = UnionType (Just topData) posLeafs' consts
-computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
+computeConstraint _ con@(Constraint _ _ _ NoReturnArg{}) = (False, con)
 -- An input argument actually IS whatever it is required to be, AND VICE VERSA: a declaration LHS is
 -- an input, so its actual and requirement denote the same thing and must agree. Meet the two and
 -- assign it to BOTH bounds. Pulling the actual down to the requirement gives it the requirement's
@@ -320,7 +320,7 @@ computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
 -- (and the ArrowTo reverse propagation) keep narrowing, this re-runs each epoch (returns False, not
 -- "done"); the meet only shrinks either bound (@act ∩ req ⊆ act@, @⊆ req@), so both stay monotone
 -- and a bare 'TypeVar' bound is preserved by the intersection.
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=meet, stypeReq=meet}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=meet, stypeReq=meet}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     -- A destructure pattern's field carries only the value inference gives it, which for a bare
@@ -361,24 +361,24 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{st
     -- ("still-unresolved vars stay symbolic") — so the meet is stored as computed. The one
     -- place a loss still happens is the property install ('updateTypeProp' restores it there).
     meet = meet1
-computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
+computeConstraint env con@(Constraint _ _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
-computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
+computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
   where
     (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
-computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (FnInputBound i (callP, fnKey, inKey) inp@SType{stypeAct=inpAct})) = (False, con{conDat=FnInputBound i (callP, fnKey, inKey) inp{stypeAct=inpAct'}})
+computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ _ (FnInputBound i (callP, fnKey, inKey) inp@SType{stypeAct=inpAct})) = (False, con{conDat=FnInputBound i (callP, fnKey, inKey) inp{stypeAct=inpAct'}})
   where
     inpAct' = case fnArgInputBound env (stypeAct callP) fnKey inKey of
       Just b  -> intersectTypes feTypeEnv inpAct b
       Nothing -> inpAct
-computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
+computeConstraint env con@(Constraint _ _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
-computeConstraint env con@(Constraint _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
+computeConstraint env con@(Constraint _ _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
   where
     dest' = addInferArgToScheme env (fmap snd vaenv) src dest
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argModeType venv t = if mode
@@ -389,7 +389,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src
     -- type as well as the actual (both are upper bounds — see 'SType'); mirror it on each side.
     destReq' = intersectTypes feTypeEnv (argModeType (fmap (stypeReq . snd) vaenv) srcReq) destReq
     destReqDecl' = intersectTypes feTypeEnv (argModeType (fmap (stypeReqDecl . snd) vaenv) srcReqDecl) destReqDecl
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (ConWhere i base cond res)) = (False, con{conDat=ConWhere i base cond res'}) -- TODO Currently using temp equals relationship, switch to actual constraint
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (ConWhere i base cond res)) = (False, con{conDat=ConWhere i base cond res'}) -- TODO Currently using temp equals relationship, switch to actual constraint
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     tp'' = case maybeGetSingleton (stypeAct cond) of
@@ -405,7 +405,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (ConWhere i base cond 
       Just tp' -> intersectTypesEnv feTypeEnv (fmap (stypeReqDecl . snd) vaenv) (stypeReqDecl res) $ typeAddPreds (stypeReqDecl base) (PredsOne $ PredExpr tp')
       Nothing -> stypeReqDecl res
     res' = res{stypeAct=tp'', stypeReq=tpReq'', stypeReqDecl=tpReqDecl''}
-computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
+computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeAct children
     chReq = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeReq children
@@ -414,7 +414,7 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent 
     (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq chReqDecl Nothing "")
 
 saveConstraint :: VConstraint -> RConstraint -> RConstraint -> FEnv -> FEnv
-saveConstraint con@(Constraint _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ vaenv' (UnionOf _ parent' _)) env = env''
+saveConstraint con@(Constraint _ _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ _ vaenv' (UnionOf _ parent' _)) env = env''
   -- TODO Delete special case of saveConstraint for UnionOf by fixing the bug
   where
     env' = setScheme env con (oldCon, newCon) parentPnt (return parent') "UnionOf"
@@ -462,7 +462,7 @@ executeConstraint cid con = do
       -- compared every execution — its object expressions carry every meta and source
       -- position, and comparing them was a third of a fragmented solve. The parts of the
       -- objects a compute actually reads are covered separately ('conOaResolveKey').
-      let conMemoKey = con'{conOs=[]}
+      let conMemoKey = con'{conOs=[], conCallArrs=[]}
       case IM.lookup cid conMemo of
         Just (ConMemo memoStamp memoCon memoOa memoPrune)
           | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey -> return memoPrune

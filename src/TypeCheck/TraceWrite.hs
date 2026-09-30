@@ -39,7 +39,7 @@ instance Show PntRef where
 
 -- | Render a constraint showing each meta as its point (e.g. @p5 -> p7@).
 showConPnts :: VConstraint -> String
-showConPnts (Constraint _ _ d) = show $ runIdentity $ mapMConDat (return . PntRef . getPnt) d
+showConPnts (Constraint _ _ _ d) = show $ runIdentity $ mapMConDat (return . PntRef . getPnt) d
 
 -- | The points referenced by a constraint.
 conPnts :: VConstraint -> [Pnt]

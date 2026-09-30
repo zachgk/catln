@@ -49,24 +49,7 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /tst
-                            ( EAppArg
-                                { eaaArg = Value /d -> /T( /x=TopType ) = /T
-                                    ( EAppArg { eaaArg = Value /x } )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = /f
-                                    ( EAppArg { eaaArg = Value /y } ) -> ∀/Data/Primitive/Boolean
-                                }
-                            ) -> ∀/Data/Primitive/Boolean =
-                            ( /f
-                                ( EAppArg
-                                    { eaaArg = Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ ∀/Data/Primitive/Boolean
-                            )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ]

@@ -35,13 +35,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /f2[ /B : TopType ]
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> $/B )( Value /init -> $/B ) -> $_/B
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> $_/B )( Value /init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /f2
-                            ( /fn( Value /v ) )( Value /init )= /fn
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) )( Value /init ) -> $_/B = /fn
                             ( Value /v -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )
@@ -68,13 +68,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /f1[ /B : TopType ]
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> $/B )( Value /init -> $/B ) -> $_/B
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> $_/B )( Value /init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /f1
-                            ( /fn( Value /v ) )( Value /init ) -> TVArg /init = Value /init
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) )( Value /init ) -> TVArg /init = Value /init
                         ]
                     }
                 )

@@ -34,7 +34,7 @@ Prgm
                     , omiDefs =
                         [ /tst
                             ( Value /d -> /T( /x=TopType ) = /T( Value /x ) )
-                            ( /f( Value /y ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /f( Value /y -> TVArg /x = Value /x )
+                            ( /f( Value /y ) ) -> ∀/Data/Primitive/Boolean = /f( Value /y -> TVArg /x = Value /x )
                         ]
                     }
                 )

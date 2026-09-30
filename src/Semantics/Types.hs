@@ -733,6 +733,12 @@ class TypeGraph tg where
   -- arrow and so starts at 'PTopType', refining as inference narrows its arms.
   typeGraphDeclaredResult :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 
+  -- | The declared RESULT of each higher-order argument of a name's declarations
+  -- (@fn(v -> $_A) -> $_B@ gives @(fn(v), $_B)@). A higher-order argument's slot holds its input
+  -- object; its result is the arrow it adds to the environment, which a definition reads as its
+  -- declaration gives it — the declaration takes precedence, as it does over the object.
+  typeGraphDeclaredArgResults :: TypeEnv tg -> TypeName -> [(ArgName, Type)]
+
   -- | The declared arg-name sets for a type name, one keyset per object declaration (data
   -- AND function objects, unlike 'typeGraphData'). An instance's args are always a subset
   -- of some declared arg-set (partial application never adds args), so these bound the
@@ -769,6 +775,7 @@ instance TypeGraph EmptyTypeGraph where
   typeGraphExpandPredExpr _ _ _ = Nothing
   typeGraphData _ _ = []
   typeGraphDeclaredResult _ _ _ = PTopType
+  typeGraphDeclaredArgResults _ _ = []
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
 typeGraphQuery typeEnv vaenv src = map (\(_, _, dest) -> dest) $ typeGraphQueryWithReason typeEnv vaenv src
@@ -8942,11 +8949,22 @@ hoSlotInputObject argName t = case maybeGetSingleton t of
 -- does not hold an input object is already the result and is returned unchanged; an input object
 -- no arrow in the environment accepts returns ⊤ — its result is unknown here, not the object.
 hoSlotResult :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> ArgName -> Type -> Type
+--
+-- What an argument returns is never an unreduced call of an argument named like itself (the rule
+-- 'NoReturnArg' applies to an arm's result). A lambda forwarding an enclosing parameter of the
+-- same name (@allBy(lst, fn(v))= ..fmap(.., fn(v)= fn(v= v))@) has a result that keeps the raw
+-- @fn(/v=..)@ form beside its reach, as any term may stay unrewritten. That raw form names the
+-- OUTER argument, whose reach is already in the union, but in the call's environment the
+-- lambda is the arrow named @fn@, so it would resolve back to itself. It is dropped.
 hoSlotResult typeEnv vaenv argName t = case hoSlotInputObject argName t of
   Just inObj -> case typeGraphQueryWithReason typeEnv vaenv inObj of
     []    -> PTopType
-    dests -> unionAllTypesWithEnv typeEnv vaenv [dest | (_, _, dest) <- dests]
+    dests -> dropSelfCalls $ unionAllTypesWithEnv typeEnv vaenv [dest | (_, _, dest) <- dests]
   Nothing -> t
+  where
+    dropSelfCalls (UnionType mTop leafs consts) =
+      UnionType mTop (joinUnionType [l | l <- splitUnionType leafs, isNothing (hoSlotInputObject argName (singletonType l))]) consts
+    dropSelfCalls r = r
 
 typeSetAux :: TypeVarAux -> Type -> PartialType -> PartialType
 typeSetAux (TVVar k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
@@ -9233,6 +9251,16 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- discovering @/T=Integer@ for dispatch).
                 (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVInt subI2 <- subType ->
                   Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt subI2) p
+                -- The same link one scope out: an external reference to a variable the
+                -- constraint's scope binds — a nested pattern's parameter annotated by the
+                -- enclosing declaration's variable (@fm[$A](.., fn(v -> $_A) -> $_B)@'s @fn(v)@
+                -- pattern) — is that declaration's variable, not its current bound. Resolved to
+                -- the bound (⊤ for an unconstrained @$A@) the pattern lost the link the call's
+                -- element evidence binds @$A@ through, and the declared input object reached the
+                -- call as @fn(/v=⊤)@. An external reference the scope does not bind still exits
+                -- as the ⊤ it denotes (the frame-exit rule above).
+                (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVExt subI2 <- subType, H.member (TVVar vn) vaenv ->
+                  Just $ typeSetAux propName (TypeVar (TVVar vn) TVExt subI2) p
                 (_, Just supTp) -> Just $ typeSetAux propName (resolvedMeet supTp met) p
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
           (vaenv', superType', subType)

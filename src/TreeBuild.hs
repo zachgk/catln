@@ -638,10 +638,33 @@ toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, o
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
+-- | The environment a call is built in: the program's, plus the arrows the call's own
+-- higher-order arguments add. Each lambda given along the call's application chain
+-- (@f(a)(fn(v)= body)@) is an Obj/Arrow pair — object its pattern @fn(/v=..)@, result its body —
+-- in scope for this call alone, so the callee's arm resolves the input object its @fn@ slot holds
+-- to the lambda's result ('hoSlotResult'). The same per-call scope the typechecker gives a call's
+-- constraints ('TypeCheck.Encode.attachCallArrs').
+withCallArrows :: TBEnv -> Expr TBMetaDat -> TBEnv
+withCallArrows env@TBEnv{tbTypeEnv} e = case callLambdas e of
+  []   -> env
+  lams -> let arrows = [ ObjArr (Just obj) ArgObj Nothing [] (Just (Nothing, arrM)) | ObjArr{oaObj=Just obj, oaArr=Just (_, arrM)} <- lams ]
+              objMap = objectMapFromList arrows
+              merged0 = mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> tbTypeEnv
+          in env{tbTypeEnv = merged0{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph merged0))}}
+
+-- | The lambdas given along a call's application chain (@f(a)(fn(v)= body)@): each argument whose
+-- object is applied to parameters and which has a body.
+callLambdas :: Expr TBMetaDat -> [ObjArr Expr TBMetaDat]
+callLambdas (TupleApply _ (_, be) arg) = case arg of
+  EAppArg oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} | not (null (exprAppliedArgs obj)) -> oa : callLambdas be
+  _ -> callLambdas be
+callLambdas _ = []
+
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show (getMetaType m)) (show $ map fst os)) False = undefined
-toTExprDest env@TBEnv{tbTypeEnv} os e m = do
-  e' <- toTExpr env os e
+toTExprDest env0@TBEnv{tbTypeEnv} os e m = do
+  e' <- toTExpr env0 os e
+  let env = withCallArrows env0 e
   let srcT = getMetaType $ getExprMeta e'
   ct <- buildCallTree env os S.empty PTopType MayHold srcT (getMetaType m)
   -- A reference to an argument of the enclosing definition — bare (@= v@) or applied
@@ -693,10 +716,10 @@ toTExprDest env@TBEnv{tbTypeEnv} os e m = do
         [v] -> Just v
         _   -> Nothing
     fromMacro f = do
-      macroResult <- f e (MacroData env os)
+      macroResult <- f e (MacroData env0 os)
       case macroResult of
         Left val -> return $ TCExpr (emptyMetaT $ singletonType $ getValPartialType val) val
-        Right e' -> toTExprDest env os e' m
+        Right e' -> toTExprDest env0 os e' m
 
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (TExpr TBMetaDat, [TExpr TBMetaDat])))
 -- buildArrow _ src oa | trace (printf "buildArrow %s: %s" (show src) (show oa)) False = undefined

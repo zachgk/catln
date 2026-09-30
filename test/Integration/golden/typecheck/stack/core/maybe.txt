@@ -40,15 +40,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( /fn( Value /v ) ->
-                                ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
-                            ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                            ( /fn( Value /v ) ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Monad/mmap
                             ( Value /m -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )
-                            ( /fn( Value /v ) ->
-                                ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) = /fn( Value /v -> TVArg /value = Value /value )
+                            ( /fn( Value /v ) ) -> $_/M = /fn( Value /v -> TVArg /value = Value /value )
                         ]
                     }
                 )
@@ -63,8 +58,8 @@ Prgm
                             ( /fn( Value /v ) ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Functor/fmap
                             ( Value /lst -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )
-                            ( /fn( Value /v ) ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
-                            ( Value /value= /fn( Value /v -> TVArg /value = Value /value ) )
+                            ( /fn( Value /v ) ) -> /Data/Maybe/Some( /value=$_/B ) = /Data/Maybe/Some
+                            ( Value /value -> $_/B = /fn( Value /v -> TVArg /value = Value /value ) )
                         ]
                     }
                 )

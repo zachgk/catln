@@ -56,13 +56,13 @@ Prgm
                     { omiDecls =
                         [ /headTo[ /B : TopType ][ /A : ∀/Data/Algebra/Eq ]
                             ( Value /lst -> ∀/Data/List[ /T=$_/A ] )
-                            ( /fn( Value /w -> $_/A ) -> $/B )( Value /dflt -> $/B ) -> $_/B
+                            ( /fn( Value /w -> $_/A ) -> $_/B )( Value /dflt -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /headTo( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( /fn( Value /w ) )( Value /dflt ) -> TVArg /dflt = Value /dflt
+                            ( /fn( Value /w -> ∀/Data/Algebra/Eq ) )( Value /dflt ) -> TVArg /dflt = Value /dflt
                         , /headTo
                             ( Value /lst -> /Data/List/Cons
                                 ( /head=TopType
@@ -70,7 +70,7 @@ Prgm
                                 )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons( Value /head )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
-                            ( /fn( Value /w ) )( Value /dflt )= /fn( Value /w -> TVArg /head = Value /head )
+                            ( /fn( Value /w -> ∀/Data/Algebra/Eq ) )( Value /dflt ) -> $_/B = /fn( Value /w -> TVArg /head = Value /head )
                         ]
                     }
                 )
@@ -79,13 +79,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /useEq[ /B : TopType ][ /A : ∀/Data/Algebra/Eq ]( Value /x -> $/A )
-                            ( /fn( Value /v -> $_/A ) -> $/B ) -> $_/B
+                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /useEq( Value /x -> ∀/Data/Algebra/Eq )
-                            ( /fn( Value /v ) )= /fn( Value /v -> TVArg /x = Value /x )
+                            ( /fn( Value /v -> ∀/Data/Algebra/Eq ) ) -> $_/B = /fn( Value /v -> TVArg /x = Value /x )
                         ]
                     }
                 )

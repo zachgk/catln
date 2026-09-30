@@ -328,7 +328,7 @@ pointScan env = do
 probeNarrow :: FEnv -> VConstraint -> IO ()
 probeNarrow env con0 = case stypeConstraint (showCon env con0) of
   TypeCheckResE _ -> putStrLn "  probeNarrow: unresolvable view"
-  TypeCheckResult _ con'@(Constraint _ vaenv (BoundedByObjs _ SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) -> do
+  TypeCheckResult _ con'@(Constraint _ _ vaenv (BoundedByObjs _ SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) -> do
     let feTypeEnvL = feTypeEnv env
     let vaenv' = fmap (stypeAct . snd) vaenv
     let argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnvL vaenv' $
