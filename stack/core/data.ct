@@ -35,8 +35,8 @@ module(Data)
     >>> -7
   every(Float, isa= [/Data/ToString])
 
-  :Float.toString -> String
-    #runtime("floatToString")
+  :Float.toString= floatText(parts= this.parts)
+    # A [Float] renders with the fewest decimal places that read back as it ([floatText]).
 
   > 1.5
     >>> 1.5

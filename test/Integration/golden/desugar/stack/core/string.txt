@@ -27,6 +27,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/boundedDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/boundedDigits( Value r -> /Data/Primitive/Integer )( Value s -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value mDn -> /Data/Primitive/Integer )( Value guess -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/boundedDigits( Value r )( Value s )( Value mUp )( Value mDn )( Value guess ) -> ∀/Data/String = digitsFrom( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )( Value mDn= Value mDn )
+                            ( Value k= pointFrom( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )( Value n= Value guess ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/upperChars"
                 , ObjectMapItem
                     { omiDecls =
@@ -212,6 +225,53 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/intPower"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/intPower( Value base -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/intPower( Value base )( Value n ) | /operator<=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        , /Data/intPower( Value base )( Value n ) | /operator&&
+                            ( Value /l= /operator>( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
+                            )
+                            ( Value /r= /operator==
+                                ( Value /l= /operator%( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 2 }
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
+                            ) -> /Data/Primitive/Integer = squared
+                            ( Value v= intPower( Value base= Value base )
+                                ( Value n= /operator//( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 2 }
+                                    )
+                                )
+                            )
+                        , /Data/intPower( Value base )( Value n ) -> /Data/Primitive/Integer = /operator*( Value /l= Value base )
+                            ( Value /r= intPower( Value base= Value base )
+                                ( Value n= /operator-( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/drop"
                 , ObjectMapItem
                     { omiDecls =
@@ -222,6 +282,50 @@ Prgm
                         [ /Data/String/drop( Value n )
                             ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
                             ( Value chars= dropChars( Value cs= Value chars )( Value n= Value n ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/magnitudeText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/magnitudeText( Value mantissa -> /Data/Primitive/Integer )( Value exponent -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/magnitudeText( Value mantissa )( Value exponent ) | /operator==( Value /l= Value mantissa )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = CStr
+                            { csValue = "0.0" }
+                        , /Data/magnitudeText( Value mantissa )( Value exponent ) -> ∀/Data/String = shortestDigits( Value mantissa= Value mantissa )( Value exponent= Value exponent )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/floatText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/floatText( Value parts -> ∀/Data/Primitive/FloatParts ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/floatText( Value parts= Value /Data/Primitive/FloatParts/NaN ) -> ∀/Data/String = CStr
+                            { csValue = "NaN" }
+                        , /Data/floatText
+                            ( Value parts= /Data/Primitive/FloatParts/Infinite( Value negative= Value /Data/Primitive/True ) ) -> ∀/Data/String = CStr
+                            { csValue = "-Infinity" }
+                        , /Data/floatText
+                            ( Value parts= /Data/Primitive/FloatParts/Infinite( Value negative= Value /Data/Primitive/False ) ) -> ∀/Data/String = CStr
+                            { csValue = "Infinity" }
+                        , /Data/floatText
+                            ( Value parts= /Data/Primitive/FloatParts/Finite( Value negative= Value /Data/Primitive/True )( Value mantissa )( Value exponent ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "-" }
+                            )
+                            ( Value /r= magnitudeText( Value mantissa= Value mantissa )( Value exponent= Value exponent ) )
+                        , /Data/floatText
+                            ( Value parts= /Data/Primitive/FloatParts/Finite( Value negative= Value /Data/Primitive/False )( Value mantissa )( Value exponent ) ) -> ∀/Data/String = magnitudeText( Value mantissa= Value mantissa )( Value exponent= Value exponent )
                         ]
                     }
                 )
@@ -267,6 +371,176 @@ Prgm
                                     )
                                 )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/wholeDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/wholeDigits
+                            ( Value ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/wholeDigits( Value ds )( Value n ) | /operator<=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value /Data/List/Nil
+                        , /Data/wholeDigits( Value ds )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = wholeDigit( Value ds= Value ds )( Value n= Value n )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/floatDigitsText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/floatDigitsText
+                            ( Value digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value point -> /Data/Primitive/Integer ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/floatDigitsText( Value digits )( Value point ) | /operator||
+                            ( Value /l= /operator<( Value /l= Value point )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
+                            )
+                            ( Value /r= /operator>( Value /l= Value point )
+                                ( Value /r= CInt
+                                    { ciValue = 7 }
+                                )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= String/Text
+                                    ( Value chars= /Data/appendChars
+                                        ( Value l= digitsText
+                                            ( Value ds= wholeDigits( Value ds= Value digits )
+                                                ( Value n= CInt
+                                                    { ciValue = 1 }
+                                                )
+                                            )
+                                        )
+                                        ( Value r= /Data/List/Cons
+                                            ( Value head= CChar
+                                                { chValue = '.' }
+                                            )
+                                            ( Value tail= digitsText
+                                                ( Value ds= fractionDigits( Value ds= Value digits )
+                                                    ( Value n= CInt
+                                                        { ciValue = 1 }
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = "e" }
+                                )
+                            )
+                            ( Value /r= toStringBase
+                                ( Value base= CInt
+                                    { ciValue = 10 }
+                                )
+                                ( Value /this= /operator-( Value /l= Value point )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
+                        , /Data/floatDigitsText( Value digits )( Value point ) | /operator==( Value /l= Value point )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = String/Text
+                            ( Value chars= /Data/List/Cons
+                                ( Value head= CChar
+                                    { chValue = '0' }
+                                )
+                                ( Value tail= /Data/List/Cons
+                                    ( Value head= CChar
+                                        { chValue = '.' }
+                                    )
+                                    ( Value tail= digitsText( Value ds= Value digits ) )
+                                )
+                            )
+                        , /Data/floatDigitsText( Value digits )( Value point ) -> ∀/Data/String = String/Text
+                            ( Value chars= /Data/appendChars
+                                ( Value l= digitsText
+                                    ( Value ds= wholeDigits( Value ds= Value digits )( Value n= Value point ) )
+                                )
+                                ( Value r= /Data/List/Cons
+                                    ( Value head= CChar
+                                        { chValue = '.' }
+                                    )
+                                    ( Value tail= digitsText
+                                        ( Value ds= fractionDigits( Value ds= Value digits )( Value n= Value point ) )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/nextDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/nextDigit( Value dn -> /Data/Primitive/Integer )( Value rn2 -> /Data/Primitive/Integer )( Value sn -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value mDn -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/nextDigit( Value dn )( Value rn2 )( Value sn )( Value mUp )( Value mDn ) | /operator&&
+                            ( Value /l= /operator&&
+                                ( Value /l= /operator<( Value /l= Value rn2 )( Value /r= Value mDn ) )
+                                ( Value /r= /operator>
+                                    ( Value /l= /operator+( Value /l= Value rn2 )( Value /r= Value mUp ) )( Value /r= Value sn )
+                                )
+                            )
+                            ( Value /r= /operator<
+                                ( Value /l= /operator*( Value /l= Value rn2 )
+                                    ( Value /r= CInt
+                                        { ciValue = 2 }
+                                    )
+                                )( Value /r= Value sn )
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons( Value head= Value dn )( Value tail= Value /Data/List/Nil )
+                        , /Data/nextDigit( Value dn )( Value rn2 )( Value sn )( Value mUp )( Value mDn ) | /operator&&
+                            ( Value /l= /operator&&
+                                ( Value /l= /operator<( Value /l= Value rn2 )( Value /r= Value mDn ) )
+                                ( Value /r= /operator>
+                                    ( Value /l= /operator+( Value /l= Value rn2 )( Value /r= Value mUp ) )( Value /r= Value sn )
+                                )
+                            )
+                            ( Value /r= /operator>=
+                                ( Value /l= /operator*( Value /l= Value rn2 )
+                                    ( Value /r= CInt
+                                        { ciValue = 2 }
+                                    )
+                                )( Value /r= Value sn )
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons
+                            ( Value head= /operator+( Value /l= Value dn )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/nextDigit( Value dn )( Value rn2 )( Value sn )( Value mUp )( Value mDn ) | /operator&&
+                            ( Value /l= /operator<( Value /l= Value rn2 )( Value /r= Value mDn ) )
+                            ( Value /r= /operator<=
+                                ( Value /l= /operator+( Value /l= Value rn2 )( Value /r= Value mUp ) )( Value /r= Value sn )
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons( Value head= Value dn )( Value tail= Value /Data/List/Nil )
+                        , /Data/nextDigit( Value dn )( Value rn2 )( Value sn )( Value mUp )( Value mDn ) | /operator&&
+                            ( Value /l= /operator>=( Value /l= Value rn2 )( Value /r= Value mDn ) )
+                            ( Value /r= /operator>
+                                ( Value /l= /operator+( Value /l= Value rn2 )( Value /r= Value mUp ) )( Value /r= Value sn )
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons
+                            ( Value head= /operator+( Value /l= Value dn )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/nextDigit( Value dn )( Value rn2 )( Value sn )( Value mUp )( Value mDn ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons( Value head= Value dn )
+                            ( Value tail= generateDigits( Value rn= Value rn2 )( Value sn= Value sn )( Value mUp= Value mUp )( Value mDn= Value mDn ) )
                         ]
                     }
                 )
@@ -348,6 +622,36 @@ Prgm
                         , /Data/toStringBase( Value base )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = String/Text
                             ( Value chars= digitsOnto( Value /base= Value /base )( Value n= Value this )( Value acc= Value /Data/List/Nil ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/atLeastZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/atLeastZero
+                            ( Value ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/atLeastZero( Value ds= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons
+                            ( Value head= CInt
+                                { ciValue = 0 }
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/atLeastZero
+                            ( Value ds= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons( Value head= Value head )( Value tail= Value tail )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/squared"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/squared( Value v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/squared( Value v ) -> /Data/Primitive/Integer = /operator*( Value /l= Value v )( Value /r= Value v ) ]
                     }
                 )
             ,
@@ -495,6 +799,24 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
                             ( Value head= toLower( Value /this= Value head ) )
                             ( Value tail= lowerChars( Value cs= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pointFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointFrom( Value r -> /Data/Primitive/Integer )( Value s -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointFrom( Value r )( Value s )( Value mUp )( Value n ) | pointReached( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )( Value n= Value n ) -> /Data/Primitive/Integer = pointDown( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )( Value n= Value n )
+                        , /Data/pointFrom( Value r )( Value s )( Value mUp )( Value n ) -> /Data/Primitive/Integer = pointFrom( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )
+                            ( Value n= /operator+( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
                         ]
                     }
                 )
@@ -720,6 +1042,29 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pointDown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointDown( Value r -> /Data/Primitive/Integer )( Value s -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointDown( Value r )( Value s )( Value mUp )( Value n ) | pointReached( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )
+                            ( Value n= /operator-( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            ) -> /Data/Primitive/Integer = pointDown( Value r= Value r )( Value s= Value s )( Value mUp= Value mUp )
+                            ( Value n= /operator-( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , /Data/pointDown( Value r )( Value s )( Value mUp )( Value n ) -> /Data/Primitive/Integer = Value n
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/parseInteger"
                 , ObjectMapItem
                     { omiDecls =
@@ -732,6 +1077,57 @@ Prgm
                             ( Value base= CInt
                                 { ciValue = 10 }
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/shortestDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/shortestDigits( Value mantissa -> /Data/Primitive/Integer )( Value exponent -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/shortestDigits( Value mantissa )( Value exponent ) | /operator>
+                            ( Value /l= /operator-
+                                ( Value /l= /operator-
+                                    ( Value /l= CInt
+                                        { ciValue = 0 }
+                                    )
+                                    ( Value /r= CInt
+                                        { ciValue = 1074 }
+                                    )
+                                )( Value /r= Value exponent )
+                            )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = scaledDigits
+                            ( Value f= /operator//( Value /l= Value mantissa )
+                                ( Value /r= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value n= /operator-
+                                        ( Value /l= /operator-
+                                            ( Value /l= CInt
+                                                { ciValue = 0 }
+                                            )
+                                            ( Value /r= CInt
+                                                { ciValue = 1074 }
+                                            )
+                                        )( Value /r= Value exponent )
+                                    )
+                                )
+                            )
+                            ( Value e= /operator-
+                                ( Value /l= CInt
+                                    { ciValue = 0 }
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1074 }
+                                )
+                            )
+                        , /Data/shortestDigits( Value mantissa )( Value exponent ) -> ∀/Data/String = scaledDigits( Value f= Value mantissa )( Value e= Value exponent )
                         ]
                     }
                 )
@@ -800,6 +1196,106 @@ Prgm
                             ( Value chars= replaceChars( Value cs= Value cs )
                                 ( Value old= /Data/List/Cons( Value head= Value oh )( Value tail= Value ot ) )( Value new= Value n )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/digitsFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitsFrom( Value r -> /Data/Primitive/Integer )( Value s -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value mDn -> /Data/Primitive/Integer )( Value k -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsFrom( Value r )( Value s )( Value mUp )( Value mDn )( Value k ) | /operator>=( Value /l= Value k )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = floatDigitsText
+                            ( Value digits= generateDigits( Value rn= Value r )
+                                ( Value sn= /operator*( Value /l= Value s )
+                                    ( Value /r= intPower
+                                        ( Value base= CInt
+                                            { ciValue = 10 }
+                                        )( Value n= Value k )
+                                    )
+                                )( Value mUp= Value mUp )( Value mDn= Value mDn )
+                            )( Value point= Value k )
+                        , /Data/digitsFrom( Value r )( Value s )( Value mUp )( Value mDn )( Value k ) -> ∀/Data/String = floatDigitsText
+                            ( Value digits= generateDigits
+                                ( Value rn= /operator*( Value /l= Value r )
+                                    ( Value /r= intPower
+                                        ( Value base= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value n= /operator-
+                                            ( Value /l= CInt
+                                                { ciValue = 0 }
+                                            )( Value /r= Value k )
+                                        )
+                                    )
+                                )( Value sn= Value s )
+                                ( Value mUp= /operator*( Value /l= Value mUp )
+                                    ( Value /r= intPower
+                                        ( Value base= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value n= /operator-
+                                            ( Value /l= CInt
+                                                { ciValue = 0 }
+                                            )( Value /r= Value k )
+                                        )
+                                    )
+                                )
+                                ( Value mDn= /operator*( Value /l= Value mDn )
+                                    ( Value /r= intPower
+                                        ( Value base= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value n= /operator-
+                                            ( Value /l= CInt
+                                                { ciValue = 0 }
+                                            )( Value /r= Value k )
+                                        )
+                                    )
+                                )
+                            )( Value point= Value k )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pointReached"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointReached( Value r -> /Data/Primitive/Integer )( Value s -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointReached( Value r )( Value s )( Value mUp )( Value n ) | /operator>=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/Primitive/Boolean = /operator<=
+                            ( Value /l= /operator+( Value /l= Value r )( Value /r= Value mUp ) )
+                            ( Value /r= /operator*
+                                ( Value /l= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 10 }
+                                    )( Value n= Value n )
+                                )( Value /r= Value s )
+                            )
+                        , /Data/pointReached( Value r )( Value s )( Value mUp )( Value n ) -> ∀/Data/Primitive/Boolean = /operator<=
+                            ( Value /l= /operator*
+                                ( Value /l= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 10 }
+                                    )
+                                    ( Value n= /operator-
+                                        ( Value /l= CInt
+                                            { ciValue = 0 }
+                                        )( Value /r= Value n )
+                                    )
+                                )
+                                ( Value /r= /operator+( Value /l= Value r )( Value /r= Value mUp ) )
+                            )( Value /r= Value s )
                         ]
                     }
                 )
@@ -945,6 +1441,30 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/fractionDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/fractionDigit
+                            ( Value ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fractionDigit( Value ds= Value /Data/List/Nil )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons
+                            ( Value head= CInt
+                                { ciValue = 0 }
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/fractionDigit
+                            ( Value ds= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = fractionDigits( Value ds= Value tail )
+                            ( Value n= /operator-( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -953,6 +1473,39 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean = rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/wholeDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/wholeDigit
+                            ( Value ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/wholeDigit( Value ds= Value /Data/List/Nil )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons
+                            ( Value head= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value tail= wholeDigits( Value ds= Value /Data/List/Nil )
+                                ( Value n= /operator-( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
+                        , /Data/wholeDigit
+                            ( Value ds= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/Cons( Value head= Value head )
+                            ( Value tail= wholeDigits( Value ds= Value tail )
+                                ( Value n= /operator-( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
                         ]
                     }
                 )
@@ -984,6 +1537,24 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/ord( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value StrOrdering ]
+                    }
+                )
+            ,
+                ( "/Data/digitsText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitsText
+                            ( Value ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsText( Value ds= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/digitsText
+                            ( Value ds= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
+                            ( Value head= digitChar( Value digit= Value head ) )
+                            ( Value tail= digitsText( Value ds= Value tail ) )
+                        ]
                     }
                 )
             ,
@@ -1069,6 +1640,42 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/generateDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/generateDigits( Value rn -> /Data/Primitive/Integer )( Value sn -> /Data/Primitive/Integer )( Value mUp -> /Data/Primitive/Integer )( Value mDn -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/generateDigits( Value rn )( Value sn )( Value mUp )( Value mDn ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = nextDigit
+                            ( Value dn= /operator//
+                                ( Value /l= /operator*( Value /l= Value rn )
+                                    ( Value /r= CInt
+                                        { ciValue = 10 }
+                                    )
+                                )( Value /r= Value sn )
+                            )
+                            ( Value rn2= /operator%
+                                ( Value /l= /operator*( Value /l= Value rn )
+                                    ( Value /r= CInt
+                                        { ciValue = 10 }
+                                    )
+                                )( Value /r= Value sn )
+                            )( Value sn= Value sn )
+                            ( Value mUp= /operator*( Value /l= Value mUp )
+                                ( Value /r= CInt
+                                    { ciValue = 10 }
+                                )
+                            )
+                            ( Value mDn= /operator*( Value /l= Value mDn )
+                                ( Value /r= CInt
+                                    { ciValue = 10 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/reversed"
                 , ObjectMapItem
                     { omiDecls =
@@ -1083,12 +1690,55 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pointGuess"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointGuess( Value e -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointGuess( Value e ) -> /Data/Primitive/Integer = /operator//
+                            ( Value /l= /operator*
+                                ( Value /l= /operator+( Value /l= Value e )
+                                    ( Value /r= CInt
+                                        { ciValue = 53 }
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 30103 }
+                                )
+                            )
+                            ( Value /r= CInt
+                                { ciValue = 100000 }
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/StrEqv"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/StrEqv ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/fractionDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/fractionDigits
+                            ( Value ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fractionDigits( Value ds )( Value n ) | /operator<=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = atLeastZero( Value ds= Value ds )
+                        , /Data/fractionDigits( Value ds )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = fractionDigit( Value ds= Value ds )( Value n= Value n )
+                        ]
                     }
                 )
             ,
@@ -1100,6 +1750,189 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value other )( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Comparison = compare( Value a= Value this )( Value b= Value other )
                             ( Value /this= ord( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/scaledDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/scaledDigits( Value f -> /Data/Primitive/Integer )( Value e -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/scaledDigits( Value f )( Value e ) | /operator&&
+                            ( Value /l= /operator>=( Value /l= Value e )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
+                            )
+                            ( Value /r= /operator==( Value /l= Value f )
+                                ( Value /r= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value n= CInt
+                                        { ciValue = 52 }
+                                    )
+                                )
+                            ) -> ∀/Data/String = boundedDigits
+                            ( Value r= /operator*
+                                ( Value /l= /operator*( Value /l= Value f )
+                                    ( Value /r= intPower
+                                        ( Value base= CInt
+                                            { ciValue = 2 }
+                                        )( Value n= Value e )
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 4 }
+                                )
+                            )
+                            ( Value s= CInt
+                                { ciValue = 4 }
+                            )
+                            ( Value mUp= /operator*
+                                ( Value /l= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )( Value n= Value e )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                            ( Value mDn= intPower
+                                ( Value base= CInt
+                                    { ciValue = 2 }
+                                )( Value n= Value e )
+                            )
+                            ( Value guess= pointGuess( Value e= Value e ) )
+                        , /Data/scaledDigits( Value f )( Value e ) | /operator&&
+                            ( Value /l= /operator>=( Value /l= Value e )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
+                            )
+                            ( Value /r= /operator!=( Value /l= Value f )
+                                ( Value /r= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value n= CInt
+                                        { ciValue = 52 }
+                                    )
+                                )
+                            ) -> ∀/Data/String = boundedDigits
+                            ( Value r= /operator*
+                                ( Value /l= /operator*( Value /l= Value f )
+                                    ( Value /r= intPower
+                                        ( Value base= CInt
+                                            { ciValue = 2 }
+                                        )( Value n= Value e )
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                            ( Value s= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value mUp= intPower
+                                ( Value base= CInt
+                                    { ciValue = 2 }
+                                )( Value n= Value e )
+                            )
+                            ( Value mDn= intPower
+                                ( Value base= CInt
+                                    { ciValue = 2 }
+                                )( Value n= Value e )
+                            )
+                            ( Value guess= pointGuess( Value e= Value e ) )
+                        , /Data/scaledDigits( Value f )( Value e ) | /operator&&
+                            ( Value /l= /operator&&
+                                ( Value /l= /operator<( Value /l= Value e )
+                                    ( Value /r= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                                ( Value /r= /operator>( Value /l= Value e )
+                                    ( Value /r= /operator-
+                                        ( Value /l= CInt
+                                            { ciValue = 0 }
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 1074 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /r= /operator==( Value /l= Value f )
+                                ( Value /r= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value n= CInt
+                                        { ciValue = 52 }
+                                    )
+                                )
+                            ) -> ∀/Data/String = boundedDigits
+                            ( Value r= /operator*( Value /l= Value f )
+                                ( Value /r= CInt
+                                    { ciValue = 4 }
+                                )
+                            )
+                            ( Value s= /operator*
+                                ( Value /l= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value n= /operator-
+                                        ( Value /l= CInt
+                                            { ciValue = 1 }
+                                        )( Value /r= Value e )
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                            ( Value mUp= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value mDn= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value guess= pointGuess( Value e= Value e ) )
+                        , /Data/scaledDigits( Value f )( Value e ) -> ∀/Data/String = boundedDigits
+                            ( Value r= /operator*( Value /l= Value f )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                            ( Value s= /operator*
+                                ( Value /l= intPower
+                                    ( Value base= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value n= /operator-
+                                        ( Value /l= CInt
+                                            { ciValue = 0 }
+                                        )( Value /r= Value e )
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                            ( Value mUp= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value mDn= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value guess= pointGuess( Value e= Value e ) )
                         ]
                     }
                 )
@@ -1162,6 +1995,27 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -1418,6 +2272,296 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "-42" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Floats as text
+                A [Float] is written with the fewest decimal digits that read back as the same number, and in
+                the notation Haskell's @show@ writes it in, so that text written by earlier versions of the
+                language reads the same: @1.5@, @0.1@, @1234567.0@, and @1.0e-2@ or @1.0e7@ outside
+                [0.1, 10^7).
+                The digits are Burger and Dybvig's free-format algorithm, as GHC's @floatToDigits@ writes it,
+                worked in whole numbers over the [/Data/Primitive/FloatParts] of the number: its magnitude is
+                [mantissa] × 2^[exponent], and a double has 53 bits of mantissa and a least exponent of -1074." }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.5 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.5" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 0.1 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0.1" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= /operator+
+                        ( Value /l= CFloat
+                            { cfValue = 0.1 }
+                        )
+                        ( Value /r= CFloat
+                            { cfValue = 0.2 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0.30000000000000004" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.0e-2 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.0e-2" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1234567.0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1234567.0" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.0e7 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.0e7" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 123.456 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "123.456" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 100.0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "100.0" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= /operator-
+                        ( Value /l= CFloat
+                            { cfValue = 0.0 }
+                        )
+                        ( Value /r= CFloat
+                            { cfValue = 2.5 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "-2.5" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 0.0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0.0" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Each of these is what Haskell's @show@ writes for the same number: the least subnormal and the" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  largest finite number, the least mantissa of an exponent (where the neighbours are unevenly" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  spaced), either side of the edges of fixed notation, and @1.0e23@, whose shortest digits are" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  not the ones it is written with." }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 5.0e-324 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "5.0e-324" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 2.2250738585072014e-308 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2.2250738585072014e-308" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.7976931348623157e308 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.7976931348623157e308" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 4.503599627370496e15 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "4.503599627370496e15" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 9.007199254740992e15 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "9.007199254740992e15" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 9.999999999999999e-2 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "9.999999999999999e-2" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 9999999.0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "9999999.0" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 9999999.5 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "9999999.5" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.0e22 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.0e22" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.2345678901234568e17 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.2345678901234568e17" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 1.0e-7 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1.0e-7" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 3.141592653589793 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "3.141592653589793" }
+            )
+        , /Catln/#print
+            ( Value /p= floatText
+                ( Value parts= parts
+                    ( Value /this= CFloat
+                        { cfValue = 9.999999999999999e22 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "9.999999999999999e22" }
             )
         , /Catln/#md
             ( Value /text= CStr

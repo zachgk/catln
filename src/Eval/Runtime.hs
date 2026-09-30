@@ -132,12 +132,25 @@ intToFloat = EPrim "intToFloat" prim
       Just (IntVal i) -> Right $ FloatVal $ fromIntegral i
       _               -> Left "Invalid intToFloat signature"
 
-floatToString :: EPrim
-floatToString = EPrim "floatToString" prim
+-- | A float taken apart into what its text is written from: whether it is negative, and its
+-- binary mantissa and exponent ('decodeFloat' of its magnitude), or that it is not a number or
+-- an infinity. The text itself is written in Catln (@stack\/core\/string.ct@).
+--
+-- The sign is its own field rather than the mantissa's, so that @-0.0@ keeps it.
+floatParts :: EPrim
+floatParts = EPrim "floatParts" prim
   where
     prim args = case H.lookup "/this" args of
-      Just (FloatVal f) -> Right $ StrVal $ show f
-      _                 -> Left "Invalid floatToString signature"
+      Just (FloatVal f)
+        | isNaN f -> Right $ TupleVal (partsName "NaN") H.empty
+        | isInfinite f -> Right $ TupleVal (partsName "Infinite") (H.singleton (runtimeArgKey "negative") (bool (f < 0)))
+        | otherwise -> let (m, e) = decodeFloat (abs f)
+                       in Right $ TupleVal (partsName "Finite") $ H.fromList
+                            [ (runtimeArgKey "negative", bool (f < 0 || isNegativeZero f))
+                            , (runtimeArgKey "mantissa", IntVal m)
+                            , (runtimeArgKey "exponent", IntVal (fromIntegral e)) ]
+      _ -> Left "Invalid floatParts signature"
+    partsName n = "/Data/Primitive/FloatParts/" ++ n
 
 intToBool :: EPrim
 intToBool = EPrim "intToBool" prim
@@ -306,7 +319,7 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatPow
             , floatToInt
             , intToFloat
-            , floatToString
+            , floatParts
             , intToBool
             , floatToBool
             , charCode

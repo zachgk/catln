@@ -71,6 +71,61 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/boundedDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/boundedDigits
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /guess -> /Data/Primitive/Integer } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/boundedDigits
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /guess -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /Data/digitsFrom
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mDn -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /k -> /Data/Primitive/Integer =
+                                        ( /Data/pointFrom
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> TVArg /guess = ( Value /guess ↦ TVArg /guess ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/upperChars"
                 , ObjectMapItem
                     { omiDecls =
@@ -576,6 +631,117 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/intPower"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/intPower
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/intPower
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /operator<=
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> /Data/Primitive/Integer = 1
+                        , /Data/intPower
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator==
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator%
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Data/squared
+                                ( EAppArg
+                                    { eaaArg = Value /v -> /Data/Primitive/Integer =
+                                        ( /Data/intPower
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                    ( /operator//
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        , /Data/intPower
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator*
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /Data/intPower
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/drop"
                 , ObjectMapItem
                     { omiDecls =
@@ -608,6 +774,122 @@ Prgm
                                         ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                                     )
                                 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/magnitudeText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/magnitudeText
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/magnitudeText
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0.0"
+                        , /Data/magnitudeText
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /Data/shortestDigits
+                                ( EAppArg
+                                    { eaaArg = Value /mantissa -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /exponent -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/floatText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/floatText
+                            ( EAppArg { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/floatText
+                            ( EAppArg { eaaArg = Value /parts -> /Data/Primitive/FloatParts/NaN = Value /Data/Primitive/FloatParts/NaN } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "NaN"
+                        , /Data/floatText
+                            ( EAppArg
+                                { eaaArg = Value /parts -> /Data/Primitive/FloatParts/Infinite( /negative=/Data/Primitive/True ) = /Data/Primitive/FloatParts/Infinite
+                                    ( EAppArg { eaaArg = Value /negative -> /Data/Primitive/True = Value /Data/Primitive/True } )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-Infinity"
+                        , /Data/floatText
+                            ( EAppArg
+                                { eaaArg = Value /parts -> /Data/Primitive/FloatParts/Infinite( /negative=/Data/Primitive/False ) = /Data/Primitive/FloatParts/Infinite
+                                    ( EAppArg { eaaArg = Value /negative -> /Data/Primitive/False = Value /Data/Primitive/False } )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Infinity"
+                        , /Data/floatText
+                            ( EAppArg
+                                { eaaArg = Value /parts -> /Data/Primitive/FloatParts/Finite
+                                    ( /negative=/Data/Primitive/True
+                                    , /mantissa=/Data/Primitive/Integer
+                                    , /exponent=/Data/Primitive/Integer
+                                    ) = /Data/Primitive/FloatParts/Finite
+                                    ( EAppArg { eaaArg = Value /negative -> /Data/Primitive/True = Value /Data/Primitive/True } )
+                                    ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                                    ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                        ( /Data/magnitudeText
+                                            ( EAppArg
+                                                { eaaArg = Value /mantissa -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /exponent -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
+                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/floatText
+                            ( EAppArg
+                                { eaaArg = Value /parts -> /Data/Primitive/FloatParts/Finite
+                                    ( /negative=/Data/Primitive/False
+                                    , /mantissa=/Data/Primitive/Integer
+                                    , /exponent=/Data/Primitive/Integer
+                                    ) = /Data/Primitive/FloatParts/Finite
+                                    ( EAppArg { eaaArg = Value /negative -> /Data/Primitive/False = Value /Data/Primitive/False } )
+                                    ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                                    ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/magnitudeText
+                                ( EAppArg
+                                    { eaaArg = Value /mantissa -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /exponent -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -727,6 +1009,688 @@ Prgm
                                                 )
                                             }
                                         ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/wholeDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/wholeDigits
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/wholeDigits
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /operator<=
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> /Data/List/Nil = Value /Data/List/Nil
+                        , /Data/wholeDigits
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ( /Data/wholeDigit
+                                ( EAppArg
+                                    { eaaArg = Value /ds -> TVArg /ds = ( Value /ds ↦ TVArg /ds ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/floatDigitsText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/floatDigitsText
+                            ( EAppArg
+                                { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /point -> /Data/Primitive/Integer } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/floatDigitsText
+                            ( EAppArg
+                                { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /point -> /Data/Primitive/Integer } ) | /operator||
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator<
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /point = ( Value /point ↦ TVArg /point ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /point = ( Value /point ↦ TVArg /point ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 7 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                                    ( EAppArg
+                                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                                            ( /Data/appendChars
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l ->
+                                                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                            ( /head=/Data/Char
+                                                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                            )
+                                                                        ) =
+                                                                        ( /Data/digitsText
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                                                                    ( /Data/wholeDigits
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
+                                                                                        )
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /n -> /Data/Primitive/Integer = 1 }
+                                                                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                                                                    )
+                                                                                }
+                                                                            ) ↦
+                                                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                                ( /head=/Data/Char
+                                                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                                )
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> /Data/List/Cons[ /T=/Data/Char ]
+                                                                        ( /head=/Data/Char
+                                                                        , /tail=
+                                                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                                ( /head=/Data/Char
+                                                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                                )
+                                                                            )
+                                                                        ) = /Data/List/Cons
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /head -> /Data/Char = '.' }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /tail ->
+                                                                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                                    ( /head=/Data/Char
+                                                                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                                    )
+                                                                                ) =
+                                                                                ( /Data/digitsText
+                                                                                    ( EAppArg
+                                                                                        { eaaArg = Value /ds -> UnionType
+                                                                                            ( Just
+                                                                                                ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                                                                                , fromList []
+                                                                                                , []
+                                                                                                )
+                                                                                            , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                                                ( /head=/Data/Primitive/Integer
+                                                                                                , /tail=/Data/List/Nil
+                                                                                                )
+                                                                                            , []
+                                                                                            ) =
+                                                                                            ( /Data/fractionDigits
+                                                                                                ( EAppArg
+                                                                                                    { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
+                                                                                                )
+                                                                                                ( EAppArg
+                                                                                                    { eaaArg = Value /n -> /Data/Primitive/Integer = 1 }
+                                                                                                ) ↦ UnionType
+                                                                                                ( Just
+                                                                                                    ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                                                                                    , fromList []
+                                                                                                    , []
+                                                                                                    )
+                                                                                                , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                                                    ( /head=/Data/Primitive/Integer
+                                                                                                    , /tail=/Data/List/Nil
+                                                                                                    )
+                                                                                                , []
+                                                                                                )
+                                                                                            )
+                                                                                        }
+                                                                                    ) ↦
+                                                                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                                        ( /head=/Data/Char
+                                                                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                                        )
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "e"
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                        ( /Data/toStringBase
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /point = ( Value /point ↦ TVArg /point ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/floatDigitsText
+                            ( EAppArg
+                                { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /point -> /Data/Primitive/Integer } ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /point = ( Value /point ↦ TVArg /point ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> /Data/String/Text
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
+                            ( EAppArg
+                                { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Data/Char = '0' }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Char = '.' }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                                    ( /Data/digitsText
+                                                        ( EAppArg
+                                                            { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
+                                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /Data/floatDigitsText
+                            ( EAppArg
+                                { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /point -> /Data/Primitive/Integer } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( EAppArg
+                                { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                    ( /Data/appendChars
+                                        ( EAppArg
+                                            { eaaArg = Value /l ->
+                                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                    ( /head=/Data/Char
+                                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                    )
+                                                ) =
+                                                ( /Data/digitsText
+                                                    ( EAppArg
+                                                        { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                                            ( /Data/wholeDigits
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /n -> TVArg /point = ( Value /point ↦ TVArg /point ) }
+                                                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                                            )
+                                                        }
+                                                    ) ↦
+                                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                        )
+                                                    )
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=
+                                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                        )
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = '.' }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /tail ->
+                                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                            ( /head=/Data/Char
+                                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                            )
+                                                        ) =
+                                                        ( /Data/digitsText
+                                                            ( EAppArg
+                                                                { eaaArg = Value /ds -> UnionType
+                                                                    ( Just
+                                                                        ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                                                        , fromList []
+                                                                        , []
+                                                                        )
+                                                                    , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                        ( /head=/Data/Primitive/Integer
+                                                                        , /tail=/Data/List/Nil
+                                                                        )
+                                                                    , []
+                                                                    ) =
+                                                                    ( /Data/fractionDigits
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /n -> TVArg /point = ( Value /point ↦ TVArg /point ) }
+                                                                        ) ↦ UnionType
+                                                                        ( Just
+                                                                            ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                                                            , fromList []
+                                                                            , []
+                                                                            )
+                                                                        , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                            ( /head=/Data/Primitive/Integer
+                                                                            , /tail=/Data/List/Nil
+                                                                            )
+                                                                        , []
+                                                                        )
+                                                                    )
+                                                                }
+                                                            ) ↦
+                                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                )
+                                                            )
+                                                        )
+                                                    }
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/nextDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/nextDigit
+                            ( EAppArg { eaaArg = Value /dn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /rn2 -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/nextDigit
+                            ( EAppArg { eaaArg = Value /dn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /rn2 -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                                    ( /operator&&
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                                ( /operator<
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                                ( /operator>
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                            ( /operator+
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator<
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator*
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /dn = ( Value /dn ↦ TVArg /dn ) }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        , /Data/nextDigit
+                            ( EAppArg { eaaArg = Value /dn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /rn2 -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                                    ( /operator&&
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                                ( /operator<
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                                ( /operator>
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                            ( /operator+
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator*
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /dn = ( Value /dn ↦ TVArg /dn ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        , /Data/nextDigit
+                            ( EAppArg { eaaArg = Value /dn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /rn2 -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator<
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator<=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator+
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /dn = ( Value /dn ↦ TVArg /dn ) }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        , /Data/nextDigit
+                            ( EAppArg { eaaArg = Value /dn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /rn2 -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator+
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /dn = ( Value /dn ↦ TVArg /dn ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        , /Data/nextDigit
+                            ( EAppArg { eaaArg = Value /dn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /rn2 -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /dn = ( Value /dn ↦ TVArg /dn ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                    ( /Data/generateDigits
+                                        ( EAppArg
+                                            { eaaArg = Value /rn -> TVArg /rn2 = ( Value /rn2 ↦ TVArg /rn2 ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /sn -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /mDn -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                                     )
                                 }
                             )
@@ -974,6 +1938,74 @@ Prgm
                                         ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                                     )
                                 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/atLeastZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/atLeastZero
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/atLeastZero
+                            ( EAppArg { eaaArg = Value /ds -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Primitive/Integer = 0 }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        , /Data/atLeastZero
+                            ( EAppArg
+                                { eaaArg = Value /ds -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Primitive/Integer } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                                    )
+                                }
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/squared"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/squared
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/squared
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator*
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -1481,6 +2513,81 @@ Prgm
                                         )
                                     )
                                 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pointFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointFrom
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointFrom
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /Data/pointReached
+                            ( EAppArg
+                                { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Data/pointDown
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        , /Data/pointFrom
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /Data/pointFrom
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -2234,6 +3341,76 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pointDown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointDown
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointDown
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /Data/pointReached
+                            ( EAppArg
+                                { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                    ( /operator-
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Data/pointDown
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        , /Data/pointDown
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = ( Value /n ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/parseInteger"
                 , ObjectMapItem
                     { omiDecls =
@@ -2259,6 +3436,111 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
                                 ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/shortestDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/shortestDigits
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/shortestDigits
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } ) | /operator>
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    ( /operator-
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator-
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1074 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> ∀/Data/String =
+                            ( /Data/scaledDigits
+                                ( EAppArg
+                                    { eaaArg = Value /f -> /Data/Primitive/Integer =
+                                        ( /operator//
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /Data/intPower
+                                                        ( EAppArg
+                                                            { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                ( /operator-
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                            ( /operator-
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1074 }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /e -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1074 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/shortestDigits
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /Data/scaledDigits
+                                ( EAppArg
+                                    { eaaArg = Value /f -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /e -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -2477,6 +3759,297 @@ Prgm
                                         ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                                     )
                                 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/digitsFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitsFrom
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /k -> /Data/Primitive/Integer } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsFrom
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /k -> /Data/Primitive/Integer } ) | /operator>=
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> ∀/Data/String =
+                            ( /Data/floatDigitsText
+                                ( EAppArg
+                                    { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                        ( /Data/generateDigits
+                                            ( EAppArg
+                                                { eaaArg = Value /rn -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /sn -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /Data/intPower
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /mUp -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /mDn -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                            ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /point -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/digitsFrom
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /k -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /Data/floatDigitsText
+                                ( EAppArg
+                                    { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                        ( /Data/generateDigits
+                                            ( EAppArg
+                                                { eaaArg = Value /rn -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /Data/intPower
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                            ( /operator-
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /sn -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /mUp -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /Data/intPower
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                            ( /operator-
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /mDn -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /Data/intPower
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                            ( /operator-
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /point -> TVArg /k = ( Value /k ↦ TVArg /k ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pointReached"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointReached
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointReached
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /operator>=
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator<=
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /Data/intPower
+                                                        ( EAppArg
+                                                            { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        , /Data/pointReached
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /s -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator<=
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /Data/intPower
+                                                        ( EAppArg
+                                                            { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                ( /operator-
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /operator+
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
@@ -2965,6 +4538,62 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/fractionDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/fractionDigit
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fractionDigit
+                            ( EAppArg { eaaArg = Value /ds -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Primitive/Integer = 0 }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        , /Data/fractionDigit
+                            ( EAppArg
+                                { eaaArg = Value /ds -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Primitive/Integer } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ( /Data/fractionDigits
+                                ( EAppArg
+                                    { eaaArg = Value /ds -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -3006,6 +4635,90 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/wholeDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/wholeDigit
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/wholeDigit
+                            ( EAppArg { eaaArg = Value /ds -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Primitive/Integer = 0 }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                    ( /Data/wholeDigits
+                                        ( EAppArg { eaaArg = Value /ds -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        ( EAppArg
+                                            { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                ( /operator-
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                    )
+                                }
+                            )
+                        , /Data/wholeDigit
+                            ( EAppArg
+                                { eaaArg = Value /ds -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Primitive/Integer } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                                    ( /Data/wholeDigits
+                                        ( EAppArg
+                                            { eaaArg = Value /ds -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                ( /operator-
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                    )
+                                }
                             )
                         ]
                     }
@@ -3071,6 +4784,66 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/ord
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/StrOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] = Value /Data/StrOrdering
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/digitsText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitsText
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsText
+                            ( EAppArg { eaaArg = Value /ds -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/List/Nil = Value /Data/List/Nil
+                        , /Data/digitsText
+                            ( EAppArg
+                                { eaaArg = Value /ds -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Primitive/Integer } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                                    )
+                                }
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Char =
+                                    ( /Data/digitChar
+                                        ( EAppArg
+                                            { eaaArg = Value /digit -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                        ) ↦ /Data/Char
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail ->
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                        )
+                                    ) =
+                                    ( /Data/digitsText
+                                        ( EAppArg
+                                            { eaaArg = Value /ds -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                        ) ↦
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                            )
+                                        )
+                                    )
+                                }
+                            )
                         ]
                     }
                 )
@@ -3361,6 +5134,98 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/generateDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/generateDigits
+                            ( EAppArg { eaaArg = Value /rn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/generateDigits
+                            ( EAppArg { eaaArg = Value /rn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sn -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mUp -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mDn -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ( /Data/nextDigit
+                                ( EAppArg
+                                    { eaaArg = Value /dn -> /Data/Primitive/Integer =
+                                        ( /operator//
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /rn = ( Value /rn ↦ TVArg /rn ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /rn2 -> /Data/Primitive/Integer =
+                                        ( /operator%
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /rn = ( Value /rn ↦ TVArg /rn ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sn -> TVArg /sn = ( Value /sn ↦ TVArg /sn ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /mUp = ( Value /mUp ↦ TVArg /mUp ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mDn -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /mDn = ( Value /mDn ↦ TVArg /mDn ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/reversed"
                 , ObjectMapItem
                     { omiDecls =
@@ -3394,12 +5259,98 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pointGuess"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pointGuess
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pointGuess
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator//
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator+
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 53 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 30103 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 100000 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/StrEqv"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/StrEqv ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/fractionDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/fractionDigits
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fractionDigits
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /operator<=
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ( /Data/atLeastZero
+                                ( EAppArg
+                                    { eaaArg = Value /ds -> TVArg /ds = ( Value /ds ↦ TVArg /ds ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            )
+                        , /Data/fractionDigits
+                            ( EAppArg
+                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ( /Data/fractionDigit
+                                ( EAppArg
+                                    { eaaArg = Value /ds -> TVArg /ds = ( Value /ds ↦ TVArg /ds ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            )
+                        ]
                     }
                 )
             ,
@@ -3428,6 +5379,421 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/Algebra/Comparison
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/scaledDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/scaledDigits
+                            ( EAppArg { eaaArg = Value /f -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/scaledDigits
+                            ( EAppArg { eaaArg = Value /f -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator==
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                ( /Data/intPower
+                                                    ( EAppArg
+                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 52 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/boundedDigits
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /Data/intPower
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 4 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> /Data/Primitive/Integer = 4 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /Data/intPower
+                                                        ( EAppArg
+                                                            { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mDn -> /Data/Primitive/Integer =
+                                        ( /Data/intPower
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /guess -> /Data/Primitive/Integer =
+                                        ( /Data/pointGuess
+                                            ( EAppArg
+                                                { eaaArg = Value /e -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/scaledDigits
+                            ( EAppArg { eaaArg = Value /f -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator!=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                ( /Data/intPower
+                                                    ( EAppArg
+                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 52 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/boundedDigits
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /Data/intPower
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> /Data/Primitive/Integer = 2 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> /Data/Primitive/Integer =
+                                        ( /Data/intPower
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mDn -> /Data/Primitive/Integer =
+                                        ( /Data/intPower
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /guess -> /Data/Primitive/Integer =
+                                        ( /Data/pointGuess
+                                            ( EAppArg
+                                                { eaaArg = Value /e -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/scaledDigits
+                            ( EAppArg { eaaArg = Value /f -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                                    ( /operator&&
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                                ( /operator<
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                                ( /operator>
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                            ( /operator-
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1074 }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator==
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                ( /Data/intPower
+                                                    ( EAppArg
+                                                        { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 52 }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/boundedDigits
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 4 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /Data/intPower
+                                                        ( EAppArg
+                                                            { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                ( /operator-
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> /Data/Primitive/Integer = 2 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mDn -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /guess -> /Data/Primitive/Integer =
+                                        ( /Data/pointGuess
+                                            ( EAppArg
+                                                { eaaArg = Value /e -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/scaledDigits
+                            ( EAppArg { eaaArg = Value /f -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /e -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /Data/boundedDigits
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /s -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /Data/intPower
+                                                        ( EAppArg
+                                                            { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                ( /operator-
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mUp -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mDn -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /guess -> /Data/Primitive/Integer =
+                                        ( /Data/pointGuess
+                                            ( EAppArg
+                                                { eaaArg = Value /e -> TVArg /e = ( Value /e ↦ TVArg /e ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -3678,6 +6044,27 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -4017,6 +6404,544 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /result -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-42"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Floats as text
+                  A [Float] is written with the fewest decimal digits that read back as the same number, and in
+                  the notation Haskell's @show@ writes it in, so that text written by earlier versions of the
+                  language reads the same: @1.5@, @0.1@, @1234567.0@, and @1.0e-2@ or @1.0e7@ outside
+                  [0.1, 10^7).
+                  The digits are Burger and Dybvig's free-format algorithm, as GHC's @floatToDigits@ writes it,
+                  worked in whole numbers over the [/Data/Primitive/FloatParts] of the number: its magnitude is
+                  [mantissa] × 2^[exponent], and a double has 53 bits of mantissa and a least exponent of -1074."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.5 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.5"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 0.1 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0.1"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> /Data/Primitive/Float = 0.1 }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Float = 0.2 }
+                                                ) ↦ /Data/Primitive/Float
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0.30000000000000004"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.0e-2 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.0e-2"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1234567.0 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1234567.0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.0e7 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.0e7"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 123.456 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "123.456"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 100.0 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "100.0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float =
+                                            ( /operator-
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> /Data/Primitive/Float = 0.0 }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Float = 2.5 }
+                                                ) ↦ /Data/Primitive/Float
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-2.5"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 0.0 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0.0"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Each of these is what Haskell's @show@ writes for the same number: the least subnormal and the"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  largest finite number, the least mantissa of an exponent (where the neighbours are unevenly"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  spaced), either side of the edges of fixed notation, and @1.0e23@, whose shortest digits are"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  not the ones it is written with."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 5.0e-324 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5.0e-324"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 2.2250738585072014e-308 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2.2250738585072014e-308"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.7976931348623157e308 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.7976931348623157e308"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 4.503599627370496e15 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4.503599627370496e15"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 9.007199254740992e15 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9.007199254740992e15"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 9.999999999999999e-2 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9.999999999999999e-2"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 9999999.0 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9999999.0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 9999999.5 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9999999.5"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.0e22 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.0e22"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.2345678901234568e17 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.2345678901234568e17"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 1.0e-7 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1.0e-7"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 3.141592653589793 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3.141592653589793"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                    ( /Data/floatText
+                        ( EAppArg
+                            { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                ( /Data/Primitive/parts
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Float = 9.999999999999999e22 }
+                                    ) ↦ ∀/Data/Primitive/FloatParts
+                                )
+                            }
+                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9.999999999999999e22"
                 }
             )
         , /Catln/#md

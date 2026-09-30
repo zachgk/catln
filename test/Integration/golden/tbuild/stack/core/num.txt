@@ -146,10 +146,36 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/FloatParts/Finite"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/FloatParts/Finite
+                            ( EAppArg { eaaArg = Value /negative -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg { eaaArg = Value /mantissa -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /exponent -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Primitive/FloatOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/FloatOrdering ]
                     , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/parts"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/parts
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/Primitive/FloatParts
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -227,6 +253,18 @@ Prgm
                         [ /Data/Primitive/round
                             ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Integer
                         ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/FloatParts/Infinite"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/FloatParts/Infinite
+                            ( EAppArg { eaaArg = Value /negative -> ∀/Data/Primitive/Boolean } )
+                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -579,6 +617,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/FloatParts/NaN"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/FloatParts/NaN ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls = []
@@ -661,6 +708,10 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Primitive/Integer
@@ -692,6 +743,22 @@ Prgm
                 , /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ]
                 ]
             , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Primitive/FloatParts
+            , cgcExtends =
+                [ /Data/Primitive/FloatParts/Finite
+                    ( /negative=∀/Data/Primitive/Boolean
+                    , /mantissa=/Data/Primitive/Integer
+                    , /exponent=/Data/Primitive/Integer
+                    )
+                , /Data/Primitive/FloatParts/NaN
+                , /Data/Primitive/FloatParts/Infinite( /negative=∀/Data/Primitive/Boolean )
+                ]
+            , cgcDoc = Just "[FloatParts] is a [Float] taken apart into what its text is written from: a finite number's
+              sign, and the whole-number [mantissa] and binary [exponent] its magnitude is
+              [mantissa] × 2^[exponent]; or that it is not a number, or an infinity and which one."
             }
         , CGClass
             { cgcSealed = True
@@ -971,13 +1038,13 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A comparison of two [Float]s produces a [Boolean]. ([Float]'s text is written on @core/string.ct@, which"
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the [Boolean] a comparison produces."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  this page is below.)"
                 }
             )
         , /Catln/#print
@@ -1008,6 +1075,14 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[FloatParts] is a [Float] taken apart into what its text is written from: a finite number's
+                  sign, and the whole-number [mantissa] and binary [exponent] its magnitude is
+                  [mantissa] × 2^[exponent]; or that it is not a number, or an infinity and which one."
                 }
             )
         ]

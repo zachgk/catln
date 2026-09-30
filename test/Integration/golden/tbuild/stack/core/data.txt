@@ -33,10 +33,7 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /this -> $/T } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls =
-                        [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/String
-                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
@@ -49,6 +46,19 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/toString
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/String =
+                            ( /Data/floatText
+                                ( EAppArg
+                                    { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
+                                        ( /Data/Primitive/parts
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                            ) ↦ ∀/Data/Primitive/FloatParts
+                                        )
+                                    }
                                 ) ↦ ∀/Data/String
                             )
                         ]

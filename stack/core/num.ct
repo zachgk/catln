@@ -135,8 +135,8 @@ module(Data/Primitive)
   (_ :: Float < _ :: Float) -> Boolean
     #runtime("float<")
 
-  # [Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through
-  #   the [Boolean] a comparison produces.
+  # A comparison of two [Float]s produces a [Boolean]. ([Float]'s text is written on @core/string.ct@, which
+  #   this page is below.)
   > (1.5 < 2.5)
     >>> True
   (_ :: Float > _ :: Float) -> Boolean
@@ -170,3 +170,13 @@ module(Data/Primitive)
 
   :Float.ceil -> Integer
     #runtime("floatCeil")
+
+  class(FloatParts, [FloatParts/Finite(negative -> Boolean, mantissa -> Integer, exponent -> Integer), FloatParts/NaN, FloatParts/Infinite(negative -> Boolean)])
+    # [FloatParts] is a [Float] taken apart into what its text is written from: a finite number's
+      sign, and the whole-number [mantissa] and binary [exponent] its magnitude is
+      [mantissa] × 2^[exponent]; or that it is not a number, or an infinity and which one.
+
+  :Float.parts -> FloatParts
+    # [parts] takes the number apart ([FloatParts]). The sign is kept apart from the mantissa, so
+      that negative zero keeps it.
+    #runtime("floatParts")

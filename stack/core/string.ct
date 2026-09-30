@@ -93,6 +93,186 @@ module(Data)
     >>> 0
   > (0 - 42).toStringBase(base= 10)
     >>> -42
+  # ## Floats as text
+    A [Float] is written with the fewest decimal digits that read back as the same number, and in
+    the notation Haskell's @show@ writes it in, so that text written by earlier versions of the
+    language reads the same: @1.5@, @0.1@, @1234567.0@, and @1.0e-2@ or @1.0e7@ outside
+    [0.1, 10^7).
+    The digits are Burger and Dybvig's free-format algorithm, as GHC's @floatToDigits@ writes it,
+    worked in whole numbers over the [/Data/Primitive/FloatParts] of the number: its magnitude is
+    [mantissa] × 2^[exponent], and a double has 53 bits of mantissa and a least exponent of -1074.
+  intPower(base -> Integer, n -> Integer) -> Integer
+    # [intPower] is [base] raised to the whole power [n], and 1 for no power: squared at each even
+      power, so it takes as many steps as [n] has bits.
+  intPower(base, n) | n <= 0= 1
+  intPower(base, n) | n > 0 && n % 2 == 0= squared(v= intPower(base= base, n= n // 2))
+  intPower(base, n) else = base * intPower(base= base, n= n - 1)
+
+  squared(v -> Integer) -> Integer
+    # [squared] is [v] times itself.
+  squared(v)= v * v
+
+  shortestDigits(mantissa -> Integer, exponent -> Integer) -> String
+    # [shortestDigits] writes the positive number [mantissa] × 2^[exponent] with the fewest decimal
+      digits that read back as it. A subnormal mantissa is first brought to the least exponent.
+  shortestDigits(mantissa, exponent) | (0 - 1074) - exponent > 0= scaledDigits(f= mantissa // intPower(base= 2, n= (0 - 1074) - exponent), e= 0 - 1074)
+  shortestDigits(mantissa, exponent) else = scaledDigits(f= mantissa, e= exponent)
+
+  scaledDigits(f -> Integer, e -> Integer) -> String
+    # [scaledDigits] sets up the digit generation for [f] × 2^[e]: the number and its scale as the
+      fraction [r] / [s], and the distance [mUp] / [s] and [mDn] / [s] to its neighbours above and
+      below, which are unequal where [f] is the least mantissa of its exponent.
+  scaledDigits(f, e) | e >= 0 && f == intPower(base= 2, n= 52)= boundedDigits(r= f * intPower(base= 2, n= e) * 4, s= 4, mUp= intPower(base= 2, n= e) * 2, mDn= intPower(base= 2, n= e), guess= pointGuess(e= e))
+  scaledDigits(f, e) | e >= 0 && f != intPower(base= 2, n= 52)= boundedDigits(r= f * intPower(base= 2, n= e) * 2, s= 2, mUp= intPower(base= 2, n= e), mDn= intPower(base= 2, n= e), guess= pointGuess(e= e))
+  scaledDigits(f, e) | e < 0 && e > 0 - 1074 && f == intPower(base= 2, n= 52)= boundedDigits(r= f * 4, s= intPower(base= 2, n= 1 - e) * 2, mUp= 2, mDn= 1, guess= pointGuess(e= e))
+  scaledDigits(f, e) else = boundedDigits(r= f * 2, s= intPower(base= 2, n= 0 - e) * 2, mUp= 1, mDn= 1, guess= pointGuess(e= e))
+
+  pointGuess(e -> Integer) -> Integer
+    # [pointGuess] is near where the decimal point of a number [f] × 2^[e] falls, [f] having 53
+      bits: its binary width times log10(2), which [pointFrom] then corrects either way.
+  pointGuess(e)= ((e + 53) * 30103) // 100000
+
+  boundedDigits(r -> Integer, s -> Integer, mUp -> Integer, mDn -> Integer, guess -> Integer) -> String
+    # [boundedDigits] finds where the decimal point falls, searching from [guess], then generates
+      the digits from there.
+  boundedDigits(r, s, mUp, mDn, guess)= digitsFrom(r= r, s= s, mUp= mUp, mDn= mDn, k= pointFrom(r= r, s= s, mUp= mUp, n= guess))
+
+  pointReached(r -> Integer, s -> Integer, mUp -> Integer, n -> Integer) -> Boolean
+    # [pointReached] is whether the number's upper bound is at most 10^[n].
+  pointReached(r, s, mUp, n) | n >= 0= r + mUp <= intPower(base= 10, n= n) * s
+  pointReached(r, s, mUp, n) else = intPower(base= 10, n= 0 - n) * (r + mUp) <= s
+
+  pointFrom(r -> Integer, s -> Integer, mUp -> Integer, n -> Integer) -> Integer
+    # [pointFrom] is the least power of ten [pointReached] holds for, searched for from [n].
+  pointFrom(r, s, mUp, n) | pointReached(r= r, s= s, mUp= mUp, n= n)= pointDown(r= r, s= s, mUp= mUp, n= n)
+  pointFrom(r, s, mUp, n) else = pointFrom(r= r, s= s, mUp= mUp, n= n + 1)
+
+  pointDown(r -> Integer, s -> Integer, mUp -> Integer, n -> Integer) -> Integer
+    # [pointDown] steps down from a power of ten [pointReached] holds for to the least one.
+  pointDown(r, s, mUp, n) | pointReached(r= r, s= s, mUp= mUp, n= n - 1)= pointDown(r= r, s= s, mUp= mUp, n= n - 1)
+  pointDown(r, s, mUp, n) else = n
+
+  digitsFrom(r -> Integer, s -> Integer, mUp -> Integer, mDn -> Integer, k -> Integer) -> String
+    # [digitsFrom] scales the fraction by the point [k], generates its digits, and writes them with
+      the decimal point [k] places into them: @0.d1 d2 …@ × 10^[k].
+  digitsFrom(r, s, mUp, mDn, k) | k >= 0= floatDigitsText(digits= generateDigits(rn= r, sn= s * intPower(base= 10, n= k), mUp= mUp, mDn= mDn), point= k)
+  digitsFrom(r, s, mUp, mDn, k) else = floatDigitsText(digits= generateDigits(rn= r * intPower(base= 10, n= 0 - k), sn= s, mUp= mUp * intPower(base= 10, n= 0 - k), mDn= mDn * intPower(base= 10, n= 0 - k)), point= k)
+
+  generateDigits(rn -> Integer, sn -> Integer, mUp -> Integer, mDn -> Integer) -> /Data/List/ConsList[$T -> Integer]
+    # [generateDigits] writes the next digit, and stops where the digits so far read back as the
+      number from below, from above, or both (then the nearer).
+  generateDigits(rn, sn, mUp, mDn)= nextDigit(dn= (rn * 10) // sn, rn2= (rn * 10) % sn, sn= sn, mUp= mUp * 10, mDn= mDn * 10)
+
+  nextDigit(dn -> Integer, rn2 -> Integer, sn -> Integer, mUp -> Integer, mDn -> Integer) -> /Data/List/ConsList[$T -> Integer]
+    # [nextDigit] is the digit [dn] with the remainder [rn2] still to write. Its guards are
+      exclusive of one another, as a guard chain's arms are not tried in the order written.
+  nextDigit(dn, rn2, sn, mUp, mDn) | rn2 < mDn && rn2 + mUp > sn && rn2 * 2 < sn= /Data/List/Cons(head= dn, tail= /Data/List/Nil)
+  nextDigit(dn, rn2, sn, mUp, mDn) | rn2 < mDn && rn2 + mUp > sn && rn2 * 2 >= sn= /Data/List/Cons(head= dn + 1, tail= /Data/List/Nil)
+  nextDigit(dn, rn2, sn, mUp, mDn) | rn2 < mDn && rn2 + mUp <= sn= /Data/List/Cons(head= dn, tail= /Data/List/Nil)
+  nextDigit(dn, rn2, sn, mUp, mDn) | rn2 >= mDn && rn2 + mUp > sn= /Data/List/Cons(head= dn + 1, tail= /Data/List/Nil)
+  nextDigit(dn, rn2, sn, mUp, mDn) else = /Data/List/Cons(head= dn, tail= generateDigits(rn= rn2, sn= sn, mUp= mUp, mDn= mDn))
+
+  digitsText(ds -> /Data/List/ConsList[$T -> Integer]) -> /Data/List/ConsList[$T -> Char]
+    # [digitsText] is the characters writing the decimal digits [ds].
+  digitsText(ds= /Data/List/Nil)= /Data/List/Nil
+  digitsText(ds= /Data/List/Cons(head, tail))= /Data/List/Cons(head= digitChar(digit= head), tail= digitsText(ds= tail))
+
+  wholeDigits(ds -> /Data/List/ConsList[$T -> Integer], n -> Integer) -> /Data/List/ConsList[$T -> Integer]
+    # [wholeDigits] is the first [n] digits of [ds], with zeros where it runs out.
+  wholeDigits(ds, n) | n <= 0= /Data/List/Nil
+  wholeDigits(ds, n) else = wholeDigit(ds= ds, n= n)
+
+  wholeDigit(ds -> /Data/List/ConsList[$T -> Integer], n -> Integer) -> /Data/List/ConsList[$T -> Integer]
+    # [wholeDigit] is [wholeDigits] past its first digit.
+  wholeDigit(ds= /Data/List/Nil, n)= /Data/List/Cons(head= 0, tail= wholeDigits(ds= /Data/List/Nil, n= n - 1))
+  wholeDigit(ds= /Data/List/Cons(head, tail), n)= /Data/List/Cons(head= head, tail= wholeDigits(ds= tail, n= n - 1))
+
+  fractionDigits(ds -> /Data/List/ConsList[$T -> Integer], n -> Integer) -> /Data/List/ConsList[$T -> Integer]
+    # [fractionDigits] is the digits of [ds] after its first [n], and a single zero where there
+      are none.
+  fractionDigits(ds, n) | n <= 0= atLeastZero(ds= ds)
+  fractionDigits(ds, n) else = fractionDigit(ds= ds, n= n)
+
+  fractionDigit(ds -> /Data/List/ConsList[$T -> Integer], n -> Integer) -> /Data/List/ConsList[$T -> Integer]
+    # [fractionDigit] is [fractionDigits] past its first digit.
+  fractionDigit(ds= /Data/List/Nil, n)= /Data/List/Cons(head= 0, tail= /Data/List/Nil)
+  fractionDigit(ds= /Data/List/Cons(head, tail), n)= fractionDigits(ds= tail, n= n - 1)
+
+  atLeastZero(ds -> /Data/List/ConsList[$T -> Integer]) -> /Data/List/ConsList[$T -> Integer]
+    # [atLeastZero] is [ds], or a single zero where it is empty.
+  atLeastZero(ds= /Data/List/Nil)= /Data/List/Cons(head= 0, tail= /Data/List/Nil)
+  atLeastZero(ds= /Data/List/Cons(head, tail))= /Data/List/Cons(head= head, tail= tail)
+
+  floatDigitsText(digits -> /Data/List/ConsList[$T -> Integer], point -> Integer) -> String
+    # [floatDigitsText] writes the digits as Haskell's @show@ does: in fixed notation where the
+      point falls within the first seven places, and as a mantissa and exponent otherwise.
+  floatDigitsText(digits, point) | point < 0 || point > 7= String/Text(chars= /Data/appendChars(l= digitsText(ds= wholeDigits(ds= digits, n= 1)), r= /Data/List/Cons(head= '.', tail= digitsText(ds= fractionDigits(ds= digits, n= 1))))) ++ "e" ++ (point - 1).toStringBase(base= 10)
+  floatDigitsText(digits, point) | point == 0= String/Text(chars= /Data/List/Cons(head= '0', tail= /Data/List/Cons(head= '.', tail= digitsText(ds= digits))))
+  floatDigitsText(digits, point) else = String/Text(chars= /Data/appendChars(l= digitsText(ds= wholeDigits(ds= digits, n= point)), r= /Data/List/Cons(head= '.', tail= digitsText(ds= fractionDigits(ds= digits, n= point)))))
+
+  floatText(parts -> /Data/Primitive/FloatParts) -> String
+    # [floatText] writes a [Float] from its parts ([Float.parts]).
+  floatText(parts= /Data/Primitive/FloatParts/NaN)= "NaN"
+  floatText(parts= /Data/Primitive/FloatParts/Infinite(negative= /Data/Primitive/True))= "-Infinity"
+  floatText(parts= /Data/Primitive/FloatParts/Infinite(negative= /Data/Primitive/False))= "Infinity"
+  floatText(parts= /Data/Primitive/FloatParts/Finite(negative= /Data/Primitive/True, mantissa, exponent))= "-" ++ magnitudeText(mantissa= mantissa, exponent= exponent)
+  floatText(parts= /Data/Primitive/FloatParts/Finite(negative= /Data/Primitive/False, mantissa, exponent))= magnitudeText(mantissa= mantissa, exponent= exponent)
+
+  magnitudeText(mantissa -> Integer, exponent -> Integer) -> String
+    # [magnitudeText] writes the non-negative number [mantissa] × 2^[exponent].
+  magnitudeText(mantissa, exponent) | mantissa == 0= "0.0"
+  magnitudeText(mantissa, exponent) else = shortestDigits(mantissa= mantissa, exponent= exponent)
+
+  > floatText(parts= 1.5.parts)
+    >>> 1.5
+  > floatText(parts= 0.1.parts)
+    >>> 0.1
+  > floatText(parts= (0.1 + 0.2).parts)
+    >>> 0.30000000000000004
+  > floatText(parts= 1.0e-2.parts)
+    >>> 1.0e-2
+  > floatText(parts= 1234567.0.parts)
+    >>> 1234567.0
+  > floatText(parts= 1.0e7.parts)
+    >>> 1.0e7
+  > floatText(parts= 123.456.parts)
+    >>> 123.456
+  > floatText(parts= 100.0.parts)
+    >>> 100.0
+  > floatText(parts= (0.0 - 2.5).parts)
+    >>> -2.5
+  > floatText(parts= 0.0.parts)
+    >>> 0.0
+  # Each of these is what Haskell's @show@ writes for the same number: the least subnormal and the
+  #   largest finite number, the least mantissa of an exponent (where the neighbours are unevenly
+  #   spaced), either side of the edges of fixed notation, and @1.0e23@, whose shortest digits are
+  #   not the ones it is written with.
+  > floatText(parts= 5.0e-324.parts)
+    >>> 5.0e-324
+  > floatText(parts= 2.2250738585072014e-308.parts)
+    >>> 2.2250738585072014e-308
+  > floatText(parts= 1.7976931348623157e308.parts)
+    >>> 1.7976931348623157e308
+  > floatText(parts= 4.503599627370496e15.parts)
+    >>> 4.503599627370496e15
+  > floatText(parts= 9.007199254740992e15.parts)
+    >>> 9.007199254740992e15
+  > floatText(parts= 9.999999999999999e-2.parts)
+    >>> 9.999999999999999e-2
+  > floatText(parts= 9999999.0.parts)
+    >>> 9999999.0
+  > floatText(parts= 9999999.5.parts)
+    >>> 9999999.5
+  > floatText(parts= 1.0e22.parts)
+    >>> 1.0e22
+  > floatText(parts= 1.2345678901234568e17.parts)
+    >>> 1.2345678901234568e17
+  > floatText(parts= 1.0e-7.parts)
+    >>> 1.0e-7
+  > floatText(parts= 3.141592653589793.parts)
+    >>> 3.141592653589793
+  > floatText(parts= 9.999999999999999e22.parts)
+    >>> 9.999999999999999e22
   # ## Ordering
     Strings are ordered the way a dictionary orders words: by their first characters that differ,
     and a string before any longer string it begins.

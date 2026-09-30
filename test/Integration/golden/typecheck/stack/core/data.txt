@@ -18,8 +18,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> ∀/Data/String ]
-                    , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString( Value /this -> ∀/Data/String ) -> ∀/Data/String = Value /this
@@ -27,6 +26,8 @@ Prgm
                             ( Value /base -> /Data/Primitive/Integer = CInt
                                 { ciValue = 10 }
                             )( Value /this -> TVArg /this = Value /this )
+                        , /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String = /Data/floatText
+                            ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
