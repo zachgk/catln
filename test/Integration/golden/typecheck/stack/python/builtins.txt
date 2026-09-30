@@ -36,13 +36,33 @@ Prgm
                     }
                 )
             ,
-                ( "/Python/Builtins/length"
+                ( "/Python/Builtins/prefixed"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/length( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
+                    { omiDecls =
+                        [ /Python/Builtins/prefixed( Value /n -> /Data/Primitive/Integer )( Value /prefix -> ∀/Data/String )( Value /base -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/prefixed( Value /n -> /Data/Primitive/Integer )( Value /prefix -> ∀/Data/String )( Value /base -> /Data/Primitive/Integer ) | /operator<( Value /l -> TVArg /n = Value /n )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "-" }
+                                )( Value /r -> TVArg /prefix = Value /prefix )
+                            )
+                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toStringBase( Value /base -> TVArg /base = Value /base )
+                                ( Value /this -> /Data/Primitive/Integer = /operator-
+                                    ( Value /l -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )( Value /r -> TVArg /n = Value /n )
+                                )
+                            )
+                        , /Python/Builtins/prefixed( Value /n -> /Data/Primitive/Integer )( Value /prefix -> ∀/Data/String )( Value /base -> /Data/Primitive/Integer ) -> ∀/Data/String = /operator++( Value /l -> TVArg /prefix = Value /prefix )
+                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toStringBase( Value /base -> TVArg /base = Value /base )( Value /this -> TVArg /n = Value /n ) )
+                        ]
                     }
                 )
             ,
@@ -61,23 +81,41 @@ Prgm
                 ( "/operator+"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /operator+
-                            ( Value /l -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } )
-                            ( Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } ) -> ∀/Data/String
-                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator+( Value /l -> ∀/Data/String )( Value /r -> ∀/Data/String ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=∀/Data/String
+                                )
+                            , []
+                            ) = /operator++( Value /l -> TVArg /l = Value /l )( Value /r -> TVArg /r = Value /r )
+                        ]
                     }
                 )
             ,
                 ( "/Python/Builtins/hex"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/hex( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/hex( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Python/Builtins/prefixed( Value /n -> TVArg /this = Value /this )
+                            ( Value /prefix -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "0x" }
+                            )
+                            ( Value /base -> /Data/Primitive/Integer = CInt
+                                { ciValue = 16 }
+                            )
+                        ]
                     }
                 )
             ,
@@ -95,31 +133,64 @@ Prgm
             ,
                 ( "/Python/Builtins/oct"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/oct( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/oct( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Python/Builtins/prefixed( Value /n -> TVArg /this = Value /this )
+                            ( Value /prefix -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "0o" }
+                            )
+                            ( Value /base -> /Data/Primitive/Integer = CInt
+                                { ciValue = 8 }
+                            )
+                        ]
                     }
                 )
             ,
                 ( "/Python/Builtins/chr"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String = /Data/toString
+                            ( Value /this -> /Data/Char = /Data/fromCode( Value /code -> TVArg /n = Value /n ) )
+                        ]
                     }
                 )
             ,
-                ( "/Python/Builtins/ord"
+                ( "/Data/Algebra/ord"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/ord( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord
+                            ( Value /this ->
+                                ( /String/Text
+                                    ( /chars=/Data/List/Cons
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    )| PredClass /Data/Algebra/Ord + /Data/String/Text
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    )| PredClass /Data/Algebra/Ord
+                                ) = /String/Text
+                                ( Value /chars -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) = /Data/List/Cons( Value /head )
+                                    ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                )
+                            ) -> /Data/Primitive/Integer| PredClass /Data/Algebra/Ordering[ /T=TopType ] = /Data/code( Value /this -> TVArg /head = Value /head )
+                        ]
                     }
                 )
             ,
@@ -147,11 +218,20 @@ Prgm
             ,
                 ( "/Python/Builtins/bin"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/bin( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/bin( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Python/Builtins/prefixed( Value /n -> TVArg /this = Value /this )
+                            ( Value /prefix -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "0b" }
+                            )
+                            ( Value /base -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )
+                        ]
                     }
                 )
             ]
@@ -191,7 +271,8 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "## String operations" }
+                { csValue = "## String operations
+                Python's string built-ins, written over the core [String] and [Char]." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text

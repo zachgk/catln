@@ -91,7 +91,7 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )
-                            ( Value /r -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /tail = Value /tail ) )
+                            ( Value /r -> /Data/Primitive/Integer = /length( Value /this -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -655,7 +655,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/count
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/Integer = /Data/List/length
+                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/Integer = /length
                             ( Value /this -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/filter( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
@@ -847,7 +847,7 @@ Prgm
                 { csValue = "## Length" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /Data/List/length
+            ( Value /p -> /Data/Primitive/Integer = /length
                 ( Value /this -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]

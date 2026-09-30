@@ -46,15 +46,86 @@ Prgm
                     }
                 )
             ,
-                ( "/Python/Builtins/length"
+                ( "/Python/Builtins/prefixed"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/length
-                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/Primitive/Integer
+                    { omiDecls =
+                        [ /Python/Builtins/prefixed
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /prefix -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) -> ∀/Data/String
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/prefixed
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /prefix -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /prefix = ( Value /prefix ↦ TVArg /prefix ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                        ( /Data/toStringBase
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Python/Builtins/prefixed
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /prefix -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /prefix = ( Value /prefix ↦ TVArg /prefix ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                        ( /Data/toStringBase
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
                     }
                 )
             ,
@@ -75,29 +146,60 @@ Prgm
                 ( "/operator+"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /operator+
-                            ( EAppArg
-                                { eaaArg = Value /l -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
-                            ) -> ∀/Data/String
-                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator+
+                            ( EAppArg { eaaArg = Value /l -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /r -> ∀/Data/String } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=∀/Data/String
+                                )
+                            , []
+                            ) =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
                     }
                 )
             ,
                 ( "/Python/Builtins/hex"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/hex
                             ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/hex
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String =
+                            ( /Python/Builtins/prefixed
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /prefix -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0x"
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> /Data/Primitive/Integer = 16 }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
                     }
                 )
             ,
@@ -117,37 +219,55 @@ Prgm
             ,
                 ( "/Python/Builtins/oct"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/oct
                             ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/oct
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String =
+                            ( /Python/Builtins/prefixed
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /prefix -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0o"
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> /Data/Primitive/Integer = 8 }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
                     }
                 )
             ,
                 ( "/Python/Builtins/chr"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/chr
                             ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Python/Builtins/ord"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/ord
-                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/Primitive/Integer
+                    , omiDefs =
+                        [ /Python/Builtins/chr
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( /Data/toString
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Data/Char =
+                                        ( /Data/fromCode
+                                            ( EAppArg
+                                                { eaaArg = Value /code -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            ) ↦ /Data/Char
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
                         ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -181,13 +301,29 @@ Prgm
             ,
                 ( "/Python/Builtins/bin"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
+                    { omiDecls =
                         [ /Python/Builtins/bin
                             ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Python/Builtins/bin
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String =
+                            ( /Python/Builtins/prefixed
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /prefix -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0b"
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
                     }
                 )
             ]
@@ -230,7 +366,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## String operations"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## String operations
+                  Python's string built-ins, written over the core [String] and [Char]."
                 }
             )
         , /Catln/#md

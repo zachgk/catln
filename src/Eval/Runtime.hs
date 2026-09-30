@@ -32,7 +32,6 @@ import           Eval.Runtime.Prgm     (prgmPrims)
 import           Eval.Runtime.System   (systemPrims)
 import           Eval.Runtime.Tasks    (tasksPrims)
 import           Eval.Runtime.WebDocs  (webDocsPrims)
-import           Numeric               (showHex, showOct)
 import           Text.Printf
 
 type Op = (String, Either EPrim MacroFunction)
@@ -90,28 +89,6 @@ rfneg = EPrim "floatNeg" prim
     prim args = case H.lookup "/a" args of
       Just (FloatVal f) -> Right $ FloatVal $ -f
       _                 -> Left "Invalid rfneg signature"
-
-strEq :: EPrim
-strEq = EPrim "strEq" prim
-  where
-    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-      (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
-      _                                  -> Left "Invalid intToString signature"
-
-strNeq :: EPrim
-strNeq = EPrim "strNeq" prim
-  where
-    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-      (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l /= r
-      _                                  -> Left "Invalid strNeq signature"
-
-intToString :: EPrim
-intToString = EPrim "intToString" prim
-  where
-    prim args = case H.lookup "/this" args of
-      (Just (IntVal val)) -> Right $ StrVal $ show val
-      _                   -> Left "Invalid intToString signature"
-
 
 intAbs :: EPrim
 intAbs = EPrim "intAbs" prim
@@ -178,27 +155,6 @@ floatToBool = EPrim "floatToBool" prim
       Just (FloatVal _)   -> Right true
       _                   -> Left "Invalid floatToBool signature"
 
-intToChar :: EPrim
-intToChar = EPrim "intToChar" prim
-  where
-    prim args = case H.lookup "/n" args of
-      Just (IntVal n) -> Right $ StrVal [chr (fromIntegral n)]
-      _               -> Left "Invalid intToChar signature"
-
-charEq :: EPrim
-charEq = EPrim "charEq" prim
-  where
-    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-      (Just (CharVal l), Just (CharVal r)) -> Right $ bool $ l == r
-      _                                    -> Left "Invalid charEq signature"
-
-charLt :: EPrim
-charLt = EPrim "charLt" prim
-  where
-    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-      (Just (CharVal l), Just (CharVal r)) -> Right $ bool $ l < r
-      _                                    -> Left "Invalid charLt signature"
-
 -- | A character's Unicode code point.
 charCode :: EPrim
 charCode = EPrim "charCode" prim
@@ -215,65 +171,6 @@ charFromCode = EPrim "charFromCode" prim
       Just (IntVal n) | n >= 0 && n <= fromIntegral (ord maxBound) -> Right $ CharVal $ chr $ fromIntegral n
       Just (IntVal n) -> Left $ printf "%d is not a Unicode code point" n
       _ -> Left $ printf "Invalid charFromCode signature with args %s" (show args)
-
-charToString :: EPrim
-charToString = EPrim "charToString" prim
-  where
-    prim args = case H.lookup "/this" args of
-      Just (CharVal c) -> Right $ StrVal [c]
-      _                -> Left "Invalid charToString signature"
-
-strToOrd :: EPrim
-strToOrd = EPrim "strToOrd" prim
-  where
-    prim args = case H.lookup "/this" args of
-      Just (StrVal (c:_)) -> Right $ IntVal $ fromIntegral (ord c)
-      _                   -> Left "Invalid strToOrd signature"
-
-intToHex :: EPrim
-intToHex = EPrim "intToHex" prim
-  where
-    prim args = case H.lookup "/this" args of
-      Just (IntVal n)
-        | n < 0     -> Right $ StrVal $ "-0x" ++ showHex (-n) ""
-        | otherwise -> Right $ StrVal $ "0x" ++ showHex n ""
-      _ -> Left "Invalid intToHex signature"
-
-intToOct :: EPrim
-intToOct = EPrim "intToOct" prim
-  where
-    prim args = case H.lookup "/this" args of
-      Just (IntVal n)
-        | n < 0     -> Right $ StrVal $ "-0o" ++ showOct (-n) ""
-        | otherwise -> Right $ StrVal $ "0o" ++ showOct n ""
-      _ -> Left "Invalid intToOct signature"
-
-intToBin :: EPrim
-intToBin = EPrim "intToBin" prim
-  where
-    prim args = case H.lookup "/this" args of
-      Just (IntVal n)
-        | n < 0     -> Right $ StrVal $ "-0b" ++ toBin (-n)
-        | otherwise -> Right $ StrVal $ "0b" ++ toBin n
-      _ -> Left "Invalid intToBin signature"
-    toBin 0 = "0"
-    toBin n = reverse $ go n
-    go 0 = ""
-    go n = (if n `mod` 2 == 0 then '0' else '1') : go (n `div` 2)
-
-strConcat :: EPrim
-strConcat = EPrim "strConcat" prim
-  where
-    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-      (Just (StrVal l), Just (StrVal r)) -> Right $ StrVal $ l ++ r
-      _                                  -> Left "Invalid strConcat signature"
-
-strLength :: EPrim
-strLength = EPrim "strLength" prim
-  where
-    prim args = case H.lookup "/this" args of
-      Just (StrVal s) -> Right $ IntVal $ fromIntegral (length s)
-      _               -> Left "Invalid strLength signature"
 
 intMax :: EPrim
 intMax = liftIntOp "Max" max
@@ -400,9 +297,6 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , liftFloatCmpOp "==" (==)
             , liftFloatCmpOp "!=" (/=)
             , rfneg
-            , strEq
-            , strNeq
-            , intToString
             , ioExit
             , println
             , ioInput
@@ -415,18 +309,8 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatToString
             , intToBool
             , floatToBool
-            , intToChar
-            , strToOrd
-            , charEq
-            , charLt
             , charCode
             , charFromCode
-            , charToString
-            , intToHex
-            , intToOct
-            , intToBin
-            , strConcat
-            , strLength
             , intMax
             , floatMax
             , intMin

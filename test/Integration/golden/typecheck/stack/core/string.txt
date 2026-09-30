@@ -94,13 +94,106 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/isEmpty"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/isEmpty( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/isEmpty
+                            ( Value /this -> /Data/String/Text( /chars=/Data/List/Nil ) = /Data/String/Text( Value /chars -> /Data/List/Nil = Value /Data/List/Nil ) ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/String/isEmpty
+                            ( Value /this -> /Data/String/Text
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                ) = /Data/String/Text
+                                ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                    ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/length./Data/String/countChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /length./Data/String/countChars
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /length./Data/String/countChars( Value /cs -> /Data/List/Nil = Value /Data/List/Nil )( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value /n
+                        , /length./Data/String/countChars
+                            ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /length./Data/String/countChars( Value /cs -> TVArg /tail = Value /tail )
+                            ( Value /n -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /n = Value /n )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Char.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/toString( Value /this -> /Data/Char.. ) -> /Data/String/Text
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=/Data/List/Nil
+                                )
+                            ) = /Data/String/Text
+                            ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons( Value /head -> TVArg /this = Value /this )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/toStringBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/toStringBase( Value /base -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/toStringBase( Value /base -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer.. ) | /operator<( Value /l -> TVArg /this = Value /this )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "-" }
+                            )
+                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toStringBase( Value /base -> TVArg /base = Value /base )
+                                ( Value /this -> /Data/Primitive/Integer = /operator-
+                                    ( Value /l -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )( Value /r -> TVArg /this = Value /this )
+                                )
+                            )
+                        , /Data/toStringBase( Value /base -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer.. ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /toStringBase./Data/digitsOnto( Value /base -> TVArg /base = Value /base )( Value /n -> TVArg /this = Value /this )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil ) )
+                        ]
                     }
                 )
             ,
@@ -120,6 +213,55 @@ Prgm
                                 ( Value /chars@Value /bc -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             )
                             ( Value /this -> /Data/StrEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean = /Data/charsEqual( Value /a -> TVArg /ac = Value /ac )( Value /b -> TVArg /bc = Value /bc )
+                        ]
+                    }
+                )
+            ,
+                ( "/toStringBase./Data/digitsOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /toStringBase./Data/digitsOnto( Value /base )( Value /n -> /Data/Primitive/Integer )
+                            ( Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /toStringBase./Data/digitsOnto( Value /base )( Value /n -> /Data/Primitive/Integer )
+                            ( Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator<( Value /l -> TVArg /n = Value /n )( Value /r -> TVArg /base = Value /base ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/Cons
+                            ( Value /head -> /Data/Char = /Data/digitChar( Value /digit -> TVArg /n = Value /n ) )( Value /tail -> TVArg /acc = Value /acc )
+                        , /toStringBase./Data/digitsOnto( Value /base )( Value /n -> /Data/Primitive/Integer )
+                            ( Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /toStringBase./Data/digitsOnto( Value /base -> TVArg /base = Value /base )
+                            ( Value /n -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /n = Value /n )( Value /r -> TVArg /base = Value /base ) )
+                            ( Value /acc -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons
+                                ( Value /head -> /Data/Char = /Data/digitChar
+                                    ( Value /digit -> /Data/Primitive/Integer = /operator%( Value /l -> TVArg /n = Value /n )( Value /r -> TVArg /base = Value /base ) )
+                                )( Value /tail -> TVArg /acc = Value /acc )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/length"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/length( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/length
+                            ( Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) -> /Data/Primitive/Integer = /length./Data/String/countChars( Value /cs -> TVArg /chars = Value /chars )
+                            ( Value /n -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
                         ]
                     }
                 )
@@ -195,6 +337,11 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -344,6 +491,124 @@ Prgm
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "foobar" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Numbers as text" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+                ( Value /base -> /Data/Primitive/Integer = CInt
+                    { ciValue = 16 }
+                )
+                ( Value /this -> /Data/Primitive/Integer = CInt
+                    { ciValue = 255 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "ff" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+                ( Value /base -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
+                ( Value /this -> /Data/Primitive/Integer = CInt
+                    { ciValue = 5 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "101" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+                ( Value /base -> /Data/Primitive/Integer = CInt
+                    { ciValue = 10 }
+                )
+                ( Value /this -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+                ( Value /base -> /Data/Primitive/Integer = CInt
+                    { ciValue = 10 }
+                )
+                ( Value /this -> /Data/Primitive/Integer = /operator-
+                    ( Value /l -> /Data/Primitive/Integer = CInt
+                        { ciValue = 0 }
+                    )
+                    ( Value /r -> /Data/Primitive/Integer = CInt
+                        { ciValue = 42 }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "-42" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# What a string does
+                The operations on a [String] live in the [/Data/String] namespace the type opens, as a
+                list's do in [/Data/List], so that each type's [length] is a name of its own." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Size" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/String/length
+                ( Value /this -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "5" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/String/length
+                ( Value /this -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/String/isEmpty
+                ( Value /this -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/String/isEmpty
+                ( Value /this -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "a" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "False" }
             )
         ]
     }

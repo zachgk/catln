@@ -181,7 +181,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                        ( /Data/List/length
+                                        ( /length
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
                                             ) ↦ /Data/Primitive/Integer
@@ -1497,7 +1497,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean
                                 }
                             ) -> /Data/Primitive/Integer =
-                            ( /Data/List/length
+                            ( /length
                                 ( EAppArg
                                     { eaaArg = Value /this -> ∀/Data/List/ConsList[ /T=TopType ] =
                                         ( /Data/List/filter
@@ -1826,7 +1826,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /Data/List/length
+                    ( /length
                         ( EAppArg
                             { eaaArg = Value /this -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer

@@ -26,11 +26,13 @@ module(Data)
     >>> hello
   every(Integer, isa= [/Data/ToString])
 
-  :Integer.toString -> String
-    #runtime("intToString")
+  :Integer.toString= this.toStringBase(base= 10)
+    # An [Integer] renders in decimal.
 
   > 42
     >>> 42
+  > (0 - 7)
+    >>> -7
   every(Float, isa= [/Data/ToString])
 
   :Float.toString -> String

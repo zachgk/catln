@@ -1,6 +1,7 @@
 import "core/bool.ct"
 import "core/eq.ct"
 import "core/ord.ct"
+import "core/num.ct"
 
 
 module(Data)
@@ -13,20 +14,13 @@ module(Data)
       A [Char] is written as a literal between single quotes: `'a'`, or an escape such as `'\n'`.
 
   # ## Ordering
-    A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
-    primitives comparing two are named functions, so [CharOrdering] can build a [Comparison] from
-    them the way [/Data/Primitive/IntOrdering] does from the integer ones.
-  charLt(l -> Char, r -> Char) -> Boolean
-    #runtime("charLt")
-
-  charEq(l -> Char, r -> Char) -> Boolean
-    #runtime("charEq")
-
+    A [Char] is ordered by its Unicode code point ([code]): two characters compare as their code
+    points do.
   every(Char, isa= [/Data/Algebra/Ord])
 
   data(CharOrdering, isa= [/Data/Algebra/Ordering[$T -> Char]])
 
-  :CharOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/charLt(l= a, r= b), eq= /Data/charEq(l= a, r= b))
+  :CharOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= a.code < b.code, eq= a.code == b.code)
 
   :Char.ord= CharOrdering
 
@@ -42,6 +36,10 @@ module(Data)
     >>> False
   > 'a'.compareTo(other= 'b').isLess
     >>> True
+  > 'b'.compareTo(other= 'a').isGreater
+    >>> True
+  > 'a'.compareTo(other= 'a').isEq
+    >>> True
   # ## Code points
   :Char.code -> Integer
     # [code] is the character's Unicode code point.
@@ -55,4 +53,15 @@ module(Data)
   > 'a'.code
     >>> 97
   > fromCode(code= 98)
+    >>> b
+  # ## Digits
+  digitChar(digit -> Integer) -> Char
+    # [digitChar] is the character writing [digit] as one digit of a number, in any base up to 36:
+      `0` to `9` for zero to nine, then `a` to `z` for ten to thirty-five.
+  digitChar(digit) | digit < 10= fromCode(code= 48 + digit)
+  digitChar(digit) else = fromCode(code= 87 + digit)
+
+  > digitChar(digit= 7)
+    >>> 7
+  > digitChar(digit= 11)
     >>> b

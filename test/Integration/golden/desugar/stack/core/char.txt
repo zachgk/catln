@@ -11,16 +11,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/charEq"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/charEq( Value l -> /Data/Char )( Value r -> /Data/Char ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/Char"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Char ]
@@ -60,6 +50,32 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/digitChar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitChar( Value digit -> /Data/Primitive/Integer ) -> /Data/Char ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitChar( Value digit ) | /operator<( Value /l= Value digit )
+                            ( Value /r= CInt
+                                { ciValue = 10 }
+                            ) -> /Data/Char = fromCode
+                            ( Value code= /operator+
+                                ( Value /l= CInt
+                                    { ciValue = 48 }
+                                )( Value /r= Value digit )
+                            )
+                        , /Data/digitChar( Value digit ) -> /Data/Char = fromCode
+                            ( Value code= /operator+
+                                ( Value /l= CInt
+                                    { ciValue = 87 }
+                                )( Value /r= Value digit )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/compare"
                 , ObjectMapItem
                     { omiDecls = []
@@ -67,19 +83,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/CharOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
-                            ( Value lt= /Data/charLt( Value l= Value a )( Value r= Value b ) )
-                            ( Value eq= /Data/charEq( Value l= Value a )( Value r= Value b ) )
+                            ( Value lt= /operator<
+                                ( Value /l= code( Value /this= Value a ) )
+                                ( Value /r= code( Value /this= Value b ) )
+                            )
+                            ( Value eq= /operator==
+                                ( Value /l= code( Value /this= Value a ) )
+                                ( Value /r= code( Value /this= Value b ) )
+                            )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/charLt"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/charLt( Value l -> /Data/Char )( Value r -> /Data/Char ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -129,7 +141,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Char
@@ -152,9 +163,8 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Ordering
-                A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
-                primitives comparing two are named functions, so [CharOrdering] can build a [Comparison] from
-                them the way [/Data/Primitive/IntOrdering] does from the integer ones." }
+                A [Char] is ordered by its Unicode code point ([code]): two characters compare as their code
+                points do." }
             )
         , /Catln/#print
             ( Value /p= /operator==
@@ -194,6 +204,34 @@ Prgm
             ( Value /result= CStr
                 { csValue = "True" }
             )
+        , /Catln/#print
+            ( Value /p= isGreater
+                ( Value /this= compareTo
+                    ( Value other= CChar
+                        { chValue = 'a' }
+                    )
+                    ( Value /this= CChar
+                        { chValue = 'b' }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isEq
+                ( Value /this= compareTo
+                    ( Value other= CChar
+                        { chValue = 'a' }
+                    )
+                    ( Value /this= CChar
+                        { chValue = 'a' }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Code points" }
@@ -211,6 +249,28 @@ Prgm
             ( Value /p= fromCode
                 ( Value code= CInt
                     { ciValue = 98 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "b" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Digits" }
+            )
+        , /Catln/#print
+            ( Value /p= digitChar
+                ( Value digit= CInt
+                    { ciValue = 7 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "7" }
+            )
+        , /Catln/#print
+            ( Value /p= digitChar
+                ( Value digit= CInt
+                    { ciValue = 11 }
                 )
             )
             ( Value /result= CStr

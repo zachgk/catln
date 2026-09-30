@@ -145,14 +145,14 @@ Prgm
                                 , /k=/Data/Primitive/Integer
                                 ) = /Digits( Value /v -> /Data/Primitive/Integer )( Value /k -> /Data/Primitive/Integer )
                             ) -> ∀/Data/String = /operator++
-                            ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /v = Value /v ) )
+                            ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
+                                ( Value /l -> ∀/Data/Algebra/Semigroup = /Data/toString( Value /this -> TVArg /v = Value /v ) )
                                 ( Value /r -> /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "/" }
                                 )
                             )
-                            ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /k = Value /k ) )
+                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toString( Value /this -> TVArg /k = Value /k ) )
                         ]
                     }
                 )

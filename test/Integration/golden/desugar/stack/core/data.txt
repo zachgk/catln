@@ -19,12 +19,15 @@ Prgm
                     { omiDecls =
                         [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> ∀/Data/String ]
                     , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String
-                        , /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String
-                        ]
+                        [ /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> ∀/Data/String ) -> ∀/Data/String = Value this ]
+                        [ /Data/toString( Value /this -> ∀/Data/String ) -> ∀/Data/String = Value this
+                        , /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = toStringBase
+                            ( Value base= CInt
+                                { ciValue = 10 }
+                            )( Value /this= Value this )
+                        ]
                     }
                 )
             ,
@@ -129,6 +132,18 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "42" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator-
+                ( Value /l= CInt
+                    { ciValue = 0 }
+                )
+                ( Value /r= CInt
+                    { ciValue = 7 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "-7" }
             )
         , /Catln/#print
             ( Value /p= CFloat

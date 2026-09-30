@@ -19,12 +19,15 @@ Prgm
                     { omiDecls =
                         [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> ∀/Data/String ]
                     , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String
-                        , /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String
-                        ]
+                        [ /Data/toString( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> ∀/Data/String ) -> ∀/Data/String = Value /this ]
+                        [ /Data/toString( Value /this -> ∀/Data/String ) -> ∀/Data/String = Value /this
+                        , /Data/toString( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Data/toStringBase
+                            ( Value /base -> /Data/Primitive/Integer = CInt
+                                { ciValue = 10 }
+                            )( Value /this -> TVArg /this = Value /this )
+                        ]
                     }
                 )
             ,
@@ -135,6 +138,19 @@ Prgm
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "42" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /operator-
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 7 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "-7" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Float = CFloat

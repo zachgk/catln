@@ -145,7 +145,7 @@ Prgm
                         [ /Data/Algebra/rel
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Algebra/Ordering } ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Algebra/Ordering } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Algebra/isEq
                                 ( EAppArg
                                     { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
@@ -161,7 +161,7 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
-                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }

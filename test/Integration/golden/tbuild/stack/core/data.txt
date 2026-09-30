@@ -35,14 +35,22 @@ Prgm
                         ]
                     , omiRuntimeDecls =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String
-                        , /Data/toString
                             ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String = ( Value /this ↦ ∀/Data/String )
+                        , /Data/toString
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/String =
+                            ( /Data/toStringBase
+                                ( EAppArg
+                                    { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                ) ↦ ∀/Data/String
+                            )
                         ]
                     }
                 )
@@ -201,6 +209,24 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /result -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /operator-
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Primitive/Integer = 7 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-7"
                 }
             )
         , /Catln/#print

@@ -29,26 +29,32 @@ module(Python/Builtins)
     #runtime("floatToBool")
 
   # ## String operations
+    Python's string built-ins, written over the core [String] and [Char].
   chr(n -> Integer) -> String
-    #runtime("intToChar")
+    # [chr] is the one-character string of the Unicode code point [n].
+  chr(n)= /Data/fromCode(code= n).toString
 
-  :String.ord -> Integer
-    #runtime("strToOrd")
+  :String/Text(chars= /Data/List/Cons(head, tail)).ord= head.code
+    # [ord] is the code point of a string's first character. It is defined only for a string that
+      has one, as Python's is: an empty string has no [ord].
 
   :Integer.hex -> String
-    #runtime("intToHex")
+  :Integer.hex= prefixed(n= this, prefix= "0x", base= 16)
 
   :Integer.oct -> String
-    #runtime("intToOct")
+  :Integer.oct= prefixed(n= this, prefix= "0o", base= 8)
 
   :Integer.bin -> String
-    #runtime("intToBin")
+  :Integer.bin= prefixed(n= this, prefix= "0b", base= 2)
 
-  (_ :: String + _ :: String) -> String
-    #runtime("strConcat")
+  prefixed(n -> Integer, prefix -> String, base -> Integer) -> String
+    # [prefixed] writes [n] in [base] behind the [prefix] Python gives it, with any minus sign ahead
+      of the prefix (`-0x1f`).
+  prefixed(n, prefix, base) | n < 0= "-" ++ prefix ++ (0 - n).toStringBase(base= base)
+  prefixed(n, prefix, base) else = prefix ++ n.toStringBase(base= base)
 
-  :String.length -> Integer
-    #runtime("strLength")
+  (l :: String + r :: String)= l ++ r
+    # Python joins strings with [operator+].
 
   # ## Numeric min/max
   max(l -> Integer, r -> Integer) -> Integer

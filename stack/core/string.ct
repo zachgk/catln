@@ -22,8 +22,8 @@ module(Data)
 
   every(Char, isa= [/Data/ToString])
 
-  :Char.toString -> String
-    #runtime("charToString")
+  :Char.toString= String/Text(chars= /Data/List/Cons(head= this, tail= /Data/List/Nil))
+    # A [Char] renders as the string holding only it.
 
   > 'a'.toString
     >>> a
@@ -72,3 +72,49 @@ module(Data)
 
   > ("foo" ++ "bar")
     >>> foobar
+  # ## Numbers as text
+  :Integer.toStringBase(base -> Integer) -> String
+    # [toStringBase] writes the number in [base] (2 to 36), with the digits of [digitChar] and a
+      leading `-` when it is negative.
+  :Integer.toStringBase(base) | this < 0= "-" ++ (0 - this).toStringBase(base= base)
+  :Integer.toStringBase(base) else  =
+    digitsOnto(n -> Integer, acc -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+    digitsOnto(n, acc) | n < base= /Data/List/Cons(head= digitChar(digit= n), tail= acc)
+    digitsOnto(n, acc) else = digitsOnto(n= n // base, acc= /Data/List/Cons(head= digitChar(digit= n % base), tail= acc))
+
+    String/Text(chars= digitsOnto(n= this, acc= /Data/List/Nil))
+
+  > 255.toStringBase(base= 16)
+    >>> ff
+  > 5.toStringBase(base= 2)
+    >>> 101
+  > 0.toStringBase(base= 10)
+    >>> 0
+  > (0 - 42).toStringBase(base= 10)
+    >>> -42
+module(Data/String)
+  # # What a string does
+    The operations on a [String] live in the [/Data/String] namespace the type opens, as a
+    list's do in [/Data/List], so that each type's [length] is a name of its own.
+  # ## Size
+  :/Data/String.length -> /Data/Primitive/Integer
+    # [length] is how many characters the string holds.
+  :/Data/String/Text(chars).length =
+    countChars(cs -> /Data/List/ConsList[$T -> /Data/Char], n -> /Data/Primitive/Integer) -> /Data/Primitive/Integer
+    countChars(cs= /Data/List/Nil, n)= n
+    countChars(cs= /Data/List/Cons(head, tail), n)= countChars(cs= tail, n= n + 1)
+    countChars(cs= chars, n= 0)
+
+  > "hello".length
+    >>> 5
+  > "".length
+    >>> 0
+  :/Data/String.isEmpty -> /Data/Primitive/Boolean
+    # [isEmpty] is whether the string holds no characters.
+  :/Data/String/Text(chars= /Data/List/Nil).isEmpty= /Data/Primitive/True
+  :/Data/String/Text(chars= /Data/List/Cons(head, tail)).isEmpty= /Data/Primitive/False
+
+  > "".isEmpty
+    >>> True
+  > "a".isEmpty
+    >>> False

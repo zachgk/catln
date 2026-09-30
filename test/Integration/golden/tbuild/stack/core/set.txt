@@ -1824,7 +1824,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/isEmpty
+                    ( /isEmpty
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -1839,7 +1839,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/isEmpty
+                    ( /isEmpty
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
                                 ( Just

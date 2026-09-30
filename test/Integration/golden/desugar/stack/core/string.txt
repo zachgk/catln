@@ -57,13 +57,80 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/isEmpty"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/isEmpty( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/isEmpty
+                            ( Value /this= /Data/String/Text( Value chars= Value /Data/List/Nil ) ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
+                        , /Data/String/isEmpty
+                            ( Value /this= /Data/String/Text
+                                ( Value chars= /Data/List/Cons( Value head )( Value tail ) )
+                            ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/length./Data/String/countChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ length./Data/String/countChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ length./Data/String/countChars( Value cs= Value /Data/List/Nil )( Value n ) -> /Data/Primitive/Integer = Value n
+                        , length./Data/String/countChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> /Data/Primitive/Integer = countChars( Value cs= Value tail )
+                            ( Value n= /operator+( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/toString( Value /this -> /Data/Char.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/toString( Value /this -> /Data/Char.. ) -> ∀/Data/String = String/Text
+                            ( Value chars= /Data/List/Cons( Value head= Value this )( Value tail= Value /Data/List/Nil ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/toStringBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/toStringBase( Value base -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/toStringBase( Value base )( Value /this -> /Data/Primitive/Integer.. ) | /operator<( Value /l= Value this )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "-" }
+                            )
+                            ( Value /r= toStringBase( Value base= Value base )
+                                ( Value /this= /operator-
+                                    ( Value /l= CInt
+                                        { ciValue = 0 }
+                                    )( Value /r= Value this )
+                                )
+                            )
+                        , /Data/toStringBase( Value base )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = String/Text
+                            ( Value chars= digitsOnto( Value /base= Value /base )( Value n= Value this )( Value acc= Value /Data/List/Nil ) )
+                        ]
                     }
                 )
             ,
@@ -76,6 +143,44 @@ Prgm
                         [ /Data/Algebra/rel
                             ( Value a= String/Text( Value chars@Value ac ) )
                             ( Value b= String/Text( Value chars@Value bc ) )( Value /this -> /Data/StrEqv.. ) -> ∀/Data/Primitive/Boolean = charsEqual( Value a= Value ac )( Value b= Value bc )
+                        ]
+                    }
+                )
+            ,
+                ( "/toStringBase./Data/digitsOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ toStringBase./Data/digitsOnto( Value /base )( Value n -> /Data/Primitive/Integer )
+                            ( Value acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ toStringBase./Data/digitsOnto( Value /base )( Value n )( Value acc ) | /operator<( Value /l= Value n )( Value /r= Value base ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
+                            ( Value head= digitChar( Value digit= Value n ) )( Value tail= Value acc )
+                        , toStringBase./Data/digitsOnto( Value /base )( Value n )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = digitsOnto( Value /base= Value /base )
+                            ( Value n= /operator//( Value /l= Value n )( Value /r= Value base ) )
+                            ( Value acc= /Data/List/Cons
+                                ( Value head= digitChar
+                                    ( Value digit= /operator%( Value /l= Value n )( Value /r= Value base ) )
+                                )( Value tail= Value acc )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/length"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/length( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/length
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> /Data/Primitive/Integer = countChars( Value cs= Value chars )
+                            ( Value n= CInt
+                                { ciValue = 0 }
+                            )
                         ]
                     }
                 )
@@ -132,6 +237,11 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -264,6 +374,109 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "foobar" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Numbers as text" }
+            )
+        , /Catln/#print
+            ( Value /p= toStringBase
+                ( Value base= CInt
+                    { ciValue = 16 }
+                )
+                ( Value /this= CInt
+                    { ciValue = 255 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "ff" }
+            )
+        , /Catln/#print
+            ( Value /p= toStringBase
+                ( Value base= CInt
+                    { ciValue = 2 }
+                )
+                ( Value /this= CInt
+                    { ciValue = 5 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "101" }
+            )
+        , /Catln/#print
+            ( Value /p= toStringBase
+                ( Value base= CInt
+                    { ciValue = 10 }
+                )
+                ( Value /this= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= toStringBase
+                ( Value base= CInt
+                    { ciValue = 10 }
+                )
+                ( Value /this= /operator-
+                    ( Value /l= CInt
+                        { ciValue = 0 }
+                    )
+                    ( Value /r= CInt
+                        { ciValue = 42 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "-42" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# What a string does
+                The operations on a [String] live in the [/Data/String] namespace the type opens, as a
+                list's do in [/Data/List], so that each type's [length] is a name of its own." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Size" }
+            )
+        , /Catln/#print
+            ( Value /p= length
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "5" }
+            )
+        , /Catln/#print
+            ( Value /p= length
+                ( Value /this= CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= isEmpty
+                ( Value /this= CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isEmpty
+                ( Value /this= CStr
+                    { csValue = "a" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
             )
         ]
     }

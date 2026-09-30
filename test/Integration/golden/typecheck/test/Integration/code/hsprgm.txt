@@ -779,7 +779,7 @@ Prgm
                                     ]
                                 )
                                 ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
-                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /consts = Value /consts )
+                            ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /consts = Value /consts )
                         , /Test/constCount
                             ( Value /t -> /Catln/Type/TypeVar
                                 ( /aux=∀/Catln/TypeVarAux
@@ -817,7 +817,7 @@ Prgm
                                         ]..
                                     ]
                                 )
-                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /items = Value /items )
+                            ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /items = Value /items )
                         ]
                     }
                 )

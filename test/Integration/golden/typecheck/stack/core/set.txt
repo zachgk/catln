@@ -1030,13 +1030,13 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/isEmpty( Value /s -> ∀/Data/Set/MapSet = Value /Data/Set/empty ) )
+            ( Value /p -> ∀/Data/Primitive/Boolean = /isEmpty( Value /s -> ∀/Data/Set/MapSet = Value /Data/Set/empty ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/isEmpty
+            ( Value /p -> ∀/Data/Primitive/Boolean = /isEmpty
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]

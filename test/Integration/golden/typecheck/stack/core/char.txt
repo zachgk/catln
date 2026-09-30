@@ -11,16 +11,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/charEq"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/charEq( Value /l -> /Data/Char )( Value /r -> /Data/Char ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/Char"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Char ]
@@ -60,6 +50,32 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/digitChar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitChar( Value /digit -> /Data/Primitive/Integer ) -> /Data/Char ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitChar( Value /digit -> /Data/Primitive/Integer ) | /operator<( Value /l -> TVArg /digit = Value /digit )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 10 }
+                            ) -> /Data/Char = /Data/fromCode
+                            ( Value /code -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 48 }
+                                )( Value /r -> TVArg /digit = Value /digit )
+                            )
+                        , /Data/digitChar( Value /digit -> /Data/Primitive/Integer ) -> /Data/Char = /Data/fromCode
+                            ( Value /code -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 87 }
+                                )( Value /r -> TVArg /digit = Value /digit )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/compare"
                 , ObjectMapItem
                     { omiDecls = []
@@ -67,20 +83,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compare( Value /a )( Value /b )
-                            ( Value /this -> /Data/CharOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/mkComparison
-                            ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/charLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
-                            ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/charEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
+                            ( Value /this -> /Data/CharOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                            ( Value /lt -> ∀/Data/Primitive/Boolean = /operator<
+                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /a = Value /a ) )
+                                ( Value /r -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /b = Value /b ) )
+                            )
+                            ( Value /eq -> ∀/Data/Primitive/Boolean = /operator==
+                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /a = Value /a ) )
+                                ( Value /r -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /b = Value /b ) )
+                            )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/charLt"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/charLt( Value /l -> /Data/Char )( Value /r -> /Data/Char ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -130,7 +142,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Char
@@ -155,9 +166,8 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Ordering
-                A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
-                primitives comparing two are named functions, so [CharOrdering] can build a [Comparison] from
-                them the way [/Data/Primitive/IntOrdering] does from the integer ones." }
+                A [Char] is ordered by its Unicode code point ([code]): two characters compare as their code
+                points do." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
@@ -200,6 +210,36 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
+        , /Catln/#print
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isGreater
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                    ( Value /other -> /Data/Char = CChar
+                        { chValue = 'a' }
+                    )
+                    ( Value /this -> /Data/Char = CChar
+                        { chValue = 'b' }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                    ( Value /other -> /Data/Char = CChar
+                        { chValue = 'a' }
+                    )
+                    ( Value /this -> /Data/Char = CChar
+                        { chValue = 'a' }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -219,6 +259,31 @@ Prgm
             ( Value /p -> /Data/Char = /Data/fromCode
                 ( Value /code -> /Data/Primitive/Integer = CInt
                     { ciValue = 98 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "b" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Digits" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Char = /Data/digitChar
+                ( Value /digit -> /Data/Primitive/Integer = CInt
+                    { ciValue = 7 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "7" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Char = /Data/digitChar
+                ( Value /digit -> /Data/Primitive/Integer = CInt
+                    { ciValue = 11 }
                 )
             )
             ( Value /result -> /Data/String/Text

@@ -68,7 +68,7 @@ Prgm
                                 ) = /Catln/RawPrgm
                                 ( Value /imports -> ∀/Data/List[ /T=/Catln/AFileImport.. ] )
                                 ( Value /statements -> ∀/Data/List[ /T=/Catln/RawStatementTree.. ] )
-                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /statements = Value /statements )
+                            ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /statements = Value /statements )
                         ]
                     }
                 )
@@ -108,7 +108,7 @@ Prgm
                                     [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]( /value=$/T ) = /Data/Maybe/Some
                                     ( Value /value -> ∀/Data/List[ /T=∀/Catln/ReadPath ] )
                                 )
-                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /value = Value /value )
+                            ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /value = Value /value )
                         ]
                     }
                 )
