@@ -147,6 +147,23 @@ class Maybe[$T] = Just[$T]($T val) | Nothing
 class Maybe2[$T] = $T | Nothing
 ```
 
+## Strings and characters
+
+A string literal is written between double quotes and a character literal between single quotes, with backslash escapes such as `\n`, `\t`, `\"`, `\'` and `\\`:
+
+```
+greeting= "Hello, world\n"
+initial= 'H'
+```
+
+A `String` is not a primitive: it is the one member of the class `String/Text(chars)`, whose `chars` field holds the string's characters as a `ConsList` of `Char`. So a string can be taken apart and built up like any list:
+
+```
+firstChar(s= String/Text(chars= Cons(head, tail)))= head
+```
+
+A `Char` is a primitive, compared by its Unicode code point (`'a'.code` is `97`, and `fromCode(code= 98)` is `'b'`). Everything a string does, from `++` and `==` to `split`, `replace` and `parseInteger`, is written in Catln in `stack/core/string.ct`, and what a character does in `stack/core/char.ct`.
+
 You can also define annotations similarly to data objects:
 
 ```
