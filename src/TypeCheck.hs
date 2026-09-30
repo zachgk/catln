@@ -101,6 +101,8 @@ typecheckPrgmsSt pprgms typechecked = do
     _                          -> return ()
   results <- gets (instrumentResults . feInstruments)
   let tprgms = map mconcat $ transpose $ reverse tfragsRev
+  -- The members these pages add to classes, against the declarations earlier pages made over them.
+  verifyAddedMembers (prgmCg (mconcat pprgms)) typechecked tprgms
   let vprgms = map mconcat $ transpose $ reverse vfragsRev
   return (tprgms, vprgms, results)
   where

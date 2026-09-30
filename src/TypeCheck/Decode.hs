@@ -19,13 +19,15 @@ import           CtConstants         (thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe          (mapMaybe)
-import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
+import           MapMeta             (MetaType (ArrMeta), clearMetaDat,
+                                      mapMetaPrgm)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph (reachesTo)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
+import           Utils               (graphToNodes)
 
 toMeta :: VarMeta -> StateT FEnv TypeCheckResult TypedMeta
 toMeta  m@(Meta pt pos mid _) = do
@@ -285,6 +287,33 @@ singleLeaf (UnionType Nothing leafs []) = case splitUnionType leafs of
   _   -> Nothing
 singleLeaf _ = Nothing
 
+-- | What a declaration's definitions leave undefined, with the target they were compared as, or
+-- 'Nothing' where they fulfill it. The definitions' input types are given universalized
+-- ('universalizeBindingArgs'), with their union.
+declUndefined :: FEnvTypeEnv -> [Type] -> Type -> ObjArr Expr TypedMetaDat -> Maybe (Type, Type)
+declUndefined prgmTypeEnv defInputTypesU defUnionU oa
+  | receiverFulfilled || isSubtypeOf prgmTypeEnv checkType target = Nothing
+  | otherwise = Just (target, snd $ differenceTypeWithEnv prgmTypeEnv H.empty checkType target)
+  where
+    declType = getMetaType $ getExprMeta $ oaObjExpr oa
+    -- A diagonal declaration (every argument typed by one shared variable, e.g.
+    -- @operator==($T l, $T r)@) is fulfilled iff the variable's bound is covered by the
+    -- diagonal projection of the definitions, not by the full product. Checking the product
+    -- would spuriously demand off-diagonal pairs like @(Integer, Float)@.
+    (checkType, target) = case diagonalVar oa =<< singleLeaf declType of
+      Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypesU))
+      Nothing                  -> (declType, defUnionU)
+    -- A class-parameter method is fulfilled by covering its receiver dimension alone (every
+    -- class member must have a definition); its parameter-typed arguments are per-member and
+    -- are validated by the definition-within-declaration check. This is an additional
+    -- acceptance path: it never suppresses a failure the product check would otherwise pass.
+    receiverFulfilled = isClassParamMethodDecl oa &&
+      case typeGetArg (partialKey "this") =<< singleLeaf declType of
+        Just recvDecl ->
+          let recvDefs = mapMaybe (\t -> typeGetArg (partialKey "this") =<< singleLeaf t) defInputTypesU
+          in not (null recvDefs) && isSubtypeOf prgmTypeEnv recvDecl (unionAllTypes prgmTypeEnv recvDefs)
+        Nothing -> False
+
 -- | Checks one name's definitions against its declarations, and its declarations against its
 -- definitions.
 --
@@ -334,28 +363,10 @@ verifyObjMapItem name importedDecls (ObjectMapItem decls runtimeDecls refineDecl
       -- (TypeObj) declarations are self-defining and need no separate definition, so they are
       -- exempt from the fulfillment check (they still bound definitions via declUnion above).
       let fulfillableDecls = filter ((/= TypeObj) . oaBasis) decls
-      forM_ fulfillableDecls $ \oa -> do
-        let declType = getMetaType $ getExprMeta $ oaObjExpr oa
-        let declLoc = getMetaPos $ getExprMeta $ oaObjExpr oa
-        -- A diagonal declaration (every argument typed by one shared variable, e.g.
-        -- @operator==($T l, $T r)@) is fulfilled iff the variable's bound is covered by the
-        -- diagonal projection of the definitions, not by the full product. Checking the product
-        -- would spuriously demand off-diagonal pairs like @(Integer, Float)@.
-        let (checkType, target) = case diagonalVar oa =<< singleLeaf declType of
-              Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypesU))
-              Nothing                  -> (declType, defUnionU)
-        -- A class-parameter method is fulfilled by covering its receiver dimension alone (every
-        -- class member must have a definition); its parameter-typed arguments are per-member and
-        -- are validated by the definition-within-declaration check above. This is an additional
-        -- acceptance path: it never suppresses a failure the product check would otherwise pass.
-        let receiverFulfilled = isClassParamMethodDecl oa &&
-              case typeGetArg (partialKey "this") =<< singleLeaf declType of
-                Just recvDecl ->
-                  let recvDefs = mapMaybe (\t -> typeGetArg (partialKey "this") =<< singleLeaf t) defInputTypesU
-                  in not (null recvDefs) && isSubtypeOf prgmTypeEnv recvDecl (unionAllTypes prgmTypeEnv recvDefs)
-                Nothing -> False
-        unless (receiverFulfilled || isSubtypeOf prgmTypeEnv checkType target) $ do
-          let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty checkType target
+      forM_ fulfillableDecls $ \oa ->
+        forM_ (declUndefined prgmTypeEnv defInputTypesU defUnionU oa) $ \(target, notDefined) -> do
+          let declType = getMetaType $ getExprMeta $ oaObjExpr oa
+          let declLoc = getMetaPos $ getExprMeta $ oaObjExpr oa
           lift $ TypeCheckResult [UnfulfilledDeclaration name declType target notDefined declLoc] ()
 
       -- Check each refinement declaration against declUnion
@@ -382,3 +393,49 @@ toPrgms vprgms = do
   _ <- H.traverseWithKey (\name -> verifyObjMapItem name (importedDecls name)) mergedObjMap
 
   return tprgms
+
+-- | Checks the members a solve adds to classes against the declarations earlier solves made over
+-- those classes.
+--
+-- A page that says @every(Maybe[$T -> Eq], isa= [Eq])@ makes every declaration over @Eq@ a
+-- declaration over @Maybe@ too, so @:$T.eq[$T -> Eq]@ is only fulfilled if the page (or one
+-- before it) defines @eq@ for a @Maybe@. 'verifyObjMapItem' cannot see that: the declaration
+-- was solved, and checked, before the member existed. So each such declaration is checked again
+-- here with every definition now known, and what the members added here leave undefined is
+-- reported on this page. That part is the undefined part now, less what was already undefined
+-- under the dependencies alone, so an older gap is reported once, where it was made.
+verifyAddedMembers :: ClassGraph -> [TPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ()
+verifyAddedMembers (ClassGraph pageCg) deps solved = do
+  FEnv{feTypeEnv, feLocalDefNames} <- get
+  let addedTo = S.fromList [ pcnName k | (CGClass{cgcExtends}, k@PClassName{}, _) <- graphToNodes pageCg, not (null cgcExtends) ]
+  let ObjectMap depItems = prgmObjMap (mconcat deps)
+  let ObjectMap solvedItems = prgmObjMap (mconcat solved)
+  let envNow = feTypeEnv{tePrgmEnv = True}
+  let envBefore = (mkTypeEnv (mconcat (map (mapMetaPrgm clearMetaDat) deps))){tePrgmEnv = True}
+  let inputType = getMetaType . getExprMeta . oaObjExpr
+  let universalized env defined oas = let ts = map (universalizeBindingArgs defined . inputType) oas in (ts, unionAllTypes env ts)
+  let definedIn env extra = let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph env in S.map makeAbsoluteName (H.keysSet objTg) <> extra
+  unless (S.null addedTo) $
+    forM_ (H.toList depItems) $ \(name, ObjectMapItem decls depRuntime _ depDefs) -> do
+      let affected = [ oa | oa <- decls, oaBasis oa /= TypeObj, not (S.null (S.intersection addedTo (typePredClassNames (inputType oa)))) ]
+      let pageDefs = maybe [] (\it -> omiDefs it ++ omiRuntimeDecls it) (H.lookup name solvedItems)
+      let (nowTs, nowU) = universalized envNow (definedIn envNow feLocalDefNames) (depDefs ++ depRuntime ++ pageDefs)
+      let (beforeTs, beforeU) = universalized envBefore (definedIn envBefore S.empty) (depDefs ++ depRuntime)
+      forM_ affected $ \oa ->
+        forM_ (declUndefined envNow nowTs nowU oa) $ \(target, notNow) -> do
+          let notBefore = maybe BottomType snd (declUndefined envBefore beforeTs beforeU oa)
+          let added = snd $ differenceTypeWithEnv envNow H.empty notNow notBefore
+          unless (isBottomType added) $
+            lift $ TypeCheckResult [UnfulfilledDeclaration name (inputType oa) target added (getMetaPos $ getExprMeta $ oaObjExpr oa)] ()
+
+-- | The classes a type names in its predicates, at any depth.
+typePredClassNames :: Type -> S.HashSet TypeName
+typePredClassNames (TypeVar _ _ inner) = typePredClassNames inner
+typePredClassNames (UnionType mTop leafs _) = maybe S.empty (\(preds, _, _) -> predsNames preds) mTop <> S.unions (map partialNames (splitUnionType leafs))
+  where
+    partialNames PartialType{ptVars, ptArgs, ptPreds} = S.unions (map typePredClassNames (H.elems ptVars ++ H.elems ptArgs)) <> predsNames ptPreds
+    predsNames (PredsOne (PredClass p)) = S.insert (ptName p) (partialNames p)
+    predsNames (PredsOne (PredRel p))   = partialNames p
+    predsNames (PredsOne (PredExpr p))  = partialNames p
+    predsNames (PredsAnd ps)            = S.unions (map predsNames ps)
+    predsNames (PredsNot p)             = predsNames p
