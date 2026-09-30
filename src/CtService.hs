@@ -983,8 +983,8 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar 
       -- 'ssfTBPrgm', and step 8 below reads back only the SCC's names.
       -- Tolerate failure: a type-erroneous program cannot build a tree, but we
       -- still want to cache the desugar/typecheck artifacts (including the trace)
-      -- for tooling. Any eval-build error is deferred into ssfTBPrgm below.
-      let tbprgmGraphRes = evalBuildAllOf (`S.member` sccNamesSet) tprgmGraph
+      -- for tooling. Each page's eval-build result, error or not, is its ssfTBPrgm below.
+      let tbprgmGraph = evalBuildAllOf (`S.member` sccNamesSet) tprgmGraph
 
       -- Step 8: Assemble updated SSFs
       let validUpdates = [(name, ssf{
@@ -1004,9 +1004,7 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar 
               ssfTypeInfo = if isJust (lookupTraceResult results)
                 then Just $ CRes tcNotes (vprgm, results)
                 else Nothing,
-              ssfTBPrgm = case tbprgmGraphRes of
-                CRes _ g  -> fmap pure $ graphLookup name g
-                CErr errs -> Just $ CErr errs
+              ssfTBPrgm = graphLookup name tbprgmGraph
             })
             | ((_, ssf, name, _), des, (tprgm, vprgm, results)) <-
                 zip3 validRaws finalDes tcResults]

@@ -588,12 +588,36 @@ objSrcPartial oa = case maybeGetSingleton objType of
     objType = getExprType $ oaObjExpr oa
     writtenAt = maybe "" (printf ", written at %s" . show) (getMetaPos $ getExprMeta $ oaObjExpr oa) :: String
 
+-- | A root definition's object: the pattern its arrow is written from.
+--
+-- A pattern is matched against the value a call is given, and never evaluated, so the applications
+-- along its spine are built as they stand rather than toward a destination. Building each base as a
+-- term ('toTExprDest') asked whether it already was what the whole object is, and a base only ever
+-- answered with the identity when it did. Where it did not, the build went looking for arrows to
+-- rewrite the pattern with, and failed. The generic declaration
+-- @(_ :: $T ++ _ :: $T)[$T -> Semigroup]@ of @core\/algebra.ct@ is what showed it: once the String
+-- @++@ was declared in its component, 'BoundedByObjs' gave the base @++(l)(r)@ both declarations as
+-- its requirement. Decode then kept its actual @++(r=⊤, l=⊤)@, which is no subtype of the object,
+-- and the declaration failed to build.
+--
+-- Only the spine is a pattern here. Each argument is still an 'ObjArr' of its own, built by
+-- 'toTEObjArr' as before.
+toTObjPattern :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
+toTObjPattern env os (TupleApply m (bm, be) arg) = do
+  be' <- toTObjPattern env os be
+  arg' <- case arg of
+    EAppArg a     -> EAppArg <$> toTEObjArr env os True a
+    EAppVar vn vm -> return $ EAppVar vn vm
+    EAppSpread a  -> EAppSpread <$> toTExpr env os a
+  return $ TTupleApply m (bm, be') arg'
+toTObjPattern env os e = toTExpr env os e
+
 -- | The Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
 -- definition ('buildRootOA').
 toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 -- toTEObjArr _ os _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
 toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, oaArr} = do
-  oaObj' <- mapM (toTExpr env os) oaObj
+  oaObj' <- mapM (if inExpr then toTExpr env os else toTObjPattern env os) oaObj
   let os' = case oa of
         ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (objSrcPartial oa, oa) : os
         _ -> os

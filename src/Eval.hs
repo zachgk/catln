@@ -418,7 +418,7 @@ prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case ver
   Nothing -> fail $ printf "Could not find prgm %s" (show prgmName)
 
 -- | Tries to TreeBuild all ObjArrs, returning all built successfully
-evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
+evalBuildAll :: EPrgmGraphData -> GraphData (CRes (Prgm TExpr EvalMetaDat)) FileImport
 evalBuildAll = evalBuildAllOf (const True)
 
 -- | 'evalBuildAll' restricted to the pages a caller is actually going to read back.
@@ -430,20 +430,34 @@ evalBuildAll = evalBuildAllOf (const True)
 -- whose result is dropped on the floor, since only the fragment's own names are ever looked up in
 -- the result. That made a whole-build quadratic in the number of pages: each of the ~50 integration
 -- files rebuilt all ~20 standard-library pages' trees before building its own.
-evalBuildAllOf :: (FileImport -> Bool) -> EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
-evalBuildAllOf selected prgmGraphData = do
-  let prgms = graphToNodes prgmGraphData
-  prgms' <- forM prgms $ \(Prgm objMap cg annots, prgmName, deps) ->
-    if not (selected prgmName)
-      then return (Prgm (objectMapFromList []) cg [], prgmName, deps)
-      else do
-        evalPrgm <- prgmFromGraphData prgmName prgmGraphData
-        let Env{evTbEnv} = evalBaseEnv evalPrgm
-        objMap' <- catCRes (buildRootOA evTbEnv <$> flatObjectMap objMap)
-        annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
-        let objMap'' = objectMapFromList objMap'
-        return (Prgm objMap'' cg annots', prgmName, deps)
-  return $ graphFromEdges prgms'
+--
+-- Each page's build is a result of its own, so what one page could not build is reported on that
+-- page rather than on every page built beside it.
+evalBuildAllOf :: (FileImport -> Bool) -> EPrgmGraphData -> GraphData (CRes (Prgm TExpr EvalMetaDat)) FileImport
+evalBuildAllOf selected prgmGraphData = graphFromEdges $ map buildPage $ graphToNodes prgmGraphData
+  where
+    buildPage (Prgm objMap cg annots, prgmName, deps) = (, prgmName, deps) $
+      if not (selected prgmName)
+        then return $ Prgm (objectMapFromList []) cg []
+        else do
+          evalPrgm <- prgmFromGraphData prgmName prgmGraphData
+          let Env{evTbEnv} = evalBaseEnv evalPrgm
+          objMap' <- buildReporting (printf "The definition %s" . show . oaObjPath) (getMetaPos . getExprMeta . oaObjExpr) (buildRootOA evTbEnv) (flatObjectMap objMap)
+          annots' <- buildReporting (printf "The annotation %s" . maybe "" show . maybeExprPath) (getMetaPos . getExprMeta) (toTExpr evTbEnv []) annots
+          return $ Prgm (objectMapFromList objMap') cg annots'
+
+-- | Builds each of a page's items, leaving out the ones that cannot be built and saying so.
+--
+-- One item that fails to build does not take the page with it, because the rest of the page can
+-- still run. But what is left out is reported as a warning naming it and the reason. Dropping it
+-- without a word hid failures: the generic @++@ declaration of @core\/algebra.ct@ once stopped
+-- building, and the only sign was that it went missing from a tree-build golden.
+buildReporting :: (a -> String) -> (a -> CodeRange) -> (a -> CRes b) -> [a] -> CRes [b]
+buildReporting name pos build = fmap catMaybes . mapM buildOne
+  where
+    buildOne x = case build x of
+      CErr errs -> CRes [MkCNote $ GenCNote (pos x) $ printf "%s could not be built, so it is left out of the built program:%s" (name x) (prettyCNotes errs)] Nothing
+      res -> Just <$> res
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
 evalBuildPrgm input srcType destType prgm = do

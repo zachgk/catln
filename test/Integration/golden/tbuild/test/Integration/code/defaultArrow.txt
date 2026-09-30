@@ -21,14 +21,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [
-                            (
-                                ( Value /f ↦ /f
-                                    ( /c=/Data/Primitive/Integer
-                                    , /b=/Data/Primitive/Integer
-                                    )
-                                )
-                            )
+                        [ /f
                             ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /c -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =

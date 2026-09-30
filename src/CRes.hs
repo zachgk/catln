@@ -238,19 +238,3 @@ fromCRes :: CRes r -> r
 fromCRes (CRes _ r) = r
 fromCRes (CErr e)   = error $ printf "Failed fromCRes with error: %s" (show e)
 
--- | Keeps the results that succeeded and drops the ones that failed.
---
--- TODO The failures are dropped along with what they said, which turns a reported failure into a
--- quietly shorter list. 'Eval.evalBuildAll' builds every definition of a page through this, so a
--- definition that cannot be built is not an error anywhere — the page is simply built without it,
--- and nothing says so. That was found by a golden test noticing that the standard library's
--- anonymous type had gone missing from the built program, which is the only reason it was noticed at
--- all; anywhere a golden does not pin the output, the same mistake is silent data loss. The notes of
--- the dropped results should be carried, which means looking at what each caller then does with a
--- list that reports failures it used to swallow.
-catCRes :: [CRes r] -> CRes [r]
-catCRes [] = return []
-catCRes (CRes notes r:rs) = do
-  rs' <- catCRes rs
-  CRes notes (r:rs')
-catCRes (CErr _:rs) = catCRes rs
