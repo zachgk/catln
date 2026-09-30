@@ -255,7 +255,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
                        | argOa <- objArgs
                        , Just aObj <- [oaObj argOa]
                        , Just (_, aM) <- [oaArr argOa]
-                       , Just srcV <- [typeGetArgLoose (inExprSingleton aObj) partial] ]
+                       , Just srcV <- [hoSlotResult typeEnv H.empty (inExprSingleton aObj) <$> typeGetArgLoose (inExprSingleton aObj) partial] ]
       let venv0 = mergeAllVarEnvs typeEnv [ fst $ intersectTypesWithVarEnv typeEnv H.empty aT srcV
                                           | (aT, srcV) <- argActuals ]
       -- An argument that SPELLS a class partial (@lst -> List[$T -> $_A]@) binds nothing on its

@@ -303,7 +303,10 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv, tbUntyped} os srcType@PartialType{ptNam
         -- Replace arrowType with srcType so completeTreeSet can compute a non-empty intersection
         in map (\(_, moa, tree) -> (srcType, moa, tree)) matchingEntries
     argArrows :: [ResBuildEnvItem]
-    argArrows = map ((srcType, Nothing,) . (`TCArg` nameStr srcName) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
+    -- A call of one of the object's arguments (@fn(v= x)@ for a higher-order @fn@) returns
+    -- what the argument returns: its input object resolved through the environment's arrows
+    -- ('hoSlotResult').
+    argArrows = map ((srcType, Nothing,) . (`TCArg` nameStr srcName) . hoSlotResult tbTypeEnv H.empty (partialToKey srcType) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
 
 -- | Whether the type graph rewrites this leaf — whether it is a call rather than a value. A data
 -- construction and a curried partial application are accepted by no arrow and are already values;
@@ -650,7 +653,7 @@ toTExprDest env@TBEnv{tbTypeEnv} os e m = do
   let argFnTree = case maybeGetSingleton srcT of
         Just sp ->
           case mapMaybe (lookupArgLoose (partialToKey sp)) (exprVarArgsWithObjSrcs tbTypeEnv os) of
-            ((_, argT):_) -> Just $ TCArg argT (nameStr (ptName sp))
+            ((_, argT):_) -> Just $ TCArg (hoSlotResult tbTypeEnv H.empty (partialToKey sp) argT) (nameStr (ptName sp))
             []            -> Nothing
         _ -> Nothing
   -- An applied term may stand unrewritten: rewriting is a chain, and the consumer's own followup

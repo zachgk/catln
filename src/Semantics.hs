@@ -446,7 +446,10 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
       Nothing -> error $ printf "Non-singleton in arrowDestType"
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
       -- _ | trace (printf "arrowDestType from %s with %s to %s.\n\t\tVanev: %s" (show src) (show oa) (show joined) (show vaenv)) False -> undefined
-      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
+      -- A body that is an argument reference (@= x@) or a call of a higher-order argument
+      -- (@= fn(v= x)@): the argument's result — for a higher-order argument, its input object
+      -- resolved through the environment's arrows ('hoSlotResult').
+      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch (substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (TVArg $ inExprSingleton n) vaenv)
       _                              -> joinedDispatch
       where
         substitute = substituteTVExt typeEnv vaenv
@@ -527,7 +530,7 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
           , Just (Just valExpr, _) <- [oaArr a]
           , isJust (maybeExprPath valExpr)
           , not (null (exprAppliedArgs valExpr))
-          , Just out <- [typeGetArgLoose (inExprSingleton valExpr) srcPartial]
+          , Just out <- [hoSlotResult typeEnv vaenv (inExprSingleton valExpr) <$> typeGetArgLoose (inExprSingleton valExpr) srcPartial]
           , out /= PTopType
           , not (isTypeVar out) ]
         -- The applied argument's slot holds what the argument RETURNS, which for a lambda whose

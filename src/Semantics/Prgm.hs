@@ -532,7 +532,7 @@ instance ExprClass Expr where
             , Just (UnionType Nothing srcArg []) <- typeGetArg argKey src
             = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
             | otherwise = case getMetaType arrM of
-                (TypeVar v _ _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArgLoose structKey src) mainArg]
+                (TypeVar v _ _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType srcArgOut) mainArg]
                 -- A declared argument spelled as a class application linking the object's
                 -- variables (@lst -> List[/T=$_/T]@) BINDS those variables from the source
                 -- content's linked dimension (@lst=Cons[/T=Integer](…)@ binds @/T=Integer@) —
@@ -541,10 +541,15 @@ instance ExprClass Expr where
                 -- explicit application (@sorted[/T=Integer](…)@) could bind, and a declaration's
                 -- linked result (@-> List[/T=$_/T]@) always presented at the variable's declared
                 -- bound instead of the call's element type.
-                declT -> [foldr insertLinked mainArg (linkedDimBinds typeEnv declT (fromMaybe PTopType (typeGetArgLoose structKey src)))]
+                declT -> [foldr insertLinked mainArg (linkedDimBinds typeEnv declT (fromMaybe PTopType srcArgOut))]
                   where insertLinked (v, d) = H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], d)
             where
               structKey = inExprSingleton obj
+              -- What the source passes for this argument, read as the argument's declared type
+              -- ('arrM') reads it: for a plain argument its value, for a higher-order argument
+              -- (@fn(v -> $_A) -> $B@) its RESULT — the input object the slot holds resolved
+              -- through the environment's arrows ('hoSlotResult').
+              srcArgOut = hoSlotResult typeEnv H.empty structKey <$> typeGetArgLoose structKey src
               -- For an alias destructure (@field@name@, e.g. @first@f@) the matched field is
               -- named by the base (@first@, so 'structKey' looks up its value in 'src') but is
               -- /bound/ under the alias (@f@) — that is the name the body references. Bind under

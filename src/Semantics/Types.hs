@@ -8923,6 +8923,31 @@ typeGetArgLoose argName partial@PartialType{ptArgs}
       _   -> typeGetArg argName partial
   where matches k = pkName k == pkName argName && pkArgs k == pkArgs argName
 
+-- | The INPUT OBJECT a higher-order argument's slot holds, if it holds one. A higher-order
+-- argument (@fn(v -> $_A) -> $M@) is an Obj/Arrow pair in the environment of the function it is
+-- passed into: its slot in the call's partial is the object @fn(/v=..)@ — named as the argument,
+-- over exactly the argument's own parameter names — and its result is the arrow's, found through
+-- the environment rather than stored in any partial.
+hoSlotInputObject :: ArgName -> Type -> Maybe PartialType
+hoSlotInputObject argName t = case maybeGetSingleton t of
+  -- Only an argument written with parameters (@fn(v)@) is higher-order here; a zero-parameter
+  -- one (@fn()@) is not yet told apart from a plain argument by its key.
+  Just p | not (S.null (pkArgs argName))
+         , makeAbsoluteName (ptName p) == makeAbsoluteName (pkName argName)
+         , H.keysSet (ptArgs p) == pkArgs argName -> Just p
+  _ -> Nothing
+
+-- | What a higher-order argument's slot RETURNS: its input object resolved through the
+-- environment's arrows (the callee's local argument arrows, or the caller's lambda). A slot that
+-- does not hold an input object is already the result and is returned unchanged; an input object
+-- no arrow in the environment accepts returns ⊤ — its result is unknown here, not the object.
+hoSlotResult :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> ArgName -> Type -> Type
+hoSlotResult typeEnv vaenv argName t = case hoSlotInputObject argName t of
+  Just inObj -> case typeGraphQueryWithReason typeEnv vaenv inObj of
+    []    -> PTopType
+    dests -> unionAllTypesWithEnv typeEnv vaenv [dest | (_, _, dest) <- dests]
+  Nothing -> t
+
 typeSetAux :: TypeVarAux -> Type -> PartialType -> PartialType
 typeSetAux (TVVar k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
 typeSetAux (TVArg k) v p@PartialType{ptArgs} = p{ptArgs=H.insert k v ptArgs}
