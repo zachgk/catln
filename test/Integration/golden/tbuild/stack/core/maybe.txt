@@ -272,14 +272,14 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/MaybeOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] }
-                            ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
-                            ( /Data/Algebra/compareTo
+                            ) -> ∀/Data/Algebra/Comparison =
+                            ( /compareTo
                                 ( EAppArg
                                     { eaaArg = Value /other -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /av = ( Value /av ↦ TVArg /av ) }
-                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                ) ↦ ∀/Data/Algebra/Comparison
                             )
                         ]
                     }
@@ -295,11 +295,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Maybe/pureSomeInt
-                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ].. =
                             ( /Data/Monad/pure
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]..
                             )
                         ]
                     }
@@ -418,7 +418,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /value@Value /av -> ∀/Data/Algebra/Ord } )
                                 }
                             ) -> ∀/Data/Algebra/Comparison =
-                            ( /Data/Algebra/compareTo
+                            ( /compareTo
                                 ( EAppArg
                                     { eaaArg = Value /other -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
                                 )
@@ -602,8 +602,8 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLess
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
-                                ( /Data/Algebra/compareTo
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
@@ -617,7 +617,7 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -634,8 +634,8 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isEq
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
-                                ( /Data/Algebra/compareTo
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
@@ -649,7 +649,7 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                             )
                                         }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -663,11 +663,11 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isGreater
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/Algebra/GreaterThan =
-                                ( /Data/Algebra/compareTo
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /compareTo
                                     ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -675,10 +675,10 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ /Data/Algebra/GreaterThan
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                     )
                 }
             )
@@ -703,7 +703,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Algebra/rel
+                    ( /rel
                         ( EAppArg
                             { eaaArg = Value /a -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                 ( EAppArg
@@ -719,15 +719,33 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] =
-                                ( /Data/Algebra/eq
+                            { eaaArg = Value /this -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Eqv
+                                        [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                , []
+                                ) =
+                                ( /eq
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                    ) ↦ UnionType
+                                    ( Just
+                                        ( PredClass /Data/Algebra/Eqv
+                                            [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                    , []
+                                    )
                                 )
                             }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -741,8 +759,8 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/False =
-                    ( /Data/Algebra/rel
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /rel
                         ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ( EAppArg
                             { eaaArg = Value /b -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -752,12 +770,28 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] =
-                                ( /Data/Algebra/eq
-                                    ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                            { eaaArg = Value /this -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/Maybe/Nothing ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                , []
+                                ) =
+                                ( /eq
+                                    ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ UnionType
+                                    ( Just
+                                        ( PredClass /Data/Algebra/Eqv[ /T=/Data/Maybe/Nothing ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/MaybeEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                    , []
+                                    )
                                 )
                             }
-                        ) ↦ /Data/Primitive/False
+                        ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )
@@ -778,11 +812,11 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLess
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/Algebra/LessThan =
-                                ( /Data/Algebra/compare
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /compare
                                     ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
                                         { eaaArg = Value /b -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -792,15 +826,15 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> /Data/MaybeOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] =
-                                            ( /Data/Algebra/ord
-                                                ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ /Data/MaybeOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ]
+                                        { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Maybe/Nothing ] =
+                                            ( /ord
+                                                ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Maybe/Nothing ]
                                             )
                                         }
-                                    ) ↦ /Data/Algebra/LessThan
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                     )
                 }
             )
@@ -814,8 +848,8 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isGreater
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
-                                ( /Data/Algebra/compare
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /compare
                                     ( EAppArg
                                         { eaaArg = Value /a -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
@@ -831,18 +865,20 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> /Data/MaybeOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] =
-                                            ( /Data/Algebra/ord
+                                        { eaaArg = Value /this -> ∀/Data/Algebra/Ordering
+                                            [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ] =
+                                            ( /ord
                                                 ( EAppArg
                                                     { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                                         ( EAppArg
                                                             { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
                                                         )
                                                     }
-                                                ) ↦ /Data/MaybeOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ]
+                                                ) ↦ ∀/Data/Algebra/Ordering
+                                                [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
                                             )
                                         }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )

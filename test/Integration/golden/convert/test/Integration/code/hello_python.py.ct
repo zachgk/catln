@@ -49,7 +49,7 @@ to_bool_from_float(x -> Float) -> Boolean= x.toBool
 
 char_from_code(n -> Integer) -> String= chr(/n= n)
 
-code_from_char(c -> String) -> Integer= c.ord
+code_from_char(c -> String) -> Integer= ord(/c= c)
 
 to_hex(n -> Integer) -> String= n.hex
 

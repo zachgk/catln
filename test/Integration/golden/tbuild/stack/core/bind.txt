@@ -30,7 +30,49 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/bindap
+                            ( EAppVar
+                                { eavName = /M
+                                , eavMeta = ∀/Data/Monad[ /T=TopType ]
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Monad[ /T=TopType ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Monad[ /T=TopType ]
+                                }
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Monad[ /T=TopType ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Monad/mmap
+                                ( /fn( /v=TopType )=∀/Data/Monad[ /T=TopType ]
+                                , /m=∀/Data/Monad[ /T=TopType ]
+                                )
+                            , []
+                            ) =
+                            ( /Data/Monad/mmap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Monad[ /T=TopType ] =
+                                        ( /fn
+                                            ( EAppArg
+                                                { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ ∀/Data/Monad[ /T=TopType ]
+                                        )
+                                    }
+                                ) ↦
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                            )
+                        ]
                     }
                 )
             ]

@@ -271,6 +271,43 @@ Prgm
                     }
                 )
             ,
+                ( "/Python/Builtins/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Python/Builtins/ord
+                            ( EAppArg
+                                { eaaArg = Value /c -> /Data/String/Text
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                        )
+                                    ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                            ) = /Data/List/Cons
+                                            ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                            )
+                                        }
+                                    )
+                                }
+                            ) ->
+                            ( /Data/code( /this=/Data/Char ) + /Data/Primitive/Integer ) =
+                            ( /Data/code
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Python/Builtins/max"
                 , ObjectMapItem
                     { omiDecls = []

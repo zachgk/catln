@@ -3,6 +3,7 @@ import "core/eq.ct"
 import "core/ord.ct"
 import "core/cons.ct"
 import "core/char.ct"
+import "core/maybe.ct"
 
 
 module(Data)
@@ -92,6 +93,36 @@ module(Data)
     >>> 0
   > (0 - 42).toStringBase(base= 10)
     >>> -42
+  # ## Ordering
+    Strings are ordered the way a dictionary orders words: by their first characters that differ,
+    and a string before any longer string it begins.
+  every(String, isa= [/Data/Algebra/Ord])
+
+  compareChars(a -> /Data/List/ConsList[$T -> Char], b -> /Data/List/ConsList[$T -> Char]) -> /Data/Algebra/Comparison
+    # [compareChars] compares two lists of characters by their first pair that differs.
+  compareChars(a= /Data/List/Nil, b= /Data/List/Nil)= /Data/Algebra/Equal
+  compareChars(a= /Data/List/Nil, b= /Data/List/Cons(head, tail))= /Data/Algebra/LessThan
+  compareChars(a= /Data/List/Cons(head, tail), b= /Data/List/Nil)= /Data/Algebra/GreaterThan
+  compareChars(a= /Data/List/Cons(head@ah, tail@at), b= /Data/List/Cons(head@bh, tail@bt))= match(ah.compareTo(other= bh))
+    c -> /Data/Algebra/Equal= compareChars(a= at, b= bt)
+    c else = c
+
+  data(StrOrdering, isa= [/Data/Algebra/Ordering[$T -> String]])
+
+  :StrOrdering.compare(a= String/Text(chars@ac), b= String/Text(chars@bc))= compareChars(a= ac, b= bc)
+
+  :String.ord= StrOrdering
+
+  :String.compareTo(other)= this.ord.compare(a= this, b= other)
+
+  > "apple".compareTo(other= "banana").isLess
+    >>> True
+  > "pear".compareTo(other= "peach").isGreater
+    >>> True
+  > "ab".compareTo(other= "abc").isLess
+    >>> True
+  > "same".compareTo(other= "same").isEq
+    >>> True
 module(Data/String)
   # # What a string does
     The operations on a [String] live in the [/Data/String] namespace the type opens, as a
@@ -118,3 +149,310 @@ module(Data/String)
     >>> True
   > "a".isEmpty
     >>> False
+  # ## Characters
+  fromChars(chars -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/String
+    # [fromChars] is the string of the characters [chars], in order.
+  fromChars(chars)= /Data/String/Text(chars= chars)
+
+  :/Data/String.first -> /Data/Maybe[$T -> /Data/Char]
+    # [first] is the string's first character, or [Nothing] for the empty string.
+  :/Data/String/Text(chars= /Data/List/Nil).first= /Data/Maybe/Nothing
+  :/Data/String/Text(chars= /Data/List/Cons(head, tail)).first= /Data/Maybe/Some(value= head)
+
+  :/Data/String.at(index -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Char]
+    # [at] is the character at [index], counting the first as 0, or [Nothing] where the string has
+      no character there.
+  :/Data/String/Text(chars).at(index)= /Data/String/Text(chars= dropChars(cs= chars, n= index)).first
+
+  > (fromChars(chars= ['h', 'i']) == "hi")
+    >>> True
+  > ("hi".first == /Data/Maybe/Some(value= 'h'))
+    >>> True
+  > ("".first == /Data/Maybe/Nothing)
+    >>> True
+  > ("abc".at(index= 2) == /Data/Maybe/Some(value= 'c'))
+    >>> True
+  > ("abc".at(index= 3) == /Data/Maybe/Nothing)
+    >>> True
+  # ## Parts of a string
+  takeChars(cs -> /Data/List/ConsList[$T -> /Data/Char], n -> /Data/Primitive/Integer) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [takeChars] is the first [n] characters of [cs], or all of them where it holds fewer.
+  takeChars(cs= /Data/List/Nil, n)= /Data/List/Nil
+  takeChars(cs= /Data/List/Cons(head, tail), n) | n <= 0= /Data/List/Nil
+  takeChars(cs= /Data/List/Cons(head, tail), n) else = /Data/List/Cons(head= head, tail= takeChars(cs= tail, n= n - 1))
+
+  dropChars(cs -> /Data/List/ConsList[$T -> /Data/Char], n -> /Data/Primitive/Integer) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [dropChars] is [cs] without its first [n] characters.
+  dropChars(cs= /Data/List/Nil, n)= /Data/List/Nil
+  dropChars(cs= /Data/List/Cons(head, tail), n) | n <= 0= /Data/List/Cons(head= head, tail= tail)
+  dropChars(cs= /Data/List/Cons(head, tail), n) else = dropChars(cs= tail, n= n - 1)
+
+  reverseChars(cs -> /Data/List/ConsList[$T -> /Data/Char], acc -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [reverseChars] is [cs] backwards, in front of [acc].
+  reverseChars(cs= /Data/List/Nil, acc)= acc
+  reverseChars(cs= /Data/List/Cons(head, tail), acc)= reverseChars(cs= tail, acc= /Data/List/Cons(head= head, tail= acc))
+
+  :/Data/String.take(n -> /Data/Primitive/Integer) -> /Data/String
+    # [take] is the first [n] characters, or the whole string where it is shorter.
+  :/Data/String/Text(chars).take(n)= /Data/String/Text(chars= takeChars(cs= chars, n= n))
+
+  :/Data/String.drop(n -> /Data/Primitive/Integer) -> /Data/String
+    # [drop] is the string without its first [n] characters.
+  :/Data/String/Text(chars).drop(n)= /Data/String/Text(chars= dropChars(cs= chars, n= n))
+
+  :/Data/String.slice(start -> /Data/Primitive/Integer, end -> /Data/Primitive/Integer) -> /Data/String
+    # [slice] is the characters from index [start] up to but not including index [end].
+  :/Data/String/Text(chars).slice(start, end)= /Data/String/Text(chars= takeChars(cs= dropChars(cs= chars, n= start), n= end - start))
+
+  :/Data/String.reversed -> /Data/String
+    # [reversed] is the string backwards.
+  :/Data/String/Text(chars).reversed= /Data/String/Text(chars= reverseChars(cs= chars, acc= /Data/List/Nil))
+
+  > "hello".take(n= 2)
+    >>> he
+  > "hello".drop(n= 2)
+    >>> llo
+  > "hello".take(n= 9)
+    >>> hello
+  > "hello".slice(start= 1, end= 4)
+    >>> ell
+  > "hello".reversed
+    >>> olleh
+  # ## Searching
+  charsStartWith(cs -> /Data/List/ConsList[$T -> /Data/Char], prefix -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/Primitive/Boolean
+    # [charsStartWith] is whether [cs] begins with the characters of [prefix].
+  charsStartWith(cs, prefix= /Data/List/Nil)= /Data/Primitive/True
+  charsStartWith(cs= /Data/List/Nil, prefix= /Data/List/Cons(head, tail))= /Data/Primitive/False
+  charsStartWith(cs= /Data/List/Cons(head@ch, tail@ct), prefix= /Data/List/Cons(head@ph, tail@pt)) | ch == ph= charsStartWith(cs= ct, prefix= pt)
+  charsStartWith(cs= /Data/List/Cons(head@ch, tail@ct), prefix= /Data/List/Cons(head@ph, tail@pt)) else = /Data/Primitive/False
+
+  dropPrefix(cs -> /Data/List/ConsList[$T -> /Data/Char], prefix -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [dropPrefix] is [cs] after the characters of [prefix], which [cs] begins with
+      ([charsStartWith]): one character dropped for each of [prefix]'s.
+  dropPrefix(cs, prefix= /Data/List/Nil)= cs
+  dropPrefix(cs= /Data/List/Nil, prefix= /Data/List/Cons(head, tail))= /Data/List/Nil
+  dropPrefix(cs= /Data/List/Cons(head@ch, tail@ct), prefix= /Data/List/Cons(head@ph, tail@pt))= dropPrefix(cs= ct, prefix= pt)
+
+  indexOfChars(cs -> /Data/List/ConsList[$T -> /Data/Char], sub -> /Data/List/ConsList[$T -> /Data/Char], i -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [indexOfChars] is where [sub] first occurs in [cs], counting [cs] as starting at [i].
+  indexOfChars(cs, sub, i) | charsStartWith(cs= cs, prefix= sub)= /Data/Maybe/Some(value= i)
+  indexOfChars(cs, sub, i) else = indexAfter(cs= cs, sub= sub, i= i)
+
+  indexAfter(cs -> /Data/List/ConsList[$T -> /Data/Char], sub -> /Data/List/ConsList[$T -> /Data/Char], i -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [indexAfter] carries the search for [sub] past the first character of [cs], which it does not
+      start at.
+  indexAfter(cs= /Data/List/Nil, sub, i)= /Data/Maybe/Nothing
+  indexAfter(cs= /Data/List/Cons(head, tail), sub, i)= indexOfChars(cs= tail, sub= sub, i= i + 1)
+
+  :/Data/String.startsWith(prefix -> /Data/String) -> /Data/Primitive/Boolean
+    # [startsWith] is whether the string begins with [prefix].
+  :/Data/String/Text(chars@cs).startsWith(prefix= /Data/String/Text(chars@p))= charsStartWith(cs= cs, prefix= p)
+
+  :/Data/String.endsWith(suffix -> /Data/String) -> /Data/Primitive/Boolean
+    # [endsWith] is whether the string ends with [suffix].
+  :/Data/String/Text(chars@cs).endsWith(suffix= /Data/String/Text(chars@s))= charsStartWith(cs= reverseChars(cs= cs, acc= /Data/List/Nil), prefix= reverseChars(cs= s, acc= /Data/List/Nil))
+
+  :/Data/String.indexOf(sub -> /Data/String) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [indexOf] is the index at which [sub] first occurs in the string, or [Nothing] where it does
+      not occur. The empty string occurs at 0.
+  :/Data/String/Text(chars@cs).indexOf(sub= /Data/String/Text(chars@s))= indexOfChars(cs= cs, sub= s, i= 0)
+
+  :/Data/String.contains(sub -> /Data/String) -> /Data/Primitive/Boolean
+    # [contains] is whether [sub] occurs anywhere in the string.
+  :/Data/String/Text(chars@cs).contains(sub= /Data/String/Text(chars@s))= indexOfChars(cs= cs, sub= s, i= 0) != /Data/Maybe/Nothing
+
+  > "hello".startsWith(prefix= "he")
+    >>> True
+  > "hello".startsWith(prefix= "lo")
+    >>> False
+  > "hello".endsWith(suffix= "lo")
+    >>> True
+  > ("hello".indexOf(sub= "ll") == /Data/Maybe/Some(value= 2))
+    >>> True
+  > ("hello".indexOf(sub= "z") == /Data/Maybe/Nothing)
+    >>> True
+  > "hello".contains(sub= "ell")
+    >>> True
+  > "hello".contains(sub= "elo")
+    >>> False
+  # ## Changing a string
+  upperChars(cs -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [upperChars] is [cs] with each character made upper case ([/Data/Char/toUpper]).
+  upperChars(cs= /Data/List/Nil)= /Data/List/Nil
+  upperChars(cs= /Data/List/Cons(head, tail))= /Data/List/Cons(head= head.toUpper, tail= upperChars(cs= tail))
+
+  lowerChars(cs -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [lowerChars] is [cs] with each character made lower case ([/Data/Char/toLower]).
+  lowerChars(cs= /Data/List/Nil)= /Data/List/Nil
+  lowerChars(cs= /Data/List/Cons(head, tail))= /Data/List/Cons(head= head.toLower, tail= lowerChars(cs= tail))
+
+  dropSpace(cs -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [dropSpace] is [cs] without the white space it begins with.
+  dropSpace(cs= /Data/List/Nil)= /Data/List/Nil
+  dropSpace(cs= /Data/List/Cons(head, tail)) | head.isSpace= dropSpace(cs= tail)
+  dropSpace(cs= /Data/List/Cons(head, tail)) else = /Data/List/Cons(head= head, tail= tail)
+
+  replaceChars(cs -> /Data/List/ConsList[$T -> /Data/Char], old -> /Data/List/ConsList[$T -> /Data/Char], new -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/Char]
+    # [replaceChars] is [cs] with each occurrence of [old] replaced by [new], each found after the
+      one before it. [old] is not empty.
+  replaceChars(cs= /Data/List/Nil, old, new)= /Data/List/Nil
+  replaceChars(cs= /Data/List/Cons(head, tail), old, new) | charsStartWith(cs= /Data/List/Cons(head= head, tail= tail), prefix= old)= /Data/appendChars(l= new, r= replaceChars(cs= dropPrefix(cs= /Data/List/Cons(head= head, tail= tail), prefix= old), old= old, new= new))
+  replaceChars(cs= /Data/List/Cons(head, tail), old, new) else = /Data/List/Cons(head= head, tail= replaceChars(cs= tail, old= old, new= new))
+
+  :/Data/String.toUpper -> /Data/String
+    # [toUpper] is the string with each lower case letter made upper case.
+  :/Data/String/Text(chars).toUpper= /Data/String/Text(chars= upperChars(cs= chars))
+
+  :/Data/String.toLower -> /Data/String
+    # [toLower] is the string with each upper case letter made lower case.
+  :/Data/String/Text(chars).toLower= /Data/String/Text(chars= lowerChars(cs= chars))
+
+  :/Data/String.trimStart -> /Data/String
+    # [trimStart] is the string without the white space it begins with.
+  :/Data/String/Text(chars).trimStart= /Data/String/Text(chars= dropSpace(cs= chars))
+
+  :/Data/String.trimEnd -> /Data/String
+    # [trimEnd] is the string without the white space it ends with.
+  :/Data/String/Text(chars).trimEnd= /Data/String/Text(chars= reverseChars(cs= dropSpace(cs= reverseChars(cs= chars, acc= /Data/List/Nil)), acc= /Data/List/Nil))
+
+  :/Data/String.trim -> /Data/String
+    # [trim] is the string without white space at either end.
+  :/Data/String/Text(chars).trim= /Data/String/Text(chars= reverseChars(cs= dropSpace(cs= reverseChars(cs= dropSpace(cs= chars), acc= /Data/List/Nil)), acc= /Data/List/Nil))
+
+  :/Data/String.replace(old -> /Data/String, new -> /Data/String) -> /Data/String
+    # [replace] is the string with every occurrence of [old] replaced by [new], each found after
+      the one before it. An empty [old] occurs nowhere, so it replaces nothing.
+  :/Data/String/Text(chars@cs).replace(old= /Data/String/Text(chars= /Data/List/Nil), new)= /Data/String/Text(chars= cs)
+  :/Data/String/Text(chars@cs).replace(old= /Data/String/Text(chars= /Data/List/Cons(head@oh, tail@ot)), new= /Data/String/Text(chars@n))= /Data/String/Text(chars= replaceChars(cs= cs, old= /Data/List/Cons(head= oh, tail= ot), new= n))
+
+  :/Data/String.repeat(n -> /Data/Primitive/Integer) -> /Data/String
+    # [repeat] is [n] copies of the string joined end to end, and the empty string for no copies.
+  :/Data/String.repeat(n) | n <= 0= ""
+  :/Data/String.repeat(n) else = this ++ this.repeat(n= n - 1)
+
+  > "Hello".toUpper
+    >>> HELLO
+  > "Hello".toLower
+    >>> hello
+  > ("  hi \n".trim == "hi")
+    >>> True
+  > ("  hi ".trimStart == "hi ")
+    >>> True
+  > (" hi  ".trimEnd == " hi")
+    >>> True
+  > "a-b-c".replace(old= "-", new= ", ")
+    >>> a, b, c
+  > "abc".replace(old= "", new= "x")
+    >>> abc
+  > "ab".repeat(n= 3)
+    >>> ababab
+  # ## Splitting and joining
+  splitChars(cs -> /Data/List/ConsList[$T -> /Data/Char], sep -> /Data/List/ConsList[$T -> /Data/Char], cur -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/String]
+    # [splitChars] cuts [cs] at each [sep], which is not empty, where [cur] holds, backwards, the
+      piece being read.
+  splitChars(cs= /Data/List/Nil, sep, cur)= /Data/List/Cons(head= /Data/String/Text(chars= reverseChars(cs= cur, acc= /Data/List/Nil)), tail= /Data/List/Nil)
+  splitChars(cs= /Data/List/Cons(head, tail), sep, cur) | charsStartWith(cs= /Data/List/Cons(head= head, tail= tail), prefix= sep)= /Data/List/Cons(head= /Data/String/Text(chars= reverseChars(cs= cur, acc= /Data/List/Nil)), tail= splitChars(cs= dropPrefix(cs= /Data/List/Cons(head= head, tail= tail), prefix= sep), sep= sep, cur= /Data/List/Nil))
+  splitChars(cs= /Data/List/Cons(head, tail), sep, cur) else = splitChars(cs= tail, sep= sep, cur= /Data/List/Cons(head= head, tail= cur))
+
+  :/Data/String.split(sep -> /Data/String) -> /Data/List/ConsList[$T -> /Data/String]
+    # [split] cuts the string at each occurrence of [sep], keeping the pieces between them, empty
+      ones included, so that joining them back with [sep] gives the string again. An empty [sep]
+      occurs nowhere, so the string is its only piece.
+  :/Data/String/Text(chars@cs).split(sep= /Data/String/Text(chars= /Data/List/Nil))= /Data/List/Cons(head= /Data/String/Text(chars= cs), tail= /Data/List/Nil)
+  :/Data/String/Text(chars@cs).split(sep= /Data/String/Text(chars= /Data/List/Cons(head@sh, tail@st)))= splitChars(cs= cs, sep= /Data/List/Cons(head= sh, tail= st), cur= /Data/List/Nil)
+
+  linesOf(cs -> /Data/List/ConsList[$T -> /Data/Char], cur -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/String]
+    # [linesOf] cuts [cs] at each newline, where [cur] holds, backwards, the line being read.
+  linesOf(cs= /Data/List/Nil, cur= /Data/List/Nil)= /Data/List/Nil
+  linesOf(cs= /Data/List/Nil, cur= /Data/List/Cons(head, tail))= /Data/List/Cons(head= /Data/String/Text(chars= reverseChars(cs= /Data/List/Cons(head= head, tail= tail), acc= /Data/List/Nil)), tail= /Data/List/Nil)
+  linesOf(cs= /Data/List/Cons(head, tail), cur) | head == '\n'= /Data/List/Cons(head= /Data/String/Text(chars= reverseChars(cs= cur, acc= /Data/List/Nil)), tail= linesOf(cs= tail, cur= /Data/List/Nil))
+  linesOf(cs= /Data/List/Cons(head, tail), cur) else = linesOf(cs= tail, cur= /Data/List/Cons(head= head, tail= cur))
+
+  wordsOf(cs -> /Data/List/ConsList[$T -> /Data/Char], cur -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/String]
+    # [wordsOf] cuts [cs] into the runs of characters between white space, where [cur] holds,
+      backwards, the word being read.
+  wordsOf(cs= /Data/List/Nil, cur= /Data/List/Nil)= /Data/List/Nil
+  wordsOf(cs= /Data/List/Nil, cur= /Data/List/Cons(head, tail))= /Data/List/Cons(head= /Data/String/Text(chars= reverseChars(cs= /Data/List/Cons(head= head, tail= tail), acc= /Data/List/Nil)), tail= /Data/List/Nil)
+  wordsOf(cs= /Data/List/Cons(head, tail), cur) | head.isSpace= endWord(rest= tail, cur= cur)
+  wordsOf(cs= /Data/List/Cons(head, tail), cur) else = wordsOf(cs= tail, cur= /Data/List/Cons(head= head, tail= cur))
+
+  endWord(rest -> /Data/List/ConsList[$T -> /Data/Char], cur -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/String]
+    # [endWord] closes the word [cur] at a space, if one was being read, and reads on from [rest].
+  endWord(rest, cur= /Data/List/Nil)= wordsOf(cs= rest, cur= /Data/List/Nil)
+  endWord(rest, cur= /Data/List/Cons(head, tail))= /Data/List/Cons(head= /Data/String/Text(chars= reverseChars(cs= /Data/List/Cons(head= head, tail= tail), acc= /Data/List/Nil)), tail= wordsOf(cs= rest, cur= /Data/List/Nil))
+
+  :/Data/String.lines -> /Data/List/ConsList[$T -> /Data/String]
+    # [lines] is the lines of the string, cut at each newline. A newline ends the line before it,
+      so a string ending in one has no empty line after it, and the empty string has no lines.
+  :/Data/String/Text(chars).lines= linesOf(cs= chars, cur= /Data/List/Nil)
+
+  :/Data/String.words -> /Data/List/ConsList[$T -> /Data/String]
+    # [words] is the words of the string: the runs of characters between white space.
+  :/Data/String/Text(chars).words= wordsOf(cs= chars, cur= /Data/List/Nil)
+
+  join(sep -> /Data/String, parts -> /Data/List/ConsList[$T -> /Data/String]) -> /Data/String
+    # [join] is the strings of [parts] joined end to end with [sep] between each two.
+  join(sep, parts= /Data/List/Nil)= ""
+  join(sep, parts= /Data/List/Cons(head, tail= /Data/List/Nil))= head
+  join(sep, parts= /Data/List/Cons(head@first, tail= /Data/List/Cons(head, tail)))= first ++ sep ++ join(sep= sep, parts= /Data/List/Cons(head= head, tail= tail))
+
+  # A list of strings renders through @core/list.ct@, which this page cannot import, so the pieces
+  #   below are shown [join]ed with a bar between them.
+  > join(sep= "|", parts= "a,b,,c".split(sep= ","))
+    >>> a|b||c
+  > join(sep= "|", parts= "a, b".split(sep= ", "))
+    >>> a|b
+  > join(sep= "|", parts= "abc".split(sep= ""))
+    >>> abc
+  > join(sep= "|", parts= "one\ntwo\n".lines)
+    >>> one|two
+  > join(sep= "|", parts= "  some  words here ".words)
+    >>> some|words|here
+  > join(sep= ", ", parts= ["a", "b", "c"])
+    >>> a, b, c
+  > join(sep= ", ", parts= "x-y".split(sep= "-"))
+    >>> x, y
+  # ## Reading numbers
+  digitsValue(cs -> /Data/List/ConsList[$T -> /Data/Char], base -> /Data/Primitive/Integer, sign -> /Data/Primitive/Integer, acc -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [digitsValue] reads the digits [cs] in [base] onto the number [acc] read so far, each counted
+      with [sign], or has [Nothing] at the first character that is no digit of [base].
+  digitsValue(cs= /Data/List/Nil, base, sign, acc)= /Data/Maybe/Some(value= acc)
+  digitsValue(cs= /Data/List/Cons(head, tail), base, sign, acc)= match(head.digitValue)
+    /Data/Maybe/Some(value@d) | d < base= digitsValue(cs= tail, base= base, sign= sign, acc= acc * base + sign * d)
+
+    m else = /Data/Maybe/Nothing
+
+  unsignedValue(cs -> /Data/List/ConsList[$T -> /Data/Char], base -> /Data/Primitive/Integer, sign -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [unsignedValue] reads the digits after any sign, of which there must be at least one.
+  unsignedValue(cs= /Data/List/Nil, base, sign)= /Data/Maybe/Nothing
+  unsignedValue(cs= /Data/List/Cons(head, tail), base, sign)= digitsValue(cs= /Data/List/Cons(head= head, tail= tail), base= base, sign= sign, acc= 0)
+
+  signedValue(cs -> /Data/List/ConsList[$T -> /Data/Char], base -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [signedValue] reads an optional sign and then the digits after it.
+  signedValue(cs= /Data/List/Nil, base)= /Data/Maybe/Nothing
+  signedValue(cs= /Data/List/Cons(head, tail), base) | head == '-'= unsignedValue(cs= tail, base= base, sign= 0 - 1)
+  signedValue(cs= /Data/List/Cons(head, tail), base) | head == '+'= unsignedValue(cs= tail, base= base, sign= 1)
+  signedValue(cs= /Data/List/Cons(head, tail), base) else = unsignedValue(cs= /Data/List/Cons(head= head, tail= tail), base= base, sign= 1)
+
+  :/Data/String.parseIntegerBase(base -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [parseIntegerBase] reads the string as a whole number in [base] (2 to 36): an optional `-`
+      or `+`, then one or more digits of [base], and nothing else. Any other string has
+      [Nothing].
+  :/Data/String/Text(chars).parseIntegerBase(base)= signedValue(cs= chars, base= base)
+
+  :/Data/String.parseInteger -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    # [parseInteger] reads the string as a decimal whole number, as [parseIntegerBase] does.
+  :/Data/String/Text(chars).parseInteger= signedValue(cs= chars, base= 10)
+
+  > ("42".parseInteger == /Data/Maybe/Some(value= 42))
+    >>> True
+  > ("-17".parseInteger == /Data/Maybe/Some(value= 0 - 17))
+    >>> True
+  > ("ff".parseIntegerBase(base= 16) == /Data/Maybe/Some(value= 255))
+    >>> True
+  > ("12a".parseInteger == /Data/Maybe/Nothing)
+    >>> True
+  > ("-".parseInteger == /Data/Maybe/Nothing)
+    >>> True
+  > ("".parseInteger == /Data/Maybe/Nothing)
+    >>> True

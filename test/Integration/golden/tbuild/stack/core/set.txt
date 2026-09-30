@@ -75,7 +75,7 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = /fn
                                                     ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean =
-                                                    ( /Data/Set/contains
+                                                    ( /contains
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                                         )
@@ -382,7 +382,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean =
-                                        ( /Data/Set/contains
+                                        ( /contains
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                             )
@@ -1420,7 +1420,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
                                 ( Just
@@ -1625,7 +1625,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
                                 ( Just
@@ -2355,7 +2355,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
                                 ( Just
@@ -2645,7 +2645,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
                                 ( Just
@@ -3339,7 +3339,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
                                 ( /Data/Set/union
@@ -3883,7 +3883,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
                                 ( /Data/Set/difference
@@ -4197,7 +4197,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
                                 ( /Data/Set/difference
@@ -4915,7 +4915,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
                                 ( /Data/Set/intersection
@@ -5316,7 +5316,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /Data/Set/contains
+                    ( /contains
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
                                 ( /Data/Set/intersection

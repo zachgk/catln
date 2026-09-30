@@ -2,6 +2,23 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Data/Functor/testFunctorComposition"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Functor/testFunctorComposition
+                            ( EAppVar
+                                { eavName = /F
+                                , eavMeta = ∀/Data/Functor[ /T=/Data/Primitive/Integer ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /x -> $/F } ) -> /Data/Primitive/Integer = 0
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Functor/fmap"
                 , ObjectMapItem
                     { omiDecls =
@@ -31,6 +48,23 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Functor/testFunctorIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Functor/testFunctorIdentity
+                            ( EAppVar
+                                { eavName = /F
+                                , eavMeta = ∀/Data/Functor[ /T=∀/Data/Algebra/Eq ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /x -> $/F } ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ]

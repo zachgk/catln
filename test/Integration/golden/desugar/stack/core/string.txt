@@ -2,6 +2,49 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/compareChars./Data/$ba75a7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ compareChars./Data/$ba75a7( Value /at )( Value /bt )( Value /$ba75a7-arg@Value c -> /Data/Algebra/Equal )= compareChars( Value a= Value at )( Value b= Value bt )
+                        , compareChars./Data/$ba75a7( Value /at )( Value /bt )( Value /$ba75a7-arg@Value c )= Value c
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/words"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/words( Value /this -> ∀/Data/String ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/words
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = wordsOf( Value cs= Value chars )( Value cur= Value /Data/List/Nil )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/upperChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/upperChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/upperChars( Value cs= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/upperChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
+                            ( Value head= toUpper( Value /this= Value head ) )
+                            ( Value tail= upperChars( Value cs= Value tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/operator++"
                 , ObjectMapItem
                     { omiDecls =
@@ -57,6 +100,32 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/parseIntegerBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/parseIntegerBase( Value base -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/parseIntegerBase( Value base )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = signedValue( Value cs= Value chars )( Value base= Value base )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/fromChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/fromChars
+                            ( Value chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/fromChars( Value chars ) -> ∀/Data/String = /Data/String/Text( Value chars= Value chars ) ]
+                    }
+                )
+            ,
                 ( "/Data/String/isEmpty"
                 , ObjectMapItem
                     { omiDecls =
@@ -95,6 +164,22 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/at"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/at( Value index -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Char ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/at( Value index )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Char ] = first
+                            ( Value /this= /Data/String/Text
+                                ( Value chars= dropChars( Value cs= Value chars )( Value n= Value index ) )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls = []
@@ -103,6 +188,138 @@ Prgm
                     , omiDefs =
                         [ /Data/toString( Value /this -> /Data/Char.. ) -> ∀/Data/String = String/Text
                             ( Value chars= /Data/List/Cons( Value head= Value this )( Value tail= Value /Data/List/Nil ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/unsignedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/unsignedValue
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer )( Value sign -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/unsignedValue( Value cs= Value /Data/List/Nil )( Value base )( Value sign ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
+                        , /Data/String/unsignedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = digitsValue
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value base= Value base )( Value sign= Value sign )
+                            ( Value acc= CInt
+                                { ciValue = 0 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/drop"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/drop( Value n -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/drop( Value n )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= dropChars( Value cs= Value chars )( Value n= Value n ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/first"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/first( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Char ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/first
+                            ( Value /this= /Data/String/Text( Value chars= Value /Data/List/Nil ) ) -> ∀/Data/Maybe[ /T=/Data/Char ] = Value /Data/Maybe/Nothing
+                        , /Data/String/first
+                            ( Value /this= /Data/String/Text
+                                ( Value chars= /Data/List/Cons( Value head )( Value tail ) )
+                            ) -> ∀/Data/Maybe[ /T=/Data/Char ] = /Data/Maybe/Some( Value value= Value head )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/takeChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/takeChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/takeChars( Value cs= Value /Data/List/Nil )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/takeChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) | /operator<=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/takeChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons( Value head= Value head )
+                            ( Value tail= takeChars( Value cs= Value tail )
+                                ( Value n= /operator-( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/indexOfChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/indexOfChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value sub -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value i -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/indexOfChars( Value cs )( Value sub )( Value i ) | charsStartWith( Value cs= Value cs )( Value prefix= Value sub ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Maybe/Some( Value value= Value i )
+                        , /Data/String/indexOfChars( Value cs )( Value sub )( Value i ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = indexAfter( Value cs= Value cs )( Value sub= Value sub )( Value i= Value i )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/compareChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/compareChars
+                            ( Value a -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value b -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Algebra/Comparison
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/compareChars( Value a= Value /Data/List/Nil )( Value b= Value /Data/List/Nil ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
+                        , /Data/compareChars( Value a= Value /Data/List/Nil )
+                            ( Value b= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
+                        , /Data/compareChars
+                            ( Value a= /Data/List/Cons( Value head )( Value tail ) )( Value b= Value /Data/List/Nil ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
+                        , /Data/compareChars
+                            ( Value a= /Data/List/Cons( Value head@Value ah )( Value tail@Value at ) )
+                            ( Value b= /Data/List/Cons( Value head@Value bh )( Value tail@Value bt ) ) -> ∀/Data/Algebra/Comparison = $ba75a7( Value /at= Value /at )( Value /bt= Value /bt )
+                            ( Value /$ba75a7-arg= compareTo( Value other= Value bh )( Value /this= Value ah ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/trimStart"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/trimStart( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/trimStart
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= dropSpace( Value cs= Value chars ) )
                         ]
                     }
                 )
@@ -134,6 +351,24 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/reverseChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/reverseChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/reverseChars( Value cs= Value /Data/List/Nil )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value acc
+                        , /Data/String/reverseChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = reverseChars( Value cs= Value tail )
+                            ( Value acc= /Data/List/Cons( Value head= Value head )( Value tail= Value acc ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/rel"
                 , ObjectMapItem
                     { omiDecls = []
@@ -143,6 +378,83 @@ Prgm
                         [ /Data/Algebra/rel
                             ( Value a= String/Text( Value chars@Value ac ) )
                             ( Value b= String/Text( Value chars@Value bc ) )( Value /this -> /Data/StrEqv.. ) -> ∀/Data/Primitive/Boolean = charsEqual( Value a= Value ac )( Value b= Value bc )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/signedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/signedValue
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/signedValue( Value cs= Value /Data/List/Nil )( Value base ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
+                        , /Data/String/signedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) | /operator==( Value /l= Value head )
+                            ( Value /r= CChar
+                                { chValue = '-' }
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = unsignedValue( Value cs= Value tail )( Value base= Value base )
+                            ( Value sign= /operator-
+                                ( Value /l= CInt
+                                    { ciValue = 0 }
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , /Data/String/signedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) | /operator==( Value /l= Value head )
+                            ( Value /r= CChar
+                                { chValue = '+' }
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = unsignedValue( Value cs= Value tail )( Value base= Value base )
+                            ( Value sign= CInt
+                                { ciValue = 1 }
+                            )
+                        , /Data/String/signedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = unsignedValue
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value base= Value base )
+                            ( Value sign= CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/StrOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/StrOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/String/wordsOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/wordsOf
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value cur -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/wordsOf( Value cs= Value /Data/List/Nil )( Value cur= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = Value /Data/List/Nil
+                        , /Data/String/wordsOf( Value cs= Value /Data/List/Nil )
+                            ( Value cur= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text
+                                ( Value chars= reverseChars
+                                    ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value acc= Value /Data/List/Nil )
+                                )
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/String/wordsOf
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value cur ) | isSpace( Value /this= Value head ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = endWord( Value rest= Value tail )( Value cur= Value cur )
+                        , /Data/String/wordsOf
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value cur ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = wordsOf( Value cs= Value tail )
+                            ( Value cur= /Data/List/Cons( Value head= Value head )( Value tail= Value cur ) )
                         ]
                     }
                 )
@@ -169,6 +481,24 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/lowerChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/lowerChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/lowerChars( Value cs= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/lowerChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
+                            ( Value head= toLower( Value /this= Value head ) )
+                            ( Value tail= lowerChars( Value cs= Value tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/length"
                 , ObjectMapItem
                     { omiDecls =
@@ -185,6 +515,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/lines"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/lines( Value /this -> ∀/Data/String ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/lines
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = linesOf( Value cs= Value chars )( Value cur= Value /Data/List/Nil )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls = []
@@ -192,6 +535,39 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value StrEqv ]
+                    }
+                )
+            ,
+                ( "/Data/String/splitChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/splitChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value sep -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value cur -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/splitChars( Value cs= Value /Data/List/Nil )( Value sep )( Value cur ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text
+                                ( Value chars= reverseChars( Value cs= Value cur )( Value acc= Value /Data/List/Nil ) )
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/String/splitChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value sep )( Value cur ) | charsStartWith
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value prefix= Value sep ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text
+                                ( Value chars= reverseChars( Value cs= Value cur )( Value acc= Value /Data/List/Nil ) )
+                            )
+                            ( Value tail= splitChars
+                                ( Value cs= dropPrefix
+                                    ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value prefix= Value sep )
+                                )( Value sep= Value sep )( Value cur= Value /Data/List/Nil )
+                            )
+                        , /Data/String/splitChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value sep )( Value cur ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = splitChars( Value cs= Value tail )( Value sep= Value sep )
+                            ( Value cur= /Data/List/Cons( Value head= Value head )( Value tail= Value cur ) )
+                        ]
                     }
                 )
             ,
@@ -213,6 +589,362 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/dropPrefix"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/dropPrefix
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value prefix -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/dropPrefix( Value cs )( Value prefix= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value cs
+                        , /Data/String/dropPrefix( Value cs= Value /Data/List/Nil )
+                            ( Value prefix= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/dropPrefix
+                            ( Value cs= /Data/List/Cons( Value head@Value ch )( Value tail@Value ct ) )
+                            ( Value prefix= /Data/List/Cons( Value head@Value ph )( Value tail@Value pt ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = dropPrefix( Value cs= Value ct )( Value prefix= Value pt )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/replaceChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/replaceChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value old -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value new -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/replaceChars( Value cs= Value /Data/List/Nil )( Value old )( Value new ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/replaceChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value old )( Value new ) | charsStartWith
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value prefix= Value old ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/appendChars( Value l= Value new )
+                            ( Value r= replaceChars
+                                ( Value cs= dropPrefix
+                                    ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value prefix= Value old )
+                                )( Value old= Value old )( Value new= Value new )
+                            )
+                        , /Data/String/replaceChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value old )( Value new ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons( Value head= Value head )
+                            ( Value tail= replaceChars( Value cs= Value tail )( Value old= Value old )( Value new= Value new ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/toUpper"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/toUpper( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/toUpper
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= upperChars( Value cs= Value chars ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/indexAfter"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/indexAfter
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value sub -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value i -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/indexAfter( Value cs= Value /Data/List/Nil )( Value sub )( Value i ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
+                        , /Data/String/indexAfter
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value sub )( Value i ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = indexOfChars( Value cs= Value tail )( Value sub= Value sub )
+                            ( Value i= /operator+( Value /l= Value i )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/toLower"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/toLower( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/toLower
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= lowerChars( Value cs= Value chars ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/endsWith"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/endsWith( Value suffix -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/endsWith
+                            ( Value suffix= /Data/String/Text( Value chars@Value s ) )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/Primitive/Boolean = charsStartWith
+                            ( Value cs= reverseChars( Value cs= Value cs )( Value acc= Value /Data/List/Nil ) )
+                            ( Value prefix= reverseChars( Value cs= Value s )( Value acc= Value /Data/List/Nil ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/dropSpace"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/dropSpace
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/dropSpace( Value cs= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/dropSpace
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | isSpace( Value /this= Value head ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = dropSpace( Value cs= Value tail )
+                        , /Data/String/dropSpace
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons( Value head= Value head )( Value tail= Value tail )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/parseInteger"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/parseInteger( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/parseInteger
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = signedValue( Value cs= Value chars )
+                            ( Value base= CInt
+                                { ciValue = 10 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/take"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/take( Value n -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/take( Value n )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= takeChars( Value cs= Value chars )( Value n= Value n ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/trimEnd"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/trimEnd( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/trimEnd
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= reverseChars
+                                ( Value cs= dropSpace
+                                    ( Value cs= reverseChars( Value cs= Value chars )( Value acc= Value /Data/List/Nil ) )
+                                )( Value acc= Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/compare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compare
+                            ( Value a= String/Text( Value chars@Value ac ) )
+                            ( Value b= String/Text( Value chars@Value bc ) )( Value /this -> /Data/StrOrdering.. ) -> ∀/Data/Algebra/Comparison = compareChars( Value a= Value ac )( Value b= Value bc )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/replace"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/replace( Value old -> ∀/Data/String )( Value new -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/replace
+                            ( Value old= /Data/String/Text( Value chars= Value /Data/List/Nil ) )( Value new )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/String = /Data/String/Text( Value chars= Value cs )
+                        , /Data/String/replace
+                            ( Value old= /Data/String/Text
+                                ( Value chars= /Data/List/Cons( Value head@Value oh )( Value tail@Value ot ) )
+                            )
+                            ( Value new= /Data/String/Text( Value chars@Value n ) )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= replaceChars( Value cs= Value cs )
+                                ( Value old= /Data/List/Cons( Value head= Value oh )( Value tail= Value ot ) )( Value new= Value n )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/digitsValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/digitsValue
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer )( Value sign -> /Data/Primitive/Integer )( Value acc -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/digitsValue( Value cs= Value /Data/List/Nil )( Value base )( Value sign )( Value acc ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Maybe/Some( Value value= Value acc )
+                        , /Data/String/digitsValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign )( Value acc ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = $6d5c93( Value /base= Value /base )( Value /acc= Value /acc )( Value /tail= Value /tail )( Value /sign= Value /sign )
+                            ( Value /$6d5c93-arg= digitValue( Value /this= Value head ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/contains"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/contains( Value sub -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/contains
+                            ( Value sub= /Data/String/Text( Value chars@Value s ) )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/Primitive/Boolean = /operator!=
+                            ( Value /l= indexOfChars( Value cs= Value cs )( Value sub= Value s )
+                                ( Value i= CInt
+                                    { ciValue = 0 }
+                                )
+                            )( Value /r= Value /Data/Maybe/Nothing )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/startsWith"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/startsWith( Value prefix -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/startsWith
+                            ( Value prefix= /Data/String/Text( Value chars@Value p ) )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/Primitive/Boolean = charsStartWith( Value cs= Value cs )( Value prefix= Value p )
+                        ]
+                    }
+                )
+            ,
+                ( "/digitsValue./Data/String/$6d5c93"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ digitsValue./Data/String/$6d5c93( Value /base )( Value /acc )( Value /tail )( Value /sign )
+                            ( Value /$6d5c93-arg= /Data/Maybe/Some( Value value@Value d ) ) | /operator<( Value /l= Value d )( Value /r= Value base )= digitsValue( Value cs= Value tail )( Value base= Value base )( Value sign= Value sign )
+                            ( Value acc= /operator+
+                                ( Value /l= /operator*( Value /l= Value acc )( Value /r= Value base ) )
+                                ( Value /r= /operator*( Value /l= Value sign )( Value /r= Value d ) )
+                            )
+                        , digitsValue./Data/String/$6d5c93( Value /base )( Value /acc )( Value /tail )( Value /sign )
+                            ( Value /$6d5c93-arg@Value m )= Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/endWord"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/endWord
+                            ( Value rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value cur -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/endWord( Value rest )( Value cur= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = wordsOf( Value cs= Value rest )( Value cur= Value /Data/List/Nil )
+                        , /Data/String/endWord( Value rest )
+                            ( Value cur= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text
+                                ( Value chars= reverseChars
+                                    ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value acc= Value /Data/List/Nil )
+                                )
+                            )
+                            ( Value tail= wordsOf( Value cs= Value rest )( Value cur= Value /Data/List/Nil ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/repeat"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/repeat( Value n -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/repeat( Value n )( Value /this -> ∀/Data/String ) | /operator<=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Data/String/repeat( Value n )( Value /this -> ∀/Data/String ) -> ∀/Data/String = /operator++( Value /l= Value this )
+                            ( Value /r= repeat
+                                ( Value n= /operator-( Value /l= Value n )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )( Value /this= Value this )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/dropChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/dropChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/dropChars( Value cs= Value /Data/List/Nil )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /Data/List/Nil
+                        , /Data/String/dropChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) | /operator<=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons( Value head= Value head )( Value tail= Value tail )
+                        , /Data/String/dropChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = dropChars( Value cs= Value tail )
+                            ( Value n= /operator-( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -225,6 +957,132 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/String/trim"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/trim( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/trim
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= reverseChars
+                                ( Value cs= dropSpace
+                                    ( Value cs= reverseChars
+                                        ( Value cs= dropSpace( Value cs= Value chars ) )( Value acc= Value /Data/List/Nil )
+                                    )
+                                )( Value acc= Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value StrOrdering ]
+                    }
+                )
+            ,
+                ( "/Data/String/join"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/join( Value sep -> ∀/Data/String )
+                            ( Value parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/join( Value sep )( Value parts= Value /Data/List/Nil ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Data/String/join( Value sep )
+                            ( Value parts= /Data/List/Cons( Value head )( Value tail= Value /Data/List/Nil ) ) -> ∀/Data/String = Value head
+                        , /Data/String/join( Value sep )
+                            ( Value parts= /Data/List/Cons( Value head@Value first )
+                                ( Value tail= /Data/List/Cons( Value head )( Value tail ) )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++( Value /l= Value first )( Value /r= Value sep ) )
+                            ( Value /r= join( Value sep= Value sep )
+                                ( Value parts= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/indexOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/indexOf( Value sub -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/indexOf
+                            ( Value sub= /Data/String/Text( Value chars@Value s ) )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = indexOfChars( Value cs= Value cs )( Value sub= Value s )
+                            ( Value i= CInt
+                                { ciValue = 0 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/slice"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/slice( Value start -> /Data/Primitive/Integer )( Value end -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/slice( Value start )( Value end )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= takeChars
+                                ( Value cs= dropChars( Value cs= Value chars )( Value n= Value start ) )
+                                ( Value n= /operator-( Value /l= Value end )( Value /r= Value start ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/charsStartWith"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/charsStartWith
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value prefix -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/charsStartWith( Value cs )( Value prefix= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
+                        , /Data/String/charsStartWith( Value cs= Value /Data/List/Nil )
+                            ( Value prefix= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
+                        , /Data/String/charsStartWith
+                            ( Value cs= /Data/List/Cons( Value head@Value ch )( Value tail@Value ct ) )
+                            ( Value prefix= /Data/List/Cons( Value head@Value ph )( Value tail@Value pt ) ) | /operator==( Value /l= Value ch )( Value /r= Value ph ) -> ∀/Data/Primitive/Boolean = charsStartWith( Value cs= Value ct )( Value prefix= Value pt )
+                        , /Data/String/charsStartWith
+                            ( Value cs= /Data/List/Cons( Value head@Value ch )( Value tail@Value ct ) )
+                            ( Value prefix= /Data/List/Cons( Value head@Value ph )( Value tail@Value pt ) ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/reversed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/reversed( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/reversed
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/String = /Data/String/Text
+                            ( Value chars= reverseChars( Value cs= Value chars )( Value acc= Value /Data/List/Nil ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/StrEqv"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/StrEqv ]
@@ -233,10 +1091,126 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Algebra/compareTo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compareTo( Value other )( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Comparison = compare( Value a= Value this )( Value b= Value other )
+                            ( Value /this= ord( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/linesOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/linesOf
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value cur -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/linesOf( Value cs= Value /Data/List/Nil )( Value cur= Value /Data/List/Nil ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = Value /Data/List/Nil
+                        , /Data/String/linesOf( Value cs= Value /Data/List/Nil )
+                            ( Value cur= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text
+                                ( Value chars= reverseChars
+                                    ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value acc= Value /Data/List/Nil )
+                                )
+                            )( Value tail= Value /Data/List/Nil )
+                        , /Data/String/linesOf
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value cur ) | /operator==( Value /l= Value head )
+                            ( Value /r= CChar
+                                { chValue = '\n' }
+                            ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text
+                                ( Value chars= reverseChars( Value cs= Value cur )( Value acc= Value /Data/List/Nil ) )
+                            )
+                            ( Value tail= linesOf( Value cs= Value tail )( Value cur= Value /Data/List/Nil ) )
+                        , /Data/String/linesOf
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value cur ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = linesOf( Value cs= Value tail )
+                            ( Value cur= /Data/List/Cons( Value head= Value head )( Value tail= Value cur ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/split"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/split( Value sep -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/split
+                            ( Value sep= /Data/String/Text( Value chars= Value /Data/List/Nil ) )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/List/Cons
+                            ( Value head= /Data/String/Text( Value chars= Value cs ) )( Value tail= Value /Data/List/Nil )
+                        , /Data/String/split
+                            ( Value sep= /Data/String/Text
+                                ( Value chars= /Data/List/Cons( Value head@Value sh )( Value tail@Value st ) )
+                            )
+                            ( Value /this= /Data/String/Text( Value chars@Value cs ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = splitChars( Value cs= Value cs )
+                            ( Value sep= /Data/List/Cons( Value head= Value sh )( Value tail= Value st ) )( Value cur= Value /Data/List/Nil )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -261,6 +1235,19 @@ Prgm
             , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/String ]
             , cgcExtends =
                 [ /Data/StrEqv[ /T=∀/Data/String ] ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/String ]
+            , cgcExtends =
+                [ /Data/StrOrdering[ /T=∀/Data/String ] ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -434,6 +1421,68 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "## Ordering
+                Strings are ordered the way a dictionary orders words: by their first characters that differ,
+                and a string before any longer string it begins." }
+            )
+        , /Catln/#print
+            ( Value /p= isLess
+                ( Value /this= compareTo
+                    ( Value other= CStr
+                        { csValue = "banana" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "apple" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isGreater
+                ( Value /this= compareTo
+                    ( Value other= CStr
+                        { csValue = "peach" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "pear" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isLess
+                ( Value /this= compareTo
+                    ( Value other= CStr
+                        { csValue = "abc" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "ab" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isEq
+                ( Value /this= compareTo
+                    ( Value other= CStr
+                        { csValue = "same" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "same" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "# What a string does
                 The operations on a [String] live in the [/Data/String] namespace the type opens, as a
                 list's do in [/Data/List], so that each type's [length] is a name of its own." }
@@ -477,6 +1526,586 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Characters" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= fromChars
+                    ( Value chars= /Data/List/Cons
+                        ( Value /head= CChar
+                            { chValue = 'h' }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CChar
+                                { chValue = 'i' }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( Value /r= CStr
+                    { csValue = "hi" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= first
+                    ( Value /this= CStr
+                        { csValue = "hi" }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CChar
+                        { chValue = 'h' }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= first
+                    ( Value /this= CStr
+                        { csValue = "" }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= at
+                    ( Value index= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "abc" }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CChar
+                        { chValue = 'c' }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= at
+                    ( Value index= CInt
+                        { ciValue = 3 }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "abc" }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Parts of a string" }
+            )
+        , /Catln/#print
+            ( Value /p= take
+                ( Value n= CInt
+                    { ciValue = 2 }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "he" }
+            )
+        , /Catln/#print
+            ( Value /p= drop
+                ( Value n= CInt
+                    { ciValue = 2 }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "llo" }
+            )
+        , /Catln/#print
+            ( Value /p= take
+                ( Value n= CInt
+                    { ciValue = 9 }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "hello" }
+            )
+        , /Catln/#print
+            ( Value /p= slice
+                ( Value start= CInt
+                    { ciValue = 1 }
+                )
+                ( Value end= CInt
+                    { ciValue = 4 }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "ell" }
+            )
+        , /Catln/#print
+            ( Value /p= reversed
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "olleh" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Searching" }
+            )
+        , /Catln/#print
+            ( Value /p= startsWith
+                ( Value prefix= CStr
+                    { csValue = "he" }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= startsWith
+                ( Value prefix= CStr
+                    { csValue = "lo" }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= endsWith
+                ( Value suffix= CStr
+                    { csValue = "lo" }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= indexOf
+                    ( Value sub= CStr
+                        { csValue = "ll" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "hello" }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 2 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= indexOf
+                    ( Value sub= CStr
+                        { csValue = "z" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "hello" }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value sub= CStr
+                    { csValue = "ell" }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value sub= CStr
+                    { csValue = "elo" }
+                )
+                ( Value /this= CStr
+                    { csValue = "hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Changing a string" }
+            )
+        , /Catln/#print
+            ( Value /p= toUpper
+                ( Value /this= CStr
+                    { csValue = "Hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "HELLO" }
+            )
+        , /Catln/#print
+            ( Value /p= toLower
+                ( Value /this= CStr
+                    { csValue = "Hello" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "hello" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= trim
+                    ( Value /this= CStr
+                        { csValue = "  hi 
+                        " }
+                    )
+                )
+                ( Value /r= CStr
+                    { csValue = "hi" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= trimStart
+                    ( Value /this= CStr
+                        { csValue = "  hi " }
+                    )
+                )
+                ( Value /r= CStr
+                    { csValue = "hi " }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= trimEnd
+                    ( Value /this= CStr
+                        { csValue = " hi  " }
+                    )
+                )
+                ( Value /r= CStr
+                    { csValue = " hi" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= replace
+                ( Value old= CStr
+                    { csValue = "-" }
+                )
+                ( Value new= CStr
+                    { csValue = ", " }
+                )
+                ( Value /this= CStr
+                    { csValue = "a-b-c" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a, b, c" }
+            )
+        , /Catln/#print
+            ( Value /p= replace
+                ( Value old= CStr
+                    { csValue = "" }
+                )
+                ( Value new= CStr
+                    { csValue = "x" }
+                )
+                ( Value /this= CStr
+                    { csValue = "abc" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "abc" }
+            )
+        , /Catln/#print
+            ( Value /p= repeat
+                ( Value n= CInt
+                    { ciValue = 3 }
+                )
+                ( Value /this= CStr
+                    { csValue = "ab" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "ababab" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Splitting and joining" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A list of strings renders through @core/list.ct@, which this page cannot import, so the pieces" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  below are shown [join]ed with a bar between them." }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = "|" }
+                )
+                ( Value parts= split
+                    ( Value sep= CStr
+                        { csValue = "," }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "a,b,,c" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a|b||c" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = "|" }
+                )
+                ( Value parts= split
+                    ( Value sep= CStr
+                        { csValue = ", " }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "a, b" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a|b" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = "|" }
+                )
+                ( Value parts= split
+                    ( Value sep= CStr
+                        { csValue = "" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "abc" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "abc" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = "|" }
+                )
+                ( Value parts= lines
+                    ( Value /this= CStr
+                        { csValue = "one
+                        two
+                        " }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "one|two" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = "|" }
+                )
+                ( Value parts= words
+                    ( Value /this= CStr
+                        { csValue = "  some  words here " }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "some|words|here" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = ", " }
+                )
+                ( Value parts= /Data/List/Cons
+                    ( Value /head= CStr
+                        { csValue = "a" }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CStr
+                            { csValue = "b" }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CStr
+                                { csValue = "c" }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a, b, c" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = ", " }
+                )
+                ( Value parts= split
+                    ( Value sep= CStr
+                        { csValue = "-" }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "x-y" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "x, y" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Reading numbers" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= parseInteger
+                    ( Value /this= CStr
+                        { csValue = "42" }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 42 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= parseInteger
+                    ( Value /this= CStr
+                        { csValue = "-17" }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= /operator-
+                        ( Value /l= CInt
+                            { ciValue = 0 }
+                        )
+                        ( Value /r= CInt
+                            { ciValue = 17 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= parseIntegerBase
+                    ( Value base= CInt
+                        { ciValue = 16 }
+                    )
+                    ( Value /this= CStr
+                        { csValue = "ff" }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 255 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= parseInteger
+                    ( Value /this= CStr
+                        { csValue = "12a" }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= parseInteger
+                    ( Value /this= CStr
+                        { csValue = "-" }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= parseInteger
+                    ( Value /this= CStr
+                        { csValue = "" }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
             )
         ]
     }

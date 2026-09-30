@@ -639,9 +639,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /code_from_char
-                            ( EAppArg { eaaArg = Value /c -> ∀/Data/String } ) -> /Data/Primitive/Integer = /ord
-                            ( EAppArg
-                                { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            ( EAppArg { eaaArg = Value /c -> ∀/Data/String } ) -> /Data/Primitive/Integer =
+                            ( /ord
+                                ( EAppArg
+                                    { eaaArg = Value /c -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }

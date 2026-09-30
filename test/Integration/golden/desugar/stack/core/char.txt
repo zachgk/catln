@@ -20,6 +20,109 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Char/isUpper"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/isUpper( Value /this -> /Data/Char.. )= /operator&&
+                            ( Value /l= /operator>=
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 65 }
+                                )
+                            )
+                            ( Value /r= /operator<=
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 90 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Char/isLower"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/isLower( Value /this -> /Data/Char.. )= /operator&&
+                            ( Value /l= /operator>=
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 97 }
+                                )
+                            )
+                            ( Value /r= /operator<=
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 122 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Char/isSpace"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/isSpace( Value /this -> /Data/Char.. )= /operator||
+                            ( Value /l= /operator==
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 32 }
+                                )
+                            )
+                            ( Value /r= /operator&&
+                                ( Value /l= /operator>=
+                                    ( Value /l= code( Value /this= Value this ) )
+                                    ( Value /r= CInt
+                                        { ciValue = 9 }
+                                    )
+                                )
+                                ( Value /r= /operator<=
+                                    ( Value /l= code( Value /this= Value this ) )
+                                    ( Value /r= CInt
+                                        { ciValue = 13 }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Char/isAlpha"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/isAlpha( Value /this -> /Data/Char.. )= /operator||
+                            ( Value /l= isUpper( Value /this= Value this ) )
+                            ( Value /r= isLower( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Char/isAlphaNum"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/isAlphaNum( Value /this -> /Data/Char.. )= /operator||
+                            ( Value /l= isAlpha( Value /this= Value this ) )
+                            ( Value /r= isDigit( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/fromCode"
                 , ObjectMapItem
                     { omiDecls = []
@@ -95,6 +198,77 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Char/toLower"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Char/toLower( Value /this -> /Data/Char.. ) -> /Data/Char ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/toLower( Value /this -> /Data/Char.. ) | isUpper( Value /this= Value this ) -> /Data/Char = /Data/fromCode
+                            ( Value code= /operator+
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 32 }
+                                )
+                            )
+                        , /Data/Char/toLower( Value /this -> /Data/Char.. ) -> /Data/Char = Value this
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Char/toUpper"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Char/toUpper( Value /this -> /Data/Char.. ) -> /Data/Char ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/toUpper( Value /this -> /Data/Char.. ) | isLower( Value /this= Value this ) -> /Data/Char = /Data/fromCode
+                            ( Value code= /operator-
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 32 }
+                                )
+                            )
+                        , /Data/Char/toUpper( Value /this -> /Data/Char.. ) -> /Data/Char = Value this
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Char/digitValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Char/digitValue( Value /this -> /Data/Char.. ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/digitValue( Value /this -> /Data/Char.. ) | isDigit( Value /this= Value this ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Maybe/Some
+                            ( Value value= /operator-
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 48 }
+                                )
+                            )
+                        , /Data/Char/digitValue( Value /this -> /Data/Char.. ) | isLower( Value /this= Value this ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Maybe/Some
+                            ( Value value= /operator-
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 87 }
+                                )
+                            )
+                        , /Data/Char/digitValue( Value /this -> /Data/Char.. ) | isUpper( Value /this= Value this ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Maybe/Some
+                            ( Value value= /operator-
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 55 }
+                                )
+                            )
+                        , /Data/Char/digitValue( Value /this -> /Data/Char.. ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -117,6 +291,29 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Char/isDigit"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Char/isDigit( Value /this -> /Data/Char.. )= /operator&&
+                            ( Value /l= /operator>=
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 48 }
+                                )
+                            )
+                            ( Value /r= /operator<=
+                                ( Value /l= code( Value /this= Value this ) )
+                                ( Value /r= CInt
+                                    { ciValue = 57 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls = []
@@ -132,6 +329,15 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -275,6 +481,186 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "b" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# What a character does
+                The operations on a [Char] live in the [/Data/Char] namespace the type opens, as a [String]'s
+                do in [/Data/String]." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Kinds of character
+                Each of these reads the character's code point, and each covers ASCII only: a letter or digit
+                of another script is none of them." }
+            )
+        , /Catln/#print
+            ( Value /p= isDigit
+                ( Value /this= CChar
+                    { chValue = '7' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isDigit
+                ( Value /this= CChar
+                    { chValue = 'x' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= isUpper
+                ( Value /this= CChar
+                    { chValue = 'Q' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isUpper
+                ( Value /this= CChar
+                    { chValue = 'q' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= isAlpha
+                ( Value /this= CChar
+                    { chValue = 'q' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isAlphaNum
+                ( Value /this= CChar
+                    { chValue = '_' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= isSpace
+                ( Value /this= CChar
+                    { chValue = ' ' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isSpace
+                ( Value /this= CChar
+                    { chValue = '\n' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= isSpace
+                ( Value /this= CChar
+                    { chValue = 'a' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Case" }
+            )
+        , /Catln/#print
+            ( Value /p= toUpper
+                ( Value /this= CChar
+                    { chValue = 'a' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "A" }
+            )
+        , /Catln/#print
+            ( Value /p= toUpper
+                ( Value /this= CChar
+                    { chValue = 'A' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "A" }
+            )
+        , /Catln/#print
+            ( Value /p= toLower
+                ( Value /this= CChar
+                    { chValue = 'Z' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "z" }
+            )
+        , /Catln/#print
+            ( Value /p= toLower
+                ( Value /this= CChar
+                    { chValue = '3' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "3" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Digit values" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= digitValue
+                    ( Value /this= CChar
+                        { chValue = '7' }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 7 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= digitValue
+                    ( Value /this= CChar
+                        { chValue = 'F' }
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt
+                        { ciValue = 15 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= digitValue
+                    ( Value /this= CChar
+                        { chValue = '-' }
+                    )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
             )
         ]
     }

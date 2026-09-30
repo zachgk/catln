@@ -38,7 +38,7 @@ Prgm
                             )
                             ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/List/filter
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Set/elements( Value /s -> TVArg /a = Value /a ) )
-                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /Data/Set/contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
                             )
                         ]
                     }
@@ -208,7 +208,7 @@ Prgm
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /Data/List/allBy
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Set/elements( Value /s -> TVArg /a = Value /a ) )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /Data/Set/contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
                         ]
                     }
                 )
@@ -848,7 +848,7 @@ Prgm
                 { csValue = "## Insertion" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -953,7 +953,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1345,7 +1345,7 @@ Prgm
                 { csValue = "## Removal" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1493,7 +1493,7 @@ Prgm
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1845,7 +1845,7 @@ Prgm
                 { csValue = "3" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/union
                     ( Value /a -> UnionType
                         ( Just
@@ -2119,7 +2119,7 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/difference
                     ( Value /a -> UnionType
                         ( Just
@@ -2277,7 +2277,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/difference
                     ( Value /a -> UnionType
                         ( Just
@@ -2639,7 +2639,7 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/intersection
                     ( Value /a -> UnionType
                         ( Just
@@ -2841,7 +2841,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
+            ( Value /p -> ∀/Data/Primitive/Boolean = /contains
                 ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/intersection
                     ( Value /a -> UnionType
                         ( Just

@@ -148,16 +148,16 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/ord"
+                ( "/Python/Builtins/ord"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord
-                            ( Value /this= String/Text
+                        [ /Python/Builtins/ord
+                            ( Value c= /Data/String/Text
                                 ( Value chars= /Data/List/Cons( Value head )( Value tail ) )
-                            ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = code( Value /this= Value head )
+                            )= code( Value /this= Value head )
                         ]
                     }
                 )

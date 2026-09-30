@@ -2,6 +2,7 @@ import "core/bool.ct"
 import "core/eq.ct"
 import "core/ord.ct"
 import "core/num.ct"
+import "core/maybe.ct"
 
 
 module(Data)
@@ -65,3 +66,82 @@ module(Data)
     >>> 7
   > digitChar(digit= 11)
     >>> b
+module(Data/Char)
+  # # What a character does
+    The operations on a [Char] live in the [/Data/Char] namespace the type opens, as a [String]'s
+    do in [/Data/String].
+  # ## Kinds of character
+    Each of these reads the character's code point, and each covers ASCII only: a letter or digit
+    of another script is none of them.
+  :/Data/Char.isDigit= this.code >= 48 && this.code <= 57
+    # [isDigit] is whether the character is one of `0` to `9`.
+
+  :/Data/Char.isUpper= this.code >= 65 && this.code <= 90
+    # [isUpper] is whether the character is one of `A` to `Z`.
+
+  :/Data/Char.isLower= this.code >= 97 && this.code <= 122
+    # [isLower] is whether the character is one of `a` to `z`.
+
+  :/Data/Char.isAlpha= this.isUpper || this.isLower
+    # [isAlpha] is whether the character is a letter.
+
+  :/Data/Char.isAlphaNum= this.isAlpha || this.isDigit
+    # [isAlphaNum] is whether the character is a letter or a digit.
+
+  :/Data/Char.isSpace= this.code == 32 || (this.code >= 9 && this.code <= 13)
+    # [isSpace] is whether the character is white space: a space, or one of the tab, newline,
+      vertical tab, form feed and carriage return.
+
+  > '7'.isDigit
+    >>> True
+  > 'x'.isDigit
+    >>> False
+  > 'Q'.isUpper
+    >>> True
+  > 'q'.isUpper
+    >>> False
+  > 'q'.isAlpha
+    >>> True
+  > '_'.isAlphaNum
+    >>> False
+  > ' '.isSpace
+    >>> True
+  > '\n'.isSpace
+    >>> True
+  > 'a'.isSpace
+    >>> False
+  # ## Case
+  :/Data/Char.toUpper -> /Data/Char
+    # [toUpper] is the upper case of a lower case letter, and any other character as it is.
+  :/Data/Char.toUpper | this.isLower= /Data/fromCode(code= this.code - 32)
+  :/Data/Char.toUpper else = this
+
+  :/Data/Char.toLower -> /Data/Char
+    # [toLower] is the lower case of an upper case letter, and any other character as it is.
+  :/Data/Char.toLower | this.isUpper= /Data/fromCode(code= this.code + 32)
+  :/Data/Char.toLower else = this
+
+  > 'a'.toUpper
+    >>> A
+  > 'A'.toUpper
+    >>> A
+  > 'Z'.toLower
+    >>> z
+  > '3'.toLower
+    >>> 3
+  # ## Digit values
+  :/Data/Char.digitValue -> /Data/Maybe[$T -> Integer]
+    # [digitValue] is the number the character stands for as a digit, the reverse of [digitChar]:
+      `0` to `9` for zero to nine, then `a` to `z` (or `A` to `Z`) for ten to thirty-five. A
+      character that is no digit has [Nothing].
+  :/Data/Char.digitValue | this.isDigit= /Data/Maybe/Some(value= this.code - 48)
+  :/Data/Char.digitValue | this.isLower= /Data/Maybe/Some(value= this.code - 87)
+  :/Data/Char.digitValue | this.isUpper= /Data/Maybe/Some(value= this.code - 55)
+  :/Data/Char.digitValue else = /Data/Maybe/Nothing
+
+  > ('7'.digitValue == /Data/Maybe/Some(value= 7))
+    >>> True
+  > ('F'.digitValue == /Data/Maybe/Some(value= 15))
+    >>> True
+  > ('-'.digitValue == /Data/Maybe/Nothing)
+    >>> True

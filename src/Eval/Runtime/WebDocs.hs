@@ -320,9 +320,9 @@ searchQueryArg = "/query"
 -- which is what a box that has not been typed into shows.
 --
 -- The matching is done here rather than in the webdocs so that what is sent is what was asked for
--- rather than everything there is to ask about. It is done here rather than in Catln because a
--- [String] is not yet something Catln can look inside — @stack\/core\/string.ct@ has equality and
--- concatenation and no substring — so a search written there could only compare whole paths.
+-- rather than everything there is to ask about. It was written here rather than in Catln when a
+-- [String] had equality and concatenation and no substring. TODO @stack\/core\/string.ct@ now has
+-- @contains@ and @toLower@, which are what this search needs, so it can move there.
 --
 -- Case-insensitively, and on the path alone, which is what the webdocs matched against when they
 -- held the list and matched it themselves. Only where the search happens has changed.
