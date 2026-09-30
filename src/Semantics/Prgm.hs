@@ -923,8 +923,21 @@ getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression:
 -- 'exprVarArgs' is exactly the binding classifier (it keys aliases\/args\/vars and never criteria),
 -- so the bound names come from it; the criteria and body are simply not traversed.
 getAllObjArrNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [Name]
-getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : (maybe [] getAllExprNames oaObj ++ maybe [] boundNames oaObj)
+getAllObjArrNames = uncurry (++) . getAllObjArrNameSplit
+
+-- | 'getAllObjArrNames' with the arguments' value heads apart from the rest.
+--
+-- A value head is either a name declared here (an entry point's @main@) or a reference to one
+-- declared elsewhere (a criterion's @Box@). Only the reader holding every other name can tell
+-- the two apart, which 'Semantics.mkTypeEnv' does. Absolutised as if declared, a RELATIVE
+-- reference named a second object: the receiver @this= Task/Simple(v)@ of an arm
+-- @:Task/Simple(v).calendarDay@ minted @/Task/Simple@ beside the declared
+-- @/Data/Note/Task/Simple@. Resolving @Task/Simple@ then found both, and the phantom leaf stayed
+-- in the arm's typed input.
+getAllObjArrNameSplit :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> ([Name], [Name])
+getAllObjArrNameSplit oa@ObjArr{oaObj} = (oaObjPath oa : exprNames ++ maybe [] boundNames oaObj, exprHeads)
   where
+    (exprNames, exprHeads) = maybe ([], []) getAllExprNameSplit oaObj
     -- The OBJECT pattern's names — its head plus every arg name recursed through
     -- 'getAllExprNames'\/'exprAppliedArgs' — are all part of the DEFINITION: a parameter
     -- (@tst(d= T(x))@'s @d@) or an entry point (@main{io->IO}@ desugared to
@@ -938,8 +951,13 @@ getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : (maybe [] getAllExprNames oa
     varAuxName (TVApplied b _) = varAuxName b
 
 getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
-getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap argAllNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
+getAllExprNames = uncurry (++) . getAllExprNameSplit
+
+-- | 'getAllExprNames' with the arguments' value heads apart, as 'getAllObjArrNameSplit' says.
+getAllExprNameSplit :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ([Name], [Name])
+getAllExprNameSplit e = (maybeToList (maybeExprPath e) ++ concatMap fst argSplits ++ concatMap fromOrdVar (exprAppliedOrdVars e), concatMap snd argSplits)
   where
+    argSplits = map argAllNames (exprAppliedArgs e)
     fromOrdVar (v, _) = varNamesWithPrefix $ pkName v
     -- An arg's value side introduces its HEAD name: the entry point @ContextIn(value= main)@
     -- declares @main@ (a module-scoped @/Scratch/main@, a converted Python def's
@@ -949,8 +967,10 @@ getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap argAllNames (expr
     -- matching-criterion head (@b= Box(v)@'s @Box@) is a reference to an existing name, so
     -- collecting it is idempotent — the same holds for criteria heads in the arg-name
     -- position (@unwrap(Box(v))@), which 'getAllObjArrNames' has always collected. Only the
-    -- head is taken; nested bindings remain 'boundNames'\/'exprVarArgs' territory.
-    argAllNames aoa = getAllObjArrNames aoa ++ argValueHeadName aoa
+    -- head is taken; nested bindings remain 'boundNames'\/'exprVarArgs' territory. A head is only
+    -- idempotent when written absolute, so heads are returned apart for 'Semantics.mkTypeEnv' to
+    -- resolve ('getAllObjArrNameSplit').
+    argAllNames aoa = let (ns, hs) = getAllObjArrNameSplit aoa in (ns, hs ++ argValueHeadName aoa)
     argValueHeadName ObjArr{oaArr=Just (Just ve, _)} = maybeToList (maybeExprPath ve)
     argValueHeadName _                               = []
 

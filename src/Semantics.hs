@@ -23,7 +23,7 @@ import           Data.Hashable       (hash)
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
-import           Data.List           (foldl', partition, sortOn)
+import           Data.List           (foldl', isPrefixOf, partition, sortOn)
 import           Data.Maybe
 import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
@@ -377,7 +377,14 @@ mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMa
     -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
     -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become
     -- @#print@, ...) whether or not their compile.ct declarations are in the import closure.
-    typeNames = S.fromList $ map makeAbsoluteName $ map mkName builtinAnnotNames ++ concatMap getAllObjArrNames (flatObjectMap objMap)
+    --
+    -- An argument's value head joins them only when it names something no other name already
+    -- does ('getAllObjArrNameSplit'). A relative head that resolves to a declared name is a
+    -- reference to it, not a second name.
+    (declaredNames, valueHeads) = mconcat $ map getAllObjArrNameSplit (flatObjectMap objMap)
+    declaredAbs = map makeAbsoluteName $ map mkName builtinAnnotNames ++ declaredNames
+    headDeclares h = "/" `isPrefixOf` nameStr h || not (any (relativeNameMatches h) declaredAbs)
+    typeNames = S.fromList $ declaredAbs ++ map makeAbsoluteName (filter headDeclares valueHeads)
 
 emptyMetaM :: (MetaDat m) => Meta m -> Meta m
 emptyMetaM m = emptyMetaN{getMetaPos=getMetaPos m}

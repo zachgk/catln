@@ -204,22 +204,19 @@ Prgm
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[]"
                         , /Data/toString
                             ( EAppArg
-                                { eaaArg = Value /this ->
-                                    ( /Cons[ /T=∀/Data/ToString ]
-                                        ( /head=TopType
-                                        , /tail=TopType
-                                        )| PredClass /Data/ToString + /Data/List/Cons[ /T=∀/Data/ToString ]
-                                        ( /head=∀/Data/ToString
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                                        )
+                                { eaaArg = Value /this -> /Data/List/Cons[ /T=∀/Data/ToString ]
+                                    ( /head=∀/Data/ToString
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                     ) = /Cons
                                     ( EAppVar
                                         { eavName = /T
                                         , eavMeta = ∀/Data/ToString
                                         }
                                     )
-                                    ( EAppArg { eaaArg = Value /head@Value /h } )
-                                    ( EAppArg { eaaArg = Value /tail@Value /t } )
+                                    ( EAppArg { eaaArg = Value /head@Value /h -> ∀/Data/ToString } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /t -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
+                                    )
                                 }
                             ) -> ∀/Data/String =
                             ( /operator++
