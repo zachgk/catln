@@ -577,12 +577,15 @@ convertPyBuiltinCall "str"   [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString")
 convertPyBuiltinCall "bool"  [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "toBool")
--- chr(n) -> chr(n=n),  ord(c) -> c.ord
+-- chr(n) -> chr(n=n),  ord(c) -> ord(c=c)
+-- Python's ord is a function of its argument rather than a method on it: a String is an Ord, and
+-- a method named ord on it would be read as the one the Ord class declares.
 convertPyBuiltinCall "chr"   [PyPosArg x] =
   Just $ rawVal "chr"
     `applyRawArgs` [(Just $ partialKey "n", convertPyExpr x)]
 convertPyBuiltinCall "ord"   [PyPosArg x] =
-  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "ord")
+  Just $ rawVal "ord"
+    `applyRawArgs` [(Just $ partialKey "c", convertPyExpr x)]
 -- hex(n) -> n.hex, oct(n) -> n.oct, bin(n) -> n.bin
 convertPyBuiltinCall "hex"   [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "hex")
