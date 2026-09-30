@@ -4283,6 +4283,20 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBPARTIAL] %s ⊆ %s" (show l) (show r)) False = undefined
 isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
+-- A sub partial's own positive class and rel predicates are read the way the meet and
+-- 'compactType' read them ('compactPartialsWithClassPred'), which expands each through its
+-- membership and meets it back in. Where membership is conditional on a parameter, that turns
+-- the predicate into the parameter's bound: under @every(ConsList[$T -> EqCO], isa= [EqCO])@ in
+-- the closed world, @Cons(head=⊤, tail=⊤) | EqCO@ is @Cons[/T=∀EqCO](head=⊤, tail=⊤)@. Read
+-- as spelled instead, the sub's absent @/T@ counted as ⊤, so that pair compared unequal one way
+-- while their difference was ∅. It was found as core/maybe.ct's @equal@ arms falling outside
+-- the declaration their meet had just been shown inside. The expansion is the compacted form of
+-- the same set, and its leaves no longer carry the expanded atoms, so each is decided on its own.
+isSubPartialOfWithEnv typeEnv vaenv sub0 super0
+  | predsHasClassRelAtom (ptPreds sub0)
+  , let expanded = splitUnionType (compactPartialsWithClassPred typeEnv vaenv [sub0])
+  , expanded /= [sub0]
+  = all (\sub -> isSubPartialOfWithEnv typeEnv vaenv sub super0) expanded
 -- Both sides are read with their spread floor ('spreadFloor') before anything else looks at
 -- them: the floor is then a listed field for the arg comparison and the clamp below, not
 -- only for the keyset check.

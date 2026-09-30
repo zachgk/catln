@@ -1199,6 +1199,43 @@ propOwnParamPointerCover = property $ do
   assertTimed "Mon arm ⊆ Mon arm" $ sub monArmT monArmT
   assertTimed "Mon arm − Mon arm = ∅" $ diffEmpty monArmT monArmT
 
+-- | A leaf carrying a class predicate is a subtype of its own meet with that class, in both the
+-- open world and the closed one the declaration coverage checks read in. In the closed world the
+-- meet expands the predicate through the conditional membership
+-- @every(ConsList[$T -> EqCO], isa= [EqCO])@, spelling @Cons(head=⊤, tail=⊤) | EqCO@ as
+-- @Cons[/T=∀EqCO](head=⊤, tail=⊤)@. The subtype check read the leaf's absent @/T@ as ⊤ and
+-- answered False for @l ⊆ l ∩ EqCO@ while @l − (l ∩ EqCO)@ was ∅. core/maybe.ct's @equal@ and
+-- @compareTo@ arms were the first to meet it, once their declarations checked them. Fixture:
+-- recursiveClassBounds.ct.
+propPredicatedLeafWithinOwnMeet :: IO Prgms -> Property
+propPredicatedLeafWithinOwnMeet ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "recursiveClassBounds.ct program not found"
+  let typeEnv0@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  eqcoPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "EqCO" `isInfixOf` nameStr (ptName cpt)] of
+    (cpt:_) -> return cpt
+    []      -> fail "EqCO class not found"
+  consN <- case [nm | nm <- S.toList teNames, "Cons" `isInfixOf` nameStr nm, not ("ConsList" `isInfixOf` nameStr nm)] of
+    (nm:_) -> return nm
+    []     -> fail "Cons type not found"
+  (headKey, tailKey) <- case [(hk, tk) | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv0 consN
+                                       , hk <- H.keys dArgs, "head" `isInfixOf` nameStr (pkName hk)
+                                       , tk <- H.keys dArgs, "tail" `isInfixOf` nameStr (pkName tk)] of
+    (ks:_) -> return ks
+    []     -> fail "Cons declares no head/tail"
+  let eqco = PredsOne (PredClass eqcoPt{ptVars=H.empty})
+  let eqcoTop = UnionType (Just (eqco, H.empty, [])) H.empty []
+  let leaf = singletonType (partialVal consN){ptArgs=H.fromList [(headKey, PTopType), (tailKey, PTopType)], ptPreds=eqco}
+  forM_ [("open", typeEnv0), ("closed", typeEnv0{tePrgmEnv=True})] $ \(world, typeEnv) -> do
+    let met = intersectTypes typeEnv leaf eqcoTop
+    annotate $ printf "%s world: l ∩ EqCO = %s" (world :: String) (show met)
+    assertTimed (world ++ ": l ⊆ EqCO") $ isSubtypeOf typeEnv leaf eqcoTop
+    assertTimed (world ++ ": l ⊆ l ∩ EqCO") $ isSubtypeOf typeEnv leaf met
+    assertTimed (world ++ ": l ∩ EqCO ⊆ l") $ isSubtypeOf typeEnv met leaf
+    assertTimed (world ++ ": l − (l ∩ EqCO) = ∅") $ isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty leaf met
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -1235,6 +1272,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
       , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
       , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
+      , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
