@@ -5037,8 +5037,9 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
           -- 'PartialType'). An unspelled ARG is ABSENT, not ⊤: writing the key in to cut it
           -- changes the leaf's ARG-SET, and the pieces then answer for values the sub does not
           -- contain — a bare @/P@ is not covered by @/P(x=A) + /P(x=⊤−A)@, which both carry an
-          -- @x@ argument it does not have.
-          | sv == PTopType, not isVars = False
+          -- @x@ argument it does not have. An arg SPELLED ⊤ is present, and is cut like any
+          -- other value: @/w(x=⊤)|P@ is covered by @/w(x=A) + /w(x=⊤−A)|P@ piece by piece.
+          | not isVars, not (H.member k (get sub)) = False
           -- A ⊤ PARAMETER slot IS cut. It carries no constraint of its own, but the supers may
           -- still partition it — @/P@ against @/P[/v=X](x=⊤)@ beside @/P[/v=⊤−X]@ — and no other
           -- route reaches that case: 'coveredBySlotUnion' delimits its family by equality OUTSIDE
