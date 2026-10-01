@@ -739,12 +739,19 @@ getExprType = getMetaType . getExprMeta
 -- name with a function (@\/Data\/List\/count@) would be keyed by that function, and the declaration,
 -- the definition, and the body's references to the parameter would all look it up there.
 --
--- Any other form is keyed by its inferred type where that is one partial, and by its path otherwise.
+-- Any other form is keyed by the arguments and type variables WRITTEN on it, under its inferred
+-- name where its type is one partial (its path otherwise). The key is the argument's identity, so it
+-- must not move as inference types the argument. Read off the inferred type, it did: a declared
+-- higher-order argument's input object carries the declaration's variables as parameters
+-- (@fn[/B=$^B](acc=$/B)@, 'Semantics.Types.tagParentVarRefs'), and its key became
+-- @fn[/B](acc)@ while every call still wrote @fn(acc)@ — so a call's arguments no longer fitted the
+-- declaration's argument sets, and the declaration was refuted as a candidate for the call.
 inExprSingleton :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ArgName
 inExprSingleton e
   | exprIsName e = partialKey $ makeAbsoluteName $ exprPath e
-  | otherwise = maybe
-      (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
+  | otherwise = (partialKey name){pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e}
+  where
+    name = maybe (makeAbsoluteName $ exprPath e) ptName (maybeGetSingleton (getExprType e))
 
 -- | Whether an expression is only a name: a base value with nothing applied to it, no arguments and
 -- no type variables (an alias @head\@h@ is its base name, @head@).
