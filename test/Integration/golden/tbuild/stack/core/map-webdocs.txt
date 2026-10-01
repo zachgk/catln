@@ -255,7 +255,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
@@ -267,7 +267,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /entries -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
@@ -296,7 +296,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Cons
@@ -356,11 +356,11 @@ Prgm
                                         { eaaArg = Value /output -> ∀/Data/String =
                                             ( /Data/toString
                                                 ( EAppArg
-                                                    { eaaArg = Value /this -> $_/B =
+                                                    { eaaArg = Value /this -> ∀/Data/ToString =
                                                         ( /fn
                                                             ( EAppArg
                                                                 { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                            ) ↦ $_/B
+                                                            ) ↦ ∀/Data/ToString
                                                         )
                                                     }
                                                 ) ↦ ∀/Data/String
@@ -393,11 +393,11 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } ) -> $_/B =
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -777,7 +777,11 @@ Prgm
                         [ /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/Map/mapValues
-                                    ( /fn( /v=TopType )=/fn( /v=TopType )
+                                    [ /MV=TopType
+                                    , /MW=∀/Data/ToString
+                                    , /MK=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=∀/Data/ToString
                                     , /m=∀/Data/Map/BinTree
                                         [ /K=∀/Data/ToString
                                         , /V=∀/Data/ToString
@@ -793,7 +797,7 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } )
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                             }
                                         ) ↦
                                         ( /Data/Map/Node[ /K=TopType ]
@@ -866,11 +870,11 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } )=
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ TopType
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -887,34 +891,28 @@ Prgm
                                         ( /acc=TopType
                                         , /v=TopType
                                         , /k=TopType
-                                        )=/fn
-                                        ( /acc=TopType
-                                        , /v=TopType
-                                        , /k=TopType
-                                        )
+                                        )=∀/Data/ToString
                                     , /m=∀/Data/Map/BinTree
                                         [ /K=∀/Data/ToString
                                         , /V=∀/Data/ToString
                                         ]
                                     , /init=∀/Data/ToString
-                                    ) =
-                                    ( /Data/Map/foldEntries
-                                        ( EAppArg
-                                            { eaaArg = Value /m -> ∀/Data/Map/BinTree
-                                                [ /K=∀/Data/ToString
-                                                , /V=∀/Data/ToString
-                                                ]
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /acc } )
-                                                ( EAppArg { eaaArg = Value /k } )
-                                                ( EAppArg { eaaArg = Value /v } )
-                                            }
-                                        )
-                                        ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } ) ↦ TopType
+                                    ) = /Data/Map/foldEntries
+                                    ( EAppArg
+                                        { eaaArg = Value /m -> ∀/Data/Map/BinTree
+                                            [ /K=∀/Data/ToString
+                                            , /V=∀/Data/ToString
+                                            ]
+                                        }
                                     )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /acc } )
+                                            ( EAppArg { eaaArg = Value /k } )
+                                            ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } )
                                 }
                             ) -> /Catln/Doc/Show/EntryFoldSteps.. =
                             ( /Data/Map/foldEntriesShow
@@ -1005,9 +1003,9 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = /fn
-                                                    ( EAppArg { eaaArg = Value /acc } )
+                                                    ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                                                     ( EAppArg { eaaArg = Value /k } )
-                                                    ( EAppArg { eaaArg = Value /v } )=
+                                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                     ( /fn
                                                         ( EAppArg
                                                             { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1017,7 +1015,7 @@ Prgm
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                        ) ↦ TopType
+                                                        ) ↦ ∀/Data/ToString
                                                     )
                                                 }
                                             )
@@ -1165,6 +1163,11 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Map/foldEntriesSteps
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = ∀/Data/ToString
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] }
                             )
@@ -1172,10 +1175,10 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
                                     ( EAppArg { eaaArg = Value /k -> $_/K } )
-                                    ( EAppArg { eaaArg = Value /v -> $_/V } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/V } ) -> $/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc -> $_/B } )
+                            ( EAppArg { eaaArg = Value /acc -> $/B } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
@@ -1187,10 +1190,10 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
                                     ( EAppArg { eaaArg = Value /k } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Map/foldEntriesSteps
                             ( EAppArg
@@ -1219,10 +1222,10 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
                                     ( EAppArg { eaaArg = Value /k } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/EntryFoldStep
                                 ( /output=∀/Data/String
@@ -1292,7 +1295,7 @@ Prgm
                                         { eaaArg = Value /output -> ∀/Data/String =
                                             ( /Data/toString
                                                 ( EAppArg
-                                                    { eaaArg = Value /this -> $_/B =
+                                                    { eaaArg = Value /this -> ∀/Data/ToString =
                                                         ( /fn
                                                             ( EAppArg
                                                                 { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1302,7 +1305,7 @@ Prgm
                                                             )
                                                             ( EAppArg
                                                                 { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                            ) ↦ $_/B
+                                                            ) ↦ ∀/Data/ToString
                                                         )
                                                     }
                                                 ) ↦ ∀/Data/String
@@ -1336,9 +1339,9 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /acc } )
+                                                ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                                                 ( EAppArg { eaaArg = Value /k } )
-                                                ( EAppArg { eaaArg = Value /v } ) -> $_/B =
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1348,12 +1351,12 @@ Prgm
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /acc -> $_/B =
+                                            { eaaArg = Value /acc -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1363,7 +1366,7 @@ Prgm
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -1423,7 +1426,7 @@ Prgm
             , cgcPartial = /Data/Map/mapValues
             , cgcExtends =
                 [ /Data/Map/mapValues
-                    ( /fn( /v=TopType )=TopType
+                    ( /fn( /v=TopType )=∀/Data/ToString
                     , /m=∀/Data/Map/BinTree
                         [ /K=∀/Data/ToString
                         , /V=∀/Data/ToString
@@ -1434,7 +1437,7 @@ Prgm
                         ( /acc=TopType
                         , /v=TopType
                         , /k=TopType
-                        )=TopType
+                        )=∀/Data/ToString
                     , /m=∀/Data/Map/BinTree
                         [ /K=∀/Data/ToString
                         , /V=∀/Data/ToString
@@ -1493,7 +1496,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A mapping over a [BinTree] whose keys and values render text is a call with a display."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A mapping over a [BinTree] whose keys and values render text, to results that do, is a call with a
+                  display."
                 }
             )
         , /Catln/#md
@@ -1519,7 +1523,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A fold over a [BinTree] whose keys, values and accumulator render text is a call with a display."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A fold over a [BinTree] whose keys, values, accumulator and step results render text is a call with
+                  a display."
                 }
             )
         , /Catln/#md

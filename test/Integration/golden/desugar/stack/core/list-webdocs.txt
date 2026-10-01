@@ -81,7 +81,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/fmapSteps
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
+                            ( fn( Value v -> $_/A ) -> ∀/Data/ToString )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -218,9 +218,9 @@ Prgm
                 ( "/Data/List/foldrSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/foldrSteps
+                        [ /Data/List/foldrSteps[ /B : ∀/Data/ToString ]
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value init -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -256,9 +256,9 @@ Prgm
                 ( "/Data/List/foldlSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/foldlSteps
+                        [ /Data/List/foldlSteps[ /B : ∀/Data/ToString ]
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value acc -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -309,7 +309,7 @@ Prgm
                         [ /Catln/Doc/dshowCall
                             ( Value s= /Data/Functor/fmap
                                 ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( fn( Value v ) )
+                                ( fn( Value v ) -> ∀/Data/ToString )
                             ) -> ∀/Catln/Doc/DShow = /Catln/Doc/Show/Steps
                             ( Value steps= fmapSteps( Value lst= Value lst )
                                 ( fn( Value v )= fn( Value v= Value v ) )
@@ -320,7 +320,7 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( Value s= /Data/Monad/mmap
                                 ( Value m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( fn( Value v ) )
+                                ( fn( Value v ) -> ∀/Data/ToString )
                             ) -> ∀/Catln/Doc/DShow = /Catln/Doc/Show/Steps
                             ( Value steps= mmapSteps( Value m= Value m )
                                 ( fn( Value v )= fn( Value v= Value v ) )
@@ -331,7 +331,7 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( Value s= /Data/List/foldl
                                 ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( fn( Value acc )( Value v ) )( Value init -> ∀/Data/ToString )
+                                ( fn( Value acc )( Value v ) -> ∀/Data/ToString )( Value init -> ∀/Data/ToString )
                             ) -> ∀/Catln/Doc/DShow = foldlShow
                             ( Value steps= foldlSteps( Value lst= Value lst )
                                 ( fn( Value acc )( Value v )= fn( Value acc= Value acc )( Value v= Value v ) )( Value acc= Value init )
@@ -343,7 +343,7 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( Value s= /Data/List/foldr
                                 ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( fn( Value acc )( Value v ) )( Value init -> ∀/Data/ToString )
+                                ( fn( Value acc )( Value v ) -> ∀/Data/ToString )( Value init -> ∀/Data/ToString )
                             ) -> ∀/Catln/Doc/DShow = foldrShow
                             ( Value steps= foldrSteps( Value lst= Value lst )
                                 ( fn( Value acc )( Value v )= fn( Value acc= Value acc )( Value v= Value v ) )( Value init= Value init )
@@ -386,9 +386,9 @@ Prgm
                 ( "/Data/List/mmapSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/mmapSteps[ /A : ∀/Data/ToString ]
-                            ( Value m -> ∀/Data/List/ConsList[ /T=$_/A ] )
-                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
+                        [ /Data/List/mmapSteps
+                            ( Value m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                            ( fn( Value v -> $_/A ) -> ∀/Data/ToString )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -419,9 +419,9 @@ Prgm
                 ( "/Data/List/foldrWalk"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/foldrWalk
+                        [ /Data/List/foldrWalk[ /B : ∀/Data/ToString ]
                             ( Value stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value acc -> $_/B )( Value index -> /Data/Primitive/Integer )
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer )
                             ( Value rows -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
@@ -477,18 +477,18 @@ Prgm
             , cgcPartial = /Data/Functor/fmap
             , cgcExtends =
                 [ /Data/Functor/fmap
-                    ( /fn( /v=TopType )=TopType
+                    ( /fn( /v=TopType )=∀/Data/ToString
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , /Data/Monad/mmap
-                    ( /fn( /v=TopType )=TopType
+                    ( /fn( /v=TopType )=∀/Data/ToString
                     , /m=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , /Data/List/foldl
                     ( /fn
                         ( /acc=TopType
                         , /v=TopType
-                        )=TopType
+                        )=∀/Data/ToString
                     , /init=∀/Data/ToString
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
@@ -496,7 +496,7 @@ Prgm
                     ( /fn
                         ( /acc=TopType
                         , /v=TopType
-                        )=TopType
+                        )=∀/Data/ToString
                     , /init=∀/Data/ToString
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
@@ -535,16 +535,16 @@ Prgm
                 instance is written as is the generic display — a call per element, each holding a shorter list than
                 the one above it — and it is a display of how the definition is written rather than of what it does.
                 The table is the second, and is what a reader opening a mapping wants.
-                Bounded to elements that are [/Data/ToString], which is what a row can hold (see
-                [/Catln/Doc/Show/Step]). A mapping over elements that render no text does not match this arm and is
-                shown the way it was before there was one." }
+                Bounded to elements that are [/Data/ToString], and to an [fn] whose results are, since a row holds
+                both as text (see [/Catln/Doc/Show/Step]). A mapping over elements or to results that render no
+                text does not match this arm and is shown the way it was before there was one." }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A mapping over a [ConsList] of things that render text is a call with a display, which is what
-                joining [/Catln/Doc/DShowCall] says. The bound on the elements is the whole of which mappings this
-                is claimed for: a mapping over elements that render no text is not a member and keeps the display
-                every other call gets." }
+                { csValue = "A mapping over a [ConsList] of things that render text, to things that render text, is a call with
+                a display, which is what joining [/Catln/Doc/DShowCall] says. The bounds on the elements and on
+                [fn] are the whole of which mappings this is claimed for: any other mapping is not a member and
+                keeps the display every other call gets." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -568,8 +568,8 @@ Prgm
                 inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
                 beside the empty list. The filter is not given a display of its own, since it would be this one
                 again with nothing added.
-                Bounded as the mapping is, to elements that are [/Data/ToString], and to [ConsList] so a
-                [/Data/Maybe] bound over keeps the display of any other call." }
+                Bounded as the mapping is, to elements and to lists [fn] makes that are [/Data/ToString], and to
+                [ConsList] so a [/Data/Maybe] bound over keeps the display of any other call." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -586,7 +586,7 @@ Prgm
                 next row. The table starts at [init] and ends at the fold's result.
                 The fold returns only the last of those accumulators, and every one before it is the whole of
                 what the fold did. Bounded as the mapping is to elements that are [/Data/ToString], and to an
-                [init] that is one as well, which is what an accumulator's cell can hold." }
+                [init] and an [fn] whose results are as well, which is what an accumulator's cell can hold." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -621,10 +621,7 @@ Prgm
             ( Value /text= CStr
                 { csValue = "The display around a right fold's rows, whose result is the FIRST row's output: the head is the
                 element combined last.
-                Read off the rows for the reason [foldlShow] gives, and for one more. The arm cannot call
-                [foldr] for it: built from the arm, where the step is a function of unknown result, [foldr]'s
-                [Cons] arm returns what the step returns and so is not known to render as text. Only its [Nil]
-                arm is, and the call then fails on any list that is not empty." }
+                Read off the rows for the reason [foldlShow] gives." }
             )
         , /Catln/#md
             ( Value /text= CStr

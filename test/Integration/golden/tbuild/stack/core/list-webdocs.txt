@@ -204,7 +204,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
@@ -216,7 +216,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
@@ -234,7 +234,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Cons
@@ -282,11 +282,11 @@ Prgm
                                         { eaaArg = Value /output -> ∀/Data/String =
                                             ( /Data/toString
                                                 ( EAppArg
-                                                    { eaaArg = Value /this -> $_/B =
+                                                    { eaaArg = Value /this -> ∀/Data/ToString =
                                                         ( /fn
                                                             ( EAppArg
                                                                 { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                            ) ↦ $_/B
+                                                            ) ↦ ∀/Data/ToString
                                                         )
                                                     }
                                                 ) ↦ ∀/Data/String
@@ -318,11 +318,11 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } ) -> $_/B =
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -652,16 +652,21 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldrSteps
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = ∀/Data/ToString
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                             )
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /init -> $_/B } )
+                            ( EAppArg { eaaArg = Value /init -> $/B } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
@@ -674,10 +679,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /init } )
+                            ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] =
                             ( /Data/List/foldrWalk
                                 ( EAppArg
@@ -714,15 +719,15 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> $_/B =
+                                        ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                         ( /fn
                                             ( EAppArg
                                                 { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ $_/B
+                                            ) ↦ ∀/Data/ToString
                                         )
                                     }
                                 )
@@ -798,16 +803,21 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldlSteps
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = ∀/Data/ToString
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                             )
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc -> $_/B } )
+                            ( EAppArg { eaaArg = Value /acc -> $/B } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
@@ -818,10 +828,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/List/foldlSteps
                             ( EAppArg
@@ -838,10 +848,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/FoldStep
                                 ( /output=∀/Data/String
@@ -899,14 +909,14 @@ Prgm
                                         { eaaArg = Value /output -> ∀/Data/String =
                                             ( /Data/toString
                                                 ( EAppArg
-                                                    { eaaArg = Value /this -> $_/B =
+                                                    { eaaArg = Value /this -> ∀/Data/ToString =
                                                         ( /fn
                                                             ( EAppArg
                                                                 { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                             )
                                                             ( EAppArg
                                                                 { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                            ) ↦ $_/B
+                                                            ) ↦ ∀/Data/ToString
                                                         )
                                                     }
                                                 ) ↦ ∀/Data/String
@@ -939,27 +949,27 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /acc } )
-                                                ( EAppArg { eaaArg = Value /v } ) -> $_/B =
+                                                ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /acc -> $_/B =
+                                            { eaaArg = Value /acc -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -1019,10 +1029,10 @@ Prgm
                                 { eaaArg = Value /s -> /Data/Functor/fmap
                                     [ /F=
                                         ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=TopType ] )
-                                    , /B=TopType
+                                    , /B=∀/Data/ToString
                                     , /A=TopType
                                     ]
-                                    ( /fn( /v=TopType )=/fn[ /A=$_/A ]( /v=$/A )
+                                    ( /fn( /v=TopType )=∀/Data/ToString
                                     , /lst=
                                         ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=TopType ] )
                                     ) =
@@ -1032,10 +1042,10 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } )
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                             }
                                         ) ↦
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/Functor[ /T=TopType ] )
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=∀/Data/ToString ] )
                                     )
                                 }
                             ) -> /Catln/Doc/Show/Steps
@@ -1048,11 +1058,11 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } )=
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ TopType
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -1067,12 +1077,28 @@ Prgm
                                 { eaaArg = Value /s -> /Data/Monad/mmap
                                     [ /B=TopType
                                     , /M=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=TopType ] )
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                            ( !
+                                                ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                                ( PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                            ) && PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/ToString
+                                        )
                                     , /A=TopType
                                     ]
-                                    ( /fn( /v=TopType )=/fn[ /A=$_/A ]( /v=$/A )
+                                    ( /fn( /v=TopType )=
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                            ( !
+                                                ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                                ( PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                            ) && PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/ToString
+                                        )
                                     , /m=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=TopType ] )
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                            ( !
+                                                ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                                ( PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                            ) && PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/ToString
+                                        )
                                     ) =
                                     ( /Data/Monad/mmap
                                         ( EAppArg
@@ -1080,7 +1106,13 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } )
+                                                ( EAppArg { eaaArg = Value /v } ) ->
+                                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                                    ( !
+                                                        ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                                        ( PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                                    ) && PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/ToString
+                                                )
                                             }
                                         ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
                                     )
@@ -1095,11 +1127,23 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v -> ∀/Data/ToString } )=
+                                                ( EAppArg { eaaArg = Value /v } ) ->
+                                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                                    ( !
+                                                        ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                                        ( PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                                    ) && PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/ToString
+                                                ) =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ TopType
+                                                    ) ↦
+                                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                                        ( !
+                                                            ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                                            ( PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                                        ) && PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/ToString
+                                                    )
                                                 )
                                             }
                                         )
@@ -1112,28 +1156,27 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/List/foldl
+                                    [ /B=∀/Data/ToString
+                                    , /A=TopType
+                                    ]
                                     ( /fn
                                         ( /acc=TopType
                                         , /v=TopType
-                                        )=/fn
-                                        ( /acc=TopType
-                                        , /v=TopType
-                                        )
+                                        )=∀/Data/ToString
                                     , /init=∀/Data/ToString
-                                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                                    ) =
-                                    ( /Data/List/foldl
-                                        ( EAppArg
-                                            { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /acc } )
-                                                ( EAppArg { eaaArg = Value /v } )
-                                            }
-                                        )
-                                        ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } ) ↦ TopType
+                                    , /lst=
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                    ) = /Data/List/foldl
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                                     )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /acc } )
+                                            ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } )
                                 }
                             ) -> /Catln/Doc/Show/FoldSteps.. =
                             ( /Data/List/foldlShow
@@ -1177,15 +1220,15 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = /fn
-                                                    ( EAppArg { eaaArg = Value /acc } )
-                                                    ( EAppArg { eaaArg = Value /v } )=
+                                                    ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
+                                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                     ( /fn
                                                         ( EAppArg
                                                             { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                        ) ↦ TopType
+                                                        ) ↦ ∀/Data/ToString
                                                     )
                                                 }
                                             )
@@ -1243,15 +1286,16 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/List/foldr
+                                    [ /B=∀/Data/ToString
+                                    , /A=TopType
+                                    ]
                                     ( /fn
                                         ( /acc=TopType
                                         , /v=TopType
-                                        )=/fn
-                                        ( /acc=TopType
-                                        , /v=TopType
-                                        )
+                                        )=∀/Data/ToString
                                     , /init=∀/Data/ToString
-                                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                    , /lst=
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
                                     ) =
                                     ( /Data/List/foldr
                                         ( EAppArg
@@ -1260,31 +1304,48 @@ Prgm
                                         ( EAppArg
                                             { eaaArg = /fn
                                                 ( EAppArg { eaaArg = Value /acc } )
-                                                ( EAppArg { eaaArg = Value /v } )
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                             }
                                         )
-                                        ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } ) ↦ TopType
+                                        ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } ) ↦ ∀/Data/ToString
                                     )
                                 }
                             ) -> /Catln/Doc/Show/FoldSteps.. =
                             ( /Data/List/foldrShow
                                 ( EAppArg
-                                    { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] =
+                                    { eaaArg = Value /steps -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons
+                                            ( /head=/Catln/Doc/Show/FoldStep
+                                                ( /output=∀/Data/String
+                                                , /acc=∀/Data/String
+                                                , /input=∀/Data/String
+                                                , /index=/Data/Primitive/Integer
+                                                )
+                                            , /tail=
+                                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
+                                            )
+                                        , []
+                                        ) =
                                         ( /Data/List/foldrSteps
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = /fn
-                                                    ( EAppArg { eaaArg = Value /acc } )
-                                                    ( EAppArg { eaaArg = Value /v } )=
+                                                    ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
+                                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                     ( /fn
                                                         ( EAppArg
                                                             { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                        ) ↦ TopType
+                                                        ) ↦ ∀/Data/ToString
                                                     )
                                                 }
                                             )
@@ -1293,7 +1354,24 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /index -> /Data/Primitive/Integer = 0 }
-                                            ) ↦ ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                            ) ↦ UnionType
+                                            ( Just
+                                                ( PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/List/Cons
+                                                ( /head=/Catln/Doc/Show/FoldStep
+                                                    ( /output=∀/Data/String
+                                                    , /acc=∀/Data/String
+                                                    , /input=∀/Data/String
+                                                    , /index=/Data/Primitive/Integer
+                                                    )
+                                                , /tail=
+                                                    ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
+                                                )
+                                            , []
+                                            )
                                         )
                                     }
                                 )
@@ -1370,17 +1448,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/mmapSteps
-                            ( EAppVar
-                                { eavName = /A
-                                , eavMeta = ∀/Data/ToString
-                                }
-                            )
                             ( EAppArg
-                                { eaaArg = Value /m -> ∀/Data/List/ConsList[ /T=$_/A ] }
+                                { eaaArg = Value /m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
@@ -1392,7 +1465,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /m -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> ∀/Data/ToString } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
@@ -1410,7 +1483,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> ∀/Data/ToString } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Cons
@@ -1458,11 +1531,11 @@ Prgm
                                         { eaaArg = Value /output -> ∀/Data/String =
                                             ( /Data/toString
                                                 ( EAppArg
-                                                    { eaaArg = Value /this -> $_/B =
+                                                    { eaaArg = Value /this -> ∀/Data/ToString =
                                                         ( /fn
                                                             ( EAppArg
                                                                 { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                            ) ↦ $_/B
+                                                            ) ↦ ∀/Data/ToString
                                                         )
                                                     }
                                                 ) ↦ ∀/Data/String
@@ -1494,11 +1567,11 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v -> ∀/Data/ToString } ) -> $_/B =
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ $_/B
+                                                    ) ↦ ∀/Data/ToString
                                                 )
                                             }
                                         )
@@ -1540,16 +1613,21 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldrWalk
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = ∀/Data/ToString
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                             )
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc -> $_/B } )
+                            ( EAppArg { eaaArg = Value /acc -> $/B } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /rows -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] }
@@ -1563,10 +1641,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /rows -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] }
@@ -1587,10 +1665,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /rows ->
@@ -1603,27 +1681,27 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> $_/B =
+                                        ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
                                         ( /fn
                                             ( EAppArg
                                                 { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ $_/B
+                                            ) ↦ ∀/Data/ToString
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /acc -> $_/B =
+                                    { eaaArg = Value /acc -> ∀/Data/ToString =
                                         ( /fn
                                             ( EAppArg
                                                 { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                            ) ↦ $_/B
+                                            ) ↦ ∀/Data/ToString
                                         )
                                     }
                                 )
@@ -1682,14 +1760,14 @@ Prgm
                                                     { eaaArg = Value /output -> ∀/Data/String =
                                                         ( /Data/toString
                                                             ( EAppArg
-                                                                { eaaArg = Value /this -> $_/B =
+                                                                { eaaArg = Value /this -> ∀/Data/ToString =
                                                                     ( /fn
                                                                         ( EAppArg
                                                                             { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                                         )
                                                                         ( EAppArg
                                                                             { eaaArg = Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                                        ) ↦ $_/B
+                                                                        ) ↦ ∀/Data/ToString
                                                                     )
                                                                 }
                                                             ) ↦ ∀/Data/String
@@ -1733,18 +1811,18 @@ Prgm
             , cgcPartial = /Data/Functor/fmap
             , cgcExtends =
                 [ /Data/Functor/fmap
-                    ( /fn( /v=TopType )=TopType
+                    ( /fn( /v=TopType )=∀/Data/ToString
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , /Data/Monad/mmap
-                    ( /fn( /v=TopType )=TopType
+                    ( /fn( /v=TopType )=∀/Data/ToString
                     , /m=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , /Data/List/foldl
                     ( /fn
                         ( /acc=TopType
                         , /v=TopType
-                        )=TopType
+                        )=∀/Data/ToString
                     , /init=∀/Data/ToString
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
@@ -1752,7 +1830,7 @@ Prgm
                     ( /fn
                         ( /acc=TopType
                         , /v=TopType
-                        )=TopType
+                        )=∀/Data/ToString
                     , /init=∀/Data/ToString
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
@@ -1796,18 +1874,18 @@ Prgm
                   instance is written as is the generic display — a call per element, each holding a shorter list than
                   the one above it — and it is a display of how the definition is written rather than of what it does.
                   The table is the second, and is what a reader opening a mapping wants.
-                  Bounded to elements that are [/Data/ToString], which is what a row can hold (see
-                  [/Catln/Doc/Show/Step]). A mapping over elements that render no text does not match this arm and is
-                  shown the way it was before there was one."
+                  Bounded to elements that are [/Data/ToString], and to an [fn] whose results are, since a row holds
+                  both as text (see [/Catln/Doc/Show/Step]). A mapping over elements or to results that render no
+                  text does not match this arm and is shown the way it was before there was one."
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A mapping over a [ConsList] of things that render text is a call with a display, which is what
-                  joining [/Catln/Doc/DShowCall] says. The bound on the elements is the whole of which mappings this
-                  is claimed for: a mapping over elements that render no text is not a member and keeps the display
-                  every other call gets."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A mapping over a [ConsList] of things that render text, to things that render text, is a call with
+                  a display, which is what joining [/Catln/Doc/DShowCall] says. The bounds on the elements and on
+                  [fn] are the whole of which mappings this is claimed for: any other mapping is not a member and
+                  keeps the display every other call gets."
                 }
             )
         , /Catln/#md
@@ -1835,8 +1913,8 @@ Prgm
                   inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
                   beside the empty list. The filter is not given a display of its own, since it would be this one
                   again with nothing added.
-                  Bounded as the mapping is, to elements that are [/Data/ToString], and to [ConsList] so a
-                  [/Data/Maybe] bound over keeps the display of any other call."
+                  Bounded as the mapping is, to elements and to lists [fn] makes that are [/Data/ToString], and to
+                  [ConsList] so a [/Data/Maybe] bound over keeps the display of any other call."
                 }
             )
         , /Catln/#md
@@ -1859,7 +1937,7 @@ Prgm
                   next row. The table starts at [init] and ends at the fold's result.
                   The fold returns only the last of those accumulators, and every one before it is the whole of
                   what the fold did. Bounded as the mapping is to elements that are [/Data/ToString], and to an
-                  [init] that is one as well, which is what an accumulator's cell can hold."
+                  [init] and an [fn] whose results are as well, which is what an accumulator's cell can hold."
                 }
             )
         , /Catln/#md
@@ -1908,10 +1986,7 @@ Prgm
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The display around a right fold's rows, whose result is the FIRST row's output: the head is the
                   element combined last.
-                  Read off the rows for the reason [foldlShow] gives, and for one more. The arm cannot call
-                  [foldr] for it: built from the arm, where the step is a function of unknown result, [foldr]'s
-                  [Cons] arm returns what the step returns and so is not known to render as text. Only its [Nil]
-                  arm is, and the call then fails on any list that is not empty."
+                  Read off the rows for the reason [foldlShow] gives."
                 }
             )
         , /Catln/#md

@@ -31,7 +31,7 @@ f2(fn(v), init)= fn(v= 1)
 # A destructuring pattern still fills its slot by inference, with no name to go on.
 data(Box(v))
 
-unwrap(b -> Box(v)) -> Integer
+unwrap(b -> Box(v -> Integer)) -> Integer
 unwrap(Box(v))= v
 
 > unwrap(b= Box(v= 3))

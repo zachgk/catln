@@ -25,16 +25,16 @@ module(Data/List)
     instance is written as is the generic display — a call per element, each holding a shorter list than
     the one above it — and it is a display of how the definition is written rather than of what it does.
     The table is the second, and is what a reader opening a mapping wants.
-    Bounded to elements that are [/Data/ToString], which is what a row can hold (see
-    [/Catln/Doc/Show/Step]). A mapping over elements that render no text does not match this arm and is
-    shown the way it was before there was one.
-  # A mapping over a [ConsList] of things that render text is a call with a display, which is what
-    joining [/Catln/Doc/DShowCall] says. The bound on the elements is the whole of which mappings this
-    is claimed for: a mapping over elements that render no text is not a member and keeps the display
-    every other call gets.
-  every(/Data/Functor/fmap(lst -> ConsList[$T -> /Data/ToString], fn(v)), isa= [/Catln/Doc/DShowCall])
+    Bounded to elements that are [/Data/ToString], and to an [fn] whose results are, since a row holds
+    both as text (see [/Catln/Doc/Show/Step]). A mapping over elements or to results that render no
+    text does not match this arm and is shown the way it was before there was one.
+  # A mapping over a [ConsList] of things that render text, to things that render text, is a call with
+    a display, which is what joining [/Catln/Doc/DShowCall] says. The bounds on the elements and on
+    [fn] are the whole of which mappings this is claimed for: any other mapping is not a member and
+    keeps the display every other call gets.
+  every(/Data/Functor/fmap(lst -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
 
-  /Catln/Doc/dshowCall(s= /Data/Functor/fmap(lst -> ConsList[$T -> /Data/ToString], fn(v)))= /Catln/Doc/Show/Steps(steps= fmapSteps(lst= lst, fn(v)= fn(v= v), index= 0))
+  /Catln/Doc/dshowCall(s= /Data/Functor/fmap(lst -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString))= /Catln/Doc/Show/Steps(steps= fmapSteps(lst= lst, fn(v)= fn(v= v), index= 0))
 
   # The rows of that table, walking the list and applying [fn] to each element as it goes.
     It applies [fn] rather than being handed what [fn] already returned. An arm of
@@ -43,7 +43,7 @@ module(Data/List)
     debugger arranging anything for it.
     [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
     sits, and the rows are wanted numbered from the front.
-  fmapSteps(lst -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
+  fmapSteps(lst -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> /Data/ToString, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
   fmapSteps(lst= Nil, fn(v), index)= Nil
   fmapSteps(lst= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= fmapSteps(lst= tail, fn(v)= fn(v= v), index= index + 1))
 
@@ -57,15 +57,15 @@ module(Data/List)
     inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
     beside the empty list. The filter is not given a display of its own, since it would be this one
     again with nothing added.
-    Bounded as the mapping is, to elements that are [/Data/ToString], and to [ConsList] so a
-    [/Data/Maybe] bound over keeps the display of any other call.
+    Bounded as the mapping is, to elements and to lists [fn] makes that are [/Data/ToString], and to
+    [ConsList] so a [/Data/Maybe] bound over keeps the display of any other call.
   # A binding over a [ConsList] of things that render text is a call with a display.
-  every(/Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v)), isa= [/Catln/Doc/DShowCall])
+  every(/Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
 
-  /Catln/Doc/dshowCall(s= /Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v)))= /Catln/Doc/Show/Steps(steps= mmapSteps(m= m, fn(v)= fn(v= v), index= 0))
+  /Catln/Doc/dshowCall(s= /Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString))= /Catln/Doc/Show/Steps(steps= mmapSteps(m= m, fn(v)= fn(v= v), index= 0))
 
   # The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does.
-  mmapSteps[$A -> /Data/ToString](m -> ConsList[$T -> $_A], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
+  mmapSteps[$A -> /Data/ToString](m -> ConsList[$T -> $_A], fn(v -> $_A) -> /Data/ToString, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
   mmapSteps(m= Nil, fn(v), index)= Nil
   mmapSteps(m= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= mmapSteps(m= tail, fn(v)= fn(v= v), index= index + 1))
 
@@ -74,11 +74,11 @@ module(Data/List)
     next row. The table starts at [init] and ends at the fold's result.
     The fold returns only the last of those accumulators, and every one before it is the whole of
     what the fold did. Bounded as the mapping is to elements that are [/Data/ToString], and to an
-    [init] that is one as well, which is what an accumulator's cell can hold.
+    [init] and an [fn] whose results are as well, which is what an accumulator's cell can hold.
   # A left fold over a [ConsList] of things that render text is a call with a display.
-  every(/Data/List/foldl(lst -> ConsList[$T -> /Data/ToString], fn(acc, v), init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+  every(/Data/List/foldl(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
 
-  /Catln/Doc/dshowCall(s= /Data/List/foldl(lst -> ConsList[$T -> /Data/ToString], fn(acc, v), init -> /Data/ToString))= foldlShow(steps= foldlSteps(lst= lst, fn(acc, v)= fn(acc= acc, v= v), acc= init, index= 0), init= init.toString)
+  /Catln/Doc/dshowCall(s= /Data/List/foldl(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString))= foldlShow(steps= foldlSteps(lst= lst, fn(acc, v)= fn(acc= acc, v= v), acc= init, index= 0), init= init.toString)
 
   # The display around a left fold's rows. Its result is the last row's output, read off the rows
     rather than worked out by folding again: the rows already hold every accumulator the fold made.
@@ -92,7 +92,7 @@ module(Data/List)
   lastOutput(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail), prev)= lastOutput(steps= tail, prev= output)
 
   # The rows of a left fold, carrying the accumulator forward as [foldl] does.
-  foldlSteps(lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
+  foldlSteps[$B -> /Data/ToString](lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
   foldlSteps(lst= Nil, fn(acc, v), acc, index)= Nil
   foldlSteps(lst= Cons(head, tail), fn(acc, v), acc, index)= Cons(head= /Catln/Doc/Show/FoldStep(index= index, acc= acc.toString, input= head.toString, output= fn(acc= acc, v= head).toString), tail= foldlSteps(lst= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), index= index + 1))
 
@@ -101,16 +101,13 @@ module(Data/List)
     The rows are still one per element in element order, which is the order the fold's calls are
     nested in and so the order a debugger finds them in.
   # A right fold over a [ConsList] of things that render text is a call with a display.
-  every(/Data/List/foldr(lst -> ConsList[$T -> /Data/ToString], fn(acc, v), init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+  every(/Data/List/foldr(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
 
-  /Catln/Doc/dshowCall(s= /Data/List/foldr(lst -> ConsList[$T -> /Data/ToString], fn(acc, v), init -> /Data/ToString))= foldrShow(steps= foldrSteps(lst= lst, fn(acc, v)= fn(acc= acc, v= v), init= init, index= 0), init= init.toString)
+  /Catln/Doc/dshowCall(s= /Data/List/foldr(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString))= foldrShow(steps= foldrSteps(lst= lst, fn(acc, v)= fn(acc= acc, v= v), init= init, index= 0), init= init.toString)
 
   # The display around a right fold's rows, whose result is the FIRST row's output: the head is the
     element combined last.
-    Read off the rows for the reason [foldlShow] gives, and for one more. The arm cannot call
-    [foldr] for it: built from the arm, where the step is a function of unknown result, [foldr]'s
-    [Cons] arm returns what the step returns and so is not known to render as text. Only its [Nil]
-    arm is, and the call then fails on any list that is not empty.
+    Read off the rows for the reason [foldlShow] gives.
   foldrShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> /Catln/Doc/Show/FoldSteps..
   foldrShow(steps, init)= /Catln/Doc/Show/FoldSteps(init= init, steps= steps, result= firstOutput(steps= steps, init= init), fromRight= /Data/Primitive/True)
 
@@ -124,7 +121,7 @@ module(Data/List)
     [stack], and each row is then consed on in front of the rows already made, so they come out in
     element order with the fold's order still in the accumulators. [index] counts down from the
     last element's.
-  foldrSteps(lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
+  foldrSteps[$B -> /Data/ToString](lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
   foldrSteps(lst, fn(acc, v), init, index)= foldrWalk(stack= onto(lst= lst, stack= Nil), fn(acc, v)= fn(acc= acc, v= v), acc= init, index= index + lst.length - 1, rows= Nil)
 
   # [lst] turned around onto [stack], so the last element is on top.
@@ -133,7 +130,7 @@ module(Data/List)
   onto(lst= Cons(head, tail), stack)= onto(lst= tail, stack= Cons(head= head, tail= stack))
 
   # The walk over that stack: each element combined into the accumulator the elements after it made.
-  foldrWalk(stack -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer, rows -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
+  foldrWalk[$B -> /Data/ToString](stack -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer, rows -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
   foldrWalk(stack= Nil, fn(acc, v), acc, index, rows)= rows
   foldrWalk(stack= Cons(head, tail), fn(acc, v), acc, index, rows)= foldrWalk(stack= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), index= index - 1, rows= Cons(head= /Catln/Doc/Show/FoldStep(index= index, acc= acc.toString, input= head.toString, output= fn(acc= acc, v= head).toString), tail= rows))
 

@@ -79,7 +79,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/mapValuesSteps
                             ( Value entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
-                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
+                            ( fn( Value v -> $_/A ) -> ∀/Data/ToString )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -241,7 +241,7 @@ Prgm
                                     , /V=∀/Data/ToString
                                     ]
                                 )
-                                ( fn( Value v ) )
+                                ( fn( Value v ) -> ∀/Data/ToString )
                             ) -> ∀/Catln/Doc/DShow = /Catln/Doc/Show/EntrySteps
                             ( Value steps= mapValuesSteps
                                 ( Value entries= ascending( Value m= Value m )( Value rest= Value /Data/List/Nil ) )
@@ -257,7 +257,7 @@ Prgm
                                     , /V=∀/Data/ToString
                                     ]
                                 )
-                                ( fn( Value acc )( Value k )( Value v ) )( Value init -> ∀/Data/ToString )
+                                ( fn( Value acc )( Value k )( Value v ) -> ∀/Data/ToString )( Value init -> ∀/Data/ToString )
                             ) -> ∀/Catln/Doc/DShow = foldEntriesShow
                             ( Value steps= foldEntriesSteps
                                 ( Value entries= descending( Value m= Value m )( Value rest= Value /Data/List/Nil ) )
@@ -314,9 +314,9 @@ Prgm
                 ( "/Data/Map/foldEntriesSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Map/foldEntriesSteps
+                        [ /Data/Map/foldEntriesSteps[ /B : ∀/Data/ToString ]
                             ( Value entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
-                            ( fn( Value acc -> $_/B )( Value k -> $_/K )( Value v -> $_/V ) -> $_/B )( Value acc -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
+                            ( fn( Value acc -> $_/B )( Value k -> $_/K )( Value v -> $_/V ) -> $/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -369,7 +369,7 @@ Prgm
             , cgcPartial = /Data/Map/mapValues
             , cgcExtends =
                 [ /Data/Map/mapValues
-                    ( /fn( /v=TopType )=TopType
+                    ( /fn( /v=TopType )=∀/Data/ToString
                     , /m=∀/Data/Map/BinTree
                         [ /K=∀/Data/ToString
                         , /V=∀/Data/ToString
@@ -380,7 +380,7 @@ Prgm
                         ( /acc=TopType
                         , /v=TopType
                         , /k=TopType
-                        )=TopType
+                        )=∀/Data/ToString
                     , /m=∀/Data/Map/BinTree
                         [ /K=∀/Data/ToString
                         , /V=∀/Data/ToString
@@ -430,7 +430,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A mapping over a [BinTree] whose keys and values render text is a call with a display." }
+                { csValue = "A mapping over a [BinTree] whose keys and values render text, to results that do, is a call with a
+                display." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -450,7 +451,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A fold over a [BinTree] whose keys, values and accumulator render text is a call with a display." }
+                { csValue = "A fold over a [BinTree] whose keys, values, accumulator and step results render text is a call with
+                a display." }
             )
         , /Catln/#md
             ( Value /text= CStr

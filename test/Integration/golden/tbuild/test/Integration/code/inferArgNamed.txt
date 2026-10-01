@@ -80,12 +80,19 @@ Prgm
                     { omiDecls =
                         [ /unwrap
                             ( EAppArg
-                                { eaaArg = Value /b -> /Box( /v=TopType ) }
+                                { eaaArg = Value /b -> /Box( /v=/Data/Primitive/Integer ) }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /unwrap
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box( /v=TopType ) = /Box
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /v ↦ /Data/Primitive/Integer )
+                        ]
                     }
                 )
             ,
