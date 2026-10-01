@@ -437,5 +437,6 @@ typePredClassNames (UnionType mTop leafs _) = maybe S.empty (\(preds, _, _) -> p
     predsNames (PredsOne (PredClass p)) = S.insert (ptName p) (partialNames p)
     predsNames (PredsOne (PredRel p))   = partialNames p
     predsNames (PredsOne (PredExpr p))  = partialNames p
+    predsNames (PredsOne PredConstEq{}) = S.empty
     predsNames (PredsAnd ps)            = S.unions (map predsNames ps)
     predsNames (PredsNot p)             = predsNames p
