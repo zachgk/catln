@@ -1,0 +1,31 @@
+import "core"
+
+
+module(Data)
+  # # Peano Integers
+    [Peano] integers build every integer from [Peano/Zero] by repeatedly taking a successor
+    ([Peano/Succ]) or a predecessor ([Peano/Pred]). Arithmetic is defined by structural recursion
+    on those constructors rather than by runtime primitives.
+  # ## Classes
+    The non-negative integers [Peano/Pos] are [Peano/Zero] or the successor of a non-negative
+    integer; the non-positive integers [Peano/Neg] are [Peano/Zero] or the predecessor of a
+    non-positive integer. [Peano/Zero] is in both. Because a [Peano/Succ] can only hold a
+    [Peano/Pos] and a [Peano/Pred] only a [Peano/Neg], every value is in canonical form: there is
+    no [Peano/Succ] of a [Peano/Pred].
+  class(Peano, [Peano/Pos, Peano/Neg])
+  class(Peano/Pos, [Peano/Succ(i -> Peano/Pos), Peano/Zero])
+  class(Peano/Neg, [Peano/Pred(i -> Peano/Neg), Peano/Zero])
+
+  # ## Conversion
+  :Peano.toInteger -> Integer
+    # [toInteger] is the [Integer] with the same value as the [Peano] integer.
+  :Peano/Zero.toInteger= 0
+  :Peano/Succ(i).toInteger= i.toInteger + 1
+  :Peano/Pred(i).toInteger= i.toInteger - 1
+
+  > Peano/Zero.toInteger
+    >>> 0
+  > Peano/Succ(i= Peano/Succ(i= Peano/Zero)).toInteger
+    >>> 2
+  > Peano/Pred(i= Peano/Pred(i= Peano/Pred(i= Peano/Zero))).toInteger
+    >>> -3
