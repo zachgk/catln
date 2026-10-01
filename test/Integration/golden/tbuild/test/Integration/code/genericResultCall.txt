@@ -310,7 +310,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
                     ( /foldrG
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
@@ -355,20 +355,20 @@ Prgm
                         ( EAppArg
                             { eaaArg = /fn
                                 ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ /Data/Primitive/Integer
+                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 )
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
                     )
                 }
             )
@@ -444,7 +444,7 @@ Prgm
                         ( EAppArg
                             { eaaArg = /fn
                                 ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Algebra/Semigroup =
+                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Semigroup =
                                 ( /operator++
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }

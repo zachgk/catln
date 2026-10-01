@@ -25,8 +25,8 @@ import qualified Data.HashSet        as S
 import           Control.Monad
 import           Control.Monad.State
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (find, intercalate, nub, partition)
-import           Data.Maybe          (fromMaybe, isJust, isNothing, mapMaybe)
+import           Data.List           (intercalate, nub, partition)
+import           Data.Maybe          (fromMaybe, isJust, isNothing)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -201,146 +201,13 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       return soa'
 
--- | The declared input type of a higher-order argument's parameter, resolved for a call site.
--- For @apply(x= 1, fn(v)= v)@ whose matched declaration is @apply(x -> $_A, fn(v -> $_A) -> $_B)@,
--- the lambda's parameter @v@ is typed by the declaration's @$_A@, substituted with the bindings
--- the call's arguments determine (@x=Integer ⇒ $_A=Integer@).
---
--- Three things bind a declaration variable here, in narrowing order: an argument whose whole type
--- IS the variable; a class PARAMETER that points at it (@lst -> List[$T -> $_A]@, recovered by
--- 'alignClassPtrs', including one level in through a variable's own declared bound); and failing
--- both, the variable's declared bound itself, which holds whatever the call passes.
---
--- The result must be RESOLVED but need not be fully concrete: a class-predicate top like @∀Eq@ is
--- a sound upper bound at every epoch, and refusing it is what left a lambda inside a generic
--- definition at Top. What stays out is a symbolic variable — writing one into a resolving point
--- oscillates against later epochs — and Top itself, which says nothing.
--- Declarations only ('omiDecls') — an unannotated definition carries no input contract.
---
--- The bound is an UPPER bound, so it is the union over every declaration the call may reach —
--- each one that ACCEPTS the call (the 'Semantics.objArrGraphQueryRaw' test: the call meets its
--- object). One accepting declaration whose parameter type cannot be resolved leaves the whole
--- bound unknown: dropping it instead would claim the parameter never takes that arm's values.
--- Overloaded arms that disagree on the parameter (@bindap@'s element-typed mmap arm beside its
--- whole-container ap arm) otherwise bounded the parameter by the resolvable arm alone, and the
--- lambda's body met that with the other arm's use to ∅. A declaration that does not accept the
--- call (its result or arguments exclude it) contributes nothing, and as the call narrows fewer
--- declarations accept, so the bound only narrows across epochs.
-fnArgInputBound :: FEnv -> Type -> ArgName -> ArgName -> Maybe Type
-fnArgInputBound env callAct fnKey inKey = case callAct of
-  UnionType Nothing leafs [] -> case concat <$> traverse partialBound (splitUnionType leafs) of
-    Just bs@(_:_) -> Just $ unionAllTypes typeEnv bs
-    _             -> Nothing
-  _ -> Nothing
-  where
-    typeEnv = feReachesTypeEnv env
-    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
-    -- keys drift between phases in pkVars (see 'typeGetArgLoose'); match name and applied args
-    looseKeyMatch a b = a == b || (pkName a == pkName b && pkArgs a == pkArgs b)
-    findArg k = find (maybe False (\ob -> looseKeyMatch (inExprSingleton ob) k) . oaObj)
-    -- The bounds of the declarations accepting this leaf; 'Nothing' when one of them has none.
-    partialBound partial@PartialType{ptName} =
-      traverse (oaBound partial) $ filter (accepts partial) $ maybe [] omiDecls (H.lookup ptName tg)
-    -- The call's arguments are still being added here ('AddArg' writes them one by one), so the
-    -- call names only a lower bound on the arguments it will have: read it as admitting the rest.
-    accepts partial oa = not $ isBottomType $ intersectTypes typeEnv (singletonType partial{ptArgMode=PtArgAny}) (getMetaType (getExprMeta (oaObjExpr oa)))
-    oaBound partial oa = do
-      let objArgs = exprAppliedArgs (oaObjExpr oa)
-      fnOa <- findArg fnKey objArgs
-      fnObj <- oaObj fnOa
-      inOa <- findArg inKey (exprAppliedArgs fnObj)
-      (_, inM) <- oaArr inOa
-      -- the bindings the call's arguments give the declaration's variables
-      let argActuals = [ (getMetaType aM, srcV)
-                       | argOa <- objArgs
-                       , Just aObj <- [oaObj argOa]
-                       , Just (_, aM) <- [oaArr argOa]
-                       , Just srcV <- [hoSlotResult typeEnv H.empty (inExprSingleton aObj) <$> typeGetArgLoose (inExprSingleton aObj) partial] ]
-      let venv0 = mergeAllVarEnvs typeEnv [ fst $ intersectTypesWithVarEnv typeEnv H.empty aT srcV
-                                          | (aT, srcV) <- argActuals ]
-      -- An argument that SPELLS a class partial (@lst -> List[$T -> $_A]@) binds nothing on its
-      -- own: the parameter points at the variable rather than being one, so 'alignClassPtrs'
-      -- recovers it from the meet. An argument typed by a bare declaration variable
-      -- (@lst -> $F@) binds only that variable, and the variable's declared bound
-      -- (@$F -> Functor[$T -> $_A]@, held in the declaration object's own var slot) is what
-      -- carries the pointers on to further variables — so run the same recovery a level in.
-      let declVars = maybe H.empty ptVars (maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa))))
-      let argVenvs = [ v | (aT, srcV) <- argActuals, v <- alignClassPtrs aT srcV ]
-      let boundVenvs = [ v
-                       | (TVVar vn, binding) <- H.toList venv0
-                       , Just bound <- [H.lookup vn declVars]
-                       , v <- alignClassPtrs bound binding ]
-      -- The variable's own declared bound, as a floor under all of the above: @$A -> Eq@ says a
-      -- parameter typed by @$_A@ is an @Eq@ whatever the call passes, and that holds even when
-      -- nothing binds the variable at all — an empty list pins no element type, but the bound is
-      -- still written on the declaration. Merging is by intersection ('mergeVarEnvs'), so a real
-      -- binding narrows past this rather than being widened by it.
-      let declBoundVenvs = [ H.singleton (TVVar vn) b | (vn, b) <- H.toList declVars, b /= PTopType ]
-      let inTy = substituteTVExt typeEnv (mergeAllVarEnvs typeEnv (venv0 : argVenvs ++ boundVenvs ++ declBoundVenvs)) (getMetaType inM)
-      -- Resolved knowledge only, which is NOT the same as fully concrete. Inside a generic
-      -- definition the element type is the declared bound — @$_A -> Eq@ read in that frame is
-      -- @∀Eq@ — and that is a sound upper bound on the parameter at every epoch, since no value
-      -- of @$_A@ can fall outside its own class. What must stay out is a SYMBOLIC variable, which
-      -- may still resolve to anything and would oscillate against later epochs, and Top, which
-      -- says nothing. Rejecting @∀Eq@ too is what left a lambda inside a generic definition at
-      -- Top, so a @Some(value= v)@ built from it could not meet the @Maybe@ instance's @Eq@ bound.
-      let ok = inTy /= PTopType && not (isBottomType inTy) && not (typeHasVars inTy)
-      -- A field whose declared type references the container RECURSIVELY is closed at the
-      -- class, not unrolled ('relaxRecursiveSelfArgs' — the rule the object-universe bound in
-      -- 'BoundedByObjs' already applies, for this same reason). This bound is derived from the
-      -- CALL's own arguments, and for a fold one of those arguments is the lambda whose result
-      -- is the very variable being bound (@foldEntries(fn(acc -> $_B, …) -> $_B, init -> $_B)@):
-      -- the equation is self-referential, so publishing the lambda's current result as the
-      -- lambda's next input bound iterates it instead of solving it, and the accumulator gains
-      -- one explicit level per epoch until the solve gives up (core/map.ct's
-      -- @keys(m)= foldEntries(…, fn(acc,k,v)= Cons(head=k, tail=acc), …)@ — depth 24 and rising).
-      -- The unrolled levels carry no information the class does not: a deeper chain is the same
-      -- accumulator fed back through its own constructor. Relaxing is the safe direction here in
-      -- any case — this is an upper bound, so a weaker one only narrows less (measured: no epoch
-      -- change on the whole core, 782 vs 782).
-      let inTy' = relaxRecursiveSelfArgs typeEnv inTy
-      guard ok
-      return inTy'
-    -- Recover the bindings a class parameter's var POINTER stands for, by meeting the declared
-    -- spelling against what the call passes. Meeting @List[$T -> $_A]@ with a @Cons(head= 1, ..)@
-    -- binds nothing in 'intersectTypesWithVarEnv' — the value's own 'ptVars' are empty until the
-    -- meet fills them — but the meet's RESULT holds @Cons[/T=Integer]@, materialized through the
-    -- data definition's @head -> $T@ field tie, and the spelling says which external var that
-    -- parameter names, so matching the two by parameter name recovers @$_A=Integer@.
-    alignClassPtrs spelled actual =
-      [ H.singleton (TVVar extV) elemT
-      | spelled /= PTopType
-      -- The spelling is read DETACHED here: it is the declaration's argument type standing on its
-      -- own, with the partial its parent references name nowhere in view, so those references
-      -- denote ⊤ and the meet against the concrete operand can narrow them.
-      , UnionType Nothing rLeafs [] <- [intersectTypes typeEnv (detachParentRefs spelled) actual]
-      , (cvn, extV) <- boundClassVarPtrs spelled
-      , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
-      , not (isBottomType elemT) ]
-    -- The (class parameter name, external var name) pointers of a bound's class partials:
-    -- @Functor[$T -> $_A]@ ⇒ [(T, A)], whether the bound is a predicate top or a positive
-    -- class-named leaf.
-    boundClassVarPtrs bound = concatMap fromPartial (case bound of
-      UnionType (Just (preds, _, _)) posLeafs _ -> predPartials preds ++ splitUnionType posLeafs
-      UnionType Nothing posLeafs _           -> splitUnionType posLeafs
-      _                                      -> [])
-      where
-        fromPartial p = [ (vn, an) | (vn, v) <- H.toList (ptVars p), Just an <- [outerVarName v] ]
-        predPartials preds = case tryPredsToList preds of
-          Just ps -> [ p | pr <- ps, p <- predPartial pr ]
-          Nothing -> []
-        predPartial (PredClass c) = [c]
-        predPartial (PredRel r)   = [r]
-        predPartial PredExpr{}    = []
-        predPartial PredConstEq{} = []
-
 -- | Binds a call's declaration-output variable from the call site's destination.
 -- For a declaration whose output is a bare declared variable — @mk[$M -> Mk](v -> V) -> $M@ —
 -- the call's arguments say nothing about @$M@; only the destination does. Once the destination
 -- has resolved, stamp it onto the call partial's variable slot (intersecting any existing
 -- binding), so downstream arrow selection can discriminate instance definitions that differ
 -- only in that variable's binding (return-type-directed dispatch, e.g. @pure@-style
--- constructors whose instances share an input shape). Mirrors 'fnArgInputBound': declarations
+-- constructors whose instances share an input shape). Declarations
 -- only, and only a resolved positive destination is written — a Top, symbolic-variable, or
 -- class-predicate destination binds nothing (writing symbolic knowledge into a resolving point
 -- oscillates against later epochs). Top-valued /fields/ inside the destination's partials are
@@ -380,7 +247,39 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
 outVarBoundSrc _ _ src = src
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
-mkReachesEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
+mkReachesEnv env con@(Constraint _ _ stypeVaenv _) = do
+  let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
+  argTypeEnv <- localArrowTypeEnv env con
+
+  -- final ReachesEnv. Reuse the per-epoch cached reaches type graph ('feReachesTypeEnv');
+  -- it is constraint-independent, so rebuilding it per call would be redundant.
+  let feTypeEnv' = feReachesTypeEnv env
+  -- A constraint with NO arg objects uses the per-epoch env value ITSELF. The empty merge
+  -- is not free — '<>' on 'TypeEnv' re-merges the class graph ('graphFromEdges') and
+  -- re-derives 'mkSatCache' from the merged representation — and it ran once per
+  -- 'ArrowTo'\/'PropEq' constraint EXECUTION, every epoch (profiled at 72% of typecheck
+  -- inside the reach machinery it feeds). Sharing the one per-epoch value drops that
+  -- rebuild for the (majority) no-arg constraints.
+  return $ ReachesEnv (withLocalArrows argTypeEnv feTypeEnv') (fmap snd vaenv) S.empty
+
+-- | A type env with a constraint's LOCAL arrows ('localArrowTypeEnv') added. A merged env never
+-- carries a query-cache token ('<>' clears it: a merged env is a different value), so every
+-- memo — reach-query, satGoal, class-expansion — silently bypassed for ARG-CARRYING constraints:
+-- their whole reaches/SAT compute re-derived shared subgoals as a tree (set.ct's functor-law
+-- fragment: one goal re-decided 3,553 times under a byte-identical key, OOM before epoch 5). The
+-- merged env lives for this one constraint execution and is immutable, so mint it its own token
+-- — the same token-per-immutable-env-value rule as the per-epoch mint in 'runConstraintsIdx'.
+withLocalArrows :: Maybe FEnvTypeEnv -> FEnvTypeEnv -> FEnvTypeEnv
+withLocalArrows Nothing base = base
+withLocalArrows (Just argTypeEnv) base =
+  let m = argTypeEnv <> base
+  in m{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph m))}
+
+-- | The arrows a constraint adds to its environment: the enclosing definition's arguments (an
+-- Obj/Arrow pair per argument, local to the definition) and the call's own lambdas. 'Nothing'
+-- when there are none.
+localArrowTypeEnv :: FEnv -> RConstraint -> TypeCheckResult (Maybe FEnvTypeEnv)
+localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
 
   let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
 
@@ -424,28 +323,9 @@ mkReachesEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
   let argArrows = [ (inExpr, argResult k inExpr outM) | (k, (inExpr, outM)) <- H.toList argVaenv' ]
   let argObjMap = objectMapFromList $ concatMap (\(inExpr, outT) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT outT))]) $ argArrows ++ [ (inExpr, ownResult outM) | (inExpr, outM) <- callArrs' ]
 
-  -- final ReachesEnv. Reuse the per-epoch cached reaches type graph ('feReachesTypeEnv');
-  -- it is constraint-independent, so rebuilding it per call would be redundant.
-  let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []
-  let feTypeEnv' = feReachesTypeEnv env
-  -- A constraint with NO arg objects uses the per-epoch env value ITSELF. The empty merge
-  -- is not free — '<>' on 'TypeEnv' re-merges the class graph ('graphFromEdges') and
-  -- re-derives 'mkSatCache' from the merged representation — and it ran once per
-  -- 'ArrowTo'\/'PropEq' constraint EXECUTION, every epoch (profiled at 72% of typecheck
-  -- inside the reach machinery it feeds). Sharing the one per-epoch value drops that
-  -- rebuild for the (majority) no-arg constraints.
-  -- A merged env never carries a query-cache token ('<>' clears it: a merged env is a
-  -- different value), so every memo — reach-query, satGoal, class-expansion — silently
-  -- bypassed for ARG-CARRYING constraints: their whole reaches/SAT compute re-derived
-  -- shared subgoals as a tree (set.ct's functor-law fragment: one goal re-decided 3,553
-  -- times under a byte-identical key, OOM before epoch 5). The merged env lives for this
-  -- one constraint execution and is immutable, so mint it its own token — the same
-  -- token-per-immutable-env-value rule as the per-epoch mint in 'runConstraintsIdx'.
-  let mergedTypeEnv
-        | H.null argVaenv' && null callArrs' = feTypeEnv'
-        | otherwise        = let m = argTypeEnv <> feTypeEnv'
-                             in m{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph m))}
-  return $ ReachesEnv mergedTypeEnv (fmap snd vaenv) S.empty
+  return $ if H.null argVaenv' && null callArrs'
+    then Nothing
+    else Just (mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) [])
 
 -- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a
 -- constraint's 'conOs' (each arg's in-expression and out meta, resolved through the current

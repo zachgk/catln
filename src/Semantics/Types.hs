@@ -3044,7 +3044,7 @@ ptAtArgKeys p@PartialType{ptArgs} ks = p{ptArgs=args', ptArgMode=PtArgExact}
 --
 -- For a caller holding a declaration's spelling with no enclosing partial in view. Reading
 -- @∀List[/T=$^/A]@ that way is what lets a meet against a concrete operand narrow it and recover
--- the binding (@∩ Cons[/T=Integer]@ ⇒ @/A=Integer@ — 'TypeCheck.TypeUtils.fnArgInputBound'); left
+-- the binding (@∩ Cons[/T=Integer]@ ⇒ @/A=Integer@); left
 -- symbolic the meet keeps the variable and nothing is discovered. 'TVInt' and 'TVExt' references
 -- are untouched: they name scopes that are not the one being detached from.
 detachParentRefs :: Type -> Type
@@ -5461,7 +5461,9 @@ varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = declaredOccsPre
   [ not (typeContainsBareTop v)
   | k <- S.toList ks, occAt k, Just v <- [H.lookup k metArgs]]
   where
-    occAt k = any (declRef k) (typeGraphData typeEnv name') || any (spellRef k) spellings
+    -- A higher-order argument's input object only RECEIVES the var's values (see
+    -- 'intersectPartialsBase'.'linkedKsOf'), so it holds no content the stamp must wait for.
+    occAt k = S.null (pkArgs k) && (any (declRef k) (typeGraphData typeEnv name') || any (spellRef k) spellings)
     declRef k PartialType{ptArgs=dArgs} = maybe False (S.member n . typeOuterVarRefs) (H.lookup k dArgs)
     spellRef k sp = maybe False (S.member n . typeOuterVarRefs) (H.lookup k sp)
     -- A declared DIRECT occurrence of the var (a template field pointer @this=$T@ — a
@@ -5481,9 +5483,12 @@ varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = declaredOccsPre
     -- arg-subset piece (@Cons(head=..)@ of a @??@-leaf, no @tail@ in its value-set)
     -- stamping from its own args. A name with no template knowledge
     -- (open world, or presentations still resolving) withholds nothing.
-    declaredOccsPresent = all (`S.member` ks)
+    -- A higher-order argument's declared RESULT naming the var is such an occurrence too: until
+    -- the argument is given, nothing says what its arrow returns.
+    declaredOccsPresent = all (`S.member` ks) $
       [ k | tmpl <- typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
           , (k, TypeVar (TVVar n') TVInt _) <- H.toList (ptArgs tmpl), n' == n ]
+      ++ [ k | (k, t) <- typeGraphDeclaredArgResults typeEnv name', n `S.member` typeOuterVarRefs t ]
 varStampSupported _ _ _ _ _ _ = True
 
 -- | Checks if a partial has predicates that turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A).
@@ -6848,30 +6853,11 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   -- unresolved may still resolve to something that widens it, so no partial join is monotone),
   -- @Just Nothing@ is VACUOUS (the occurrence constrains nothing and does not withhold, as an
   -- empty container does at a linked slot), and @Just (Just v)@ is evidence.
-  --
-  -- A slot holding exactly the variable's own bound ('varBoundFor') is vacuous. It is not a
-  -- reading of the occurrence at all — it is the bound, read back out of the slot the
-  -- declaration's instantiation put it in — so joining it pins the binding AT the bound: the
-  -- join can never be narrower than a value it already contains. That is self-defeating for any
-  -- occurrence, and unrecoverable for one whose content is DERIVED from the variable rather than
-  -- supplied alongside it: a higher-order argument's declared result (@fn(v) -> $M@ beside
-  -- @m -> $M@) in a DEFINITION ARM, where @fn@ is a binder carrying no value of its own and so
-  -- has no later epoch in which it resolves to anything else. The arm's own pattern
-  -- (@m= Cons(head, tail)@) is then the only real evidence, and it is what should decide the
-  -- binding.
-  -- Restricted to a FUNCTION-typed argument, whose slot value is the function's declared
-  -- RESULT rather than a value the caller hands over. A plain argument holding the bound is
-  -- saying the caller may pass anything of that class, which is a real reading of the
-  -- occurrence and must keep counting: @equal[$T -> Eq](this -> $T, other -> $T)@ has arms
-  -- whose two constructors differ (@this=Cons, other=Nil@), and dropping either side's
-  -- reading there narrows @$T@ to the other constructor and empties the arm.
-  let isFnArg k = not (S.null (pkArgs k))
   let discoveryAt k n = case H.lookup k liveArgsMap >>= H.lookup n . fst . splitVarArgEnv . fst of
-        Just PTopType                          -> Nothing
-        Just TypeVar{}                         -> Nothing
-        Just v | isFnArg k, v == varBoundFor n -> Just Nothing
-        Just v | not (passedThrough n v)       -> Just (Just (canonBinding v))
-        _                                      -> Nothing
+        Just PTopType                    -> Nothing
+        Just TypeVar{}                   -> Nothing
+        Just v | not (passedThrough n v) -> Just (Just (canonBinding v))
+        _                                -> Nothing
   -- The pointer join for an arg-set piece ranges over that piece's occurrences of the name:
   -- an occurrence on an arg OUTSIDE the piece does not constrain it (the ∅ piece of
   -- @Pair(first=$A, second=$B)??@ keeps @/A@ at its declared bound even when the @first@
@@ -6914,8 +6900,29 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
       predPartialOf (PredConstEq c) = constantPartialType c
   let linkedParamsOf n t = [ pn | pt <- selfPartials t
                            , (pn, TypeVar (TVVar n') TVParent _) <- H.toList (ptVars pt), n' == n ]
+  -- A higher-order argument's INPUT OBJECT links its parameters to the declaration's variables too
+  -- (@fn[/MV=$^MV](v=$/MV)@), but those parameters are where the variable's values are GIVEN — the
+  -- lambda's @v@ takes whatever the call binds @$MV@ to — so they are no evidence of it. Joined as
+  -- occurrences, the lambda's still-⊤ parameter withheld @$MV@'s binding, which was the only thing
+  -- that could ever type the parameter. Only the argument's RESULT is evidence ('hoResultKsOf').
   let linkedKsOf n ks = L.nub [ (k, pn) | tmpl <- declTmpls, (k, tv) <- H.toList (ptArgs tmpl)
-                              , k `S.member` ks, pn <- linkedParamsOf n tv ]
+                              , k `S.member` ks, S.null (pkArgs k), pn <- linkedParamsOf n tv ]
+  -- A HIGHER-ORDER argument's declared RESULT (@fn(acc -> $_B) -> $_B@) is an occurrence of the
+  -- variable too, but not one the object holds: the slot holds the input object, and the result
+  -- is the arrow the argument adds to the environment ('hoSlotResult'). Read through that arrow,
+  -- a call's lambda gives the content its body reaches — evidence, joined like any occurrence;
+  -- a definition's own argument gives back the declared variable itself (its arrow returns the
+  -- declaration's @$_B@), which says nothing about the binding — vacuous, as the arm's other
+  -- occurrences are then the only evidence (@mmap(m= Cons(..), fn(v))@ binding @$M@ from @m@).
+  -- An arrow the environment does not hold yet, or one reaching unresolved content, WITHHOLDS:
+  -- its result may still widen the join, and stamping without it narrowed @foldEntries@'s @$B@
+  -- to the @Nil@ of @init@ alone while the lambda's @Cons@ was still on its way. An occurrence
+  -- nested inside the result (@fn(..) -> List[$T -> $_B]@) withholds too.
+  let hoResultKsOf n ks = [ (k, t) | (k, t) <- typeGraphDeclaredArgResults typeEnv name', k `S.member` ks, n `S.member` typeOuterVarRefs t ]
+  let resultAt (k, t) = case fmap (hoSlotResult typeEnv vaenv k . snd) (H.lookup k liveArgsMap) of
+        Just TypeVar{} -> Just Nothing
+        Just r | not (typeHasVars r), not (typeContainsBareTop r), TypeVar{} <- t -> Just (Just r)
+        _ -> Nothing
   let pointerJoinFor ks =
         let ksL = S.toList ks
             joinFor n =
@@ -6950,14 +6957,15 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
                                                 , not (isTypeVar b), b /= PTopType ]
                                              ++ [ b | Just b <- [H.lookup n (exactEnvOf k)]
                                                 , not (isTypeVar b), b /= PTopType ])
-              in case (mapM (`discoveryAt` n) ptrKs, mapM contentAt (L.nub contentKs), mapM linkedAt (linkedKsOf n ks)) of
+              in case ((++) <$> mapM (`discoveryAt` n) ptrKs <*> mapM resultAt (hoResultKsOf n ks), mapM contentAt (L.nub contentKs), mapM linkedAt (linkedKsOf n ks)) of
                 (Just mvals, Just cvals, Just lvalss)
                   | let vals = catMaybes mvals
                   , let lvals = concat lvalss
                   , not (null (vals ++ cvals ++ lvals))
                   , let joined = unionAllTypesWithEnv typeEnv vaenv (vals ++ cvals ++ lvals)
-                  -- A vacuous occurrence is one the variable's own bound was read back out of,
-                  -- so the join is missing whatever that occurrence will really hold. Reading
+                  -- A vacuous occurrence (a definition's own higher-order result, which is the
+                  -- variable itself) is missing from the join, which so lacks whatever that
+                  -- occurrence will really hold. Reading
                   -- the evidence at INSTANCE granularity is what keeps the binding wide enough
                   -- for it while still naming the instance the arm selected.
                   , let joined' = if any isNothing mvals
@@ -8085,8 +8093,8 @@ substituteTVExtScoped typeEnv scope vaenv (UnionType Nothing partials []) =
 -- built from a lambda's current result — @foldEntries(fn(acc -> $_B, …) -> $_B, init -> $_B)@
 -- binds the accumulator from the lambda whose RESULT is that same variable — is then a
 -- self-referential equation, and publishing it as the next input bound would add one
--- constructor level per epoch. 'TypeCheck.TypeUtils.fnArgInputBound' closes such a recursive
--- field at its class ('relaxRecursiveSelfArgs'), the rule the object-universe bound applies.
+-- constructor level per epoch. A lambda's parameter is now typed by the call's own requirement on
+-- its @fn@ slot, which the object-universe bound closes at the class ('relaxRecursiveSelfArgs').
 substituteTVExtScoped typeEnv scope vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
   UnionType (Just (predsSub preds, negLeafs, negConsts))
             (joinUnionType $ map (substitutePartialTVExtScoped typeEnv scope vaenv) $ splitUnionType posLeafs) consts
@@ -8710,7 +8718,7 @@ tagParentVarRefs = onType
       (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
     onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
         ptVars  = H.mapWithKey (onVarSlot sc) ptVars,
-        ptArgs  = fmap (onDirect sc') ptArgs,
+        ptArgs  = H.mapWithKey (\k -> onDirect sc' . hopInput sc' k) ptArgs,
         ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
       }
       where sc' = S.fromList (map TVVar (H.keys ptVars))
@@ -8732,6 +8740,21 @@ tagParentVarRefs = onType
     -- @unwrap@'s @/U@. The parser spells a bare @$U@ context-free as 'TVInt', and left so it would
     -- break the 'TVInt' contract (a variable of the SAME partial). The self-entry @/T=$T@ names
     -- its own slot and stays 'TVInt'.
+    -- A HIGHER-ORDER argument's slot holds its input object (@fn(acc -> $_B)@ in
+    -- @foldEntries[$B]@), whose parameters name the enclosing partial's variables from one level
+    -- further in than a parent reference reaches. The input object is a pattern rather than data,
+    -- so it can carry those variables itself: each one it references becomes a parameter of the
+    -- object that is a parent reference to the enclosing one (@fn[/B=$^B](acc=$/B)@), and the
+    -- descent below spells the uses as references to that parameter. The declaration then has
+    -- one spelling, and an occurrence of @$B@ inside the input object is visible to the
+    -- enclosing partial as a linked occurrence ('intersectPartialsBase').
+    hopInput sc k v@(UnionType Nothing leafs [])
+      | isJust (hoSlotInputObject k v) = UnionType Nothing (joinUnionType (map (hopLeaf sc) (splitUnionType leafs))) []
+    hopInput _ _ v = v
+    hopLeaf sc p@PartialType{ptVars, ptArgs} = p{ptVars = H.union ptVars hops}
+      where
+        refs = [ n | v@(TVVar n) <- S.toList (S.unions (map typeExtVarAuxes (H.elems ptArgs))), S.member v sc, not (H.member n ptVars) ]
+        hops = H.fromList [ (n, TypeVar (TVVar n) TVParent PTopType) | n <- refs ]
     onVarSlot sc k (TypeVar v@(TVVar n) TVInt i) | n /= k, S.member v sc = TypeVar v TVParent (onSlot sc i)
     onVarSlot sc _ t = onSlot sc t
     onSlot sc (TypeVar v@(TVVar _) TVExt i) | S.member v sc = TypeVar v TVParent i
@@ -8966,6 +8989,25 @@ hoSlotResult typeEnv vaenv argName t = case hoSlotInputObject argName t of
       UnionType mTop (joinUnionType [l | l <- splitUnionType leafs, isNothing (hoSlotInputObject argName (singletonType l))]) consts
     dropSelfCalls r = r
 
+-- | A higher-order input object spelled to reach its enclosing object's variables one hop at a
+-- time. A declared @fn(v -> $_MV)@ sits in a slot of @foldEntries[/MV]@, so its parameter
+-- annotation names a variable two levels out — past the @fn@ pattern to the object it is an
+-- argument of — which no traversal carries (a 'TVExt' reads the ambient env, where a caller's
+-- frame never binds the callee's @/MV@). Spelled as @fn[/MV=$^MV](v=$MV)@ instead, each step is
+-- one the algebra resolves: @fn@'s own @/MV@ is a parent reference to the declaration's (bound
+-- when a call meets the declaration), and @v@ is an internal pointer to @fn@'s @/MV@. Only
+-- references to variables the scope binds (@inScope@) are lifted; any other stays as it is.
+hopInputObject :: TypeVarArgEnv -> Type -> Type
+hopInputObject inScope (UnionType Nothing leafs []) = UnionType Nothing (joinUnionType (map hopLeaf (splitUnionType leafs))) []
+  where
+    hopLeaf p@PartialType{ptVars, ptArgs} = p{ptVars = H.union ptVars hops, ptArgs = fmap toPointer ptArgs}
+      where
+        refs = [ n | TypeVar (TVVar n) TVExt _ <- H.elems ptArgs, H.member (TVVar n) inScope, not (H.member n ptVars) ]
+        hops = H.fromList [ (n, TypeVar (TVVar n) TVParent PTopType) | n <- refs ]
+        toPointer (TypeVar (TVVar n) TVExt i) | n `elem` refs = TypeVar (TVVar n) TVInt i
+        toPointer t = t
+hopInputObject _ t = t
+
 typeSetAux :: TypeVarAux -> Type -> PartialType -> PartialType
 typeSetAux (TVVar k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
 typeSetAux (TVArg k) v p@PartialType{ptArgs} = p{ptArgs=H.insert k v ptArgs}
@@ -9175,6 +9217,14 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
             let (env', t) = intersectTypesWithVarEnv typeEnv vaenv orig m
                 fresh = H.difference env' vaenv
             in if H.null fresh then t else substituteKeep typeEnv fresh t
+      -- A higher-order argument's slot holds its INPUT OBJECT, whose parameters are annotated by
+      -- the enclosing declaration's variables (@fn(/acc=$_B, /k=$_MK, /v=$_MV)@). Those are bound
+      -- per call, by the call meeting the declaration, so the object is stored with its in-scope
+      -- references lifted to hops ('hopInputObject') rather than read concretely (an unbound
+      -- @$_MV@ as ⊤, @$_MK@ as its bound @∀Ord@), which left nothing for a call to bind.
+      let slotValue supProp evSup met = case propName of
+            TVArg k | supProp == PTopType, isJust (hoSlotInputObject k subType) -> hopInputObject vaenv subType
+            _ -> resolvedMeet evSup met
       let intersectedPartials sup@PartialType{ptVars=supVars} sub0 = case (slotOwnVar sup, slotRead sup) of
             (Just v, _) -> do
               -- A pointer slot names a MEMBERSHIP position (@this -> $T@): a single
@@ -9208,7 +9258,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- the drop's in-scope set extends with @sup@'s own var names — a slot value
                 -- @∀ConsList[/T=$_/T]@ under @insertStep[/T=∀Ord]@ keeps its link. The value is
                 -- detached from @sup@ here, so the enclosing scope must be supplied explicitly.
-                else Just ( typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) (resolvedMeet (withEvidence supProp) met)) sup
+                else Just ( typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) (slotValue supProp (withEvidence supProp) met)) sup
                           , closeFrame sup (resolvedMeet (withEvidence sub0) met) )
             (_, Nothing) -> Nothing
       let tightenedSuper = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType (map tightenSup supPartialList)) []

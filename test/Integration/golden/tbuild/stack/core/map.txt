@@ -1001,12 +1001,12 @@ Prgm
                         [ /Data/Map/foldEntries
                             ( EAppVar
                                 { eavName = /B
-                                , eavMeta = TopType
+                                , eavMeta = $/B
                                 }
                             )
                             ( EAppVar
                                 { eavName = /MV
-                                , eavMeta = TopType
+                                , eavMeta = $/MV
                                 }
                             )
                             ( EAppVar
@@ -1024,8 +1024,8 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
-                                    ( EAppArg { eaaArg = Value /k -> $/MK } )
-                                    ( EAppArg { eaaArg = Value /v -> $/MV } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /k -> $_/MK } )
+                                    ( EAppArg { eaaArg = Value /v -> $_/MV } ) -> $_/B
                                 }
                             )
                             ( EAppArg { eaaArg = Value /init -> $/B } ) -> $_/B
@@ -1038,7 +1038,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /k } )
+                                    ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
                             )
@@ -1081,7 +1081,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc } )
-                                    ( EAppArg { eaaArg = Value /k } )
+                                    ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
                             )
@@ -1584,7 +1584,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $/MV } ) -> $/MW
+                                    ( EAppArg { eaaArg = Value /v -> $_/MV } ) -> $_/MW
                                 }
                             ) -> ∀/Data/Map/BinTree
                             [ /K=$_/MK
@@ -2260,15 +2260,15 @@ Prgm
                         ( EAppArg
                             { eaaArg = /fn
                                 ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /k -> /Data/Primitive/Integer } )
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
+                                ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ /Data/Primitive/Integer
+                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 )
                             }
                         )
@@ -5186,7 +5186,7 @@ Prgm
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = /fn
-                                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/Primitive/Integer =
                                                         ( /operator+
                                                             ( EAppArg
                                                                 { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }

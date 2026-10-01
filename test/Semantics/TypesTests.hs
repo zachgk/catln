@@ -73,7 +73,7 @@ readTopVar _ _   t                                = t
 -- operand is read to its value first ('readTopVar'), because 'intersectTypesWithVarEnv' returns a
 -- variable meet as the bare VARIABLE while recording the narrowing in its (here discarded) env — the
 -- mergeVarEnvVal doctrine: @$a ∩ b@ keeps @$a@ symbolic and so reads standalone as @$a@, deliberately
--- wider so a call-site lambda's parameter can be refined later ('FnInputBound'). The set-algebra laws
+-- wider so a call-site lambda's parameter can be refined later. The set-algebra laws
 -- are about denotations, so a top-level variable is read to its value first; nested variables are
 -- left for the meet, which resolves them exactly. Union, complement and the subtype\/equality checks
 -- resolve a bound variable inline (via 'vaenvLookup'), so they take the environment directly.

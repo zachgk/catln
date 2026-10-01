@@ -26,7 +26,7 @@ module(Data/Map)
       empty map is written [Leaf].
 
   # ## Size
-  foldEntries[$MK -> /Data/Algebra/Ord, $MV, $B](m -> /Data/Map[$K -> $_MK, $V -> $_MV], fn(acc -> $_B, k -> $MK, v -> $MV) -> $_B, init -> $_B) -> $_B
+  foldEntries[$MK -> /Data/Algebra/Ord, $MV, $B](m -> /Data/Map[$K -> $_MK, $V -> $_MV], fn(acc -> $_B, k -> $_MK, v -> $_MV) -> $_B, init -> $_B) -> $_B
     # [foldEntries] collapses a map to a single value by visiting every entry in key order. A node
       sits between its two subtrees, so the walk folds the [right] subtree into the accumulator
       first, then the node's own entry, then the [left] subtree — which means the step sees entries
@@ -218,7 +218,7 @@ module(Data/Map)
   [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
   instance awaits two-parameter [Functor] support. The operation itself works generically.)
 module(Data/Map)
-  mapValues[$MK, $MV, $MW](m -> BinTree[$K -> $_MK, $V -> $_MV], fn(v -> $MV) -> $MW) -> BinTree[$K -> $_MK, $V -> $_MW]
+  mapValues[$MK, $MV, $MW](m -> BinTree[$K -> $_MK, $V -> $_MV], fn(v -> $_MV) -> $_MW) -> BinTree[$K -> $_MK, $V -> $_MW]
     # [mapValues] rebuilds the tree, applying [fn] to each node's value and recursing into both
       subtrees; the keys and shape are carried through unchanged, and the value type may change from
       the function's input type to its output type.

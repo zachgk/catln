@@ -195,12 +195,6 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                             AddArg 8 (baseM', TVArg $ inExprSingleton obj) m',
                             PropEq 11 (m', TVArg $ inExprSingleton obj) (hoSlotPoint obj arrM')
                             ]
-              -- A lambda argument (@fn(v)= v@): each of its parameters is typed by the callee's
-              -- declared input type for that position (@fn(v -> $_A)@), resolved per call site
-              -- during solving (see 'fnArgInputBound'). Without this nothing constrains the
-              -- lambda's parameter, so its body — and hence the function's output — stays Top.
-              ++ [ FnInputBound 45 (m', inExprSingleton obj, inExprSingleton nObj) nArrM
-                 | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj ]
             (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
               -- Output with (x) infer
               [
@@ -252,7 +246,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       -- declaration's reference to its own variable (@[$M -> Monad[$T -> $_A]]@) as the ⊤ it
       -- denotes. The two spellings are the same SET, so the later projection is judged a no-op and
       -- the erased one is what every consumer then reads (measured: a lambda parameter's declared
-      -- type, which 'TypeCheck.TypeUtils.fnArgInputBound' recovers from that bound).
+      -- type, which reaches the lambda through that bound).
       modify $ addConstraints ([EqReqAct 34 vm' | EncodeIn <- [est]] ++ [AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm'])
       return $ EAppVar vn vm'
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args

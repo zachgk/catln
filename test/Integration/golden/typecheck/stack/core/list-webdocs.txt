@@ -518,7 +518,7 @@ Prgm
                                 , /B=TopType
                                 , /A=TopType
                                 ]
-                                ( /fn( /v=TopType )=/fn( /v=TopType )
+                                ( /fn( /v=TopType )=/fn[ /A=$_/A ]( /v=$/A )
                                 , /lst=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=TopType ] )
                                 ) = /Data/Functor/fmap
@@ -539,7 +539,7 @@ Prgm
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=TopType ] )
                                 , /A=TopType
                                 ]
-                                ( /fn( /v=TopType )=/fn( /v=TopType )
+                                ( /fn( /v=TopType )=/fn[ /A=$_/A ]( /v=$/A )
                                 , /m=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=TopType ] )
                                 ) = /Data/Monad/mmap
@@ -555,9 +555,6 @@ Prgm
                             )
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/List/foldl
-                                [ /B=∀/Data/ToString
-                                , /A=TopType
-                                ]
                                 ( /fn
                                     ( /acc=TopType
                                     , /v=TopType
@@ -566,8 +563,7 @@ Prgm
                                     , /v=TopType
                                     )
                                 , /init=∀/Data/ToString
-                                , /lst=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                 ) = /Data/List/foldl
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /acc )( Value /v ) )( Value /init -> ∀/Data/ToString )
@@ -613,9 +609,6 @@ Prgm
                             ( Value /init -> ∀/Data/String = /Data/toString( Value /this -> TVArg /init = Value /init ) )
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/List/foldr
-                                [ /B=∀/Data/ToString
-                                , /A=TopType
-                                ]
                                 ( /fn
                                     ( /acc=TopType
                                     , /v=TopType
@@ -624,8 +617,7 @@ Prgm
                                     , /v=TopType
                                     )
                                 , /init=∀/Data/ToString
-                                , /lst=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                 ) = /Data/List/foldr
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /acc )( Value /v ) )( Value /init -> ∀/Data/ToString )

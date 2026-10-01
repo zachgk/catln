@@ -560,19 +560,19 @@ Prgm
                 ( "/Data/Map/foldEntries"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Map/foldEntries[ /B : TopType ][ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                        [ /Data/Map/foldEntries[ /B : $/B ][ /MV : $/MV ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value /m -> ∀/Data/Map
                                 [ /K=$_/MK
                                 , /V=$_/MV
                                 ]
                             )
-                            ( /fn( Value /acc -> $_/B )( Value /k -> $/MK )( Value /v -> $/MV ) -> $_/B )( Value /init -> $/B ) -> $_/B
+                            ( /fn( Value /acc -> $_/B )( Value /k -> $_/MK )( Value /v -> $_/MV ) -> $_/B )( Value /init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/foldEntries( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
-                            ( /fn( Value /acc )( Value /k )( Value /v ) )( Value /init ) -> TVArg /init = Value /init
+                            ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) )( Value /init ) -> TVArg /init = Value /init
                         , /Data/Map/foldEntries
                             ( Value /m -> /Data/Map/Node
                                 ( /value=TopType
@@ -600,7 +600,7 @@ Prgm
                                     ]
                                 )
                             )
-                            ( /fn( Value /acc )( Value /k )( Value /v ) )( Value /init )= /Data/Map/foldEntries( Value /m -> TVArg /left = Value /left )
+                            ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) )( Value /init )= /Data/Map/foldEntries( Value /m -> TVArg /left = Value /left )
                             ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
                             ( Value /init -> $_/B = /fn
                                 ( Value /acc= /Data/Map/foldEntries( Value /m -> TVArg /right = Value /right )
@@ -832,7 +832,7 @@ Prgm
                                 , /V=$_/MV
                                 ]
                             )
-                            ( /fn( Value /v -> $/MV ) -> $/MW ) -> ∀/Data/Map/BinTree
+                            ( /fn( Value /v -> $_/MV ) -> $_/MW ) -> ∀/Data/Map/BinTree
                             [ /K=$_/MK
                             , /V=$_/MW
                             ]
@@ -1226,7 +1226,7 @@ Prgm
                         { ciValue = 20 }
                     )
                 )
-                ( /fn( Value /acc )( Value /k -> /Data/Primitive/Integer )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
+                ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -2826,7 +2826,7 @@ Prgm
                                 { ciValue = 20 }
                             )
                         )
-                        ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                        ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )

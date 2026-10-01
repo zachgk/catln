@@ -236,63 +236,15 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (BoundedByKnown i p@
     -- A known bound is a spelled type (annotation seeds enter here), so it is decl-origin.
     reqDecl' = intersectTypesEnv feTypeEnv (fmap (stypeReqDecl . snd) vaenv) reqDecl (boundFor reqDecl)
 computeConstraint _ con@(Constraint _ _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
-  where
-    vaenv' = fmap (stypeAct . snd) vaenv
-    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
-    -- A type is REQUIRED to be a declared/defined object, but that does not mean it ACTUALLY is one:
-    -- being one of the known objects is only a requirement. So narrow only the requirement against
-    -- the object-universe bound and leave the actual untouched.
-    --
-    -- Relax each bound object's self-referential field (one that recurses back to a type the
-    -- object participates in) so a destructured value whose corresponding field is still an
-    -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
-    -- The objects universe is closed-world (only currently-declared data objects), but an OPEN
-    -- (unsealed) class may gain instances in a future file, so a value typed by one is genuinely
-    -- inhabitable and must survive the bound rather than empty. Admit the requirement's OWN
-    -- open-class predicate components (with their real element bounds) as inhabitable bound members
-    -- ('openClassPart pReq'): an open-class requirement (e.g. a @Functor[Eq]@ law argument with no
-    -- in-scope instance) must survive the object-universe bound rather than empty. Sealed classes are
-    -- excluded — they equal their declared members, already in the universe.
-    --
-    -- Only narrow a *concrete* requirement. A Top requirement meets the whole universe to the whole
-    -- universe (every known object) — not a narrowing, and a performance blowup — so leave it be
-    -- (the 'stypeReq=PTopType' guard above already short-circuits it). A named requirement instead
-    -- meets only its name-matching objects, tightening the requirement's arg fields (e.g.
-    -- @/f(/a=Top)@ narrows to @/f(/a=<declared>)@).
-    -- The narrowing is applied per requirement channel — the accumulated 'stypeReq' and the
-    -- decl-origin 'stypeReqDecl' — each against its own var-env and its own open-class
-    -- components ('openClassPart'). Narrowing spelled requirement content against declared
-    -- objects preserves the decl channel's origin purity: no actual-derived input enters.
-    narrowChannel chanVaenv chanReq = chanReq'
-      where
-        boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb (openClassPart feTypeEnv chanReq)) argsBoundUb
-        boundNames = case boundUbReq of
-          UnionType _ bLeafs _ -> map ptName $ splitUnionType bLeafs
-          _                    -> []
-        -- The universe bound is open-world on NAMES: a requirement leaf whose name matches no
-        -- object in the universe (a compiler annotation whose compile.ct declaration is not in
-        -- this import closure, or any name declared outside the current program) offers nothing
-        -- to tighten against, so it passes through unchanged rather than emptying the requirement.
-        -- A name the universe DOES know meets its name-matching objects as before.
-        nameKnown l = any (relativeNameMatches (ptName l)) boundNames
-        chanReq' | chanReq == PTopType = chanReq
-                 | otherwise           = case chanReq of
-                     UnionType mTop leafs consts ->
-                       let (knownLeafs, unknownLeafs) = partition nameKnown (splitUnionType leafs)
-                           metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (singletonType l) boundUbReq
-                                      | l <- knownLeafs ]
-                           metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (UnionType mTop H.empty consts) boundUbReq
-                       in unionAllTypes feTypeEnv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
-                     _ -> snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv chanReq boundUbReq
-    reqChanVaenv = fmap (stypeReq . snd) vaenv
-    declChanVaenv = fmap (stypeReqDecl . snd) vaenv
-    pReq' = narrowChannel reqChanVaenv pReq
-    -- Exact-input memo: the two channels are identical until an echo writer diverges them
-    -- (most points, most epochs), and 'narrowChannel' is a pure function of (vaenv, req) —
-    -- reuse the req result only when BOTH inputs match, so no cross-channel contamination.
-    pReqDecl' | pReqDecl == pReq && declChanVaenv == reqChanVaenv = pReq'
-              | otherwise = narrowChannel declChanVaenv pReqDecl
+-- The universe is met in an environment holding the constraint's LOCAL arrows
+-- ('localArrowTypeEnv'): the meet joins every occurrence of a declaration variable, and a
+-- higher-order argument's declared result is an occurrence held by the arrow that argument adds
+-- to the environment (the definition's own argument arrows, or the call's lambdas), not by the
+-- object ('intersectPartialsBase'). A constraint whose local arrows cannot be read is dropped,
+-- as an 'ArrowTo' is.
+computeConstraint env con@(Constraint _ _ _ BoundedByObjs{}) = case localArrowTypeEnv env con of
+  TypeCheckResult _ argTypeEnv -> boundedByObjs (withLocalArrows argTypeEnv (feTypeEnv env)) con
+  TypeCheckResE _              -> (True, con)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
@@ -367,11 +319,6 @@ computeConstraint env con@(Constraint _ _ _ (ArrowTo i src dest)) = case arrowCo
 computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
   where
     (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
-computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ _ (FnInputBound i (callP, fnKey, inKey) inp@SType{stypeAct=inpAct})) = (False, con{conDat=FnInputBound i (callP, fnKey, inKey) inp{stypeAct=inpAct'}})
-  where
-    inpAct' = case fnArgInputBound env (stypeAct callP) fnKey inKey of
-      Just b  -> intersectTypes feTypeEnv inpAct b
-      Nothing -> inpAct
 computeConstraint env con@(Constraint _ _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
@@ -432,6 +379,66 @@ saveConstraint vals old new env = saveDat $ saveVaenv env
 -- This takes a constraint and tries to apply it in the environment.
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
+boundedByObjs :: FEnvTypeEnv -> RConstraint -> (Bool, RConstraint)
+boundedByObjs feTypeEnv con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
+  where
+    vaenv' = fmap (stypeAct . snd) vaenv
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
+    -- A type is REQUIRED to be a declared/defined object, but that does not mean it ACTUALLY is one:
+    -- being one of the known objects is only a requirement. So narrow only the requirement against
+    -- the object-universe bound and leave the actual untouched.
+    --
+    -- Relax each bound object's self-referential field (one that recurses back to a type the
+    -- object participates in) so a destructured value whose corresponding field is still an
+    -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
+    -- The objects universe is closed-world (only currently-declared data objects), but an OPEN
+    -- (unsealed) class may gain instances in a future file, so a value typed by one is genuinely
+    -- inhabitable and must survive the bound rather than empty. Admit the requirement's OWN
+    -- open-class predicate components (with their real element bounds) as inhabitable bound members
+    -- ('openClassPart pReq'): an open-class requirement (e.g. a @Functor[Eq]@ law argument with no
+    -- in-scope instance) must survive the object-universe bound rather than empty. Sealed classes are
+    -- excluded — they equal their declared members, already in the universe.
+    --
+    -- Only narrow a *concrete* requirement. A Top requirement meets the whole universe to the whole
+    -- universe (every known object) — not a narrowing, and a performance blowup — so leave it be
+    -- (the 'stypeReq=PTopType' guard above already short-circuits it). A named requirement instead
+    -- meets only its name-matching objects, tightening the requirement's arg fields (e.g.
+    -- @/f(/a=Top)@ narrows to @/f(/a=<declared>)@).
+    -- The narrowing is applied per requirement channel — the accumulated 'stypeReq' and the
+    -- decl-origin 'stypeReqDecl' — each against its own var-env and its own open-class
+    -- components ('openClassPart'). Narrowing spelled requirement content against declared
+    -- objects preserves the decl channel's origin purity: no actual-derived input enters.
+    narrowChannel chanVaenv chanReq = chanReq'
+      where
+        boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb (openClassPart feTypeEnv chanReq)) argsBoundUb
+        boundNames = case boundUbReq of
+          UnionType _ bLeafs _ -> map ptName $ splitUnionType bLeafs
+          _                    -> []
+        -- The universe bound is open-world on NAMES: a requirement leaf whose name matches no
+        -- object in the universe (a compiler annotation whose compile.ct declaration is not in
+        -- this import closure, or any name declared outside the current program) offers nothing
+        -- to tighten against, so it passes through unchanged rather than emptying the requirement.
+        -- A name the universe DOES know meets its name-matching objects as before.
+        nameKnown l = any (relativeNameMatches (ptName l)) boundNames
+        chanReq' | chanReq == PTopType = chanReq
+                 | otherwise           = case chanReq of
+                     UnionType mTop leafs consts ->
+                       let (knownLeafs, unknownLeafs) = partition nameKnown (splitUnionType leafs)
+                           metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (singletonType l) boundUbReq
+                                      | l <- knownLeafs ]
+                           metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (UnionType mTop H.empty consts) boundUbReq
+                       in unionAllTypes feTypeEnv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
+                     _ -> snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv chanReq boundUbReq
+    reqChanVaenv = fmap (stypeReq . snd) vaenv
+    declChanVaenv = fmap (stypeReqDecl . snd) vaenv
+    pReq' = narrowChannel reqChanVaenv pReq
+    -- Exact-input memo: the two channels are identical until an echo writer diverges them
+    -- (most points, most epochs), and 'narrowChannel' is a pure function of (vaenv, req) —
+    -- reuse the req result only when BOTH inputs match, so no cross-channel contamination.
+    pReqDecl' | pReqDecl == pReq && declChanVaenv == reqChanVaenv = pReq'
+              | otherwise = narrowChannel declChanVaenv pReqDecl
+boundedByObjs _ con = (False, con)
+
 executeConstraint :: Int -> VConstraint -> StateT FEnv TypeCheckResult Bool
 executeConstraint cid con = do
   modify $ startConstraint con
@@ -442,21 +449,22 @@ executeConstraint cid con = do
     TypeCheckResult _ con' -> do
       -- Skip-if-unchanged: 'computeConstraint' is a pure function of the resolved view
       -- @con'@ plus, for the kinds that read the per-epoch env caches, those caches
-      -- ('feReachesTypeEnv' for ArrowTo/PropEq/FnInputBound via 'mkReachesEnv' /
-      -- 'settlePropSlot' / 'fnArgInputBound'; the universe is already substituted INTO a
+      -- ('feReachesTypeEnv' for ArrowTo/PropEq/BoundedByObjs via 'mkReachesEnv' /
+      -- 'settlePropSlot'; the universe is already substituted INTO a
       -- BoundedByObjs view by 'showCon', and 'feUniverseKey' tracks
-      -- it). An ArrowTo additionally resolves its 'conOs' object-side arg entries
-      -- ('conOaResolveKey'). When every component of that key equals the last execution's,
+      -- it). An ArrowTo or BoundedByObjs additionally resolves its 'conOs' object-side arg
+      -- entries and call arrows ('conOaResolveKey'). When every component of that key equals the last execution's,
       -- the recomputed stores would all be refused as unchanged by 'setScheme' — a provable
       -- no-op, so skip the compute and save entirely and repeat the prune decision.
       let stampKey = case conDat con of
-            ArrowTo{}      -> feEnvStamp
-            PropEq{}       -> feEnvStamp
-            FnInputBound{} -> feEnvStamp
-            _              -> 0
+            ArrowTo{}       -> feEnvStamp
+            PropEq{}        -> feEnvStamp
+            BoundedByObjs{} -> feEnvStamp
+            _               -> 0
       let oaKey = case conDat con of
-            ArrowTo{} -> conOaResolveKey env con
-            _         -> []
+            ArrowTo{}       -> conOaResolveKey env con
+            BoundedByObjs{} -> conOaResolveKey env con
+            _               -> []
       -- 'conOs' is CONSTANT for a given constraint (the same cid always resolves the same
       -- object list), so it is zeroed out of the memoized view rather than structurally
       -- compared every execution — its object expressions carry every meta and source

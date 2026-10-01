@@ -225,10 +225,10 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
-                  A declaration's function-typed argument keeps only its result — @headTo@'s own object type reads
-                  @/fn(/w=TopType)=$/B@, with @w -> $_A@ gone — so the parameter's declared type is recovered at the
-                  call by reading the declaration back ('TypeCheck.TypeUtils.fnArgInputBound'). Two things stopped
-                  that here, and each needs its own row below to see.
+                  A declaration's function-typed argument slot holds its INPUT OBJECT, with @w@ annotated by the
+                  declaration's own variable (@headTo[/A](/fn=/fn[/A=$^A](/w=$/A))@). A call meets that declaration,
+                  which binds @/A@, and the lambda's pattern @fn(w)@ receives @w@'s type from the call's requirement
+                  through its slot. Two things stopped that here, and each needs its own row below to see.
                   A parameter left at Top is not fatal on its own; a body that never needs the bound runs fine on
                   one. It bites when the body BUILDS something whose own declaration requires the bound, since a
                   Top argument cannot meet it:
@@ -483,10 +483,10 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                                ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
                                 ( /operator==
                                     ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                        { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )

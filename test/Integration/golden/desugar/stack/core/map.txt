@@ -245,7 +245,7 @@ Prgm
                                 , /V=$_/MV
                                 ]
                             )
-                            ( fn( Value acc -> $_/B )( Value k -> $/MK )( Value v -> $/MV ) -> $_/B )( Value init -> $/B ) -> $_/B
+                            ( fn( Value acc -> $_/B )( Value k -> $_/MK )( Value v -> $_/MV ) -> $_/B )( Value init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -305,7 +305,7 @@ Prgm
                                 , /V=$_/MV
                                 ]
                             )
-                            ( fn( Value v -> $/MV ) -> $/MW ) -> ∀/Data/Map/BinTree
+                            ( fn( Value v -> $_/MV ) -> $_/MW ) -> ∀/Data/Map/BinTree
                             [ /K=$_/MK
                             , /V=$_/MW
                             ]
