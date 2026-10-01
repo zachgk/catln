@@ -88,8 +88,8 @@ Prgm
                     , omiDefs =
                         [ /unwrap
                             ( EAppArg
-                                { eaaArg = Value /b -> /Box( /v=TopType ) = /Box
-                                    ( EAppArg { eaaArg = Value /v } )
+                                { eaaArg = Value /b -> /Box( /v=/Data/Primitive/Integer ) = /Box
+                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } )
                                 }
                             ) -> /Data/Primitive/Integer = ( Value /v ↦ /Data/Primitive/Integer )
                         ]

@@ -129,6 +129,14 @@ data ConstraintDat p
   | EqReqAct Int p -- ^ An input argument's actual and requirement denote the same thing (an LHS input actually IS whatever it is required to be, and vice versa), so meet the two and set BOTH to @act ∩ req@.
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
+  -- | A 'PropEq' of @super@ whose property is the argument an application INFERRED: the one key
+  -- the application layer @app@ holds that its @base@ does not, once inference leaves it unique
+  -- (the same reading as 'TypeCheck.Decode.toExpr''s @learnedArgName@). Until then it does
+  -- nothing. It links a destructuring pattern that does not name its argument (@unwrap(Box(v))@)
+  -- to the slot it fills, as @PropEq@ links a named one (@unwrap(b= Box(v))@). The projected
+  -- @super@ may be the layer itself or the complete object the layer is part of
+  -- ('TypeCheck.Encode.topArgPropEqs').
+  | PropEqInferred Int (p, p, p) p -- ^ Both Actual and Req, PropEqInferred (super, app, base) slot
   | AddArg Int (p, TypeVarAux) p -- ^ Both Actual and Req,
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
@@ -183,6 +191,11 @@ mapMConDat f (ArrowTo i p1 p2) = do
 mapMConDat f (PropEq i (p1, name) p2) = do
   p1' <- f p1
   PropEq i (p1', name) <$> f p2
+mapMConDat f (PropEqInferred i (p1, pa, pb) p2) = do
+  p1' <- f p1
+  pa' <- f pa
+  pb' <- f pb
+  PropEqInferred i (p1', pa', pb') <$> f p2
 mapMConDat f (AddArg i (p1, argName) p2) = do
   p1' <- f p1
   AddArg i (p1', argName) <$> f p2
@@ -338,6 +351,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (EqReqAct i s) = printf "EqReqAct%d %s" i (show s)
   show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
   show (PropEq i (s1, n) s2) = printf "(%s).(%s) %d== %s"  (show s1) (show n) i (show s2)
+  show (PropEqInferred i (s1, sa, sb) s2) = printf "(%s).(inferred from %s over %s) %d== %s"  (show s1) (show sa) (show sb) i (show s2)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)

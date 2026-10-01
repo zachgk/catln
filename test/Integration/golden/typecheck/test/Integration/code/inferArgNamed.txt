@@ -59,7 +59,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /unwrap
-                            ( Value /b -> /Box( /v=TopType ) = /Box( Value /v ) ) -> /Data/Primitive/Integer = Value /v
+                            ( Value /b -> /Box( /v=/Data/Primitive/Integer ) = /Box( Value /v -> /Data/Primitive/Integer ) ) -> /Data/Primitive/Integer = Value /v
                         ]
                     }
                 )

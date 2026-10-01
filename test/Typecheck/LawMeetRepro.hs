@@ -226,19 +226,20 @@ probeChannels env con = case stypeConstraint (showCon env con) of
 -- | The 'SType's embedded in a constraint's payload ('ConstraintDat' has no Foldable).
 conSTypes :: ConstraintDat SType -> [SType]
 conSTypes d = case d of
-  EqualsKnown _ p _    -> [p]
-  EqPoints _ a b       -> [a, b]
-  BoundedByKnown _ p _ -> [p]
-  BoundedByObjs _ p _  -> [p]
-  NoReturnArg _ p      -> [p]
-  EqReqAct _ p         -> [p]
-  ArrowTo _ a b        -> [a, b]
-  PropEq _ (a, _) b    -> [a, b]
-  AddArg _ (a, _) b    -> [a, b]
-  AddInferArg _ a b    -> [a, b]
-  SetArgMode _ _ a b   -> [a, b]
-  ConWhere _ a b c     -> [a, b, c]
-  UnionOf _ p ps       -> p : ps
+  EqualsKnown _ p _                 -> [p]
+  EqPoints _ a b                    -> [a, b]
+  BoundedByKnown _ p _              -> [p]
+  BoundedByObjs _ p _               -> [p]
+  NoReturnArg _ p                   -> [p]
+  EqReqAct _ p                      -> [p]
+  ArrowTo _ a b                     -> [a, b]
+  PropEq _ (a, _) b                 -> [a, b]
+  PropEqInferred _ (a, app, base) b -> [a, app, base, b]
+  AddArg _ (a, _) b                 -> [a, b]
+  AddInferArg _ a b                 -> [a, b]
+  SetArgMode _ _ a b                -> [a, b]
+  ConWhere _ a b c                  -> [a, b, c]
+  UnionOf _ p ps                    -> p : ps
 
 -- | Replay the fragment's epochs one constraint at a time, mirroring
 -- 'runConstraintsIdx': per-epoch env-cache rebuild, sequential 'executeConstraint' with

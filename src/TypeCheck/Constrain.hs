@@ -124,6 +124,18 @@ updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeR
     (superAct'', superReq'', superReqDecl'') = settlePropSlot env (ambientEnv $ fmap stypeAct vaenv) propName superAct' superReq' superReqDecl'
     vaenv' = H.intersectionWith (\t s -> s{stypeReqDecl=t}) (envAmbient declVaenv') $ H.intersectionWith (\t s -> s{stypeReq=t}) (envAmbient reqVaenv') $ H.intersectionWith (\t s -> s{stypeAct=t}) (envAmbient actVaenv') vaenv
 
+-- | The argument an application inferred: the one key its actual holds that its base's does not,
+-- once each is a single partial. 'Nothing' while inference still offers more than one, which is
+-- the reading 'TypeCheck.Decode.toExpr' gives its @learnedArgName@ once inference has finished.
+inferredArgName :: SType -> SType -> Maybe TypeVarAux
+inferredArgName SType{stypeAct=UnionType Nothing baseLeafs []} SType{stypeAct=UnionType Nothing appLeafs []} =
+  case (splitUnionType baseLeafs, splitUnionType appLeafs) of
+    ([PartialType{ptArgs=baseArgs}], [PartialType{ptArgs=appArgs}]) -> case H.keys (H.difference appArgs baseArgs) of
+      [argName] -> Just (TVArg argName)
+      _         -> Nothing
+    _ -> Nothing
+inferredArgName _ _ = Nothing
+
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
@@ -321,6 +333,10 @@ computeConstraint env con@(Constraint _ _ _ (ArrowTo i src dest)) = case arrowCo
 computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
   where
     (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+computeConstraint env con@(Constraint _ _ vaenv (PropEqInferred i (super, app, base) sub)) = case inferredArgName base app of
+    Just name -> let (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+                 in (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEqInferred i (super', app, base) sub'})
+    Nothing -> (False, con)
 computeConstraint env con@(Constraint _ _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
@@ -463,10 +479,11 @@ executeConstraint cid con = do
       -- the recomputed stores would all be refused as unchanged by 'setScheme' — a provable
       -- no-op, so skip the compute and save entirely and repeat the prune decision.
       let stampKey = case conDat con of
-            ArrowTo{}       -> feEnvStamp
-            PropEq{}        -> feEnvStamp
-            BoundedByObjs{} -> feEnvStamp
-            _               -> 0
+            ArrowTo{}        -> feEnvStamp
+            PropEq{}         -> feEnvStamp
+            PropEqInferred{} -> feEnvStamp
+            BoundedByObjs{}  -> feEnvStamp
+            _                -> 0
       let oaKey = case conDat con of
             ArrowTo{}       -> conOaResolveKey env con
             BoundedByObjs{} -> conOaResolveKey env con
@@ -581,3 +598,4 @@ runConstraintsIdx limit cons = do
         -- The index paired with each constraint is its 'feConMemo' key and rides along, so
         -- reversing the running order leaves the skip-memo keys untouched.
         runConstraintsIdx (limit - 1) (reverse cons')
+

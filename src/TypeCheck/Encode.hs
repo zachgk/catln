@@ -214,10 +214,14 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
               | patternHeadIsDefined obj ->
               -- Input with a destructuring pattern (e.g. @Box(v)@): the pattern's own structure
               -- does not name the declared argument it fills, so infer which argument it fills by
-              -- type. The 'PropEq' still links the pattern's own type into that slot.
+              -- type. The link to that slot goes through the argument inference settles on
+              -- ('PropEqInferred'), as a named pattern's goes through its name. Linked by the
+              -- pattern's own head instead, it named an argument the call does not have, and what
+              -- the declaration says of the slot (@b -> Box(v -> Integer)@) never reached the
+              -- pattern: @v@ stayed ⊤ positionally where @b= Box(v)@ gave it Integer.
               [
                         AddInferArg 24 (getExprMeta baseExpr') m',
-                        PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
+                        PropEqInferred 25 (m', m', getExprMeta baseExpr') arrM'
                         ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
               -- Input with (x -> T), and the higher-order parameter pattern @fn(v)@ whose head
@@ -314,12 +318,27 @@ annotSeedConstraints = map (\a -> BoundedByKnown 46 (getExprMeta a) (relTypeAppl
 -- result point is the arrow the argument adds to the body's environment, never the slot. A
 -- destructuring pattern (@Box(v)@, whose head names a defined type) is not higher-order: its slot
 -- is its value, as the per-layer handling in 'fromExpr' reads it ('patternHeadIsDefined').
+--
+-- A destructuring pattern written WITHOUT its argument's name (@unwrap(Box(v))@) has no key to
+-- project by: its head names the type, not the argument. So its link goes through the argument
+-- its own layer inferred ('PropEqInferred'), still read from the complete object. Keyed by the
+-- head instead, it projected an argument the object does not have, and met the slot to ∅ as
+-- soon as the declaration narrowed it.
 topArgPropEqs :: S.HashSet Name -> VExpr -> [VConstraintDat]
-topArgPropEqs definedNames obj' =
-  [ PropEq 47 (getExprMeta obj', TVArg $ inExprSingleton nObj) slot
-  | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj'
-  , let slot | S.member (makeAbsoluteName $ exprPath nObj) definedNames = nArrM
-             | otherwise                                             = hoSlotPoint nObj nArrM ]
+topArgPropEqs definedNames obj' = go obj'
+  where
+    whole = getExprMeta obj'
+    headDefined nObj = S.member (makeAbsoluteName $ exprPath nObj) definedNames
+    go (TupleApply layerM (_, base) arg) = argLink layerM base arg ++ go base
+    go (AliasExpr b _)                   = go b
+    go (EWhere _ b _)                    = go b
+    go _                                 = []
+    argLink layerM base (EAppArg ObjArr{oaObj=Just nObj, oaArr=Just (arrE, nArrM)})
+      | headDefined nObj, Nothing <- arrE = [PropEqInferred 47 (whole, layerM, getExprMeta base) nArrM]
+      | headDefined nObj                  = [PropEq 47 (whole, TVArg $ inExprSingleton nObj) nArrM]
+      | otherwise                         = [PropEq 47 (whole, TVArg $ inExprSingleton nObj) (hoSlotPoint nObj nArrM)]
+    argLink _ _ (EAppSpread ae) = go ae
+    argLink _ _ _ = []
 
 -- | The absolute names that something in the program defines: the declared types and values of
 -- the typechecked type graph, plus those the batch being encoded is adding ('feLocalDefNames').
@@ -340,6 +359,9 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   -- referenced by name. The two share a 'Value' AST but must be encoded differently: a
   -- binding is open and receives the field's declared type (see below), whereas a reference
   -- keeps its own resolved type. A name is a binding exactly when nothing defines it.
+  -- A pattern whose head names a defined type ('fromExpr''s @patternHeadIsDefined@).
+  let isDestructure e@TupleApply{} = S.member (makeAbsoluteName $ exprPath e) definedNames
+      isDestructure _              = False
   let isBindingVar t = case maybeGetSingleton t of
         Just p  -> not $ S.member (makeAbsoluteName $ ptName p) definedNames
         Nothing -> False
@@ -421,6 +443,12 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
             BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt PTopType),
                      EqPoints 20 (getExprMeta argExpr') arrM'
                     ]
+        -- Input with a destructuring pattern that does not name its argument (@Box(v)@ in
+        -- @unwrap(Box(v))@): the pattern IS the argument's value, as the value of a named one
+        -- (@b= Box(v)@) is, so the two are the same point as there ('EqPoints' 20). Without it
+        -- the slot took what the declaration says of the argument and the pattern never did.
+        (EncodeIn{}, Just obj, Just (Nothing, arrM'))
+          | isDestructure obj -> [EqPoints 20 (getExprMeta obj) arrM']
         (EncodeIn{}, Just _obj, Just (Nothing, _arrM')) ->
           -- Input with (x -> T)
           []
