@@ -2402,7 +2402,7 @@ expandClassPartialWithNamesFullAux visited typeEnv@TypeEnv{teClassGraph=ClassGra
           let fullList = splitUnionType p
               filteredList = filter (\PartialType{ptName=n} -> S.member n allowedNames) fullList
               hasOut = any (\PartialType{ptName=n} -> not $ S.member n allowedNames) fullList
-          in (joinUnionType $ map mapClassPartial filteredList, hasOut)
+          in (joinUnionType $ map mapClassPartial (mapMaybe (classSideMember typeEnv vaenv classVars) filteredList), hasOut)
         mapClassTypeWithNamesFull t = expandTypesWithNamesFullAux visited' typeEnv vaenv t allowedNames
         -- Substitute this class's instantiated arguments through the member at expansion EXIT
         -- ('substituteExit' resolves EVERY external 'TVExt' reference — the class scope the
@@ -2468,6 +2468,30 @@ expandClassPartialAux mAllowed typeEnv vaenv pp = case teQueryCacheKey typeEnv o
           in ((tok, H.insert key r mTok) : take 2 rest, ())
         return r
 
+-- | A class's member record read at one instantiation of the class, or 'Nothing' where that
+-- instantiation does not hold the member.
+--
+-- A member recorded with a dimension its own data declaration does not declare
+-- (@data(IntOrdering, isa= [Ordering[$T -> Integer]])@ records @IntOrdering[/T=Integer]@) carries
+-- the CLASS's parameter binding, not one of its own: @IntOrdering@ is the @Ordering@ over
+-- @Integer@. So the binding decides which instantiations hold the member — under the covariant
+-- reading, @Ordering[/T=Y]@ does exactly when @Integer ⊆ Y@ — and it never constrains the
+-- member's values, so the member is read without it. Read as the member's own dimension, a value
+-- spelled without it (@/Data/MaybeEqv@, the body of every instance arm) read the missing @/T@ as
+-- ⊤ and fell outside its own class. Every reading of a class's members goes through here — the
+-- class expansions ('expandClassPartialAuxRaw', 'expandClassPartialWithNamesFull') and the
+-- symbolic engine's member candidates ('classSatCandidates') — so the provers agree.
+classSideMember :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> H.HashMap TypeVarName Type -> PartialType -> Maybe PartialType
+classSideMember typeEnv vaenv classVars m@PartialType{ptName=memberName, ptVars=memberVars}
+  | H.null classSide = Just m
+  | all admitted (H.toList classSide) = Just m{ptVars = H.difference memberVars classSide}
+  | otherwise = Nothing
+  where
+    classSide = case typeGraphData typeEnv memberName of
+      []    -> H.empty
+      decls -> H.filterWithKey (\k _ -> not (any (H.member k . ptVars) decls)) memberVars
+    admitted (k, b) = isSubtypeOfWithEnv typeEnv vaenv b (H.lookupDefault PTopType k classVars)
+
 expandClassPartialAuxRaw :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 expandClassPartialAuxRaw mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
   where
@@ -2500,7 +2524,7 @@ expandClassPartialAuxRaw mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} va
           -- Name-filter BEFORE the exit substitution: 'substitutePartialExit' never renames
           -- a member, so filtering on declared names is equivalent and skips the
           -- substitution cost for dropped members.
-          mapClassType (UnionType Nothing p []) = UnionType Nothing (joinUnionType $ map mapClassPartial $ keepPartials $ splitUnionType p) []
+          mapClassType (UnionType Nothing p []) = UnionType Nothing (joinUnionType $ mapMaybe mapClassMember $ keepPartials $ splitUnionType p) []
           mapClassType t@(UnionType Nothing _ _) = keepType t
           -- A class-typed member (@List@'s @∀ConsList[/T=$_T]@) exits the class scope here:
           -- substitute its external references totally ('substituteExit'), or the dangling
@@ -2510,6 +2534,7 @@ expandClassPartialAuxRaw mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} va
           expandNeg (TypeVar tv _ _) = H.lookupDefault PTopType (extKey tv) vaenv
           expandNeg t              = t
           mapClassPartial = substitutePartialExit typeEnv ((ambientEnv $ joinVarArgEnv classVars H.empty))
+          mapClassMember m = mapClassPartial <$> classSideMember typeEnv vaenv classVars m
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
 -- | Whether a relative reference's applied arg keys are realizable under a candidate name:
@@ -2860,7 +2885,7 @@ classSatCandidates typeEnv vaenv satUse PartialType{ptName, ptVars=classVarsP} =
         -- constructors (with the member's element bound applied), so e.g. @Nil@ is recognised as an
         -- @Eq@ (an empty list vacuously satisfies the @[/T=Eq]@ element bound). A non-class member
         -- (a concrete data type) stays a completed leaf.
-        candsOfMember (UnionType Nothing p []) = Just (map mkMemberCand (splitUnionType p))
+        candsOfMember (UnionType Nothing p []) = Just (map mkMemberCand (mapMaybe (classSideMember typeEnv vaenv classVars) (splitUnionType p)))
         candsOfMember t = candsOfType t
         mkMemberCand tp@PartialType{ptName=tpNm}
           | H.member tpNm (scClasses (teSatCache typeEnv)) = CandGoal (SatGoal [SatClass (mapClassPartial tp)] [])

@@ -82,9 +82,7 @@ Prgm
                         [ /Data/Algebra/rel
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
-                            ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/BoolEqv.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/boolEq
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -136,7 +134,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Primitive/Boolean } ) -> /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Primitive/BoolEqv
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Primitive/Boolean } ) -> /Data/Primitive/BoolEqv = Value /Data/Primitive/BoolEqv
                         ]
                     }
                 )
@@ -271,27 +269,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                        , []
-                                        ) =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ] =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ UnionType
-                                            ( Just
-                                                ( PredClass /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                            , []
-                                            )
+                                            ) ↦ ∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean

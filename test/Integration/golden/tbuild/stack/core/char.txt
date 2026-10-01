@@ -302,7 +302,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Char.. } ) -> /Data/CharOrdering| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/CharOrdering
+                            ( EAppArg { eaaArg = Value /this -> /Data/Char.. } ) -> /Data/CharOrdering = Value /Data/CharOrdering
                         ]
                     }
                 )
@@ -379,9 +379,7 @@ Prgm
                         [ /Data/Algebra/compare
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/CharOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] }
-                            ) -> ∀/Data/Algebra/Comparison =
+                            ( EAppArg { eaaArg = Value /this -> /Data/CharOrdering.. } ) -> ∀/Data/Algebra/Comparison =
                             ( /Data/Algebra/mkComparison
                                 ( EAppArg
                                     { eaaArg = Value /lt -> ∀/Data/Primitive/Boolean =
@@ -637,7 +635,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/ord
-                            ( EAppArg { eaaArg = Value /this -> /Data/Char.. } ) -> /Data/CharOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] = Value /Data/CharOrdering
+                            ( EAppArg { eaaArg = Value /this -> /Data/Char.. } ) -> /Data/CharOrdering = Value /Data/CharOrdering
                         ]
                     }
                 )

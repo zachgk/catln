@@ -10,7 +10,7 @@ import           CtService
 import           Data.Graph                (graphFromEdges)
 import qualified Data.HashMap.Strict       as H
 import qualified Data.HashSet              as S
-import           Data.List                 (isInfixOf)
+import           Data.List                 (isInfixOf, isSuffixOf)
 import           Data.Maybe
 import           Hedgehog
 import qualified Hedgehog.Gen              as HG
@@ -1277,6 +1277,45 @@ propOuterVarNotCaptured = property $ do
         renameIn t = t
     eqTimed "meet over $_T = meet over $_X, renamed" mT renamed
 
+-- | A data type joining a parameterized class at a fixed parameter —
+-- @data(PtRel, isa= [Rel[$T -> Pt]])@, as core's instance relations do — is recorded under the
+-- class as @PtRel[/T=Pt]@, where @/T@ is the CLASS's parameter: PtRel declares none. The record's
+-- binding decides which instantiations hold the member (@Rel[/T=Y]@ does exactly when @Pt ⊆ Y@)
+-- and does not constrain PtRel's own values. Read as PtRel's own dimension, a plain @PtRel@ read
+-- its missing @/T@ as ⊤ and was in no instantiation at all, not even the bare class — so every
+-- instance arm of core's @eq@ and @ord@ (@= /Data/MaybeEqv@) fell outside its declared result.
+-- Fixture: unit/dataIsaParamClass.ct.
+propDataIsaBindsClassParam :: Property
+propDataIsaBindsClassParam = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/dataIsaParamClass.ct"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  relPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "Rel" `isInfixOf` nameStr (ptName cpt)] of
+    (cpt:_) -> return cpt
+    []      -> fail "Rel not found"
+  let findData n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return $ singletonType $ partialVal nm
+        []     -> fail $ printf "%s type not found" n
+  ptT <- findData "Pt"
+  qtT <- findData "Qt"
+  ptRel <- findData "PtRel"
+  tKey <- case H.keys (ptVars relPt) of
+    (k:_) -> return k
+    _     -> fail "Rel has no parameter"
+  let relOver t = UnionType (Just (PredsOne (PredClass relPt{ptVars=H.singleton tKey t}), H.empty, [])) H.empty []
+  let bare = UnionType (Just (PredsOne (PredClass relPt{ptVars=H.empty}), H.empty, [])) H.empty []
+  forM_ [("open", typeEnv), ("closed", typeEnv{tePrgmEnv=True})] $ \(world, te) -> do
+    let sub a b = isSubtypeOf te a b
+    let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv te H.empty a b
+    let checks = [ ("PtRel ⊆ Rel", sub ptRel bare)
+                 , ("PtRel ⊆ Rel[Pt]", sub ptRel (relOver ptT))
+                 , ("PtRel ⊆ Rel[⊤]", sub ptRel (relOver PTopType))
+                 , ("PtRel − Rel[⊤] = ∅", diffEmpty ptRel (relOver PTopType))
+                 , ("PtRel − Rel = ∅", diffEmpty ptRel bare)
+                 , ("PtRel ⊄ Rel[Qt]", not $ sub ptRel (relOver qtT))
+                 , ("PtRel − Rel[Qt] ≠ ∅", not $ diffEmpty ptRel (relOver qtT)) ]
+    forM_ checks $ \(n, ok) -> annotate $ printf "%s world: %s -> %s" (world :: String) (n :: String) (show ok)
+    assert $ all snd checks
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -1313,6 +1352,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
       , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
       , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
+      , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)

@@ -123,9 +123,7 @@ Prgm
                         [ /Data/Algebra/rel
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
-                            ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/IntEqExample.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/intEq
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -137,9 +135,7 @@ Prgm
                         , /Data/Algebra/rel
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Algebra/AllEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
-                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/AllEqv.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -355,9 +351,7 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
                         )
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/IntEqExample }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ( EAppArg { eaaArg = Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample } ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )
@@ -376,9 +370,7 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /b -> /Data/Primitive/Integer = 3 }
                         )
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/IntEqExample }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ( EAppArg { eaaArg = Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample } ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )
@@ -389,7 +381,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /rel
                         ( EAppArg
                             { eaaArg = Value /a -> /Data/Primitive/Integer = 2 }
@@ -397,9 +389,7 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /b -> /Data/Primitive/Integer = 3 }
                         )
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Data/Algebra/AllEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/AllEqv }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ( EAppArg { eaaArg = Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv } ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                     )
                 }
             )

@@ -73,10 +73,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
-                        , /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/AllEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/IntEqExample.. ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        , /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/AllEqv.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -234,8 +232,7 @@ Prgm
                 )
                 ( Value /b -> /Data/Primitive/Integer = CInt
                     { ciValue = 2 }
-                )
-                ( Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/IntEqExample )
+                )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -248,22 +245,20 @@ Prgm
                 )
                 ( Value /b -> /Data/Primitive/Integer = CInt
                     { ciValue = 3 }
-                )
-                ( Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/IntEqExample )
+                )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /rel
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt
                     { ciValue = 2 }
                 )
                 ( Value /b -> /Data/Primitive/Integer = CInt
                     { ciValue = 3 }
-                )
-                ( Value /this -> /Data/Algebra/AllEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/AllEqv )
+                )( Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv )
             )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr

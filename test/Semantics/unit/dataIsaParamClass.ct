@@ -1,0 +1,12 @@
+annot(#noCore)
+
+# A data type joining a parameterized class at a fixed parameter, as core's instance relations
+# do ([data(MaybeEqv, isa= [Eqv[$T -> Maybe]])]): [PtRel] is the [Rel] over [Pt].
+#noCore
+module(Fx)
+  data(Pt)
+  data(Qt)
+
+  class(Rel[$T])
+
+  data(PtRel, isa= [/Fx/Rel[$T -> /Fx/Pt]])
