@@ -29,14 +29,23 @@ Prgm
                     , omiDefs =
                         [ /Data/List/allBy
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /Data/List/all
+                            ( /fn( Value /v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/all
                             ( Value /lst ->
                                 ( /Data/List/Nil + /Data/List/Cons
                                     ( /head=TopType
                                     , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     )| PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ]
                                 ) = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
-                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Primitive/Boolean
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /fn( /v=TopType )
+                                    , []
+                                    ) = /fn( Value /v -> TVArg /v = Value /v )
+                                )
                             )
                         ]
                     }
@@ -142,14 +151,23 @@ Prgm
                     , omiDefs =
                         [ /Data/List/anyBy
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /Data/List/any
+                            ( /fn( Value /v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/any
                             ( Value /lst ->
                                 ( /Data/List/Nil + /Data/List/Cons
                                     ( /head=TopType
                                     , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     )| PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ]
                                 ) = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
-                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Primitive/Boolean
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /fn( /v=TopType )
+                                    , []
+                                    ) = /fn( Value /v -> TVArg /v = Value /v )
+                                )
                             )
                         ]
                     }
@@ -186,16 +204,9 @@ Prgm
                             ( Value /a -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ( Value /b -> ∀/Data/List/ConsList[ /T=TopType ] ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/foldr( Value /lst -> TVArg /a = Value /a )
                             ( /fn
-                                ( Value /acc -> /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
-                                )( Value /v ) -> /Data/List/Cons
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /v ) -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=/Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> TVArg /b = Value /b )
                         ]
@@ -214,7 +225,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/filter
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /lst = Value /lst )
+                            ( /fn( Value /v ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /lst = Value /lst )
                             ( /fn( Value /v ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/List/ConsList[ /T=TopType ]
@@ -247,7 +258,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldr[ /B : TopType ][ /A : TopType ]
                             ( Value /lst -> ∀/Data/List[ /T=$_/A ] )
-                            ( /fn( Value /acc -> $_/B )( Value /v -> $_/A ) -> $/B )( Value /init -> $/B ) -> $_/B
+                            ( /fn( Value /acc -> $_/B )( Value /v -> $_/A ) -> $_/B )( Value /init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -261,9 +272,9 @@ Prgm
                                 ) = /Data/List/Cons( Value /head )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
-                            ( /fn( Value /acc )( Value /v ) )( Value /init )= /fn
+                            ( /fn( Value /acc )( Value /v ) )( Value /init ) -> $_/B = /fn
                             ( Value /acc= /Data/List/foldr( Value /lst -> TVArg /tail = Value /tail )
-                                ( /fn( Value /acc )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
+                                ( /fn( Value /acc )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
                             )( Value /v -> TVArg /head = Value /head )
                         ]
                     }
@@ -327,7 +338,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/sum
                             ( Value /lst -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc -> /Data/Primitive/Integer )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
+                            ( /fn( Value /acc )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                             ( Value /init -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )
@@ -403,16 +414,9 @@ Prgm
                     , omiDefs =
                         [ /Data/List/reversed( Value /lst -> ∀/Data/List ) -> ∀/Data/List = /Data/List/foldl( Value /lst -> TVArg /lst = Value /lst )
                             ( /fn
-                                ( Value /acc -> /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
-                                )( Value /v ) -> /Data/List/Cons
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /v ) -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=/Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> /Data/List/Nil = Value /Data/List/Nil )
                         ]
@@ -457,7 +461,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/any
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( /fn( Value /acc )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
                 )
@@ -514,9 +518,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Monad/mmap( Value /m -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( /fn( Value /v ) ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
-                            ) -> /Data/List/Nil = Value /Data/List/Nil
+                            ( /fn( Value /v ) ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Monad/mmap
                             ( Value /m -> /Data/List/Cons
                                 ( /head=TopType
@@ -524,48 +526,21 @@ Prgm
                                 ) = /Data/List/Cons( Value /head )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
-                            ( /fn( Value /v ) ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
-                            ) -> UnionType
+                            ( /fn( Value /v ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List/ConsList[ /T=TopType ]
                                 , fromList []
                                 , []
                                 )
-                            ,
-                                ( /Data/List/append
-                                    ( /a=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /b=∀/Data/List/ConsList[ /T=TopType ]
-                                    ) + /Data/List/foldr
-                                    [ /B=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /A=TopType
-                                    ]
-                                    ( /fn
-                                        ( /acc=TopType
-                                        , /v=TopType
-                                        )=/Data/List/Cons
-                                        ( /head=TopType
-                                        , /tail=/Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                            )
-                                        )
-                                    , /init=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /lst=
-                                        ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                            )
-                                        )
-                                    )
+                            , /Data/List/append
+                                ( /a=$_/M
+                                , /b=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             , []
                             ) = /Data/List/append
-                            ( Value /a -> ∀/Data/List/ConsList[ /T=TopType ] = /fn( Value /v -> TVArg /head = Value /head ) )
+                            ( Value /a -> $_/M = /fn( Value /v -> TVArg /head = Value /head ) )
                             ( Value /b -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v ) ->
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) = /fn( Value /v -> TVArg /v = Value /v )
-                                )
+                                ( /fn( Value /v ) -> $_/M = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
                     }
@@ -603,12 +578,12 @@ Prgm
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( /fn( Value /v ) ) -> /Data/List/Cons
-                            ( /head=TopType
+                            ( /head=$_/B
                             , /tail=∀/Data/List/ConsList[ /T=TopType ]
                             ) = /Data/List/Cons
-                            ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
+                            ( Value /head -> $_/B = /fn( Value /v -> TVArg /head = Value /head ) )
                             ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
                     }
@@ -619,7 +594,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldl[ /B : TopType ][ /A : TopType ]
                             ( Value /lst -> ∀/Data/List[ /T=$_/A ] )
-                            ( /fn( Value /acc -> $_/B )( Value /v -> $_/A ) -> $/B )( Value /init -> $/B ) -> $_/B
+                            ( /fn( Value /acc -> $_/B )( Value /v -> $_/A ) -> $_/B )( Value /init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -634,8 +609,8 @@ Prgm
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( /fn( Value /acc )( Value /v ) )( Value /init )= /Data/List/foldl( Value /lst -> TVArg /tail = Value /tail )
-                            ( /fn( Value /acc )( Value /v )= /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )
-                            ( Value /init= /fn( Value /acc -> TVArg /init = Value /init )( Value /v -> TVArg /head = Value /head ) )
+                            ( /fn( Value /acc )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )
+                            ( Value /init -> $_/B = /fn( Value /acc -> TVArg /init = Value /init )( Value /v -> TVArg /head = Value /head ) )
                         ]
                     }
                 )
@@ -651,7 +626,19 @@ Prgm
                     , omiDefs =
                         [ /Data/List/elem
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )( Value /item -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /Data/List/anyBy( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /v -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )( Value /r -> TVArg /item = Value /item ) )
+                            ( /fn( Value /v -> ∀/Data/Algebra/Eq ) -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ( /this=∀/Data/Algebra/Eq
+                                    , /other=∀/Data/Algebra/Eq
+                                    )
+                                , []
+                                ) = /operator==( Value /l -> TVArg /v = Value /v )( Value /r -> TVArg /item = Value /item )
+                            )
                         ]
                     }
                 )
@@ -711,7 +698,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/all
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ( /fn( Value /acc )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]
                     }
                 )
@@ -775,9 +762,18 @@ Prgm
                     , omiDefs =
                         [ /Data/List/count
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/Integer = /length
+                            ( /fn( Value /v ) ) -> /Data/Primitive/Integer = /length
                             ( Value /this -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/filter( Value /lst -> TVArg /lst = Value /lst )
-                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Primitive/Boolean
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /fn( /v=TopType )
+                                    , []
+                                    ) = /fn( Value /v -> TVArg /v = Value /v )
+                                )
                             )
                         ]
                     }
@@ -1130,9 +1126,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1143,9 +1137,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/List/foldr( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1175,7 +1167,7 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( /fn( Value /acc -> ∀/Data/Algebra/Semigroup )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
+                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
                     ( Value /r -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "x" }
@@ -1232,9 +1224,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1245,9 +1235,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/List/foldl( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1277,7 +1265,7 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( /fn( Value /acc -> ∀/Data/Algebra/Semigroup )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
+                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
                     ( Value /r -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "x" }
@@ -1986,7 +1974,7 @@ Prgm
                 { csValue = "## Reversing" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Data/List/reversed
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List ) = /Data/List/reversed
                 ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -2026,7 +2014,7 @@ Prgm
                 { csValue = "[3, 2, 1]" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Data/List/reversed( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) )
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List ) = /Data/List/reversed( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[]" }

@@ -64,11 +64,13 @@ Prgm
                                     { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] =
                                         ( /Data/List/filter
                                             ( EAppArg
-                                                { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] =
+                                                { eaaArg = Value /lst ->
+                                                    ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) =
                                                     ( /Data/Set/elements
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                                        ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
+                                                        ) ↦
+                                                        ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
                                                     )
                                                 }
                                             )
@@ -124,11 +126,13 @@ Prgm
                                     { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] =
+                                    { eaaArg = Value /items ->
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] ) =
                                         ( /Data/Set/elements
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                            ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            ) ↦
+                                            ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
                                         )
                                     }
                                 ) ↦ ∀/Data/Set[ /T=TopType ]
@@ -371,11 +375,13 @@ Prgm
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/List/allBy
                                 ( EAppArg
-                                    { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] =
+                                    { eaaArg = Value /lst ->
+                                        ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) =
                                         ( /Data/Set/elements
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                            ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
+                                            ) ↦
+                                            ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
                                         )
                                     }
                                 )
@@ -429,48 +435,8 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /acc -> UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                                    , fromList []
-                                                    , []
-                                                    )
-                                                , /Data/Set/MkSet
-                                                    ( /map=UnionType
-                                                        ( Just
-                                                            ( PredClass /Data/Map
-                                                                [ /K=∀/Data/Algebra/Ord
-                                                                , /V=TopType
-                                                                ]
-                                                            , fromList []
-                                                            , []
-                                                            )
-                                                        , /remove./Data/Map/$b74ebc
-                                                            ( /nk=TopType
-                                                            , /$b74ebc-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
-                                                            , /key=∀/Data/Algebra/Ord
-                                                            , /nv=TopType
-                                                            , /right=∀/Data/Map/BinTree
-                                                                [ /K=TopType
-                                                                , /V=TopType
-                                                                ]
-                                                            , /left=∀/Data/Map/BinTree
-                                                                [ /K=TopType
-                                                                , /V=TopType
-                                                                ]
-                                                            )| PredClass /Data/Map
-                                                            [ /K=TopType
-                                                            , /V=TopType
-                                                            ]
-                                                        , []
-                                                        )
-                                                    )| PredClass /Data/Set[ /T=TopType ]
-                                                , []
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
+                                        ( EAppArg { eaaArg = Value /acc } )
+                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
@@ -771,20 +737,20 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
                                         ( /operator==
                                             ( EAppArg
-                                                { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
                                                     ( /size
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                                        ) ↦ ∀/Data/Algebra/Eq
+                                                        ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> ∀/Data/Algebra/Eq =
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
                                                     ( /size
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                                        ) ↦ ∀/Data/Algebra/Eq
+                                                        ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
                                             ) ↦ ∀/Data/Primitive/Boolean
@@ -825,11 +791,11 @@ Prgm
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
                                         ( /size
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                            ) ↦ ∀/Data/Algebra/Eq
+                                            ) ↦ /Data/Primitive/Integer
                                         )
                                     }
                                 )
@@ -873,49 +839,8 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /acc -> UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                                    , fromList []
-                                                    , []
-                                                    )
-                                                , /Data/Set/MkSet
-                                                    ( /map=UnionType
-                                                        ( Just
-                                                            ( PredClass /Data/Map
-                                                                [ /K=∀/Data/Algebra/Ord
-                                                                , /V=()
-                                                                ]
-                                                            , fromList []
-                                                            , []
-                                                            )
-                                                        , /insert./Data/Map/$5a3188
-                                                            ( /nk=TopType
-                                                            , /value=TopType
-                                                            , /key=∀/Data/Algebra/Ord
-                                                            , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
-                                                            , /nv=TopType
-                                                            , /right=∀/Data/Map/BinTree
-                                                                [ /K=TopType
-                                                                , /V=TopType
-                                                                ]
-                                                            , /left=∀/Data/Map/BinTree
-                                                                [ /K=TopType
-                                                                , /V=TopType
-                                                                ]
-                                                            )| PredClass /Data/Map
-                                                            [ /K=TopType
-                                                            , /V=TopType
-                                                            ]
-                                                        , []
-                                                        )
-                                                    )| PredClass /Data/Set[ /T=TopType ]
-                                                , []
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
+                                        ( EAppArg { eaaArg = Value /acc } )
+                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
@@ -1088,11 +1013,13 @@ Prgm
                                     { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] =
+                                    { eaaArg = Value /items ->
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] ) =
                                         ( /Data/Set/elements
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                            ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            ) ↦
+                                            ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
                                         )
                                     }
                                 ) ↦ ∀/Data/Set[ /T=TopType ]
@@ -1754,7 +1681,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
@@ -1943,7 +1870,7 @@ Prgm
                                     )
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -2091,7 +2018,8 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
+                            { eaaArg = Value /l ->
+                                ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/Algebra/Eq ) =
                                 ( /Data/Set/elements
                                     ( EAppArg
                                         { eaaArg = Value /s -> UnionType
@@ -2280,7 +2208,8 @@ Prgm
                                                 )
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Eq
+                                    ) ↦
+                                    ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )
@@ -2940,7 +2869,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -3327,7 +3256,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -3571,7 +3500,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -3871,7 +3800,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -4516,7 +4445,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -4903,7 +4832,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ ∀/Catln/Doc/DShow
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )

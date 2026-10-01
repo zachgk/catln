@@ -316,7 +316,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/foldEntriesSteps[ /B : ∀/Data/ToString ]
                             ( Value entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
-                            ( fn( Value acc -> $_/B )( Value k -> $_/K )( Value v -> $_/V ) -> $/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
+                            ( fn( Value acc -> $_/B )( Value k -> $_/K )( Value v -> $_/V ) -> $_/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

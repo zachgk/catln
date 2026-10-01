@@ -267,171 +267,10 @@ Prgm
                             ( EAppArg { eaaArg = Value /entries -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
-                        , /Data/Map/mapValuesSteps
-                            ( EAppArg
-                                { eaaArg = Value /entries -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
-                                    ( /head=/Data/Map/Entry
-                                        ( /value=∀/Data/ToString
-                                        , /key=∀/Data/ToString
-                                        )
-                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
-                                    ) = /Data/List/Cons
-                                    ( EAppArg
-                                        { eaaArg = Value /head -> /Data/Map/Entry
-                                            ( /value=∀/Data/ToString
-                                            , /key=∀/Data/ToString
-                                            ) = /Data/Map/Entry
-                                            ( EAppArg { eaaArg = Value /key -> ∀/Data/ToString } )
-                                            ( EAppArg { eaaArg = Value /value -> ∀/Data/ToString } )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Cons
-                            ( /head=/Catln/Doc/Show/EntryStep
-                                ( /output=∀/Data/String
-                                , /input=∀/Data/String
-                                , /key=∀/Data/String
-                                , /index=/Data/Primitive/Integer
-                                )
-                            , /tail=UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/EntryStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=TopType ]
-                                    ( /head=/Catln/Doc/Show/EntryStep
-                                        ( /output=∀/Data/String
-                                        , /input=∀/Data/String
-                                        , /key=∀/Data/String
-                                        , /index=/Data/Primitive/Integer
-                                        )
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                    )
-                                , []
-                                )
-                            ) = /Data/List/Cons
-                            ( EAppArg
-                                { eaaArg = Value /head -> /Catln/Doc/Show/EntryStep
-                                    ( /output=∀/Data/String
-                                    , /input=∀/Data/String
-                                    , /key=∀/Data/String
-                                    , /index=/Data/Primitive/Integer
-                                    ) = /Catln/Doc/Show/EntryStep
-                                    ( EAppArg
-                                        { eaaArg = Value /index -> TVArg /index = ( Value /index ↦ TVArg /index ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /key -> ∀/Data/String =
-                                            ( /Data/toString
-                                                ( EAppArg
-                                                    { eaaArg = Value /this -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                                ) ↦ ∀/Data/String
-                                            )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /input -> ∀/Data/String =
-                                            ( /Data/toString
-                                                ( EAppArg
-                                                    { eaaArg = Value /this -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                ) ↦ ∀/Data/String
-                                            )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /output -> ∀/Data/String =
-                                            ( /Data/toString
-                                                ( EAppArg
-                                                    { eaaArg = Value /this -> ∀/Data/ToString =
-                                                        ( /fn
-                                                            ( EAppArg
-                                                                { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                            ) ↦ ∀/Data/ToString
-                                                        )
-                                                    }
-                                                ) ↦ ∀/Data/String
-                                            )
-                                        }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /tail -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/EntryStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=TopType ]
-                                        ( /head=/Catln/Doc/Show/EntryStep
-                                            ( /output=∀/Data/String
-                                            , /input=∀/Data/String
-                                            , /key=∀/Data/String
-                                            , /index=/Data/Primitive/Integer
-                                            )
-                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                        )
-                                    , []
-                                    ) =
-                                    ( /Data/Map/mapValuesSteps
-                                        ( EAppArg
-                                            { eaaArg = Value /entries -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
-                                                ( /fn
-                                                    ( EAppArg
-                                                        { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ ∀/Data/ToString
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /index -> /Data/Primitive/Integer =
-                                                ( /operator+
-                                                    ( EAppArg
-                                                        { eaaArg = Value /l -> TVArg /index = ( Value /index ↦ TVArg /index ) }
-                                                    )
-                                                    ( EAppArg
-                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                                    ) ↦ /Data/Primitive/Integer
-                                                )
-                                            }
-                                        ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/EntryStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/EntryStep.. ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=TopType ]
-                                            ( /head=/Catln/Doc/Show/EntryStep
-                                                ( /output=∀/Data/String
-                                                , /input=∀/Data/String
-                                                , /key=∀/Data/String
-                                                , /index=/Data/Primitive/Integer
-                                                )
-                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                            )
-                                        , []
-                                        )
-                                    )
-                                }
-                            )
                         ]
                     }
                 )
@@ -777,16 +616,12 @@ Prgm
                         [ /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/Map/mapValues
-                                    [ /MV=TopType
-                                    , /MW=∀/Data/ToString
-                                    , /MK=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=∀/Data/ToString
+                                    ( /fn( /v=TopType )=/fn( /v=TopType )
                                     , /m=∀/Data/Map/BinTree
                                         [ /K=∀/Data/ToString
                                         , /V=∀/Data/ToString
                                         ]
-                                    ) =
+                                    )| PredClass /Catln/Doc/DShowCall =
                                     ( /Data/Map/mapValues
                                         ( EAppArg
                                             { eaaArg = Value /m -> ∀/Data/Map/BinTree
@@ -870,11 +705,27 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = /fn
-                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
+                                                ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                                ( Just
+                                                    ( PredClass /Data/ToString
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /fn( /v=TopType )
+                                                , []
+                                                ) =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ ∀/Data/ToString
+                                                    ) ↦ UnionType
+                                                    ( Just
+                                                        ( PredClass /Data/ToString
+                                                        , fromList []
+                                                        , []
+                                                        )
+                                                    , /fn( /v=TopType )
+                                                    , []
+                                                    )
                                                 )
                                             }
                                         )
@@ -891,28 +742,34 @@ Prgm
                                         ( /acc=TopType
                                         , /v=TopType
                                         , /k=TopType
-                                        )=∀/Data/ToString
+                                        )=/fn
+                                        ( /acc=TopType
+                                        , /v=TopType
+                                        , /k=TopType
+                                        )
                                     , /m=∀/Data/Map/BinTree
                                         [ /K=∀/Data/ToString
                                         , /V=∀/Data/ToString
                                         ]
                                     , /init=∀/Data/ToString
-                                    ) = /Data/Map/foldEntries
-                                    ( EAppArg
-                                        { eaaArg = Value /m -> ∀/Data/Map/BinTree
-                                            [ /K=∀/Data/ToString
-                                            , /V=∀/Data/ToString
-                                            ]
-                                        }
+                                    )| PredClass /Catln/Doc/DShowCall =
+                                    ( /Data/Map/foldEntries
+                                        ( EAppArg
+                                            { eaaArg = Value /m -> ∀/Data/Map/BinTree
+                                                [ /K=∀/Data/ToString
+                                                , /V=∀/Data/ToString
+                                                ]
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = /fn
+                                                ( EAppArg { eaaArg = Value /acc } )
+                                                ( EAppArg { eaaArg = Value /k } )
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
+                                            }
+                                        )
+                                        ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } ) ↦ TopType
                                     )
-                                    ( EAppArg
-                                        { eaaArg = /fn
-                                            ( EAppArg { eaaArg = Value /acc } )
-                                            ( EAppArg { eaaArg = Value /k } )
-                                            ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
-                                        }
-                                    )
-                                    ( EAppArg { eaaArg = Value /init -> ∀/Data/ToString } )
                                 }
                             ) -> /Catln/Doc/Show/EntryFoldSteps.. =
                             ( /Data/Map/foldEntriesShow
@@ -1005,7 +862,19 @@ Prgm
                                                 { eaaArg = /fn
                                                     ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                                                     ( EAppArg { eaaArg = Value /k } )
-                                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
+                                                    ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                                    ( Just
+                                                        ( PredClass /Data/ToString
+                                                        , fromList []
+                                                        , []
+                                                        )
+                                                    , /fn
+                                                        ( /acc=TopType
+                                                        , /v=TopType
+                                                        , /k=TopType
+                                                        )
+                                                    , []
+                                                    ) =
                                                     ( /fn
                                                         ( EAppArg
                                                             { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1015,7 +884,19 @@ Prgm
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                        ) ↦ ∀/Data/ToString
+                                                        ) ↦ UnionType
+                                                        ( Just
+                                                            ( PredClass /Data/ToString
+                                                            , fromList []
+                                                            , []
+                                                            )
+                                                        , /fn
+                                                            ( /acc=TopType
+                                                            , /v=TopType
+                                                            , /k=TopType
+                                                            )
+                                                        , []
+                                                        )
                                                     )
                                                 }
                                             )
@@ -1175,7 +1056,7 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /acc -> $_/B } )
                                     ( EAppArg { eaaArg = Value /k -> $_/K } )
-                                    ( EAppArg { eaaArg = Value /v -> $_/V } ) -> $/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/V } ) -> $_/B
                                 }
                             )
                             ( EAppArg { eaaArg = Value /acc -> $/B } )
@@ -1188,9 +1069,9 @@ Prgm
                             ( EAppArg { eaaArg = Value /entries -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /acc } )
+                                    ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                                     ( EAppArg { eaaArg = Value /k } )
-                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
@@ -1220,9 +1101,9 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /acc } )
+                                    ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                                     ( EAppArg { eaaArg = Value /k } )
-                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
@@ -1295,7 +1176,7 @@ Prgm
                                         { eaaArg = Value /output -> ∀/Data/String =
                                             ( /Data/toString
                                                 ( EAppArg
-                                                    { eaaArg = Value /this -> ∀/Data/ToString =
+                                                    { eaaArg = Value /this -> $_/B =
                                                         ( /fn
                                                             ( EAppArg
                                                                 { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1305,7 +1186,7 @@ Prgm
                                                             )
                                                             ( EAppArg
                                                                 { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                            ) ↦ ∀/Data/ToString
+                                                            ) ↦ $_/B
                                                         )
                                                     }
                                                 ) ↦ ∀/Data/String
@@ -1341,7 +1222,7 @@ Prgm
                                             { eaaArg = /fn
                                                 ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                                                 ( EAppArg { eaaArg = Value /k } )
-                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/ToString =
+                                                ( EAppArg { eaaArg = Value /v } ) -> $_/B =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1351,12 +1232,12 @@ Prgm
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                    ) ↦ ∀/Data/ToString
+                                                    ) ↦ $_/B
                                                 )
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /acc -> ∀/Data/ToString =
+                                            { eaaArg = Value /acc -> $_/B =
                                                 ( /fn
                                                     ( EAppArg
                                                         { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -1366,7 +1247,7 @@ Prgm
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                                    ) ↦ ∀/Data/ToString
+                                                    ) ↦ $_/B
                                                 )
                                             }
                                         )

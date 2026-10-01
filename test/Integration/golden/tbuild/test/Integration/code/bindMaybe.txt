@@ -11,8 +11,7 @@ Prgm
                         [ /maybeBind
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) =
+                            ) -> ∀/Data/Maybe =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -26,8 +25,7 @@ Prgm
                                             ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                                ) ↦ ∀/Data/Maybe
                             )
                         ]
                     }

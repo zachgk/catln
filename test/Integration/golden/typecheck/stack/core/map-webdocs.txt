@@ -142,7 +142,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/mapValuesSteps( Value /entries -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( /fn( Value /v ) -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
+                            ( /fn( Value /v ) )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Map/mapValuesSteps
                             ( Value /entries -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
                                 ( /head=/Data/Map/Entry
@@ -158,7 +158,7 @@ Prgm
                                 )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
                             )
-                            ( /fn( Value /v ) -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
+                            ( /fn( Value /v ) )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/EntryStep
                                 ( /output=∀/Data/String
                                 , /input=∀/Data/String
@@ -415,16 +415,12 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Map/mapValues
-                                [ /MV=TopType
-                                , /MW=∀/Data/ToString
-                                , /MK=TopType
-                                ]
-                                ( /fn( /v=TopType )=∀/Data/ToString
+                                ( /fn( /v=TopType )=/fn( /v=TopType )
                                 , /m=∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
                                     ]
-                                ) = /Data/Map/mapValues
+                                )| PredClass /Catln/Doc/DShowCall = /Data/Map/mapValues
                                 ( Value /m -> ∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
@@ -455,7 +451,16 @@ Prgm
                                     , []
                                     ) = /Data/Map/ascending( Value /m -> TVArg /m = Value /m )( Value /rest -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
-                                ( /fn( Value /v ) -> ∀/Data/ToString = /fn( Value /v -> TVArg /v = Value /v ) )
+                                ( /fn( Value /v ) -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/ToString
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /fn( /v=TopType )
+                                    , []
+                                    ) = /fn( Value /v -> TVArg /v = Value /v )
+                                )
                                 ( Value /index -> /Data/Primitive/Integer = CInt
                                     { ciValue = 0 }
                                 )
@@ -466,13 +471,17 @@ Prgm
                                     ( /acc=TopType
                                     , /v=TopType
                                     , /k=TopType
-                                    )=∀/Data/ToString
+                                    )=/fn
+                                    ( /acc=TopType
+                                    , /v=TopType
+                                    , /k=TopType
+                                    )
                                 , /m=∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
                                     ]
                                 , /init=∀/Data/ToString
-                                ) = /Data/Map/foldEntries
+                                )| PredClass /Catln/Doc/DShowCall = /Data/Map/foldEntries
                                 ( Value /m -> ∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
@@ -536,7 +545,20 @@ Prgm
                                     , []
                                     ) = /Data/Map/descending( Value /m -> TVArg /m = Value /m )( Value /rest -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
-                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /k )( Value /v ) -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )( Value /acc -> TVArg /init = Value /init )
+                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /k )( Value /v ) -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/ToString
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /fn
+                                        ( /acc=TopType
+                                        , /v=TopType
+                                        , /k=TopType
+                                        )
+                                    , []
+                                    ) = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v )
+                                )( Value /acc -> TVArg /init = Value /init )
                                 ( Value /index -> /Data/Primitive/Integer = CInt
                                     { ciValue = 0 }
                                 )
@@ -608,13 +630,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/foldEntriesSteps[ /B : ∀/Data/ToString ]
                             ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
-                            ( /fn( Value /acc -> $_/B )( Value /k -> $_/K )( Value /v -> $_/V ) -> $/B )( Value /acc -> $/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
+                            ( /fn( Value /acc -> $_/B )( Value /k -> $_/K )( Value /v -> $_/V ) -> $_/B )( Value /acc -> $/B )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/foldEntriesSteps( Value /entries -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( /fn( Value /acc )( Value /k )( Value /v ) -> ∀/Data/ToString )( Value /acc -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
+                            ( /fn( Value /acc -> ∀/Data/ToString )( Value /k )( Value /v ) )( Value /acc -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Map/foldEntriesSteps
                             ( Value /entries -> /Data/List/Cons[ /T=/Data/Map/Entry.. ]
                                 ( /head=/Data/Map/Entry
@@ -630,7 +652,7 @@ Prgm
                                 )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] )
                             )
-                            ( /fn( Value /acc )( Value /k )( Value /v ) -> ∀/Data/ToString )( Value /acc -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
+                            ( /fn( Value /acc -> ∀/Data/ToString )( Value /k )( Value /v ) )( Value /acc -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> /Data/List/Cons
                             ( /head=/Catln/Doc/Show/EntryFoldStep
                                 ( /output=∀/Data/String
                                 , /acc=∀/Data/String
@@ -668,7 +690,7 @@ Prgm
                                 ( Value /acc -> ∀/Data/String = /Data/toString( Value /this -> TVArg /acc = Value /acc ) )
                                 ( Value /input -> ∀/Data/String = /Data/toString( Value /this -> TVArg /value = Value /value ) )
                                 ( Value /output -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
+                                    ( Value /this -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
                                 )
                             )
                             ( Value /tail -> UnionType
@@ -689,8 +711,8 @@ Prgm
                                     )
                                 , []
                                 ) = /Data/Map/foldEntriesSteps( Value /entries -> TVArg /tail = Value /tail )
-                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /k )( Value /v ) -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
-                                ( Value /acc -> ∀/Data/ToString = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
+                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /k )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /k = Value /k )( Value /v -> TVArg /v = Value /v ) )
+                                ( Value /acc -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /k -> TVArg /key = Value /key )( Value /v -> TVArg /value = Value /value ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }

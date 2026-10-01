@@ -220,7 +220,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldrSteps[ /B : ∀/Data/ToString ]
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value init -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -258,7 +258,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldlSteps[ /B : ∀/Data/ToString ]
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -386,8 +386,8 @@ Prgm
                 ( "/Data/List/mmapSteps"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/List/mmapSteps
-                            ( Value m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                        [ /Data/List/mmapSteps[ /A : ∀/Data/ToString ]
+                            ( Value m -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( fn( Value v -> $_/A ) -> ∀/Data/ToString )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []
@@ -421,7 +421,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldrWalk[ /B : ∀/Data/ToString ]
                             ( Value stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer )
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value acc -> $/B )( Value index -> /Data/Primitive/Integer )
                             ( Value rows -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ]
                         ]
                     , omiRuntimeDecls = []
