@@ -4634,6 +4634,16 @@ constantInType _ _ _ _ = False
 -- on, so an answer computed while one fired may depend on which questions were in flight above
 -- it, and storing it would let the path it was first reached on decide it for every later one.
 -- Traced ('teDebug') queries bypass it so the trace shows every question asked.
+--
+-- The key is forced to a value before it is compared or stored, as 'Semantics.objArrGraphQuery'
+-- forces its answers. A key holds its question's types and var-arg env, and the env is lazy in its
+-- values: 'TypeCheck.Common.setDescriptor' resolves an entry only where a check reads it, and an
+-- entry can be a stored scheme still being worked out further up the stack. Kept as a thunk, a
+-- later question whose key hashed alike compared against it and forced that scheme from inside
+-- its own evaluation, which GHC ends as @<<loop>>@ (every page importing core, once core/char.ct
+-- took Char out of core/string.ct). The questions themselves never needed those entries: with the
+-- memo bypassed the same pages compile. Stored keys are now values, so a comparison forces
+-- nothing that is still being worked out.
 type SubtypeMemoKey = (Int, (Bool, Bool, Bool), [(TypeVarAux, Type)], Type, Type)
 
 {-# NOINLINE subtypeMemoRef #-}
@@ -4649,7 +4659,9 @@ isSubtypeOfWithEnv typeEnv vaenv t1 t2 = case teQueryCacheKey typeEnv of
   Nothing -> isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
   Just _ | teInSatDecision typeEnv -> isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
   Just tok -> unsafePerformIO $ do
-    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), L.sortOn fst (H.toList vaenv), t1, t2)
+    let vaenvList = L.sortOn fst (H.toList vaenv)
+    _ <- evaluate (forceType t1 `seq` forceType t2 `seq` foldr (\(_, v) acc -> forceType v `seq` acc) () vaenvList)
+    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), vaenvList, t1, t2)
     gens <- readIORef subtypeMemoRef
     case lookup tok gens >>= H.lookup key of
       Just r -> return r
