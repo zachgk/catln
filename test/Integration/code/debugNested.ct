@@ -33,7 +33,6 @@ bump(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
   function, and under each element of the fmap the calls of a function written over several lines.
 totals(xs -> /Data/List[$T -> Integer]) -> /Data/List[$T -> Integer] =
   shifted= fmap(lst= xs, fn(v)= total(a= v, b= 2))
-
   shifted
 
 main{io -> IO} =

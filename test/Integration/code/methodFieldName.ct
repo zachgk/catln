@@ -12,8 +12,9 @@ module(Lib)
 data(Rec(foo -> Integer))
 
 f(x -> Integer) -> Integer
-f(x)=
-  n = x.foo
+f(x) =
+  n= x.foo
+
   n + 1
 
 main{io -> IO}= io.println(msg= f(x= -3).toString).exit(val= 0)
