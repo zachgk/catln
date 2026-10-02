@@ -756,7 +756,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feInstruments, feUpdatedDuringEpoch} c
     -- env does not hold already reads as ('Semantics.Types.vaenvLookup'); before this, one such
     -- point made the whole env an error and refused the store outright.
     vaenv :: TypeVarArgEnv
-    vaenv = HL.map (resolveVaenvEntry env . snd) (constraintVarArgEnvIO con)
+    vaenv = HL.mapKeys extKey $ HL.map (resolveVaenvEntry env . snd) (constraintVarArgEnvIO con)
     schemeChanged :: Bool
     schemeChanged = case (scheme, scheme') of
       (TypeCheckResult _ SType{stypeAct=UnionType (Just _) _ _}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True

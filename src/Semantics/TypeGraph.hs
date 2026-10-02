@@ -132,7 +132,7 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
   where
     reachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> ReachesTree
     reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf
-    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt PTopType) ("arg", ReachesLeaf)
+    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | extKey (TVArg (partialKey argName)) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt PTopType) ("arg", ReachesLeaf)
     reachesPartial env@ReachesEnv{rTypeEnv, rVisited, rVaenv} partial = do
 
       let ttypes = typeGraphQueryWithReason rTypeEnv rVaenv partial

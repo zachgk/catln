@@ -58,7 +58,7 @@ instance Semigroup (ObjArrTypeGraph e m) where
 -- shared token 1 and the memo mixed answers across epochs and programs. The mint's IO
 -- now forces its argument INSIDE the action, so the expression depends on the argument
 -- and cannot float.
-type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(TypeVarAux, Type)])
+type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(VarKey, Type)])
 
 -- | Keeps the THREE most-recently-used token generations: the per-page static env's
 -- token, the current epoch's reaches token, and the current constraint's merged reaches
@@ -451,7 +451,7 @@ arrowDestTypeDispatch :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat
 arrowDestTypeDispatch = arrowDestTypeBase True
 
 arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
-arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . withScope . withDeclaredArgResults . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
+arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . withScope . withDeclaredArgResults . ambientEnv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
     -- An arrow the querying scope itself adds to its environment — an argument of the enclosing
     -- definition, or a lambda the call is given ('ArgObj') — is defined IN that scope, so its
@@ -464,8 +464,8 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
     withScope local
       | oaBasis oa == ArgObj = H.union local (H.mapWithKey scopeLink ambient)
       | otherwise            = local
-    scopeLink v PTopType = TypeVar v TVExt PTopType
-    scopeLink _ t        = t
+    scopeLink (VarKey _ v) PTopType = TypeVar v TVExt PTopType
+    scopeLink _ t                   = t
     -- The arm's higher-order arguments read as its declaration gives them: an unannotated
     -- @fn(v)@ is the declared @fn(v -> $_A) -> $_B@, so a result variable only the declaration
     -- spells (@$_B@, which the arm's body result is written in) is bound to what the call's
@@ -473,11 +473,11 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
     withDeclaredArgResults vaenv0 = foldr bindResult vaenv0 (typeGraphDeclaredArgResults typeEnv (ptName srcPartial))
       where
         bindResult (k, TypeVar v _ _) env
-          | maybe True (== PTopType) (H.lookup v env)
+          | maybe True (== PTopType) (H.lookup (extKey v) env)
           , Just slot <- typeGetArgLoose k srcPartial
           , res <- hoSlotResult typeEnv env k slot
           , res /= PTopType
-          = H.insert v res env
+          = H.insert (extKey v) res env
         bindResult _ env = env
     srcPartial = case maybeGetSingleton $ substituteTVExt typeEnv H.empty $ singletonType src of
       Just s  -> s
@@ -487,7 +487,7 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
       -- A body that is an argument reference (@= x@) or a call of a higher-order argument
       -- (@= fn(v= x)@): the argument's result — for a higher-order argument, its input object
       -- resolved through the environment's arrows ('hoSlotResult').
-      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch (substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (TVArg $ inExprSingleton n) vaenv)
+      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch (substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
       _                              -> joinedDispatch
       where
         substitute = substituteTVExt typeEnv vaenv
@@ -563,7 +563,7 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
           -- A bare argument reference (@head=x@): the field is the argument's bound value.
           , isJust (maybeExprPath valExpr)
           , null (exprAppliedArgs valExpr)
-          , Just fv <- [H.lookup (TVArg (inExprSingleton valExpr)) vaenv] ]
+          , Just fv <- [H.lookup (extKey (TVArg (inExprSingleton valExpr))) vaenv] ]
           ++
           -- DISPATCH ONLY ('arrowDestTypeDispatch'): a field valued by an APPLICATION of one
           -- of the object's own arguments (@head= fn(v=head)@ where @fn@ is an object arg) is
@@ -678,4 +678,4 @@ metaTypeVar m = case getMetaType m of
   _             -> Nothing
 
 isSubtypeOfWithObjSrcs :: (TypeGraph tg, Show m, MetaDat m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> Type -> Type -> Bool
-isSubtypeOfWithObjSrcs typeEnv objSrcs subType supType = any (\vaenv -> isSubtypeOfWithEnv typeEnv (fmap snd vaenv) subType supType) (exprVarArgsWithObjSrcs typeEnv objSrcs)
+isSubtypeOfWithObjSrcs typeEnv objSrcs subType supType = any (\vaenv -> isSubtypeOfWithEnv typeEnv (ambientEnv $ (fmap snd vaenv)) subType supType) (exprVarArgsWithObjSrcs typeEnv objSrcs)

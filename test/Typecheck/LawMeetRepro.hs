@@ -329,15 +329,15 @@ probeNarrow env con0 = case stypeConstraint (showCon env con0) of
   TypeCheckResE _ -> putStrLn "  probeNarrow: unresolvable view"
   TypeCheckResult _ con'@(Constraint _ _ vaenv (BoundedByObjs _ SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) -> do
     let feTypeEnvL = feTypeEnv env
-    let vaenv' = fmap (stypeAct . snd) vaenv
+    let vaenv' = ambientEnv $ fmap (stypeAct . snd) vaenv
     let argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnvL vaenv' $
           UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $
                              splitVarArgEnv $ constraintVarArgEnv con') []
     let objMapBoundUb' = objMapBoundUb
     forceStep "objMapBoundUb'" (show objMapBoundUb')
     forceStep "argsBoundUb" (show argsBoundUb)
-    forM_ [("REQ", fmap (stypeReq . snd) vaenv, pReq),
-           ("REQDECL", fmap (stypeReqDecl . snd) vaenv, pReqDecl)] $ \(chNm, chanVaenv, chanReq) -> do
+    forM_ [("REQ", ambientEnv $ fmap (stypeReq . snd) vaenv, pReq),
+           ("REQDECL", ambientEnv $ fmap (stypeReqDecl . snd) vaenv, pReqDecl)] $ \(chNm, chanVaenv, chanReq) -> do
       putStrLn $ "  -- channel " ++ chNm ++ ": chanReq = " ++ take 400 (show chanReq)
       let ocp = openClassPart feTypeEnvL chanReq
       forceStep (chNm ++ ".openClassPart") (show ocp)

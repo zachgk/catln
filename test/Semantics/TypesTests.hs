@@ -984,7 +984,7 @@ propParentVarBindingRespected gPrgm = property $ do
   -- else, so a reader that resolves the parent reference by name against the ambient layer
   -- (instead of the enclosing partial's binding) reads the decoy and the pair comes apart.
   decoy <- forAll $ HG.frequency [(2, Just <$> genGroundLeafBound prgm), (1, return Nothing)]
-  let vaenv = maybe vaenv0 (\d -> H.insert (TVVar varName) d vaenv0) decoy
+  let vaenv = maybe vaenv0 (\d -> H.insert (extKey (TVVar varName)) d vaenv0) decoy
   classify "decoy bound in the ambient env" (isJust decoy)
   annotate $ printf "vaenv = %s" (show vaenv)
   annotate $ printf "ref = %s" (show ref)

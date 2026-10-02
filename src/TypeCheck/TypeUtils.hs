@@ -260,7 +260,7 @@ mkReachesEnv env con@(Constraint _ _ stypeVaenv _) = do
   -- 'ArrowTo'\/'PropEq' constraint EXECUTION, every epoch (profiled at 72% of typecheck
   -- inside the reach machinery it feeds). Sharing the one per-epoch value drops that
   -- rebuild for the (majority) no-arg constraints.
-  return $ ReachesEnv (withLocalArrows argTypeEnv feTypeEnv') (fmap snd vaenv) S.empty
+  return $ ReachesEnv (withLocalArrows argTypeEnv feTypeEnv') (ambientEnv $ fmap snd vaenv) S.empty
 
 -- | A type env with a constraint's LOCAL arrows ('localArrowTypeEnv') added. A merged env never
 -- carries a query-cache token ('<>' clears it: a merged env is a different value), so every
@@ -316,7 +316,7 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
   -- The argument's own result is read through the constraint's bindings; the declared one is
   -- NOT — it is the link the call binds, and resolving it here would read an in-scope but still
   -- unbound declaration variable (@$_B@ registered for the definition at ⊤) as the ⊤ it is now.
-  let ownResult outM = substituteTVExt (feTypeEnv env) (fmap snd vaenv) (getMetaType outM)
+  let ownResult outM = substituteTVExt (feTypeEnv env) (ambientEnv $ fmap snd vaenv) (getMetaType outM)
   let argResult k inExpr outM
         | not (null (exprAppliedArgs inExpr)), Just declT <- declResultFor k = intersectTypes (feTypeEnv env) (ownResult outM) declT
         | otherwise = ownResult outM
@@ -438,7 +438,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   let reachesTypeEnv = rTypeEnv reachesEnv
   let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
   let reaches0 = dropSelfBaseReach con $ reachesPartials reachesEnv allPartials
-  let vaenv' = fmap (stypeAct . snd) conVaenv
+  let vaenv' = ambientEnv $ fmap (stypeAct . snd) conVaenv
 
   -- Where and how the requirement acts depends on the kind of destination:
   --   * A consumption point (an argument slot, a where-clause bool) holds the settled value
@@ -699,7 +699,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
              (Nothing, Just am) -> am
              (Just sp, Just am) -> structUnion am sp
   let viableComponents = unionAllTypesWithEnv feTypeEnv vaenv' (map viableMet viableKeys)
-  let reqVaenv = fmap (stypeReq . snd) conVaenv
+  let reqVaenv = ambientEnv $ fmap (stypeReq . snd) conVaenv
   let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableBare
   let narrowedReq = intersectTypesEnv feTypeEnv reqVaenv srcReq   viableComponents
   -- Narrow act and req in lockstep so the deferred act⊆req check still holds at Decode, and each

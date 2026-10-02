@@ -352,7 +352,7 @@ genVaenv prgm = go [] varNamePool
     -- slot (@b ↦ Pair[/A=$_b]@) is a recursive equation rather than a value, and resolving it
     -- unfolds without end. No program's environment holds one — the algebra keeps such an
     -- equation on the occurrence instead of installing it ('comparedPartialsEnv').
-    go acc [] = return $ H.fromList acc
+    go acc [] = return $ ambientEnv $ H.fromList acc
     go acc (n:ns) = do
       bind <- HG.frequency [(2, return True), (1, return False)]
       if not bind

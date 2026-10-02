@@ -501,9 +501,9 @@ instance ExprClass Expr where
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
                     (lt@(UnionType Nothing _ _), rt) | isJust (maybeGetSingleton lt) -> concatMap findArrowMatches bases'
                       where
-                        findArrowMatches base' = case typeGraphQuery typeEnv (fmap snd base') $ getSingleton lt of
+                        findArrowMatches base' = case typeGraphQuery typeEnv (ambientEnv $ (fmap snd base')) $ getSingleton lt of
                           [] -> [H.empty]
-                          qr -> let fromEachArrow = fmap (\qrt -> fst $ intersectTypesWithVarEnv typeEnv (fmap snd base') qrt rt) qr
+                          qr -> let fromEachArrow = fmap (\qrt -> envAmbient $ fst $ intersectTypesWithVarEnv typeEnv (ambientEnv $ (fmap snd base')) qrt rt) qr
                                 in joinPossVarArgMetaWithSrc typeEnv (map (fmap ([],)) fromEachArrow) [base']
                     _ -> [H.empty]
                   _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)

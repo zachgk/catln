@@ -534,7 +534,7 @@ fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
   ObjectMap tTg <- gets feTTypeGraph
   let depDeclVars = S.unions [ declArgResultVars decl | decl@ObjArr{oaObj=Just{}} <- maybe [] omiDecls (H.lookup objName tTg) ]
   let declVs = S.toList $ S.difference (S.union batchDeclVars depDeclVars) (S.fromList (H.keys explicitVaenv))
-  let implicitVs = S.toList $ S.union (S.fromList declVs) $ S.unions $ map (outOfScopeTVExtVars scopeBase) annotTys
+  let implicitVs = S.toList $ S.union (S.fromList declVs) $ S.unions $ map (outOfScopeTVExtVars (ambientEnv $ scopeBase)) annotTys
   implicitVaenv <- fmap H.fromList $ forM implicitVs $ \v -> do
     p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
     let vm = Meta PTopType (getMetaPos $ getExprMeta obj') nil (mkVarMetaDat inEst p)
