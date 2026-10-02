@@ -869,14 +869,8 @@ Prgm
                         [ /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/Functor/fmap
-                                    [ /F=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=TopType ] )
-                                    , /B=TopType
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=/fn[ /A=$_/A ]( /v=$/A )
-                                    , /lst=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=TopType ] )
+                                    ( /fn( /v=TopType )=/fn( /v=TopType )
+                                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                     )| PredClass /Catln/Doc/DShowCall =
                                     ( /Data/Functor/fmap
                                         ( EAppArg
@@ -937,14 +931,8 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/Monad/mmap
-                                    [ /B=TopType
-                                    , /M=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=TopType ] )
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=/fn[ /A=$_/A ]( /v=$/A )
-                                    , /m=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=TopType ] )
+                                    ( /fn( /v=TopType )=/fn( /v=TopType )
+                                    , /m=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                     )| PredClass /Catln/Doc/DShowCall = /Data/Monad/mmap
                                     ( EAppArg
                                         { eaaArg = Value /m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }

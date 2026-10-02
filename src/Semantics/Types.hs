@@ -3562,11 +3562,18 @@ slotUnionCovers typeEnv vaenv covers sub sup =
 -- Derived from the partial ALONE, never from a comparison's shared env: reading the other side's
 -- binding back would narrow this partial to it and vacuously prove @Cons(head=$/T) ⊆
 -- Cons[/T=X](head=X)@ for any @X@.
+--
+-- A function's declaration ties its parameter to its arguments the same way a data type's ties
+-- it to fields: @(_ :: $T ++ _ :: $T)[$T -> Semigroup]@ makes an application's @/T@ what its
+-- arguments are. So the declarations' input templates ('typeGraphArrowTemplates') are read
+-- beside the data declarations. Read from the data alone, an application spelled without the
+-- parameter (@++(l=String, r=String)@) kept it at ⊤, and so fell outside its own declaration's
+-- @/T=∀Semigroup@ whatever its arguments were.
 ptVarEff :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> TypeVarName -> Type -> Type
 ptVarEff typeEnv vaenv p k v = foldr (intersectTypesEnv typeEnv vaenv) v
   [ substituteTVExtScoped typeEnv ((ambientEnv $ joinVarArgEnv (ptVars p) H.empty)) vaenv av
   | (ak, av) <- H.toList (ptArgs p), not (isTypeVar av)
-  , dp <- typeGraphData typeEnv (ptName p)
+  , dp <- typeGraphData typeEnv (ptName p) ++ typeGraphArrowTemplates typeEnv (ptName p)
   , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
 
 -- | Whether a type parameter of a name is tied to SEVERAL of its values' positions. A type is the

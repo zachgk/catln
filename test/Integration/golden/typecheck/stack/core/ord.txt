@@ -553,7 +553,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
-                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )
@@ -568,7 +568,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
-                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )
@@ -583,7 +583,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isGreater
-                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )
@@ -598,7 +598,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLessEq
-                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )

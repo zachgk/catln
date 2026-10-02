@@ -1316,6 +1316,52 @@ propDataIsaBindsClassParam = property $ do
     forM_ checks $ \(n, ok) -> annotate $ printf "%s world: %s -> %s" (world :: String) (n :: String) (show ok)
     assert $ all snd checks
 
+-- | A function declaration whose arguments are its own parameter (@(_ :: $T ++ _ :: $T)[$T ->
+-- Semigroup]@) holds an application to two members of the parameter's bound, and not one to a type
+-- outside it. The application is spelled without the parameter (@op(l=Sa, r=Sa)@), so its @/T@ is
+-- what its arguments are, as a data value's is what its pointer-declared fields are
+-- ('ptVarEff'). Read from data declarations alone, the application's @/T@ stayed ⊤ and every
+-- application fell outside its own declaration: core's String arm of @++@ outside the generic
+-- @++@, as soon as the String declaration became a refinement and no longer covered it itself.
+-- Fixture: unit/pointerArgsMember.ct.
+propFunctionParamFromArgs :: Property
+propFunctionParamFromArgs = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/pointerArgsMember.ct"
+  let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/op" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    (t:_) -> return t
+    []    -> fail "op not declared"
+  opName <- case [ n | (n, _) <- H.toList om, "/op" `isSuffixOf` nameStr n ] of
+    (n:_) -> return n
+    []    -> fail "op not found"
+  let findData n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return $ singletonType $ partialVal nm
+        []     -> fail $ printf "%s type not found" n
+  sa <- findData "Sa"
+  sb <- findData "Sb"
+  declLeaf <- case declT of
+    UnionType Nothing leafs [] | [p] <- splitUnionType leafs -> return p
+    _ -> fail "decl is not one leaf"
+  let keyNamed k = case [ ak | ak <- H.keys (ptArgs declLeaf), k `isSuffixOf` nameStr (pkName ak) ] of
+        (ak:_) -> return ak
+        []     -> fail ("no arg " ++ k)
+  lk <- keyNamed "/l"
+  rk <- keyNamed "/r"
+  let app a b = singletonType (partialVal opName){ptArgs = H.fromList [(lk, a), (rk, b)]}
+  annotate $ printf "decl = %s" (show declT)
+  forM_ [("open", typeEnv), ("closed", typeEnv{tePrgmEnv=True})] $ \(world, te) -> do
+    let sub a b = isSubtypeOf te a b
+    let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv te H.empty a b
+    let checks = [ ("op(Sa, Sa) ⊆ decl", sub (app sa sa) declT)
+                 , ("op(Sa, Sa) − decl = ∅", diffEmpty (app sa sa) declT)
+                 , ("op(Sb, Sb) ⊄ decl", not $ sub (app sb sb) declT)
+                 , ("op(Sb, Sb) − decl ≠ ∅", not $ diffEmpty (app sb sb) declT) ]
+    forM_ checks $ \(n, ok) -> do
+      forceTimed (world ++ ": " ++ n) ok
+      annotate $ printf "%s world: %s -> %s" (world :: String) n (show ok)
+    assert $ all snd checks
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -1353,6 +1399,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
       , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
       , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
+      , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)

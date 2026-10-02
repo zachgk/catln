@@ -842,14 +842,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLess
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 2 }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -866,14 +866,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isEq
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 3 }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -890,14 +890,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isGreater
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 4 }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -914,14 +914,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLessEq
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 2 }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )

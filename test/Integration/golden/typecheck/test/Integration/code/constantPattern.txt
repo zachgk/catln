@@ -18,7 +18,8 @@ Prgm
                                 { ciValue = 0 }
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /msg -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
                                     ( Value /this -> ∀/Data/Primitive/Boolean = /startsA
                                         ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                             ( /head=/Data/Char
@@ -31,7 +32,8 @@ Prgm
                                     )
                                 )
                                 ( Value /this -> /Catln/IO = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
                                         ( Value /this -> ∀/Data/Primitive/Boolean = /startsA
                                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                                 ( /head=/Data/Char
@@ -55,7 +57,8 @@ Prgm
                                         )
                                     )
                                     ( Value /this -> /Catln/IO = /Catln/println
-                                        ( Value /msg -> ∀/Data/String = /Data/toString
+                                        ( Value /msg -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
                                             ( Value /this -> ∀/Data/Primitive/Boolean = /isZero
                                                 ( Value /x -> /Data/Primitive/Integer = CInt
                                                     { ciValue = 5 }
@@ -63,7 +66,8 @@ Prgm
                                             )
                                         )
                                         ( Value /this -> /Catln/IO = /Catln/println
-                                            ( Value /msg -> ∀/Data/String = /Data/toString
+                                            ( Value /msg -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
                                                 ( Value /this -> ∀/Data/Primitive/Boolean = /isZero
                                                     ( Value /x -> /Data/Primitive/Integer = CInt
                                                         { ciValue = 0 }

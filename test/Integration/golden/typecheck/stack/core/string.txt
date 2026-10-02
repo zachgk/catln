@@ -16,7 +16,7 @@ Prgm
                                 )
                             ,
                                 ( /compareChars./Data/$ba75a7
-                                    ( /$ba75a7-arg=∀/Data/Algebra/Comparison
+                                    ( /$ba75a7-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                     , /at=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     , /bt=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) + /Data/compareChars
@@ -859,7 +859,7 @@ Prgm
                                 ) = /Data/List/Cons( Value /head@Value /bh -> /Data/Char )
                                 ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> ∀/Data/Algebra/Comparison = /$ba75a7( Value /at -> TVArg /at = Value /at )( Value /bt -> TVArg /bt = Value /bt )
-                            ( Value /$ba75a7-arg -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /bh = Value /bh )( Value /this -> TVArg /ah = Value /ah ) )
+                            ( Value /$ba75a7-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo( Value /other -> TVArg /bh = Value /bh )( Value /this -> TVArg /ah = Value /ah ) )
                         ]
                     }
                 )

@@ -1,0 +1,13 @@
+annot(#noCore)
+
+# A declaration whose arguments both point at its own parameter bounded by a class
+# ([(_ :: $T ++ _ :: $T)[$T -> Semigroup]]): an application to two members of the class is within
+# it, and one to a type outside the class is not.
+#noCore
+module(Fx)
+  data(Sa)
+  data(Sb)
+  class(Semi)
+  every(/Fx/Sa, isa= [/Fx/Semi])
+
+  op[$T -> /Fx/Semi](l -> $T, r -> $T) -> $T
