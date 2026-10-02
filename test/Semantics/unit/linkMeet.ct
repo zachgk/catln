@@ -1,0 +1,18 @@
+annot(#noCore)
+
+# A class-bounded operator and a class-bounded function over the same parameter, mirroring core's
+# [Semigroup] [operator++] and [Group] [inverse] (stack/core/algebra.ct): a law body
+# [testGroup[$T -> Group](t -> $T)= t ++ inverse(t= t)] meets [operator++(l=$_T, r=inverse(t=$_T))]
+# against the declaration while the definition's scope binds [$T] to its bound.
+#noCore
+data(Integer)
+class(Semi)
+class(Grp)
+every(Grp, isa= [/Semi])
+every(Integer, isa= [/Grp])
+
+(_ :: $T ++ _ :: $T)[$T -> Semi] -> $T
+(l :: Integer ++ r :: Integer) -> Integer= l
+
+inverse[$T -> Grp](t -> $T) -> $T
+inverse(t -> Integer) -> Integer= t

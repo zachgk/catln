@@ -1236,6 +1236,47 @@ propPredicatedLeafWithinOwnMeet ioPrgms = property $ do
     assertTimed (world ++ ": l ∩ EqCO ⊆ l") $ isSubtypeOf typeEnv met leaf
     assertTimed (world ++ ": l − (l ∩ EqCO) = ∅") $ isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty leaf met
 
+-- | An outer variable nested in a slot is not the partial's like-named parameter. A law body
+-- @testGroup[$T -> Group](t -> $T)= t ++ inverse(t= t)@ meets @operator++(l=$_T, r=inverse(t=$_T))@
+-- against @operator++[$T -> Semi](l -> $T, r -> $T)@: the @$_T@ inside @inverse@ names the law's
+-- variable, and the meet descending into @operator++@'s arguments read it as @operator++@'s own
+-- @/T@ — whose binding it was itself feeding (@/T = inverse(t=$_T)@), so the reading never ended
+-- (a build of core ran out of memory). Renaming the outer variable must not change the meet.
+propOuterVarNotCaptured :: Property
+propOuterVarNotCaptured = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/linkMeet.ct"
+  let typeEnv = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "++" `isInfixOf` nameStr n, d <- omiDecls omi ] of
+    (d:_) -> return d
+    _     -> fail "no ++ declaration"
+  invName <- case [ n | (n, _) <- H.toList om, "inverse" `isInfixOf` nameStr n ] of
+    (n:_) -> return n
+    _     -> fail "no inverse"
+  plusName <- case [ n | (n, _) <- H.toList om, "++" `isInfixOf` nameStr n ] of
+    (n:_) -> return n
+    _     -> fail "no ++"
+  let outer n = TypeVar (TVVar (partialKey n)) TVExt PTopType
+  let callOver n = singletonType (partialVal plusName){ptArgs = H.fromList
+        [ (partialKey "l", outer n)
+        , (partialKey "r", singletonType (partialVal invName){ptArgs = H.singleton (partialKey "t") (outer n)}) ]}
+  let envFor n = ambientEnv $ H.singleton (TVVar (partialKey n)) (classPartial (partialVal "/Grp"))
+  annotate $ printf "decl = %s" (show declT)
+  forM_ [(H.empty, H.empty), (envFor "T", envFor "X")] $ \(envT, envX) -> do
+    mT <- timed "meet over $_T" $ intersectTypesEnv typeEnv envT (callOver "T") declT
+    mX <- timed "meet over $_X" $ intersectTypesEnv typeEnv envX (callOver "X") declT
+    annotate $ printf "over T: %s" (show mT)
+    annotate $ printf "over X: %s" (show mX)
+    -- The same meet up to the outer variable's name.
+    let renamed = renameOuter mX
+        renameOuter (UnionType m ls cs) = UnionType m (joinUnionType (map renameLeaf (splitUnionType ls))) cs
+        renameOuter t = t
+        renameLeaf p = p{ptVars = fmap renameIn (ptVars p), ptArgs = fmap renameIn (ptArgs p)}
+        renameIn (TypeVar (TVVar k) TVExt i) | k == partialKey "X" = TypeVar (TVVar (partialKey "T")) TVExt (renameIn i)
+        renameIn t@(UnionType{}) = renameOuter t
+        renameIn t = t
+    eqTimed "meet over $_T = meet over $_X, renamed" mT renamed
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -1273,6 +1314,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
       , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
+      , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
