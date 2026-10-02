@@ -233,14 +233,14 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
+                                                { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                                        ) ↦ ∀/Data/Algebra/Semigroup
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
@@ -248,16 +248,16 @@ Prgm
                                                 { eaaArg = Value /r -> /Data/String/Text
                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/"
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /k = ( Value /k ↦ TVArg /k ) }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String

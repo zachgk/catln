@@ -90,14 +90,14 @@ Prgm
                                     { eaaArg = Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$b74ebc-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                    { eaaArg = Value /$b74ebc-arg -> ∀/Data/Algebra/Comparison =
                                         ( /Data/Algebra/compareTo
                                             ( EAppArg
                                                 { eaaArg = Value /other -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                            ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
                                 ) ↦ ∀/Data/Map
@@ -515,7 +515,7 @@ Prgm
                                 )
                             ,
                                 ( /get./Data/Map/$bc95bf
-                                    ( /$bc95bf-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ( /$bc95bf-arg=∀/Data/Algebra/Comparison
                                     , /value=TopType
                                     , /key=∀/Data/Algebra/Ord
                                     , /right=∀/Data/Map/BinTree
@@ -526,7 +526,7 @@ Prgm
                                         [ /K=TopType
                                         , /V=TopType
                                         ]
-                                    ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=TopType ) + /Data/Map/get
                                     ( /m=TopType
                                     , /key=TopType
                                     )
@@ -552,7 +552,7 @@ Prgm
                                 )
                             ,
                                 ( /get./Data/Map/$bc95bf
-                                    ( /$bc95bf-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ( /$bc95bf-arg=∀/Data/Algebra/Comparison
                                     , /value=TopType
                                     , /key=∀/Data/Algebra/Ord
                                     , /right=∀/Data/Map/BinTree
@@ -563,7 +563,7 @@ Prgm
                                         [ /K=TopType
                                         , /V=TopType
                                         ]
-                                    ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=TopType ) + /Data/Map/get
                                     ( /m=TopType
                                     , /key=TopType
                                     )
@@ -718,14 +718,14 @@ Prgm
                                     { eaaArg = Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$bc95bf-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                    { eaaArg = Value /$bc95bf-arg -> ∀/Data/Algebra/Comparison =
                                         ( /Data/Algebra/compareTo
                                             ( EAppArg
                                                 { eaaArg = Value /other -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                            ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
                                 ) ↦ UnionType
@@ -1321,14 +1321,14 @@ Prgm
                                     { eaaArg = Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$5a3188-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                    { eaaArg = Value /$5a3188-arg -> ∀/Data/Algebra/Comparison =
                                         ( /Data/Algebra/compareTo
                                             ( EAppArg
                                                 { eaaArg = Value /other -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                            ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
                                 ) ↦ /Data/Map/Node
@@ -1581,7 +1581,7 @@ Prgm
                                     , /V=∀/Data/Algebra/Eq
                                     ]
                                 }
-                            ) -> ∀/Data/Primitive/Boolean =
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                             ( /operator&&
                                 ( EAppArg
                                     { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
@@ -1618,7 +1618,7 @@ Prgm
                                             ) ↦ ∀/Data/Primitive/Boolean
                                         )
                                     }
-                                ) ↦ ∀/Data/Primitive/Boolean
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                             )
                         ]
                     }

@@ -83,7 +83,7 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/toStringBase
                                             ( EAppArg
                                                 { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
@@ -99,7 +99,7 @@ Prgm
                                                         ) ↦ /Data/Primitive/Integer..
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String
@@ -113,14 +113,14 @@ Prgm
                                     { eaaArg = Value /l -> TVArg /prefix = ( Value /prefix ↦ TVArg /prefix ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/toStringBase
                                             ( EAppArg
                                                 { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String

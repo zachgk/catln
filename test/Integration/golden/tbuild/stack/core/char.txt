@@ -1231,27 +1231,11 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                , []
-                                ) =
+                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                 ( /Data/Char/digitValue
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Char = '7' }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                 )
                             }
                         )
@@ -1275,27 +1259,11 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                , []
-                                ) =
+                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                 ( /Data/Char/digitValue
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Char = 'F' }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                 )
                             }
                         )
@@ -1319,27 +1287,11 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                , []
-                                ) =
+                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                 ( /Data/Char/digitValue
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Char = '-' }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                 )
                             }
                         )

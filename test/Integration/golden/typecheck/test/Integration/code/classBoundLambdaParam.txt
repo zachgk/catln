@@ -32,18 +32,7 @@ Prgm
                     , omiDefs =
                         [ /viaGeneric
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Algebra/Eq ] )( Value /probe -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /headTo( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
-                                , []
-                                ) = /operator==
+                            ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==
                                 ( Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
                                 ( Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> TVArg /probe = Value /probe ) )
                             )( Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False )

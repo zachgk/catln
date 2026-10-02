@@ -19,7 +19,7 @@ Prgm
                                 )
                             ,
                                 ( /compareChars./Data/$ba75a7
-                                    ( /$ba75a7-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ( /$ba75a7-arg=∀/Data/Algebra/Comparison
                                     , /at=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     , /bt=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) + /Data/compareChars
@@ -859,14 +859,14 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/magnitudeText
                                             ( EAppArg
                                                 { eaaArg = Value /mantissa -> TVArg /mantissa = ( Value /mantissa ↦ TVArg /mantissa ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /exponent -> TVArg /exponent = ( Value /exponent ↦ TVArg /exponent ) }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String
@@ -1157,36 +1157,14 @@ Prgm
                                                                                 ) =
                                                                                 ( /Data/digitsText
                                                                                     ( EAppArg
-                                                                                        { eaaArg = Value /ds -> UnionType
-                                                                                            ( Just
-                                                                                                ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                                                                                , fromList []
-                                                                                                , []
-                                                                                                )
-                                                                                            , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                                                ( /head=/Data/Primitive/Integer
-                                                                                                , /tail=/Data/List/Nil
-                                                                                                )
-                                                                                            , []
-                                                                                            ) =
+                                                                                        { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
                                                                                             ( /Data/fractionDigits
                                                                                                 ( EAppArg
                                                                                                     { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
                                                                                                 )
                                                                                                 ( EAppArg
                                                                                                     { eaaArg = Value /n -> /Data/Primitive/Integer = 1 }
-                                                                                                ) ↦ UnionType
-                                                                                                ( Just
-                                                                                                    ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                                                                                    , fromList []
-                                                                                                    , []
-                                                                                                    )
-                                                                                                , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                                                    ( /head=/Data/Primitive/Integer
-                                                                                                    , /tail=/Data/List/Nil
-                                                                                                    )
-                                                                                                , []
-                                                                                                )
+                                                                                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                                                                                             )
                                                                                         }
                                                                                     ) ↦
@@ -1214,7 +1192,7 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/toStringBase
                                             ( EAppArg
                                                 { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
@@ -1230,7 +1208,7 @@ Prgm
                                                         ) ↦ /Data/Primitive/Integer..
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String
@@ -1345,36 +1323,14 @@ Prgm
                                                         ) =
                                                         ( /Data/digitsText
                                                             ( EAppArg
-                                                                { eaaArg = Value /ds -> UnionType
-                                                                    ( Just
-                                                                        ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                                                        , fromList []
-                                                                        , []
-                                                                        )
-                                                                    , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                        ( /head=/Data/Primitive/Integer
-                                                                        , /tail=/Data/List/Nil
-                                                                        )
-                                                                    , []
-                                                                    ) =
+                                                                { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
                                                                     ( /Data/fractionDigits
                                                                         ( EAppArg
                                                                             { eaaArg = Value /ds -> TVArg /digits = ( Value /digits ↦ TVArg /digits ) }
                                                                         )
                                                                         ( EAppArg
                                                                             { eaaArg = Value /n -> TVArg /point = ( Value /point ↦ TVArg /point ) }
-                                                                        ) ↦ UnionType
-                                                                        ( Just
-                                                                            ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                                                            , fromList []
-                                                                            , []
-                                                                            )
-                                                                        , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                            ( /head=/Data/Primitive/Integer
-                                                                            , /tail=/Data/List/Nil
-                                                                            )
-                                                                        , []
-                                                                        )
+                                                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                                                                     )
                                                                 }
                                                             ) ↦
@@ -1827,14 +1783,14 @@ Prgm
                                     { eaaArg = Value /bt -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$ba75a7-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                    { eaaArg = Value /$ba75a7-arg -> ∀/Data/Algebra/Comparison =
                                         ( /compareTo
                                             ( EAppArg
                                                 { eaaArg = Value /other -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) }
-                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                            ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
                                 ) ↦ ∀/Data/Algebra/Comparison
@@ -1901,7 +1857,7 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/toStringBase
                                             ( EAppArg
                                                 { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
@@ -1917,7 +1873,7 @@ Prgm
                                                         ) ↦ /Data/Primitive/Integer..
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String
@@ -4102,27 +4058,11 @@ Prgm
                                     { eaaArg = Value /sign -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$6d5c93-arg -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        , []
-                                        ) =
+                                    { eaaArg = Value /$6d5c93-arg -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                         ( /Data/Char/digitValue
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                            ) ↦ UnionType
-                                            ( Just
-                                                ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            , []
-                                            )
+                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
                                 ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
@@ -4253,15 +4193,7 @@ Prgm
                                     , /cs=TopType
                                     , /sign=TopType
                                     ) + /digitsValue./Data/String/$6d5c93
-                                    ( /$6d5c93-arg=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                        , []
-                                        )
+                                    ( /$6d5c93-arg=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                     , /base=/Data/Primitive/Integer
                                     , /acc=/Data/Primitive/Integer
                                     , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
@@ -4893,7 +4825,7 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> ∀/Data/String =
                                         ( /Data/String/join
                                             ( EAppArg
                                                 { eaaArg = Value /sep -> TVArg /sep = ( Value /sep ↦ TVArg /sep ) }
@@ -4910,7 +4842,7 @@ Prgm
                                                         { eaaArg = Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/String
@@ -6307,14 +6239,14 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/toStringBase
                         ( EAppArg
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 16 }
                         )
                         ( EAppArg
                             { eaaArg = Value /this -> /Data/Primitive/Integer = 255 }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6325,14 +6257,14 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/toStringBase
                         ( EAppArg
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 2 }
                         )
                         ( EAppArg
                             { eaaArg = Value /this -> /Data/Primitive/Integer = 5 }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6343,14 +6275,14 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/toStringBase
                         ( EAppArg
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
                         )
                         ( EAppArg
                             { eaaArg = Value /this -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6361,7 +6293,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/toStringBase
                         ( EAppArg
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
@@ -6377,7 +6309,7 @@ Prgm
                                     ) ↦ /Data/Primitive/Integer
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6401,7 +6333,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6411,7 +6343,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6422,7 +6354,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6432,7 +6364,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6443,7 +6375,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6462,7 +6394,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6473,7 +6405,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6483,7 +6415,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6494,7 +6426,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6504,7 +6436,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6515,7 +6447,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6525,7 +6457,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6536,7 +6468,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6546,7 +6478,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6557,7 +6489,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6567,7 +6499,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6578,7 +6510,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6597,7 +6529,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6608,7 +6540,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6618,7 +6550,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6653,7 +6585,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6663,7 +6595,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6674,7 +6606,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6684,7 +6616,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6695,7 +6627,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6705,7 +6637,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6716,7 +6648,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6726,7 +6658,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6737,7 +6669,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6747,7 +6679,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6758,7 +6690,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6768,7 +6700,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6779,7 +6711,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6789,7 +6721,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6800,7 +6732,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6810,7 +6742,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6821,7 +6753,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6831,7 +6763,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6842,7 +6774,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6852,7 +6784,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6863,7 +6795,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6873,7 +6805,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6884,7 +6816,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6894,7 +6826,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -6905,7 +6837,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/floatText
                         ( EAppArg
                             { eaaArg = Value /parts -> ∀/Data/Primitive/FloatParts =
@@ -6915,7 +6847,7 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/FloatParts
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -7806,7 +7738,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -7814,19 +7746,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /parts -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/String ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    )
-                                , []
-                                ) =
+                            { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                 ( /Data/String/split
                                     ( EAppArg
                                         { eaaArg = Value /sep -> /Data/String/Text
@@ -7837,22 +7757,10 @@ Prgm
                                         { eaaArg = Value /this -> /Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a,b,,c"
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -7863,7 +7771,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -7871,19 +7779,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /parts -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/String ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    )
-                                , []
-                                ) =
+                            { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                 ( /Data/String/split
                                     ( EAppArg
                                         { eaaArg = Value /sep -> /Data/String/Text
@@ -7894,22 +7790,10 @@ Prgm
                                         { eaaArg = Value /this -> /Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a, b"
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -7920,7 +7804,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -7928,19 +7812,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /parts -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/String ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    )
-                                , []
-                                ) =
+                            { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                 ( /Data/String/split
                                     ( EAppArg
                                         { eaaArg = Value /sep -> /Data/String/Text
@@ -7951,22 +7823,10 @@ Prgm
                                         { eaaArg = Value /this -> /Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "abc"
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -7977,7 +7837,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -7985,19 +7845,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /parts -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/String ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    )
-                                , []
-                                ) =
+                            { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                 ( /Data/String/lines
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/String/Text
@@ -8005,22 +7853,10 @@ Prgm
                                           two
                                           "
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -8031,7 +7867,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -8039,40 +7875,16 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /parts -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/String ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    )
-                                , []
-                                ) =
+                            { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                 ( /Data/String/words
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  some  words here "
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -8083,7 +7895,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -8156,7 +7968,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )
@@ -8167,7 +7979,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
+                { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/String/join
                         ( EAppArg
                             { eaaArg = Value /sep -> /Data/String/Text
@@ -8175,19 +7987,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /parts -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/String ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    )
-                                , []
-                                ) =
+                            { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                 ( /Data/String/split
                                     ( EAppArg
                                         { eaaArg = Value /sep -> /Data/String/Text
@@ -8198,22 +7998,10 @@ Prgm
                                         { eaaArg = Value /this -> /Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x-y"
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
+                        ) ↦ ∀/Data/String
                     )
                 }
             )

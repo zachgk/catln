@@ -1,0 +1,9 @@
+import "core"
+
+# A recursive call passed as an argument is within its declared result. The argument of [++] here
+# reaches the arm's own `"-" ++ textNeg(..)`, whose argument is the same call: inferred from its
+# arms alone it is only a [Semigroup], and the [String] [textNeg] is declared to return is what
+# makes the arm's result one.
+textNeg(n -> Integer) -> String
+textNeg(n) | n < 0= "-" ++ textNeg(n= 0 - n)
+textNeg(n) else = "d"

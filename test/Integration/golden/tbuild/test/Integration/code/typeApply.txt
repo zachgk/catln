@@ -80,11 +80,11 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Semigroup =
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/String =
                                         ( /Data/toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ ∀/Data/Functor[ /T=TopType ]

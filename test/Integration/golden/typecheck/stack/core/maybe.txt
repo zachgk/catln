@@ -624,7 +624,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ].. = /Data/Maybe/pureSomeInt
+                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Data/Maybe/pureSomeInt
                     ( Value /v -> /Data/Primitive/Integer = CInt
                         { ciValue = 5 }
                     )

@@ -1072,11 +1072,11 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ].. =
+                            { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. =
                                 ( /Data/Maybe/pureSomeInt
                                     ( EAppArg
                                         { eaaArg = Value /v -> /Data/Primitive/Integer = 5 }
-                                    ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]..
+                                    ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )..
                                 )
                             }
                         )

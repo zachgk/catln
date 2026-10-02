@@ -111,6 +111,21 @@ testRefineArgsParam = testCase "an arm and a refinement within an args-tied decl
   let outside = [ n | n <- [show note | note <- notes], "Outside Declaration" `isInfixOf` n ]
   assertEqual (unlines outside) [] outside
 
+-- | A recursive call passed as an argument is read as its declared result: @textNeg@'s guarded arm
+-- passes @textNeg(..)@ to @++@, and inferred from the arms alone that argument is only a
+-- @Semigroup@ (the arm's own @++@ is what it reaches), so the arm was reported as not guaranteed
+-- to return the @String@ it is declared to. Fixture: unit/recursiveDeclaredArg.ct.
+testRecursiveDeclaredArg :: TestTree
+testRecursiveDeclaredArg = testCase "a recursive call argument is within its declared result" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/recursiveDeclaredArg.ct"]
+    getTPrgm ctss
+  let notes = case res of
+        CRes ns _ -> ns
+        CErr ns   -> ns
+  let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, "\"textNeg\"" `isInfixOf` n ]
+  assertEqual (unlines reported) [] reported
+
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
     -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
@@ -119,6 +134,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , THG.testProperty "propTypeChecks" (p propTypeChecks)
     , testResultNotGuaranteed
     , testRefineArgsParam
+    , testRecursiveDeclaredArg
                                   ]
   where
     p prop = prop

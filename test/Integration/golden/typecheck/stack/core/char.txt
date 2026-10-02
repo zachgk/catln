@@ -717,15 +717,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                    , []
-                    ) = /Data/Char/digitValue
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Char/digitValue
                     ( Value /this -> /Data/Char = CChar
                         { chValue = '7' }
                     )
@@ -742,15 +734,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                    , []
-                    ) = /Data/Char/digitValue
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Char/digitValue
                     ( Value /this -> /Data/Char = CChar
                         { chValue = 'F' }
                     )
@@ -767,15 +751,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                    , []
-                    ) = /Data/Char/digitValue
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Char/digitValue
                     ( Value /this -> /Data/Char = CChar
                         { chValue = '-' }
                     )

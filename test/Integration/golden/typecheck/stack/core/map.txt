@@ -49,7 +49,7 @@ Prgm
                             [ /K=TopType
                             , /V=TopType
                             ] = /$b74ebc( Value /nk -> TVArg /nk = Value /nk )( Value /key -> TVArg /key = Value /key )( Value /nv -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )( Value /left -> TVArg /left = Value /left )
-                            ( Value /$b74ebc-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )
+                            ( Value /$b74ebc-arg -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )
                         ]
                     }
                 )
@@ -258,7 +258,7 @@ Prgm
                                 )
                             ,
                                 ( /get./Data/Map/$bc95bf
-                                    ( /$bc95bf-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ( /$bc95bf-arg=∀/Data/Algebra/Comparison
                                     , /value=TopType
                                     , /key=∀/Data/Algebra/Ord
                                     , /right=∀/Data/Map/BinTree
@@ -269,7 +269,7 @@ Prgm
                                         [ /K=TopType
                                         , /V=TopType
                                         ]
-                                    ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=TopType ) + /Data/Map/get
                                     ( /m=TopType
                                     , /key=TopType
                                     )
@@ -284,7 +284,7 @@ Prgm
                                 )
                             ,
                                 ( /get./Data/Map/$bc95bf
-                                    ( /$bc95bf-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ( /$bc95bf-arg=∀/Data/Algebra/Comparison
                                     , /value=TopType
                                     , /key=∀/Data/Algebra/Ord
                                     , /right=∀/Data/Map/BinTree
@@ -295,7 +295,7 @@ Prgm
                                         [ /K=TopType
                                         , /V=TopType
                                         ]
-                                    ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=TopType ) + /Data/Map/get
                                     ( /m=TopType
                                     , /key=TopType
                                     )
@@ -384,7 +384,7 @@ Prgm
                             , /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T )
                             , []
                             ) = /$bc95bf( Value /value -> TVArg /value = Value /value )( Value /key -> TVArg /key = Value /key )( Value /right -> TVArg /right = Value /right )( Value /left -> TVArg /left = Value /left )
-                            ( Value /$bc95bf-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )
+                            ( Value /$bc95bf-arg -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )
                         ]
                     }
                 )
@@ -685,7 +685,7 @@ Prgm
                                 , /V=TopType
                                 ]
                             ) = /$5a3188( Value /nk -> TVArg /nk = Value /nk )( Value /value -> TVArg /value = Value /value )( Value /key -> TVArg /key = Value /key )( Value /nv -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )( Value /left -> TVArg /left = Value /left )
-                            ( Value /$5a3188-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )
+                            ( Value /$5a3188-arg -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )
                         ]
                     }
                 )
@@ -793,7 +793,7 @@ Prgm
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=∀/Data/Algebra/Eq
                                 ]
-                            ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
                                 ( Value /l -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /a = Value /a ) )
                                 ( Value /r -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /b = Value /b ) )

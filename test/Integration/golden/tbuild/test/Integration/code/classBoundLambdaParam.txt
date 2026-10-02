@@ -56,18 +56,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                            ( /this=∀/Data/Algebra/Eq
-                                            , /other=∀/Data/Algebra/Eq
-                                            )
-                                        , []
-                                        ) =
+                                        ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
                                         ( /operator==
                                             ( EAppArg
                                                 { eaaArg = Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
@@ -82,26 +71,7 @@ Prgm
                                                         { eaaArg = Value /value -> TVArg /probe = ( Value /probe ↦ TVArg /probe ) }
                                                     )
                                                 }
-                                            ) ↦ UnionType
-                                            ( Just
-                                                ( PredClass /Data/Primitive/Boolean
-                                                , fromList []
-                                                , []
-                                                )
-                                            ,
-                                                ( /Data/charsEqual
-                                                    ( /a=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                                    , /b=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                                    ) + /operator&&
-                                                    ( /r=∀/Data/Primitive/Boolean
-                                                    , /l=∀/Data/Primitive/Boolean
-                                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                                    ( /this=∀/Data/Algebra/Eq
-                                                    , /other=∀/Data/Algebra/Eq
-                                                    )
-                                                )
-                                            , []
-                                            )
+                                            ) ↦ ∀/Data/Primitive/Boolean
                                         )
                                     }
                                 )

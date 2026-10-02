@@ -28,7 +28,7 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /l=∀/Data/Algebra/Semigroup
+                                    , /l=∀/Data/String
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
@@ -36,7 +36,7 @@ Prgm
                                 )
                             , []
                             ) = /operator==
-                            ( Value /l -> ∀/Data/Algebra/Semigroup = /Data/toString
+                            ( Value /l -> ∀/Data/String = /Data/toString
                                 ( Value /this -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )

@@ -50,14 +50,14 @@ Prgm
                             ( EAppArg { eaaArg = Value /b -> ∀/Data/Algebra/Ord } ) -> /Data/Primitive/Integer =
                             ( /rankOf.$37487c
                                 ( EAppArg
-                                    { eaaArg = Value /$37487c-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                    { eaaArg = Value /$37487c-arg -> ∀/Data/Algebra/Comparison =
                                         ( /Data/Algebra/compareTo
                                             ( EAppArg
                                                 { eaaArg = Value /other -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                            ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer

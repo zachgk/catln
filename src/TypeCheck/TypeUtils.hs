@@ -201,6 +201,37 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       return soa'
 
+-- | What the declarations of a complete call form promise it evaluates to, or 'PTopType' when some
+-- declaration of its name applying to it promises nothing this can read (or none applies: an
+-- undeclared function, a data value, a partial application). Unlike 'typeGraphDeclaredResult',
+-- the arms of an undeclared function are not read: they are what is inferred of the call, not a
+-- promise about it.
+--
+-- Only a result spelled without type variables (@-> String@) is read. A result that is a
+-- declaration's parameter (@mmap(m -> $M, ..) -> $M@) promises a value within the set @$M@ is
+-- given or inferred as, and @$M@ is not the type of the argument it also contains: @m=Some(5)@
+-- does not make @Nothing@ outside it.
+declaredCallResult :: FEnvTypeEnv -> TypeVarArgEnv -> PartialType -> Type
+declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case mapM fixedResult applying of
+  Just results@(_:_) -> unionAllTypes typeEnv results
+  _                  -> PTopType
+  where
+    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
+    applying = [ oa
+               | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup ptName tg)
+               , let declType = getMetaType (getExprMeta (oaObjExpr oa))
+               , Just declObj <- [maybeGetSingleton declType]
+               , H.keysSet (ptArgs declObj) == H.keysSet callArgs
+               , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType p) declType ]
+    -- The declared result, when it is the same for every call the declaration applies to: spelled
+    -- without type variables, and not read from this call's arguments (the solved graph may show
+    -- @:$T.eq -> Eqv[$T]@ with its parameter already resolved, and resolving it against a call
+    -- then gives the call's @Eqv[/T=Some(..)]@ rather than what the call's arms construct).
+    fixedResult oa@ObjArr{oaArr=Just (_, outM)}
+      | outT /= PTopType, not (typeContainsTypeVar outT), arrowDestType typeEnv vaenv p oa == [outT] = Just outT
+      where outT = getMetaType outM
+    fixedResult _ = Nothing
+
 -- | Binds a call's declaration-output variable from the call site's destination.
 -- For a declaration whose output is a bare declared variable — @mk[$M -> Mk](v -> V) -> $M@ —
 -- the call's arguments say nothing about @$M@; only the destination does. Once the destination
@@ -476,7 +507,23 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- @destByGraph0@, so this cannot change which arrows a requirement forces.
   let resolveSelf = if destIsArrowResult then resolveTypeSelfRefs H.empty else id
   let destActR = resolveSelf destAct
-  let destBound = intersectTypesEnv feTypeEnv vaenv' destActR destReq
+  -- An argument slot (ArrowTo 10/15) is the value passed INTO another call, settled there (see
+  -- the settle-forcing rule below).
+  let destIsArgArm = case con of
+        Constraint _ _ _ (ArrowTo 10 _ _) -> True
+        Constraint _ _ _ (ArrowTo 15 _ _) -> True
+        _                                 -> False
+  -- What a call passed as an argument settles to is within what its declarations promise
+  -- ('declaredCallResult'), whatever its arms are inferred to give. The arms can be inferred
+  -- wider than the promise where they are recursive: in @f(n) | n < 0= "-" ++ f(n= 0 - n)@ the
+  -- argument @f(..)@ reaches the arm's own @"-" ++ f(..)@, whose argument is this very slot, so
+  -- inference narrowing from ⊤ stops at what the generic @++@ gives any @Semigroup@, never
+  -- reaching the @String@ @f@ is declared to return. An arm outside its declaration is reported
+  -- by the guaranteed-result check ('TypeCheck.Constrain.verifyGuaranteedResults').
+  let srcDeclBound
+        | destIsArgArm && null consts && not (H.null srcPartials) = unionAllTypes feTypeEnv (map (declaredCallResult reachesTypeEnv vaenv') (splitUnionType srcPartials))
+        | otherwise = PTopType
+  let destBound = intersectTypesEnv feTypeEnv vaenv' (intersectTypesEnv feTypeEnv vaenv' destActR destReq) srcDeclBound
   let reaches' = if reqForcesChoice then cutReachesTree reachesTypeEnv vaenv' destBound reaches0 else reaches0
   let destByGraph = resolveSelf $ if reqForcesChoice then unionReachesTree reachesTypeEnv vaenv' reaches' else destByGraph0
   -- An arrow dest carrying a symbolic external var (an instance arm constructing
@@ -533,10 +580,6 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- to settle through its direct arrows NOW even where no declaration engages — otherwise
   -- it rides (through var-linked dims) into values no arrow can ever act on ("no arrows
   -- from Some[/T=raw ∪ …]" at TreeBuild).
-  let destIsArgArm = case con of
-        Constraint _ _ _ (ArrowTo 10 _ _) -> True
-        Constraint _ _ _ (ArrowTo 15 _ _) -> True
-        _                                 -> False
   let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv' ((partialVal (ptName l)){ptArgMode=PtArgUnbounded})))
                      && (not (reqAdmitsForm reachesTypeEnv vaenv' destReqDecl l)
                           || (destIsArgArm && not (S.member (ptName l) (feInputArrowNames env))))
