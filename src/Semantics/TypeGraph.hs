@@ -127,6 +127,54 @@ cutReachesTree typeEnv vaenv req (ReachesTypeTree children) = ReachesTypeTree $ 
 cutReachesTree _ _ _ ReachesLeaf = ReachesLeaf
 
 
+-- | Whether every form a value of type @t@ can take is guaranteed to end within @req@: the
+-- check that a value flowing into a point satisfies the point's requirement for ALL of the
+-- values it may be, where 'reachesHasCutSubtypeOf' asks whether SOME path does.
+--
+-- A form passes when it is itself within @req@. Otherwise it still rewrites, and it passes when
+-- the promises it triggers that are guaranteed to end within @req@ jointly cover it — every value
+-- it admits is accepted by one of them — which is the rule 'cutReachesTree' applies when a
+-- requirement chooses among arrows. A promise is guaranteed when its result is within @req@ or
+-- every form of its result passes in turn. Every promise is asked, declarations included
+-- ('typeGraphQueryAllWithReason'): a call is accepted on the strength of its callee's DECLARED
+-- result, and the callee's own definitions are each held to that declaration where they are
+-- checked. The reach query's pruning would drop a declaration whenever its definitions are the
+-- more specific promises, and a recursive call judged through its own definitions only comes
+-- back to itself. A form with no guaranteed promise that is not within @req@ fails, and so does
+-- one re-entered along its own path, which proves nothing about where it ends.
+typeGuaranteedWithin :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+typeGuaranteedWithin typeEnv vaenv req = typeOk S.empty
+  where
+    -- A free variable is read as what it is bound to, or the ⊤ it denotes unbound, before the
+    -- form is judged. Kept symbolic, a meet with a promise's object leaves it as written, and the
+    -- covered source then reads exactly as the source: covered by its own spelling, whatever the
+    -- variable stands for (@toString(this=$_B)@ with @$_B@ unbound).
+    typeOk visited t0
+      | isSubtypeOfWithEnv typeEnv vaenv t req = True
+      | otherwise = case t of
+          UnionType Nothing leafs consts -> all (partialOk visited) (splitUnionType leafs ++ map constantPartialType consts)
+          _                              -> False
+      where t = substituteTVExt typeEnv vaenv t0
+    partialOk visited p
+      | isSubtypeOfWithEnv typeEnv vaenv (singletonType p) req = True
+      | S.member p visited = False
+      | otherwise = not (null kept) && isSubtypeOfWithEnv typeEnv vaenv (singletonType p) (unionAllTypesWithEnvOnce typeEnv vaenv (map (srcVarsOnly p) kept))
+      where
+        visited' = S.insert p visited
+        kept = [ coveredSrc | (_, coveredSrc, dest) <- typeGraphQueryAllWithReason typeEnv vaenv p, typeOk visited' dest ]
+    -- What a promise covers is the source met with its object, and the meet brings the promise's
+    -- own parameters along (@toString(this=∀ToString)@ meeting @toString[$T](this -> $T)@ covers
+    -- @toString[/T=∀ToString](this=$/T)@). Those name the promise's scope, set by its arguments;
+    -- they do not narrow which values of the source it accepts, so the covered source is read
+    -- without the ones the source does not have. An argument may point at one (@this=$/T@), so
+    -- its value is read into the arguments first ('substituteTVExt' descends with the partial's
+    -- own bindings): dropped unread, the pointer would dangle and read as the ⊤ that covers
+    -- anything.
+    srcVarsOnly PartialType{ptVars=srcVars} t = case substituteTVExt typeEnv vaenv t of
+      UnionType Nothing leafs consts ->
+        UnionType Nothing (joinUnionType [ l{ptVars = H.intersection (ptVars l) srcVars} | l <- splitUnionType leafs ]) consts
+      t' -> t'
+
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)
   where

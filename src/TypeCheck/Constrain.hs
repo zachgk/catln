@@ -24,6 +24,8 @@ import qualified Data.Zip            as Z
 
 import           Control.Monad.State
 import           Semantics           (unsafeFreshQueryToken)
+import           Semantics.Prgm      (Meta (..))
+import           Semantics.TypeGraph (ReachesEnv (..), typeGuaranteedWithin)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -599,3 +601,34 @@ runConstraintsIdx limit cons = do
         -- reversing the running order leaves the skip-memo keys untouched.
         runConstraintsIdx (limit - 1) (reverse cons')
 
+-- | Reports each value whose every form is not guaranteed to end within what its point's
+-- declaration requires ('typeGuaranteedWithin'), once inference has converged.
+--
+-- Inference itself only asks whether a value CAN satisfy a requirement: 'TypeCheck.Decode.toMeta'
+-- accepts a form that meets the requirement or has some path to it, and a requirement narrows a
+-- definition's own arguments from their use. So a definition whose body needs more of its input
+-- than its declaration promises type-checks — @unwrap(b -> Box(v)) -> Integer@ answering its
+-- @v@, or an argument @fn(v) -> $_B@ handed to @toString@ — and fails only where it is built or
+-- called. This asks the stronger question at the two kinds of point a value is held to a
+-- declaration: an argument it is passed as (an output argument's slot) and the result a
+-- definition returns. The requirement is the declaration's alone ('stypeReqDecl'): the
+-- accumulated one also holds what the value's own forms wrote back, which would answer for them.
+-- A free variable is read through the constraint's own bindings.
+verifyGuaranteedResults :: [VConstraint] -> StateT FEnv TypeCheckResult ()
+verifyGuaranteedResults cons = do
+  env <- get
+  forM_ cons $ \con -> case conDat con of
+    ArrowTo i srcM _ | i `elem` [10, 15, 32] -> case stypeConstraint (showCon env con) of
+      TypeCheckResult _ rcon@Constraint{conDat=ArrowTo _ srcS destS} -> do
+        let vaenv = ambientEnv $ fmap (stypeAct . snd) (conVaenv rcon)
+        let req = stypeReqDecl destS
+        let src = case stypeAct srcS of
+              TypeVar v _ _ -> vaenvLookup vaenv v
+              t             -> t
+        let guaranteed = isSubtypeOfWithEnv (feTypeEnv env) vaenv src req || case mkReachesEnv env rcon of
+              TypeCheckResult _ renv -> typeGuaranteedWithin (rTypeEnv renv) vaenv req src
+              TypeCheckResE _        -> True
+        unless guaranteed $
+          lift $ TypeCheckResult [ResultNotGuaranteed (stypeDesc destS) src req (getMetaPos srcM)] ()
+      _ -> pure ()
+    _ -> pure ()

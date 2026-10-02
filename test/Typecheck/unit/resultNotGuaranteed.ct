@@ -1,0 +1,31 @@
+annot(#noCore)
+
+# Definitions whose bodies need more of their input than their declarations promise, beside twins
+# whose declarations state what the body needs. Each type-checks; only the unsound ones are reported
+# as a result not guaranteed within its declaration.
+#noCore
+module(Fx)
+  data(Num)
+  data(Txt)
+  data(Box(v))
+
+  class(Shows)
+  data(Pic)
+  every(/Fx/Pic, isa= [/Fx/Shows])
+
+  render[$T -> /Fx/Shows](x -> $T) -> /Fx/Txt
+  render(x)= /Fx/Txt
+
+  # [v] may be anything, and the declaration promises a [Num].
+  unwrapBad(b -> /Fx/Box(v)) -> /Fx/Num
+  unwrapBad(/Fx/Box(v))= v
+
+  unwrapOk(b -> /Fx/Box(v -> /Fx/Num)) -> /Fx/Num
+  unwrapOk(/Fx/Box(v))= v
+
+  # [fn] may return anything, and [render] needs a [Shows].
+  showBad(fn(v -> /Fx/Pic) -> $_B) -> /Fx/Txt
+  showBad(fn(v))= render(x= fn(v= /Fx/Pic))
+
+  showOk(fn(v -> /Fx/Pic) -> /Fx/Shows) -> /Fx/Txt
+  showOk(fn(v))= render(x= fn(v= /Fx/Pic))

@@ -54,6 +54,10 @@ data TypeCheckError
   | RefineOutsideDeclaration TypeName Type Type Type CodeRange
   | ProofWithoutRefine TypeName CodeRange
   | ExistOnNonDeclaration TypeName CodeRange
+  -- | A value flowing into a point is not guaranteed to be within what the point's declaration
+  -- requires: the point's description, the value's type, the declared requirement and where the
+  -- value is written. A warning while the library is brought within it.
+  | ResultNotGuaranteed String Type Type CodeRange
   deriving (Eq, Ord, Generic, Hashable)
 
 -- | SType actual required (description in type)
@@ -307,6 +311,7 @@ instance Show TypeCheckError where
   show (RefineOutsideDeclaration name refineType declType diff loc) = printf "Refine Outside Declaration for %s:\n\tRefine input type: %s\n\tDeclaration input type: %s\n\tUndeclared part: %s\n\tLocation: %s" (nameStr name) (show refineType) (show declType) (show diff) (maybe "Unknown" showCodeRange loc)
   show (ProofWithoutRefine name loc) = printf "#proof on %s, which is not a #refine declaration: only a refinement claims something to prove\n\tLocation: %s" (nameStr name) (maybe "Unknown" showCodeRange loc)
   show (ExistOnNonDeclaration name loc) = printf "#exist on %s, which is not a declaration: only a declaration says how a name's arrows are quantified\n\tLocation: %s" (nameStr name) (maybe "Unknown" showCodeRange loc)
+  show (ResultNotGuaranteed desc valType req loc) = printf "Result Not Guaranteed:\n\tAt: %s\n\tValue type: %s\n\tDeclared requirement: %s\n\tSome of the forms the value may take are not guaranteed to end within the requirement.\n\tLocation: %s" desc (show valType) (show req) (maybe "Unknown" showCodeRange loc)
 
 instance CNoteTC TypeCheckError where
   metaCNote (GenTypeCheckError m _)      = m
@@ -328,8 +333,12 @@ instance CNoteTC TypeCheckError where
   metaCNote (ExistOnNonDeclaration _ loc) = case loc of
     Just pos -> Just $ Meta PTopType (Just pos) nil ()
     Nothing  -> Nothing
+  metaCNote (ResultNotGuaranteed _ _ _ loc) = case loc of
+    Just pos -> Just $ Meta PTopType (Just pos) nil ()
+    Nothing  -> Nothing
 
-  typeCNote _ = CNoteError
+  typeCNote ResultNotGuaranteed{} = CNoteWarn
+  typeCNote _                     = CNoteError
   showRecursiveCNote _ n = literal $ show n
 
 instance Show SType where

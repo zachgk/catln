@@ -30,7 +30,7 @@ import           MapMeta
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
-import           TypeCheck.Constrain   (runConstraints)
+import           TypeCheck.Constrain   (runConstraints, verifyGuaranteedResults)
 import           TypeCheck.Decode
 import           TypeCheck.Encode
 import           TypeCheck.Instruments (defaultInstruments)
@@ -140,6 +140,7 @@ typecheckPrgmsSt pprgms typechecked = do
           modify $ \e -> e{feVTypeGraph = mempty, feTTypeGraph = tGraph, feTTypeGraphCleared = tCleared}
           (vprgms', cons) <- fromPrgmsFragment frag (tRec, tPrec)
           converged <- runConstraints runConstraintsLimit cons
+          when converged $ verifyGuaranteedResults cons
           modify nextConstrainEpoch
           tprgms' <- toPrgms vprgms'
           uni <- gets (\e -> stypeAct <$> descriptor e (feUnionAllObjs e))

@@ -10,15 +10,19 @@
 -- This is the module for testing typechecking.
 --------------------------------------------------------------------
 module Typecheck.TypeCheckTests where
-import           Control.Monad.State   (evalStateT, execStateT, runStateT)
+import           Control.Monad.State   (evalStateT, execStateT, lift, runStateT)
 import           CRes
+import           CtService             (ctssBaseFiles, getTPrgm)
 import           Data.Graph            (graphFromEdges)
+import           Data.List             (isInfixOf, sort)
 import           Hedgehog
 import qualified Hedgehog.Gen          as HG
 import           MapMeta
+import           Semantics             (testCtssConfig)
 import           Semantics.Prgm
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog   as THG
+import           Test.Tasty.HUnit      (assertEqual, testCase)
 import           Testing.Generation    (genPrgms)
 import           Text.Printf
 import           TypeCheck             (typecheckPrgm)
@@ -74,12 +78,31 @@ propTypeChecks = property $ do
     CRes{}    -> return ()
     CErr errs -> fail $ prettyCNotes errs
 
+-- | A definition whose body needs more of its input than its declaration promises is reported, and
+-- its twin whose declaration states what the body needs is not. @unwrapBad@ returns a @v@ that may be
+-- anything as a @Num@; @showBad@ hands what @fn@ returns, which may be anything, to @render@, which
+-- needs a @Shows@. Both type-check; only the type checker's stronger question — is every form the
+-- value may take guaranteed within the declaration — tells them from @unwrapOk@ and @showOk@.
+-- Fixture: unit/resultNotGuaranteed.ct.
+testResultNotGuaranteed :: TestTree
+testResultNotGuaranteed = testCase "unsound arms are reported, their sound twins are not" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/resultNotGuaranteed.ct"]
+    getTPrgm ctss
+  let notes = case res of
+        CRes ns _ -> ns
+        CErr ns   -> ns
+  let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n ]
+  let names = sort [ nm | nm <- ["unwrapBad", "unwrapOk", "showBad", "showOk"], any (("\"/Fx/" ++ nm ++ "\"") `isInfixOf`) reported ]
+  assertEqual (unlines reported) ["showBad", "unwrapBad"] names
+
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
     -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
     THG.testProperty "propConstraint" (p propConstraint)
     , THG.testProperty "propConstraints" (p propConstraints)
     , THG.testProperty "propTypeChecks" (p propTypeChecks)
+    , testResultNotGuaranteed
                                   ]
   where
     p prop = prop
