@@ -20,7 +20,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe          (isJust, mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat,
-                                      mapMetaPrgm)
+                                      mapMetaObjectMap, mapMetaPrgm)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph (reachesTo)
@@ -334,10 +334,13 @@ declUndefined prgmTypeEnv defInputTypesU defUnionU oa
 -- Without them an arm whose declaration was solved first was checked against nothing. They are
 -- not checked for fulfillment here, since what fulfills them was mostly defined in the solve that
 -- declared them.
-verifyObjMapItem :: TypeName -> [ObjArr Expr TypedMetaDat] -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
-verifyObjMapItem name importedDecls (ObjectMapItem decls runtimeDecls refineDecls defs) = do
+--
+-- The checks read the @solvedTypeEnv@ ('solvedVerifyTypeEnv'), whose type graph holds the solved
+-- objects rather than the ones the solve started from.
+verifyObjMapItem :: FEnvTypeEnv -> TypeName -> [ObjArr Expr TypedMetaDat] -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
+verifyObjMapItem solvedTypeEnv name importedDecls (ObjectMapItem decls runtimeDecls refineDecls defs) = do
   FEnv{feTypeEnv, feLocalDefNames} <- get
-  let prgmTypeEnv = feTypeEnv{tePrgmEnv = True}
+  let prgmTypeEnv = solvedTypeEnv{tePrgmEnv = True}
   -- A runtime declaration has no body, but it behaves like a definition for coverage: it is
   -- bounded by the declarations (checked against declUnion) and contributes to the definition
   -- coverage that fulfills them (part of defUnion).
@@ -410,9 +413,27 @@ toPrgms vprgms = do
   -- The solved dependencies this solve was given hold the declarations made in earlier solves.
   FEnv{feTTypeGraph = ObjectMap depObjMap} <- get
   let importedDecls name = maybe [] omiDecls (H.lookup name depObjMap)
-  _ <- H.traverseWithKey (\name -> verifyObjMapItem name (importedDecls name)) mergedObjMap
+  solvedTypeEnv <- gets (solvedVerifyTypeEnv (ObjectMap mergedObjMap))
+  _ <- H.traverseWithKey (\name -> verifyObjMapItem solvedTypeEnv name (importedDecls name)) mergedObjMap
 
   return tprgms
+
+-- | The environment a solve's declarations and definitions are checked in: its type graph is the
+-- solved objects of this solve and of the earlier solves it depends on.
+--
+-- The 'feTypeEnv' a solve starts from is built from the program before inference, where an object
+-- has no type yet (every one is ⊤). A check that reads a declaration's spelled input from the graph
+-- then finds nothing there. One such read is a declaration's parameter tied to its arguments
+-- ('ptVarEff'): @(_ :: $T ++ _ :: $T)[$T -> Semigroup]@ ties @$T@ to both of its arguments, so an
+-- arm @String\/Text(..) ++ String\/Text(..)@ (which binds no @$T@ of its own) is inside it because
+-- its arguments are. Without the declaration's input in the graph, the arm was read with @$T@
+-- unconstrained by them and was reported as outside the declaration.
+--
+-- The graph changes, so the query cache gets a fresh token rather than sharing the starting one.
+solvedVerifyTypeEnv :: ObjectMap Expr TypedMetaDat -> FEnv -> FEnvTypeEnv
+solvedVerifyTypeEnv solved FEnv{feTypeEnv, feTTypeGraphCleared} = env{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph env))}
+  where
+    env = feTypeEnv{teTypeGraph = ObjArrTypeGraph (mapMetaObjectMap clearMetaDat solved <> feTTypeGraphCleared)}
 
 -- | Checks the members a solve adds to classes against the declarations earlier solves made over
 -- those classes.

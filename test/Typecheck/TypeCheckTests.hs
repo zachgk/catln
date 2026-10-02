@@ -96,6 +96,21 @@ testResultNotGuaranteed = testCase "unsound arms are reported, their sound twins
   let names = sort [ nm | nm <- ["unwrapBad", "unwrapOk", "showBad", "showOk"], any (("\"/Fx/" ++ nm ++ "\"") `isInfixOf`) reported ]
   assertEqual (unlines reported) ["showBad", "unwrapBad"] names
 
+-- | An arm that binds no parameter of its own is within a declaration whose parameter is tied to
+-- its arguments, and a refinement for a class in the parameter's bound is within it too. Both are
+-- read from the declaration's spelled input, which the checks find in the solved type graph.
+-- Fixture: unit/refineArgsParam.ct.
+testRefineArgsParam :: TestTree
+testRefineArgsParam = testCase "an arm and a refinement within an args-tied declaration" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/refineArgsParam.ct"]
+    getTPrgm ctss
+  let notes = case res of
+        CRes ns _ -> ns
+        CErr ns   -> ns
+  let outside = [ n | n <- [show note | note <- notes], "Outside Declaration" `isInfixOf` n ]
+  assertEqual (unlines outside) [] outside
+
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
     -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
@@ -103,6 +118,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , THG.testProperty "propConstraints" (p propConstraints)
     , THG.testProperty "propTypeChecks" (p propTypeChecks)
     , testResultNotGuaranteed
+    , testRefineArgsParam
                                   ]
   where
     p prop = prop

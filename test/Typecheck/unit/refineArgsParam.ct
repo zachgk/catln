@@ -1,0 +1,18 @@
+annot(#noCore)
+
+# A declaration whose parameter is tied to its arguments ([(_ :: $T ++ _ :: $T)[$T -> Semi]]),
+# refined for a class in [Semi] and defined by an arm over that class's member, as core's [++] over
+# [String/Text]. The arm binds no [$T] of its own: it is within the declaration because its
+# arguments are, and the refinement is within it because [Str] is a [Semi].
+#noCore
+module(Fx)
+  data(Ch)
+  class(Semi)
+  (_ :: $T ++ _ :: $T)[$T -> /Fx/Semi] -> $T
+
+  class(Str, [/Fx/Str/Txt(chars -> /Fx/Ch)])
+  every(/Fx/Str, isa= [/Fx/Semi])
+
+  (_ :: /Fx/Str ++ _ :: /Fx/Str) -> /Fx/Str
+    #refine
+  (/Fx/Str/Txt(chars@a) ++ /Fx/Str/Txt(chars@b))= /Fx/Str/Txt(chars= a)
