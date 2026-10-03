@@ -29,3 +29,54 @@ module(Data)
     >>> 2
   > Peano/Pred(i= Peano/Pred(i= Peano/Pred(i= Peano/Zero))).toInteger
     >>> -3
+  # ## Equality
+    A [Peano] integer is an [Eq] type: two values are equal when they are built from the same
+    constructors. Because values are canonical, a [Peano/Succ] never equals a [Peano/Pred] or
+    [Peano/Zero], and matching constructors are equal when their inner values are.
+  every(Peano, isa= [/Data/Algebra/Eq])
+module(Data/Algebra)
+  :/Data/Peano/Zero.equal(other= /Data/Peano/Zero)= True
+  :/Data/Peano/Zero.equal(other= /Data/Peano/Succ(i))= False
+  :/Data/Peano/Zero.equal(other= /Data/Peano/Pred(i))= False
+  :/Data/Peano/Succ(i).equal(other= /Data/Peano/Zero)= False
+  :/Data/Peano/Succ(i).equal(other= /Data/Peano/Pred(i@r))= False
+  :/Data/Peano/Succ(i@l).equal(other= /Data/Peano/Succ(i@r))= l.equal(other= r)
+  :/Data/Peano/Pred(i).equal(other= /Data/Peano/Zero)= False
+  :/Data/Peano/Pred(i).equal(other= /Data/Peano/Succ(i@r))= False
+  :/Data/Peano/Pred(i@l).equal(other= /Data/Peano/Pred(i@r))= l.equal(other= r)
+module(Data)
+  > (Peano/Succ(i= Peano/Zero) == Peano/Succ(i= Peano/Zero))
+    >>> True
+  > (Peano/Succ(i= Peano/Zero) == Peano/Succ(i= Peano/Succ(i= Peano/Zero)))
+    >>> False
+  > (Peano/Pred(i= Peano/Zero) == Peano/Succ(i= Peano/Zero))
+    >>> False
+  > (Peano/Pred(i= Peano/Zero) != Peano/Zero)
+    >>> True
+  > (Peano/Zero != Peano/Zero)
+    >>> False
+  # ## Addition
+  every(Peano, isa= [/Data/Algebra/Add])
+    # A [Peano] integer is an [/Data/Algebra/Add]: [operator+] moves one step at a time from the
+      right operand to the left. Adding [Peano/Zero] changes nothing; a step of the same sign is
+      moved across, and a [Peano/Succ] meeting a [Peano/Pred] cancels both.
+
+  (l :: Peano + Peano/Zero)= l
+  (l :: Peano/Pos + Peano/Succ(i@r))= Peano/Succ(i= l) + r
+  (l :: Peano/Neg + Peano/Pred(i@r))= Peano/Pred(i= l) + r
+  (Peano/Succ(i@l) + Peano/Pred(i@r))= l + r
+  (Peano/Pred(i@l) + Peano/Succ(i@r))= l + r
+
+  # Each sign combination takes a different arm.
+  > (Peano/Succ(i= Peano/Succ(i= Peano/Zero)) + Peano/Succ(i= Peano/Succ(i= Peano/Succ(i= Peano/Zero)))).toInteger
+    >>> 5
+  > (Peano/Succ(i= Peano/Succ(i= Peano/Zero)) + Peano/Pred(i= Peano/Pred(i= Peano/Pred(i= Peano/Zero)))).toInteger
+    >>> -1
+  > (Peano/Pred(i= Peano/Pred(i= Peano/Zero)) + Peano/Succ(i= Peano/Succ(i= Peano/Succ(i= Peano/Zero)))).toInteger
+    >>> 1
+  > (Peano/Pred(i= Peano/Pred(i= Peano/Zero)) + Peano/Pred(i= Peano/Pred(i= Peano/Pred(i= Peano/Zero)))).toInteger
+    >>> -5
+  > (Peano/Pred(i= Peano/Zero) + Peano/Zero).toInteger
+    >>> -1
+  > (Peano/Zero + Peano/Succ(i= Peano/Zero)).toInteger
+    >>> 1
