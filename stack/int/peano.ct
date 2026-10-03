@@ -66,6 +66,12 @@ module(Data)
   (l :: Peano/Neg + Peano/Pred(i@r))= Peano/Pred(i= l) + r
   (Peano/Succ(i@l) + Peano/Pred(i@r))= l + r
   (Peano/Pred(i@l) + Peano/Succ(i@r))= l + r
+  (l :: Peano/Pos + r :: Peano/Pos) -> Peano/Pos
+    # The sum of two non-negative integers is non-negative. It is proven rather than tested: the
+      arm adding [Peano/Zero] returns its non-negative left operand, and the arm moving a
+      [Peano/Succ] across is non-negative by the same claim about its own recursive call.
+    #refine
+    #proof
 
   # Each sign combination takes a different arm.
   > (Peano/Succ(i= Peano/Succ(i= Peano/Zero)) + Peano/Succ(i= Peano/Succ(i= Peano/Succ(i= Peano/Zero)))).toInteger
