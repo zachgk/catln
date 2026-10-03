@@ -23,11 +23,17 @@ Prgm
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /$490dbb-arg@Value /x2 }
-                            ) ->
-                            ( /operator*
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Ring
+                                , fromList []
+                                , []
+                                )
+                            , /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=TopType
-                                ) + /Data/Primitive/Integer
+                                )
+                            , []
                             ) =
                             ( /operator*
                                 ( EAppArg
@@ -41,7 +47,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦ /Data/Primitive/Integer
+                                ) ↦ ∀/Data/Algebra/Ring
                             )
                         ]
                     }
@@ -86,14 +92,22 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
-                            ( /abs.$490dbb
-                                ( /$490dbb-arg=/Data/Primitive/Integer
-                                , /x=/Data/Primitive/Integer
-                                ) + /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Ring
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /abs.$490dbb
+                                    ( /$490dbb-arg=/Data/Primitive/Integer
+                                    , /x=/Data/Primitive/Integer
+                                    ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=∀/Data/Algebra/Ring
+                                    )
+                                )
+                            , []
                             ) =
                             ( /abs.$490dbb
                                 ( EAppArg
@@ -101,11 +115,17 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /$490dbb-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦
-                                ( /operator*
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Ring
+                                    , fromList []
+                                    , []
+                                    )
+                                , /operator*[ /T=∀/Data/Algebra/Ring ]
                                     ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Primitive/Integer
+                                    , /l=∀/Data/Algebra/Ring
+                                    )
+                                , []
                                 )
                             )
                         ]

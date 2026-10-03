@@ -1220,14 +1220,14 @@ Prgm
                                                 { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /this -> /Data/Primitive/Integer.. =
                                                     ( /operator-
                                                         ( EAppArg
                                                             { eaaArg = Value /l -> TVArg /point = ( Value /point ↦ TVArg /point ) }
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                                        ) ↦ /Data/Primitive/Integer
+                                                        ) ↦ /Data/Primitive/Integer..
                                                     )
                                                 }
                                             ) ↦ ∀/Data/Algebra/Semigroup
@@ -1907,14 +1907,14 @@ Prgm
                                                 { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /this -> /Data/Primitive/Integer.. =
                                                     ( /operator-
                                                         ( EAppArg
                                                             { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /r -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                                        ) ↦ /Data/Primitive/Integer
+                                                        ) ↦ /Data/Primitive/Integer..
                                                     )
                                                 }
                                             ) ↦ ∀/Data/Algebra/Semigroup
@@ -4287,26 +4287,26 @@ Prgm
                                 { eaaArg = Value /acc -> /Data/Primitive/Integer =
                                     ( /operator+
                                         ( EAppArg
-                                            { eaaArg = Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                            { eaaArg = Value /l -> ∀/Data/Algebra/Ring =
                                                 ( /operator*
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                                    ) ↦ ∀/Data/Algebra/Ring
                                                 )
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                            { eaaArg = Value /r -> ∀/Data/Algebra/Ring =
                                                 ( /operator*
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /r -> TVArg /d = ( Value /d ↦ TVArg /d ) }
-                                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                                    ) ↦ ∀/Data/Algebra/Ring
                                                 )
                                             }
                                         ) ↦ /Data/Primitive/Integer

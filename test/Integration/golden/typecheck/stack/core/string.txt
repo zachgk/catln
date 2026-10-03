@@ -636,7 +636,7 @@ Prgm
                                 ( Value /base -> /Data/Primitive/Integer = CInt
                                     { ciValue = 10 }
                                 )
-                                ( Value /this -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /point = Value /point )
+                                ( Value /this -> /Data/Primitive/Integer.. = /operator-( Value /l -> TVArg /point = Value /point )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
                                     )
@@ -898,7 +898,7 @@ Prgm
                                 { csValue = "-" }
                             )
                             ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toStringBase( Value /base -> TVArg /base = Value /base )
-                                ( Value /this -> /Data/Primitive/Integer = /operator-
+                                ( Value /this -> /Data/Primitive/Integer.. = /operator-
                                     ( Value /l -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
                                     )( Value /r -> TVArg /this = Value /this )
@@ -1980,8 +1980,8 @@ Prgm
                             , []
                             ) = /Data/String/digitsValue( Value /cs -> TVArg /tail = Value /tail )( Value /base -> TVArg /base = Value /base )( Value /sign -> TVArg /sign = Value /sign )
                             ( Value /acc -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator*( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /base = Value /base ) )
-                                ( Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator*( Value /l -> TVArg /sign = Value /sign )( Value /r -> TVArg /d = Value /d ) )
+                                ( Value /l -> ∀/Data/Algebra/Ring = /operator*( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /base = Value /base ) )
+                                ( Value /r -> ∀/Data/Algebra/Ring = /operator*( Value /l -> TVArg /sign = Value /sign )( Value /r -> TVArg /d = Value /d ) )
                             )
                         , /digitsValue./Data/String/$6d5c93( Value /base )( Value /acc )( Value /tail )( Value /sign )
                             ( Value /$6d5c93-arg@Value /m ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing

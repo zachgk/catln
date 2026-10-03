@@ -43,7 +43,8 @@ Prgm
                         [ /bump
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> ∀/Data/Maybe =
+                            ) ->
+                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -57,7 +58,8 @@ Prgm
                                             ) ↦ /Data/Maybe/Some( /value=∀/Data/Algebra/Add )
                                         )
                                     }
-                                ) ↦ ∀/Data/Maybe
+                                ) ↦
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
                             )
                         ]
                     }

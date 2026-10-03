@@ -28,7 +28,7 @@ Prgm
                                 { eavName = /T
                                 , eavMeta = ∀/Data/Algebra/Ord
                                 }
-                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Algebra/isLessEq
                                 ( EAppArg
                                     { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
@@ -41,7 +41,7 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
-                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
@@ -226,7 +226,7 @@ Prgm
                                 { eavName = /T
                                 , eavMeta = ∀/Data/Algebra/Ord
                                 }
-                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Algebra/isLess
                                 ( EAppArg
                                     { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
@@ -239,7 +239,7 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
-                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }

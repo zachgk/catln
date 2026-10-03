@@ -14,11 +14,17 @@ Prgm
                                 { ciValue = 0 }
                             ) -> TVArg /x2 = Value /x2
                         , /abs.$490dbb( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$490dbb-arg@Value /x2 ) ->
-                            ( /operator*
+                            ( Value /$490dbb-arg@Value /x2 ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Ring
+                                , fromList []
+                                , []
+                                )
+                            , /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=TopType
-                                ) + /Data/Primitive/Integer
+                                )
+                            , []
                             ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
                             ( Value /r -> /Data/Primitive/Integer = /operator-
                                 ( Value /a -> /Data/Primitive/Integer = CInt
@@ -56,14 +62,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$490dbb
-                                ( /$490dbb-arg=/Data/Primitive/Integer
-                                , /x=/Data/Primitive/Integer
-                                ) + /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                        [ /abs( Value /x -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Ring
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /abs.$490dbb
+                                    ( /$490dbb-arg=/Data/Primitive/Integer
+                                    , /x=/Data/Primitive/Integer
+                                    ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=∀/Data/Algebra/Ring
+                                    )
+                                )
+                            , []
                             ) = /abs.$490dbb( Value /x -> TVArg /x = Value /x )
                             ( Value /$490dbb-arg -> TVArg /x = Value /x )
                         ]

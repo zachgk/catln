@@ -12,7 +12,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator<=( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLessEq
+                        [ /operator<=( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLessEq
                             ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /r = Value /r )( Value /this -> TVArg /l = Value /l ) )
                         ]
                     }
@@ -105,7 +105,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator<( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
+                        [ /operator<( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
                             ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /r = Value /r )( Value /this -> TVArg /l = Value /l ) )
                         ]
                     }

@@ -479,6 +479,42 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[Char] gives no comparison arms of its own, so its [operator<] and the others come from" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  [compareTo] through the [/Data/Algebra/Ord] definitions." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator<
+                ( Value /l -> /Data/Char = CChar
+                    { chValue = 'a' }
+                )
+                ( Value /r -> /Data/Char = CChar
+                    { chValue = 'b' }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator<=
+                ( Value /l -> /Data/Char = CChar
+                    { chValue = 'b' }
+                )
+                ( Value /r -> /Data/Char = CChar
+                    { chValue = 'a' }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Code points" }
             )
         , /Catln/#print

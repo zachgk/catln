@@ -373,20 +373,8 @@ Prgm
                             )
                             ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /acc -> TVArg /init = Value /init )
                             ( Value /index -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
-                                    ( Value /r -> UnionType
-                                        ( Just
-                                            ( PredExpr /operator==
-                                                ( /r=/Data/Primitive/True
-                                                , /l=~nonNeg( /this=~/$this )
-                                                ) && PredRel Integer
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        ) = /length( Value /this -> TVArg /lst = Value /lst )
-                                    )
+                                ( Value /l -> ∀/Data/Algebra/Ring = /operator+( Value /l -> TVArg /index = Value /index )
+                                    ( Value /r -> ∀/Data/Algebra/Add = /length( Value /this -> TVArg /lst = Value /lst ) )
                                 )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }

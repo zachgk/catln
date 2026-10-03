@@ -71,7 +71,22 @@ Prgm
                                     { eaaArg = Value /l -> TVArg /count = ( Value /count ↦ TVArg /count ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
+                                    { eaaArg = Value /r ->
+                                        ( /Data/List/length
+                                            ( /this=UnionType
+                                                ( Just
+                                                    ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/List/Cons[ /T=TopType ]
+                                                    ( /head=TopType
+                                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                                    )
+                                                , []
+                                                )
+                                            )| PredClass /Data/Algebra/Add + /Data/Primitive/Integer
+                                        ) =
                                         ( /Data/List/count
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> /Data/List/Cons
@@ -125,7 +140,22 @@ Prgm
                                                         ) ↦ ∀/Data/Primitive/Boolean
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Add
+                                            ) ↦
+                                            ( /Data/List/length
+                                                ( /this=UnionType
+                                                    ( Just
+                                                        ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List
+                                                        , fromList []
+                                                        , []
+                                                        )
+                                                    , /Data/List/Cons[ /T=TopType ]
+                                                        ( /head=TopType
+                                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                                        )
+                                                    , []
+                                                    )
+                                                )| PredClass /Data/Algebra/Add + /Data/Primitive/Integer
+                                            )
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer

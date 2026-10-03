@@ -44,7 +44,7 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            )=
+                            ) -> ∀/Data/Monad[ /T=TopType ] =
                             ( /Data/Monad/mmap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -74,7 +74,7 @@ Prgm
                                             )
                                         )
                                     }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/Monad[ /T=TopType ]
                             )
                         ]
                     }

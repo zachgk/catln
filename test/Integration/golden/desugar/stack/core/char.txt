@@ -440,6 +440,38 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "[Char] gives no comparison arms of its own, so its [operator<] and the others come from" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  [compareTo] through the [/Data/Algebra/Ord] definitions." }
+            )
+        , /Catln/#print
+            ( Value /p= /operator<
+                ( Value /l= CChar
+                    { chValue = 'a' }
+                )
+                ( Value /r= CChar
+                    { chValue = 'b' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator<=
+                ( Value /l= CChar
+                    { chValue = 'b' }
+                )
+                ( Value /r= CChar
+                    { chValue = 'a' }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "## Code points" }
             )
         , /Catln/#print
