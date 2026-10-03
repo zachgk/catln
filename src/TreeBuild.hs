@@ -365,7 +365,19 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound _force srcType 
                   metPart = intersectTypes tbTypeEnv (UnionType mTop (joinUnionType settled) consts) (expandToMembers 10 bound')
               in unionTypes tbTypeEnv metPart (UnionType Nothing (joinUnionType raws) [])
           | otherwise = t
-    let resArrows''WithPostTypes = concatMap (\item@(_, _, resArrow) -> map ((item,) . boundPost) $ resArrowDestType tbTypeEnv srcType resArrow) resArrows''
+    -- Each arm's result is read from the part of the source the arm ACCEPTS — the source met with
+    -- the arm's object — as the type graph's own query reads it ('tryTArrow'). Read from the whole
+    -- source, an arm's argument is whatever the source holds there: a call reaching here still
+    -- generic (@operator+[/T=∀Add](/l=$T, /r=$T)@, from an argument nothing typed) gave the arm
+    -- @(l :: P + P/Z)= l@ the result @∀Add@ — Integer among it — though the arm only ever answers
+    -- with a @P@, and the arm was then reported as needed by an Integer call it can never serve.
+    let acceptedSrcs itemType = case intersectTypes tbTypeEnv (singletonType srcType) (singletonType itemType) of
+          UnionType Nothing leafs [] | not (H.null leafs) -> splitUnionType leafs
+          _                                               -> [srcType]
+        itemDests itemType resArrow = case acceptedSrcs itemType of
+          [accepted] -> resArrowDestType tbTypeEnv accepted resArrow
+          accepteds  -> [unionAllTypes tbTypeEnv (concatMap (\accepted -> resArrowDestType tbTypeEnv accepted resArrow) accepteds)]
+    let resArrows''WithPostTypes = concatMap (\item@(itemType, _, resArrow) -> map ((item,) . boundPost) $ itemDests itemType resArrow) resArrows''
     let followups = map (arrowFollowup env os visitedArrows bound' srcType destType) resArrows''WithPostTypes
     let resArrows''' = mapMaybe cresToMaybe followups
     -- An arm whose result cannot reach the destination is left out of the call, which is how a call

@@ -1,0 +1,22 @@
+import "core"
+
+
+# An operator declared once on its class (here [operator+] on [/Data/Algebra/Add]) is reached
+  through that generic declaration wherever its operands are untyped. [sumOf]'s arguments carry no
+  type, so its [a + d] is built as the fully generic call, and the tree build then considers every
+  arm of [operator+] — [Box]'s among them. An arm's result must be read from the part of the call
+  that arm accepts: [Box]'s arm only ever answers with a [Box], so it is no candidate for the
+  [Integer] that [total] needs. Read from the whole generic call, the arm appeared to answer
+  [Integer] too, and the build refused the call.
+data(Box)
+
+every(Box, isa= [/Data/Algebra/Add])
+
+(Box + Box)= Box
+
+total(acc -> Integer) -> Integer= acc
+
+sumOf(a, d)= total(acc= a + d)
+
+# Exits 0 only when the untyped sum built and evaluated to 3.
+main{io -> IO}= io.exit(val= sumOf(a= 1, d= 2) - 3)

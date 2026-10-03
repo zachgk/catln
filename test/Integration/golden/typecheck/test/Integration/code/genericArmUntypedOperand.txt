@@ -1,0 +1,108 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = /operator-
+                                ( Value /l -> /Data/Primitive/Integer = /sumOf
+                                    ( Value /a -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /d -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 2 }
+                                    )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 3 }
+                                )
+                            )( Value /this -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Box ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator+"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator+( Value /l -> /Box = Value /Box )( Value /r -> /Box = Value /Box ) -> /Box = Value /Box ]
+                    }
+                )
+            ,
+                ( "/total"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total( Value /acc -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value /acc ]
+                    }
+                )
+            ,
+                ( "/sumOf"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sumOf( Value /a )( Value /d ) ->
+                            ( /Data/Primitive/Integer + /total( /acc=/Data/Primitive/Integer ) ) = /total
+                            ( Value /acc -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /d = Value /d ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Box
+            , cgcExtends = [ /Box ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "An operator declared once on its class (here [operator+] on [/Data/Algebra/Add]) is reached
+                through that generic declaration wherever its operands are untyped. [sumOf]'s arguments carry no
+                type, so its [a + d] is built as the fully generic call, and the tree build then considers every
+                arm of [operator+] — [Box]'s among them. An arm's result must be read from the part of the call
+                that arm accepts: [Box]'s arm only ever answers with a [Box], so it is no candidate for the
+                [Integer] that [total] needs. Read from the whole generic call, the arm appeared to answer
+                [Integer] too, and the build refused the call." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Exits 0 only when the untyped sum built and evaluated to 3." }
+            )
+        ]
+    }
