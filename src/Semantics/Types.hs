@@ -7070,6 +7070,9 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
         Just TypeVar{} -> Just Nothing
         Just r | not (typeHasVars r), not (typeContainsBareTop r), TypeVar{} <- t -> Just (Just r)
         _ -> Nothing
+  -- Whether a template spells an argument (not a higher-order argument's input object) as the
+  -- parameter itself.
+  let directOccurrenceOf n tmpl = or [ n' == n | (k, TypeVar (TVVar n') _ _) <- H.toList (ptArgs tmpl), S.null (pkArgs k) ]
   let pointerJoinFor ks =
         let ksL = S.toList ks
             joinFor n =
@@ -7125,7 +7128,16 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
         -- Ranging over linked names too would stamp a var no direct occurrence stamps — the
         -- content of a single-element literal ("x") standing in for the element type its
         -- declaration gives (@String@), which is a narrowing, not a widening.
-        in H.fromList $ mapMaybe joinFor $ S.toList $ S.unions $ map pointerNamesAt ksL
+        --
+        -- A parameter the declaration gives NO direct occurrence is the exception: its linked
+        -- occurrences are all it has, so they start its join. @foldr[$A, $B](lst -> List[$T ->
+        -- $_A], fn(acc -> $_B, v -> $_A) -> $_B, ..)@ has @$A@ only inside @lst@ (and at the
+        -- lambda's @v@, where it is given rather than evidenced), and without its join the
+        -- lambda's @v@ never learned the list's element type.
+            linkedOnlyNames = S.fromList [ n | n <- L.nub (concatMap (H.keys . ptVars) declTmpls)
+                                             , not (any (directOccurrenceOf n) declTmpls)
+                                             , not (null (linkedKsOf n ks)) ]
+        in H.fromList $ mapMaybe joinFor $ S.toList $ S.unions (map pointerNamesAt ksL) <> linkedOnlyNames
   -- A name an arg contributes to the pointer JOIN through a LINKED (parent-scope) occurrence must
   -- not ALSO meet through the exact-reference env: both readings describe the SAME occurrence, and
   -- the meet would pull the join straight back down (@/T = (K/A + K/B) ⊓ K/B = K/B@ — the head's
