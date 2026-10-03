@@ -1316,6 +1316,54 @@ propDataIsaBindsClassParam = property $ do
     forM_ checks $ \(n, ok) -> annotate $ printf "%s world: %s -> %s" (world :: String) (n :: String) (show ok)
     assert $ all snd checks
 
+-- | A meet never leaves its first operand. A call to @fold[$B](fn(acc -> $_B) -> $_B, ..)@ holds
+-- its @fn@ slot as the input object @fn[/B=$^B](acc=$/B)@, whose @acc@ is whatever the call binds
+-- @$B@ to; with the call's @/B=X@ that is @X@. Met with the same call spelling @fn@ concretely as
+-- @fn[/B=X+Y](acc=X+Y)@ (which contains it), the result must still be within the first: core's
+-- @sum@ stored such a meet as its requirement, and reading the pointer as ⊤ there gave the
+-- concrete @X+Y@ back, which the narrowing check refused as a widening.
+propHoSlotParentMeet :: Property
+propHoSlotParentMeet = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
+  let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/fold" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    (t:_) -> return t
+    []    -> fail "fold not declared"
+  declLeaf <- case declT of
+    UnionType Nothing leafs [] | [p] <- splitUnionType leafs -> return p
+    _ -> fail "decl is not one leaf"
+  let findData n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return $ singletonType $ partialVal nm
+        []     -> fail $ printf "%s type not found" n
+  x <- findData "X"
+  y <- findData "Y"
+  let xy = unionTypes typeEnv x y
+  (fnKey, fnSlot) <- case [ (k, v) | (k, v) <- H.toList (ptArgs declLeaf), not (S.null (pkArgs k)) ] of
+    [kv] -> return kv
+    _    -> fail "no higher-order arg"
+  initKey <- case [ k | k <- H.keys (ptArgs declLeaf), "/init" `isSuffixOf` nameStr (pkName k) ] of
+    [k] -> return k
+    _   -> fail "no init arg"
+  bName <- case H.keys (ptVars declLeaf) of
+    [b] -> return b
+    _   -> fail "fold has not one parameter"
+  fnObj <- case maybeGetSingleton fnSlot of
+    Just o  -> return o
+    Nothing -> fail "fn slot is not one input object"
+  annotate $ printf "declared fn slot = %s" (show fnSlot)
+  let call fn = singletonType declLeaf{ptVars = H.singleton bName x, ptArgs = H.fromList [(fnKey, fn), (initKey, x)]}
+  let concreteFn = singletonType fnObj{ptVars = fmap (const xy) (ptVars fnObj), ptArgs = fmap (const xy) (ptArgs fnObj)}
+  let a = call fnSlot
+  let b = call concreteFn
+  annotate $ printf "a = %s" (show a)
+  annotate $ printf "b = %s" (show b)
+  forM_ [("open", typeEnv), ("closed", typeEnv{tePrgmEnv=True})] $ \(world, te) -> do
+    let met = intersectTypesEnv te H.empty a b
+    annotate $ printf "%s world: a ∩ b = %s" (world :: String) (show met)
+    assertTimed (world ++ ": a ⊆ b") $ isSubtypeOfWithEnv te H.empty a b
+    assertTimed (world ++ ": a ∩ b ⊆ a") $ isSubtypeOfWithEnv te H.empty met a || isBottomType (snd (differenceTypeWithEnv te H.empty met a))
+
 -- | A function declaration whose arguments are its own parameter (@(_ :: $T ++ _ :: $T)[$T ->
 -- Semigroup]@) holds an application to two members of the parameter's bound, and not one to a type
 -- outside it. The application is spelled without the parameter (@op(l=Sa, r=Sa)@), so its @/T@ is
@@ -1400,6 +1448,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
       , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
       , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)
+      , HG.testProperty "propHoSlotParentMeet" (withTests 1 propHoSlotParentMeet)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)

@@ -6889,7 +6889,25 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
                           -- variable as @operator++@'s own and fed the parameter its own binding).
                           -- A parameter whose slot is still a variable or ⊤ reads ⊤ there.
                           vaenv
-  let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) aArgs) (fmap (deepVaenv,) bArgs)
+  -- A higher-order argument's input object reaches this partial's variables through its own
+  -- parameters, spelled as parent references (@fn[/B=$^B](acc=$/B)@ — 'hopInputObject'). Its
+  -- parameter slots are met in the nested meet, under no scope that says which partial a parent
+  -- reference names, so there the reference reads as ⊤ ('substituteTVExt' keeps a parent reference
+  -- symbolic at the top) and the meet with a concrete slot (@fn[/B=X+Y](acc=X+Y)@) answered that
+  -- slot: outside the first operand, whose @acc@ is @/B@'s @X@. So the input object's parent
+  -- references are read here, against this partial's own resolved bindings, before the meet.
+  let ownResolved = H.fromList [ (TVVar n, r) | (n, v) <- H.toList vars', let r = substituteTVExt typeEnv vaenv v
+                                              , not (isTypeVar r), r /= PTopType ]
+  let readInputObjParents k t
+        | S.null (pkArgs k) = t
+        | otherwise = case t of
+            UnionType Nothing leafs cs -> UnionType Nothing (joinUnionType (map onInputObj (splitUnionType leafs))) cs
+            _                          -> t
+        where
+          onInputObj p = p{ptVars = fmap onParam (ptVars p)}
+          onParam (TypeVar v TVParent i) | Just b <- H.lookup v ownResolved = meetInner typeEnv vaenv b i
+          onParam x = x
+  let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) (H.mapWithKey readInputObjParents aArgs)) (fmap (deepVaenv,) (H.mapWithKey readInputObjParents bArgs))
   let args' = fmap snd argsMap
   -- An arg whose met value denotes ∅ cannot be present (see the arg-mode reasoning below). The
   -- value is judged as the rest of the algebra judges a slot ('partialHasEmptySlot'): RESOLVED

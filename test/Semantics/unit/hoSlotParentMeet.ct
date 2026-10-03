@@ -1,0 +1,10 @@
+annot(#noCore)
+
+# A declaration whose higher-order argument receives its variable ([fold]'s [fn(acc -> $_B)]),
+# as core's [foldr]. A call's [fn] slot is spelled [fn[/B=$^B](acc=$/B)]: its [acc] is whatever the
+# call binds [$B] to.
+#noCore
+module(Fx)
+  data(X)
+  data(Y)
+  fold[$B](fn(acc -> $_B) -> $_B, init -> $_B) -> $_B
