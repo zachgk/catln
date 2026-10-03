@@ -26,12 +26,13 @@ module(Data/Map)
       empty map is written [Leaf].
 
   # ## Size
-  foldEntries[$MK -> /Data/Algebra/Ord, $MV, $B](m -> /Data/Map[$K -> $_MK, $V -> $_MV], fn(acc -> $_B, k -> $_MK, v -> $_MV) -> $_B, init -> $_B) -> $_B
+  foldEntries[$MK, $MV, $B](m -> /Data/Map[$K -> $_MK, $V -> $_MV], fn(acc -> $_B, k -> $_MK, v -> $_MV) -> $_B, init -> $_B) -> $_B
     # [foldEntries] collapses a map to a single value by visiting every entry in key order. A node
       sits between its two subtrees, so the walk folds the [right] subtree into the accumulator
       first, then the node's own entry, then the [left] subtree — which means the step sees entries
       in DESCENDING key order and a step that prepends therefore produces ascending order.
-      [size], [keys] and [values] are all this fold with a different step.
+      [size], [keys] and [values] are all this fold with a different step. The walk follows the
+      tree's shape and never compares keys, so it asks nothing of them.
   foldEntries(m= Leaf, fn(acc, k, v), init)= init
   foldEntries(m= Node(left, key, value, right), fn(acc, k, v), init)= foldEntries(m= left, fn(acc, k, v)= fn(acc= acc, k= k, v= v), init= fn(acc= foldEntries(m= right, fn(acc, k, v)= fn(acc= acc, k= k, v= v), init= init), k= key, v= value))
 

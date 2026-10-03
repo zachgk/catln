@@ -421,20 +421,33 @@ Prgm
                                 )
                             )
                         , /Catln/Doc/dshowCall
-                            ( Value /s -> /Data/Map/foldEntries[ /MV=∀/Data/ToString ]
+                            ( Value /s -> /Data/Map/foldEntries
+                                [ /MV=∀/Data/ToString
+                                , /MK=∀/Data/ToString
+                                , /B=∀/Data/ToString
+                                ]
                                 ( /fn
                                     ( /acc=TopType
                                     , /v=TopType
                                     , /k=TopType
                                     )=/fn
-                                    ( /acc=TopType
-                                    , /v=TopType
-                                    , /k=TopType
-                                    )
-                                , /m=∀/Data/Map/BinTree
-                                    [ /K=∀/Data/ToString
-                                    , /V=∀/Data/ToString
+                                    [ /MV=∀/Data/ToString
+                                    , /MK=∀/Data/ToString
+                                    , /B=∀/Data/ToString
                                     ]
+                                    ( /acc=∀/Data/ToString
+                                    , /v=∀/Data/ToString
+                                    , /k=∀/Data/ToString
+                                    )
+                                , /m=
+                                    ( TopType | PredClass /Data/Map/BinTree
+                                        [ /K=∀/Data/ToString
+                                        , /V=∀/Data/ToString
+                                        ] && PredClass /Data/Map
+                                        [ /K=∀/Data/ToString
+                                        , /V=∀/Data/ToString
+                                        ]
+                                    )
                                 , /init=∀/Data/ToString
                                 )| PredClass /Catln/Doc/DShowCall = /Data/Map/foldEntries
                                 ( Value /m -> ∀/Data/Map/BinTree
@@ -442,7 +455,7 @@ Prgm
                                     , /V=∀/Data/ToString
                                     ]
                                 )
-                                ( /fn( Value /acc )( Value /k )( Value /v ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
+                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /k -> ∀/Data/ToString )( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/EntryFoldSteps.. = /Data/Map/foldEntriesShow
                             ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] = /Data/Map/foldEntriesSteps
                                 ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] = /Data/Map/descending( Value /m -> TVArg /m = Value /m )( Value /rest -> /Data/List/Nil = Value /Data/List/Nil ) )
