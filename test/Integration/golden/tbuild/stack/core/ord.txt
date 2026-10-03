@@ -2,6 +2,51 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/operator<="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator<=
+                            ( EAppArg
+                                { eaaArg = Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator<=
+                            ( EAppArg { eaaArg = Value /l -> $/T } )
+                            ( EAppArg { eaaArg = Value /r -> $/T } )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( /Data/Algebra/isLessEq
+                                ( EAppArg
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                        ( /compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                            ) ↦ ∀/Data/Algebra/Comparison
+                                        )
+                                    }
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/isGreaterEq"
                 , ObjectMapItem
                     { omiDecls =
@@ -17,6 +62,51 @@ Prgm
                             ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isGreaterEq
                             ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        ]
+                    }
+                )
+            ,
+                ( "/operator>="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator>=
+                            ( EAppArg
+                                { eaaArg = Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator>=
+                            ( EAppArg { eaaArg = Value /l -> $/T } )
+                            ( EAppArg { eaaArg = Value /r -> $/T } )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( /Data/Algebra/isGreaterEq
+                                ( EAppArg
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                        ( /compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                            ) ↦ ∀/Data/Algebra/Comparison
+                                        )
+                                    }
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                            )
                         ]
                     }
                 )
@@ -110,6 +200,51 @@ Prgm
                     }
                 )
             ,
+                ( "/operator<"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator<
+                            ( EAppArg { eaaArg = Value /l -> $/T } )
+                            ( EAppArg { eaaArg = Value /r -> $/T } )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( /Data/Algebra/isLess
+                                ( EAppArg
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                        ( /compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                            ) ↦ ∀/Data/Algebra/Comparison
+                                        )
+                                    }
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/mkDivComparison"
                 , ObjectMapItem
                     { omiDecls =
@@ -162,6 +297,51 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/operator>"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator>
+                            ( EAppArg
+                                { eaaArg = Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator>
+                            ( EAppArg { eaaArg = Value /l -> $/T } )
+                            ( EAppArg { eaaArg = Value /r -> $/T } )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Ord
+                                }
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( /Data/Algebra/isGreater
+                                ( EAppArg
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                                        ( /compareTo
+                                            ( EAppArg
+                                                { eaaArg = Value /other -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                            ) ↦ ∀/Data/Algebra/Comparison
+                                        )
+                                    }
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                             )
                         ]
                     }
@@ -449,6 +629,10 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Algebra/Comparison
@@ -513,8 +697,8 @@ Prgm
                   Ordering mirrors equivalence exactly. [Ordering] is the class of orderings over a type [$T] (the
                   analog of [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
                   type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
-                  follows. The primitive [operator<] / [operator<=] / [operator>] / [operator>=] remain defined
-                  directly in [Data/Primitive]."
+                  follows, and the comparison operators [operator<] / [operator<=] / [operator>] / [operator>=]
+                  follow from [compareTo] in turn."
                 }
             )
         , /Catln/#md
@@ -600,6 +784,17 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  class here defines only the abstract concept."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Comparison operators
+                  Every [Ord] type can be compared with [operator<], [operator<=], [operator>] and [operator>=],
+                  each read from [compareTo]. They are declared once, on the class, so that every type's arms
+                  belong to the one declaration. A type may also give arms of its own (the numeric types use
+                  runtime primitives in [Data/Primitive]); those overlap the definitions here, and the derived
+                  overlap tests check that the two agree."
                 }
             )
         , /Catln/#md

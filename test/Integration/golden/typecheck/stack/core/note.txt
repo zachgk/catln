@@ -500,7 +500,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Nothing = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=∀/Data/String ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Simple
                         ( /contents=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )

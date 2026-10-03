@@ -129,8 +129,8 @@ Prgm
                 worked, and it is what says the fault was the variable rather than the shape." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /useG
-                ( /fn( Value /a ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /a = Value /a )
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /useG
+                ( /fn( Value /a ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /a = Value /a )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -171,7 +171,7 @@ Prgm
                 concrete until it is called." }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /foldrG
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /foldrG
                 ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -205,7 +205,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /acc )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
+                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -216,7 +216,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /foldrG( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
-                ( /fn( Value /acc )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
+                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )

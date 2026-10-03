@@ -745,6 +745,12 @@ Prgm
             , cgcDoc = Nothing
             }
         , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Number
+            , cgcExtends = [ ∀/Data/Primitive/Number ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Primitive/FloatParts
             , cgcExtends =
@@ -778,6 +784,18 @@ Prgm
                   The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
                   comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
                   defined here alongside the types — build on those primitives."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both numeric types implement the [/Data/Algebra/Ring] operators with the runtime primitives"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  below."
                 }
             )
         , /Catln/#md

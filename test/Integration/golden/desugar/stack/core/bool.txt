@@ -65,15 +65,15 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator~
-                            ( Value /a= Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                            ( Value /a -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator~
-                            ( Value /a= Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
+                            ( Value /a -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
                         , /operator~
-                            ( Value /a= Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
+                            ( Value /a -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )

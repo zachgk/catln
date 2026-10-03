@@ -7,7 +7,8 @@ module(Data/Algebra)
   # # Catln Core Abstract Algebra Types
     These types define some of the basic relationship between types and ways classes can relate to themselves.
     The [Eq] class of equality lives in [Data/Algebra/eq] and ordering ([Ord]) in [Data/Algebra/ord];
-    this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group]).
+    this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group]) and the
+    arithmetic classes ([Add], [Ring]).
   # ## Semigroup
   class(Semigroup)
     # A semigroup is a type combined with an associative operation called [operator++].
@@ -82,3 +83,25 @@ module(Data/Algebra)
     #assert(test= t ++ inverse(t= t) == mempty)
     #assert(test= inverse(t= t) ++ t == mempty)
     0
+
+  # ## Arithmetic
+    An operator has a single declaration, made on the class of everything it applies to, and each
+    type then implements it with its own arms (or a [#runtime] primitive). A type joins the class to
+    use the operator: [Integer] and [Float] are [Ring]s through [Number], and a user type such as a
+    Peano integer becomes one by joining and defining the arms.
+  class(Add)
+    # An [Add] type can be combined with [operator+]. Every [Ring] is an [Add]; a type with an
+      addition but no subtraction or multiplication (such as a concatenation) can be an [Add] alone.
+
+  (_ :: $T + _ :: $T)[$T -> /Data/Algebra/Add] -> $T
+
+  class(Ring)
+    # A [Ring] adds subtraction ([operator-]), negation, and multiplication ([operator*]) to the
+      addition of an [Add].
+
+  every(Ring, isa= [/Data/Algebra/Add])
+
+  (_ :: $T - _ :: $T)[$T -> /Data/Algebra/Ring] -> $T
+  (-(_ :: $T))[$T -> /Data/Algebra/Ring] -> $T
+
+  (_ :: $T * _ :: $T)[$T -> /Data/Algebra/Ring] -> $T

@@ -380,6 +380,12 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -405,6 +411,12 @@ Prgm
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## String operations
                   Python's string built-ins, written over the core [String] and [Char]."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Python's [operator+] on strings concatenates, which makes [String] an [/Data/Algebra/Add]."
                 }
             )
         , /Catln/#md

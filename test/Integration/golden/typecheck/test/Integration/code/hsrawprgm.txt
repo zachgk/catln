@@ -302,18 +302,7 @@ Prgm
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
                                 ( Value /msg -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> UnionType
-                                        ( Just
-                                            ( PredExpr /operator==
-                                                ( /r=/Data/Primitive/True
-                                                , /l=~nonNeg( /this=~/$this )
-                                                ) && PredRel Integer
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        ) = /Test/readsCount
+                                    ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /Test/readsCount
                                         ( Value /r -> /Catln/ImportResult
                                             ( /prgm=/Catln/RawPrgm..
                                             , /reads=∀/Data/Maybe
@@ -329,18 +318,7 @@ Prgm
                                 )
                                 ( Value /this -> /Catln/IO = /Catln/println
                                     ( Value /msg -> ∀/Data/String = /Data/toString
-                                        ( Value /this -> UnionType
-                                            ( Just
-                                                ( PredExpr /operator==
-                                                    ( /r=/Data/Primitive/True
-                                                    , /l=~nonNeg( /this=~/$this )
-                                                    ) && PredRel Integer
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/Primitive/Integer
-                                            , []
-                                            ) = /Test/resultDeclCount
+                                        ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /Test/resultDeclCount
                                             ( Value /r -> /Catln/ImportResult
                                                 ( /prgm=/Catln/RawPrgm..
                                                 , /reads=∀/Data/Maybe
@@ -356,18 +334,7 @@ Prgm
                                     )
                                     ( Value /this -> /Catln/IO = /Catln/println
                                         ( Value /msg -> ∀/Data/String = /Data/toString
-                                            ( Value /this -> UnionType
-                                                ( Just
-                                                    ( PredExpr /operator==
-                                                        ( /r=/Data/Primitive/True
-                                                        , /l=~nonNeg( /this=~/$this )
-                                                        ) && PredRel Integer
-                                                    , fromList []
-                                                    , []
-                                                    )
-                                                , /Data/Primitive/Integer
-                                                , []
-                                                ) = /Test/declCount
+                                            ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /Test/declCount
                                                 ( Value /p -> /Catln/RawPrgm
                                                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                                                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -1226,18 +1193,7 @@ Prgm
                 { csValue = "## A whole page, and the result of reading one" }
             )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredExpr /operator==
-                        ( /r=/Data/Primitive/True
-                        , /l=~nonNeg( /this=~/$this )
-                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    , []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) = /Test/declCount
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/declCount
                 ( Value /p -> /Catln/RawPrgm
                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -1249,18 +1205,7 @@ Prgm
                 { csValue = "0" }
             )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredExpr /operator==
-                        ( /r=/Data/Primitive/True
-                        , /l=~nonNeg( /this=~/$this )
-                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    , []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) = /Test/declCount
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/declCount
                 ( Value /p -> /Catln/RawPrgm
                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -1276,18 +1221,7 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredExpr /operator==
-                        ( /r=/Data/Primitive/True
-                        , /l=~nonNeg( /this=~/$this )
-                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    , []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) = /Test/resultDeclCount
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/resultDeclCount
                 ( Value /r -> /Catln/ImportResult
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe
@@ -1305,18 +1239,7 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredExpr /operator==
-                        ( /r=/Data/Primitive/True
-                        , /l=~nonNeg( /this=~/$this )
-                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    , []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) = /Test/readsCount
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/readsCount
                 ( Value /r -> /Catln/ImportResult
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe

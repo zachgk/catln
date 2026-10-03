@@ -334,7 +334,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq && PredClass /Catln/Doc/DShow ) =
                     ( /headTo
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
@@ -349,20 +349,20 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> /Data/Primitive/Integer =
+                                ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq ) =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /w = ( Value /w ↦ TVArg /w ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ /Data/Primitive/Integer
+                                    ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /dflt -> /Data/Primitive/Integer = 0 }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq && PredClass /Catln/Doc/DShow )
                     )
                 }
             )

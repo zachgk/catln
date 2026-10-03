@@ -27,13 +27,13 @@ Prgm
                                                 { eaaArg = Value /msg -> ∀/Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
-                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                            { eaaArg = Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) =
                                                                 ( /lenStr
                                                                     ( EAppArg
                                                                         { eaaArg = Value /s -> /Data/String/Text
                                                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                                                                         }
-                                                                    ) ↦ /Data/Primitive/Integer
+                                                                    ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
                                                                 )
                                                             }
                                                         ) ↦ ∀/Data/String
@@ -108,11 +108,11 @@ Prgm
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /lenChars
                                             ( EAppArg
                                                 { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer

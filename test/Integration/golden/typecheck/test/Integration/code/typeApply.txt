@@ -52,7 +52,7 @@ Prgm
                     , omiDefs =
                         [ /incMaybe
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=TopType ] = /applyInc( Value /lst -> TVArg /m = Value /m )
-                            ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                            ( /fn( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /v = Value /v )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )

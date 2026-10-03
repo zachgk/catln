@@ -649,7 +649,7 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Nothing =
+                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=∀/Data/String ] =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Simple
@@ -664,7 +664,7 @@ Prgm
                                             )
                                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                                         }
-                                    ) ↦ /Data/Maybe/Nothing
+                                    ) ↦ ∀/Data/Maybe[ /T=∀/Data/String ]
                                 )
                             }
                         )

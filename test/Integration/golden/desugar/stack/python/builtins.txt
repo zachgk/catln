@@ -218,6 +218,12 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -236,6 +242,10 @@ Prgm
             ( Value /text= CStr
                 { csValue = "## String operations
                 Python's string built-ins, written over the core [String] and [Char]." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Python's [operator+] on strings concatenates, which makes [String] an [/Data/Algebra/Add]." }
             )
         , /Catln/#md
             ( Value /text= CStr

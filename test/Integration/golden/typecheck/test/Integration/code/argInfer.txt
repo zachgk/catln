@@ -27,7 +27,7 @@ Prgm
                             ,
                                 ( /operator==
                                     ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
+                                    , /l=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
@@ -35,7 +35,7 @@ Prgm
                                 )
                             , []
                             ) = /operator==
-                            ( Value /l -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq ) = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )( Value /r -> TVArg /a = Value /a )

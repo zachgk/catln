@@ -12,8 +12,8 @@ module(Data/Algebra)
     Ordering mirrors equivalence exactly. [Ordering] is the class of orderings over a type [$T] (the
     analog of [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
     type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
-    follows. The primitive [operator<] / [operator<=] / [operator>] / [operator>=] remain defined
-    directly in [Data/Primitive].
+    follows, and the comparison operators [operator<] / [operator<=] / [operator>] / [operator>=]
+    follow from [compareTo] in turn.
   # ## The comparison result
     Comparing two values yields a [Comparison]: the left is [LessThan], [Equal] to, or
     [GreaterThan] the right.
@@ -88,6 +88,24 @@ module(Data/Algebra)
   # The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each
   #   numeric type derives from its ordering live alongside their types in [Data/Primitive]; the
   #   class here defines only the abstract concept.
+  # ## Comparison operators
+    Every [Ord] type can be compared with [operator<], [operator<=], [operator>] and [operator>=],
+    each read from [compareTo]. They are declared once, on the class, so that every type's arms
+    belong to the one declaration. A type may also give arms of its own (the numeric types use
+    runtime primitives in [Data/Primitive]); those overlap the definitions here, and the derived
+    overlap tests check that the two agree.
+  (_ :: $T < _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T < r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isLess
+
+  (_ :: $T <= _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T <= r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isLessEq
+
+  (_ :: $T > _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T > r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isGreater
+
+  (_ :: $T >= _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T >= r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isGreaterEq
+
   # ## Partial ordering
     Some types can be compared but need not be totally ordered: two values may have no order
     between them. [pcompare] yields a [PComparison], which is either an ordinary [Comparison] or

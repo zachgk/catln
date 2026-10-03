@@ -202,12 +202,12 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /operator-
-                            ( Value /a= Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                            ( Value /a -> /Data/Primitive/Integer = Hole TopType HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
                         , /operator-
                             ( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive { haName = Nothing } )
                             ( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
                         , /operator-
-                            ( Value /a= Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
+                            ( Value /a -> /Data/Primitive/Float = Hole TopType HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         , /operator-
                             ( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive { haName = Nothing } )
                             ( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
@@ -493,6 +493,12 @@ Prgm
             , cgcDoc = Nothing
             }
         , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Number
+            , cgcExtends = [ ∀/Data/Primitive/Number ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Primitive/FloatParts
             , cgcExtends =
@@ -525,6 +531,14 @@ Prgm
                 The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
                 comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
                 defined here alongside the types — build on those primitives." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Both numeric types implement the [/Data/Algebra/Ring] operators with the runtime primitives" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  below." }
             )
         , /Catln/#md
             ( Value /text= CStr

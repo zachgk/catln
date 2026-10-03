@@ -19,7 +19,7 @@ Prgm
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
                                 ( Value /msg -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> /Data/Primitive/Integer = /lenStr
+                                    ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /lenStr
                                         ( Value /s -> /Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                             { csValue = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
@@ -68,7 +68,7 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )
-                            ( Value /r -> /Data/Primitive/Integer = /lenChars( Value /cs -> TVArg /tail = Value /tail ) )
+                            ( Value /r -> ∀/Data/Algebra/Add = /lenChars( Value /cs -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )

@@ -41,6 +41,12 @@ module(Data)
     >>> True
   > 'a'.compareTo(other= 'a').isEq
     >>> True
+  # [Char] gives no comparison arms of its own, so its [operator<] and the others come from
+  #   [compareTo] through the [/Data/Algebra/Ord] definitions.
+  > ('a' < 'b')
+    >>> True
+  > ('b' <= 'a')
+    >>> False
   # ## Code points
   :Char.code -> Integer
     # [code] is the character's Unicode code point.

@@ -13,6 +13,10 @@ module(Data/Primitive)
 
   every(Number, isa= [/Data/Algebra/Eq])
 
+  # Both numeric types implement the [/Data/Algebra/Ring] operators with the runtime primitives
+  #   below.
+  every(Number, isa= [/Data/Algebra/Ring])
+
   # ## Integers
   (-(_ :: Integer)) -> Integer
     #runtime("intNeg")

@@ -296,11 +296,11 @@ Prgm
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /Test/keyDepthAll
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /args = ( Value /args ↦ TVArg /args ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer
@@ -334,35 +334,13 @@ Prgm
                                                 { eaaArg = Value /msg -> ∀/Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
-                                                            { eaaArg = Value /this -> UnionType
-                                                                ( Just
-                                                                    ( PredExpr /operator==
-                                                                        ( /r=/Data/Primitive/True
-                                                                        , /l=~nonNeg( /this=~/$this )
-                                                                        ) && PredRel Integer
-                                                                    , fromList []
-                                                                    , []
-                                                                    )
-                                                                , /Data/Primitive/Integer
-                                                                , []
-                                                                ) =
+                                                            { eaaArg = Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) =
                                                                 ( /Test/ownDeclCount
                                                                     ( EAppArg
                                                                         { eaaArg = Value /name -> /Data/String/Text
                                                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Test/intOf"
                                                                         }
-                                                                    ) ↦ UnionType
-                                                                    ( Just
-                                                                        ( PredExpr /operator==
-                                                                            ( /r=/Data/Primitive/True
-                                                                            , /l=~nonNeg( /this=~/$this )
-                                                                            ) && PredRel Integer
-                                                                        , fromList []
-                                                                        , []
-                                                                        )
-                                                                    , /Data/Primitive/Integer
-                                                                    , []
-                                                                    )
+                                                                    ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
                                                                 )
                                                             }
                                                         ) ↦ ∀/Data/String
@@ -376,18 +354,7 @@ Prgm
                                                             { eaaArg = Value /msg -> ∀/Data/String =
                                                                 ( /Data/toString
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /this -> UnionType
-                                                                            ( Just
-                                                                                ( PredExpr /operator==
-                                                                                    ( /r=/Data/Primitive/True
-                                                                                    , /l=~nonNeg( /this=~/$this )
-                                                                                    ) && PredRel Integer
-                                                                                , fromList []
-                                                                                , []
-                                                                                )
-                                                                            , /Data/Primitive/Integer
-                                                                            , []
-                                                                            ) =
+                                                                        { eaaArg = Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) =
                                                                             ( /Test/declCount
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /p -> /Catln/Prgm
@@ -403,18 +370,7 @@ Prgm
                                                                                         ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                         ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                     }
-                                                                                ) ↦ UnionType
-                                                                                ( Just
-                                                                                    ( PredExpr /operator==
-                                                                                        ( /r=/Data/Primitive/True
-                                                                                        , /l=~nonNeg( /this=~/$this )
-                                                                                        ) && PredRel Integer
-                                                                                    , fromList []
-                                                                                    , []
-                                                                                    )
-                                                                                , /Data/Primitive/Integer
-                                                                                , []
-                                                                                )
+                                                                                ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
                                                                             )
                                                                         }
                                                                     ) ↦ ∀/Data/String
@@ -560,18 +516,7 @@ Prgm
                                                                                                                         { eaaArg = Value /msg -> ∀/Data/String =
                                                                                                                             ( /Data/toString
                                                                                                                                 ( EAppArg
-                                                                                                                                    { eaaArg = Value /this -> UnionType
-                                                                                                                                        ( Just
-                                                                                                                                            ( PredExpr /operator==
-                                                                                                                                                ( /r=/Data/Primitive/True
-                                                                                                                                                , /l=~nonNeg( /this=~/$this )
-                                                                                                                                                ) && PredRel Integer
-                                                                                                                                            , fromList []
-                                                                                                                                            , []
-                                                                                                                                            )
-                                                                                                                                        , /Data/Primitive/Integer
-                                                                                                                                        , []
-                                                                                                                                        ) =
+                                                                                                                                    { eaaArg = Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) =
                                                                                                                                         ( /Test/constCount
                                                                                                                                             ( EAppArg
                                                                                                                                                 { eaaArg = Value /t -> /Catln/Type/UnionType
@@ -600,18 +545,7 @@ Prgm
                                                                                                                                                         }
                                                                                                                                                     )
                                                                                                                                                 }
-                                                                                                                                            ) ↦ UnionType
-                                                                                                                                            ( Just
-                                                                                                                                                ( PredExpr /operator==
-                                                                                                                                                    ( /r=/Data/Primitive/True
-                                                                                                                                                    , /l=~nonNeg( /this=~/$this )
-                                                                                                                                                    ) && PredRel Integer
-                                                                                                                                                , fromList []
-                                                                                                                                                , []
-                                                                                                                                                )
-                                                                                                                                            , /Data/Primitive/Integer
-                                                                                                                                            , []
-                                                                                                                                            )
+                                                                                                                                            ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
                                                                                                                                         )
                                                                                                                                     }
                                                                                                                                 ) ↦ ∀/Data/String
@@ -647,7 +581,7 @@ Prgm
                                                                                                                                                 { eaaArg = Value /msg -> ∀/Data/String =
                                                                                                                                                     ( /Data/toString
                                                                                                                                                         ( EAppArg
-                                                                                                                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                                                                                                            { eaaArg = Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) =
                                                                                                                                                                 ( /Test/keyDepth
                                                                                                                                                                     ( EAppArg
                                                                                                                                                                         { eaaArg = Value /k -> /Catln/PartialKey
@@ -700,7 +634,7 @@ Prgm
                                                                                                                                                                                 }
                                                                                                                                                                             )
                                                                                                                                                                         }
-                                                                                                                                                                    ) ↦ /Data/Primitive/Integer
+                                                                                                                                                                    ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
                                                                                                                                                                 )
                                                                                                                                                             }
                                                                                                                                                         ) ↦ ∀/Data/String
@@ -1288,20 +1222,20 @@ Prgm
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /l -> ∀/Data/Algebra/Add =
                                         ( /Test/keyDepth
                                             ( EAppArg
                                                 { eaaArg = Value /k -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /Test/keyDepthAll
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer
@@ -1619,7 +1553,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /Test/keyDepth
                         ( EAppArg
                             { eaaArg = Value /k -> /Catln/PartialKey
@@ -1672,7 +1606,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -1708,18 +1642,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /Test/constCount
                         ( EAppArg
                             { eaaArg = Value /t -> /Catln/Type/UnionType
@@ -1797,18 +1720,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -1988,18 +1900,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /Test/declCount
                         ( EAppArg
                             { eaaArg = Value /p -> /Catln/Prgm
@@ -2015,18 +1916,7 @@ Prgm
                                 ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -2053,35 +1943,13 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /Test/ownDeclCount
                         ( EAppArg
                             { eaaArg = Value /name -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Test/intOf"
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -2098,35 +1966,13 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /Test/ownDeclCount
                         ( EAppArg
                             { eaaArg = Value /name -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Test/notWrittenAnywhere"
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )

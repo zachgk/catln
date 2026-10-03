@@ -497,29 +497,29 @@ Prgm
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /l -> ∀/Data/Algebra/Add =
                                         ( /operator+
                                             ( EAppArg
                                                 { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                                     ( /rsize
                                                         ( EAppArg
                                                             { eaaArg = Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) }
-                                                        ) ↦ /Data/Primitive/Integer
+                                                        ) ↦ ∀/Data/Algebra/Add
                                                     )
                                                 }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /rsize
                                             ( EAppArg
                                                 { eaaArg = Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer

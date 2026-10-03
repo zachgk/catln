@@ -52,7 +52,7 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )
-                            ( Value /r -> /Data/Primitive/Integer = /countMixed( Value /ks -> TVArg /tail = Value /tail ) )
+                            ( Value /r -> ∀/Data/Algebra/Add = /countMixed( Value /ks -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -109,7 +109,7 @@ Prgm
                 { csValue = "Homogeneous first, as the floor: this passed on the head-alone rule too." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countMixed
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /countMixed
                 ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
@@ -135,7 +135,7 @@ Prgm
                 spine starts from or one it reaches through the tail." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countMixed
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /countMixed
                 ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
@@ -180,7 +180,7 @@ Prgm
                 { csValue = "2" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countMixed
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /countMixed
                 ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Tagged
                         ( /value=/Data/String/Text
@@ -212,7 +212,7 @@ Prgm
                 { csValue = "2" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countMixed
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /countMixed
                 ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons

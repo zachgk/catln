@@ -53,6 +53,9 @@ module(Python/Builtins)
   prefixed(n, prefix, base) | n < 0= "-" ++ prefix ++ (0 - n).toStringBase(base= base)
   prefixed(n, prefix, base) else = prefix ++ n.toStringBase(base= base)
 
+  # Python's [operator+] on strings concatenates, which makes [String] an [/Data/Algebra/Add].
+  every(/Data/String, isa= [/Data/Algebra/Add])
+
   (l :: String + r :: String)= l ++ r
     # Python joins strings with [operator+].
 

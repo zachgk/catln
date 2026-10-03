@@ -15,7 +15,7 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
+                                ( Value /l -> ∀/Data/Algebra/Ring = /fib
                                     ( Value /integer -> /Data/Primitive/Integer = CInt
                                         { ciValue = 3 }
                                     )
@@ -37,20 +37,26 @@ Prgm
                         [ /fib( Value /integer -> /Data/Primitive/Integer ) | /operator>( Value /l -> TVArg /integer = Value /integer )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
-                            ) ->
-                            ( /operator+
-                                ( /r=( /Data/Primitive/Integer + /Data/Primitive/Float )
-                                , /l=( /Data/Primitive/Integer + /Data/Primitive/Float )
-                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Add
+                                , fromList []
+                                , []
+                                )
+                            , /operator+
+                                ( /r=∀/Data/Algebra/Add
+                                , /l=∀/Data/Algebra/Add
+                                )
+                            , []
                             ) = /operator+
-                            ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
+                            ( Value /l -> ∀/Data/Algebra/Add = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
                                     )
                                 )
                             )
-                            ( Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
+                            ( Value /r -> ∀/Data/Algebra/Add = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 2 }

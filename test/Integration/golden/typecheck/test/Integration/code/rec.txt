@@ -15,7 +15,7 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /fact
+                                ( Value /l -> ∀/Data/Algebra/Ring = /fact
                                     ( Value /x -> /Data/Primitive/Integer = CInt
                                         { ciValue = 3 }
                                     )
@@ -39,13 +39,19 @@ Prgm
                                 { ciValue = 1 }
                             ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
-                        , /fact( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator*
-                                ( /r=/Data/Primitive/Integer
+                        , /fact( Value /x -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Ring
+                                , fromList []
+                                , []
+                                )
+                            , /operator*
+                                ( /r=∀/Data/Algebra/Ring
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                )
+                            , []
                             ) = /operator*( Value /l -> TVArg /x = Value /x )
-                            ( Value /r -> /Data/Primitive/Integer = /fact
+                            ( Value /r -> ∀/Data/Algebra/Ring = /fact
                                 ( Value /x -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /x = Value /x )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }

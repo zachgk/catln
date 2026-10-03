@@ -16,16 +16,22 @@ Prgm
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Add
+                                , fromList []
+                                , []
+                                )
+                            , /operator+
+                                ( /r=∀/Data/Algebra/Add
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                )
+                            , []
                             ) = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )
-                            ( Value /r -> /Data/Primitive/Integer = /llength( Value /this -> TVArg /tail = Value /tail ) )
+                            ( Value /r -> ∀/Data/Algebra/Add = /llength( Value /this -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -43,7 +49,7 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /llength
+                                ( Value /l -> ∀/Data/Algebra/Ring = /llength
                                     ( Value /this -> /Data/List/Cons
                                         ( /head=/Data/Primitive/Integer
                                         , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]

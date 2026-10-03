@@ -42,7 +42,7 @@ Prgm
                     , omiDefs =
                         [ /abs
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
-                            ( /operator*
+                            ( /operator*[ /T=/Data/Primitive/Integer ]
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /abs.$4e99c1
@@ -72,7 +72,7 @@ Prgm
                                         )
                                     }
                                 ) ↦
-                                ( /operator*
+                                ( /operator*[ /T=/Data/Primitive/Integer ]
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Primitive/Integer

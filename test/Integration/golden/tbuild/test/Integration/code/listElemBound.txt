@@ -32,11 +32,11 @@ Prgm
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /countCons
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer
@@ -75,11 +75,11 @@ Prgm
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /countBare
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer
@@ -153,11 +153,11 @@ Prgm
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /countAll
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer
@@ -219,7 +219,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countAll
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons
@@ -254,7 +254,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -278,7 +278,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countCons
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons
@@ -314,7 +314,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -332,7 +332,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countBare
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons
@@ -353,7 +353,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )

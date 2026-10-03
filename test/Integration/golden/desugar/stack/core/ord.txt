@@ -2,6 +2,22 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/operator<="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator<=
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator<=( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean = isLessEq
+                            ( Value /this= compareTo( Value other= Value r )( Value /this= Value l ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/isGreaterEq"
                 , ObjectMapItem
                     { omiDecls =
@@ -12,6 +28,22 @@ Prgm
                         [ /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/LessThan.. ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/Equal.. ) -> ∀/Data/Primitive/Boolean = Value True
                         , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/GreaterThan.. ) -> ∀/Data/Primitive/Boolean = Value True
+                        ]
+                    }
+                )
+            ,
+                ( "/operator>="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator>=
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator>=( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean = isGreaterEq
+                            ( Value /this= compareTo( Value other= Value r )( Value /this= Value l ) )
                         ]
                     }
                 )
@@ -63,6 +95,22 @@ Prgm
                     }
                 )
             ,
+                ( "/operator<"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator<
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator<( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean = isLess
+                            ( Value /this= compareTo( Value other= Value r )( Value /this= Value l ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/mkDivComparison"
                 , ObjectMapItem
                     { omiDecls =
@@ -86,6 +134,22 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> ∀/Data/Algebra/Ordering ) -> ∀/Data/Primitive/Boolean = isEq
                             ( Value /this= compare( Value a= Value a )( Value b= Value b )( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/operator>"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator>
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator>( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean = isGreater
+                            ( Value /this= compareTo( Value other= Value r )( Value /this= Value l ) )
                         ]
                     }
                 )
@@ -298,6 +362,10 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Algebra/Comparison
@@ -361,8 +429,8 @@ Prgm
                 Ordering mirrors equivalence exactly. [Ordering] is the class of orderings over a type [$T] (the
                 analog of [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
                 type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
-                follows. The primitive [operator<] / [operator<=] / [operator>] / [operator>=] remain defined
-                directly in [Data/Primitive]." }
+                follows, and the comparison operators [operator<] / [operator<=] / [operator>] / [operator>=]
+                follow from [compareTo] in turn." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -424,6 +492,15 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "  class here defines only the abstract concept." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Comparison operators
+                Every [Ord] type can be compared with [operator<], [operator<=], [operator>] and [operator>=],
+                each read from [compareTo]. They are declared once, on the class, so that every type's arms
+                belong to the one declaration. A type may also give arms of its own (the numeric types use
+                runtime primitives in [Data/Primitive]); those overlap the definitions here, and the derived
+                overlap tests check that the two agree." }
             )
         , /Catln/#md
             ( Value /text= CStr

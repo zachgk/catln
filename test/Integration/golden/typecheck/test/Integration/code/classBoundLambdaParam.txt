@@ -166,7 +166,7 @@ Prgm
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /headTo
+            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq && PredClass /Catln/Doc/DShow ) = /headTo
                 ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
@@ -175,7 +175,7 @@ Prgm
                         { ciValue = 3 }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /w = Value /w )
+                ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq ) = /operator+( Value /l -> TVArg /w = Value /w )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )

@@ -27,12 +27,12 @@ Prgm
                                                 { eaaArg = Value /msg -> ∀/Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
-                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                            { eaaArg = Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) =
                                                                 ( /step
                                                                     ( EAppArg
                                                                         { eaaArg = Value /count -> /Data/Primitive/Integer = 1 }
                                                                     )
-                                                                    ( EAppArg { eaaArg = Value /more -> /Data/Primitive/True = Value /Data/Primitive/True } ) ↦ /Data/Primitive/Integer
+                                                                    ( EAppArg { eaaArg = Value /more -> /Data/Primitive/True = Value /Data/Primitive/True } ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
                                                                 )
                                                             }
                                                         ) ↦ ∀/Data/String
@@ -71,7 +71,7 @@ Prgm
                                     { eaaArg = Value /l -> TVArg /count = ( Value /count ↦ TVArg /count ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /Data/List/count
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> /Data/List/Cons
@@ -125,7 +125,7 @@ Prgm
                                                         ) ↦ ∀/Data/Primitive/Boolean
                                                     )
                                                 }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer

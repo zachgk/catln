@@ -86,18 +86,18 @@ Prgm
                     , omiDefs =
                         [ /f.n
                             ( EAppArg { eaaArg = Value /x } ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
+                            ( /operator+[ /T=/Data/Primitive/Integer.. ]
+                                ( /r=/Data/Primitive/Integer..
+                                , /l=/Data/Primitive/Integer..
                                 ) + /Lib/foo( /this=TopType ) + /Data/Primitive/Integer
                             ) =
                             ( /foo
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                 ) ↦
-                                ( /operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
+                                ( /operator+[ /T=/Data/Primitive/Integer.. ]
+                                    ( /r=/Data/Primitive/Integer..
+                                    , /l=/Data/Primitive/Integer..
                                     ) + /Data/Primitive/Integer
                                 )
                             )

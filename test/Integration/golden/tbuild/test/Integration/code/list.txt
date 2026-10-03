@@ -21,25 +21,31 @@ Prgm
                                         { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
                                     )
                                 }
-                            ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Add
+                                , fromList []
+                                , []
+                                )
+                            , /operator+
+                                ( /r=∀/Data/Algebra/Add
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                )
+                            , []
                             ) =
                             ( /operator+
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /llength
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
-                                ) ↦ /Data/Primitive/Integer
+                                ) ↦ ∀/Data/Algebra/Add
                             )
                         ]
                     }
@@ -64,7 +70,7 @@ Prgm
                                     { eaaArg = Value /val -> /Data/Primitive/Integer =
                                         ( /operator-
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /l -> ∀/Data/Algebra/Ring =
                                                     ( /llength
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> /Data/List/Cons
@@ -89,7 +95,7 @@ Prgm
                                                                     }
                                                                 )
                                                             }
-                                                        ) ↦ /Data/Primitive/Integer
+                                                        ) ↦ ∀/Data/Algebra/Ring
                                                     )
                                                 }
                                             )

@@ -22,11 +22,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bindWithLocal.$9471e8.doubled
-                            ( EAppArg { eaaArg = Value /x } ) ->
-                            ( /operator+
+                            ( EAppArg { eaaArg = Value /x } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Add
+                                , fromList []
+                                , []
+                                )
+                            , /operator+
                                 ( /r=TopType
                                 , /l=TopType
-                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                                )
+                            , []
                             ) =
                             ( /operator+
                                 ( EAppArg
@@ -34,7 +40,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                ) ↦ ∀/Data/Algebra/Add
                             )
                         ]
                     }
@@ -49,22 +55,22 @@ Prgm
                         [ /bindWithLocal.$9471e8
                             ( EAppArg
                                 { eaaArg = Value /$9471e8-arg@Value /x }
-                            ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                            ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
                             ( EAppArg
-                                { eaaArg = Value /value -> /Data/Primitive/Integer =
+                                { eaaArg = Value /value -> ∀/Data/Algebra/Add =
                                     ( /operator+
                                         ( EAppArg
-                                            { eaaArg = Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                            { eaaArg = Value /l -> ∀/Data/Algebra/Add =
                                                 ( /bindWithLocal.$9471e8.doubled
                                                     ( EAppArg
                                                         { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                                    ) ↦ ∀/Data/Algebra/Add
                                                 )
                                             }
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/Primitive/Integer
+                                        ) ↦ ∀/Data/Algebra/Add
                                     )
                                 }
                             )
@@ -88,11 +94,11 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) =
+                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) =
                                         ( /bindWithLocal.$9471e8
                                             ( EAppArg
                                                 { eaaArg = Value /$9471e8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
+                                            ) ↦ /Data/Maybe/Some( /value=∀/Data/Algebra/Add )
                                         )
                                     }
                                 ) ↦ ∀/Data/Maybe

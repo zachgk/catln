@@ -59,6 +59,34 @@ Prgm
                     }
                 )
             ,
+                ( "/operator+"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator+
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Add ] -> $/T
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator-"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator-
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ring ] -> $/T
+                        , /operator-
+                            ( Value /a -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ring ] -> $/T
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Algebra/testCommutativeMonoid"
                 , ObjectMapItem
                     { omiDecls = []
@@ -106,6 +134,19 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/operator*"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator*
+                            ( Value /l -> $/T = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> $/T = Hole TopType HoleActive { haName = Nothing } )[ /T : ∀/Data/Algebra/Ring ] -> $/T
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
@@ -118,6 +159,16 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Add
+            , cgcExtends = [ ∀/Data/Algebra/Ring ]
+            , cgcDoc = Just "An [Add] type can be combined with [operator+]. Every [Ring] is an [Add]; a type with an
+              addition but no subtraction or multiplication (such as a concatenation) can be an [Add] alone."
+            }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/CommutativeMonoid
@@ -155,6 +206,13 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ring
+            , cgcExtends = []
+            , cgcDoc = Just "A [Ring] adds subtraction ([operator-]), negation, and multiplication ([operator*]) to the
+              addition of an [Add]."
+            }
+        , CGClass
+            { cgcSealed = False
             , cgcPartial = /Data/Algebra/Semigroup
             , cgcExtends = [ ∀/Data/Algebra/Monoid ]
             , cgcDoc = Just "A semigroup is a type combined with an associative operation called [operator++].
@@ -167,7 +225,8 @@ Prgm
                 { csValue = "# Catln Core Abstract Algebra Types
                 These types define some of the basic relationship between types and ways classes can relate to themselves.
                 The [Eq] class of equality lives in [Data/Algebra/eq] and ordering ([Ord]) in [Data/Algebra/ord];
-                this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group])." }
+                this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group]) and the
+                arithmetic classes ([Add], [Ring])." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -217,6 +276,24 @@ Prgm
                 It adds an inverse operation that finds the opposite of an element.
                 For integers with addition, negation with [operator~] would be the inverse.
                 Something like [String]s would not have an inverse, so it wouldn't be a [Group]." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Arithmetic
+                An operator has a single declaration, made on the class of everything it applies to, and each
+                type then implements it with its own arms (or a [#runtime] primitive). A type joins the class to
+                use the operator: [Integer] and [Float] are [Ring]s through [Number], and a user type such as a
+                Peano integer becomes one by joining and defining the arms." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [Add] type can be combined with [operator+]. Every [Ring] is an [Add]; a type with an
+                addition but no subtraction or multiplication (such as a concatenation) can be an [Add] alone." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [Ring] adds subtraction ([operator-]), negation, and multiplication ([operator*]) to the
+                addition of an [Add]." }
             )
         ]
     }

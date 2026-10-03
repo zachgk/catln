@@ -19,7 +19,7 @@ Prgm
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
                                 ( Value /msg -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> /Data/Primitive/Integer = /step
+                                    ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /step
                                         ( Value /count -> /Data/Primitive/Integer = CInt
                                             { ciValue = 1 }
                                         )( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )
@@ -39,7 +39,7 @@ Prgm
                     , omiDefs =
                         [ /step( Value /count -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Primitive/Integer = Value /count
                         , /step( Value /count -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /count = Value /count )
-                            ( Value /r -> /Data/Primitive/Integer = /Data/List/count
+                            ( Value /r -> ∀/Data/Algebra/Add = /Data/List/count
                                 ( Value /lst -> /Data/List/Cons
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]

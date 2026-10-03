@@ -21,11 +21,11 @@ Prgm
                                     { eaaArg = Value /val -> /Data/Primitive/Integer =
                                         ( /operator-
                                             ( EAppArg
-                                                { eaaArg = Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                                { eaaArg = Value /l -> ∀/Data/Algebra/Ring =
                                                     ( /fib
                                                         ( EAppArg
                                                             { eaaArg = Value /integer -> /Data/Primitive/Integer = 3 }
-                                                        ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                                        ) ↦ ∀/Data/Algebra/Ring
                                                     )
                                                 }
                                             )
@@ -56,15 +56,21 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                            ) ->
-                            ( /operator+
-                                ( /r=( /Data/Primitive/Integer + /Data/Primitive/Float )
-                                , /l=( /Data/Primitive/Integer + /Data/Primitive/Float )
-                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Add
+                                , fromList []
+                                , []
+                                )
+                            , /operator+
+                                ( /r=∀/Data/Algebra/Add
+                                , /l=∀/Data/Algebra/Add
+                                )
+                            , []
                             ) =
                             ( /operator+
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                    { eaaArg = Value /l -> ∀/Data/Algebra/Add =
                                         ( /fib
                                             ( EAppArg
                                                 { eaaArg = Value /integer -> /Data/Primitive/Integer =
@@ -77,12 +83,12 @@ Prgm
                                                         ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
-                                            ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
                                         ( /fib
                                             ( EAppArg
                                                 { eaaArg = Value /integer -> /Data/Primitive/Integer =
@@ -95,10 +101,10 @@ Prgm
                                                         ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
-                                            ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                            ) ↦ ∀/Data/Algebra/Add
                                         )
                                     }
-                                ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                ) ↦ ∀/Data/Algebra/Add
                             )
                         , /fib
                             ( EAppArg { eaaArg = Value /integer -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = 1

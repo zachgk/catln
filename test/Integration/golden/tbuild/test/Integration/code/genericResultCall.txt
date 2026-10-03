@@ -241,24 +241,24 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /useG
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /a } ) -> /Data/Primitive/Integer =
+                                ( EAppArg { eaaArg = Value /a } ) -> ∀/Data/Algebra/Add =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ /Data/Primitive/Integer
+                                    ) ↦ ∀/Data/Algebra/Add
                                 )
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /x -> /Data/Primitive/Integer = 5 }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -310,7 +310,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /foldrG
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
@@ -355,20 +355,20 @@ Prgm
                         ( EAppArg
                             { eaaArg = /fn
                                 ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                    ) ↦ ∀/Data/Algebra/Add
                                 )
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
                     )
                 }
             )
@@ -385,14 +385,14 @@ Prgm
                         ( EAppArg
                             { eaaArg = /fn
                                 ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                    ) ↦ ∀/Data/Algebra/Add
                                 )
                             }
                         )
