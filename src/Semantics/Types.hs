@@ -55,6 +55,7 @@ import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           Utils
 
+
 -- |The name is the basic type used for various kinds of names.
 -- It carries a precomputed hash so 'Hashable' is O(1): names key the 'PartialLeafs' maps the
 -- set algebra rebuilds constantly, and hashing them character by character would dominate
@@ -5511,8 +5512,14 @@ varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = declaredOccsPre
     -- (open world, or presentations still resolving) withholds nothing.
     -- A higher-order argument's declared RESULT naming the var is such an occurrence too: until
     -- the argument is given, nothing says what its arrow returns.
+    -- Only a template this piece can be an application OF is consulted: one whose arguments
+    -- include every argument the piece has. A name declared at more than one shape — unary and
+    -- binary @operator-@, each @[$T -> Ring]@ — has templates the piece can never complete
+    -- (@a@ is no argument of @operator-(l, r)@), and waiting on their occurrences withheld every
+    -- stamp, so no call of either shape bound @$T@ from its arguments.
     declaredOccsPresent = all (`S.member` ks) $
       [ k | tmpl <- typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
+          , ks `S.isSubsetOf` H.keysSet (ptArgs tmpl)
           , (k, TypeVar (TVVar n') TVInt _) <- H.toList (ptArgs tmpl), n' == n ]
       ++ [ k | (k, t) <- typeGraphDeclaredArgResults typeEnv name', n `S.member` typeOuterVarRefs t ]
 varStampSupported _ _ _ _ _ _ = True
