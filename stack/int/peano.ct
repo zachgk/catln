@@ -80,3 +80,71 @@ module(Data)
     >>> -1
   > (Peano/Zero + Peano/Succ(i= Peano/Zero)).toInteger
     >>> 1
+  # ## Comparison
+    A [Peano] integer is an [/Data/Algebra/Ord]: every [Peano/Pred] is below [Peano/Zero], which
+    is below every [Peano/Succ], and values built from the same constructor compare by their inner
+    values. [PeanoOrdering] is its [/Data/Algebra/Ordering], which also makes it the canonical
+    equivalence; [operator<] and the other comparisons come from [compareTo].
+  every(Peano, isa= [/Data/Algebra/Ord])
+
+  data(PeanoOrdering, isa= [/Data/Algebra/Ordering[$T -> Peano]])
+
+  :PeanoOrdering.compare(a, b)= a.compareTo(other= b)
+
+  :Peano.ord= PeanoOrdering
+
+  :Peano.eq= PeanoOrdering
+module(Data/Algebra)
+  :/Data/Peano/Zero.compareTo(other= /Data/Peano/Zero)= /Data/Algebra/Equal
+  :/Data/Peano/Zero.compareTo(other= /Data/Peano/Succ(i))= /Data/Algebra/LessThan
+  :/Data/Peano/Zero.compareTo(other= /Data/Peano/Pred(i))= /Data/Algebra/GreaterThan
+  :/Data/Peano/Succ(i).compareTo(other= /Data/Peano/Zero)= /Data/Algebra/GreaterThan
+  :/Data/Peano/Succ(i).compareTo(other= /Data/Peano/Pred(i@r))= /Data/Algebra/GreaterThan
+  :/Data/Peano/Succ(i@l).compareTo(other= /Data/Peano/Succ(i@r))= l.compareTo(other= r)
+  :/Data/Peano/Pred(i).compareTo(other= /Data/Peano/Zero)= /Data/Algebra/LessThan
+  :/Data/Peano/Pred(i).compareTo(other= /Data/Peano/Succ(i@r))= /Data/Algebra/LessThan
+  :/Data/Peano/Pred(i@l).compareTo(other= /Data/Peano/Pred(i@r))= l.compareTo(other= r)
+module(Data)
+  # Each comparison is shown once where it holds and once where it does not.
+  > (Peano/Pred(i= Peano/Zero) < Peano/Succ(i= Peano/Zero))
+    >>> True
+  > (Peano/Succ(i= Peano/Succ(i= Peano/Zero)) < Peano/Succ(i= Peano/Zero))
+    >>> False
+  > (Peano/Zero <= Peano/Zero)
+    >>> True
+  > (Peano/Zero > Peano/Pred(i= Peano/Zero))
+    >>> True
+  > (Peano/Pred(i= Peano/Pred(i= Peano/Zero)) >= Peano/Pred(i= Peano/Zero))
+    >>> False
+  # ## Negation, Subtraction and Multiplication
+  every(Peano, isa= [/Data/Algebra/Ring])
+    # A [Peano] integer is a [/Data/Algebra/Ring]. Negation swaps every [Peano/Succ] for a
+      [Peano/Pred] and back, subtraction adds the negation, and multiplication recurses on the right
+      operand: each [Peano/Succ] adds one more copy of the left operand and each [Peano/Pred] takes
+      one away.
+
+  (-(Peano/Zero))= Peano/Zero
+  (-(Peano/Succ(i)))= Peano/Pred(i= -i)
+  (-(Peano/Pred(i)))= Peano/Succ(i= -i)
+  (l :: Peano - r :: Peano)= l + (-r)
+
+  (_ :: Peano * Peano/Zero)= Peano/Zero
+  (l :: Peano * Peano/Succ(i@r))= l + (l * r)
+  (l :: Peano * Peano/Pred(i@r))= (l * r) - l
+
+  > (-Peano/Succ(i= Peano/Succ(i= Peano/Zero))).toInteger
+    >>> -2
+  > (-Peano/Pred(i= Peano/Zero)).toInteger
+    >>> 1
+  > (Peano/Succ(i= Peano/Zero) - Peano/Succ(i= Peano/Succ(i= Peano/Succ(i= Peano/Zero)))).toInteger
+    >>> -2
+  > (Peano/Pred(i= Peano/Zero) - Peano/Pred(i= Peano/Pred(i= Peano/Zero))).toInteger
+    >>> 1
+  > (Peano/Succ(i= Peano/Succ(i= Peano/Zero)) * Peano/Succ(i= Peano/Succ(i= Peano/Succ(i= Peano/Zero)))).toInteger
+    >>> 6
+  > (Peano/Succ(i= Peano/Succ(i= Peano/Zero)) * Peano/Pred(i= Peano/Pred(i= Peano/Pred(i= Peano/Zero)))).toInteger
+    >>> -6
+  > (Peano/Pred(i= Peano/Pred(i= Peano/Zero)) * Peano/Pred(i= Peano/Pred(i= Peano/Pred(i= Peano/Zero)))).toInteger
+    >>> 6
+  > (Peano/Pred(i= Peano/Zero) * Peano/Zero).toInteger
+    >>> 0
