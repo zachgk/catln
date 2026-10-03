@@ -429,7 +429,11 @@ boundedByObjs feTypeEnv con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stype
                            metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (singletonType l) boundUbReq
                                       | l <- knownLeafs ]
                            metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (UnionType mTop H.empty consts) boundUbReq
-                       in unionAllTypes feTypeEnv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
+                       -- Recombined under the channel's environment, the one each piece was met
+                       -- under: a piece can keep an in-scope link (@inverse(/t=$_T)@ with
+                       -- @T ↦ ∀Group@), which read in an empty environment denotes ⊤ and would
+                       -- widen the requirement.
+                       in unionAllTypesWithEnv feTypeEnv chanVaenv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
                      _ -> snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv chanReq boundUbReq
     reqChanVaenv = ambientEnv (fmap (stypeReq . snd) vaenv)
     declChanVaenv = ambientEnv (fmap (stypeReqDecl . snd) vaenv)
