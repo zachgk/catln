@@ -1,0 +1,16 @@
+annot(#noCore)
+
+#noCore
+# A [#proof] on a declaration that is not a refinement claims nothing to prove, and is an error
+  rather than ignored.
+# The annotations are declared as core's compile.ct declares them, since this page does not import
+  it.
+module(Catln)
+  annot(#refine)
+  annot(#proof)
+
+data(A)
+
+f(a -> A) -> A
+  #proof
+f(a)= a

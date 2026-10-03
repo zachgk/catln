@@ -1,0 +1,48 @@
+annot(#noCore)
+
+#noCore
+# Refinements proven by the type checker ([#proof]) rather than tested by generating inputs.
+  Each refinement is proven once per definition it overlaps: the definition is typechecked again on
+  the overlap and its result must convert to the claim. [Nat] is written here rather than taken from
+  the library so a failure has a dozen lines to read.
+  The names say what the proof must find: [collapse] and [keep] are provable, [grow] and [keep2]
+  each have one definition the claim is wrong about.
+# The annotations are declared as core's compile.ct declares them, since this page does not import
+  it.
+module(Catln)
+  annot(#refine)
+  annot(#proof)
+
+class(Nat, [Z, S(n -> Nat)])
+
+# Proven only through the induction hypothesis. Its declaration says no more than [Nat], so the
+  recursive arm proves [Z] by reading its own call through the claim.
+collapse(n -> Nat) -> Nat
+collapse(n= Z)= Z
+collapse(n= S(n@m))= collapse(n= m)
+collapse(n -> Nat) -> Z
+  #refine
+  #proof
+
+# A refinement about part of the definition's input: proven on that part alone.
+keep(n -> Nat) -> Nat
+keep(n)= n
+keep(n -> Z) -> Z
+  #refine
+  #proof
+
+# Wrong about its [Z] arm, which gives [S]. The recursive arm is still proven by the hypothesis:
+  it is the base arm the induction rests on that fails.
+grow(n -> Nat) -> Nat
+grow(n= Z)= S(n= Z)
+grow(n= S(n@m))= grow(n= m)
+grow(n -> Nat) -> Z
+  #refine
+  #proof
+
+# Wrong about the part of the input it states: an [S] is kept an [S].
+keep2(n -> Nat) -> Nat
+keep2(n)= n
+keep2(n -> S(n -> Nat)) -> Z
+  #refine
+  #proof

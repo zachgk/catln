@@ -48,12 +48,14 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EExpr, EPrgm, EvalMetaDat,
-                                          MockIO, SSF (..), TExpr, TestResult,
-                                          Val, esAsks, joinedStage,
+                                          MockIO, SSF (..), TExpr,
+                                          TestKind (TestRefinementProof),
+                                          TestResult, Val, esAsks, joinedStage,
                                           newEvalService, oaTestId,
                                           withRunSources)
 import           Eval.SyntaxTree         (withRunSyntax)
-import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
+import           Eval.Testing            (TestCheck (StaticCheck),
+                                          TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
                                           awaitSettled, covered, startWatcher,
@@ -63,7 +65,7 @@ import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig, ctssCachePath, ctssToday)
 import           Semantics.CtType        (fromCt)
 import           Semantics.Prgm
-import           Semantics.Types         (Name, mkName, partialKey)
+import           Semantics.Types         (Name, mkName, nameStr, partialKey)
 import           Semantics.Val           hiding (Val)
 import           Syntax.Ct.Builder       (applyRawArgs, rawVal)
 import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
@@ -87,6 +89,8 @@ import           TypeCheck.Common        (AnyInstrument, InstrumentResults,
                                           lookupTraceResult, typeCheckToRes)
 import           TypeCheck.Instruments   (defaultInstruments,
                                           typeInfoInstruments)
+import           TypeCheck.Proof         (RefinementProof (..), proveRefinement,
+                                          refinementProofs)
 import           Utils
 
 type TBPrgm = Prgm TExpr EvalMetaDat
@@ -1290,7 +1294,30 @@ getEvalBuild ctss prgmName fun = do
 getTestResults :: CTSS -> CResT IO [TestDesc]
 getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
-  evalTest base
+  ctssDeriveTests ctss base
+
+-- | Every test of a program: those the evaluator runs ('evalTest') and the proofs of its @#proof@
+-- refinements, which the type checker decides.
+--
+-- A proof typechecks a definition again, so it starts from the definition as desugared — the
+-- page's 'ssfDes' — rather than from what the first solve inferred of it. The two are matched by
+-- the meta of the definition's object, which typechecking keeps.
+ctssDeriveTests :: CTSS -> GraphData TPrgm FileImport -> CResT IO [TestDesc]
+ctssDeriveTests (CTSS ssmv _) tprgms = do
+  evaluated <- evalTest tprgms
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  dess <- asCResT $ mapM (\(_, name, _) -> requireComputed (ssfDes =<< graphLookup name ctssData)) (graphToNodes tprgms)
+  let preDefs = H.fromList [(getMetaId $ getExprMeta $ oaObjExpr oa, oa) | des <- dess, oa <- flatObjectMap (prgmObjMap des)]
+  let prgm = mconcat $ map fst3 $ graphToNodes tprgms
+  let proofTest proof@RefinementProof{rpName, rpDef} = TestDesc
+        (printf "%s :: refinement-proof" (nameStr rpName))
+        (nameStr (oaObjPath rpDef))
+        (oaTestId rpDef)
+        TestRefinementProof
+        (StaticCheck $ case H.lookup (oaTestId rpDef) preDefs of
+          Just preDef -> proveRefinement prgm preDef proof
+          Nothing -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta $ oaObjExpr rpDef) $ printf "Could not find the desugared definition of %s to prove" (nameStr rpName)])
+  return $ evaluated ++ map proofTest (refinementProofs prgm)
 
 -- | The tests a page wrote, run and kept.
 --
@@ -1313,7 +1340,7 @@ ctssTestsFrom ctss prgmName = do
     Just tests -> asCResT tests
     Nothing -> do
       tprgms <- ctssTestPages ctss prgmName
-      descs <- evalTest tprgms
+      descs <- ctssDeriveTests ctss tprgms
       let owners = pageOwners tprgms
       -- Every test comes from a definition and every definition was written in a page, so a test
       -- that cannot be placed is reported rather than dropped — dropped, it would be a test that

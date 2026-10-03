@@ -667,12 +667,13 @@ withRunSources offered run = run{drSources = H.fromList [(name, src) | (name, sr
 
 -- | Which family of test a 'TestResult' came from. A @#test@ or @#example@ definition produces a
 -- 'TestSimple' when it takes no arguments and a 'TestProperty' when the test engine has to generate
--- them; the other three are derived from the program rather than written in it.
+-- them; the others are derived from the program rather than written in it.
 data TestKind
   = TestSimple
   | TestProperty
   | TestOverlapAgreement
   | TestRefinementAgreement
+  | TestRefinementProof
   | TestPrintGolden
   deriving (Eq, Show, Generic, ToJSON)
 

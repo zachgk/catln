@@ -1,0 +1,27 @@
+annot(#noCore)
+
+#noCore
+# A refinement of an operator declared once, generically, on its class — the shape of core's
+  [operator+] refined for one member type.
+  The refinement must not be read as a declaration of which objects exist. Read as one, it bounded
+  the arms in place of the generic declaration, the arms lost the declaration's [$T], and both were
+  rejected as outside the declaration.
+module(Catln)
+  annot(#refine)
+  annot(#proof)
+
+class(Add)
+
+(_ :: $T + _ :: $T)[$T -> /Add] -> $T
+
+class(P, [S(i -> P), Z])
+
+every(P, isa= [/Add])
+
+(l :: P + Z)= l
+(l :: P + S(i@r))= S(i= l) + r
+
+# Proven for both arms: [l] is a [P], and the recursive arm's call reads this same claim.
+(l :: P + r :: P) -> P
+  #refine
+  #proof

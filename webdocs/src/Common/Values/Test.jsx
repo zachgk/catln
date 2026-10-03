@@ -16,6 +16,7 @@ const KINDS = {
   TestProperty: 'property test',
   TestOverlapAgreement: 'overlap agreement',
   TestRefinementAgreement: 'refinement agreement',
+  TestRefinementProof: 'refinement proof',
   TestPrintGolden: 'print golden',
 };
 

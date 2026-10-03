@@ -178,6 +178,8 @@ showTestInput v = show v
 data TestCheck
   = EvalCheck (CResT IO Val)
   | PropCheck (IO PropOutcome)
+  -- | A check decided without running the program, such as a proof by the type checker.
+  | StaticCheck (CRes ())
 
 -- | A test derived from a program, before it is run. 'evalTest' derives these; 'runTestDesc' turns
 -- one into the 'TestResult' that is cached, served and displayed.
@@ -195,6 +197,7 @@ runTestDesc :: TestDesc -> IO TestResult
 runTestDesc TestDesc{tdName, tdOwner, tdOwnerId, tdKind, tdCheck} = finish <$> case tdCheck of
   EvalCheck action -> ofEval <$> runCResT action
   PropCheck run    -> ofProp <$> run
+  StaticCheck res  -> return $ ofEval res
   where
     finish (passed, cases, inputs, notes) = TestResult tdName tdOwner tdOwnerId tdKind passed cases inputs notes
     -- An evaluation test is run once on the program as written, so it has no generated case to count
@@ -340,6 +343,8 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
   [ mkRefinementTest omi defOa dom refRet
   | omi <- H.elems om
   , refOa <- omiRefineDecls omi
+  -- A refinement to prove is checked by its proof ('TypeCheck.Proof') instead.
+  , not (oaHasAnnotRel proofAnnot refOa)
   , Just (_, refM) <- [oaArr refOa]
   , let refRet = getMetaType refM
   , defOa <- filter evaluable (omiDefs omi)

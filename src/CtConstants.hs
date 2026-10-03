@@ -218,6 +218,11 @@ elseAnnot = "/Catln/#else"
 refineAnnot :: String
 refineAnnot = "/Catln/#refine"
 
+-- | Marks a refinement declaration as one to PROVE with the type checker rather than to test by
+-- generating inputs (see "TypeCheck.Proof").
+proofAnnot :: String
+proofAnnot = "/Catln/#proof"
+
 runtimeAnnot, runtimeAnnotK :: String
 runtimeAnnot = "/Catln/#runtime"
 runtimeAnnotK = "/k"
@@ -248,7 +253,7 @@ importerAnnotExts = "extensions"
 builtinAnnotNames :: [String]
 builtinAnnotNames =
   [ assertStr, testAnnot, exampleAnnot, mdAnnot, printAnnot, ctxAnnot, elseAnnot
-  , refineAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
+  , refineAnnot, proofAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
   , importerAnnotAbs
   -- The annotations' argument keywords are emitted alongside them (@#md(text= ...)@), so they
   -- are part of the same vocabulary.

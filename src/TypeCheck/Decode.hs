@@ -15,7 +15,7 @@
 module TypeCheck.Decode where
 
 import           Control.Monad.State
-import           CtConstants         (thisKey)
+import           CtConstants         (proofAnnot, thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe          (mapMaybe)
@@ -332,6 +332,11 @@ verifyObjMapItem name importedDecls (ObjectMapItem decls runtimeDecls refineDecl
   -- bounded by the declarations (checked against declUnion) and contributes to the definition
   -- coverage that fulfills them (part of defUnion).
   let defLikeOAs = defs ++ runtimeDecls
+  -- Only a refinement claims a result to prove; a @#proof@ anywhere else would be silently
+  -- ignored, so it is an error. Checked before the coverage below, which returns early for a
+  -- name without declarations or definitions.
+  forM_ (decls ++ defLikeOAs) $ \oa -> when (oaHasAnnotRel proofAnnot oa) $
+    lift $ TypeCheckResult [ProofWithoutRefine name (getMetaPos . getExprMeta =<< oaObj oa)] ()
   case (map (getMetaType . getExprMeta . oaObjExpr) (decls ++ importedDecls), map (getMetaType . getExprMeta . oaObjExpr) defLikeOAs) of
     ([], _) -> pure ()
     (_, []) -> pure ()

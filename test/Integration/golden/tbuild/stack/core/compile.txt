@@ -224,6 +224,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#proof"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#proof ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/classPlaceholder"
                 , ObjectMapItem
                     { omiDecls =
@@ -274,6 +283,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

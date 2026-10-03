@@ -103,6 +103,13 @@ module(Catln)
   annot(#refine)
     # [#refine] marks a declaration as a refinement: a narrower return-type claim for a function
       that overlaps an existing definition, checked by the derived refinement-agreement tests.
+  annot(#proof)
+    # [#proof] marks a [#refine] declaration as one to prove rather than test.
+      Instead of generating inputs, [catln test] checks every definition the refinement overlaps
+      with the type checker. The definition is typechecked again with its input narrowed to the
+      overlap, and its result must be convertible to the claimed return type. Calls back into the
+      function being proven read the claim itself, as an induction hypothesis.
+      Value predicates such as [Integer_nonNeg] can not be proven yet.
 
   # ## Build-in Type Macros
   (_ ?-> _) -> Boolean

@@ -52,6 +52,7 @@ data TypeCheckError
   | DefinitionOutsideDeclaration TypeName Type Type Type CodeRange
   | UnfulfilledDeclaration TypeName Type Type Type CodeRange
   | RefineOutsideDeclaration TypeName Type Type Type CodeRange
+  | ProofWithoutRefine TypeName CodeRange
   deriving (Eq, Ord, Generic, Hashable)
 
 -- | SType actual required (description in type)
@@ -290,6 +291,7 @@ instance Show TypeCheckError where
   show (DefinitionOutsideDeclaration name defType declType diff loc) = printf "Definition Outside Declaration for %s:\n\tDefinition input type: %s\n\tDeclaration input type: %s\n\tUndeclared part: %s\n\tLocation: %s" (nameStr name) (show defType) (show declType) (show diff) (maybe "Unknown" showCodeRange loc)
   show (UnfulfilledDeclaration name declType defType diff loc) = printf "Unfulfilled Declaration for %s:\n\tDeclaration input type: %s\n\tDefinition input type: %s\n\tUndefined part: %s\n\tLocation: %s" (nameStr name) (show declType) (show defType) (show diff) (maybe "Unknown" showCodeRange loc)
   show (RefineOutsideDeclaration name refineType declType diff loc) = printf "Refine Outside Declaration for %s:\n\tRefine input type: %s\n\tDeclaration input type: %s\n\tUndeclared part: %s\n\tLocation: %s" (nameStr name) (show refineType) (show declType) (show diff) (maybe "Unknown" showCodeRange loc)
+  show (ProofWithoutRefine name loc) = printf "#proof on %s, which is not a #refine declaration: only a refinement claims something to prove\n\tLocation: %s" (nameStr name) (maybe "Unknown" showCodeRange loc)
 
 instance CNoteTC TypeCheckError where
   metaCNote (GenTypeCheckError m _)      = m
@@ -303,6 +305,9 @@ instance CNoteTC TypeCheckError where
     Just pos -> Just $ Meta PTopType (Just pos) nil ()
     Nothing  -> Nothing
   metaCNote (RefineOutsideDeclaration _ _ _ _ loc) = case loc of
+    Just pos -> Just $ Meta PTopType (Just pos) nil ()
+    Nothing  -> Nothing
+  metaCNote (ProofWithoutRefine _ loc) = case loc of
     Just pos -> Just $ Meta PTopType (Just pos) nil ()
     Nothing  -> Nothing
 
