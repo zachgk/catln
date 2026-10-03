@@ -234,7 +234,12 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                         PropEq 25 (m', TVArg $ inExprSingleton obj) (hoSlotPoint obj arrM')
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
-      modify $ addConstraints (constraints ++ eqReqActs)
+      -- The higher-order arguments already applied in the base also read their slots from this
+      -- layer ('callHoSlotLinks'): what is known of the call grows as it is applied.
+      let hoLinks = case est of
+            EncodeOut{} -> callHoSlotLinks m' baseExpr'
+            EncodeIn{}  -> []
+      modify $ addConstraints (constraints ++ eqReqActs ++ hoLinks)
       modify $ endConstraintBlock (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg'))
       return $ EAppArg arg'
     EAppVar vn vm -> do
@@ -283,6 +288,24 @@ hoSlotPoint :: VExpr -> VarMeta -> VarMeta
 hoSlotPoint obj arrM
   | not (null (exprAppliedArgs obj)) = getExprMeta obj
   | otherwise                        = arrM
+
+-- | Each higher-order argument applied in a call's base links its slot to a further-applied layer
+-- of the call, as 'topArgPropEqs' links a definition's arguments to its complete object.
+--
+-- A lambda's slot is read where its argument is applied ('PropEq' 11), and that layer is a partial
+-- application: the declaration's variables a LATER argument fixes are not on it. In
+-- @foldr(lst= lst, fn(acc, v)= acc + v, init= 0)@ the lambda is applied before @init@, the only
+-- direct occurrence of @$_B@, so its slot read @/B=⊤@ and @acc@ was never typed. Linked from every
+-- later layer, the slot also reads the layer that has all of the call's arguments.
+callHoSlotLinks :: VarMeta -> VExpr -> [VConstraintDat]
+callHoSlotLinks layerM = go
+  where
+    go (TupleApply _ (_, base) arg) = link arg ++ go base
+    go (AliasExpr b _)              = go b
+    go _                            = []
+    link (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)})
+      | not (null (exprAppliedArgs obj)) = [PropEq 48 (layerM, TVArg $ inExprSingleton obj) (getExprMeta obj)]
+    link _ = []
 
 -- | Non-linear matching: when a pattern binds one variable to several argument positions
 -- (e.g. @f(a@x, b@x)@), those positions must share a type. Encode that by equating their type
