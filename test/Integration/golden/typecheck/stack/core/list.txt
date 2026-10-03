@@ -449,7 +449,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/any
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
                 )
@@ -686,7 +686,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/all
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]
                     }
                 )

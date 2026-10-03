@@ -241,7 +241,7 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
 -- constructors whose instances share an input shape). Declarations
 -- only, and only a resolved positive destination is written — a Top, symbolic-variable, or
 -- class-predicate destination binds nothing (writing symbolic knowledge into a resolving point
--- oscillates against later epochs). Top-valued /fields/ inside the destination's partials are
+-- oscillates against later epochs; a class predicate chooses no instance). Top-valued /fields/ inside the destination's partials are
 -- allowed: an annotation may leave a declared field unbound at Top, and the partial names
 -- still discriminate the instances.
 --
@@ -253,15 +253,23 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
 -- @$_B@ is circular (the lambda's @acc@ is a @$_B@), and narrowing from ⊤ stops at what @+@ gives
 -- any number. An occurrence outside the destination, still unresolved, or nested inside an
 -- argument's type leaves the variable to its occurrences (@mmap(m= Some(..))@ required to be
--- @Nothing@ binds nothing). The higher-order results are read in @localTypeEnv@, the environment
+-- @Nothing@ binds nothing). The destination may be a class here (@any@ declared @-> Boolean@
+-- chooses @$_B=∀Boolean@): it is still a set holding every occurrence. The higher-order results are read in @localTypeEnv@, the environment
 -- holding the call's lambdas.
 outVarBoundSrc :: FEnv -> FEnvTypeEnv -> Type -> Type -> Type
-outVarBoundSrc env localTypeEnv dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing srcLeafs srcConsts)
-  | not (H.null destLeafs) && not (isBottomType dest) && not (typeContainsTypeVar dest) =
+outVarBoundSrc env localTypeEnv dest@(UnionType _ _ _) src@(UnionType Nothing srcLeafs srcConsts)
+  | dest /= PTopType && not (isBottomType dest) && not (typeContainsTypeVar dest) =
       case UnionType Nothing (joinUnionType $ map bindLeaf $ splitUnionType srcLeafs) srcConsts of
         src' | src' == src -> src
         src'               -> src'
   where
+    -- The resolved positive destination an output-only variable is written from. A class
+    -- predicate (@∀Monad@) is no choice of instance; a lambda-fed variable whose occurrences are
+    -- all within the destination may still take it (@any@'s @$_B@ as @∀Boolean@): it is a set
+    -- holding every one of them, which is all the variable claims.
+    concreteDest = case dest of
+      UnionType Nothing destLeafs _ -> not (H.null destLeafs)
+      _                             -> False
     typeEnv = feReachesTypeEnv env
     TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
     bindLeaf p = foldr bindVar p (outVarNames p)
@@ -279,7 +287,7 @@ outVarBoundSrc env localTypeEnv dest@(UnionType Nothing destLeafs _) src@(UnionT
       -- intersecting the destination alone onto it (@/M=Nothing@ from the result) would empty
       -- the argument evidence (@m=Some(..) ∩ Nothing = ∅@) — unless every occurrence is already
       -- within the destination.
-      , not (any (argRefsVar vn) (H.elems (ptArgs declObj))) || (givenToArgument vn declObj && occurrencesWithin vn declObj p)
+      , (concreteDest && not (any (argRefsVar vn) (H.elems (ptArgs declObj)))) || (givenToArgument vn declObj && occurrencesWithin vn declObj p)
       -- Complete applications only: a partial application's ArrowTo destination is the
       -- further-applied call node, not the result the declaration's output variable stands for.
       , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]

@@ -1,0 +1,25 @@
+annot(#noCore)
+
+# A fold whose declared result is a class, as core's [any]. The call chooses [$_B] as the
+# [Boolean] [anyNeg] is declared to return: [init] and the lambda's result are both within it.
+# The list is the open [List] class, so the fold's own arms do not cover it and only the
+# declaration's [$_B] can guarantee the result.
+#noCore
+data(True)
+data(False)
+class(Boolean, [True, False])
+
+class(List[$T])
+class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+every(ConsList[$T -> $_T], isa= [/List[$T -> $_T]])
+
+neg(b -> Boolean) -> Boolean
+neg(b= True)= False
+neg(b= False)= True
+
+fold[$A, $B](lst -> List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+fold(lst= Nil, fn(acc, v), init)= init
+fold(lst= Cons(head, tail), fn(acc, v), init)= fn(acc= fold(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
+
+anyNeg(lst -> List[$T -> Boolean]) -> Boolean
+anyNeg(lst)= fold(lst= lst, fn(acc, v)= neg(b= v), init= False)

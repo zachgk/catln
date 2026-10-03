@@ -22,7 +22,7 @@ import           Semantics             (testCtssConfig)
 import           Semantics.Prgm
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog   as THG
-import           Test.Tasty.HUnit      (assertEqual, testCase)
+import           Test.Tasty.HUnit      (Assertion, assertEqual, testCase)
 import           Testing.Generation    (genPrgms)
 import           Text.Printf
 import           TypeCheck             (typecheckPrgm)
@@ -130,14 +130,24 @@ testRecursiveDeclaredArg = testCase "a recursive call argument is within its dec
 -- folds with @foldr@ into an @Integer@, and the lambda's parameters are typed from the call.
 -- Fixture: unit/foldDeclaredResult.ct.
 testFoldDeclaredResult :: TestTree
-testFoldDeclaredResult = testCase "a fold into its declared result is guaranteed" $ do
+testFoldDeclaredResult = testCase "a fold into its declared result is guaranteed" $
+  assertResultGuaranteed "test/Typecheck/unit/foldDeclaredResult.ct" "total"
+
+-- | A fold into a declared CLASS result: the call's accumulator variable is chosen as the class.
+testFoldClassResult :: TestTree
+testFoldClassResult = testCase "a fold into its declared class result is guaranteed" $
+  assertResultGuaranteed "test/Typecheck/unit/foldClassResult.ct" "anyNeg"
+
+-- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
+assertResultGuaranteed :: String -> String -> Assertion
+assertResultGuaranteed page name = do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/foldDeclaredResult.ct"]
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
     getTPrgm ctss
   let notes = case res of
         CRes ns _ -> ns
         CErr ns   -> ns
-  let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, "\"total\"" `isInfixOf` n ]
+  let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, show name `isInfixOf` n ]
   assertEqual (unlines reported) [] reported
 
 typecheckTests :: TestTree
@@ -150,6 +160,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testRefineArgsParam
     , testRecursiveDeclaredArg
     , testFoldDeclaredResult
+    , testFoldClassResult
                                   ]
   where
     p prop = prop
