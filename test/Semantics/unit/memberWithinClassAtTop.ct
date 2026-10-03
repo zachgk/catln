@@ -1,0 +1,10 @@
+annot(#noCore)
+
+# A class member whose field names its own parameter, as core's [MapSet] wraps a [Map] keyed by
+# the set's items: every [MkSet[$K -> Z]] is a [MapSet] and a [Set] at any wider parameter.
+#noCore
+data(Z)
+class(Map[$K, $V])
+class(Set[$T])
+class(MapSet[$K, $V], [MkSet[$K -> $_K, $V -> $_V](map -> /Map[$K -> $_K, $V -> $_V])])
+every(MapSet[$K -> $_K, $V -> $_V], isa= [/Set[$T -> $_K]])

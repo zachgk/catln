@@ -1364,6 +1364,50 @@ propHoSlotParentMeet = property $ do
     assertTimed (world ++ ": a ⊆ b") $ isSubtypeOfWithEnv te H.empty a b
     assertTimed (world ++ ": a ∩ b ⊆ a") $ isSubtypeOfWithEnv te H.empty met a || isBottomType (snd (differenceTypeWithEnv te H.empty met a))
 
+-- | A class's member at a concrete parameter is within the class at ⊤. A member declared with a
+-- field naming its own parameter (@MkSet[$K -> $_K, ..](map -> Map[$K -> $_K, ..])@) spells that
+-- field with a parent reference (@map=∀Map[/K=$^K, ..]@), and the class at ⊤ expands to the member
+-- at ⊤ with the reference unresolved. The symbolic engine took the unresolved reference for one
+-- unknown binding the member's @∀Map[/K=Z]@ escapes, so @MkSet[/K=Z](..) ⊆ ∀MapSet[/K=⊤]@ failed
+-- while @MkSet[/K=Z](..) ⊆ ∀MapSet[/K=Z] ⊆ ∀MapSet[/K=⊤]@ held — core's @Set@ requirements then
+-- failed their narrowing check once a meet spelled a set as its member.
+propMemberWithinClassAtTop :: Property
+propMemberWithinClassAtTop = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/memberWithinClassAtTop.ct"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  let classPt n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, ("/" ++ n) `isSuffixOf` nameStr (ptName cpt)] of
+        (cpt:_) -> return cpt
+        []      -> fail $ printf "%s class not found" n
+  let findName n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return nm
+        []     -> fail $ printf "%s not found" n
+  setPt <- classPt "Set"
+  msPt <- classPt "MapSet"
+  z <- singletonType . partialVal <$> findName "Z"
+  mkN <- findName "MkSet"
+  let top cpt = UnionType (Just (PredsOne (PredClass cpt), H.empty, [])) H.empty []
+  let atParam n t cpt = top cpt{ptVars=H.mapWithKey (\k _ -> if ("/" ++ n) `isSuffixOf` nameStr (pkName k) then t else PTopType) (ptVars cpt)}
+  -- The member as the class at ⊤ spells it, then at a concrete parameter.
+  mkArgs <- case typeGraphData typeEnv mkN of
+    (PartialType{ptArgs=dArgs}:_) -> return (H.keys dArgs)
+    []                            -> fail "MkSet declares no fields"
+  let mk = singletonType (partialVal mkN){ptArgs=H.fromList [ (k, PTopType) | k <- mkArgs ]}
+  memberTop <- case intersectTypes typeEnv mk (atParam "K" PTopType msPt) of
+    UnionType Nothing ls [] | [l] <- splitUnionType ls -> return l
+    t -> fail $ printf "MkSet ∩ MapSet[K=⊤] is not one leaf: %s" (show t)
+  kVar <- case [ k | k <- H.keys (ptVars memberTop), "/K" `isSuffixOf` nameStr (pkName k) ] of
+    [k] -> return k
+    _   -> fail "MkSet has no K"
+  let memberZ = singletonType memberTop{ptVars=H.insert kVar z (ptVars memberTop)}
+  annotate $ printf "member at Z = %s" (show memberZ)
+  let checks = [ ("member ⊆ MapSet[K=Z]", memberZ, atParam "K" z msPt)
+               , ("member ⊆ MapSet[K=⊤]", memberZ, atParam "K" PTopType msPt)
+               , ("member ⊆ Set[T=Z]", memberZ, atParam "T" z setPt)
+               , ("member ⊆ Set[T=⊤]", memberZ, atParam "T" PTopType setPt) ]
+  forM_ checks $ \(n, a, b) -> do
+    annotate $ printf "%s: symbolic %s" (n :: String) (show (typeCoveredSymbolic typeEnv H.empty ProveEmpty a b))
+    assertTimed n $ isSubtypeOf typeEnv a b
+
 -- | A function declaration whose arguments are its own parameter (@(_ :: $T ++ _ :: $T)[$T ->
 -- Semigroup]@) holds an application to two members of the parameter's bound, and not one to a type
 -- outside it. The application is spelled without the parameter (@op(l=Sa, r=Sa)@), so its @/T@ is
@@ -1449,6 +1493,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
       , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)
       , HG.testProperty "propHoSlotParentMeet" (withTests 1 propHoSlotParentMeet)
+      , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)

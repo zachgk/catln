@@ -3707,7 +3707,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
       | isFlexibleVar env tSub = tSup == PTopType || isFlexibleVar env tSup || teArgModeProjection typeEnv
       | otherwise = not (typesSatDiff typeEnv env satUse hyps tSub tSup)
       where tSub = resolveSelfRefs sub (subSlot tSub0)
-            tSup = resolveSelfRefs sup (supSlot tSup0)
+            tSup = readOwnTop sup (resolveSelfRefs sup (supSlot tSup0))
     -- A parameter value's internal ('TVInt') spelling names a variable of the partial itself —
     -- 'tagParentVarRefs' spells a reference to the enclosing partial 'TVParent' — so it is never
     -- read through the ambient env.
@@ -3721,6 +3721,24 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- The partial's own bindings are the SCOPE of its slot values (what a parent reference in
     -- them names), not an ambient env: an ambient spelling there is not the partial's to resolve.
     resolveSelfRefs p t = substituteKeepScoped typeEnv ((ambientEnv $ joinVarArgEnv (ptVars p) H.empty)) H.empty t
+    -- A cover PATTERN's own parameter left at ⊤ admits every binding, so a field value that names
+    -- it is the field at any binding: @MkSet[/K=⊤](map=∀Map[/K=$^K])@ covers a set whose map has
+    -- any key type, as its member @MkSet[/K=Z](map=∀Map[/K=$^K])@ does. A parent reference whose
+    -- parameter is bound to ⊤ stays symbolic in a scoped read, and the engine took that spelling
+    -- for one unknown binding the sub's @∀Map[/K=Z]@ escapes — so a class's member at a concrete
+    -- parameter fell outside the class at ⊤, while the materialized prover reads the spelling as
+    -- covering it. The references at the value's own level name the pattern itself, and are read
+    -- detached ('detachLevelParentRefs') only when every outer reference in the value names one
+    -- of the pattern's ⊤-bound parameters: any other names a binding the pattern does hold, and
+    -- reading it as ⊤ would widen the pattern. That includes a parameter bound to a SELF-LINK
+    -- (@/T ↦ $_T@, a recursive member's element tied to its enclosing list's): the link is the
+    -- binding, and reading it as ⊤ let a @Cons[/T=Entry](.., tail=ConsList[/T=Entry])@ arm
+    -- pattern be absorbed into a @tail=ConsList[/T=⊤]@ spelling.
+    readOwnTop p t
+      | not (S.null refs), refs `S.isSubsetOf` H.keysSet ownTop = detachLevelParentRefs t
+      | otherwise = t
+      where ownTop = H.filter (== PTopType) (ptVars p)
+            refs = typeOuterVarRefs t
     -- FLEXIBLE means "ranges over every binding". An occurrence CARRYING KNOWLEDGE is not that:
     -- @$_b ∩ {X}@ ranges only within @X@, so calling it flexible would demand a ⊤ (or equally
     -- flexible) cover slot and refuse the true @$_b∩{X} ⊆ X@, manufacturing an escape witness
