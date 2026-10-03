@@ -77,7 +77,7 @@ filterBestPrecedence precedenceMap = filterObjectMap (\oa -> objectPrecedence oa
 -- accumulating solve loop: merge maps with '<>' and precedences with @H.unionWith min@.
 recursiveObjsWithPrecedence :: (Show m, MetaDat m) => ObjectMap Expr m -> (ObjectMap Expr m, H.HashMap TypeName [Int])
 recursiveObjsWithPrecedence objMap = (objMapRec, buildPrecedenceMap objMapRec)
-  where objMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap objMap
+  where objMapRec = mconcat $ map getRecursiveObjs $ universeObjectMap objMap
 
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'. The typechecked dependency
@@ -87,7 +87,7 @@ recursiveObjsWithPrecedence objMap = (objMapRec, buildPrecedenceMap objMapRec)
 addUnionObjToEnv :: VObjectMap -> TObjectMap -> H.HashMap TypeName [Int] -> StateT FEnv TypeCheckResult ()
 addUnionObjToEnv vobjMap tobjMapRec tPrecedenceMap = do
   FEnv{feTypeEnv} <- get
-  let vobjMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap vobjMap
+  let vobjMapRec = mconcat $ map getRecursiveObjs $ universeObjectMap vobjMap
 
   -- Finds the best precedence for all each object name
   let vePrecedenceMap = buildPrecedenceMap vobjMapRec

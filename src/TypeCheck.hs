@@ -66,7 +66,7 @@ depPieceOf :: TypeName -> ObjectMapItem Expr TypedMetaDat -> DepPiece
 depPieceOf k item = (recPiece, buildPrecedenceMap recPiece, graphPiece, mapMetaObjectMap clearMetaDat graphPiece)
   where
     graphPiece = ObjectMap (H.singleton k item)
-    recPiece = mconcat $ map getRecursiveObjs $ flatObjectMapItem item
+    recPiece = mconcat $ map getRecursiveObjs $ universeObjectMapItem item
 
 typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], InstrumentResults)
 typecheckPrgmsSt pprgms typechecked = do

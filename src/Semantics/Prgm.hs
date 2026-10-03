@@ -831,6 +831,20 @@ flatObjectMapItem (ObjectMapItem decls runtimeDecls refineDecls defs) = decls ++
 flatObjectMap :: ObjectMap e m -> [ObjArr e m]
 flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
 
+-- | The arrows of an item that say which objects exist: all of them but its refinement
+-- declarations. A refinement claims a narrower result for inputs its declarations already admit
+-- (that it stays inside them is checked on its own), so it adds no object. Read as one, it enters
+-- the object universe at declaration precedence, and where the declaration was solved earlier (a
+-- class instance's page refining a core operator) it is the only declaration there: the arms are
+-- then bounded by the refinement instead, lose the declaration's type parameters, and fail the
+-- declaration coverage check.
+universeObjectMapItem :: ObjectMapItem e m -> [ObjArr e m]
+universeObjectMapItem item = flatObjectMapItem item{omiRefineDecls = []}
+
+-- | 'universeObjectMapItem' over a whole map.
+universeObjectMap :: ObjectMap e m -> [ObjArr e m]
+universeObjectMap (ObjectMap objMap) = concatMap universeObjectMapItem (H.elems objMap)
+
 -- | Whether an object arrow carries the given annotation, by its ABSOLUTE path.
 --
 -- The annotation path may still be relative (@#refine@\/@#runtime@) before name resolution or
