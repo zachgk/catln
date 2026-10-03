@@ -170,10 +170,22 @@ typeGuaranteedWithin typeEnv vaenv req = typeOk S.empty
     -- its value is read into the arguments first ('substituteTVExt' descends with the partial's
     -- own bindings): dropped unread, the pointer would dangle and read as the ⊤ that covers
     -- anything.
-    srcVarsOnly PartialType{ptVars=srcVars} t = case substituteTVExt typeEnv vaenv t of
+    --
+    -- A higher-order argument's input object carries the same scope one level in
+    -- (@fn[/B=$^B](acc=$/B)@ — 'hopInputObject'): its parameters are hops to the promise's, read
+    -- into its own arguments by the same substitution, so they are dropped where the source's slot
+    -- does not spell them, as the promise's own are.
+    srcVarsOnly PartialType{ptVars=srcVars, ptArgs=srcArgs} t = case substituteTVExt typeEnv vaenv t of
       UnionType Nothing leafs consts ->
-        UnionType Nothing (joinUnionType [ l{ptVars = H.intersection (ptVars l) srcVars} | l <- splitUnionType leafs ]) consts
+        UnionType Nothing (joinUnionType [ l{ptVars = H.intersection (ptVars l) srcVars, ptArgs = H.mapWithKey inputObjVars (ptArgs l)} | l <- splitUnionType leafs ]) consts
       t' -> t'
+      where
+        inputObjVars k v
+          | S.null (pkArgs k) = v
+          | otherwise = case (v, H.lookup k srcArgs >>= maybeGetSingleton) of
+              (UnionType Nothing ls cs, Just srcObj) ->
+                UnionType Nothing (joinUnionType [ o{ptVars = H.intersection (ptVars o) (ptVars srcObj)} | o <- splitUnionType ls ]) cs
+              _ -> v
 
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)
