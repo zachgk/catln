@@ -320,7 +320,15 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
   let argResult k inExpr outM
         | not (null (exprAppliedArgs inExpr)), Just declT <- declResultFor k = intersectTypes (feTypeEnv env) (ownResult outM) declT
         | otherwise = ownResult outM
-  let argArrows = [ (inExpr, argResult k inExpr outM) | (k, (inExpr, outM)) <- H.toList argVaenv' ]
+  -- A lambda the call is given SHADOWS an enclosing argument of the same name and parameters:
+  -- in @filter(lst, fn(v))= mmap(m= lst, fn(v)= keepIf(v= v, keep= fn(v= v)))@ the @fn@ this
+  -- call's slot holds is the lambda, and the enclosing predicate @fn@ is only what the lambda's
+  -- body calls (a constraint of its own, which carries no lambdas and so still sees it). Keeping
+  -- both under the one name made a read of the slot's result answer the union of the two — the
+  -- predicate's @Boolean@ beside the lambda's list.
+  let callArrKeys = [ (pkName k, pkArgs k) | (inExpr, _) <- callArrs', let k = inExprSingleton inExpr ]
+  let shadowed k = (pkName k, pkArgs k) `elem` callArrKeys
+  let argArrows = [ (inExpr, argResult k inExpr outM) | (k, (inExpr, outM)) <- H.toList argVaenv', not (shadowed k) ]
   let argObjMap = objectMapFromList $ concatMap (\(inExpr, outT) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT outT))]) $ argArrows ++ [ (inExpr, ownResult outM) | (inExpr, outM) <- callArrs' ]
 
   return $ if H.null argVaenv' && null callArrs'
