@@ -108,6 +108,7 @@ typecheckPrgmsSt pprgms typechecked = do
   where
     unObjectMap (ObjectMap m) = m
     objMapKeys = H.keys . unObjectMap
+    joinPieces (r1, p1, g1, c1) (r2, p2, g2, c2) = (r1 <> r2, H.unionWith min p1 p2, g1 <> g2, c1 <> c2)
     -- A fragment that fails to converge stops the loop: its dependents would solve against a
     -- half-settled fragment ('addUnionObjToEnv' rejects undetermined dependency objects
     -- outright), and the failure's own notes already say why the page failed.
@@ -148,8 +149,15 @@ typecheckPrgmsSt pprgms typechecked = do
                 _                          -> True
           -- Promote the solved fragment: per-item pieces join the dependency side the same
           -- way page-external dependencies entered.
+          --
+          -- JOIN a piece already held under the same key rather than replacing it. The key a page
+          -- defines can also be a dependency's — arms of an operator declared in core (@/operator+@
+          -- for a page's own type) are written under the declaration's name — and replacing the
+          -- dependency's piece hid core's declaration and its runtime arms from every later
+          -- fragment of the page: an @Integer + Integer@ there reached only the page's arms and
+          -- came out empty.
           let fragPieces = H.mapWithKey depPieceOf (unObjectMap (mconcat (map prgmObjMap tprgms')))
-          return (tprgms':taccs, vprgms':vaccs, H.union fragPieces pieces, converged && uniOk)
+          return (tprgms':taccs, vprgms':vaccs, H.unionWith joinPieces fragPieces pieces, converged && uniOk)
 
 -- | Typecheck a set of programs solved together, watched by the given instruments.
 --
