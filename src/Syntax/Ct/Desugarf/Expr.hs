@@ -21,12 +21,14 @@ import           Text.Printf
 
 import           CtConstants
 import           Data.Char               (toLower)
+import           Data.List               (isPrefixOf)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+
 
 desExpr :: PSExpr -> DesExpr
 desExpr (CExpr m c) = CExpr m c
@@ -77,7 +79,20 @@ semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ snd $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
+    prefixOperatorApply = case (be, args) of
+      (RawValue _ n, [_]) -> operatorPrefix `isPrefixOf` nameStr n
+      _                   -> False
     aux :: (ParseMeta, PSExpr) -> (Int, (Bool, PObjArr)) -> (ParseMeta, PSExpr)
+    -- The bracket of a PREFIX operator's operand is the operator's own application syntax, not a
+    -- grouping, so it is looked through before the operand is read. A prefix operator binds
+    -- tighter than @::@, so its typed operand can only be written bracketed — @(-(_ :: $T))@ —
+    -- and read with the bracket it missed the typed-operand case below: the operand became a
+    -- value hole carrying the type (@a= Hole $T@) instead of an argument of that type
+    -- (@a -> $T@), so nothing bound @$T@ from the argument and every call read the result as
+    -- the variable's bound. Only there: elsewhere a written bracket is how an argument keeps a
+    -- typed VALUE pattern (@ContextIn(value= (_ :: $V), .._)@ in core's @Context@), which the
+    -- typed-operand case would turn into an argument declaration.
+    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawParen inner), am)})) | prefixOperatorApply = aux (m, e) (argIndex, (False, rarg{roaArr=Just (Just inner, am)}))
     aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just newArr)}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]), _)})) = case aux (m, e) (argIndex, (False, rarg{roaArr=Just newArr})) of
       -- A /named/ typed operand @l :: $T@ desugars like a function argument @l -> $T@: move the
       -- operand value into the object position with a type-only arrow slot, rather than leaving it
