@@ -26,7 +26,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /tst[ /T : TopType ]
-                            ( Value /d -> /T( /x=TopType ) = /T( Value /x -> $_/T ) )
+                            ( Value /d -> /T( /x=$_/T ) = /T( Value /x -> $_/T ) )
                             ( /f( Value /y -> $_/T ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []

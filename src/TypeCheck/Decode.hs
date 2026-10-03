@@ -88,10 +88,20 @@ toMeta  m@(Meta pt pos mid _) = do
       -- @Node(value=⊤, ..)@ against its slot-refined requirement) — and kept as-is otherwise;
       -- which forms exist is inference's decision, not Decode's. Uniform over the union: no
       -- settled/raw distinction.
+      --
+      -- A meet that drops one of the leaf's OUTER references is not a refinement either. Decode
+      -- has no variable bindings (they lived in the constraint's environment), so it cannot read
+      -- a meet involving one: a leaf linked to its definition's own variable
+      -- (@operator++(/l=$_T)@ in @testGroup[$T -> Group]@, @equal(/other=$_T)@ in @==@) meets the
+      -- requirement with the link either read as the ⊤ an unbound variable denotes or replaced by
+      -- the requirement's like-named OWN pointer (@equal[/T=∀Eq](/other=$/T)@, which reads
+      -- @equal@'s @/T@, a different variable). Either way the link the tree build resolves per
+      -- call would be gone.
+      let outerRefs = typeExtVarAuxes . singletonType
       let refineLeafByReq l = case intersectTypes feTypeEnv (singletonType l) req of
             UnionType Nothing ls [] -> case splitUnionType ls of
-              [l'] | ptName l' == ptName l -> l'
-              _                            -> l
+              [l'] | ptName l' == ptName l, outerRefs l `S.isSubsetOf` outerRefs l' -> l'
+              _                                                                   -> l
             _ -> l
       let ubMetReq = case ubMet of
             UnionType mTop leafs consts | req /= PTopType, not (isTypeVar req) ->

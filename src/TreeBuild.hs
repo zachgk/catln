@@ -433,14 +433,31 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound _force srcType 
 -- sound upper bound on the runtime value here, threaded down from outer calls
 -- (see 'buildPartialCallTree'); pass 'PTopType' at roots.
 buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> CallForce -> Type -> Type -> CRes TCallTree
+buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force srcType destType
+  | not (H.null osEnv)
+  , srcType' /= srcType || destType' /= destType
+  = buildCallTreeAt env os visitedArrows bound force srcType' destType'
+  where
+    -- A definition's types keep its own variables as links (@l.equal(other= r)@ in
+    -- @(l :: $T == r :: $T)@ is @equal(this=$_T, other=$_T)@): the tree is built for one call,
+    -- whose bindings say what they are here (@T ↦ True@ from @l@). Read unresolved, a link is
+    -- the ⊤ it denotes, and every arm of @equal@ accepts it.
+    osEnv = case exprVarArgsWithObjSrcs tbTypeEnv os of
+      [vaenv] -> ambientEnv (H.filter (/= PTopType) (fmap snd vaenv))
+      _       -> H.empty
+    srcType' = substituteTVExt tbTypeEnv osEnv srcType
+    destType' = substituteTVExt tbTypeEnv osEnv destType
+buildCallTree env os visitedArrows bound force srcType destType = buildCallTreeAt env os visitedArrows bound force srcType destType
+
+buildCallTreeAt :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> CallForce -> Type -> Type -> CRes TCallTree
 -- The two whole-source shortcuts below are the 'MayHold' reading of the source: it may stand as
 -- it is because the destination accepts it. Under 'MustCall' the question is settled per leaf in
 -- 'buildPartialCallTree', which is the only level that can see whether the type graph rewrites it.
-buildCallTree TBEnv{tbTypeEnv} os _ _ MayHold srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
+buildCallTreeAt TBEnv{tbTypeEnv} os _ _ MayHold srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
 -- buildCallTree _ os _ _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
-buildCallTree _ _ _ _ MayHold _ PTopType = return TCTId
-buildCallTree _ _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
-buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound force (TypeVar v _ i) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
+buildCallTreeAt _ _ _ _ MayHold _ PTopType = return TCTId
+buildCallTreeAt _ _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
+buildCallTreeAt env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound force (TypeVar v _ i) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
   [vaenv] -> case H.lookup v vaenv of
     Just (_, srcType') -> buildCallTree env objSrcs visitedArrows bound force (intersectTypes tbTypeEnv srcType' i) destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
@@ -449,12 +466,12 @@ buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound force (TypeVar v 
 -- represented as @UnionType (Just (PredRel Boolean, _)) [] []@) carries its members only in the
 -- predicate, so expand it to the member union and build from that. Without this it would yield an
 -- empty 'TCMatch' that no runtime value can satisfy.
-buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force src@(UnionType (Just (preds, _, _)) srcLeafs consts) destType
+buildCallTreeAt env@TBEnv{tbTypeEnv} os visitedArrows bound force src@(UnionType (Just (preds, _, _)) srcLeafs consts) destType
   | null (splitUnionType srcLeafs) && null consts
   , let expanded = expandPredicates tbTypeEnv H.empty preds
   , expanded /= src =
       buildCallTree env os visitedArrows bound force expanded destType
-buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force (UnionType _ srcLeafs consts) destType = do
+buildCallTreeAt env@TBEnv{tbTypeEnv} os visitedArrows bound force (UnionType _ srcLeafs consts) destType = do
   -- Inference spells a source open-world: a leaf may still carry a class its value is not (yet)
   -- a member of (@rel(this=MyEqv|Eqv)@, kept because a later file could declare @MyEqv isa Eqv@).
   -- This program is the whole program ('tePrgmEnv'), where such a leaf is empty — no runtime value
