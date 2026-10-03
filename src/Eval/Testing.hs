@@ -274,7 +274,13 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
         -- call against. It is narrower than a clause's inferred result, so the call's own type is not
         -- already a subtype of it — which forces the tree builder to actually build and evaluate the
         -- body to a concrete value rather than leaving it as an unevaluated application.
-        retDest = clearUnionTypePreds $ case [getMetaType m | d <- omiDecls omi ++ omiRuntimeDecls omi, Just (_, m) <- [oaArr d]] of
+        --
+        -- The return is read as the declaration gives it FOR THE OVERLAP'S INPUT, not as written: a
+        -- generic declaration (@(_ :: $T - _ :: $T)[$T -> Ring] -> $T@) returns its variable, which
+        -- admits the unevaluated application itself, so both clauses would come back unbuilt. Only
+        -- declarations that accept the overlap answer (a generic one beside the runtime
+        -- primitives it covers is not necessarily first).
+        retDest = clearUnionTypePreds $ case concat [arrowDestType typeEnv H.empty partial d | d@ObjArr{oaArr=Just _} <- omiDecls omi ++ omiRuntimeDecls omi] of
           (t:_) -> t
           []    -> intType
         testName = printf "%s :: overlap-agreement" (nameStr (oaObjPath oaA))
