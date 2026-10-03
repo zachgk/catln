@@ -1,0 +1,7 @@
+import "core"
+
+# A fold whose accumulator is its declared result. [foldr]'s [$A] is read from [lst] alone, its
+# [$B] reaches the lambda's [acc] from the complete call, and the call chooses [$_B] as the
+# [Integer] [total] is declared to return: [init] and the lambda's result are both within it.
+total(lst -> /Data/List[$T -> Integer]) -> Integer
+total(lst)= /Data/List/foldr(lst= lst, fn(acc, v)= acc + v, init= 0)

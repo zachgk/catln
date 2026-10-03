@@ -126,6 +126,20 @@ testRecursiveDeclaredArg = testCase "a recursive call argument is within its dec
   let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, "\"textNeg\"" `isInfixOf` n ]
   assertEqual (unlines reported) [] reported
 
+-- | A fold's result is within the declared result of the definition it is the body of: @total@
+-- folds with @foldr@ into an @Integer@, and the lambda's parameters are typed from the call.
+-- Fixture: unit/foldDeclaredResult.ct.
+testFoldDeclaredResult :: TestTree
+testFoldDeclaredResult = testCase "a fold into its declared result is guaranteed" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/foldDeclaredResult.ct"]
+    getTPrgm ctss
+  let notes = case res of
+        CRes ns _ -> ns
+        CErr ns   -> ns
+  let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, "\"total\"" `isInfixOf` n ]
+  assertEqual (unlines reported) [] reported
+
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
     -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
@@ -135,6 +149,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testResultNotGuaranteed
     , testRefineArgsParam
     , testRecursiveDeclaredArg
+    , testFoldDeclaredResult
                                   ]
   where
     p prop = prop

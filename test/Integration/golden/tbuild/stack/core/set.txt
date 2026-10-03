@@ -436,7 +436,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
@@ -840,7 +840,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []

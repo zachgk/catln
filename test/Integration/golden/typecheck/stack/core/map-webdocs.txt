@@ -395,7 +395,11 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Map/mapValues
-                                ( /fn( /v=TopType )=/fn( /v=TopType )
+                                [ /MV=∀/Data/ToString
+                                , /MW=TopType
+                                , /MK=∀/Data/ToString
+                                ]
+                                ( /fn( /v=TopType )=/fn[ /MV=∀/Data/ToString ]( /v=∀/Data/ToString )
                                 , /m=∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
@@ -406,7 +410,7 @@ Prgm
                                     , /V=∀/Data/ToString
                                     ]
                                 )
-                                ( /fn( Value /v ) -> ∀/Data/ToString )
+                                ( /fn( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/EntrySteps
                             ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] ) = /Catln/Doc/Show/EntrySteps
                             ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep.. ] = /Data/Map/mapValuesSteps
@@ -417,7 +421,7 @@ Prgm
                                 )
                             )
                         , /Catln/Doc/dshowCall
-                            ( Value /s -> /Data/Map/foldEntries
+                            ( Value /s -> /Data/Map/foldEntries[ /MV=∀/Data/ToString ]
                                 ( /fn
                                     ( /acc=TopType
                                     , /v=TopType

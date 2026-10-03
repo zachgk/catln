@@ -244,8 +244,19 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
 -- oscillates against later epochs). Top-valued /fields/ inside the destination's partials are
 -- allowed: an annotation may leave a declared field unbound at Top, and the partial names
 -- still discriminate the instances.
-outVarBoundSrc :: FEnv -> Type -> Type -> Type
-outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing srcLeafs srcConsts)
+--
+-- A variable that ALSO occurs in the call's arguments is the set the caller chooses it to be,
+-- given only that it contains every one of its occurrences. When each of them is resolved and
+-- already within the destination, the destination is such a set, and it is the one the call site
+-- needs: @sum(lst)= foldr(lst= lst, fn(acc, v)= acc + v, init= 0)@ declared @-> Integer@ chooses
+-- @$_B=Integer@ for @init=0@ and a lambda returning @Integer@. Read from the occurrences alone,
+-- @$_B@ is circular (the lambda's @acc@ is a @$_B@), and narrowing from ⊤ stops at what @+@ gives
+-- any number. An occurrence outside the destination, still unresolved, or nested inside an
+-- argument's type leaves the variable to its occurrences (@mmap(m= Some(..))@ required to be
+-- @Nothing@ binds nothing). The higher-order results are read in @localTypeEnv@, the environment
+-- holding the call's lambdas.
+outVarBoundSrc :: FEnv -> FEnvTypeEnv -> Type -> Type -> Type
+outVarBoundSrc env localTypeEnv dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing srcLeafs srcConsts)
   | not (H.null destLeafs) && not (isBottomType dest) && not (typeContainsTypeVar dest) =
       case UnionType Nothing (joinUnionType $ map bindLeaf $ splitUnionType srcLeafs) srcConsts of
         src' | src' == src -> src
@@ -262,20 +273,38 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
       , TypeVar (TVVar vn) _ _ <- [getMetaType outM]
       , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
       , H.member vn (ptVars declObj)
-      -- Output-ONLY variables: with an argument occurrence of the same var (@mmap@'s
-      -- @m -> $M@), the output position is just one more membership occurrence — the
-      -- variable's witness is the occurrences' JOIN, and intersecting the destination alone
-      -- onto it (@/M=Nothing@ from the result) would empty the argument evidence
-      -- (@m=Some(..) ∩ Nothing = ∅@). Only a var with no argument occurrence (@pure@'s @$M@)
-      -- is determined by the destination.
-      , not (any (argRefsVar vn) (H.elems (ptArgs declObj)))
+      -- An output-ONLY variable (@pure@'s @$M@) is determined by the destination. With an
+      -- argument occurrence of the same var (@mmap@'s @m -> $M@), the output position is just
+      -- one more membership occurrence — the variable's witness is the occurrences' JOIN, and
+      -- intersecting the destination alone onto it (@/M=Nothing@ from the result) would empty
+      -- the argument evidence (@m=Some(..) ∩ Nothing = ∅@) — unless every occurrence is already
+      -- within the destination.
+      , not (any (argRefsVar vn) (H.elems (ptArgs declObj))) || (givenToArgument vn declObj && occurrencesWithin vn declObj p)
       -- Complete applications only: a partial application's ArrowTo destination is the
       -- further-applied call node, not the result the declaration's output variable stands for.
       , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]
     argRefsVar vn (TypeVar (TVVar vn') _ _)               = vn' == vn
     argRefsVar vn (TypeVar (TVApplied (TVVar vn') _) _ _) = vn' == vn
     argRefsVar _ _                                        = False
-outVarBoundSrc _ _ src = src
+    -- Every occurrence of @vn@ in the call is resolved and within the destination: the direct
+    -- arguments' values and the higher-order arguments' results. An occurrence nested in an
+    -- argument's or a result's type is not read, so it refuses.
+    occurrencesWithin vn declObj p@PartialType{ptName} =
+      and [ maybe False within (H.lookup k (ptArgs p))
+          | (k, t) <- H.toList (ptArgs declObj), S.null (pkArgs k), argRefsVar vn t ]
+      && null [ () | (k, t) <- H.toList (ptArgs declObj), S.null (pkArgs k), not (argRefsVar vn t)
+                   , S.member vn (typeOuterVarRefs t) ]
+      && and [ maybe False (within . hoSlotResult localTypeEnv H.empty k) (H.lookup k (ptArgs p))
+             | (k, rt) <- hoResults, argRefsVar vn rt ]
+      && null [ () | (_, rt) <- hoResults, not (argRefsVar vn rt), S.member vn (typeOuterVarRefs rt) ]
+      where hoResults = typeGraphDeclaredArgResults typeEnv ptName
+    -- The variable is GIVEN to a higher-order argument (@fn(acc -> $_B)@): its occurrences then
+    -- depend on what it is chosen to be, which is the circularity the destination resolves. A
+    -- variable only its arguments supply is their join and is left to it.
+    givenToArgument vn declObj = or [ S.member vn (typeOuterVarRefs t) | (k, t) <- H.toList (ptArgs declObj), not (S.null (pkArgs k)) ]
+    within v = not (typeContainsBareTop v) && not (typeContainsTypeVar v) && not (isBottomType v)
+               && isSubtypeOfWithEnv typeEnv H.empty v dest
+outVarBoundSrc _ _ _ src = src
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
 mkReachesEnv env con@(Constraint _ _ stypeVaenv _) = do
@@ -619,7 +648,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
                 | otherwise                      = destFinal0
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
-  let srcBound = outVarBoundSrc env destFinal src
+  let srcBound = outVarBoundSrc env reachesTypeEnv destFinal src
 
   -- Reverse direction: the arrow imposes a requirement back on the source. Keep only the source
   -- components that actually reach the required destination — a component is viable if its own

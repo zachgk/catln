@@ -232,7 +232,7 @@ Prgm
                         [ /Data/Set/removeAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
-                            ( /fn( Value /acc )( Value /v ) -> UnionType
+                            ( /fn( Value /acc )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
@@ -447,7 +447,7 @@ Prgm
                         [ /Data/Set/addAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
-                            ( /fn( Value /acc )( Value /v ) -> UnionType
+                            ( /fn( Value /acc )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []

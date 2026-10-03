@@ -550,24 +550,24 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/List/foldl
                                 [ /B=∀/Data/ToString
-                                , /A=TopType
+                                , /A=∀/Data/ToString
                                 ]
                                 ( /fn
                                     ( /acc=TopType
                                     , /v=TopType
                                     )=/fn
                                     [ /B=∀/Data/ToString
-                                    , /A=$_/A
+                                    , /A=∀/Data/ToString
                                     ]
                                     ( /acc=∀/Data/ToString
-                                    , /v=$/A
+                                    , /v=∀/Data/ToString
                                     )
                                 , /init=∀/Data/ToString
                                 , /lst=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/List/foldl
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
+                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/FoldSteps.. = /Data/List/foldlShow
                             ( Value /steps -> UnionType
                                 ( Just
@@ -623,24 +623,24 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/List/foldr
                                 [ /B=∀/Data/ToString
-                                , /A=TopType
+                                , /A=∀/Data/ToString
                                 ]
                                 ( /fn
                                     ( /acc=TopType
                                     , /v=TopType
                                     )=/fn
                                     [ /B=∀/Data/ToString
-                                    , /A=$_/A
+                                    , /A=∀/Data/ToString
                                     ]
                                     ( /acc=∀/Data/ToString
-                                    , /v=$/A
+                                    , /v=∀/Data/ToString
                                     )
                                 , /init=∀/Data/ToString
                                 , /lst=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/List/foldr
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
+                                ( /fn( Value /acc -> ∀/Data/ToString )( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/FoldSteps.. = /Data/List/foldrShow
                             ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldrSteps( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> UnionType
