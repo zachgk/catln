@@ -439,9 +439,12 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Maybe ]
+            , cgcPartial = /Data/Algebra/Eqv
+                [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
             , cgcExtends =
-                [ /Data/MaybeEqv[ /T=∀/Data/Maybe ] ]
+                [ /Data/MaybeEqv
+                    [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -453,9 +456,12 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/Maybe ]
+            , cgcPartial = /Data/Algebra/Ordering
+                [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
             , cgcExtends =
-                [ /Data/MaybeOrdering[ /T=∀/Data/Maybe ] ]
+                [ /Data/MaybeOrdering
+                    [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

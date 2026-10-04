@@ -957,8 +957,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Map/Leaf.. ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf )( Value /b -> TVArg /other = Value /other )
-                        , /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )
+                        [ /Data/Algebra/equal
+                            ( Value /other -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )( Value /this -> /Data/Map/Leaf.. ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf )( Value /b -> TVArg /other = Value /other )
+                        , /Data/Algebra/equal
+                            ( Value /other -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )
                             ( Value /this -> /Data/Map/Node
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=∀/Data/Algebra/Eq
@@ -1071,9 +1081,20 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Map/BinTree ]
+            , cgcPartial = /Data/Algebra/Eqv
+                [ /T=∀/Data/Map/BinTree
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=∀/Data/Algebra/Eq
+                    ]
+                ]
             , cgcExtends =
-                [ /Data/Map/MapEqv[ /T=∀/Data/Map/BinTree ] ]
+                [ /Data/Map/MapEqv
+                    [ /T=∀/Data/Map/BinTree
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=∀/Data/Algebra/Eq
+                        ]
+                    ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

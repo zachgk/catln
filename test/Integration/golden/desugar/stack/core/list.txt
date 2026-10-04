@@ -625,9 +625,12 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/List/ConsList ]
+            , cgcPartial = /Data/Algebra/Eqv
+                [ /T=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] ]
             , cgcExtends =
-                [ /Data/List/ConsEqv[ /T=∀/Data/List/ConsList ] ]
+                [ /Data/List/ConsEqv
+                    [ /T=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -639,9 +642,12 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/List/ConsList ]
+            , cgcPartial = /Data/Algebra/Ordering
+                [ /T=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ]
             , cgcExtends =
-                [ /Data/List/ConsOrdering[ /T=∀/Data/List/ConsList ] ]
+                [ /Data/List/ConsOrdering
+                    [ /T=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

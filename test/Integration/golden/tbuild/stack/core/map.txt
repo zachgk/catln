@@ -1919,7 +1919,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
+                            ( EAppArg
+                                { eaaArg = Value /other -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                }
+                            )
                             ( EAppArg { eaaArg = Value /this -> /Data/Map/Leaf.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Map/mapEqual
                                 ( EAppArg { eaaArg = Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf } )
@@ -1928,7 +1934,13 @@ Prgm
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
                         , /Data/Algebra/equal
-                            ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
+                            ( EAppArg
+                                { eaaArg = Value /other -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/Map/Node
                                     [ /K=∀/Data/Algebra/Ord
@@ -2100,9 +2112,20 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Map/BinTree ]
+            , cgcPartial = /Data/Algebra/Eqv
+                [ /T=∀/Data/Map/BinTree
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=∀/Data/Algebra/Eq
+                    ]
+                ]
             , cgcExtends =
-                [ /Data/Map/MapEqv[ /T=∀/Data/Map/BinTree ] ]
+                [ /Data/Map/MapEqv
+                    [ /T=∀/Data/Map/BinTree
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=∀/Data/Algebra/Eq
+                        ]
+                    ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

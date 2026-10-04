@@ -543,7 +543,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )
+                        [ /Data/Algebra/equal
+                            ( Value /other ->
+                                ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
+                            )
                             ( Value /this -> /Data/Set/MkSet[ /K=∀/Data/Algebra/Ord ]
                                 ( /map=∀/Data/Map
                                     [ /K=∀/Data/Algebra/Ord
@@ -688,9 +691,12 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Set/MapSet ]
+            , cgcPartial = /Data/Algebra/Eqv
+                [ /T=∀/Data/Set/MapSet[ /K=∀/Data/Algebra/Ord ] ]
             , cgcExtends =
-                [ /Data/Set/SetEqv[ /T=∀/Data/Set/MapSet ] ]
+                [ /Data/Set/SetEqv
+                    [ /T=∀/Data/Set/MapSet[ /K=∀/Data/Algebra/Ord ] ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

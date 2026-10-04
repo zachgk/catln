@@ -269,7 +269,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other )
+                        [ /Data/Algebra/equal
+                            ( Value other -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /this= /Data/Set/MkSet[ /K : ∀/Data/Algebra/Ord ]( Value map@Value m ) ) -> ∀/Data/Primitive/Boolean = /Data/Set/setEqual
                             ( Value a= /Data/Set/MkSet( Value map= Value m ) )( Value b= Value other )
                         ]
@@ -326,9 +327,12 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Set/MapSet ]
+            , cgcPartial = /Data/Algebra/Eqv
+                [ /T=∀/Data/Set/MapSet[ /K=∀/Data/Algebra/Ord ] ]
             , cgcExtends =
-                [ /Data/Set/SetEqv[ /T=∀/Data/Set/MapSet ] ]
+                [ /Data/Set/SetEqv
+                    [ /T=∀/Data/Set/MapSet[ /K=∀/Data/Algebra/Ord ] ]
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

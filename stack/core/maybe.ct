@@ -40,7 +40,7 @@ module(Data/Maybe)
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 
-  data(MaybeEqv, isa= [/Data/Algebra/Eqv[$T -> /Data/Maybe]])
+  data(MaybeEqv, isa= [/Data/Algebra/Eqv[$T -> /Data/Maybe[$T -> /Data/Algebra/Eq]]])
     # [MaybeEqv] compares two [Maybe]s of [Eq] elements arm by arm.
 module(Data/Algebra)
   :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= True
@@ -69,7 +69,7 @@ module(Data/Maybe)
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
 
-  data(MaybeOrdering, isa= [/Data/Algebra/Ordering[$T -> /Data/Maybe]])
+  data(MaybeOrdering, isa= [/Data/Algebra/Ordering[$T -> /Data/Maybe[$T -> /Data/Algebra/Ord]]])
     # [MaybeOrdering] orders two [Maybe]s of [Ord] elements arm by arm.
 module(Data/Algebra)
   :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= /Data/Algebra/Equal

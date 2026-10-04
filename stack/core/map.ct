@@ -178,7 +178,7 @@ module(Data/Map)
       equals [Some(value)] through the [Maybe] [Eq] instance, [and]ing that into the accumulator.
   containedIn(a, b)= foldEntries(m= a, fn(acc, k, v)= acc && (get(m= b, key= k) == /Data/Maybe/Some(value= v)), init= /Data/Primitive/True)
 
-  data(MapEqv, isa= [/Data/Algebra/Eqv[$T -> BinTree]])
+  data(MapEqv, isa= [/Data/Algebra/Eqv[$T -> BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq]]])
     # [MapEqv] is the equivalence [eq] names for a [BinTree]: [mapEqual], order-independent.
 module(Data/Algebra)
   :/Data/Map/MapEqv.rel(a -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq], b -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= a, b= b)
@@ -186,8 +186,8 @@ module(Data/Algebra)
   :/Data/Map/Leaf.eq= /Data/Map/MapEqv
   :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).eq= /Data/Map/MapEqv
 
-  :/Data/Map/Leaf.equal(other)= /Data/Map/mapEqual(a= /Data/Map/Leaf, b= other)
-  :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).equal(other)= /Data/Map/mapEqual(a= /Data/Map/Node(left= left, key= key, value= value, right= right), b= other)
+  :/Data/Map/Leaf.equal(other -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= /Data/Map/Leaf, b= other)
+  :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).equal(other -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= /Data/Map/Node(left= left, key= key, value= value, right= right), b= other)
 module(Data/Map)
   # Two maps with the same entries are equal even when built in different orders (different tree
   #   shapes); maps differing in a value are not.

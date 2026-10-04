@@ -275,7 +275,7 @@ module(Data/List)
 module(Data)
   every(/Data/List/ConsList[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/List)
-  data(ConsEqv, isa= [/Data/Algebra/Eqv[$T -> /Data/List/ConsList]])
+  data(ConsEqv, isa= [/Data/Algebra/Eqv[$T -> /Data/List/ConsList[$T -> /Data/Algebra/Eq]]])
     # [ConsEqv] compares two [ConsList]s of [Eq] elements constructor for constructor.
 module(Data/Algebra)
   :/Data/List/ConsEqv.rel(a= /Data/List/Nil, b= /Data/List/Nil)= True
@@ -312,7 +312,7 @@ module(Data/List)
 module(Data)
   every(/Data/List/ConsList[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
 module(Data/List)
-  data(ConsOrdering, isa= [/Data/Algebra/Ordering[$T -> /Data/List/ConsList]])
+  data(ConsOrdering, isa= [/Data/Algebra/Ordering[$T -> /Data/List/ConsList[$T -> /Data/Algebra/Ord]]])
     # [ConsOrdering] orders two [ConsList]s of [Ord] elements lexicographically.
 module(Data/Algebra)
   :/Data/List/ConsOrdering.compare(a= /Data/List/Nil, b= /Data/List/Nil)= /Data/Algebra/Equal
