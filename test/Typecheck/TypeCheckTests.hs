@@ -150,6 +150,12 @@ testDeclVarBound :: TestTree
 testDeclVarBound = testCase "a declaration variable a definition does not apply keeps its bound" $
   assertResultGuaranteed "test/Typecheck/unit/declVarBound.ct" "walk"
 
+-- | An instance written under a declaration's absolute name on another page, then called by a
+-- later fragment: the call is still read with the declaration that shares the instance's key.
+testSharedKeyDeclaration :: TestTree
+testSharedKeyDeclaration = testCase "a declaration shared with a page's instance arms still bounds later calls" $
+  assertResultGuaranteed "test/Typecheck/unit/sharedKey/use.ct" "filt"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -175,6 +181,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testFoldClassResult
     , testMatchRecursiveCall
     , testDeclVarBound
+    , testSharedKeyDeclaration
                                   ]
   where
     p prop = prop

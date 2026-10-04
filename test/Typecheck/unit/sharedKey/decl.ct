@@ -1,0 +1,11 @@
+annot(#noCore)
+
+# The declaration side of [use.ct]: a generic operation over a class, as core/monad.ct's
+# [mmap]. Its instances are written on other pages under the declaration's absolute name.
+#noCore
+data(True)
+data(False)
+class(Boolean, [True, False])
+class(Monad[$T])
+
+mmap[$M -> /Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M

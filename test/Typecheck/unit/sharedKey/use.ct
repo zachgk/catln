@@ -1,0 +1,23 @@
+import "decl.ct"
+annot(#noCore)
+
+# An instance written under the declaration's absolute name, as core/list.ct's [mmap] arms, and a
+# later definition calling it, as core's [filter]. The arms are solved before [filt], and [filt]'s
+# result is guaranteed only through the declaration on [decl.ct], which shares the arms' key.
+#noCore
+class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+every(ConsList[$T -> $_T], isa= [/Monad])
+
+append(a -> ConsList[$T -> $_T], b -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]
+append(a= Nil, b)= b
+append(a= Cons(head, tail), b)= Cons(head= head, tail= append(a= tail, b= b))
+
+/mmap(m= Nil, fn(v))= Nil
+/mmap(m= Cons(head, tail), fn(v))= append(a= fn(v= head), b= /mmap(m= tail, fn(v)= fn(v= v)))
+
+keepIf(v, keep -> Boolean) -> ConsList
+keepIf(v, keep= True)= Cons(head= v, tail= Nil)
+keepIf(v, keep= False)= Nil
+
+filt[$A](lst -> ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> ConsList[$T -> $_A]
+filt(lst, fn(v))= mmap(m= lst, fn(v)= keepIf(v= v, keep= fn(v= v)))

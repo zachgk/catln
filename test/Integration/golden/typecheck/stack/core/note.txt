@@ -529,21 +529,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some
-                        [ /T=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        ]
-                        ( /value=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
-                    , []
-                    ) = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=∀/Data/String ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /due=/Data/Maybe/Some
@@ -638,21 +624,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some
-                        [ /T=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        ]
-                        ( /value=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
-                    , []
-                    ) = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=∀/Data/String ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /due=/Data/Maybe/Some
