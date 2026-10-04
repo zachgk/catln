@@ -28,11 +28,13 @@ module(Data/Functor)
 
   # ## Functor laws
     Identity law: mapping the identity function over a functor returns it unchanged. Expressed
-    as a property test, it is checked against every [Functor] instance (here [$F]) whose
-    elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
-    members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
-    file over the import graph, so each file defining an instance checks the law for it.
-  testFunctorIdentity[$F -> /Data/Functor[$T -> /Data/Algebra/Eq]](x -> $F) =
+    as a property test, it is checked against every [Functor] instance (here [$F]) that is
+    itself [Eq] — so the mapped result can be compared with the original — at arbitrary
+    members of that instance. Holding [Eq] elements is not enough: a [Functor] is compared by
+    its own equality, which only an [Eq] instance has, so the bound is the intersection of
+    the two classes. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per file over
+    the import graph, so each file defining an instance checks the law for it.
+  testFunctorIdentity[$F -> /Data/Functor[$T -> /Data/Algebra/Eq] && /Data/Algebra/Eq](x -> $F) =
     #test
     #assert(test= fmap(lst= x, fn(v)= v) == x)
     0

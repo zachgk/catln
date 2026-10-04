@@ -67,6 +67,12 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
     mapType :: Bool -> Type -> Type
     mapType reqResolve (TopType np (PredsOne (PredRel p))) | H.null np = resolveRelPartial reqResolve p
+    -- A written intersection (@Functor[$T -> Eq] && Eq@, 'Syntax.Ct.Desugarf.Expr.intersectWrittenTypes'):
+    -- each named part resolves as it would alone, and the parts are joined again.
+    mapType reqResolve (TopType np (PredsAnd ps)) | H.null np, not (null ps), Just rels <- mapM relAtom ps = foldr1 (intersectResolved reqResolve) (map (resolveRelPartial reqResolve) rels)
+      where
+        relAtom (PredsOne (PredRel p)) = Just p
+        relAtom _                      = Nothing
     mapType _ (TopType np ps) = TopType np ps
     mapType _ tp@(TypeVar TVVar{} _ _) = tp
     mapType _ (TypeVar TVArg{} _ _) = error "Invalid arg type"
@@ -80,6 +86,15 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
           ptArgs = fmap (mapType reqResolve) ptArgs,
           ptPreds = mapTypePreds (mapTypePred (mapPartial reqResolve)) ptPreds
                                                                                                                       }
+
+    -- | Two resolved parts of an intersection as one type: classes (and still-relative names) are
+    -- predicates on ⊤ and join as predicates; a data type keeps its leaf, filtered by the other
+    -- part's predicates. Two data types are not an intersection anyone writes on purpose.
+    intersectResolved :: Bool -> Type -> Type -> Type
+    intersectResolved _ (TopType n1 p1) (TopType n2 p2) | H.null n1, H.null n2 = TopType H.empty (predsAnd p1 p2)
+    intersectResolved _ (TopType n1 p1) t | H.null n1, Just l <- maybeGetSingleton t = singletonType l{ptPreds = predsAnd (ptPreds l) p1}
+    intersectResolved r t top@TopType{} = intersectResolved r top t
+    intersectResolved _ a b = error $ printf "An intersection (&&) can join at most one data type, not %s and %s" (show a) (show b)
 
     -- | Resolves possibilities for a relative partial for use in the class graph
     resolveClassPartial :: Bool -> PartialType -> PartialType

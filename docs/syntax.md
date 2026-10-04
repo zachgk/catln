@@ -147,6 +147,13 @@ class Maybe[$T] = Just[$T]($T val) | Nothing
 class Maybe2[$T] = $T | Nothing
 ```
 
+A type written after `->` may be the intersection of several with `&&`: the values that are in every one of them. It is how a type variable is bounded by more than one class:
+
+```
+# $F is a Functor of Eq elements that is itself Eq
+testFunctorIdentity[$F -> Functor[$T -> Eq] && Eq](x -> $F) = fmap(lst= x, fn(v)= v) == x
+```
+
 ## Strings and characters
 
 A string literal is written between double quotes and a character literal between single quotes, with backslash escapes such as `\n`, `\t`, `\"`, `\'` and `\\`:

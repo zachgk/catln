@@ -159,7 +159,7 @@ pArrowFull basis = do
   guardAnnots <- pPatternGuard
   arrM <- optional $ do
     _ <- symbol "->" <|> symbol ":"
-    term
+    pTypeTerm
   maybeExpr2 <- optional $ do
     s <- (Left <$> symbol "=>") <|> (Left <$> symbol "=") <|> (Right <$> symbol "<-")
     afterEquals <- (Left <$> pEndOfLine) <|> (Right <$> pExpr)
@@ -185,6 +185,16 @@ pArrowFull basis = do
   return $ case maybeExpr2 of
     Just (Right{}, _) -> Left $ RawBindStatement oa
     _                 -> Right oa
+
+-- | A type written after @->@: a term, or the intersection of several (@Functor[$T -> Eq] && Eq@,
+-- the values in every one of them). Nothing else may follow a type there, so @&&@ is not read
+-- as the boolean operator; 'Syntax.Ct.Desugarf.Expr.exprToType' reads the application as the
+-- intersection.
+pTypeTerm :: Parser PExpr
+pTypeTerm = do
+  t <- term
+  rest <- many (symbol "&&" *> term)
+  return $ foldl (mkOp2 "&&") t rest
 
 pArrowFullOA :: ObjectBasis -> Parser PObjArr
 pArrowFullOA basis = do

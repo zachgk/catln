@@ -35,7 +35,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Functor/testFunctorIdentity
-                            [ /F : ∀/Data/Functor[ /T=∀/Data/Algebra/Eq ] ]( Value x -> $/F )= CInt
+                            [ /F :
+                                ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
+                            ]( Value x -> $/F )= CInt
                             { ciValue = 0 }
                         ]
                     }
@@ -113,10 +115,12 @@ Prgm
             ( Value /text= CStr
                 { csValue = "## Functor laws
                 Identity law: mapping the identity function over a functor returns it unchanged. Expressed
-                as a property test, it is checked against every [Functor] instance (here [$F]) whose
-                elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
-                members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
-                file over the import graph, so each file defining an instance checks the law for it." }
+                as a property test, it is checked against every [Functor] instance (here [$F]) that is
+                itself [Eq] — so the mapped result can be compared with the original — at arbitrary
+                members of that instance. Holding [Eq] elements is not enough: a [Functor] is compared by
+                its own equality, which only an [Eq] instance has, so the bound is the intersection of
+                the two classes. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per file over
+                the import graph, so each file defining an instance checks the law for it." }
             )
         , /Catln/#md
             ( Value /text= CStr

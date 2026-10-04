@@ -1,0 +1,14 @@
+annot(#noCore)
+
+# A type variable bounded by an intersection of classes ([Box && Eq]): a value of it is in both,
+# so [f] may return its [Box] argument as the [Eq] it declares.
+#noCore
+class(Eq)
+class(Box[$T])
+data(A)
+every(A, isa= [/Eq, /Box])
+
+f[$F -> Box && Eq](x -> $F) -> Eq
+f(x)= x
+
+useA -> Eq= f(x= A)

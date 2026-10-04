@@ -156,6 +156,11 @@ testSharedKeyDeclaration :: TestTree
 testSharedKeyDeclaration = testCase "a declaration shared with a page's instance arms still bounds later calls" $
   assertResultGuaranteed "test/Typecheck/unit/sharedKey/use.ct" "filt"
 
+-- | A type variable bounded by an intersection (@$F -> Box && Eq@) is within each part.
+testIntersectionBound :: TestTree
+testIntersectionBound = testCase "a type variable bounded by an intersection is within each part" $
+  assertResultGuaranteed "test/Typecheck/unit/intersectionBound.ct" "f"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -182,6 +187,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testMatchRecursiveCall
     , testDeclVarBound
     , testSharedKeyDeclaration
+    , testIntersectionBound
                                   ]
   where
     p prop = prop

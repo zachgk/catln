@@ -219,7 +219,18 @@ exprToType vaenv (RawVarsApply _ (RawValue _ n) vs) | isJust (parseTVVar (nameSt
           Just vn       -> partialKey (mkName vn)
           Nothing       -> error $ printf "No var name found in applied type var %s" (show varExpr)
     toOverride roa = error $ printf "Unexpected var application in applied type var: %s" (show roa)
+-- A written intersection @A && B@ ('Syntax.Ct.Parser.Expr.pTypeTerm'): the values in both.
+exprToType vaenv (RawTupleApply _ (_, RawValue _ op) [(False, RawObjArr{roaObj=Just (RawValue _ ln), roaArr=Just (Just l, _)}), (False, RawObjArr{roaObj=Just (RawValue _ rn), roaArr=Just (Just r, _)})])
+  | nameStr op == operatorName "&&", nameStr ln == operatorArgL, nameStr rn == operatorArgR = intersectWrittenTypes (exprToType vaenv l) (exprToType vaenv r)
 exprToType _ e                        = getExprType $ exprPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
+
+-- | The type a written @A && B@ denotes. Names are not resolved yet, so each side is still the
+-- relation its name denotes ('relTypeVal'), or an intersection already: the result is ⊤ filtered
+-- by the predicates of both, which name resolution reads part by part
+-- ('Syntax.Ct.Desugarf.Passes').
+intersectWrittenTypes :: Type -> Type -> Type
+intersectWrittenTypes (TopType n1 p1) (TopType n2 p2) = TopType (joinUnionType (splitUnionType n1 ++ splitUnionType n2)) (predsAnd p1 p2)
+intersectWrittenTypes a b = error $ printf "An intersection (&&) of types can only join named types, not %s and %s" (show a) (show b)
 
 exprToTypeMeta :: PVarArgMap -> PExpr -> ParseMeta
 exprToTypeMeta vaenv e = mWithType (exprToType vaenv e) (getExprMeta e)
