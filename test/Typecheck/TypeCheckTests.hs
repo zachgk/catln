@@ -138,6 +138,12 @@ testFoldClassResult :: TestTree
 testFoldClassResult = testCase "a fold into its declared class result is guaranteed" $
   assertResultGuaranteed "test/Typecheck/unit/foldClassResult.ct" "anyNeg"
 
+-- | A recursive call inside a @match@ arm: the generated arm's raw call is read with the values
+-- its call site binds to the arm's inputs.
+testMatchRecursiveCall :: TestTree
+testMatchRecursiveCall = testCase "a recursive call in a match arm is guaranteed" $
+  assertResultGuaranteed "test/Typecheck/unit/matchRecursiveCall.ct" "lookup"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -161,6 +167,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testRecursiveDeclaredArg
     , testFoldDeclaredResult
     , testFoldClassResult
+    , testMatchRecursiveCall
                                   ]
   where
     p prop = prop

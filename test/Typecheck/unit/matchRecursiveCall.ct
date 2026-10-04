@@ -1,0 +1,21 @@
+annot(#noCore)
+
+# A recursive call inside a [match] arm, as core's Map [get]. The match's arms are generated
+# definitions whose inputs ([left], [key]) are typed only by the call that passes them, so the
+# arm's raw call [lookup(m= left, key= key)] is guaranteed only when it is read with the
+# subtree and key the enclosing arm destructured.
+#noCore
+class(Ord)
+class(Comparison, [LessThan, Equal, GreaterThan])
+:$T.compareTo[$T -> /Ord](other -> $T) -> /Comparison
+class(Map[$K, $V])
+class(BinTree[$K, $V], [Node[$K -> $_K, $V -> $_V](left -> BinTree[$K -> $_K, $V -> $_V], key -> $K, value -> $V, right -> BinTree[$K -> $_K, $V -> $_V]), Leaf])
+every(BinTree[$K -> $_K, $V -> $_V], isa= [/Map[$K -> $_K, $V -> $_V]])
+class(Maybe[$T], [Some[$T -> $_T](value -> $T), None])
+
+lookup[$MK -> /Ord, $MV](m -> /Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Maybe[$T -> $_MV]
+lookup(m= Leaf, key)= None
+lookup(m= Node(left, key@nk, value, right), key)= match(key.compareTo(other= nk))
+  c -> /Equal= Some(value= value)
+  c -> /LessThan= lookup(m= left, key= key)
+  c -> /GreaterThan= lookup(m= right, key= key)

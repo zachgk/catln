@@ -1411,7 +1411,7 @@ propMemberParentParams = property $ do
     _ -> fail "the meet is not a union of nodes"
   forM_ leafs $ \l -> do
     -- A field's parent references name the leaf, so it is read in the leaf's own scope.
-    let readField k = substituteTVExtScoped typeEnv (joinVarArgEnv (ptVars l) H.empty) H.empty (fromMaybe PTopType (typeGetArg k l))
+    let readField k = substituteTVExtScoped typeEnv (ambientEnv $ joinVarArgEnv (ptVars l) H.empty) H.empty (fromMaybe PTopType (typeGetArg k l))
     annotate $ printf "key = %s, left = %s" (show (readField keyK)) (show (readField leftK))
     assertTimed "key ⊆ Kx" $ isSubtypeOf typeEnv (readField keyK) kx
     assertTimed "left ⊆ BinTree[K=Kx]" $ isSubtypeOf typeEnv (readField leftK) treeKx

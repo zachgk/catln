@@ -532,7 +532,22 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
           Just n  -> not (null (typeGraphData typeEnv n))
           Nothing -> False
         joinedResolved | isDataConstruction = applyResolvedFields typeEnv resolvedFields joined
-                       | otherwise          = joined
+                       | otherwise          = applyResolvedCallArgs joined
+        -- The same holds for a body that CALLS a function (@getL(m= left, key= key)@): its raw
+        -- call form stores each argument with the body's abstract type, @getL(m=Top, key=Top)@
+        -- for a generated match arm whose inputs only its call site types. The call is applied to
+        -- the very values the arm's own arguments are bound to, so each slot valued by a bare
+        -- argument reference is read through the vaenv, narrowing it to the binding
+        -- (@getL(m=BinTree[K=Ord], key=Ord)@). A narrower source only narrows the slot, so the
+        -- read is monotone.
+        applyResolvedCallArgs (UnionType Nothing leafs consts)
+          | Just callee <- maybeExprPath =<< oaArrExpr
+          , not (H.null argRefFields) =
+            UnionType Nothing (joinUnionType [ if relativeNameMatches callee (ptName l) then l{ptArgs = H.mapWithKey resolveSlot (ptArgs l)} else l | l <- splitUnionType leafs ]) consts
+        applyResolvedCallArgs t = t
+        resolveSlot k slot = case H.lookup k argRefFields of
+          Just fv | not (isTypeVar fv) -> intersectTypes typeEnv slot fv
+          _                            -> slot
         -- DISPATCH ONLY ('arrowDestTypeDispatch'): the presented dest must be what the BUILT arm
         -- returns. The arm's body compiles toward the arrow's result meta ('TreeBuild.buildArrow'),
         -- so a body-meta leaf the graph can still rewrite (a raw applied term such as
@@ -555,16 +570,7 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
         -- is an argument reference through the vaenv, recovering @head=Integer@ (and hence the data
         -- parameter it defines — see 'applyResolvedFields'). This is the per-field analogue of the
         -- bare-path body case above (@= v@).
-        resolvedFields = H.fromList $
-          [ (inExprSingleton (oaObjExpr a), fv)
-          | Just b <- [oaArrExpr]
-          , a <- exprAppliedArgs b
-          , Just (Just valExpr, _) <- [oaArr a]
-          -- A bare argument reference (@head=x@): the field is the argument's bound value.
-          , isJust (maybeExprPath valExpr)
-          , null (exprAppliedArgs valExpr)
-          , Just fv <- [H.lookup (extKey (TVArg (inExprSingleton valExpr))) vaenv] ]
-          ++
+        resolvedFields = H.union argRefFields $ H.fromList
           -- DISPATCH ONLY ('arrowDestTypeDispatch'): a field valued by an APPLICATION of one
           -- of the object's own arguments (@head= fn(v=head)@ where @fn@ is an object arg) is
           -- the argument's OUTPUT, which the dispatch-resolved src partial carries as the
@@ -581,6 +587,15 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
           , Just out <- [hoSlotResult typeEnv vaenv (inExprSingleton valExpr) <$> typeGetArgLoose (inExprSingleton valExpr) srcPartial]
           , out /= PTopType
           , not (isTypeVar out) ]
+        -- A bare argument reference (@head=x@): the field is the argument's bound value.
+        argRefFields = H.fromList
+          [ (inExprSingleton (oaObjExpr a), fv)
+          | Just b <- [oaArrExpr]
+          , a <- exprAppliedArgs b
+          , Just (Just valExpr, _) <- [oaArr a]
+          , isJust (maybeExprPath valExpr)
+          , null (exprAppliedArgs valExpr)
+          , Just fv <- [H.lookup (extKey (TVArg (inExprSingleton valExpr))) vaenv] ]
         -- The applied argument's slot holds what the argument RETURNS, which for a lambda whose
         -- body is itself a call is the raw call partial (@/operator+(l=Integer, r=Integer)@) —
         -- at the type level a term may always stay unrewritten, so 'arrowConstrainUbs' keeps the
