@@ -48,7 +48,8 @@ import qualified Hedgehog.Internal.Report
 import           Hedgehog.Internal.Runner   (checkReport)
 import qualified Hedgehog.Internal.Seed     as HedgehogSeed
 import           Semantics
-import           Semantics.Annots           (getRuntimeAnnot, hasAnnot, isAnnot)
+import           Semantics.Annots           (getRuntimeAnnot, hasAnnot,
+                                             hasElseAnnot, isAnnot)
 import           System.Timeout             (timeout)
 import           Testing.Generation         (genValForType)
 import           Text.Printf
@@ -211,6 +212,14 @@ runTestDesc TestDesc{tdName, tdOwner, tdOwnerId, tdKind, tdCheck} = finish <$> c
       | otherwise = (False, Just poCases, poInputs, Just $ fromMaybe gaveUp poReport)
     gaveUp = "The test engine could not generate any usable input for this test"
 
+-- | The program as the derived tests decide which arms overlap: as written, every class closed to
+-- its declared members, which is how dispatch reads it ('TreeBuild'). The tests run the program, so
+-- the arms that overlap are the arms dispatch could choose between. Read open-world, as inference
+-- reads it, an arm for a class (@:Ordering.rel@, @dshow(s -> DShow)@) overlaps every arm whose input
+-- might yet join that class, which no run of this program can choose between.
+runTypeEnv :: EPrgm -> TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
+runTypeEnv prgm = (mkTypeEnv prgm){tePrgmEnv = True}
+
 -- | A clause the derived tests can evaluate: a definition with a body, or a runtime primitive
 -- (evaluated through its @#runtime@ implementation).
 evaluableClause :: EObjArr -> Bool
@@ -257,14 +266,14 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   , omiQuant omi == QuantUnique
   , let parts = sortOn (getMetaPos . getExprMeta . oaObjExpr) $ filter evaluable (omiDefs omi ++ omiRuntimeDecls omi)
   , (oaA, oaB) <- pairs parts
-  , let dom = intersectTypes typeEnv (clauseDom oaA) (clauseDom oaB)
+  , let dom = intersectTypes runEnv (clauseDom oaA) (clauseDom oaB)
   , not (isBottomType dom)
   , isJust (maybeGetSingleton dom)
   -- Only overlapping definitions that can actually agree are testable: their result types must
   -- overlap too. Overloads that share an input shape but produce different result types (e.g. the
   -- 'bindap' arms: a plain value vs a 'Functor' vs a 'Monad', which also differ in what their
   -- function argument returns) are not meant to agree, so no agreement test is derived for them.
-  , not (isBottomType (intersectTypes typeEnv (clauseCod oaA) (clauseCod oaB)))
+  , not (isBottomType (intersectTypes runEnv (clauseCod oaA) (clauseCod oaB)))
   -- A clause chosen by a condition rather than by its domain is not an overlapping definition. Two
   -- guarded arms of one function are the branches of a conditional — @greet(…) | formal= …@ beside
   -- @greet(…) else = …@ — and branches are meant to differ, which is the whole of what a branch is
@@ -276,10 +285,17 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   -- where BOTH conditions hold — which is not a type and so is not something 'genValForType' can be
   -- asked for. Where that region is empty there is nothing to agree about in the first place.
   , conditionFree oaA && conditionFree oaB
+  -- An @else@ arm applies only where no other arm does (as 'TreeBuild' dispatches it), so the input
+  -- it is chosen for is its domain less its siblings' and overlaps none of them. Its written domain
+  -- still intersects theirs — @llmText(content= Some(Str(s)))@ beside @llmText(content) else@ — so
+  -- without this every function with a fallback arm derives a test asserting that the fallback
+  -- agrees with the arms it falls back from.
+  , not (hasElseAnnot oaA) && not (hasElseAnnot oaB)
   ]
   where
     TypeEnv{teNames} = typeEnv
     typeEnv = mkTypeEnv prgm
+    runEnv = runTypeEnv prgm
     -- Pairing a non-linear diagonal against a primitive sibling is how @(_@x - _@x)= 0@ becomes a
     -- derived test of the built-in subtraction (@x - x == 0@).
     evaluable = evaluableClause
@@ -295,6 +311,15 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
       Just (Nothing, m)   -> getMetaType m
       Nothing             -> PTopType
     pairs xs = [(a, b) | (a:rest) <- tails xs, b <- rest]
+    -- What a function is declared to return for an input: the results of its declarations which
+    -- accept it, or — when none does — of the given arms, for a function written only as definitions
+    -- is declared by them, each giving its own return (@mdbl(v -> Integer) -> Integer= v@). A runtime
+    -- primitive is a declaration too, its declared return its own.
+    declaredReturns omi arms src = case dests (omiDecls omi ++ omiRuntimeDecls omi) of
+      []    -> dests arms
+      found -> found
+      where
+        dests oas = [dest | d@ObjArr{oaArr=Just _} <- oas, dest <- arrowDestType typeEnv H.empty src d]
 
     mkOverlapTest omi oaA oaB dom = TestDesc testName (nameStr (oaObjPath oaA)) (oaTestId oaA) TestOverlapAgreement (PropCheck (checkPropWithTimeout False prop))
       where
@@ -308,7 +333,10 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
         -- admits the unevaluated application itself, so both clauses would come back unbuilt. Only
         -- declarations that accept the overlap answer (a generic one beside the runtime
         -- primitives it covers is not necessarily first).
-        retDest = clearUnionTypePreds $ case concat [arrowDestType typeEnv H.empty partial d | d@ObjArr{oaArr=Just _} <- omiDecls omi ++ omiRuntimeDecls omi] of
+        --
+        -- A function no declaration accepts the overlap of is declared by its arms, so their own
+        -- returns are the destination ('declaredReturns').
+        retDest = clearUnionTypePreds $ case declaredReturns omi [oaA, oaB] partial of
           (t:_) -> t
           []    -> intType
         testName = printf "%s :: overlap-agreement" (nameStr (oaObjPath oaA))
@@ -373,7 +401,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
   , let refRet = getMetaType refM
   , let arms = [ (defOa, dom)
                | defOa <- filter evaluableClause (omiDefs omi)
-               , let dom = intersectTypes typeEnv (clauseDom refOa) (clauseDom defOa)
+               , let dom = intersectTypes runEnv (clauseDom refOa) (clauseDom defOa)
                , not (isBottomType dom)
                , isJust (maybeGetSingleton dom)
                ]
@@ -381,6 +409,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
   where
     TypeEnv{teNames} = typeEnv
     typeEnv = mkTypeEnv prgm
+    runEnv = runTypeEnv prgm
     env = evalBaseEnv prgm
     clauseDom oa = getExprType (oaObjExpr oa)
 
@@ -531,7 +560,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
         testName = printf "%s :: refinement-agreement" (nameStr name)
         retDest = refineRetDest omi
         accepting input = [ oa | oa <- filter evaluableClause (omiDefs omi ++ omiRuntimeDecls omi)
-                               , isSubtypeOf typeEnv (singletonType (getValPartialType input)) (clauseDom oa) ]
+                               , isSubtypeOf runEnv (singletonType (getValPartialType input)) (clauseDom oa) ]
         runArm input arms oa = runCResT $ do
           outV <- runCallIn (envWithoutClauses prgm name (filter (/= oa) arms)) retDest input
           matches <- valMatchesType outV refRet
