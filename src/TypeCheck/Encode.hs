@@ -581,13 +581,22 @@ fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
   -- result spelled in it stays a link (bound per call at dispatch) rather than the ⊤ it would
   -- read as out of scope.
   let objName = makeAbsoluteName (exprPath obj')
-  batchDeclVars <- gets (H.lookupDefault S.empty objName . feBatchDeclVars)
+  --
+  -- Such a variable ranges over what the declaration bounds it by (@foldrWalk[$B -> ToString]@'s
+  -- @$B@ is some 'ToString'), which its point records as its declared requirement. Its value stays
+  -- ⊤, the unbound link: a concrete value is substituted for the variable, and the definition's
+  -- @fn(acc, v)@ then returns a concrete result its arrow tree cannot be built toward. The
+  -- guarantee check reads an unbound variable as that bound ('verifyGuaranteedResults'), so the
+  -- arm's @fn(acc= acc, v= head)@ (a @$_B@) is a 'ToString' and the recursive call is within the
+  -- declaration's @acc -> $_B@.
+  batchDeclVars <- gets (H.lookupDefault H.empty objName . feBatchDeclVars)
   ObjectMap tTg <- gets feTTypeGraph
-  let depDeclVars = S.unions [ declArgResultVars decl | decl@ObjArr{oaObj=Just{}} <- maybe [] omiDecls (H.lookup objName tTg) ]
-  let declVs = S.toList $ S.difference (S.union batchDeclVars depDeclVars) (S.fromList (H.keys explicitVaenv))
-  let implicitVs = S.toList $ S.union (S.fromList declVs) $ S.unions $ map (outOfScopeTVExtVars (ambientEnv $ scopeBase)) annotTys
+  let depDeclVars = foldr (H.unionWith joinDeclVarBounds) H.empty [ declArgResultVarBounds decl | decl@ObjArr{oaObj=Just{}} <- maybe [] omiDecls (H.lookup objName tTg) ]
+  let declVarBounds = H.difference (H.unionWith joinDeclVarBounds batchDeclVars depDeclVars) explicitVaenv
+  let implicitVs = S.toList $ S.union (S.fromList (H.keys declVarBounds)) $ S.unions $ map (outOfScopeTVExtVars (ambientEnv $ scopeBase)) annotTys
   implicitVaenv <- fmap H.fromList $ forM implicitVs $ \v -> do
-    p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
+    let bound = H.lookupDefault PTopType v declVarBounds
+    p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType bound Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
     let vm = Meta PTopType (getMetaPos $ getExprMeta obj') nil (mkVarMetaDat inEst p)
     return (v, (vm, vm))
   modify $ endConstraintBlock (Just oa') (H.union explicitVaenv implicitVaenv)
@@ -619,7 +628,7 @@ addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgm
 fromPrgmsFragment :: [PPrgm] -> (TObjectMap, H.HashMap TypeName [Int]) -> StateT FEnv TypeCheckResult ([VPrgm], [VConstraint])
 fromPrgmsFragment pprgms (tobjMapRec, tPrecedenceMap) = do
   accumCons <- gets feCons
-  modify $ \e -> e{feCons=[], feBatchDeclVars = H.unionWith S.union (declVarsOf pprgms) (feBatchDeclVars e)}
+  modify $ \e -> e{feCons=[], feBatchDeclVars = H.unionWith (H.unionWith joinDeclVarBounds) (declVarsOf pprgms) (feBatchDeclVars e)}
   vprgms <- mapM fromPrgm pprgms
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tobjMapRec tPrecedenceMap
   -- Last, once every constraint (including the universe's, added just above) is in: hand the
@@ -649,12 +658,29 @@ attachCallArrs env@FEnv{feCons, feCallArrs}
 -- what a definition reads its unannotated @fn(v)@ arrow as returning, so they join its scope; the
 -- declaration's other variables (a class parameter an argument is typed by) are not the
 -- definition's and are left alone.
-declVarsOf :: [PPrgm] -> H.HashMap TypeName (S.HashSet TypeVarAux)
-declVarsOf pprgms = H.fromListWith S.union
-  [ (makeAbsoluteName name, declArgResultVars decl)
+declVarsOf :: [PPrgm] -> H.HashMap TypeName (H.HashMap TypeVarAux Type)
+declVarsOf pprgms = H.fromListWith (H.unionWith joinDeclVarBounds)
+  [ (makeAbsoluteName name, declArgResultVarBounds decl)
   | Prgm{prgmObjMap=ObjectMap om} <- pprgms
   , (name, omi) <- H.toList om
   , decl@ObjArr{oaObj=Just{}} <- omiDecls omi ]
+
+-- | 'declArgResultVars', each with the bound the declaration applies it with (@[$B -> ToString]@
+-- bounds @/B@ by @∀ToString@). A bound that references other variables, or a variable the
+-- declaration does not apply, is ⊤: a dangling reference would only read as the ⊤ it denotes.
+declArgResultVarBounds :: (MetaDat m, Show m) => ObjArr Expr m -> H.HashMap TypeVarAux Type
+declArgResultVarBounds decl = H.fromList [ (v, boundOf v) | v <- S.toList (declArgResultVars decl) ]
+  where
+    appliedVars = exprAppliedVars (oaObjExpr decl)
+    boundOf (TVVar n) | Just m <- H.lookup n appliedVars, bound <- getMetaType m, not (typeHasVars bound) = bound
+    boundOf _ = PTopType
+
+-- | Two declarations of one name bounding a variable differently: either may be the one a call
+-- reaches, so the variable is bounded by neither.
+joinDeclVarBounds :: Type -> Type -> Type
+joinDeclVarBounds a b
+  | a == b = a
+  | otherwise = PTopType
 
 -- | The variables a declaration's higher-order arguments' declared results reference.
 declArgResultVars :: (MetaDat m, Show m) => ObjArr Expr m -> S.HashSet TypeVarAux

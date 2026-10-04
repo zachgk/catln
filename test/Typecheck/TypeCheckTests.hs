@@ -144,6 +144,12 @@ testMatchRecursiveCall :: TestTree
 testMatchRecursiveCall = testCase "a recursive call in a match arm is guaranteed" $
   assertResultGuaranteed "test/Typecheck/unit/matchRecursiveCall.ct" "lookup"
 
+-- | A higher-order argument's result spelled by a declaration variable the definition does not
+-- apply: the variable ranges over the declaration's bound.
+testDeclVarBound :: TestTree
+testDeclVarBound = testCase "a declaration variable a definition does not apply keeps its bound" $
+  assertResultGuaranteed "test/Typecheck/unit/declVarBound.ct" "walk"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -168,6 +174,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testFoldDeclaredResult
     , testFoldClassResult
     , testMatchRecursiveCall
+    , testDeclVarBound
                                   ]
   where
     p prop = prop

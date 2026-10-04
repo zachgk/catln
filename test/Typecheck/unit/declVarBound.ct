@@ -1,0 +1,20 @@
+annot(#noCore)
+
+# A recursive call whose argument is a higher-order argument's result, as core's [foldrWalk].
+# The definition does not apply [$B] itself: its unannotated [fn(acc, v)] returns the
+# declaration's [$_B], which ranges over the [ToString] the declaration bounds it by, so the
+# recursive call's [acc= fn(acc= acc, v= head)] is within the declared [acc -> $_B].
+#noCore
+data(Integer)
+data(String)
+class(ToString)
+every(Integer, isa= [/ToString])
+:$T.toString[$T -> /ToString] -> String
+class(List[$T])
+class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+every(ConsList[$T -> $_T], isa= [/List[$T -> $_T]])
+data(Step(acc -> String, output -> String))
+
+walk[$B -> /ToString](stack -> ConsList[$T -> /ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, rows -> /List[$T -> Step..]) -> /List[$T -> Step..]
+walk(stack= Nil, fn(acc, v), acc, rows)= rows
+walk(stack= Cons(head, tail), fn(acc, v), acc, rows)= walk(stack= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), rows= Cons(head= Step(acc= acc.toString, output= fn(acc= acc, v= head).toString), tail= rows))

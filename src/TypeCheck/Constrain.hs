@@ -620,7 +620,9 @@ verifyGuaranteedResults cons = do
   forM_ cons $ \con -> case conDat con of
     ArrowTo i srcM _ | i `elem` [10, 15, 32] -> case stypeConstraint (showCon env con) of
       TypeCheckResult _ rcon@Constraint{conDat=ArrowTo _ srcS destS} -> do
-        let vaenv = ambientEnv $ fmap (stypeAct . snd) (conVaenv rcon)
+        -- A variable the solve left unbound (⊤) ranges over what its declaration bounds it by.
+        let varValue s = if stypeAct s == PTopType then stypeReqDecl s else stypeAct s
+        let vaenv = ambientEnv $ fmap (varValue . snd) (conVaenv rcon)
         let req = stypeReqDecl destS
         let src = case stypeAct srcS of
               TypeVar v _ _ -> vaenvLookup vaenv v
