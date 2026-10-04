@@ -223,6 +223,12 @@ refineAnnot = "/Catln/#refine"
 proofAnnot :: String
 proofAnnot = "/Catln/#proof"
 
+-- | Marks a declaration's arrows as EXISTENTIALLY quantified: its overlapping arms are alternative
+-- rewrites, any one of which is a valid result, rather than arms which must agree (see
+-- 'Semantics.Prgm.omiQuant').
+existAnnot :: String
+existAnnot = "/Catln/#exist"
+
 runtimeAnnot, runtimeAnnotK :: String
 runtimeAnnot = "/Catln/#runtime"
 runtimeAnnotK = "/k"
@@ -253,7 +259,7 @@ importerAnnotExts = "extensions"
 builtinAnnotNames :: [String]
 builtinAnnotNames =
   [ assertStr, testAnnot, exampleAnnot, mdAnnot, printAnnot, ctxAnnot, elseAnnot
-  , refineAnnot, proofAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
+  , refineAnnot, proofAnnot, existAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
   , importerAnnotAbs
   -- The annotations' argument keywords are emitted alongside them (@#md(text= ...)@), so they
   -- are part of the same vocabulary.

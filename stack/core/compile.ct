@@ -110,6 +110,14 @@ module(Catln)
       overlap, and its result must be convertible to the claimed return type. Calls back into the
       function being proven read the claim itself, as an induction hypothesis.
       Value predicates such as [Integer_nonNeg] can not be proven yet.
+      For an [#exist] function the definitions need not each prove the claim: it is proven when the
+      definitions which do prove it together cover the refinement's input.
+  annot(#exist)
+    # [#exist] marks a declaration's arrows as existentially quantified.
+      An arrow is unique by default: wherever two definitions overlap they must give the same
+      result, which the derived overlap-agreement tests check. The definitions of an [#exist]
+      arrow are instead alternatives, any one of which is a valid result, so they are not tested
+      for agreement, and a [#refine] of it holds when some definition establishes it.
 
   # ## Build-in Type Macros
   (_ ?-> _) -> Boolean

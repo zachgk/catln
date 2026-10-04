@@ -15,10 +15,10 @@
 module TypeCheck.Decode where
 
 import           Control.Monad.State
-import           CtConstants         (proofAnnot, thisKey)
+import           CtConstants         (existAnnot, proofAnnot, thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.Maybe          (mapMaybe)
+import           Data.Maybe          (isJust, mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat,
                                       mapMetaPrgm)
 import           Semantics
@@ -337,6 +337,11 @@ verifyObjMapItem name importedDecls (ObjectMapItem decls runtimeDecls refineDecl
   -- name without declarations or definitions.
   forM_ (decls ++ defLikeOAs) $ \oa -> when (oaHasAnnotRel proofAnnot oa) $
     lift $ TypeCheckResult [ProofWithoutRefine name (getMetaPos . getExprMeta =<< oaObj oa)] ()
+  -- The quantification of a name is said by its declarations ('omiQuant' reads only those); an
+  -- @#exist@ on a definition, a refinement or a type would be silently ignored, so it is an error.
+  let declaresArrow oa = isJust (oaArr oa)
+  forM_ (filter (not . declaresArrow) decls ++ defs ++ refineDecls) $ \oa -> when (oaHasAnnotRel existAnnot oa) $
+    lift $ TypeCheckResult [ExistOnNonDeclaration name (getMetaPos . getExprMeta =<< oaObj oa)] ()
   case (map (getMetaType . getExprMeta . oaObjExpr) (decls ++ importedDecls), map (getMetaType . getExprMeta . oaObjExpr) defLikeOAs) of
     ([], _) -> pure ()
     (_, []) -> pure ()

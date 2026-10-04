@@ -864,6 +864,22 @@ isRuntimeDecl :: (ExprClass e) => ObjArr e m -> Bool
 isRuntimeDecl oa@ObjArr{oaArr=Just (Nothing, _)} = oaHasAnnotRel runtimeAnnot oa
 isRuntimeDecl _                                  = False
 
+-- | How a name's arrows are quantified over their results.
+--
+-- A 'QuantUnique' name maps each input to one result (∀ input, ∃! output): wherever two of its arms
+-- overlap they must agree, and a refinement of it must hold of every arm. A 'QuantExist' name maps an
+-- input to any of its arms' results (∀ input, ∃ output): its overlapping arms are alternative
+-- rewrites, and a refinement of it holds when some arm establishes it for each input.
+data Quant = QuantUnique | QuantExist
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | The quantification of a name: 'QuantExist' when one of its declarations is marked @#exist@ and
+-- 'QuantUnique' otherwise. Only a declaration may carry it (see 'TypeCheck.Decode').
+omiQuant :: (ExprClass e) => ObjectMapItem e m -> Quant
+omiQuant omi
+  | any (oaHasAnnotRel existAnnot) (omiDecls omi ++ omiRuntimeDecls omi) = QuantExist
+  | otherwise = QuantUnique
+
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
 singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where

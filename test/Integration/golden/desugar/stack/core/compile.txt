@@ -223,6 +223,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#exist"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#exist ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Then"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Then ]
@@ -244,6 +253,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
