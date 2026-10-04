@@ -269,11 +269,12 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   , let dom = intersectTypes runEnv (clauseDom oaA) (clauseDom oaB)
   , not (isBottomType dom)
   , isJust (maybeGetSingleton dom)
-  -- Only overlapping definitions that can actually agree are testable: their result types must
-  -- overlap too. Overloads that share an input shape but produce different result types (e.g. the
-  -- 'bindap' arms: a plain value vs a 'Functor' vs a 'Monad', which also differ in what their
-  -- function argument returns) are not meant to agree, so no agreement test is derived for them.
-  , not (isBottomType (intersectTypes runEnv (clauseCod oaA) (clauseCod oaB)))
+  -- Only overlapping definitions that can actually agree are testable: their DECLARED result types
+  -- must overlap too. Overloads that share an input shape but are declared to produce different
+  -- result types (e.g. the 'bindap' arms: a plain value vs a 'Functor' vs a 'Monad', which also
+  -- differ in what their function argument returns) are not meant to agree, so no agreement test is
+  -- derived for them.
+  , not (isBottomType (intersectTypes runEnv (clauseCod omi oaA) (clauseCod omi oaB)))
   -- A clause chosen by a condition rather than by its domain is not an overlapping definition. Two
   -- guarded arms of one function are the branches of a conditional — @greet(…) | formal= …@ beside
   -- @greet(…) else = …@ — and branches are meant to differ, which is the whole of what a branch is
@@ -304,12 +305,16 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
     -- it may pick without evaluating a condition first.
     conditionFree oa = null (exprWhereConds (oaObjExpr oa))
     clauseDom oa = getExprType (oaObjExpr oa)
-    -- The clause's result (codomain) type: its body's type, or the declared return for a
-    -- body-less runtime primitive.
-    clauseCod oa = case oaArr oa of
-      Just (Just body, _) -> getExprType body
-      Just (Nothing, m)   -> getMetaType m
-      Nothing             -> PTopType
+    -- The clause's declared result (codomain) type: what the function is declared to return for the
+    -- clause's input ('declaredReturns', the clause answering for itself where nothing declares the
+    -- function), read over each object the clause accepts. It is NOT the body's type, which is the
+    -- body as written: a bare argument's is the reference to that argument, and two constants or two
+    -- different calls are disjoint, so reading it hid disagreeing arms of every such shape.
+    clauseCod omi oa = unionAllTypes typeEnv
+      [ dest
+      | UnionType Nothing leafs [] <- [clauseDom oa]
+      , src <- splitUnionType leafs
+      , dest <- declaredReturns omi [oa] src ]
     pairs xs = [(a, b) | (a:rest) <- tails xs, b <- rest]
     -- What a function is declared to return for an input: the results of its declarations which
     -- accept it, or — when none does — of the given arms, for a function written only as definitions

@@ -22,18 +22,14 @@ class(Nat, [Z, S(n -> Nat)])
 (S(n) == Z)= Data/Primitive/False
 (S(n@l) == S(n@r))= l == r
 
-# Both bodies call [same] rather than giving a bare argument or a constant: the agreement tests pair
-  only definitions whose result types overlap, and a result type is read from the body as written —
-  a bare argument's is the reference to it, and two constructors or two different calls are
-  disjoint.
-same(n -> Nat) -> Nat
-same(n)= n
-
+# The bodies are a bare argument and a constructor, whose types as written are disjoint. Overlapping
+  definitions are paired by their DECLARED result types, which here are both [Nat], so the pair is
+  tested.
 nudge(n -> Nat) -> Nat
   #exist
-nudge(n)= same(n= n)
-nudge(n= Z)= same(n= S(n= Z))
+nudge(n)= n
+nudge(n= Z)= S(n= Z)
 
 nudgeU(n -> Nat) -> Nat
-nudgeU(n)= same(n= n)
-nudgeU(n= Z)= same(n= S(n= Z))
+nudgeU(n)= n
+nudgeU(n= Z)= S(n= Z)

@@ -29,6 +29,9 @@ quantificationTests = testGroup "Quantification"
       assertEqual "which refinement tests passed"
         (sort [("/pick", True), ("/pickU", False), ("/pickU", False)])
         (sort [(trOwner r, trPassed r) | r <- results, trKind r == TestRefinementAgreement])
+      assertEqual "only the unique twins' overlapping definitions are tested for agreement"
+        (sort [("/chooseU", False), ("/pickU", False)])
+        (sort [(trOwner r, trPassed r) | r <- results, trKind r == TestOverlapAgreement])
       let notesOf owner = concat [fromMaybe "" (trNotes r) | r <- results, trOwner r == owner, not (trPassed r)]
       assertContains "the cover failure names what was proven" "Proven input: /cover(/n=/Z)" (notesOf "/cover")
       assertContains "the cover failure names what is uncovered" "Uncovered input: /cover(/n=∀/Nat - /Z)" (notesOf "/cover")
