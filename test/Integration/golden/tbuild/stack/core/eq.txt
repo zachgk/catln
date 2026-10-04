@@ -381,7 +381,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /rel
                         ( EAppArg
                             { eaaArg = Value /a -> /Data/Primitive/Integer = 2 }
@@ -389,7 +389,7 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /b -> /Data/Primitive/Integer = 3 }
                         )
-                        ( EAppArg { eaaArg = Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv } ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                        ( EAppArg { eaaArg = Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv } ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )

@@ -137,6 +137,9 @@ Prgm
                     ( /name=/Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /tags=/Data/List/Cons
+                        [ /T=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ]
                         ( /head=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                         , /tail=/Data/List/Cons
@@ -156,6 +159,9 @@ Prgm
                     )
                     ( EAppArg
                         { eaaArg = Value /tags -> /Data/List/Cons
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
                             ( /head=/Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             , /tail=/Data/List/Cons
@@ -197,6 +203,13 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> /Holder
                     ( /items=/Data/List/Cons
+                        [ /T=
+                            ( /Mixed/Labelled
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) + /Mixed/Plain
+                            )
+                        ]
                         ( /head=/Mixed/Plain
                         , /tail=/Data/List/Cons
                             [ /T=/Mixed/Labelled
@@ -214,6 +227,13 @@ Prgm
                     ) = /Holder
                     ( EAppArg
                         { eaaArg = Value /items -> /Data/List/Cons
+                            [ /T=
+                                ( /Mixed/Labelled
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) + /Mixed/Plain
+                                )
+                            ]
                             ( /head=/Mixed/Plain
                             , /tail=/Data/List/Cons
                                 [ /T=/Mixed/Labelled

@@ -10,6 +10,13 @@ Prgm
                     , omiDefs =
                         [ Value /main -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -35,6 +42,13 @@ Prgm
                                 )
                             ) = /Catln/CatlnResult
                             ( Value /files -> /Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -125,6 +139,13 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons
+                    [ /T=/Catln/BuildFile
+                        ( /path=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /contents=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ]
                     ( /head=/Catln/BuildFile
                         ( /path=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )

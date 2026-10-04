@@ -55,13 +55,13 @@ Prgm
                             ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/Integer = 0
                         , /countMixed
                             ( EAppArg
-                                { eaaArg = Value /ks -> /Data/List/Cons
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head } )
+                                { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
+                                    ( /head=∀/Mixed
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Mixed ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Mixed } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Mixed ] }
                                     )
                                 }
                             ) -> /Data/Primitive/Integer =
@@ -142,7 +142,7 @@ Prgm
                 { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countMixed
                         ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
+                            { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Mixed/Plain ]
                                 ( /head=/Mixed/Plain
                                 , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                                     ( /head=/Mixed/Plain
@@ -181,7 +181,7 @@ Prgm
                 { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countMixed
                         ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
+                            { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                 ( /head=/Mixed/Plain
                                 , /tail=/Data/List/Cons
                                     [ /T=/Mixed/Tagged
@@ -240,7 +240,7 @@ Prgm
                 { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countMixed
                         ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
+                            { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                 ( /head=/Mixed/Tagged
                                     ( /value=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -286,7 +286,7 @@ Prgm
                 { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countMixed
                         ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
+                            { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                 ( /head=/Mixed/Plain
                                 , /tail=/Data/List/Cons
                                     [ /T=

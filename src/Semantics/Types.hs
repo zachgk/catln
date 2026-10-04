@@ -1280,6 +1280,21 @@ predsHasOpenAtom typeEnv
       PredConstEq _ -> False
     openClass c = not (predsSealed typeEnv (PredsOne (PredClass c)))
 
+-- | Whether a leaf named @n@ has its class memberships fixed by what is declared now. An open
+-- class can gain members, but only NEW types: a type already in scope with no @every@ into a class
+-- (or one only at some parameters) gains none later (Zach's ruling, 2026-10-03). So an open class
+-- read against such a leaf is decided by its current members restricted to the leaf's name, as a
+-- sealed one is: @Node ∩ ∀Map[/K=Kx]@ is @Node[/K=Kx]@ through @every(BinTree[$K..], isa=
+-- [Map[$K..]])@, not a @Node|Map[/K=Kx]@ whose fields read ⊤. A class's placeholder member, and a
+-- leaf named as a class, stand for the members not yet declared and stay open. So does a call
+-- form: the ruling is about TYPES, and a function's call joins classes by what it rewrites to as
+-- well as by an @every@ naming it (core's @DShowCall@ members), so only a name with a data
+-- definition ('typeGraphData') counts.
+knownMemberName :: (TypeGraph tg) => TypeEnv tg -> TypeName -> Bool
+knownMemberName typeEnv n =
+  S.member n (teNames typeEnv) && nameStr n /= classPlaceholderStr && not (H.member n (scClasses (teSatCache typeEnv)))
+    && not (null (typeGraphData typeEnv n))
+
 -- | Whether class @c@'s membership structure is recursive: the class-reference graph
 -- reachable from @c@ — through its members' names and every class\/rel atom appearing at
 -- any depth in their var\/arg slots (e.g. @Cons@'s @tail=∀ConsList[$T]@) — revisits a
@@ -3766,9 +3781,16 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
 satAdmits :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
 satAdmits typeEnv vaenv satUse hyps m atom = case atom of
   SatLeafs ls -> any (partialsOverlapSat typeEnv vaenv satUse hyps m) ls
+  -- A shape named by a type already in scope has its memberships fixed by what is declared now
+  -- ('knownMemberName'): an open class gains new types, never this one. So the class's current
+  -- members decide whether the shape is one, as they would a sealed class's, where the open-world
+  -- gate otherwise refuses to enumerate them and admits it — the meet reads @#noCore ∩ (⊤|¬Bag)@
+  -- as @#noCore@, and the cover @#noCore ⊆ ⊤|¬Bag@ must agree.
   SatClass c -> case classSatCandidates typeEnv vaenv satUse c of
-    Nothing    -> True
     Just cands -> any candAdmits cands
+    Nothing | knownMemberName typeEnv (ptName m)
+            , Just cands <- classSatCandidates typeEnv vaenv ProveWitness c -> any candAdmits cands
+            | otherwise -> True
   SatRel r -> nameRoute || classRoute
     where
       nameRoute = relNameAdmits typeEnv r m
@@ -5537,12 +5559,15 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
         -- expanded: an unsealed class (or a relation reaching one) has members beyond those
         -- declared so far, so outside 'tePrgmEnv' its expansion is its current members, not
         -- the class. Such an atom stays attached to the partial as a conjunct, which is exact.
+        -- The expansion here is restricted to the partial's own name, so a partial whose
+        -- memberships are already fixed ('knownMemberName') expands every atom.
         (allClassPreds, allRelPreds, residConjs0) = splitConjs (conjsOf (ptPreds partial))
+        ownKnown = tePrgmEnv typeEnv || knownMemberName typeEnv (ptName partial)
         (relPreds, openRelPreds)
-          | tePrgmEnv typeEnv = (allRelPreds, [])
+          | ownKnown = (allRelPreds, [])
           | otherwise = L.partition (all (\c -> predsSealed typeEnv (PredsOne (PredClass c))) . relMatchingClasses typeEnv) allRelPreds
         (classPreds, openClassPreds)
-          = L.partition (\c -> tePrgmEnv typeEnv || predsSealed typeEnv (PredsOne (PredClass c))) allClassPreds
+          = L.partition (\c -> ownKnown || predsSealed typeEnv (PredsOne (PredClass c))) allClassPreds
         residConjs = map (PredsOne . PredClass) openClassPreds ++ map (PredsOne . PredRel) openRelPreds ++ residConjs0
         partial' = partial{ptPreds = rebuildConjs residConjs}
         ownName = S.singleton (ptName partial')
@@ -7636,9 +7661,12 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) (Union
 -- height), and that path's spellings are the ones the rest of the algebra decides exactly.
 --
 -- An OPEN class atom ('predsHasOpenAtom') is attached the same way: its current members do
--- not bound it, so materializing it would decide membership closed-world.
+-- not bound it, so materializing it would decide membership closed-world. Unless every leaf is a
+-- type already in scope ('knownMemberName'): no later file adds such a type to a class, so the
+-- class's current members restricted to the leaves' names are exact, and the expansion below
+-- carries the class's parameters into the leaves' fields.
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing partials []) (UnionType (Just (preds, (H.null -> True), [])) (H.null -> True) [])
-  | predsHasRecNegAtom typeEnv preds || predsHasOpenAtom typeEnv preds =
+  | predsHasRecNegAtom typeEnv preds || (predsHasOpenAtom typeEnv preds && not (all (knownMemberName typeEnv) (H.keys partials))) =
       (vaenv, compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ map (`partialAddPreds` preds) $ splitUnionType partials) [])
 -- PosPartials ∩ Top(_, preds) when negLeafs empty → expand/filter
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(UnionType (Just (preds, negPartials, [])) (H.null -> True) _)

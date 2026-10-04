@@ -584,13 +584,14 @@ assertFactsKept reading before kept = do
   assertTimed (reading ++ ": a ∩ b = ∅ kept") (not (pfMeetEmpty before) || pfMeetEmpty kept)
   assertTimed (reading ++ ": a − b = ∅ kept") (not (pfDiffEmpty before) || pfDiffEmpty kept)
 
--- | Open-world soundness: a later file may declare an existing name a member of an UNSEALED class
--- (@every(X isa C)@), and everything proved before that declaration must still hold after it — that
--- is what lets a program be compiled in stages. The extension adds exactly the class-graph node the
--- declaration desugars to, merged into @C@'s existing node.
+-- | Open-world soundness: a later file may create a NEW type and declare it a member of an UNSEALED
+-- class (@every(X isa C)@), and everything proved before that declaration must still hold after it
+-- — that is what lets a program be compiled in stages. The extension adds exactly the class-graph
+-- node the declaration desugars to, merged into @C@'s existing node.
 --
--- Primitive types are never the extended member: a constant's membership is decided by the classes
--- as declared now, so a proof about a constant is allowed to change when its primitive type joins.
+-- Only a new type joins. A type already in scope with no @every@ into a class never gains one
+-- (Zach's ruling, 2026-10-03; 'knownMemberName'), so a proof that reads such a type's memberships
+-- from the declarations is not one a later file can break, and the extension never names one.
 propExtensionKeepsProofs :: IO GenPrgm -> Property
 propExtensionKeepsProofs gPrgm = property $ do
   gPrgm' <- lift gPrgm
@@ -599,11 +600,9 @@ propExtensionKeepsProofs gPrgm = property $ do
   -- Parameter-free unsealed classes only: a parameterized membership would also need its
   -- parameter bindings chosen, which is a different question.
   let openClasses = [ cpt | (CGClass False cpt _ _, _, _) <- graphToNodes cg, H.null (ptVars cpt) ]
-  let primitives = S.fromList (map ptName [intLeaf, floatLeaf, strLeaf, charLeaf])
-  let members = [ nm | nm <- S.toList teNames, not (S.member nm primitives) ]
-  when (null openClasses || null members) discard
+  when (null openClasses) discard
   cls <- forAll $ HG.element openClasses
-  member <- forAll $ HG.element [ nm | nm <- members, nm /= ptName cls ]
+  let member = head [ nm | i <- [0 :: Int ..], let nm = mkName (printf "/ExtensionMember%d" i), not (S.member nm teNames) ]
   let extension = Prgm mempty (ClassGraph (graphFromEdges
         [ (CGClass False (partialVal (ptName cls)) [singletonType (partialVal member)] Nothing
           , PClassName (ptName cls)
@@ -1364,6 +1363,62 @@ propHoSlotParentMeet = property $ do
     assertTimed (world ++ ": a ⊆ b") $ isSubtypeOfWithEnv te H.empty a b
     assertTimed (world ++ ": a ∩ b ⊆ a") $ isSubtypeOfWithEnv te H.empty met a || isBottomType (snd (differenceTypeWithEnv te H.empty met a))
 
+-- | A class member met with its parent class at a parameter: every @BinTree[$K -> $_K, ..]@ is a
+-- @Map[$K -> $_K, ..]@, so @Node ∩ ∀Map[/K=Kx]@ holds only nodes keyed by @Kx@. Core's @Map@ arms
+-- match @m= Node(left, key, value, right)@ against a declared @m -> Map[$K -> $_MK]@ and read the
+-- pattern's fields from that meet, so each field read must carry the parameter: @key@ within @Kx@
+-- and @left@ within @∀BinTree[/K=Kx]@. @Map@ is open, but @Node@ is already in scope, so no later
+-- file makes it a @Map@ any other way ('knownMemberName'). Inference reads the open world; the
+-- closed world relaxes a member's fields to ⊤ as match targets, so its field reads are not asked.
+propMemberParentParams :: Property
+propMemberParentParams = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/memberParentParams.ct"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  let classPt n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, ("/" ++ n) `isSuffixOf` nameStr (ptName cpt)] of
+        (cpt:_) -> return cpt
+        []      -> fail $ printf "%s class not found" n
+  let findName n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return nm
+        []     -> fail $ printf "%s not found" n
+  mapPt <- classPt "Map"
+  treePt <- classPt "BinTree"
+  kx <- singletonType . partialVal <$> findName "Kx"
+  nodeN <- findName "Node"
+  ky <- singletonType . partialVal <$> findName "Ky"
+  let atK t cpt = do
+        kVar <- case [ k | k <- H.keys (ptVars cpt), "/K" `isSuffixOf` nameStr (pkName k) ] of
+          [k] -> return k
+          _   -> fail $ printf "%s has no K" (show (ptName cpt))
+        return $ UnionType (Just (PredsOne (PredClass cpt{ptVars=H.insert kVar t (fmap (const PTopType) (ptVars cpt))}), H.empty, [])) H.empty []
+  mapKx <- atK kx mapPt
+  treeKx <- atK kx treePt
+  treeKy <- atK ky treePt
+  nodeArgs <- case typeGraphData typeEnv nodeN of
+    (PartialType{ptArgs=dArgs}:_) -> return (H.keys dArgs)
+    []                            -> fail "Node declares no fields"
+  let argKey n = case [ k | k <- nodeArgs, ("/" ++ n) `isSuffixOf` nameStr (pkName k) ] of
+        [k] -> return k
+        _   -> fail $ printf "Node has no %s" n
+  keyK <- argKey "key"
+  leftK <- argKey "left"
+  let node = singletonType (partialVal nodeN){ptArgs=H.fromList [ (k, PTopType) | k <- nodeArgs ]}
+  let met = intersectTypes typeEnv node mapKx
+  annotate $ printf "Node ∩ Map[K=Kx] = %s" (show met)
+  assertTimed "Node ∩ Map[K=Kx] ⊆ Node" $ isSubtypeOf typeEnv met node
+  assertTimed "Node ∩ Map[K=Kx] ⊆ Map[K=Kx]" $ isSubtypeOf typeEnv met mapKx
+  leafs <- case met of
+    UnionType Nothing ls [] | not (H.null ls) -> return (splitUnionType ls)
+    _ -> fail "the meet is not a union of nodes"
+  forM_ leafs $ \l -> do
+    -- A field's parent references name the leaf, so it is read in the leaf's own scope.
+    let readField k = substituteTVExtScoped typeEnv (joinVarArgEnv (ptVars l) H.empty) H.empty (fromMaybe PTopType (typeGetArg k l))
+    annotate $ printf "key = %s, left = %s" (show (readField keyK)) (show (readField leftK))
+    assertTimed "key ⊆ Kx" $ isSubtypeOf typeEnv (readField keyK) kx
+    assertTimed "left ⊆ BinTree[K=Kx]" $ isSubtypeOf typeEnv (readField leftK) treeKx
+    -- Read as the parameter, not as a free spelling that any binding would also admit.
+    assertTimed "key ⊄ Ky" $ not $ isSubtypeOf typeEnv (readField keyK) ky
+    assertTimed "left ⊄ BinTree[K=Ky]" $ not $ isSubtypeOf typeEnv (readField leftK) treeKy
+
 -- | A class's member at a concrete parameter is within the class at ⊤. A member declared with a
 -- field naming its own parameter (@MkSet[$K -> $_K, ..](map -> Map[$K -> $_K, ..])@) spells that
 -- field with a parent reference (@map=∀Map[/K=$^K, ..]@), and the class at ⊤ expands to the member
@@ -1493,6 +1548,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
       , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)
       , HG.testProperty "propHoSlotParentMeet" (withTests 1 propHoSlotParentMeet)
+      , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)

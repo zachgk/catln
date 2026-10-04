@@ -252,7 +252,7 @@ Prgm
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel
+            ( Value /p -> ∀/Data/Primitive/Boolean = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt
                     { ciValue = 2 }
                 )

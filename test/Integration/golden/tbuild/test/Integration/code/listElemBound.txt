@@ -60,13 +60,13 @@ Prgm
                             ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/Integer = 0
                         , /countBare
                             ( EAppArg
-                                { eaaArg = Value /ks -> /Data/List/Cons
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )| PredClass /Data/List[ /T=/Bare ] = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head } )
+                                { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Bare ]
+                                    ( /head=/Bare
+                                    , /tail=∀/Data/List/ConsList[ /T=/Bare ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Bare } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Bare ] }
                                     )
                                 }
                             ) -> /Data/Primitive/Integer =
@@ -138,13 +138,13 @@ Prgm
                             ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/Integer = 0
                         , /countAll
                             ( EAppArg
-                                { eaaArg = Value /ks -> /Data/List/Cons
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )| PredClass /Data/List[ /T=/Item.. ] = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head } )
+                                { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Item.. ]
+                                    ( /head=/Item..
+                                    , /tail=∀/Data/List/ConsList[ /T=/Item.. ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Item.. } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Item.. ] }
                                     )
                                 }
                             ) -> /Data/Primitive/Integer =
@@ -223,6 +223,7 @@ Prgm
                     ( /countAll
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons
+                                [ /T=/Item( /n=/Data/Primitive/Integer ) ]
                                 ( /head=/Item( /n=/Data/Primitive/Integer )
                                 , /tail=/Data/List/Cons
                                     [ /T=/Item( /n=/Data/Primitive/Integer ) ]
@@ -335,7 +336,7 @@ Prgm
                 { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
                     ( /countBare
                         ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
+                            { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Bare ]
                                 ( /head=/Bare
                                 , /tail=/Data/List/Cons[ /T=/Bare ]
                                     ( /head=/Bare

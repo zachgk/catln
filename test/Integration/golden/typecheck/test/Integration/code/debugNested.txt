@@ -175,11 +175,9 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            ,
-                                ( /Data/Maybe/Nothing + /Data/Maybe/Some( /value=/Data/Primitive/Integer ) + /Data/List/Cons
-                                    ( /head=/Data/Primitive/Integer
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
+                            , /Data/List/Cons
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             , []
                             ) = /Data/Functor/fmap( Value /lst -> TVArg /xs = Value /xs )
@@ -206,7 +204,7 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Maybe/Nothing + /Data/Maybe/Some( /value=/Data/Primitive/Integer ) + /Data/List/Cons
+                                ( /Data/List/Cons
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     ) + /totals.shifted

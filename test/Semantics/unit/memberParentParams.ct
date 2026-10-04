@@ -1,0 +1,12 @@
+annot(#noCore)
+
+# A class member reached through its parent: every [BinTree] is a [Map] with the same [$K] and
+# [$V], so a [Node] that is a [Map[$K -> Kx]] is a [Node] whose [key] is a [Kx] and whose
+# subtrees are [BinTree[$K -> Kx]], as core's [Map] arms match [Node(left, key, value, right)]
+# against a declared [m -> Map[$K -> $_MK]].
+#noCore
+data(Kx)
+data(Ky)
+class(Map[$K, $V])
+class(BinTree[$K, $V], [Node[$K -> $_K, $V -> $_V](left -> BinTree[$K -> $_K, $V -> $_V], key -> $K, value -> $V, right -> BinTree[$K -> $_K, $V -> $_V]), Leaf])
+every(BinTree[$K -> $_K, $V -> $_V], isa= [/Map[$K -> $_K, $V -> $_V]])

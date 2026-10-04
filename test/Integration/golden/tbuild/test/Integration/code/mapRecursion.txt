@@ -375,32 +375,32 @@ Prgm
                         [ /risNode
                             ( EAppArg
                                 { eaaArg = Value /m -> /RNode
-                                    ( /value=TopType
-                                    , /key=TopType
+                                    [ /K=∀/ROrd
+                                    , /V=TopType
+                                    ]
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
                                     , /right=∀/RTree
-                                        [ /K=TopType
-                                        , /V=TopType
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
-                                        [ /K=TopType
-                                        , /V=TopType
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
                                         ]
-                                    )| PredClass /RIMap
-                                    [ /K=∀/ROrd
-                                    , /V=$_/MV
-                                    ] = /RNode
+                                    ) = /RNode
                                     ( EAppArg
                                         { eaaArg = Value /left -> ∀/RTree
-                                            [ /K=TopType
+                                            [ /K=∀/ROrd
                                             , /V=TopType
                                             ]
                                         }
                                     )
-                                    ( EAppArg { eaaArg = Value /key } )
+                                    ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
                                     ( EAppArg { eaaArg = Value /value } )
                                     ( EAppArg
                                         { eaaArg = Value /right -> ∀/RTree
-                                            [ /K=TopType
+                                            [ /K=∀/ROrd
                                             , /V=TopType
                                             ]
                                         }
@@ -441,32 +441,32 @@ Prgm
                         [ /rsize
                             ( EAppArg
                                 { eaaArg = Value /m -> /RNode
-                                    ( /value=TopType
-                                    , /key=TopType
+                                    [ /K=∀/ROrd
+                                    , /V=TopType
+                                    ]
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
                                     , /right=∀/RTree
-                                        [ /K=TopType
-                                        , /V=TopType
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
-                                        [ /K=TopType
-                                        , /V=TopType
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
                                         ]
-                                    )| PredClass /RIMap
-                                    [ /K=∀/ROrd
-                                    , /V=$_/MV
-                                    ] = /RNode
+                                    ) = /RNode
                                     ( EAppArg
                                         { eaaArg = Value /left -> ∀/RTree
-                                            [ /K=TopType
+                                            [ /K=∀/ROrd
                                             , /V=TopType
                                             ]
                                         }
                                     )
-                                    ( EAppArg { eaaArg = Value /key } )
+                                    ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
                                     ( EAppArg { eaaArg = Value /value } )
                                     ( EAppArg
                                         { eaaArg = Value /right -> ∀/RTree
-                                            [ /K=TopType
+                                            [ /K=∀/ROrd
                                             , /V=TopType
                                             ]
                                         }
@@ -615,7 +615,10 @@ Prgm
                             ( EAppArg { eaaArg = Value /m -> /RLeaf = Value /RLeaf } )
                             ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
                             ( EAppArg { eaaArg = Value /value } ) -> /RNode
-                            ( /value=TopType
+                            [ /K=∀/ROrd
+                            , /V=TopType
+                            ]
+                            ( /value=$/V
                             , /key=∀/ROrd
                             , /right=/RLeaf
                             , /left=/RLeaf
@@ -631,32 +634,32 @@ Prgm
                         , /rput
                             ( EAppArg
                                 { eaaArg = Value /m -> /RNode
-                                    ( /value=TopType
-                                    , /key=TopType
+                                    [ /K=∀/ROrd
+                                    , /V=TopType
+                                    ]
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
                                     , /right=∀/RTree
-                                        [ /K=TopType
-                                        , /V=TopType
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
-                                        [ /K=TopType
-                                        , /V=TopType
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
                                         ]
-                                    )| PredClass /RIMap
-                                    [ /K=∀/ROrd
-                                    , /V=$_/MV
-                                    ] = /RNode
+                                    ) = /RNode
                                     ( EAppArg
                                         { eaaArg = Value /left -> ∀/RTree
-                                            [ /K=TopType
+                                            [ /K=∀/ROrd
                                             , /V=TopType
                                             ]
                                         }
                                     )
-                                    ( EAppArg { eaaArg = Value /key@Value /nk } )
+                                    ( EAppArg { eaaArg = Value /key@Value /nk -> ∀/ROrd } )
                                     ( EAppArg { eaaArg = Value /value@Value /nv } )
                                     ( EAppArg
                                         { eaaArg = Value /right -> ∀/RTree
-                                            [ /K=TopType
+                                            [ /K=∀/ROrd
                                             , /V=TopType
                                             ]
                                         }
@@ -681,7 +684,7 @@ Prgm
                                 , /V=$_/MV
                                 ]
                                 ( /value=$/V
-                                , /key=∀/ROrd
+                                , /key=$/K
                                 , /right=∀/RTree
                                     [ /K=∀/ROrd
                                     , /V=$_/V
@@ -740,7 +743,7 @@ Prgm
                                     , /V=$_/MV
                                     ]
                                     ( /value=$/V
-                                    , /key=∀/ROrd
+                                    , /key=$/K
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
                                         , /V=$_/V

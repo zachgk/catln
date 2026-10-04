@@ -138,7 +138,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Maybe/pureSomeInt( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ].. = /Data/Monad/pure( Value /v -> TVArg /v = Value /v ) ]
+                        [ /Data/Maybe/pureSomeInt( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v ) ]
                     }
                 )
             ,
@@ -150,11 +150,11 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value ) )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /this -> /Data/Maybe/Some( /value=TopType )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value@Value /bv ) )
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value@Value /bv -> ∀/Data/Algebra/Eq ) )
                             ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /av -> ∀/Data/Algebra/Eq ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
                         ]
                     }
@@ -181,11 +181,11 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some( Value /value ) )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /this -> /Data/Maybe/Some( /value=TopType )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some( Value /value ) ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
+                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType )| PredClass /Data/Algebra/Ord = /Data/Maybe/Some( Value /value@Value /bv ) )
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( Value /value@Value /bv -> ∀/Data/Algebra/Ord ) )
                             ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value /value@Value /av -> ∀/Data/Algebra/Ord ) ) -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /bv = Value /bv )( Value /this -> TVArg /av = Value /av )
                         ]
                     }
@@ -291,12 +291,12 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -308,12 +308,12 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
                     )
@@ -336,7 +336,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
-                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /other -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
                         )
@@ -355,7 +355,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
-                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /other -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
                         )
@@ -374,7 +374,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isGreater
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                    ( Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
                         )
@@ -431,7 +431,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /rel( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                 ( Value /b -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
@@ -463,7 +463,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
-                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compare( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                     ( Value /b -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -565,8 +565,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Monad/mmap
-                    ( Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/mmap
+                    ( Value /m -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 5 }
                         )
@@ -577,7 +577,7 @@ Prgm
                         )
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 6 }
                     )
@@ -590,7 +590,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Nothing = /Data/Monad/mmap
-                    ( Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /m -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 5 }
                         )
@@ -624,12 +624,12 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Data/Maybe/pureSomeInt
+                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/pureSomeInt
                     ( Value /v -> /Data/Primitive/Integer = CInt
                         { ciValue = 5 }
                     )
                 )
-                ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 5 }
                     )

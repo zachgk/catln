@@ -328,6 +328,25 @@ Prgm
                         [ /Test/onePrgm
                             ( EAppArg { eaaArg = Value /name -> ∀/Data/String } ) -> /Catln/RawPrgm
                             ( /statements=/Data/List/Cons
+                                [ /T=/Catln/RawStatementTree
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            )..
+                                        )
+                                    , /children=/Data/List/Nil
+                                    )
+                                ]
                                 ( /head=/Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
@@ -339,6 +358,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /imports -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = Value /statements -> /Data/List/Cons
+                                    [ /T=/Catln/RawStatementTree
+                                        ( /statement=/Catln/RawStatement/RawDeclStatement
+                                            ( /objArr=/Catln/RawObjArr
+                                                ( /arr=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        ]..
+                                                    ]
+                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /basis=∀/Catln/ObjectBasis
+                                                )..
+                                            )
+                                        , /children=/Data/List/Nil
+                                        )
+                                    ]
                                     ( /head=/Catln/RawStatementTree
                                         ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                         , /children=/Data/List/Nil
@@ -1026,6 +1064,11 @@ Prgm
                             ( /prgm=/Catln/RawPrgm..
                             , /reads=/Data/Maybe/Some
                                 [ /T=/Data/List/Cons
+                                    [ /T=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
                                     ( /head=/Catln/ReadPath/ReadFile
                                         ( /path=/Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1034,6 +1077,11 @@ Prgm
                                     )
                                 ]
                                 ( /value=/Data/List/Cons
+                                    [ /T=/Catln/ReadPath/ReadFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
                                     ( /head=/Catln/ReadPath/ReadFile
                                         ( /path=/Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1076,6 +1124,11 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /reads -> /Data/Maybe/Some
                                     [ /T=/Data/List/Cons
+                                        [ /T=/Catln/ReadPath/ReadFile
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
                                         ( /head=/Catln/ReadPath/ReadFile
                                             ( /path=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1084,6 +1137,11 @@ Prgm
                                         )
                                     ]
                                     ( /value=/Data/List/Cons
+                                        [ /T=/Catln/ReadPath/ReadFile
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
                                         ( /head=/Catln/ReadPath/ReadFile
                                             ( /path=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )

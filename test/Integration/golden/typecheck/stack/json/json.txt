@@ -11,6 +11,9 @@ Prgm
                         [ /Catln/Doc/dshow( Value /s -> ∀/Data/Json ) -> /Catln/Doc/Show/Rendered
                             ( /value=∀/Data/Json
                             , /assets=/Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
                                 ( /head=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Cons
@@ -24,6 +27,9 @@ Prgm
                                 )
                             ) = /Catln/Doc/Show/Rendered( Value /value -> TVArg /s = Value /s )
                             ( Value /assets -> /Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
                                 ( /head=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Cons
@@ -56,6 +62,9 @@ Prgm
                         , /Catln/Doc/dshow( Value /s -> /Data/Json/Member.. ) -> /Catln/Doc/Show/Rendered
                             ( /value=/Data/Json/Member..
                             , /assets=/Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
                                 ( /head=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Cons
@@ -69,6 +78,9 @@ Prgm
                                 )
                             ) = /Catln/Doc/Show/Rendered( Value /value -> TVArg /s = Value /s )
                             ( Value /assets -> /Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
                                 ( /head=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 , /tail=/Data/List/Cons
@@ -307,12 +319,12 @@ Prgm
             ( Value /p -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/typeName
                 ( Value /value -> /Data/Json/Array
-                    ( /entries=/Data/List/Cons
+                    ( /entries=/Data/List/Cons[ /T=/Data/Json/Null ]
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/Json/Array
-                    ( Value /entries -> /Data/List/Cons
+                    ( Value /entries -> /Data/List/Cons[ /T=/Data/Json/Null ]
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons( Value /head -> /Data/Json/Null = Value /Data/Json/Null )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -328,6 +340,12 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/typeName
                 ( Value /value -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
+                        [ /T=/Data/Json/Member
+                            ( /value=/Data/Json/Null
+                            , /key=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String/Text
@@ -337,6 +355,12 @@ Prgm
                         )
                     ) = /Data/Json/Object
                     ( Value /entries -> /Data/List/Cons
+                        [ /T=/Data/Json/Member
+                            ( /value=/Data/Json/Null
+                            , /key=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String/Text
@@ -374,6 +398,13 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/typeName
                 ( Value /value -> /Data/Json/Array
                     ( /entries=/Data/List/Cons
+                        [ /T=
+                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            )
+                        ]
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Cons
                             [ /T=
@@ -400,6 +431,13 @@ Prgm
                         )
                     ) = /Data/Json/Array
                     ( Value /entries -> /Data/List/Cons
+                        [ /T=
+                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            )
+                        ]
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Cons
                             [ /T=
@@ -482,6 +520,11 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/typeName
                 ( Value /value -> /Data/Json/Array
                     ( /entries=/Data/List/Cons
+                        [ /T=/Data/Json/Str
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Str
                             ( /value=/Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -501,6 +544,11 @@ Prgm
                         )
                     ) = /Data/Json/Array
                     ( Value /entries -> /Data/List/Cons
+                        [ /T=/Data/Json/Str
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Str
                             ( /value=/Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -561,6 +609,17 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/typeName
                 ( Value /value -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
+                        [ /T=/Data/Json/Member
+                            ( /value=
+                                ( /Data/Json/Null + /Data/Json/Str
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                )
+                            , /key=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String/Text
@@ -589,6 +648,17 @@ Prgm
                         )
                     ) = /Data/Json/Object
                     ( Value /entries -> /Data/List/Cons
+                        [ /T=/Data/Json/Member
+                            ( /value=
+                                ( /Data/Json/Null + /Data/Json/Str
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                )
+                            , /key=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String/Text
@@ -680,9 +750,26 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/typeName
                 ( Value /value -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
+                        [ /T=/Data/Json/Member
+                            ( /value=/Data/Json/Array
+                                ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
+                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
+                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    )
+                                )
+                            , /key=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Array
                                 ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
@@ -698,9 +785,26 @@ Prgm
                         )
                     ) = /Data/Json/Object
                     ( Value /entries -> /Data/List/Cons
+                        [ /T=/Data/Json/Member
+                            ( /value=/Data/Json/Array
+                                ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
+                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
+                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    )
+                                )
+                            , /key=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Array
                                 ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
@@ -717,6 +821,7 @@ Prgm
                         ( Value /head -> /Data/Json/Member
                             ( /value=/Data/Json/Array
                                 ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
@@ -734,6 +839,7 @@ Prgm
                             )
                             ( Value /value -> /Data/Json/Array
                                 ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
@@ -743,6 +849,7 @@ Prgm
                                     )
                                 ) = /Data/Json/Array
                                 ( Value /entries -> /Data/List/Cons
+                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]

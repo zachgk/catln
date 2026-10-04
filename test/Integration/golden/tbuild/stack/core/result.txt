@@ -23,6 +23,12 @@ Prgm
                         [ /Catln/www
                             ( EAppArg { eaaArg = Value /html -> ∀/Data/String } ) -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=∀/Data/String
+                                    )
+                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -33,6 +39,12 @@ Prgm
                             ) = /Catln/CatlnResult
                             ( EAppArg
                                 { eaaArg = Value /files -> /Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /contents=∀/Data/String
+                                        )
+                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String/Text
                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )

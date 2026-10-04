@@ -341,12 +341,14 @@ Prgm
                                                                 ( Value /t -> /Catln/Type/UnionType
                                                                     ( /top=/Data/Maybe/Nothing
                                                                     , /consts=/Data/List/Cons
+                                                                        [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
                                                                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                                                         , /tail=/Data/List/Nil
                                                                         )
                                                                     , /leafs=/Data/List/Nil
                                                                     ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )
                                                                     ( Value /consts -> /Data/List/Cons
+                                                                        [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
                                                                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                                                         , /tail=/Data/List/Nil
                                                                         ) = /Data/List/Cons
@@ -377,6 +379,13 @@ Prgm
                                                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                                             , /vars=/Data/List/Nil
                                                                             , /args=/Data/List/Cons
+                                                                                [ /T=/Catln/PartialKey
+                                                                                    ( /name=/Data/String/Text
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                                    , /vars=/Data/List/Nil
+                                                                                    , /args=/Data/List/Nil
+                                                                                    )
+                                                                                ]
                                                                                 ( /head=/Catln/PartialKey
                                                                                     ( /name=/Data/String/Text
                                                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -391,6 +400,13 @@ Prgm
                                                                                 { csValue = "f" }
                                                                             )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
                                                                             ( Value /args -> /Data/List/Cons
+                                                                                [ /T=/Catln/PartialKey
+                                                                                    ( /name=/Data/String/Text
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                                    , /vars=/Data/List/Nil
+                                                                                    , /args=/Data/List/Nil
+                                                                                    )
+                                                                                ]
                                                                                 ( /head=/Catln/PartialKey
                                                                                     ( /name=/Data/String/Text
                                                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -801,11 +817,11 @@ Prgm
                         [ /Test/keyDepthAll( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /Test/keyDepthAll
-                            ( Value /ks -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                )| PredClass /Data/List[ /T=/Catln/PartialKey.. ] = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /ks -> /Data/List/Cons[ /T=/Catln/PartialKey.. ]
+                                ( /head=/Catln/PartialKey..
+                                , /tail=∀/Data/List/ConsList[ /T=/Catln/PartialKey.. ]
+                                ) = /Data/List/Cons( Value /head -> /Catln/PartialKey.. )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/PartialKey.. ] )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> ∀/Data/Algebra/Add = /Test/keyDepth( Value /k -> TVArg /head = Value /head ) )
                             ( Value /r -> ∀/Data/Algebra/Add = /Test/keyDepthAll( Value /ks -> TVArg /tail = Value /tail ) )
@@ -1038,6 +1054,13 @@ Prgm
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                     , /vars=/Data/List/Nil
                     , /args=/Data/List/Cons
+                        [ /T=/Catln/PartialKey
+                            ( /name=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /vars=/Data/List/Nil
+                            , /args=/Data/List/Nil
+                            )
+                        ]
                         ( /head=/Catln/PartialKey
                             ( /name=/Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1052,6 +1075,13 @@ Prgm
                         { csValue = "f" }
                     )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
                     ( Value /args -> /Data/List/Cons
+                        [ /T=/Catln/PartialKey
+                            ( /name=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /vars=/Data/List/Nil
+                            , /args=/Data/List/Nil
+                            )
+                        ]
                         ( /head=/Catln/PartialKey
                             ( /name=/Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1097,6 +1127,13 @@ Prgm
                 ( Value /t -> /Catln/Type/UnionType
                     ( /top=/Data/Maybe/Nothing
                     , /consts=/Data/List/Cons
+                        [ /T=
+                            ( /Catln/Constant/CStr
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) + /Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                            )
+                        ]
                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                         , /tail=/Data/List/Cons
                             [ /T=/Catln/Constant/CStr
@@ -1114,6 +1151,13 @@ Prgm
                     , /leafs=/Data/List/Nil
                     ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )
                     ( Value /consts -> /Data/List/Cons
+                        [ /T=
+                            ( /Catln/Constant/CStr
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) + /Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                            )
+                        ]
                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                         , /tail=/Data/List/Cons
                             [ /T=/Catln/Constant/CStr
