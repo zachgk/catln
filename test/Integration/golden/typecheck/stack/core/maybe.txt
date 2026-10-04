@@ -64,7 +64,7 @@ Prgm
                             ( Value /a -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )( Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeEqv.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/rel
                             ( Value /a -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /av -> ∀/Data/Algebra/Eq ) )
-                            ( Value /b -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value@Value /bv ) )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
+                            ( Value /b -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /bv -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
                         ]
                     }
                 )
@@ -126,7 +126,7 @@ Prgm
                             ( Value /a -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )( Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeOrdering.. ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compare
                             ( Value /a -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value /value@Value /av -> ∀/Data/Algebra/Ord ) )
-                            ( Value /b -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value@Value /bv ) )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /bv = Value /bv )( Value /this -> TVArg /av = Value /av )
+                            ( Value /b -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value /value@Value /bv -> ∀/Data/Algebra/Ord ) )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /bv = Value /bv )( Value /this -> TVArg /av = Value /av )
                         ]
                     }
                 )

@@ -121,8 +121,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel
-                            ( EAppArg { eaaArg = Value /a } )
-                            ( EAppArg { eaaArg = Value /b } )
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /this -> /Data/Algebra/IntEqExample.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/intEq
                                 ( EAppArg

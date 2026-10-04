@@ -46,7 +46,7 @@ module(Data/Algebra)
   :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= True
   :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value))= False
   :/Data/MaybeEqv.rel(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= False
-  :/Data/MaybeEqv.rel(a= /Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@av), b= /Data/Maybe/Some(value@bv))= av == bv
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@av), b= /Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@bv))= av == bv
 
   :/Data/Maybe/Nothing.eq= /Data/MaybeEqv
   :/Data/Maybe/Some[$T -> /Data/Algebra/Eq](value).eq= /Data/MaybeEqv
@@ -75,7 +75,7 @@ module(Data/Algebra)
   :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= /Data/Algebra/Equal
   :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value))= /Data/Algebra/LessThan
   :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= /Data/Algebra/GreaterThan
-  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@av), b= /Data/Maybe/Some(value@bv))= av.compareTo(other= bv)
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@av), b= /Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@bv))= av.compareTo(other= bv)
 
   :/Data/Maybe/Nothing.ord= /Data/MaybeOrdering
   :/Data/Maybe/Some[$T -> /Data/Algebra/Ord](value).ord= /Data/MaybeOrdering

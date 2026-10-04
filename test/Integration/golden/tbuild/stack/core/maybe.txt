@@ -104,8 +104,13 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /bv } )
+                                { eaaArg = Value /b -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value@Value /bv -> ∀/Data/Algebra/Eq } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /this -> /Data/MaybeEqv.. } ) -> ∀/Data/Primitive/Boolean =
@@ -252,8 +257,13 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /bv } )
+                                { eaaArg = Value /b -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Ord
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value@Value /bv -> ∀/Data/Algebra/Ord } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /this -> /Data/MaybeOrdering.. } ) -> ∀/Data/Algebra/Comparison =

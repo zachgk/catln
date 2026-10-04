@@ -62,7 +62,7 @@ module(Data/Primitive)
 
   data(BoolEqv, isa= [/Data/Algebra/Eqv[$T -> Boolean]])
 
-  :BoolEqv.rel(a, b)= /Data/Primitive/boolEq(l= a, r= b)
+  :BoolEqv.rel(a -> Boolean, b -> Boolean)= /Data/Primitive/boolEq(l= a, r= b)
 
   :Boolean.eq= BoolEqv
 

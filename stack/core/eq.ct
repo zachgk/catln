@@ -44,7 +44,7 @@ module(Data/Algebra)
     distinct values).
   data(IntEqExample, isa= [/Data/Algebra/Eqv[$T -> Integer]])
 
-  :IntEqExample.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+  :IntEqExample.rel(a -> Integer, b -> Integer)= /Data/Primitive/intEq(l= a, r= b)
 
   data(AllEqv, isa= [/Data/Algebra/Eqv[$T -> Integer]])
 

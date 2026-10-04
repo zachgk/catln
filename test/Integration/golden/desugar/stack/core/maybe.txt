@@ -64,7 +64,7 @@ Prgm
                             ( Value a= /Data/Maybe/Some( Value value ) )( Value b= Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/rel
                             ( Value a= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value@Value av ) )
-                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
+                            ( Value b= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value@Value bv ) )( Value /this -> /Data/MaybeEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
                         ]
                     }
                 )
@@ -126,7 +126,7 @@ Prgm
                             ( Value a= /Data/Maybe/Some( Value value ) )( Value b= Value /Data/Maybe/Nothing )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compare
                             ( Value a= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value@Value av ) )
-                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = compareTo( Value other= Value bv )( Value /this= Value av )
+                            ( Value b= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value@Value bv ) )( Value /this -> /Data/MaybeOrdering.. ) -> ∀/Data/Algebra/Comparison = compareTo( Value other= Value bv )( Value /this= Value av )
                         ]
                     }
                 )

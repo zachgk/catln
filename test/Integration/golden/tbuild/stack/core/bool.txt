@@ -80,16 +80,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel
-                            ( EAppArg { eaaArg = Value /a } )
-                            ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/BoolEqv.. } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /a -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg { eaaArg = Value /b -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/BoolEqv.. } ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                             ( /Data/Primitive/boolEq
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                ) ↦ ∀/Data/Primitive/Boolean
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                             )
                         ]
                     }
