@@ -1,0 +1,14 @@
+annot(#noCore)
+
+#noCore
+# An [#exist] on a definition rather than a declaration says nothing about the arrow's
+  quantification, which only a declaration states, and is an error rather than ignored.
+# The annotation is declared as core's compile.ct declares it, since this page does not import it.
+module(Catln)
+  annot(#exist)
+
+data(A)
+
+f(a -> A) -> A
+f(a)= a
+  #exist

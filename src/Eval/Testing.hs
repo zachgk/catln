@@ -211,6 +211,32 @@ runTestDesc TestDesc{tdName, tdOwner, tdOwnerId, tdKind, tdCheck} = finish <$> c
       | otherwise = (False, Just poCases, poInputs, Just $ fromMaybe gaveUp poReport)
     gaveUp = "The test engine could not generate any usable input for this test"
 
+-- | A clause the derived tests can evaluate: a definition with a body, or a runtime primitive
+-- (evaluated through its @#runtime@ implementation).
+evaluableClause :: EObjArr -> Bool
+evaluableClause oa = case oaArr oa of
+  Just (Just _, _)  -> True
+  Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
+  _                 -> False
+
+-- | The program's environment with some clauses of one function removed, so a normal call dispatches
+-- among the rest — which is how one clause of several is evaluated in isolation. Removing (rather
+-- than keeping only one) preserves a runtime-primitive sibling, which has no body to keep.
+envWithoutClauses :: EPrgm -> TypeName -> [EObjArr] -> Env
+envWithoutClauses prgm@(Prgm (ObjectMap om) _ _) name dropOas = evalBaseEnv prgm{prgmObjMap = ObjectMap (H.adjust without name om)}
+  where
+    without o = o{ omiDefs = filter (`notElem` dropOas) (omiDefs o)
+                 , omiRuntimeDecls = filter (`notElem` dropOas) (omiRuntimeDecls o) }
+
+-- | Build and evaluate a call of a value in an environment, against a destination type. Building the
+-- full call (rather than a body alone) resolves the body's nested operators and primitives against a
+-- concrete result type.
+runCallIn :: Env -> Type -> Val -> CResT IO Val
+runCallIn env dest input = do
+  let inputE = valToEExpr input
+  tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) dest
+  fst <$> runStateT (evalExpr tree) env
+
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
 -- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A
 -- non-linear "diagonal" definition (e.g. @rel(a@x, b@x)= True@) overlaps every full definition it
@@ -226,6 +252,9 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   -- Ordered by where the arms were written, so which of a pair is @oaA@ — and so which page the
   -- test belongs to — is the same on every run. The object map's own order is a hash order, which
   -- would move a cross-file agreement test between the two files it pairs.
+  -- An existential name's arms are alternatives which may give different results, so only a unique
+  -- name's arms are tested for agreement.
+  , omiQuant omi == QuantUnique
   , let parts = sortOn (getMetaPos . getExprMeta . oaObjExpr) $ filter evaluable (omiDefs omi ++ omiRuntimeDecls omi)
   , (oaA, oaB) <- pairs parts
   , let dom = intersectTypes typeEnv (clauseDom oaA) (clauseDom oaB)
@@ -251,13 +280,9 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   where
     TypeEnv{teNames} = typeEnv
     typeEnv = mkTypeEnv prgm
-    -- A clause we can evaluate: a definition with a body, or a runtime primitive (evaluated through
-    -- its @#runtime@ implementation). Pairing a non-linear diagonal against a primitive sibling is
-    -- how @(_@x - _@x)= 0@ becomes a derived test of the built-in subtraction (@x - x == 0@).
-    evaluable oa = case oaArr oa of
-      Just (Just _, _)  -> True
-      Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
-      _                 -> False
+    -- Pairing a non-linear diagonal against a primitive sibling is how @(_@x - _@x)= 0@ becomes a
+    -- derived test of the built-in subtraction (@x - x == 0@).
+    evaluable = evaluableClause
     -- A clause with no guard on it, which is the only kind whose domain is the whole of what
     -- selects it. 'TreeBuild.findResArrows' reads the same 'exprWhereConds' to decide which arrows
     -- it may pick without evaluating a condition first.
@@ -302,18 +327,10 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
           return $ TupleVal (nameStr (ptName partial)) (H.fromList [(n, H.lookupDefault NoVal (repOf n) repMap) | n <- argNames])
         -- To evaluate one clause of the overlapping pair in isolation, remove the OTHER clause from
         -- its function so a normal call dispatches to the one we want (bypassing the overlap), then
-        -- build and evaluate that call. Building the full call (rather than the body alone) resolves
-        -- the body's nested operators/primitives against a concrete result type. Removing (rather
-        -- than keeping only one) preserves a runtime-primitive sibling, which has no body to keep.
-        withoutClause dropOa o = o{ omiDefs = filter (/= dropOa) (omiDefs o)
-                                  , omiRuntimeDecls = filter (/= dropOa) (omiRuntimeDecls o) }
-        soloEnv dropOa = evalBaseEnv prgm{prgmObjMap = ObjectMap (H.adjust (withoutClause dropOa) (oaObjPath oaA) om)}
-        envA = soloEnv oaB
-        envB = soloEnv oaA
-        runClause env input = runCResT $ do
-          let inputE = valToEExpr input
-          tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
-          fst <$> runStateT (evalExpr tree) env
+        -- build and evaluate that call.
+        envA = envWithoutClauses prgm (oaObjPath oaA) [oaB]
+        envB = envWithoutClauses prgm (oaObjPath oaA) [oaA]
+        runClause env input = runCResT $ runCallIn env retDest input
         prop :: RecordCase -> Hedgehog.Property
         prop record = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
@@ -338,29 +355,53 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
 -- concrete value, and assert that value matches the refinement's claimed return type (see
 -- 'valMatchesType'). For @:ConsList.length -> Integer_nonNeg #refine@ paired with @Nil.length= 0@
 -- this checks that the length of a @Nil@ is a non-negative integer.
+--
+-- How the claim is checked follows the function's quantification ('omiQuant'). A unique function's
+-- arms must each satisfy it, so there is one test per overlapping definition. An existential
+-- function's arms are alternatives, so there is one test per refinement, and an input passes when
+-- SOME arm accepting it gives a result matching the claim (see 'mkExistRefinementTest').
 deriveRefinementTests :: EPrgm -> [TestDesc]
-deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
-  [ mkRefinementTest omi defOa dom refRet
-  | omi <- H.elems om
+deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
+  [ case omiQuant omi of
+      QuantUnique -> [mkRefinementTest omi defOa dom refRet | (defOa, dom) <- arms]
+      QuantExist  -> [mkExistRefinementTest name omi refOa (map snd arms) refRet | not (null arms)]
+  | (name, omi) <- H.toList om
   , refOa <- omiRefineDecls omi
   -- A refinement to prove is checked by its proof ('TypeCheck.Proof') instead.
   , not (oaHasAnnotRel proofAnnot refOa)
   , Just (_, refM) <- [oaArr refOa]
   , let refRet = getMetaType refM
-  , defOa <- filter evaluable (omiDefs omi)
-  , let dom = intersectTypes typeEnv (clauseDom refOa) (clauseDom defOa)
-  , not (isBottomType dom)
-  , isJust (maybeGetSingleton dom)
+  , let arms = [ (defOa, dom)
+               | defOa <- filter evaluableClause (omiDefs omi)
+               , let dom = intersectTypes typeEnv (clauseDom refOa) (clauseDom defOa)
+               , not (isBottomType dom)
+               , isJust (maybeGetSingleton dom)
+               ]
   ]
   where
     TypeEnv{teNames} = typeEnv
     typeEnv = mkTypeEnv prgm
     env = evalBaseEnv prgm
-    evaluable oa = case oaArr oa of
-      Just (Just _, _)  -> True
-      Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
-      _                 -> False
     clauseDom oa = getExprType (oaObjExpr oa)
+
+    -- Build a definition's call against the function's NOMINAL declared return (predicates cleared),
+    -- exactly as the overlap tests do (see 'retDest' there) — NOT the definition's own inferred arrow
+    -- type. A recursive definition such as @Cons.length= 1 + tail.length@ has an inferred return that
+    -- still carries its body's unevaluated @operator+@ application as a positive leaf; building
+    -- against that finds the body already a subtype and leaves it unreduced (a @TupleVal /operator+@
+    -- rather than an @Integer@). The narrower nominal @Integer@ is not already satisfied, so the tree
+    -- builder evaluates the body to a concrete value.
+    refineRetDest omi = clearUnionTypePreds $ case [getMetaType m | d <- omiDecls omi ++ omiRuntimeDecls omi, Just (_, m) <- [oaArr d]] of
+      (t:_) -> t
+      []    -> intType
+
+    -- A generated input of the (singleton) overlap of a refinement and a definition.
+    genRefineInput dom = do
+      let partial = getSingleton dom
+      let argTypeMap = H.fromList [(nameStr (pkName k), t) | (k, t) <- H.toList (ptArgs partial)]
+      let genArg t = genValForType typeEnv (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
+      vals <- mapM (\n -> (,) n <$> genArg (H.lookupDefault PTopType n argTypeMap)) (H.keys argTypeMap)
+      return $ TupleVal (nameStr (ptName partial)) (H.fromList vals)
 
     -- A refinement claim is stored as a type predicate on the declared return — a @PredExpr@ holding
     -- a symbolic application tree such as @operator==(r=True, l=nonNeg(this=$this))@ (the desugaring
@@ -457,30 +498,12 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
     mkRefinementTest omi defOa dom refRet = TestDesc testName (nameStr (oaObjPath defOa)) (oaTestId defOa) TestRefinementAgreement (PropCheck (checkPropWithTimeout True prop))
       where
         testName = printf "%s :: refinement-agreement" (nameStr (oaObjPath defOa))
-        -- Build the definition's call against the function's NOMINAL declared return (predicates
-        -- cleared), exactly as the overlap tests do (see 'retDest' there) — NOT the definition's own
-        -- inferred arrow type. A recursive definition such as @Cons.length= 1 + tail.length@ has an
-        -- inferred return that still carries its body's unevaluated @operator+@ application as a
-        -- positive leaf; building against that finds the body already a subtype and leaves it
-        -- unreduced (a @TupleVal /operator+@ rather than an @Integer@). The narrower nominal @Integer@
-        -- is not already satisfied, so the tree builder evaluates the body to a concrete value.
-        retDest = clearUnionTypePreds $ case [getMetaType m | d <- omiDecls omi ++ omiRuntimeDecls omi, Just (_, m) <- [oaArr d]] of
-          (t:_) -> t
-          []    -> intType
-        partial = getSingleton dom
-        argTypeMap = H.fromList [(nameStr (pkName k), t) | (k, t) <- H.toList (ptArgs partial)]
-        genArg t = genValForType typeEnv (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
-        genInput = do
-          let argNames = H.keys argTypeMap
-          vals <- mapM (\n -> (,) n <$> genArg (H.lookupDefault PTopType n argTypeMap)) argNames
-          return $ TupleVal (nameStr (ptName partial)) (H.fromList vals)
+        retDest = refineRetDest omi
+        genInput = genRefineInput dom
         -- 'env' (the full program env, all definitions) lets a recursive definition (e.g.
         -- @Cons.length@ calling @tail.length@) reach its siblings; dispatch picks the right clause
         -- for the generated input.
-        runDef input = do
-          let inputE = valToEExpr input
-          tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
-          fst <$> runStateT (evalExpr tree) env
+        runDef = runCallIn env retDest
         prop :: RecordCase -> Hedgehog.Property
         prop record = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
@@ -494,6 +517,36 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
                 CRes _ False -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not matching the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
                 CErr ns      -> Hedgehog.footnote (printf "Refinement predicate eval failed on %s = %s: %s" (show input) (show outV) (prettyCNotes ns)) >> Hedgehog.failure
             CErr ns -> Hedgehog.footnote (printf "eval failed: %s" (prettyCNotes ns)) >> Hedgehog.failure
+
+    -- The refinement test of an EXISTENTIAL function: one per refinement, generating inputs from
+    -- every overlap of it with a definition. An input passes when some arm accepting it, evaluated
+    -- in isolation (the other accepting arms removed, as the overlap tests isolate a clause), gives a
+    -- result matching the claim.
+    --
+    -- The isolation is of the outer call only: a recursive call inside the arm dispatches without the
+    -- removed arms too. That can only miss a path some removed arm would have offered, so it may fail
+    -- an input whose claim holds but never passes one whose claim does not.
+    mkExistRefinementTest name omi refOa doms refRet = TestDesc testName (nameStr name) (oaTestId refOa) TestRefinementAgreement (PropCheck (checkPropWithTimeout True prop))
+      where
+        testName = printf "%s :: refinement-agreement" (nameStr name)
+        retDest = refineRetDest omi
+        accepting input = [ oa | oa <- filter evaluableClause (omiDefs omi ++ omiRuntimeDecls omi)
+                               , isSubtypeOf typeEnv (singletonType (getValPartialType input)) (clauseDom oa) ]
+        runArm input arms oa = runCResT $ do
+          outV <- runCallIn (envWithoutClauses prgm name (filter (/= oa) arms)) retDest input
+          matches <- valMatchesType outV refRet
+          return (outV, matches)
+        showArm (CRes _ (outV, _)) = show outV
+        showArm (CErr ns)          = printf "eval failed: %s" (prettyCNotes ns)
+        prop :: RecordCase -> Hedgehog.Property
+        prop record = Hedgehog.property $ do
+          input <- Hedgehog.forAll (HG.choice (map genRefineInput doms))
+          record (showTestInput input)
+          let arms = accepting input
+          results <- liftIO $ mapM (runArm input arms) arms
+          if or [matches | CRes _ (_, matches) <- results]
+            then Hedgehog.success
+            else Hedgehog.footnote (printf "Refinement violated: no arm of %s on %s produced a result matching the claimed return %s. The arms produced:\n  %s" testName (show input) (show refRet) (intercalate "\n  " (map showArm results))) >> Hedgehog.failure
 
 evalTest :: EPrgmGraphData -> CResT IO [TestDesc]
 evalTest prgmGraphData = do

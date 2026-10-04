@@ -1,0 +1,60 @@
+annot(#noCore)
+
+#noCore
+# Refinements of existentially quantified functions ([#exist]), beside unique twins with the same
+  definitions. The definitions of an [#exist] function are alternatives, so a refinement of it holds
+  when some definition establishes it for each input, where a unique function needs every
+  definition to.
+  The names say what is checked: [choose] is proven and [chooseU] is not, [cover] is not proven
+  because the definitions proving it leave part of its input uncovered, and [pick] passes its
+  refinement test where [pickU] fails it.
+# The annotations are declared as core's compile.ct declares them, since this page does not import
+  it.
+module(Catln)
+  annot(#refine)
+  annot(#proof)
+  annot(#exist)
+
+class(Nat, [Z, S(n -> Nat)])
+
+# On a [Z] the first definition gives [Z] and the second an [S]: one proves the claim, which is
+  enough for an existential function.
+choose(n -> Nat) -> Nat
+  #exist
+choose(n)= n
+choose(n= Z)= S(n= Z)
+choose(n -> Z) -> Z
+  #refine
+  #proof
+
+# The same definitions, unique: the second definition is a proof obligation of its own and fails.
+chooseU(n -> Nat) -> Nat
+chooseU(n)= n
+chooseU(n= Z)= S(n= Z)
+chooseU(n -> Z) -> Z
+  #refine
+  #proof
+
+# The first definition proves the claim on [Z] alone, and nothing proves it on an [S].
+cover(n -> Nat) -> Nat
+  #exist
+cover(n= Z)= Z
+cover(n)= S(n= n)
+cover(n -> Nat) -> Z
+  #refine
+  #proof
+
+# Tested by generating inputs rather than proven: on a [Z] some definition gives a [Z].
+pick(n -> Nat) -> Nat
+  #exist
+pick(n)= n
+pick(n= Z)= S(n= Z)
+pick(n -> Z) -> Z
+  #refine
+
+# The same definitions, unique: the second definition's result on a [Z] violates the claim.
+pickU(n -> Nat) -> Nat
+pickU(n)= n
+pickU(n= Z)= S(n= Z)
+pickU(n -> Z) -> Z
+  #refine

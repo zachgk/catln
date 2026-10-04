@@ -1,0 +1,39 @@
+annot(#noCore)
+
+#noCore
+# Overlapping definitions which disagree: on a [Z] the first gives [Z] and the second [S(n= Z)]. A
+  unique function's overlapping definitions must give the same result, so [nudgeU] derives an
+  overlap-agreement test which fails. The definitions of an [#exist] function are alternatives, so
+  [nudge] derives no agreement test at all.
+# The page does not import core, which would typecheck the whole of it for one test. What core
+  would supply is written here instead: the annotation as core's compile.ct declares it, and the
+  equality on [Nat] the agreement tests compare results with.
+module(Catln)
+  annot(#exist)
+
+module(Data/Primitive)
+  class(Boolean, [True, False])
+
+class(Nat, [Z, S(n -> Nat)])
+
+(l :: Nat == r :: Nat) -> Data/Primitive/Boolean
+(Z == Z)= Data/Primitive/True
+(Z == S(n))= Data/Primitive/False
+(S(n) == Z)= Data/Primitive/False
+(S(n@l) == S(n@r))= l == r
+
+# Both bodies call [same] rather than giving a bare argument or a constant: the agreement tests pair
+  only definitions whose result types overlap, and a result type is read from the body as written —
+  a bare argument's is the reference to it, and two constructors or two different calls are
+  disjoint.
+same(n -> Nat) -> Nat
+same(n)= n
+
+nudge(n -> Nat) -> Nat
+  #exist
+nudge(n)= same(n= n)
+nudge(n= Z)= same(n= S(n= Z))
+
+nudgeU(n -> Nat) -> Nat
+nudgeU(n)= same(n= n)
+nudgeU(n= Z)= same(n= S(n= Z))

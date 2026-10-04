@@ -89,7 +89,9 @@ import           TypeCheck.Common        (AnyInstrument, InstrumentResults,
                                           lookupTraceResult, typeCheckToRes)
 import           TypeCheck.Instruments   (defaultInstruments,
                                           typeInfoInstruments)
-import           TypeCheck.Proof         (RefinementProof (..), proveRefinement,
+import           TypeCheck.Proof         (RefinementObligation (..),
+                                          RefinementProof (..),
+                                          proveAnyRefinement, proveRefinement,
                                           refinementProofs)
 import           Utils
 
@@ -1309,15 +1311,20 @@ ctssDeriveTests (CTSS ssmv _) tprgms = do
   dess <- asCResT $ mapM (\(_, name, _) -> requireComputed (ssfDes =<< graphLookup name ctssData)) (graphToNodes tprgms)
   let preDefs = H.fromList [(getMetaId $ getExprMeta $ oaObjExpr oa, oa) | des <- dess, oa <- flatObjectMap (prgmObjMap des)]
   let prgm = mconcat $ map fst3 $ graphToNodes tprgms
-  let proofTest proof@RefinementProof{rpName, rpDef} = TestDesc
-        (printf "%s :: refinement-proof" (nameStr rpName))
-        (nameStr (oaObjPath rpDef))
-        (oaTestId rpDef)
+  let preDefOf RefinementProof{rpName, rpDef} = case H.lookup (oaTestId rpDef) preDefs of
+        Just preDef -> return preDef
+        Nothing -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta $ oaObjExpr rpDef) $ printf "Could not find the desugared definition of %s to prove" (nameStr rpName)]
+  let proofTest name owner check = TestDesc
+        (printf "%s :: refinement-proof" (nameStr name))
+        (nameStr (oaObjPath owner))
+        (oaTestId owner)
         TestRefinementProof
-        (StaticCheck $ case H.lookup (oaTestId rpDef) preDefs of
-          Just preDef -> proveRefinement prgm preDef proof
-          Nothing -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta $ oaObjExpr rpDef) $ printf "Could not find the desugared definition of %s to prove" (nameStr rpName)])
-  return $ evaluated ++ map proofTest (refinementProofs prgm)
+        (StaticCheck check)
+  -- A unique function's refinement is a test per definition, placed with that definition; an
+  -- existential one's is a single test of the definitions together, placed with the refinement.
+  let obligationTest (ProveEach proof@RefinementProof{rpName, rpDef}) = proofTest rpName rpDef (preDefOf proof >>= \preDef -> proveRefinement prgm preDef proof)
+      obligationTest (ProveAny name refine required proofs) = proofTest name refine (proveAnyRefinement prgm name refine required [(preDefOf proof, proof) | proof <- proofs])
+  return $ evaluated ++ map obligationTest (refinementProofs prgm)
 
 -- | The tests a page wrote, run and kept.
 --

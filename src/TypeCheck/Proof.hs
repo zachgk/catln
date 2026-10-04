@@ -14,12 +14,19 @@
 -- overlap alone and against the already typechecked program, and its result must convert to the
 -- claimed type. During that solve, calls back into the function being proven are read through the
 -- claim itself (the induction hypothesis), which every overlapping definition establishes in turn.
+--
+-- Which definitions must prove it follows the function's quantification ('omiQuant'). Every
+-- overlapping definition of a unique function must, since any of them may be the one result. An
+-- existential function's definitions are alternatives, so its claim is proven when the definitions
+-- which prove it together cover the input the refinement and its definitions share.
 --------------------------------------------------------------------
 
 module TypeCheck.Proof (
   RefinementProof(..),
+  RefinementObligation(..),
   refinementProofs,
   proveRefinement,
+  proveAnyRefinement,
   ) where
 
 import           CRes
@@ -47,18 +54,33 @@ data RefinementProof = RefinementProof
   , rpOverlap :: Type
   }
 
--- | Every obligation of the program's @#proof@ refinements: one per refinement and overlapping
--- definition. A definition the refinement does not overlap makes no claim about it.
-refinementProofs :: TPrgm -> [RefinementProof]
-refinementProofs prgm@(Prgm (ObjectMap om) _ _) =
-  [ RefinementProof name refOa defOa dom
+-- | What a @#proof@ refinement asks to be proven, by the quantification of its function.
+data RefinementObligation
+  -- | A unique function: the refinement holds of this one definition. There is one per overlapping
+  -- definition, and each is a test of its own.
+  = ProveEach RefinementProof
+  -- | An existential function: the refinement holds when the definitions proving it cover the
+  -- 'Type', which is the refinement's input as far as the definitions accept it. One per refinement.
+  | ProveAny TypeName TObjArr Type [RefinementProof]
+
+-- | Every obligation of the program's @#proof@ refinements. A definition the refinement does not
+-- overlap makes no claim about it.
+refinementProofs :: TPrgm -> [RefinementObligation]
+refinementProofs prgm@(Prgm (ObjectMap om) _ _) = concat
+  [ case omiQuant omi of
+      QuantUnique -> map ProveEach proofs
+      QuantExist  -> [ProveAny name refOa required proofs]
   | (name, omi) <- H.toList om
   , refOa <- omiRefineDecls omi
   , oaHasAnnotRel proofAnnot refOa
   , isJust (oaArr refOa)
-  , defOa <- omiDefs omi ++ omiRuntimeDecls omi
-  , let dom = intersectTypes typeEnv (inputType refOa) (inputType defOa)
-  , not (isBottomType dom)
+  , let defOas = omiDefs omi ++ omiRuntimeDecls omi
+  , let proofs = [ RefinementProof name refOa defOa dom
+                 | defOa <- defOas
+                 , let dom = intersectTypes typeEnv (inputType refOa) (inputType defOa)
+                 , not (isBottomType dom)
+                 ]
+  , let required = intersectTypes typeEnv (inputType refOa) (unionAllTypes typeEnv (map inputType defOas))
   ]
   where
     typeEnv = mkTypeEnv prgm
@@ -123,6 +145,32 @@ proveRefinement tprgm preDef RefinementProof{rpName, rpRefine, rpDef, rpOverlap}
     predsHasExpr (PredsOne _)          = False
     predsHasExpr (PredsAnd ps)         = any predsHasExpr ps
     predsHasExpr (PredsNot p)          = predsHasExpr p
+
+-- | Prove the refinement of an existential function: each overlapping definition is attempted as
+-- 'proveRefinement' proves it, and the claim holds when the overlaps of those that prove it cover
+-- the required input. A definition which does not prove it is no failure in itself — another may be
+-- the result on that input — so its reason is reported only when the cover falls short.
+--
+-- The induction hypothesis each attempt reads is the claim over the refinement's whole input, now
+-- an existence claim: for each input some arrow gives a result within it. That is what the cover
+-- establishes, by induction over the proven definitions together (and with the same termination
+-- caveat as 'opaqueDeps').
+proveAnyRefinement :: TPrgm -> TypeName -> TObjArr -> Type -> [(CRes PObjArr, RefinementProof)] -> CRes ()
+proveAnyRefinement tprgm name refine required attempts =
+  if isSubtypeOf typeEnv required proven
+    then return ()
+    else CErr [MkCNote $ GenCErr refinePos $ intercalate "\n\t" $
+      [ printf "Could not prove %s on the input %s, claimed to give %s, because the definitions which prove it do not cover the input" (nameStr name) (show required) claim
+      , printf "Proven input: %s" (show proven)
+      , printf "Uncovered input: %s" (show $ differenceTypeEnv typeEnv required proven)
+      ] ++ map prettyCNotes failures]
+  where
+    typeEnv = mkTypeEnv tprgm
+    results = [ (proof, preDef >>= \d -> proveRefinement tprgm d proof) | (preDef, proof) <- attempts ]
+    proven = unionAllTypes typeEnv [ rpOverlap proof | (proof, CRes _ ()) <- results ]
+    failures = [ ns | (_, CErr ns) <- results ]
+    claim = maybe "nothing" (show . getMetaType . snd) (oaArr refine)
+    refinePos = getMetaPos . getExprMeta =<< oaObj refine
 
 -- | The definition to typecheck again: under the fresh 'proofSubjectName', with its input narrowed
 -- to the overlap. The input of an object is the type at the top of its expression, which the solve
