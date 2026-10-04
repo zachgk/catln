@@ -669,8 +669,34 @@ linkedDimBinds typeEnv declT content = case declT of
 mergeVarArgMetaWithSrcItem :: (TypeGraph tg) => TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
 mergeVarArgMetaWithSrcItem typeEnv (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
 
+-- | Combines the bindings two parts of an object's match make. An ARGUMENT binds once, so two
+-- readings of it are two constraints on one value and meet. A type VARIABLE is bound by each
+-- argument whose declared type is the variable itself (@(l :: $T == r :: $T)@), and each such
+-- argument is one of its members: from those DIRECT occurrences the variable's value at the call
+-- is their JOIN — the same rule as the type algebra's pointer-occurrence join
+-- ('Semantics.Types.intersectPartialsBaseN'). Meeting them collapsed a mixed call
+-- (@Some(1) == Nothing@) to @T = ∅@, and every type spelled through @$T@ in the body then read as
+-- empty.
+--
+-- Any other binding still meets: a linked dimension (@lst -> ConsList[$T]@, 'linkedDimBinds') and
+-- the variable's own slot on the call ('fromArg' on 'EAppVar'). Those can present the variable's
+-- declared bound rather than evidence (@sorted[/T=∀Ord](lst=Cons[/T=Integer](…))@, or a set built
+-- from @empty@), and joined, that bound absorbed the element type the other occurrences carry.
+--
+-- A ⊤ contributes nothing to the join: it is what a binding that says nothing reads as, not a
+-- member of the variable, so joined it would erase every occurrence's value.
 joinPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m
-joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWith (mergeVarArgMetaWithSrcItem typeEnv) aVarArgMap bVarArgMap | aVarArgMap <- aVarArgMaps, bVarArgMap <- bVarArgMaps]
+joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWithKey merge aVarArgMap bVarArgMap | aVarArgMap <- aVarArgMaps, bVarArgMap <- bVarArgMaps]
+  where
+    merge TVVar{} (m1s, t1) (m2s, t2)
+      | all direct m1s && all direct m2s = (m1s ++ m2s, joinOcc t1 t2)
+    merge _ a b                       = mergeVarArgMetaWithSrcItem typeEnv a b
+    direct (_, m) = case getMetaType m of
+      TypeVar{} -> True
+      _         -> False
+    joinOcc PTopType t = t
+    joinOcc t PTopType = t
+    joinOcc t1 t2      = unionTypes typeEnv t1 t2
 
 joinAllPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossArgMetaMapWithSrc m
 joinAllPossVarArgMetaWithSrc _ []     = [H.empty]
