@@ -197,9 +197,9 @@ Prgm
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Array
-                                    ( /entries=∀/Data/List[ /T=∀/Data/Json ] ) = /Data/Json/Array
+                                    ( /entries=∀/Data/List/ConsList[ /T=∀/Data/Json ] ) = /Data/Json/Array
                                     ( EAppArg
-                                        { eaaArg = Value /entries -> ∀/Data/List[ /T=∀/Data/Json ] }
+                                        { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] }
                                     )
                                 }
                             ) -> /Data/String/Text
@@ -207,9 +207,9 @@ Prgm
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Object
-                                    ( /entries=∀/Data/List[ /T=/Data/Json/Member.. ] ) = /Data/Json/Object
+                                    ( /entries=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] ) = /Data/Json/Object
                                     ( EAppArg
-                                        { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member.. ] }
+                                        { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] }
                                     )
                                 }
                             ) -> /Data/String/Text
@@ -223,7 +223,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Json/Object
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member.. ] }
+                                { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -270,7 +270,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Json/Array
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List[ /T=∀/Data/Json ] }
+                                { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -299,14 +299,16 @@ Prgm
                 , /Data/Json/Number( /value=∀/Data/Primitive/Number )
                 , /Data/Json/Str( /value=∀/Data/String )
                 , /Data/Json/Array
-                    ( /entries=∀/Data/List[ /T=∀/Data/Json ] )
+                    ( /entries=∀/Data/List/ConsList[ /T=∀/Data/Json ] )
                 , /Data/Json/Object
-                    ( /entries=∀/Data/List[ /T=/Data/Json/Member.. ] )
+                    ( /entries=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] )
                 ]
             , cgcDoc = Just "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
               close together is a reader guessing which of them an arm meant.
               [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
-              and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+              and what makes it recursive. The lists are [ConsList]s, the ones a document is read into and
+              the ones every reader of these walks [Nil] and [Cons] by: the open [/Data/List] class would
+              admit a list none of them can take apart. An object's entries are [Json/Member]s rather than a [/Data/Map]
               because a document's keys are written in an order and shown in it — a map would sort them, and
               a JSON file shown with its keys rearranged is not the file that was read."
             }
@@ -334,7 +336,9 @@ Prgm
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
                   close together is a reader guessing which of them an arm meant.
                   [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
-                  and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+                  and what makes it recursive. The lists are [ConsList]s, the ones a document is read into and
+                  the ones every reader of these walks [Nil] and [Cons] by: the open [/Data/List] class would
+                  admit a list none of them can take apart. An object's entries are [Json/Member]s rather than a [/Data/Map]
                   because a document's keys are written in an order and shown in it — a map would sort them, and
                   a JSON file shown with its keys rearranged is not the file that was read."
                 }
