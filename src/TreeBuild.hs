@@ -715,6 +715,9 @@ callLambdas _ = []
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show (getMetaType m)) (show $ map fst os)) False = undefined
+-- A hole is not converted toward its destination: it produces no value, failing where a run
+-- reaches it, so there is nothing to convert — and its type (⊤) has no arrows to build from.
+toTExprDest env0 os e@HoleExpr{} _ = toTExpr env0 os e
 toTExprDest env0@TBEnv{tbTypeEnv} os e m = do
   e' <- toTExpr env0 os e
   let env = withCallArrows env0 e

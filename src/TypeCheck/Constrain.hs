@@ -17,6 +17,7 @@
 module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
 import qualified Data.IntMap.Strict  as IM
 import           Data.List           (intercalate, partition)
 import           Data.Maybe
@@ -618,6 +619,8 @@ verifyGuaranteedResults :: [VConstraint] -> StateT FEnv TypeCheckResult ()
 verifyGuaranteedResults cons = do
   env <- get
   forM_ cons $ \con -> case conDat con of
+    -- A hole produces no value, so it is within anything it is held to.
+    ArrowTo _ srcM _ | maybe False (`S.member` feHolePoints env) (getPnt srcM) -> pure ()
     ArrowTo i srcM _ | i `elem` [10, 15, 32] -> case stypeConstraint (showCon env con) of
       TypeCheckResult _ rcon@Constraint{conDat=ArrowTo _ srcS destS} -> do
         -- A variable the solve left unbound (⊤) ranges over what its declaration bounds it by.

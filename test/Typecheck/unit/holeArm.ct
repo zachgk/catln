@@ -1,0 +1,13 @@
+annot(#noCore)
+
+# An arm whose body is a hole, as stack/python/builtins.ct's [ord] of the empty string. [undefined]
+# produces no value — it fails where a run reaches it — so the arm is within the declared [B].
+#noCore
+data(A1)
+data(A2)
+class(A, [A1, A2])
+data(B)
+
+f(x -> A) -> B
+f(x= A1)= B
+f(x= A2)= undefined

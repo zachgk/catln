@@ -167,6 +167,11 @@ testParamShadowsFunction :: TestTree
 testParamShadowsFunction = testCase "an argument shadows a like-named function" $
   assertResultGuaranteed "test/Typecheck/unit/paramShadowsFunction.ct" "step"
 
+-- | An arm whose body is a hole produces no value, so it is within its declaration.
+testHoleArm :: TestTree
+testHoleArm = testCase "an arm ending in a hole is within its declaration" $
+  assertResultGuaranteed "test/Typecheck/unit/holeArm.ct" "f"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -195,6 +200,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testSharedKeyDeclaration
     , testIntersectionBound
     , testParamShadowsFunction
+    , testHoleArm
                                   ]
   where
     p prop = prop

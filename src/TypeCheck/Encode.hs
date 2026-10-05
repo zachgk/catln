@@ -86,6 +86,7 @@ makeBaseFEnv instruments prgm = FEnv{
   feReachesTypeEnv = tokenedTypeEnv,
   feUniverseKey = BottomType,
   feInputArrowNames = S.empty,
+  feHolePoints = S.empty,
   feLocalDefNames = S.empty,
   feEnvStamp = 0,
   feCallArrs = IM.empty,
@@ -127,6 +128,7 @@ fromExpr est@EncodeIn{} (Value m name) = do
   return $ Value m' name
 fromExpr est (HoleExpr m hole) = do
   m' <- fromMeta BAct est m ("Hole " ++ show hole)
+  forM_ (getPnt m') $ \p -> modify $ \e -> e{feHolePoints = S.insert p (feHolePoints e)}
   return $ HoleExpr m' hole
 fromExpr est (AliasExpr base alias) = do
   base' <- fromExpr est base
