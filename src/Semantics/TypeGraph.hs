@@ -157,6 +157,11 @@ typeGuaranteedWithin typeEnv vaenv req = typeOk S.empty
       where t = substituteTVExt typeEnv vaenv t0
     partialOk visited p
       | isSubtypeOfWithEnv typeEnv vaenv (singletonType p) req = True
+      -- A bare reference to one of the definition's own arguments is that argument, as
+      -- 'reachesPartials' reads it: an argument shadows every other name it matches, so
+      -- @step(count, ..)= count@ is the parameter even where a function @/Data/List/count@ is
+      -- imported, whose arrows would otherwise be the only promises asked.
+      | H.null (ptArgs p), H.null (ptVars p), Just argValue <- H.lookup (TVArg (partialKey (ptName p))) vaenv = typeOk visited argValue
       | S.member p visited = False
       | otherwise = not (null kept) && isSubtypeOfWithEnv typeEnv vaenv (singletonType p) (unionAllTypesWithEnvOnce typeEnv vaenv (map (srcVarsOnly p) kept))
       where

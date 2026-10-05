@@ -12,7 +12,7 @@ module(Scratch)
 
   :TEqv.rel(a -> $T, b -> $T) -> Boolean
 
-  data(MyEqv, isa= [/Scratch/TEqv[$T= Integer]])
+  data(MyEqv, isa= [/Scratch/TEqv[$T -> Integer]])
 
   :MyEqv.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
 

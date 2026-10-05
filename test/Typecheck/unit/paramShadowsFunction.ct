@@ -1,0 +1,16 @@
+annot(#noCore)
+
+# A definition's argument named the same as a function in another module, as
+# test/Integration/code/paramShadowsGlobal.ct's [count] beside core's [/Data/List/count]. The
+# argument shadows the function, so [step]'s [count] is the [Integer] it declares, not the
+# function whose arrows ask for a list.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+
+module(Data/List)
+  class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+  count(lst -> ConsList) -> /Data/Primitive/Integer
+
+step(count -> /Data/Primitive/Integer) -> /Data/Primitive/Integer
+step(count)= count

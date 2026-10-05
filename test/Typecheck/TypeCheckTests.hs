@@ -161,6 +161,12 @@ testIntersectionBound :: TestTree
 testIntersectionBound = testCase "a type variable bounded by an intersection is within each part" $
   assertResultGuaranteed "test/Typecheck/unit/intersectionBound.ct" "f"
 
+-- | A definition's argument shadows a like-named function in another module: the check reads the
+-- argument, not the function's arrows.
+testParamShadowsFunction :: TestTree
+testParamShadowsFunction = testCase "an argument shadows a like-named function" $
+  assertResultGuaranteed "test/Typecheck/unit/paramShadowsFunction.ct" "step"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -188,6 +194,7 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testDeclVarBound
     , testSharedKeyDeclaration
     , testIntersectionBound
+    , testParamShadowsFunction
                                   ]
   where
     p prop = prop
