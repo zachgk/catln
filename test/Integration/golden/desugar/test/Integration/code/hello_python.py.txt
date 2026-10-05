@@ -68,7 +68,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ sort_list( Value lst -> ∀/Data/List ) -> ∀/Data/List = sorted( Value /lst= Value lst ) ]
+                        [ sort_list
+                            ( Value lst -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = sorted( Value /lst= Value lst )
+                        ]
                     }
                 )
             ,
@@ -134,7 +136,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ any_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = any( Value /lst= Value flags ) ]
+                        [ any_true
+                            ( Value flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = any( Value /lst= Value flags )
+                        ]
                     }
                 )
             ,
@@ -270,7 +274,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ sum_list( Value nums -> ∀/Data/List ) -> /Data/Primitive/Integer = sum( Value /lst= Value nums ) ]
+                        [ sum_list
+                            ( Value nums -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = sum( Value /lst= Value nums )
+                        ]
                     }
                 )
             ,
@@ -350,7 +356,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ all_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = all( Value /lst= Value flags ) ]
+                        [ all_true
+                            ( Value flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = all( Value /lst= Value flags )
+                        ]
                     }
                 )
             ,

@@ -150,14 +150,17 @@ Prgm
             ,
                 ( "/Python/Builtins/ord"
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /Python/Builtins/ord( Value c -> ∀/Data/String ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Python/Builtins/ord
                             ( Value c= /Data/String/Text
                                 ( Value chars= /Data/List/Cons( Value head )( Value tail ) )
-                            )= code( Value /this= Value head )
+                            ) -> /Data/Primitive/Integer = code( Value /this= Value head )
+                        , /Python/Builtins/ord
+                            ( Value c= /Data/String/Text( Value chars= Value /Data/List/Nil ) ) -> /Data/Primitive/Integer = Hole TopType HoleUndefined
                         ]
                     }
                 )

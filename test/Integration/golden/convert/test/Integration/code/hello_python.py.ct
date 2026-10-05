@@ -69,17 +69,17 @@ int_min(a -> Integer, b -> Integer) -> Integer= min(/l= a, /r= b)
 
 float_min(a -> Float, b -> Float) -> Float= min(/l= a, /r= b)
 
-sum_list(nums -> List) -> Integer= sum(/lst= nums)
+sum_list(nums -> List[$T -> Integer]) -> Integer= sum(/lst= nums)
 
-all_true(flags -> List) -> Boolean= all(/lst= flags)
+all_true(flags -> List[$T -> Boolean]) -> Boolean= all(/lst= flags)
 
-any_true(flags -> List) -> Boolean= any(/lst= flags)
+any_true(flags -> List[$T -> Boolean]) -> Boolean= any(/lst= flags)
 
 make_range(n -> Integer) -> List= range(/stop= n)
 
 reverse_list(lst -> List) -> List= reversed(/lst= lst)
 
-sort_list(lst -> List) -> List= sorted(/lst= lst)
+sort_list(lst -> List[$T -> Integer]) -> List[$T -> Integer]= sorted(/lst= lst)
 
 say_hello(msg -> String){io -> IO}= io.println(/msg= msg.toString)
 

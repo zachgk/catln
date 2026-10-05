@@ -131,15 +131,15 @@ def float_min(a: float, b: float) -> float:
 
 
 # Collection operations
-def sum_list(nums: list) -> int:
+def sum_list(nums: list[int]) -> int:
     return sum(nums)
 
 
-def all_true(flags: list) -> bool:
+def all_true(flags: list[bool]) -> bool:
     return all(flags)
 
 
-def any_true(flags: list) -> bool:
+def any_true(flags: list[bool]) -> bool:
     return any(flags)
 
 
@@ -151,7 +151,7 @@ def reverse_list(lst: list) -> list:
     return reversed(lst)
 
 
-def sort_list(lst: list) -> list:
+def sort_list(lst: list[int]) -> list[int]:
     return sorted(lst)
 
 

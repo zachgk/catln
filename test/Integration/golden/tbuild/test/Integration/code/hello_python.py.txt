@@ -117,33 +117,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sort_list
-                            ( EAppArg { eaaArg = Value /lst -> ∀/Data/List } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                )
-                            , []
-                            ) =
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] =
                             ( /sorted
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
-                                , []
-                                )
+                                ) ↦ ∀/Data/List[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -322,7 +302,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /any_true
-                            ( EAppArg { eaaArg = Value /flags -> ∀/Data/List } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg
+                                { eaaArg = Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] }
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /any
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) }
@@ -570,7 +552,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sum_list
-                            ( EAppArg { eaaArg = Value /nums -> ∀/Data/List } ) -> /Data/Primitive/Integer =
+                            ( EAppArg
+                                { eaaArg = Value /nums -> ∀/Data/List[ /T=/Data/Primitive/Integer ] }
+                            ) -> /Data/Primitive/Integer =
                             ( /sum
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /nums = ( Value /nums ↦ TVArg /nums ) }
@@ -714,7 +698,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /all_true
-                            ( EAppArg { eaaArg = Value /flags -> ∀/Data/List } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg
+                                { eaaArg = Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] }
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /all
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) }

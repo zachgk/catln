@@ -68,18 +68,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sort_list( Value /lst -> ∀/Data/List ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                )
-                            , []
-                            ) = /sorted( Value /lst -> TVArg /lst = Value /lst )
+                        [ /sort_list
+                            ( Value /lst -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /sorted( Value /lst -> TVArg /lst = Value /lst )
                         ]
                     }
                 )
@@ -164,7 +154,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /any_true( Value /flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = /any( Value /lst -> TVArg /flags = Value /flags ) ]
+                        [ /any_true
+                            ( Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /any( Value /lst -> TVArg /flags = Value /flags )
+                        ]
                     }
                 )
             ,
@@ -309,7 +301,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sum_list( Value /nums -> ∀/Data/List ) -> /Data/Primitive/Integer = /sum( Value /lst -> TVArg /nums = Value /nums ) ]
+                        [ /sum_list
+                            ( Value /nums -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /sum( Value /lst -> TVArg /nums = Value /nums )
+                        ]
                     }
                 )
             ,
@@ -389,7 +383,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /all_true( Value /flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = /all( Value /lst -> TVArg /flags = Value /flags ) ]
+                        [ /all_true
+                            ( Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /all( Value /lst -> TVArg /flags = Value /flags )
+                        ]
                     }
                 )
             ,

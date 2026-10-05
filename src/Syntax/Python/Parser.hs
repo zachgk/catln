@@ -517,6 +517,11 @@ mapPyBuiltinType name    = name
 convertPyTypeExpr :: PyExpr -> RawExpr ()
 convertPyTypeExpr (PyVar name) = rawVal (mapPyBuiltinType name)
 convertPyTypeExpr PyNone       = rawVal "IO"   -- None in annotation position maps to IO
+-- A subscripted collection annotation (@list[int]@) gives the element type: @List[$T -> Integer]@.
+-- A bare @list@ says nothing about its elements, so a list handed to anything that needs them
+-- typed (@sum@ asks for a list of integers) is only guaranteed when the element is written.
+convertPyTypeExpr (PySubscript (PyVar "list") el) =
+  RawVarsApply emptyMetaN (rawVal (mapPyBuiltinType "list")) [RawObjArr (Just (rawVal "$T")) ArgObj Nothing [] (Just (Nothing, Just (convertPyTypeExpr el))) Nothing]
 convertPyTypeExpr e            = convertPyExpr e
 
 convertPyExpr :: PyExpr -> RawExpr ()

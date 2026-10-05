@@ -273,7 +273,10 @@ Prgm
             ,
                 ( "/Python/Builtins/ord"
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /Python/Builtins/ord
+                            ( EAppArg { eaaArg = Value /c -> ∀/Data/String } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
@@ -297,13 +300,18 @@ Prgm
                                         }
                                     )
                                 }
-                            ) ->
-                            ( /Data/code( /this=/Data/Char ) + /Data/Primitive/Integer ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /Data/code
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /head = ( Value /head ↦ TVArg /head ) }
                                 ) ↦ /Data/Primitive/Integer
                             )
+                        , /Python/Builtins/ord
+                            ( EAppArg
+                                { eaaArg = Value /c -> /Data/String/Text( /chars=/Data/List/Nil ) = /Data/String/Text
+                                    ( EAppArg { eaaArg = Value /chars -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            ) -> /Data/Primitive/Integer = Hole TopType HoleUndefined
                         ]
                     }
                 )

@@ -34,9 +34,11 @@ module(Python/Builtins)
     # [chr] is the one-character string of the Unicode code point [n].
   chr(n)= /Data/fromCode(code= n).toString
 
-  ord(c= /Data/String/Text(chars= /Data/List/Cons(head, tail)))= head.code
+  ord(c -> String) -> Integer
     # [ord] is the code point of the first character of [c]. It is defined only for a string that
-      has one, as Python's is: an empty string has no [ord].
+      has one, as Python's is: an empty string has no [ord], and asking for one fails when it runs.
+  ord(c= /Data/String/Text(chars= /Data/List/Cons(head, tail)))= head.code
+  ord(c= /Data/String/Text(chars= /Data/List/Nil))= undefined
 
   :Integer.hex -> String
   :Integer.hex= prefixed(n= this, prefix= "0x", base= 16)

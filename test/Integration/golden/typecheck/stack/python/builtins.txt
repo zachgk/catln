@@ -165,7 +165,8 @@ Prgm
             ,
                 ( "/Python/Builtins/ord"
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /Python/Builtins/ord( Value /c -> ∀/Data/String ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
@@ -182,8 +183,9 @@ Prgm
                                     ) = /Data/List/Cons( Value /head -> /Data/Char )
                                     ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 )
-                            ) ->
-                            ( /Data/code( /this=/Data/Char ) + /Data/Primitive/Integer ) = /Data/code( Value /this -> TVArg /head = Value /head )
+                            ) -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /head = Value /head )
+                        , /Python/Builtins/ord
+                            ( Value /c -> /Data/String/Text( /chars=/Data/List/Nil ) = /Data/String/Text( Value /chars -> /Data/List/Nil = Value /Data/List/Nil ) ) -> /Data/Primitive/Integer = Hole TopType HoleUndefined
                         ]
                     }
                 )
