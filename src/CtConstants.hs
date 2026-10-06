@@ -229,6 +229,13 @@ proofAnnot = "/Catln/#proof"
 existAnnot :: String
 existAnnot = "/Catln/#exist"
 
+-- | The annotation marking a declaration whose promise holds only on part of its domain, declared
+-- in @stack/core/compile.ct@. Such a declaration is not checked for fulfillment
+-- ('TypeCheck.Decode.verifyObjMapItem') and derives no test of its promise
+-- ('Eval.Testing.deriveRefinementTests').
+invalidAnnot :: String
+invalidAnnot = "/Catln/#invalid"
+
 runtimeAnnot, runtimeAnnotK :: String
 runtimeAnnot = "/Catln/#runtime"
 runtimeAnnotK = "/k"
@@ -259,7 +266,7 @@ importerAnnotExts = "extensions"
 builtinAnnotNames :: [String]
 builtinAnnotNames =
   [ assertStr, testAnnot, exampleAnnot, mdAnnot, printAnnot, ctxAnnot, elseAnnot
-  , refineAnnot, proofAnnot, existAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
+  , refineAnnot, proofAnnot, existAnnot, invalidAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
   , importerAnnotAbs
   -- The annotations' argument keywords are emitted alongside them (@#md(text= ...)@), so they
   -- are part of the same vocabulary.

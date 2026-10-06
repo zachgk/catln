@@ -383,9 +383,10 @@ verifyObjMapItem solvedTypeEnv name importedDecls (ObjectMapItem decls runtimeDe
           lift $ TypeCheckResult [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc] ()
 
       -- Check each declaration against defUnion (which includes runtime declarations). Data-type
-      -- (TypeObj) declarations are self-defining and need no separate definition, so they are
-      -- exempt from the fulfillment check (they still bound definitions via declUnion above).
-      let fulfillableDecls = filter ((/= TypeObj) . oaBasis) decls
+      -- (TypeObj) declarations are self-defining and need no separate definition, and an @#invalid@
+      -- declaration promises more than its definitions keep, so both are exempt from the
+      -- fulfillment check (they still bound definitions via declUnion above).
+      let fulfillableDecls = filter fulfillable decls
       forM_ fulfillableDecls $ \oa ->
         forM_ (declUndefined prgmTypeEnv defInputTypesU defUnionU oa) $ \(target, notDefined) -> do
           let declType = getMetaType $ getExprMeta $ oaObjExpr oa
@@ -400,6 +401,11 @@ verifyObjMapItem solvedTypeEnv name importedDecls (ObjectMapItem decls runtimeDe
         unless (isSubtypeOf prgmTypeEnv refineType declUnion) $ do
           let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty refineType declUnion
           lift $ TypeCheckResult [RefineOutsideDeclaration name refineType declUnion undeclared refineLoc] ()
+
+-- | Whether a declaration must be fulfilled by definitions: not a data type, which defines itself,
+-- and not @#invalid@, whose promise holds only on part of its domain.
+fulfillable :: ObjArr Expr TypedMetaDat -> Bool
+fulfillable oa = oaBasis oa /= TypeObj && not (isInvalidDecl oa)
 
 toPrgms :: [VPrgm] -> StateT FEnv TypeCheckResult [TPrgm]
 toPrgms vprgms = do
@@ -458,7 +464,7 @@ verifyAddedMembers (ClassGraph pageCg) deps solved = do
   let definedIn env extra = let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph env in S.map makeAbsoluteName (H.keysSet objTg) <> extra
   unless (S.null addedTo) $
     forM_ (H.toList depItems) $ \(name, ObjectMapItem decls depRuntime _ depDefs) -> do
-      let affected = [ oa | oa <- decls, oaBasis oa /= TypeObj, not (S.null (S.intersection addedTo (typePredClassNames (inputType oa)))) ]
+      let affected = [ oa | oa <- decls, fulfillable oa, not (S.null (S.intersection addedTo (typePredClassNames (inputType oa)))) ]
       let pageDefs = maybe [] (\it -> omiDefs it ++ omiRuntimeDecls it) (H.lookup name solvedItems)
       let (nowTs, nowU) = universalized envNow (definedIn envNow feLocalDefNames) (depDefs ++ depRuntime ++ pageDefs)
       let (beforeTs, beforeU) = universalized envBefore (definedIn envBefore S.empty) (depDefs ++ depRuntime)

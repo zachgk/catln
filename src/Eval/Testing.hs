@@ -399,7 +399,9 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
       QuantUnique -> [mkRefinementTest omi defOa dom refRet | (defOa, dom) <- arms]
       QuantExist  -> [mkExistRefinementTest name omi refOa (map snd arms) refRet | not (null arms)]
   | (name, omi) <- H.toList om
-  , refOa <- omiRefineDecls omi
+  -- An @#invalid@ refinement claims more than its definitions keep, so testing the claim would
+  -- only find that out again.
+  , refOa <- filter (not . isInvalidDecl) (omiRefineDecls omi)
   -- A refinement to prove is checked by its proof ('TypeCheck.Proof') instead.
   , not (oaHasAnnotRel proofAnnot refOa)
   , Just (_, refM) <- [oaArr refOa]

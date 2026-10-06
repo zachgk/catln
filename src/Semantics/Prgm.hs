@@ -883,6 +883,11 @@ universeObjectMap (ObjectMap objMap) = concatMap universeObjectMapItem (H.elems 
 oaHasAnnotRel :: (ExprClass e) => String -> ObjArr e m -> Bool
 oaHasAnnotRel name oa = any (\a -> relativeNameMatches (exprPath a) (mkName name)) (oaAnnots oa)
 
+-- | Whether an object arrow is a declaration marked @#invalid@: one whose promise holds only on part
+-- of its domain, so it is neither checked for fulfillment nor tested on its promise.
+isInvalidDecl :: (ExprClass e) => ObjArr e m -> Bool
+isInvalidDecl = oaHasAnnotRel invalidAnnot
+
 -- | Whether an object arrow is a runtime declaration (a declaration whose body is supplied by the
 -- evaluator runtime). It is DEFINITION-like: it needs no separate definition to fulfill a
 -- declaration, and it must not widen the object universe the way a declaration does.

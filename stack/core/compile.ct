@@ -100,6 +100,15 @@ module(Catln)
   annot(#eximport(name -> String))
     # [#eximport] is used to mark exported items from Haskell modules.
       When a Haskell module has an explicit export list, this annotation indicates which items are re-exported.
+  annot(#invalid)
+    # [#invalid] marks a declaration whose promise does not hold over its whole domain. Something
+      the declaration is written over cannot yet be stated precisely, so it promises more than its
+      definitions keep: the promise holds only on part of the domain, and the declaration's
+      documentation comment should say which part. Whoever relies on the arrow does so at their own
+      risk.
+      An [#invalid] declaration is not checked for being fulfilled by its definitions, and the
+      tests [catln test] derives from a declaration's promise are not derived from it, since an
+      invalid promise would fail them. It still bounds its definitions as any declaration does.
   annot(#refine)
     # [#refine] marks a declaration as a refinement: a narrower return-type claim for a function
       that overlaps an existing definition, checked by the derived refinement-agreement tests.
