@@ -32,5 +32,6 @@ main = do
   integrationTests' <- integrationTests
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests, hsBuiltinsTests, evalCommonTests, refinementProofTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
+  typecheckTests' <- typecheckTests
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests, hsBuiltinsTests, evalCommonTests, refinementProofTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
   defaultMain catlnTests

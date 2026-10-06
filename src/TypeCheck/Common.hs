@@ -338,8 +338,7 @@ instance CNoteTC TypeCheckError where
     Just pos -> Just $ Meta PTopType (Just pos) nil ()
     Nothing  -> Nothing
 
-  typeCNote ResultNotGuaranteed{} = CNoteWarn
-  typeCNote _                     = CNoteError
+  typeCNote _ = CNoteError
   showRecursiveCNote _ n = literal $ show n
 
 instance Show SType where

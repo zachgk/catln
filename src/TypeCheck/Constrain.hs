@@ -612,7 +612,8 @@ runConstraintsIdx limit cons = do
 -- @v@, or an argument @fn(v) -> $_B@ handed to @toString@ — and fails only where it is built or
 -- called. This asks the stronger question at the two kinds of point a value is held to a
 -- declaration: an argument it is passed as (an output argument's slot) and the result a
--- definition returns. The requirement is the declaration's alone ('stypeReqDecl'): the
+-- definition returns, and a value not guaranteed within it is an error. The requirement is the
+-- declaration's alone ('stypeReqDecl'): the
 -- accumulated one also holds what the value's own forms wrote back, which would answer for them.
 -- A free variable is read through the constraint's own bindings.
 verifyGuaranteedResults :: [VConstraint] -> StateT FEnv TypeCheckResult ()

@@ -274,6 +274,11 @@ builtinAnnotNames =
   , importerAnnotName, importerAnnotExts
   ]
 
+-- | How a page written to fail is named: a test compiles it, requires that it fails, and does not
+-- print the errors it fails with ('Semantics.ctssQuietPage').
+errPageSuffix :: String
+errPageSuffix = ".err.ct"
+
 anonStr :: String
 anonStr = "/"
 

@@ -10,6 +10,7 @@
 -- This is the module for testing typechecking.
 --------------------------------------------------------------------
 module Typecheck.TypeCheckTests where
+import           Common.TestCommon     (findErrCt)
 import           Control.Monad.State   (evalStateT, execStateT, lift, runStateT)
 import           CRes
 import           CtService             (ctssBaseFiles, getTPrgm)
@@ -22,7 +23,8 @@ import           Semantics             (testCtssConfig)
 import           Semantics.Prgm
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog   as THG
-import           Test.Tasty.HUnit      (Assertion, assertEqual, testCase)
+import           Test.Tasty.HUnit      (Assertion, assertEqual, assertFailure,
+                                        testCase)
 import           Testing.Generation    (genPrgms)
 import           Text.Printf
 import           TypeCheck             (typecheckPrgm)
@@ -78,16 +80,27 @@ propTypeChecks = property $ do
     CRes{}    -> return ()
     CErr errs -> fail $ prettyCNotes errs
 
+-- | A page written to fail ('findErrCt') fails to type-check. What it fails with is not printed
+-- ('Semantics.ctssQuietPage'), so a test asserting which errors those are is the place to read them.
+testErrPage :: FilePath -> TestTree
+testErrPage page = testCase page $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgm ctss
+  case res of
+    CErr _   -> return ()
+    CRes _ _ -> assertFailure "the page is written to fail, and it type-checked"
+
 -- | A definition whose body needs more of its input than its declaration promises is reported, and
 -- its twin whose declaration states what the body needs is not. @unwrapBad@ returns a @v@ that may be
 -- anything as a @Num@; @showBad@ hands what @fn@ returns, which may be anything, to @render@, which
 -- needs a @Shows@. Both type-check; only the type checker's stronger question — is every form the
 -- value may take guaranteed within the declaration — tells them from @unwrapOk@ and @showOk@.
--- Fixture: unit/resultNotGuaranteed.ct.
+-- Fixture: unit/resultNotGuaranteed.err.ct.
 testResultNotGuaranteed :: TestTree
 testResultNotGuaranteed = testCase "unsound arms are reported, their sound twins are not" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/resultNotGuaranteed.ct"]
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/resultNotGuaranteed.err.ct"]
     getTPrgm ctss
   let notes = case res of
         CRes ns _ -> ns
@@ -184,8 +197,10 @@ assertResultGuaranteed page name = do
   let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, show name `isInfixOf` n ]
   assertEqual (unlines reported) [] reported
 
-typecheckTests :: TestTree
-typecheckTests = testGroup "TypeCheckTests" [
+typecheckTests :: IO TestTree
+typecheckTests = do
+  errPages <- findErrCt "test/Typecheck/unit/"
+  return $ testGroup "TypeCheckTests" [
     -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
     THG.testProperty "propConstraint" (p propConstraint)
     , THG.testProperty "propConstraints" (p propConstraints)
@@ -201,10 +216,11 @@ typecheckTests = testGroup "TypeCheckTests" [
     , testIntersectionBound
     , testParamShadowsFunction
     , testHoleArm
-                                  ]
+    , testGroup "Error pages" (map testErrPage errPages)
+    ]
   where
     p prop = prop
     -- p prop = withTests 10000 prop
 
 main :: IO ()
-main = defaultMain typecheckTests
+main = defaultMain =<< typecheckTests

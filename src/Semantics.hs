@@ -17,13 +17,15 @@ module Semantics where
 import qualified Data.HashMap.Strict as H
 
 import           Control.Exception   (bracket_, evaluate)
-import           CtConstants         (builtinAnnotNames, operatorHasArrow)
+import           CtConstants         (builtinAnnotNames, errPageSuffix,
+                                      operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
 import           Data.Hashable       (hash)
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
-import           Data.List           (foldl', isPrefixOf, partition, sortOn)
+import           Data.List           (foldl', isPrefixOf, isSuffixOf, partition,
+                                      sortOn)
 import           Data.Maybe
 import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
@@ -336,13 +338,20 @@ data CTSSConfig = CTSSConfig {
   -- Held here for the reason 'ctssCachePath' is: a run's own setting rather than something found
   -- wherever it is wanted. Every test pins it, so a test's queries ask one thing forever; a doc
   -- server leaves it absent and reads the day each evaluation is made on.
-  ctssToday     :: Maybe Day
+  ctssToday     :: Maybe Day,
+  -- | The pages whose notes a build does not print, by the path they are displayed as.
+  --
+  -- A test may compile a page that is written to fail, and assert the errors it fails with. Those
+  -- errors are what the test expects, so printing them only buries the ones that are not among the
+  -- run's output. Tests quiet every page named @*.err.ct@, which is how such a page is named; the
+  -- compiler quiets none, since a page someone asked to build is one whose errors they asked for.
+  ctssQuietPage :: String -> Bool
                                 }
 
 testCtssConfig, buildCtssConfig :: CTSSConfig
 -- | Pinned to a Saturday, which has a @last friday@ behind it and a @next monday@ ahead of it, and
 -- which sits among the dates the Obsidian fixtures write.
-testCtssConfig = CTSSConfig "stack" Nothing (Just (fromGregorian 2026 1 3))
+testCtssConfig = CTSSConfig "stack" Nothing (Just (fromGregorian 2026 1 3)) (errPageSuffix `isSuffixOf`)
 -- | The standard-library location used by the CLI/LSP/WebDocs. During development
 -- the compiler is run from a worktree (e.g. via @stack exec@) whose working directory
 -- contains a local @stack/@ standard library; prefer it so multiple worktrees can be
@@ -359,7 +368,7 @@ buildCtssConfig = unsafePerformIO $ do
   -- ('Syntax.InferImport.importPathCandidates').
   home <- getHomeDirectory
   let cachePath = joinPath [home, ".catln", "cache", "import"]
-  return $ CTSSConfig (if localExists then localPath else "~/.catln/stack") (Just cachePath) Nothing
+  return $ CTSSConfig (if localExists then localPath else "~/.catln/stack") (Just cachePath) Nothing (const False)
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)

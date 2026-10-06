@@ -62,7 +62,8 @@ import           FileWatch               (Watch, Watcher, allCovered,
                                           watchReads, withPending)
 import           GHC.Generics            (Generic)
 import           MapMeta                 (parseMetaIDScope)
-import           Semantics               (CTSSConfig, ctssCachePath, ctssToday)
+import           Semantics               (CTSSConfig, ctssCachePath,
+                                          ctssQuietPage, ctssToday)
 import           Semantics.CtType        (fromCt)
 import           Semantics.Prgm
 import           Semantics.Types         (Name, mkName, nameStr, partialKey)
@@ -862,12 +863,14 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
         -- inside the lock the service is held under: a pipeline reading the 'MVar' it is being run
         -- from would wait for itself.
         p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages (ctssInstrument sccFileNames) ctssEpochs
+        let quiet = all (maybe False (ctssQuietPage (ctssConfig ctssdat)) . impDisp) sccFileNames
+        let report notes = unless (null notes || quiet) $ putStrLn $ prettyCNotes notes
         case p of
           CRes notes updates -> do
-            unless (null notes) $ putStrLn $ prettyCNotes notes
+            report notes
             return $ ctssMapPages (\k ssf -> fromMaybe ssf (H.lookup k updates)) ctssdat
           CErr notes -> do
-            unless (null notes) $ putStrLn $ prettyCNotes notes
+            report notes
             -- A page whose pipeline hard-failed is still a page the service holds: commit the
             -- failure to the SCC's members rather than killing the host process (tests, LSP,
             -- webdocs all live above this). Every stage field already carries 'CRes', and every
