@@ -139,7 +139,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Char.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value CharOrdering ]
+                        [ /Data/Algebra/eq( Value /this -> /Data/Char.. ) -> ∀/Data/Algebra/Eqv = Value CharOrdering ]
                     }
                 )
             ,
@@ -185,7 +185,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/CharOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                        [ /Data/Algebra/compare( Value a -> /Data/Char )( Value b -> /Data/Char )( Value /this -> /Data/CharOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
                             ( Value lt= /operator<
                                 ( Value /l= code( Value /this= Value a ) )
                                 ( Value /r= code( Value /this= Value b ) )
@@ -287,7 +287,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord( Value /this -> /Data/Char.. ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value CharOrdering ]
+                        [ /Data/Algebra/ord( Value /this -> /Data/Char.. ) -> ∀/Data/Algebra/Ordering = Value CharOrdering ]
                     }
                 )
             ,
@@ -355,9 +355,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=/Data/Char ]
-            , cgcExtends =
-                [ /Data/CharOrdering[ /T=/Data/Char ] ]
+            , cgcPartial = /Data/Algebra/Ordering
+            , cgcExtends = [ /Data/CharOrdering ]
             , cgcDoc = Nothing
             }
         ]

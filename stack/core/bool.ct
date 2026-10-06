@@ -60,7 +60,7 @@ module(Data/Primitive)
     [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow.
   every(Boolean, isa= [/Data/Algebra/Eq])
 
-  data(BoolEqv, isa= [/Data/Algebra/Eqv[$T -> Boolean]])
+  data(BoolEqv, isa= [/Data/Algebra/Eqv])
 
   :BoolEqv.rel(a -> Boolean, b -> Boolean)= /Data/Primitive/boolEq(l= a, r= b)
 

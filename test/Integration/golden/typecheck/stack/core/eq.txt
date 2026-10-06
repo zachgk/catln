@@ -16,19 +16,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/testEqvTransitive"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testEqvTransitive
-                            [ /E : ∀/Data/Algebra/Eqv[ /T=TopType ] ]( Value /e -> $/E )( Value /x -> $/T )( Value /y -> $/T )( Value /z -> $/T ) -> /Data/Primitive/Integer = CInt
-                            { ciValue = 0 }
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/AllEqv"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/AllEqv ]
@@ -38,38 +25,10 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/testEqvReflexive"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testEqvReflexive
-                            [ /E : ∀/Data/Algebra/Eqv[ /T=TopType ] ]( Value /e -> $/E )( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt
-                            { ciValue = 0 }
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Algebra/testEqvSymmetric"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testEqvSymmetric
-                            [ /E : ∀/Data/Algebra/Eqv[ /T=TopType ] ]( Value /e -> $/E )( Value /x -> $/T )( Value /y -> $/T ) -> /Data/Primitive/Integer = CInt
-                            { ciValue = 0 }
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/rel"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/rel( Value /a -> $/T )( Value /b -> $/T )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean
-                        ]
+                        [ /Data/Algebra/rel[ /T : TopType ]( Value /a -> $/T )( Value /b -> $/T )( Value /this -> ∀/Data/Algebra/Eqv ) -> ∀/Data/Primitive/Boolean ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
@@ -82,7 +41,7 @@ Prgm
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/eq[ /T : ∀/Data/Algebra/Eq ]( Value /this -> $/T ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] ]
+                        [ /Data/Algebra/eq[ /T : ∀/Data/Algebra/Eq ]( Value /this -> $/T ) -> ∀/Data/Algebra/Eqv ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -133,9 +92,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Eq
@@ -144,10 +100,10 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=TopType ]
+            , cgcPartial = /Data/Algebra/Eqv
             , cgcExtends =
-                [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
-                , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
+                [ /Data/Algebra/IntEqExample
+                , /Data/Algebra/AllEqv
                 ]
             , cgcDoc = Just ""
             }
@@ -165,19 +121,17 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Equivalence Relations
-                An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
-                a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
-                are to be considered equivalent." }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "[rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the" }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "class defines it for its own type. See the per-type instances (such as [IntEqv]) below." }
+                An [Eqv] is the class of equivalence relations. Each object in the class is a single
+                equivalence relation over some type, and supplies the [rel] that decides whether two values of
+                that type are to be considered equivalent.
+                TODO The type an [Eqv] relates is not data, so it cannot be a type parameter of the class the
+                way the element type of a [List] is. Once refinement types can state it, write it as what each
+                relation covers and drop the [#invalid] below:
+                ```
+                :Eqv.over -> TypeSet
+                :Eqv.rel[$T](a -> $T, b -> $T) | this.over.superset($T) -> Boolean
+                :$T.eq[$T -> /Data/Algebra/Eq] -> /Data/Algebra/Eqv | $out.over.superset($T)
+                ```" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
@@ -268,29 +222,29 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Laws of equivalence
-                Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
-                each value to itself. Expressed as a property test, it is checked against every [Eqv]
-                instance (here [$E]) at arbitrary members of that instance's type (here [$T])." }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Symmetry: equivalent values relate the same in either direction. Checked against every [Eqv]" }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "  instance ([$E]) at arbitrary members ([$T]); the biconditional makes it non-vacuous." }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Transitivity: a~b and b~c imply a~c. Expressed as a material implication, so ordinary equalities" }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "  satisfy it vacuously and a relation like [AllEqv] exercises the premise." }
+                Reflexivity, symmetry and transitivity are properties of the [Eqv] class itself: every
+                equivalence relation must satisfy them, so each is a property test checked against every [Eqv]
+                instance (here [$E]) at arbitrary members of the type that instance relates (here [$T]).
+                Symmetry is written as a biconditional to make it non-vacuous, and transitivity as a material
+                implication, so ordinary equalities satisfy it vacuously and a relation like [AllEqv] exercises
+                the premise.
+                TODO The laws are set aside while [rel] is [#invalid]: they read the type an instance relates
+                from a parameter of [Eqv], which it no longer has, so they cannot generate values the instance
+                is defined over. Restore them once [Eqv.over] can be stated:
+                ```
+                testEqvReflexive[$E -> Eqv[$T]](e -> $E, t -> $T) =
+                  #test
+                  #assert(test= e.rel(a= t, b= t))
+                  0
+                testEqvSymmetric[$E -> Eqv[$T]](e -> $E, x -> $T, y -> $T) =
+                  #test
+                  #assert(test= e.rel(a= x, b= y) == e.rel(a= y, b= x))
+                  0
+                testEqvTransitive[$E -> Eqv[$T]](e -> $E, x -> $T, y -> $T, z -> $T) =
+                  #test
+                  #assert(test= ~(e.rel(a= x, b= y) && e.rel(a= y, b= z)) || e.rel(a= x, b= z))
+                  0
+                ```" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text

@@ -24,13 +24,11 @@ Prgm
                 ( "/Scratch/rel"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Scratch/rel( Value /a -> $/T )( Value /b -> $/T )
-                            ( Value /this -> ∀/Scratch/TEqv[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean
-                        ]
+                        [ /Scratch/rel[ /T : TopType ]( Value /a -> $/T )( Value /b -> $/T )( Value /this -> ∀/Scratch/TEqv ) -> ∀/Data/Primitive/Boolean ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Scratch/rel( Value /a )( Value /b )( Value /this -> /Scratch/MyEqv.. ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /Scratch/rel( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )( Value /this -> /Scratch/MyEqv.. ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
                     }
                 )
             ]
@@ -41,9 +39,8 @@ Prgm
         , CGType
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Scratch/TEqv[ /T=TopType ]
-            , cgcExtends =
-                [ /Scratch/MyEqv[ /T=/Data/Primitive/Integer ] ]
+            , cgcPartial = /Scratch/TEqv
+            , cgcExtends = [ /Scratch/MyEqv ]
             , cgcDoc = Just ""
             }
         ]
@@ -51,27 +48,27 @@ Prgm
         [ /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Class-method type-parameter binding." }
+                { csValue = "A class method over a type its members choose, written as core's [Eqv] is while refinement" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed" }
+                { csValue = "types cannot state that type. The abstract [rel] takes arguments of any one type and is" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to" }
+                { csValue = "[#invalid]: each member defines it only over the type it relates, so the declaration is not" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is" }
+                { csValue = "checked for fulfillment. The member [MyEqv] relates [Integer]s, so its definition types its" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "fulfilled by covering the receiver (every member of the class has a definition)." }
+                { csValue = "arguments as [Integer] itself." }
             )
         ]
     }

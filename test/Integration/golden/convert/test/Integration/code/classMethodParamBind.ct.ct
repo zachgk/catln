@@ -4,18 +4,19 @@ import "core"
 
 
 module(Scratch)
-  # Class-method type-parameter binding.
-  # The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed
-  # by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to
-  # [Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is
-  # fulfilled by covering the receiver (every member of the class has a definition).
-  class(TEqv[$T])
+  # A class method over a type its members choose, written as core's [Eqv] is while refinement
+  # types cannot state that type. The abstract [rel] takes arguments of any one type and is
+  # [#invalid]: each member defines it only over the type it relates, so the declaration is not
+  # checked for fulfillment. The member [MyEqv] relates [Integer]s, so its definition types its
+  # arguments as [Integer] itself.
+  class(TEqv)
 
-  :TEqv.rel(a -> $T, b -> $T) -> Boolean
+  :TEqv.rel[$T](a -> $T, b -> $T) -> Boolean
+    #invalid
 
-  data(MyEqv, isa= [/Scratch/TEqv[$T -> Integer]])
+  data(MyEqv, isa= [/Scratch/TEqv])
 
-  :MyEqv.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+  :MyEqv.rel(a -> Integer, b -> Integer)= /Data/Primitive/intEq(l= a, r= b)
 
   main{io -> IO} =
     #assert(test= MyEqv.rel(a= 2, b= 2))

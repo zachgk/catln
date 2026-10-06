@@ -93,9 +93,9 @@ module(Data)
     equivalence; [operator<] and the other comparisons come from [compareTo].
   every(Peano, isa= [/Data/Algebra/Ord])
 
-  data(PeanoOrdering, isa= [/Data/Algebra/Ordering[$T -> Peano]])
+  data(PeanoOrdering, isa= [/Data/Algebra/Ordering])
 
-  :PeanoOrdering.compare(a, b)= a.compareTo(other= b)
+  :PeanoOrdering.compare(a -> Peano, b -> Peano)= a.compareTo(other= b)
 
   :Peano.ord= PeanoOrdering
 

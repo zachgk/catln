@@ -2129,7 +2129,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=∀/Data/String ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> ∀/Data/Algebra/Eqv = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -2497,7 +2497,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=∀/Data/String ] = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> ∀/Data/Algebra/Ordering = /ord( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -2901,9 +2901,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/String ]
-            , cgcExtends =
-                [ /Data/StrEqv[ /T=∀/Data/String ] ]
+            , cgcPartial = /Data/Algebra/Eqv
+            , cgcExtends = [ /Data/StrEqv ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -2914,9 +2913,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/String ]
-            , cgcExtends =
-                [ /Data/StrOrdering[ /T=∀/Data/String ] ]
+            , cgcPartial = /Data/Algebra/Ordering
+            , cgcExtends = [ /Data/StrOrdering ]
             , cgcDoc = Nothing
             }
         , CGClass

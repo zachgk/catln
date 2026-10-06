@@ -210,7 +210,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compare( Value /a )( Value /b )( Value /this -> /Data/CharOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                        [ /Data/Algebra/compare( Value /a -> /Data/Char )( Value /b -> /Data/Char )( Value /this -> /Data/CharOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /operator<
                                 ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /a = Value /a ) )
                                 ( Value /r -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /b = Value /b ) )
@@ -301,7 +301,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Char.. ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Char.. ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> ∀/Data/Algebra/Eqv = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -351,7 +351,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Char.. ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Char.. ] = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> ∀/Data/Algebra/Ordering = /ord( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -385,9 +385,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=/Data/Char ]
-            , cgcExtends =
-                [ /Data/CharOrdering[ /T=/Data/Char ] ]
+            , cgcPartial = /Data/Algebra/Ordering
+            , cgcExtends = [ /Data/CharOrdering ]
             , cgcDoc = Nothing
             }
         ]
@@ -432,7 +431,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
-                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Char = CChar
                         { chValue = 'b' }
                     )
@@ -447,7 +446,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isGreater
-                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Char = CChar
                         { chValue = 'a' }
                     )
@@ -462,7 +461,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
-                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Char = CChar
                         { chValue = 'a' }
                     )

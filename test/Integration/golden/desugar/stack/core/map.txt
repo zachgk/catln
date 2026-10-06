@@ -306,9 +306,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Map/Leaf.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Map/MapEqv
+                        [ /Data/Algebra/eq( Value /this -> /Data/Map/Leaf.. ) -> ∀/Data/Algebra/Eqv = Value /Data/Map/MapEqv
                         , /Data/Algebra/eq
-                            ( Value /this= /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]( Value left )( Value key )( Value value )( Value right ) ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Map/MapEqv
+                            ( Value /this= /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]( Value left )( Value key )( Value value )( Value right ) ) -> ∀/Data/Algebra/Eqv = Value /Data/Map/MapEqv
                         ]
                     }
                 )
@@ -518,19 +518,7 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Eqv
-                [ /T=∀/Data/Map/BinTree
-                    [ /K=∀/Data/Algebra/Ord
-                    , /V=∀/Data/Algebra/Eq
-                    ]
-                ]
-            , cgcExtends =
-                [ /Data/Map/MapEqv
-                    [ /T=∀/Data/Map/BinTree
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=∀/Data/Algebra/Eq
-                        ]
-                    ]
-                ]
+            , cgcExtends = [ /Data/Map/MapEqv ]
             , cgcDoc = Nothing
             }
         , CGClass

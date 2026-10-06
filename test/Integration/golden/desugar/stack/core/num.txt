@@ -267,8 +267,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value IntOrdering
-                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value FloatOrdering
+                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Algebra/Eqv = Value IntOrdering
+                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Algebra/Eqv = Value FloatOrdering
                         ]
                     }
                 )
@@ -301,10 +301,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/Primitive/IntOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                        [ /Data/Algebra/compare( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/IntOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
                             ( Value lt= /Data/Primitive/intLt( Value l= Value a )( Value r= Value b ) )
                             ( Value eq= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b ) )
-                        , /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/Primitive/FloatOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                        , /Data/Algebra/compare( Value a -> /Data/Primitive/Float )( Value b -> /Data/Primitive/Float )( Value /this -> /Data/Primitive/FloatOrdering.. ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
                             ( Value lt= /Data/Primitive/floatLt( Value l= Value a )( Value r= Value b ) )
                             ( Value eq= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b ) )
                         ]
@@ -376,8 +376,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value IntOrdering
-                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value FloatOrdering
+                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Algebra/Ordering = Value IntOrdering
+                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Algebra/Ordering = Value FloatOrdering
                         ]
                     }
                 )
@@ -481,14 +481,9 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Ordering
-                [ /T=
-                    ( TopType | !
-                        ( !( PredRel Float ) && !( PredRel Integer ) )
-                    )
-                ]
             , cgcExtends =
-                [ /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ]
-                , /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ]
+                [ /Data/Primitive/IntOrdering
+                , /Data/Primitive/FloatOrdering
                 ]
             , cgcDoc = Nothing
             }

@@ -79,9 +79,9 @@ module(Data/Primitive)
   # [Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its
   #   [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the
   #   same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence).
-  data(IntOrdering, isa= [/Data/Algebra/Ordering[$T -> Integer]])
+  data(IntOrdering, isa= [/Data/Algebra/Ordering])
 
-  :IntOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
+  :IntOrdering.compare(a -> Integer, b -> Integer)= /Data/Algebra/mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
 
   :Integer.ord= IntOrdering
 
@@ -154,9 +154,9 @@ module(Data/Primitive)
     #runtime("float==")
 
   # [Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above.
-  data(FloatOrdering, isa= [/Data/Algebra/Ordering[$T -> Float]])
+  data(FloatOrdering, isa= [/Data/Algebra/Ordering])
 
-  :FloatOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
+  :FloatOrdering.compare(a -> Float, b -> Float)= /Data/Algebra/mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
 
   :Float.ord= FloatOrdering
 

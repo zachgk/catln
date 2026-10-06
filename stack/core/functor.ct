@@ -32,8 +32,8 @@ module(Data/Functor)
     itself [Eq] — so the mapped result can be compared with the original — at arbitrary
     members of that instance. Holding [Eq] elements is not enough: a [Functor] is compared by
     its own equality, which only an [Eq] instance has, so the bound is the intersection of
-    the two classes. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per file over
-    the import graph, so each file defining an instance checks the law for it.
+    the two classes. It instantiates per file over the import graph, so each file defining an
+    instance checks the law for it.
   testFunctorIdentity[$F -> /Data/Functor[$T -> /Data/Algebra/Eq] && /Data/Algebra/Eq](x -> $F) =
     #test
     #assert(test= fmap(lst= x, fn(v)= v) == x)

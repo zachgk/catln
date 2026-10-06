@@ -269,11 +269,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ] =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
+                                            ) ↦ ∀/Data/Algebra/Eqv
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -304,9 +304,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-            , cgcExtends =
-                [ /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] ]
+            , cgcPartial = /Data/Algebra/Eqv
+            , cgcExtends = [ /Data/Primitive/BoolEqv ]
             , cgcDoc = Nothing
             }
         , CGClass

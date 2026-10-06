@@ -450,11 +450,7 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Eqv
-                [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-            , cgcExtends =
-                [ /Data/MaybeEqv
-                    [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-                ]
+            , cgcExtends = [ /Data/MaybeEqv ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -467,11 +463,7 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Ordering
-                [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-            , cgcExtends =
-                [ /Data/MaybeOrdering
-                    [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-                ]
+            , cgcExtends = [ /Data/MaybeOrdering ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -719,16 +711,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv
-                                        [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/MaybeEqv
-                                , []
-                                ) =
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
                                 ( /eq
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -736,16 +719,7 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Eqv
-                                            [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/MaybeEqv
-                                    , []
-                                    )
+                                    ) ↦ ∀/Data/Algebra/Eqv
                                 )
                             }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -759,7 +733,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /rel
                         ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ( EAppArg
@@ -770,28 +744,12 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/Maybe/Nothing ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/MaybeEqv
-                                , []
-                                ) =
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
                                 ( /eq
-                                    ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Eqv[ /T=/Data/Maybe/Nothing ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/MaybeEqv
-                                    , []
-                                    )
+                                    ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Algebra/Eqv
                                 )
                             }
-                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                        ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )
@@ -826,25 +784,9 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> UnionType
-                                            ( Just
-                                                ( PredClass /Data/Algebra/Ordering[ /T=/Data/Maybe/Nothing ]
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/MaybeOrdering
-                                            , []
-                                            ) =
+                                        { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
                                             ( /ord
-                                                ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Algebra/Ordering[ /T=/Data/Maybe/Nothing ]
-                                                    , fromList []
-                                                    , []
-                                                    )
-                                                , /Data/MaybeOrdering
-                                                , []
-                                                )
+                                                ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Algebra/Ordering
                                             )
                                         }
                                     ) ↦ ∀/Data/Algebra/Comparison
@@ -881,16 +823,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> UnionType
-                                            ( Just
-                                                ( PredClass /Data/Algebra/Ordering
-                                                    [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/MaybeOrdering
-                                            , []
-                                            ) =
+                                        { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
                                             ( /ord
                                                 ( EAppArg
                                                     { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -898,16 +831,7 @@ Prgm
                                                             { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
                                                         )
                                                     }
-                                                ) ↦ UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Algebra/Ordering
-                                                        [ /T=/Data/Maybe/Some( /value=/Data/Primitive/Integer ) ]
-                                                    , fromList []
-                                                    , []
-                                                    )
-                                                , /Data/MaybeOrdering
-                                                , []
-                                                )
+                                                ) ↦ ∀/Data/Algebra/Ordering
                                             )
                                         }
                                     ) ↦ ∀/Data/Algebra/Comparison

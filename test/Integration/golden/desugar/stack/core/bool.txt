@@ -93,7 +93,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value BoolEqv ]
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Algebra/Eqv = Value BoolEqv ]
                     }
                 )
             ,
@@ -201,9 +201,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-            , cgcExtends =
-                [ /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] ]
+            , cgcPartial = /Data/Algebra/Eqv
+            , cgcExtends = [ /Data/Primitive/BoolEqv ]
             , cgcDoc = Nothing
             }
         , CGClass

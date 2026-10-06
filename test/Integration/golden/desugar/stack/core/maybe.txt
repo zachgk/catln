@@ -75,9 +75,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/MaybeEqv
+                        [ /Data/Algebra/eq( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Eqv = Value /Data/MaybeEqv
                         , /Data/Algebra/eq
-                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value /Data/MaybeEqv
+                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) ) -> ∀/Data/Algebra/Eqv = Value /Data/MaybeEqv
                         ]
                     }
                 )
@@ -166,9 +166,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value /Data/MaybeOrdering
+                        [ /Data/Algebra/ord( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Ordering = Value /Data/MaybeOrdering
                         , /Data/Algebra/ord
-                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value /Data/MaybeOrdering
+                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) ) -> ∀/Data/Algebra/Ordering = Value /Data/MaybeOrdering
                         ]
                     }
                 )
@@ -217,11 +217,7 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Eqv
-                [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-            , cgcExtends =
-                [ /Data/MaybeEqv
-                    [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-                ]
+            , cgcExtends = [ /Data/MaybeEqv ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -234,11 +230,7 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Ordering
-                [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-            , cgcExtends =
-                [ /Data/MaybeOrdering
-                    [ /T=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-                ]
+            , cgcExtends = [ /Data/MaybeOrdering ]
             , cgcDoc = Nothing
             }
         , CGClass

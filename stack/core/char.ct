@@ -19,9 +19,9 @@ module(Data)
     points do.
   every(Char, isa= [/Data/Algebra/Ord])
 
-  data(CharOrdering, isa= [/Data/Algebra/Ordering[$T -> Char]])
+  data(CharOrdering, isa= [/Data/Algebra/Ordering])
 
-  :CharOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= a.code < b.code, eq= a.code == b.code)
+  :CharOrdering.compare(a -> Char, b -> Char)= /Data/Algebra/mkComparison(lt= a.code < b.code, eq= a.code == b.code)
 
   :Char.ord= CharOrdering
 

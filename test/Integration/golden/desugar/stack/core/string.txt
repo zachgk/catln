@@ -856,7 +856,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value StrEqv ]
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Eqv = Value StrEqv ]
                     }
                 )
             ,
@@ -1536,7 +1536,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] = Value StrOrdering ]
+                        [ /Data/Algebra/ord( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Ordering = Value StrOrdering ]
                     }
                 )
             ,
@@ -2086,9 +2086,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/String ]
-            , cgcExtends =
-                [ /Data/StrEqv[ /T=∀/Data/String ] ]
+            , cgcPartial = /Data/Algebra/Eqv
+            , cgcExtends = [ /Data/StrEqv ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -2099,9 +2098,8 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=∀/Data/String ]
-            , cgcExtends =
-                [ /Data/StrOrdering[ /T=∀/Data/String ] ]
+            , cgcPartial = /Data/Algebra/Ordering
+            , cgcExtends = [ /Data/StrOrdering ]
             , cgcDoc = Nothing
             }
         , CGClass

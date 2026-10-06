@@ -28,18 +28,21 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Scratch/rel
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
+                            )
                             ( EAppArg { eaaArg = Value /a -> $/T } )
                             ( EAppArg { eaaArg = Value /b -> $/T } )
-                            ( EAppArg
-                                { eaaArg = Value /this -> ∀/Scratch/TEqv[ /T=$_/T ] }
-                            ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg { eaaArg = Value /this -> ∀/Scratch/TEqv } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Scratch/rel
-                            ( EAppArg { eaaArg = Value /a } )
-                            ( EAppArg { eaaArg = Value /b } )
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /this -> /Scratch/MyEqv.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/intEq
                                 ( EAppArg
@@ -60,9 +63,8 @@ Prgm
         , CGType
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Scratch/TEqv[ /T=TopType ]
-            , cgcExtends =
-                [ /Scratch/MyEqv[ /T=/Data/Primitive/Integer ] ]
+            , cgcPartial = /Scratch/TEqv
+            , cgcExtends = [ /Scratch/MyEqv ]
             , cgcDoc = Just ""
             }
         ]
@@ -70,31 +72,31 @@ Prgm
         [ /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Class-method type-parameter binding."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A class method over a type its members choose, written as core's [Eqv] is while refinement"
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "types cannot state that type. The abstract [rel] takes arguments of any one type and is"
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[#invalid]: each member defines it only over the type it relates, so the declaration is not"
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "checked for fulfillment. The member [MyEqv] relates [Integer]s, so its definition types its"
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "fulfilled by covering the receiver (every member of the class has a definition)."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "arguments as [Integer] itself."
                 }
             )
         ]

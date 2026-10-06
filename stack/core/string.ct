@@ -41,7 +41,7 @@ module(Data)
 
   every(String, isa= [/Data/Algebra/Eq])
 
-  data(StrEqv, isa= [/Data/Algebra/Eqv[$T -> String]])
+  data(StrEqv, isa= [/Data/Algebra/Eqv])
 
   :StrEqv.rel(a= String/Text(chars@ac), b= String/Text(chars@bc))= charsEqual(a= ac, b= bc)
 
@@ -287,7 +287,7 @@ module(Data)
     c -> /Data/Algebra/Equal= compareChars(a= at, b= bt)
     c else = c
 
-  data(StrOrdering, isa= [/Data/Algebra/Ordering[$T -> String]])
+  data(StrOrdering, isa= [/Data/Algebra/Ordering])
 
   :StrOrdering.compare(a= String/Text(chars@ac), b= String/Text(chars@bc))= compareChars(a= ac, b= bc)
 
