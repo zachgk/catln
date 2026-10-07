@@ -5305,8 +5305,15 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
             --     the reference.
             --
             -- A partial-local ('TVInt') spelling names the partial itself and is kept.
+            --
+            -- A PARAMETER is read at its effective value ('ptVarEff'): one its declaration ties
+            -- to an argument is what that argument is, spelled or not. A definition
+            -- @eq(this=∀Peano)@ under @eq[$T](this -> $T)@ is @eq[/T=∀Peano](this=∀Peano)@, and so
+            -- holds the @∀Peano@ piece of the declaration's @/T@; read as the ⊤ an unspelled
+            -- parameter is on its own, its piece was the whole slot, which it does not cover, and
+            -- a declaration every definition fulfilled was reported unfulfilled.
             slotVal p
-              | isVars    = substituteKeepScoped typeEnv vaenv vaenv raw
+              | isVars    = substituteKeepScoped typeEnv vaenv vaenv (ptVarEff typeEnv vaenv p k raw)
               | otherwise = substituteKeepScoped typeEnv ((ambientEnv $ joinVarArgEnv (ptVars p) H.empty)) H.empty raw
               where raw = H.lookupDefault PTopType k (get p)
             env | isVars    = vaenv

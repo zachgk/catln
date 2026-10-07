@@ -1,0 +1,35 @@
+annot(#noCore)
+
+# A function's parameter tied to its argument ([eq[$T](this -> $T)]) is what the argument is, so an
+# arm spelled without it ([eq(this= ∀Peano)]) is the same set as one spelled with it
+# ([eq[T= ∀Peano](this= ∀Peano)]). Declaration coverage must read both spellings the same. A page
+# adding [Peano] to [Eq] spelled its arm the first way and left [eq] unfulfilled. The recursive
+# classes and the single-member [Str] are what sent the coverage through the symbolic engine.
+#noCore
+module(Lib)
+  data(R)
+
+  class(Eq)
+
+  :$T.eq[$T -> /Lib/Eq] -> /Lib/R
+
+  data(Num)
+
+  class(Lst, [/Lib/Cons(head -> /Lib/Num, tail -> /Lib/Lst), /Lib/Nil])
+
+  every(/Lib/Lst, isa= [/Lib/Eq])
+
+  :/Lib/Nil.eq= /Lib/R
+  :/Lib/Cons(head, tail).eq= /Lib/R
+
+  class(Str, [/Lib/Text(chars -> /Lib/Lst)])
+
+  every(/Lib/Str, isa= [/Lib/Eq])
+
+  :/Lib/Str.eq= /Lib/R
+module(Pg)
+  class(Peano, [/Pg/Peano/Succ(i -> /Pg/Peano), /Pg/Peano/Zero])
+
+  every(/Pg/Peano, isa= [/Lib/Eq])
+
+  :/Pg/Peano.eq= /Lib/R

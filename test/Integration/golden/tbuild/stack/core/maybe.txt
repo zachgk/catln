@@ -733,7 +733,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /rel
                         ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ( EAppArg
@@ -749,7 +749,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Algebra/Eqv
                                 )
                             }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                     )
                 }
             )

@@ -1419,6 +1419,42 @@ propMemberParentParams = property $ do
     assertTimed "key ⊄ Ky" $ not $ isSubtypeOf typeEnv (readField keyK) ky
     assertTimed "left ⊄ BinTree[K=Ky]" $ not $ isSubtypeOf typeEnv (readField leftK) treeKy
 
+-- | An arm spelled without the parameter its declaration ties to its argument is the same set as
+-- one spelled with it: @eq(this=∀Peano)@ and @eq[/T=∀Peano](this=∀Peano)@ under
+-- @eq[$T](this -> $T)@. Declaration coverage read them differently: with every arm spelled
+-- without its @/T@, @eq[/T=∀Eq](this=$/T)@ was not within their union, though it is within the
+-- union spelled with it. Fixture: unit/coverDerivedParam.ct.
+propCoverDerivedParam :: Property
+propCoverDerivedParam = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/coverDerivedParam.ct"
+  let typeEnv = (mkTypeEnv prgm){tePrgmEnv=True}
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  omi <- case [ o | (n, o) <- H.toList om, "/eq" `isSuffixOf` nameStr n ] of
+    [o] -> return o
+    _   -> fail "no single eq"
+  declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | d <- omiDecls omi ] of
+    [d] -> return d
+    _   -> fail "no single eq declaration"
+  let defTs = [ getMetaType (getExprMeta (oaObjExpr d)) | d <- omiDefs omi ]
+  let unspelled (UnionType m ls cs) = UnionType m (joinUnionType [ l{ptVars=H.empty} | l <- splitUnionType ls ]) cs
+      unspelled t = t
+  annotate $ printf "decl = %s" (show declT)
+  annotate $ printf "defs = %s" (show defTs)
+  forM_ defTs $ \d -> eqTimed' ("respelled " ++ show d) typeEnv d (unspelled d)
+  assertTimed "decl ⊆ ∪ defs" $ isSubtypeOf typeEnv declT (unionAllTypes typeEnv defTs)
+  assertTimed "decl ⊆ ∪ defs without their /T" $ isSubtypeOf typeEnv declT (unionAllTypes typeEnv (map unspelled defTs))
+  -- As a page adding Peano to Eq spells them: its own arm without /T, the earlier pages' arms with.
+  let peanoOnly d = if "Peano" `isInfixOf` show d then unspelled d else d
+  let mixed = unionAllTypes typeEnv (map peanoOnly defTs)
+  let atClass c (UnionType m ls cs) = UnionType m (joinUnionType [ l{ptVars=fmap (const (classPartial (partialVal c))) (ptVars l)} | l <- splitUnionType ls ]) cs
+      atClass _ t = t
+  -- Each class's piece of the declaration is within the union on its own, as is their union.
+  forM_ ["/Pg/Peano", "/Lib/Str", "/Lib/Lst"] $ \c ->
+    assertTimed (printf "decl at %s ⊆ ∪ defs, the Peano arm without its /T" (nameStr c)) $ isSubtypeOf typeEnv (atClass c declT) mixed
+  assertTimed "decl ⊆ ∪ defs, the Peano arm without its /T" $ isSubtypeOf typeEnv declT mixed
+  where
+    eqTimed' msg te a b = assertTimed msg (isEqType te a b)
+
 -- | A class's member at a concrete parameter is within the class at ⊤. A member declared with a
 -- field naming its own parameter (@MkSet[$K -> $_K, ..](map -> Map[$K -> $_K, ..])@) spells that
 -- field with a parent reference (@map=∀Map[/K=$^K, ..]@), and the class at ⊤ expands to the member
@@ -1552,6 +1588,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
       , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
+      , HG.testProperty "propCoverDerivedParam" (withTests 1 propCoverDerivedParam)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
