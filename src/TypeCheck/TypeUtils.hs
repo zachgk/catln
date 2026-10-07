@@ -245,19 +245,27 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
 -- allowed: an annotation may leave a declared field unbound at Top, and the partial names
 -- still discriminate the instances.
 --
--- A variable that ALSO occurs in the call's arguments is the set the caller chooses it to be,
--- given only that it contains every one of its occurrences. When each of them is resolved and
--- already within the destination, the destination is such a set, and it is the one the call site
--- needs: @sum(lst)= foldr(lst= lst, fn(acc, v)= acc + v, init= 0)@ declared @-> Integer@ chooses
--- @$_B=Integer@ for @init=0@ and a lambda returning @Integer@. Read from the occurrences alone,
--- @$_B@ is circular (the lambda's @acc@ is a @$_B@), and narrowing from ⊤ stops at what @+@ gives
--- any number. An occurrence outside the destination, still unresolved, or nested inside an
--- argument's type leaves the variable to its occurrences (@mmap(m= Some(..))@ required to be
--- @Nothing@ binds nothing). The destination may be a class here (@any@ declared @-> Boolean@
--- chooses @$_B=∀Boolean@): it is still a set holding every occurrence. The higher-order results are read in @localTypeEnv@, the environment
--- holding the call's lambdas.
-outVarBoundSrc :: FEnv -> FEnvTypeEnv -> Type -> Type -> Type
-outVarBoundSrc env localTypeEnv dest@(UnionType _ _ _) src@(UnionType Nothing srcLeafs srcConsts)
+-- A variable that is also GIVEN to a higher-order argument (@foldr@'s @fn(acc -> $_B)@) is the set
+-- the caller chooses it to be, and read from its occurrences alone it is circular: the lambda's
+-- @acc@ is a @$_B@, so what the lambda returns depends on the choice, and narrowing from ⊤ stops at
+-- what the lambda returns for any @acc@ — @acc + v@ gives what @+@ gives any 'Add'. Such a variable
+-- is chosen to be what the destination's declaration requires of it (@destDecl@), when every direct
+-- occurrence (@init@) is resolved and within it — the requirement, not the destination's inferred
+-- value, which a call settling on @dflt= False@ only happens to give:
+-- @sum(lst)= foldr(lst= lst, fn(acc, v)= acc + v, init= 0)@ declared @-> Integer@ chooses
+-- @$_B=Integer@, and its lambda is then read with an @Integer@ @acc@. The variable holds @init@ and
+-- lies within the destination, so the destination is the widest set it may be, and the one a lambda
+-- widening it keeps to (@all@'s @init=True@ under a lambda returning any 'Boolean').
+--
+-- What the lambda returns is not asked of the choice: that it returns within the variable is the
+-- call's obligation, a requirement on the lambda's result ('HoResultReq') that the result is held to
+-- once inference has converged ('TypeCheck.Constrain.verifyGuaranteedResults'). So the destination
+-- must be one a lambda CAN be shown to keep to — a union of types, or a sealed class such as @Boolean@. An open class (a
+-- printed value's 'DShow') may gain a member in any later file, so no result is within it unless it
+-- names a member already, and it chooses nothing. An occurrence still unresolved, outside the
+-- destination, or nested inside an argument's type also leaves the variable to its occurrences.
+outVarBoundSrc :: FEnv -> Type -> Type -> Type -> Type
+outVarBoundSrc env dest@(UnionType _ _ _) destDecl src@(UnionType Nothing srcLeafs srcConsts)
   | dest /= PTopType && not (isBottomType dest) && not (typeContainsTypeVar dest) =
       case UnionType Nothing (joinUnionType $ map bindLeaf $ splitUnionType srcLeafs) srcConsts of
         src' | src' == src -> src
@@ -273,9 +281,9 @@ outVarBoundSrc env localTypeEnv dest@(UnionType _ _ _) src@(UnionType Nothing sr
     typeEnv = feReachesTypeEnv env
     TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
     bindLeaf p = foldr bindVar p (outVarNames p)
-    bindVar vn p@PartialType{ptVars} = p{ptVars=H.insertWith (flip (intersectTypes typeEnv)) vn dest ptVars}
+    bindVar (vn, v) p@PartialType{ptVars} = p{ptVars=H.insertWith (flip (intersectTypes typeEnv)) vn v ptVars}
     outVarNames p@PartialType{ptName} = nub
-      [ vn
+      [ (vn, v)
       | oa <- maybe [] omiDecls (H.lookup ptName tg)
       , Just (_, outM) <- [oaArr oa]
       , TypeVar (TVVar vn) _ _ <- [getMetaType outM]
@@ -287,32 +295,70 @@ outVarBoundSrc env localTypeEnv dest@(UnionType _ _ _) src@(UnionType Nothing sr
       -- intersecting the destination alone onto it (@/M=Nothing@ from the result) would empty
       -- the argument evidence (@m=Some(..) ∩ Nothing = ∅@) — unless every occurrence is already
       -- within the destination.
-      , (concreteDest && not (any (argRefsVar vn) (H.elems (ptArgs declObj)))) || (givenToArgument vn declObj && occurrencesWithin vn declObj p)
+      , Just v <- [if givenToArgument vn declObj
+                     then if declChoosable && occurrencesWithin vn declObj p then Just destDecl else Nothing
+                     else if concreteDest && not (any (argRefsVar vn) (H.elems (ptArgs declObj))) then Just dest else Nothing]
       -- Complete applications only: a partial application's ArrowTo destination is the
       -- further-applied call node, not the result the declaration's output variable stands for.
       , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]
     argRefsVar vn (TypeVar (TVVar vn') _ _)               = vn' == vn
     argRefsVar vn (TypeVar (TVApplied (TVVar vn') _) _ _) = vn' == vn
     argRefsVar _ _                                        = False
-    -- Every occurrence of @vn@ in the call is resolved and within the destination: the direct
-    -- arguments' values and the higher-order arguments' results. An occurrence nested in an
-    -- argument's or a result's type is not read, so it refuses.
-    occurrencesWithin vn declObj p@PartialType{ptName} =
-      and [ maybe False within (H.lookup k (ptArgs p))
-          | (k, t) <- H.toList (ptArgs declObj), S.null (pkArgs k), argRefsVar vn t ]
+    -- Every direct occurrence of @vn@ in the call is resolved and within the destination. An
+    -- occurrence nested in an argument's or a result's type is not read, so it refuses, as does a
+    -- call with no direct occurrence for the destination to hold.
+    occurrencesWithin vn declObj PartialType{ptName, ptArgs=callArgs} =
+      not (null occs) && all within occs
       && null [ () | (k, t) <- H.toList (ptArgs declObj), S.null (pkArgs k), not (argRefsVar vn t)
                    , S.member vn (typeOuterVarRefs t) ]
-      && and [ maybe False (within . hoSlotResult localTypeEnv H.empty k) (H.lookup k (ptArgs p))
-             | (k, rt) <- hoResults, argRefsVar vn rt ]
-      && null [ () | (_, rt) <- hoResults, not (argRefsVar vn rt), S.member vn (typeOuterVarRefs rt) ]
-      where hoResults = typeGraphDeclaredArgResults typeEnv ptName
+      && null [ () | (_, rt) <- typeGraphDeclaredArgResults typeEnv ptName, not (argRefsVar vn rt)
+                   , S.member vn (typeOuterVarRefs rt) ]
+      where occs = [ v | (k, t) <- H.toList (ptArgs declObj), S.null (pkArgs k), argRefsVar vn t, Just v <- [H.lookup k callArgs] ]
+    -- The declared destination a variable given to a higher-order argument is chosen as: resolved
+    -- and closed.
+    declChoosable = destDecl /= PTopType && not (isBottomType destDecl) && not (typeContainsTypeVar destDecl)
+                    && closedType typeEnv destDecl
     -- The variable is GIVEN to a higher-order argument (@fn(acc -> $_B)@): its occurrences then
-    -- depend on what it is chosen to be, which is the circularity the destination resolves. A
+    -- depend on what it is chosen to be, which is the circularity the choice resolves. A
     -- variable only its arguments supply is their join and is left to it.
     givenToArgument vn declObj = or [ S.member vn (typeOuterVarRefs t) | (k, t) <- H.toList (ptArgs declObj), not (S.null (pkArgs k)) ]
     within v = not (typeContainsBareTop v) && not (typeContainsTypeVar v) && not (isBottomType v)
-               && isSubtypeOfWithEnv typeEnv H.empty v dest
+               && isSubtypeOfWithEnv typeEnv H.empty v destDecl
 outVarBoundSrc _ _ _ src = src
+
+-- | A form of a call as the requirement on it reads it: each variable its declaration returns bare
+-- (@(_ :: $T + _ :: $T) -> $T@) taken to be the destination.
+--
+-- The requirement is what the call's arguments must be for its result to be guaranteed within the
+-- destination. Through a declaration returning @$T@, that is a @$T@ within the destination, and the
+-- destination itself is the widest such set, so the weakest requirement on the arguments: a lambda
+-- whose @acc + v@ must return an @Integer@ requires its @v@ to be one (@r -> $T@ with @$T=Integer@),
+-- which is what types the element of a list the lambda folds — an empty one too, which is a list of
+-- @Integer@ vacuously. Only the requirement reads it so; the call's value keeps the variable as its
+-- arguments give it ('outVarBoundSrc' is the value-side choice). A destination is taken only when
+-- it is closed, as there: an open class may gain members anywhere, so no argument is required to
+-- be within it.
+outVarReqKey :: FEnvTypeEnv -> Type -> PartialType -> PartialType
+outVarReqKey typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} dest key@PartialType{ptName, ptVars=keyVars}
+  | closed = key{ptVars = foldr bind keyVars outVars}
+  | otherwise = key
+  where
+    closed = dest /= PTopType && not (isBottomType dest) && not (typeContainsTypeVar dest) && closedType typeEnv dest
+    outVars = nub
+      [ vn
+      | oa <- maybe [] omiDecls (H.lookup ptName tg)
+      , Just (_, outM) <- [oaArr oa]
+      , TypeVar (TVVar vn) _ _ <- [getMetaType outM]
+      , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
+      , H.member vn (ptVars declObj) ]
+    bind vn = H.insertWith (flip (intersectTypes typeEnv)) vn dest
+
+-- | Whether a value can be shown to lie within a type: it names no class predicate, or only sealed
+-- ones. An open class may gain a member in any later file, so a value is within it only by naming a
+-- member it already has.
+closedType :: (TypeGraph tg) => TypeEnv tg -> Type -> Bool
+closedType typeEnv (UnionType (Just (preds, _, _)) _ _) = predsSealed typeEnv preds
+closedType _ _                                          = True
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
 mkReachesEnv env con@(Constraint _ _ stypeVaenv _) = do
@@ -656,7 +702,14 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
                 | otherwise                      = destFinal0
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
-  let srcBound = outVarBoundSrc env reachesTypeEnv destFinal src
+  -- What the destination's declaration requires of it, resolved: the destination a variable given
+  -- to a higher-order argument is chosen from, and the one the requirement reads a declaration's
+  -- returned variable at ('outVarReqKey'). Its inferred value is not a requirement: a call whose
+  -- arms settle on @dflt= False@ only happens to give @False@, and a lambda it is given need not.
+  let destDecl = case destReqDecl of
+        TypeVar v _ _ -> vaenvLookup vaenv' v
+        t             -> t
+  let srcBound = outVarBoundSrc env destFinal destDecl src
 
   -- Reverse direction: the arrow imposes a requirement back on the source. Keep only the source
   -- components that actually reach the required destination — a component is viable if its own
@@ -769,7 +822,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
             unionAllTypes feTypeEnv (map (singletonType . constantPartialType) cs)
           atSlot v = widenSlotConsts v
   let viableMet key =
-        let arrowMets = [ widenSlotConsts metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ]
+        let arrowMets = [ widenSlotConsts metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' (outVarReqKey reachesTypeEnv destDecl key) ]
             arrowMet = case arrowMets of
               []   -> Nothing
               mets -> Just (unionAllTypesWithEnv feTypeEnv vaenv' mets)

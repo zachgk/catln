@@ -1,0 +1,34 @@
+annot(#noCore)
+
+# A fold whose step is an operator declared once on its class, as core's [+] is on [Add]. Inside
+# the step, [acc] is what [foldr]'s [$B] is chosen to be: [sum]'s declared [Integer], which [init]
+# is within. Read with [acc] unbound, [acc + v] is what [+] gives any [Add], and [sum]'s result was
+# not guaranteed an [Integer]. [sumNil] folds an empty list, whose element nothing says: the step
+# must return an [Integer], so [+] requires [v] to be one, and an empty list is a list of them.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+module(Catln)
+  data(IO)
+module(Fx)
+  class(Add)
+
+  every(/Data/Primitive/Integer, isa= [/Fx/Add])
+
+  (_ :: $T + _ :: $T)[$T -> /Fx/Add] -> $T
+  (l :: /Data/Primitive/Integer + r :: /Data/Primitive/Integer)= l
+
+  class(List[$T])
+  class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
+  every(ConsList[$T -> $_T], isa= [/Fx/List[$T -> $_T]])
+
+  foldr[$A, $B](lst -> /Fx/List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+  foldr(lst= /Fx/Nil, fn(acc, v), init)= init
+  foldr(lst= /Fx/Cons(head, tail), fn(acc, v), init)= fn(acc= foldr(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
+
+  sum(lst -> /Fx/List[$T -> /Data/Primitive/Integer]) -> /Data/Primitive/Integer
+  sum(lst)= foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
+
+  sumNil -> /Data/Primitive/Integer
+  sumNil= foldr(lst= /Fx/Nil, fn(acc, v)= acc + v, init= 0)

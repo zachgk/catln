@@ -25,7 +25,9 @@ import qualified Data.Zip            as Z
 
 import           Control.Monad.State
 import           Semantics           (unsafeFreshQueryToken)
-import           Semantics.Prgm      (Meta (..))
+import           Semantics.Prgm      (Meta (..), ObjArr (..),
+                                      ObjectBasis (ArgObj), exprAppliedArgs,
+                                      exprVarArgs)
 import           Semantics.TypeGraph (ReachesEnv (..), typeGuaranteedWithin)
 import           Semantics.Types
 import           Text.Printf
@@ -99,8 +101,8 @@ equalizeSTypes FEnv{feTypeEnv} vaenv (stype1@SType{stypeAct=act1, stypeReq=req1,
 -- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types.
 -- After the meets, the slot settle ('settlePropSlot') drops settle-forced unsettled forms from
 -- the super's actual slot and tightens its requirement slot to the declared-bound meet.
-updateSchemeProp :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (STypeVarArgEnv, SType, SType)
-updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq, stypeReqDecl=superReqDecl} propName sub@SType{stypeAct=subAct, stypeReq=subReq, stypeReqDecl=subReqDecl} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq'', stypeReqDecl=superReqDecl''}, sub{stypeAct=subAct', stypeReq=subReq', stypeReqDecl=subReqDecl'})
+updateSchemeProp :: FEnv -> S.HashSet TypeVarAux -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (STypeVarArgEnv, SType, SType)
+updateSchemeProp env@FEnv{feTypeEnv} lambdaArgs vaenv super@SType{stypeAct=superAct, stypeReq=superReq, stypeReqDecl=superReqDecl} propName sub@SType{stypeAct=subAct, stypeReq=subReq, stypeReqDecl=subReqDecl} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq'', stypeReqDecl=superReqDecl''}, sub{stypeAct=subAct', stypeReq=subReq', stypeReqDecl=subReqDecl'})
   where
     (actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (ambientEnv $ fmap stypeAct vaenv) superAct propName subAct
     -- A requirement-side projection never commits a respell that LOSES a type-var spelling
@@ -125,7 +127,34 @@ updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeR
     subReqDecl' | typeVarLost subReqDecl subReqDecl'0 = subReqDecl
                 | otherwise                           = subReqDecl'0
     (superAct'', superReq'', superReqDecl'') = settlePropSlot env (ambientEnv $ fmap stypeAct vaenv) propName superAct' superReq' superReqDecl'
-    vaenv' = H.intersectionWith (\t s -> s{stypeReqDecl=t}) (envAmbient declVaenv') $ H.intersectionWith (\t s -> s{stypeReq=t}) (envAmbient reqVaenv') $ H.intersectionWith (\t s -> s{stypeAct=t}) (envAmbient actVaenv') vaenv
+    vaenv' = argRefReq $ H.intersectionWith (\t s -> s{stypeReqDecl=t}) (envAmbient declVaenv') $ H.intersectionWith (\t s -> s{stypeReq=t}) (envAmbient reqVaenv') $ H.intersectionWith (\t s -> s{stypeAct=t}) (envAmbient actVaenv') vaenv
+    -- A slot whose value is a bare reference to one of a lambda's own arguments (@r= v@ in
+    -- @fn(acc, v)= acc + v@) IS that argument, so what the slot is required to be the argument is
+    -- required to be: the requirement is what its use needs of it. The slot's own requirement is
+    -- narrowed by the projection above, but the argument's point is reached only through the
+    -- constraint's environment, so the argument's requirement is met with it there. This is how a
+    -- lambda's @v@ learns from @+@'s declaration that the result it must return makes it an
+    -- @Integer@, and so that the list it folds is a list of them.
+    --
+    -- Only a lambda's: it has no declaration of its own, so what it accepts is only what its call
+    -- and its uses say. A definition's argument is what its declaration says it accepts (@a -> $T@
+    -- for every @$T@), which a use needing more does not narrow — that is an arm exceeding its
+    -- declaration, reported as one ('verifyGuaranteedResults'). And only a closed requirement, as
+    -- for every requirement read from a destination ('closedType'): @<@'s @$T -> Ord@ asks nothing
+    -- of @v@ that a list of any element could not be refused for.
+    argRefReq e = case subAct of
+      TypeVar tv@TVArg{} _ _ | subReq' /= PTopType, closedType feTypeEnv subReq', S.member tv lambdaArgs, Just s <- H.lookup tv e ->
+        H.insert tv s{stypeReq = intersectTypes feTypeEnv (stypeReq s) subReq'} e
+      _ -> e
+
+-- | The arguments of the lambdas a constraint is inside: each enclosing object that is a lambda a
+-- call is given (an argument arrow whose object takes parameters, @fn(acc, v)= ..@) binds its own.
+lambdaArgsOf :: Constraint p -> S.HashSet TypeVarAux
+lambdaArgsOf Constraint{conOs} = S.fromList
+  [ k
+  | oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} <- conOs
+  , oaBasis oa == ArgObj, not (null (exprAppliedArgs obj))
+  , k <- H.keys (exprVarArgs obj) ]
 
 -- | The argument an application inferred: the one key its actual holds that its base's does not,
 -- once each is a single partial. 'Nothing' while inference still offers more than one, which is
@@ -335,11 +364,30 @@ computeConstraint env con@(Constraint _ _ _ (ArrowTo i src dest)) = case arrowCo
     TypeCheckResE _ -> (True, con)
 computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
   where
-    (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+    (vaenv', super', sub') = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name sub
 computeConstraint env con@(Constraint _ _ vaenv (PropEqInferred i (super, app, base) sub)) = case inferredArgName base app of
-    Just name -> let (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+    Just name -> let (vaenv', super', sub') = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name sub
                  in (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEqInferred i (super', app, base) sub'})
     Nothing -> (False, con)
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ _ (HoResultReq i (call, argName) result)) = case declaredResult of
+    Just r | r /= PTopType -> (False, con{conDat=HoResultReq i (call, argName) result{stypeReq=meet (stypeReq result) r, stypeReqDecl=meet (stypeReqDecl result) r}})
+    _ -> (False, con)
+  where
+    meet a b = intersectTypes feTypeEnv a b
+    -- Each form the call may take reads the argument's declared result through its own bindings;
+    -- a form that says nothing of it leaves the result unbounded.
+    declaredResult = case stypeReq call of
+      UnionType Nothing leafs _ | not (H.null leafs) -> unionAllTypes feTypeEnv <$> mapM resultFor (splitUnionType leafs)
+      _ -> Nothing
+    resultFor leaf = case [ dr | (k, dr) <- typeGraphDeclaredArgResults feTypeEnv (ptName leaf), pkName k == pkName argName, pkArgs k == pkArgs argName ] of
+      [TypeVar (TVVar vn) _ _] -> H.lookup vn (ptVars leaf) >>= settled
+      [dr]                     -> settled dr
+      _                        -> Nothing
+    -- Only a closed result is required of the lambda, as only a closed destination is chosen for
+    -- a variable ('outVarBoundSrc'): an open class (@foldEntriesSteps[$B -> ToString]@'s bound)
+    -- may gain members anywhere, so no result short of a member is within it.
+    settled t | t == PTopType || typeContainsTypeVar t || not (closedType feTypeEnv t) = Nothing
+              | otherwise = Just t
 computeConstraint env con@(Constraint _ _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
@@ -602,6 +650,11 @@ runConstraintsIdx limit cons = do
         -- reversing the running order leaves the skip-memo keys untouched.
         runConstraintsIdx (limit - 1) (reverse cons')
 
+-- | The 'ArrowTo' constraints that hold a value to a declaration: an output argument's slot (10, 15)
+-- and a definition's result (32).
+guaranteedArrows :: [Int]
+guaranteedArrows = [10, 15, 32]
+
 -- | Reports each value whose every form is not guaranteed to end within what its point's
 -- declaration requires ('typeGuaranteedWithin'), once inference has converged.
 --
@@ -622,7 +675,7 @@ verifyGuaranteedResults cons = do
   forM_ cons $ \con -> case conDat con of
     -- A hole produces no value, so it is within anything it is held to.
     ArrowTo _ srcM _ | maybe False (`S.member` feHolePoints env) (getPnt srcM) -> pure ()
-    ArrowTo i srcM _ | i `elem` [10, 15, 32] -> case stypeConstraint (showCon env con) of
+    ArrowTo i srcM _ | i `elem` guaranteedArrows -> case stypeConstraint (showCon env con) of
       TypeCheckResult _ rcon@Constraint{conDat=ArrowTo _ srcS destS} -> do
         -- A variable the solve left unbound (⊤) ranges over what its declaration bounds it by.
         let varValue s = if stypeAct s == PTopType then stypeReqDecl s else stypeAct s

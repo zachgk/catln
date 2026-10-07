@@ -110,6 +110,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#invalid"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#invalid ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/#debug"
                 , ObjectMapItem
                     { omiDecls =
@@ -292,6 +301,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

@@ -271,13 +271,13 @@ Prgm
                                     ]
                                 )
                             ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l -> ∀/Data/Algebra/Add = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )
-                                ( Value /r -> ∀/Data/Algebra/Add = /rsize( Value /m -> TVArg /left = Value /left ) )
+                                ( Value /r -> /Data/Primitive/Integer = /rsize( Value /m -> TVArg /left = Value /left ) )
                             )
-                            ( Value /r -> ∀/Data/Algebra/Add = /rsize( Value /m -> TVArg /right = Value /right ) )
+                            ( Value /r -> /Data/Primitive/Integer = /rsize( Value /m -> TVArg /right = Value /right ) )
                         , /rsize( Value /m -> /RLeaf = Value /RLeaf ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         ]

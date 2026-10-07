@@ -70,11 +70,11 @@ Prgm
                                     { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Add =
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
                                         ( /countMixed
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ ∀/Data/Algebra/Add
+                                            ) ↦ /Data/Primitive/Integer
                                         )
                                     }
                                 ) ↦ /Data/Primitive/Integer
@@ -139,7 +139,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Mixed/Plain ]
@@ -160,7 +160,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -178,7 +178,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
@@ -226,7 +226,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -237,7 +237,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
@@ -272,7 +272,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -283,7 +283,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
@@ -349,7 +349,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )

@@ -14,12 +14,32 @@ Prgm
                             , /obj=/Data/Maybe/Some
                                 [ /T=/Catln/RawExpr/RawValue
                                     ( /name=∀/Data/String
-                                    , /meta=/Catln/Meta..
+                                    , /meta=/Catln/Meta
+                                        ( /type=∀/Catln/Type
+                                        , /dat=/Catln/Unit..
+                                        , /id=∀/Data/String
+                                        , /pos=∀/Data/Maybe
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos..
+                                                , /A=/Catln/SourcePos..
+                                                ]..
+                                            ]
+                                        )..
                                     )
                                 ]
                                 ( /value=/Catln/RawExpr/RawValue
                                     ( /name=∀/Data/String
-                                    , /meta=/Catln/Meta..
+                                    , /meta=/Catln/Meta
+                                        ( /type=∀/Catln/Type
+                                        , /dat=/Catln/Unit..
+                                        , /id=∀/Data/String
+                                        , /pos=∀/Data/Maybe
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos..
+                                                , /A=/Catln/SourcePos..
+                                                ]..
+                                            ]
+                                        )..
                                     )
                                 )
                             , /annots=/Data/List/Nil
@@ -30,18 +50,60 @@ Prgm
                             ( Value /obj -> /Data/Maybe/Some
                                 [ /T=/Catln/RawExpr/RawValue
                                     ( /name=∀/Data/String
-                                    , /meta=/Catln/Meta..
+                                    , /meta=/Catln/Meta
+                                        ( /type=∀/Catln/Type
+                                        , /dat=/Catln/Unit..
+                                        , /id=∀/Data/String
+                                        , /pos=∀/Data/Maybe
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos..
+                                                , /A=/Catln/SourcePos..
+                                                ]..
+                                            ]
+                                        )..
                                     )
                                 ]
                                 ( /value=/Catln/RawExpr/RawValue
                                     ( /name=∀/Data/String
-                                    , /meta=/Catln/Meta..
+                                    , /meta=/Catln/Meta
+                                        ( /type=∀/Catln/Type
+                                        , /dat=/Catln/Unit..
+                                        , /id=∀/Data/String
+                                        , /pos=∀/Data/Maybe
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos..
+                                                , /A=/Catln/SourcePos..
+                                                ]..
+                                            ]
+                                        )..
                                     )
                                 ) = /Data/Maybe/Some
                                 ( Value /value -> /Catln/RawExpr/RawValue
                                     ( /name=∀/Data/String
-                                    , /meta=/Catln/Meta..
-                                    ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )( Value /name -> TVArg /name = Value /name )
+                                    , /meta=/Catln/Meta
+                                        ( /type=∀/Catln/Type
+                                        , /dat=/Catln/Unit..
+                                        , /id=∀/Data/String
+                                        , /pos=∀/Data/Maybe
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos..
+                                                , /A=/Catln/SourcePos..
+                                                ]..
+                                            ]
+                                        )..
+                                    ) = /Catln/RawExpr/RawValue
+                                    ( Value /meta -> /Catln/Meta
+                                        ( /type=∀/Catln/Type
+                                        , /dat=/Catln/Unit..
+                                        , /id=∀/Data/String
+                                        , /pos=∀/Data/Maybe
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos..
+                                                , /A=/Catln/SourcePos..
+                                                ]..
+                                            ]
+                                        ).. = Value /Test/noMeta
+                                    )( Value /name -> TVArg /name = Value /name )
                                 )
                             )( Value /basis -> /Catln/ObjectBasis/FunctionObj = Value /Catln/ObjectBasis/FunctionObj )( Value /doc -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /annots -> /Data/List/Nil = Value /Data/List/Nil )( Value /arr -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /def -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
@@ -246,7 +308,21 @@ Prgm
                                     )
                                 ]
                                 ( /head=/Catln/RawStatementTree
-                                    ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            )..
+                                        )
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
@@ -274,17 +350,72 @@ Prgm
                                     )
                                 ]
                                 ( /head=/Catln/RawStatementTree
-                                    ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            )..
+                                        )
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Catln/RawStatementTree
-                                    ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            )..
+                                        )
                                     , /children=/Data/List/Nil
                                     ) = /Catln/RawStatementTree
-                                    ( Value /statement -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement
-                                        ( Value /objArr -> /Catln/RawObjArr.. = /Test/emptyObjArr( Value /name -> TVArg /name = Value /name ) )
+                                    ( Value /statement -> /Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            )..
+                                        ) = /Catln/RawStatement/RawDeclStatement
+                                        ( Value /objArr -> /Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            ).. = /Test/emptyObjArr( Value /name -> TVArg /name = Value /name )
+                                        )
                                     )( Value /children -> /Data/List/Nil = Value /Data/List/Nil )
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
@@ -340,7 +471,7 @@ Prgm
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
                                 ( Value /msg -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /Test/readsCount
+                                    ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
                                         ( Value /r -> /Catln/ImportResult
                                             ( /prgm=/Catln/RawPrgm..
                                             , /reads=∀/Data/Maybe
@@ -356,7 +487,7 @@ Prgm
                                 )
                                 ( Value /this -> /Catln/IO = /Catln/println
                                     ( Value /msg -> ∀/Data/String = /Data/toString
-                                        ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /Test/resultDeclCount
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/resultDeclCount
                                             ( Value /r -> /Catln/ImportResult
                                                 ( /prgm=/Catln/RawPrgm..
                                                 , /reads=∀/Data/Maybe
@@ -372,7 +503,7 @@ Prgm
                                     )
                                     ( Value /this -> /Catln/IO = /Catln/println
                                         ( Value /msg -> ∀/Data/String = /Data/toString
-                                            ( Value /this -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString ) = /Test/declCount
+                                            ( Value /this -> /Data/Primitive/Integer = /Test/declCount
                                                 ( Value /p -> /Catln/RawPrgm
                                                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                                                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -387,8 +518,34 @@ Prgm
                                         ( Value /this -> /Catln/IO = /Catln/println
                                             ( Value /msg -> /Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/statementKind
-                                                ( Value /s -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement
-                                                    ( Value /objArr -> /Catln/RawObjArr.. = /Test/emptyObjArr
+                                                ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                                                    ( /objArr=/Catln/RawObjArr
+                                                        ( /arr=∀/Data/Maybe
+                                                            [ /T=/Catln/Pair
+                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                ]..
+                                                            ]
+                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /basis=∀/Catln/ObjectBasis
+                                                        )..
+                                                    ) = /Catln/RawStatement/RawDeclStatement
+                                                    ( Value /objArr -> /Catln/RawObjArr
+                                                        ( /arr=∀/Data/Maybe
+                                                            [ /T=/Catln/Pair
+                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                ]..
+                                                            ]
+                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /basis=∀/Catln/ObjectBasis
+                                                        ).. = /Test/emptyObjArr
                                                         ( Value /name -> /Data/String/Text
                                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                             { csValue = "myFn" }
@@ -422,8 +579,30 @@ Prgm
                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                                                         ( Value /e -> /Catln/RawExpr/RawList
                                                             ( /values=/Data/List/Nil
-                                                            , /meta=/Catln/Meta..
-                                                            ) = /Catln/RawExpr/RawList( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
+                                                            , /meta=/Catln/Meta
+                                                                ( /type=∀/Catln/Type
+                                                                , /dat=/Catln/Unit..
+                                                                , /id=∀/Data/String
+                                                                , /pos=∀/Data/Maybe
+                                                                    [ /T=/Catln/Pair
+                                                                        [ /B=/Catln/SourcePos..
+                                                                        , /A=/Catln/SourcePos..
+                                                                        ]..
+                                                                    ]
+                                                                )..
+                                                            ) = /Catln/RawExpr/RawList
+                                                            ( Value /meta -> /Catln/Meta
+                                                                ( /type=∀/Catln/Type
+                                                                , /dat=/Catln/Unit..
+                                                                , /id=∀/Data/String
+                                                                , /pos=∀/Data/Maybe
+                                                                    [ /T=/Catln/Pair
+                                                                        [ /B=/Catln/SourcePos..
+                                                                        , /A=/Catln/SourcePos..
+                                                                        ]..
+                                                                    ]
+                                                                ).. = Value /Test/noMeta
+                                                            )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
                                                         )
                                                     )
                                                     ( Value /this -> /Catln/IO = /Catln/println
@@ -432,8 +611,30 @@ Prgm
                                                             ( Value /e -> /Catln/RawExpr/RawValue
                                                                 ( /name=/Data/String/Text
                                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                , /meta=/Catln/Meta..
-                                                                ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                                                                , /meta=/Catln/Meta
+                                                                    ( /type=∀/Catln/Type
+                                                                    , /dat=/Catln/Unit..
+                                                                    , /id=∀/Data/String
+                                                                    , /pos=∀/Data/Maybe
+                                                                        [ /T=/Catln/Pair
+                                                                            [ /B=/Catln/SourcePos..
+                                                                            , /A=/Catln/SourcePos..
+                                                                            ]..
+                                                                        ]
+                                                                    )..
+                                                                ) = /Catln/RawExpr/RawValue
+                                                                ( Value /meta -> /Catln/Meta
+                                                                    ( /type=∀/Catln/Type
+                                                                    , /dat=/Catln/Unit..
+                                                                    , /id=∀/Data/String
+                                                                    , /pos=∀/Data/Maybe
+                                                                        [ /T=/Catln/Pair
+                                                                            [ /B=/Catln/SourcePos..
+                                                                            , /A=/Catln/SourcePos..
+                                                                            ]..
+                                                                        ]
+                                                                    ).. = Value /Test/noMeta
+                                                                )
                                                                 ( Value /name -> /Data/String/Text
                                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                                     { csValue = "foo" }
@@ -446,8 +647,30 @@ Prgm
                                                                 ( Value /e -> /Catln/RawExpr/RawValue
                                                                     ( /name=/Data/String/Text
                                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                    , /meta=/Catln/Meta..
-                                                                    ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                                                                    , /meta=/Catln/Meta
+                                                                        ( /type=∀/Catln/Type
+                                                                        , /dat=/Catln/Unit..
+                                                                        , /id=∀/Data/String
+                                                                        , /pos=∀/Data/Maybe
+                                                                            [ /T=/Catln/Pair
+                                                                                [ /B=/Catln/SourcePos..
+                                                                                , /A=/Catln/SourcePos..
+                                                                                ]..
+                                                                            ]
+                                                                        )..
+                                                                    ) = /Catln/RawExpr/RawValue
+                                                                    ( Value /meta -> /Catln/Meta
+                                                                        ( /type=∀/Catln/Type
+                                                                        , /dat=/Catln/Unit..
+                                                                        , /id=∀/Data/String
+                                                                        , /pos=∀/Data/Maybe
+                                                                            [ /T=/Catln/Pair
+                                                                                [ /B=/Catln/SourcePos..
+                                                                                , /A=/Catln/SourcePos..
+                                                                                ]..
+                                                                            ]
+                                                                        ).. = Value /Test/noMeta
+                                                                    )
                                                                     ( Value /name -> /Data/String/Text
                                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                                                         { csValue = "foo" }
@@ -685,7 +908,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/oneResult( Value /name -> ∀/Data/String ) -> /Catln/ImportResult
-                            ( /prgm=/Catln/RawPrgm..
+                            ( /prgm=/Catln/RawPrgm
+                                ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
+                                , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
+                                )..
                             , /reads=/Data/Maybe/Some
                                 [ /T=/Data/List/Cons
                                     [ /T=/Catln/ReadPath/ReadFile
@@ -721,7 +947,11 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 )
                             ) = /Catln/ImportResult
-                            ( Value /prgm -> /Catln/RawPrgm.. = /Test/onePrgm( Value /name -> TVArg /name = Value /name ) )
+                            ( Value /prgm -> /Catln/RawPrgm
+                                ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
+                                , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
+                                ).. = /Test/onePrgm( Value /name -> TVArg /name = Value /name )
+                            )
                             ( Value /source -> /Data/Maybe/Some
                                 [ /T=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1104,8 +1334,30 @@ Prgm
                 ( Value /e -> /Catln/RawExpr/RawValue
                     ( /name=/Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    , /meta=/Catln/Meta..
-                    ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                    , /meta=/Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        )..
+                    ) = /Catln/RawExpr/RawValue
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        ).. = Value /Test/noMeta
+                    )
                     ( Value /name -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "foo" }
@@ -1122,8 +1374,30 @@ Prgm
                 ( Value /e -> /Catln/RawExpr/RawValue
                     ( /name=/Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    , /meta=/Catln/Meta..
-                    ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                    , /meta=/Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        )..
+                    ) = /Catln/RawExpr/RawValue
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        ).. = Value /Test/noMeta
+                    )
                     ( Value /name -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "foo" }
@@ -1151,20 +1425,84 @@ Prgm
                     ( /base=/Catln/RawExpr/RawValue
                         ( /name=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /meta=/Catln/Meta..
+                        , /meta=/Catln/Meta
+                            ( /type=∀/Catln/Type
+                            , /dat=/Catln/Unit..
+                            , /id=∀/Data/String
+                            , /pos=∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos..
+                                    , /A=/Catln/SourcePos..
+                                    ]..
+                                ]
+                            )..
                         )
                     , /value=/Catln/RawExpr/RawValue
                         ( /name=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /meta=/Catln/Meta..
+                        , /meta=/Catln/Meta
+                            ( /type=∀/Catln/Type
+                            , /dat=/Catln/Unit..
+                            , /id=∀/Data/String
+                            , /pos=∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos..
+                                    , /A=/Catln/SourcePos..
+                                    ]..
+                                ]
+                            )..
                         )
-                    , /meta=/Catln/Meta..
-                    ) = /Catln/RawExpr/RawMethod( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                    , /meta=/Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        )..
+                    ) = /Catln/RawExpr/RawMethod
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        ).. = Value /Test/noMeta
+                    )
                     ( Value /base -> /Catln/RawExpr/RawValue
                         ( /name=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /meta=/Catln/Meta..
-                        ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                        , /meta=/Catln/Meta
+                            ( /type=∀/Catln/Type
+                            , /dat=/Catln/Unit..
+                            , /id=∀/Data/String
+                            , /pos=∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos..
+                                    , /A=/Catln/SourcePos..
+                                    ]..
+                                ]
+                            )..
+                        ) = /Catln/RawExpr/RawValue
+                        ( Value /meta -> /Catln/Meta
+                            ( /type=∀/Catln/Type
+                            , /dat=/Catln/Unit..
+                            , /id=∀/Data/String
+                            , /pos=∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos..
+                                    , /A=/Catln/SourcePos..
+                                    ]..
+                                ]
+                            ).. = Value /Test/noMeta
+                        )
                         ( Value /name -> /Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "io" }
@@ -1173,8 +1511,30 @@ Prgm
                     ( Value /value -> /Catln/RawExpr/RawValue
                         ( /name=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /meta=/Catln/Meta..
-                        ) = /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )
+                        , /meta=/Catln/Meta
+                            ( /type=∀/Catln/Type
+                            , /dat=/Catln/Unit..
+                            , /id=∀/Data/String
+                            , /pos=∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos..
+                                    , /A=/Catln/SourcePos..
+                                    ]..
+                                ]
+                            )..
+                        ) = /Catln/RawExpr/RawValue
+                        ( Value /meta -> /Catln/Meta
+                            ( /type=∀/Catln/Type
+                            , /dat=/Catln/Unit..
+                            , /id=∀/Data/String
+                            , /pos=∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos..
+                                    , /A=/Catln/SourcePos..
+                                    ]..
+                                ]
+                            ).. = Value /Test/noMeta
+                        )
                         ( Value /name -> /Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "println" }
@@ -1191,8 +1551,30 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
                 ( Value /e -> /Catln/RawExpr/RawList
                     ( /values=/Data/List/Nil
-                    , /meta=/Catln/Meta..
-                    ) = /Catln/RawExpr/RawList( Value /meta -> /Catln/Meta.. = Value /Test/noMeta )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
+                    , /meta=/Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        )..
+                    ) = /Catln/RawExpr/RawList
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=∀/Catln/Type
+                        , /dat=/Catln/Unit..
+                        , /id=∀/Data/String
+                        , /pos=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
+                                ]..
+                            ]
+                        ).. = Value /Test/noMeta
+                    )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
             ( Value /result -> /Data/String/Text
@@ -1232,8 +1614,34 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/statementKind
-                ( Value /s -> /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. ) = /Catln/RawStatement/RawDeclStatement
-                    ( Value /objArr -> /Catln/RawObjArr.. = /Test/emptyObjArr
+                ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                    ( /objArr=/Catln/RawObjArr
+                        ( /arr=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                ]..
+                            ]
+                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                        , /basis=∀/Catln/ObjectBasis
+                        )..
+                    ) = /Catln/RawStatement/RawDeclStatement
+                    ( Value /objArr -> /Catln/RawObjArr
+                        ( /arr=∀/Data/Maybe
+                            [ /T=/Catln/Pair
+                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                ]..
+                            ]
+                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                        , /basis=∀/Catln/ObjectBasis
+                        ).. = /Test/emptyObjArr
                         ( Value /name -> /Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                             { csValue = "myFn" }
@@ -1251,7 +1659,7 @@ Prgm
                 { csValue = "## A whole page, and the result of reading one" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/declCount
+            ( Value /p -> /Data/Primitive/Integer = /Test/declCount
                 ( Value /p -> /Catln/RawPrgm
                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -1263,7 +1671,7 @@ Prgm
                 { csValue = "0" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/declCount
+            ( Value /p -> /Data/Primitive/Integer = /Test/declCount
                 ( Value /p -> /Catln/RawPrgm
                     ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -1279,7 +1687,7 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/resultDeclCount
+            ( Value /p -> /Data/Primitive/Integer = /Test/resultDeclCount
                 ( Value /r -> /Catln/ImportResult
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe
@@ -1297,7 +1705,7 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /Test/readsCount
+            ( Value /p -> /Data/Primitive/Integer = /Test/readsCount
                 ( Value /r -> /Catln/ImportResult
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe

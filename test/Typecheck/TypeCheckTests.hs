@@ -185,6 +185,13 @@ testHoleArm :: TestTree
 testHoleArm = testCase "an arm ending in a hole is within its declaration" $
   assertResultGuaranteed "test/Typecheck/unit/holeArm.ct" "f"
 
+-- | A fold whose step is an operator declared on its class (@+@ on @Add@) returns what the call
+-- chose its accumulator to be, an empty list's fold included. Fixture: unit/foldClassOp.ct.
+testFoldClassOp :: TestTree
+testFoldClassOp = testCase "a fold through a class-declared operator is within its declaration" $ do
+  assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sum"
+  assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sumNil"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -216,6 +223,7 @@ typecheckTests = do
     , testIntersectionBound
     , testParamShadowsFunction
     , testHoleArm
+    , testFoldClassOp
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

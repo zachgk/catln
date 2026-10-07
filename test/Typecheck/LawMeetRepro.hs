@@ -236,6 +236,7 @@ conSTypes d = case d of
   PropEq _ (a, _) b                 -> [a, b]
   PropEqInferred _ (a, app, base) b -> [a, app, base, b]
   AddArg _ (a, _) b                 -> [a, b]
+  HoResultReq _ (a, _) b            -> [a, b]
   AddInferArg _ a b                 -> [a, b]
   SetArgMode _ _ a b                -> [a, b]
   ConWhere _ a b c                  -> [a, b, c]

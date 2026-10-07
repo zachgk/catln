@@ -50,9 +50,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /f.n( Value /x ) ->
-                            ( /operator+[ /T=/Data/Primitive/Integer.. ]
-                                ( /r=/Data/Primitive/Integer..
-                                , /l=/Data/Primitive/Integer..
+                            ( /operator+[ /T=/Data/Primitive/Integer ]
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /Lib/foo( /this=TopType ) + /Data/Primitive/Integer
                             ) = /foo( Value /this -> TVArg /x = Value /x )
                         ]

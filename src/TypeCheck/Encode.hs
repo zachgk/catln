@@ -305,8 +305,8 @@ callHoSlotLinks layerM = go
     go (TupleApply _ (_, base) arg) = link arg ++ go base
     go (AliasExpr b _)              = go b
     go _                            = []
-    link (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)})
-      | not (null (exprAppliedArgs obj)) = [PropEq 48 (layerM, TVArg $ inExprSingleton obj) (getExprMeta obj)]
+    link (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just _, arrM)})
+      | not (null (exprAppliedArgs obj)) = [PropEq 48 (layerM, TVArg $ inExprSingleton obj) (getExprMeta obj), HoResultReq 49 (layerM, inExprSingleton obj) arrM]
     link _ = []
 
 -- | Non-linear matching: when a pattern binds one variable to several argument positions

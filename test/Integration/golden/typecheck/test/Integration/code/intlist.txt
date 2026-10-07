@@ -34,7 +34,7 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> ∀/Data/Algebra/Ring = /len
+                                ( Value /l -> /Data/Primitive/Integer = /len
                                     ( Value /this -> /IntCons
                                         ( /head=/Data/Primitive/Integer
                                         , /tail=/IntCons
@@ -81,7 +81,7 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )
-                            ( Value /r -> ∀/Data/Algebra/Add = /len( Value /this -> TVArg /tail = Value /tail ) )
+                            ( Value /r -> /Data/Primitive/Integer = /len( Value /this -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )

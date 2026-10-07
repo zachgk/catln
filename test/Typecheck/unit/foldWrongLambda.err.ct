@@ -1,0 +1,30 @@
+annot(#noCore)
+
+# A fold whose step returns something other than what [foldr]'s [$B] is chosen to be. [sum] chooses
+# [$B] to be its declared [Integer]; the step must then return one, and a [Str] is not.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+module(Catln)
+  data(IO)
+module(Fx)
+  class(Add)
+
+  data(Str)
+
+  every(/Data/Primitive/Integer, isa= [/Fx/Add])
+
+  (_ :: $T + _ :: $T)[$T -> /Fx/Add] -> $T
+  (l :: /Data/Primitive/Integer + r :: /Data/Primitive/Integer)= l
+
+  class(List[$T])
+  class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
+  every(ConsList[$T -> $_T], isa= [/Fx/List[$T -> $_T]])
+
+  foldr[$A, $B](lst -> /Fx/List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+  foldr(lst= /Fx/Nil, fn(acc, v), init)= init
+  foldr(lst= /Fx/Cons(head, tail), fn(acc, v), init)= fn(acc= foldr(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
+
+  sum(lst -> /Fx/List[$T -> /Data/Primitive/Integer]) -> /Data/Primitive/Integer
+  sum(lst)= foldr(lst= lst, fn(acc, v)= /Fx/Str, init= 0)

@@ -16,7 +16,7 @@ Prgm
                                 )
                             ,
                                 ( /compareChars./Data/$ba75a7
-                                    ( /$ba75a7-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ( /$ba75a7-arg=∀/Data/Algebra/Comparison
                                     , /at=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     , /bt=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) + /Data/compareChars
@@ -452,7 +452,7 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "-" }
                             )
-                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/magnitudeText( Value /mantissa -> TVArg /mantissa = Value /mantissa )( Value /exponent -> TVArg /exponent = Value /exponent ) )
+                            ( Value /r -> ∀/Data/String = /Data/magnitudeText( Value /mantissa -> TVArg /mantissa = Value /mantissa )( Value /exponent -> TVArg /exponent = Value /exponent ) )
                         , /Data/floatText
                             ( Value /parts -> /Data/Primitive/FloatParts/Finite
                                 ( /negative=/Data/Primitive/False
@@ -607,18 +607,7 @@ Prgm
                                                     , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                                     )
                                                 ) = /Data/digitsText
-                                                ( Value /ds -> UnionType
-                                                    ( Just
-                                                        ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                                        , fromList []
-                                                        , []
-                                                        )
-                                                    , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                        ( /head=/Data/Primitive/Integer
-                                                        , /tail=/Data/List/Nil
-                                                        )
-                                                    , []
-                                                    ) = /Data/fractionDigits( Value /ds -> TVArg /digits = Value /digits )
+                                                ( Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/fractionDigits( Value /ds -> TVArg /digits = Value /digits )
                                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                                         { ciValue = 1 }
                                                     )
@@ -632,11 +621,11 @@ Prgm
                                     { csValue = "e" }
                                 )
                             )
-                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toStringBase
+                            ( Value /r -> ∀/Data/String = /Data/toStringBase
                                 ( Value /base -> /Data/Primitive/Integer = CInt
                                     { ciValue = 10 }
                                 )
-                                ( Value /this -> /Data/Primitive/Integer.. = /operator-( Value /l -> TVArg /point = Value /point )
+                                ( Value /this -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /point = Value /point )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
                                     )
@@ -705,19 +694,7 @@ Prgm
                                             , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                             )
                                         ) = /Data/digitsText
-                                        ( Value /ds -> UnionType
-                                            ( Just
-                                                ( PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                ( /head=/Data/Primitive/Integer
-                                                , /tail=/Data/List/Nil
-                                                )
-                                            , []
-                                            ) = /Data/fractionDigits( Value /ds -> TVArg /digits = Value /digits )( Value /n -> TVArg /point = Value /point )
-                                        )
+                                        ( Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/fractionDigits( Value /ds -> TVArg /digits = Value /digits )( Value /n -> TVArg /point = Value /point ) )
                                     )
                                 )
                             )
@@ -859,7 +836,7 @@ Prgm
                                 ) = /Data/List/Cons( Value /head@Value /bh -> /Data/Char )
                                 ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> ∀/Data/Algebra/Comparison = /$ba75a7( Value /at -> TVArg /at = Value /at )( Value /bt -> TVArg /bt = Value /bt )
-                            ( Value /$ba75a7-arg -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compareTo( Value /other -> TVArg /bh = Value /bh )( Value /this -> TVArg /ah = Value /ah ) )
+                            ( Value /$ba75a7-arg -> ∀/Data/Algebra/Comparison = /compareTo( Value /other -> TVArg /bh = Value /bh )( Value /this -> TVArg /ah = Value /ah ) )
                         ]
                     }
                 )
@@ -897,8 +874,8 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "-" }
                             )
-                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/toStringBase( Value /base -> TVArg /base = Value /base )
-                                ( Value /this -> /Data/Primitive/Integer.. = /operator-
+                            ( Value /r -> ∀/Data/String = /Data/toStringBase( Value /base -> TVArg /base = Value /base )
+                                ( Value /this -> /Data/Primitive/Integer = /operator-
                                     ( Value /l -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
                                     )( Value /r -> TVArg /this = Value /this )
@@ -1881,16 +1858,7 @@ Prgm
                                 ) = /Data/List/Cons( Value /head -> /Data/Char )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             )( Value /base -> /Data/Primitive/Integer )( Value /sign -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /$6d5c93( Value /base -> TVArg /base = Value /base )( Value /acc -> TVArg /acc = Value /acc )( Value /tail -> TVArg /tail = Value /tail )( Value /sign -> TVArg /sign = Value /sign )
-                            ( Value /$6d5c93-arg -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                , []
-                                ) = /Data/Char/digitValue( Value /this -> TVArg /head = Value /head )
-                            )
+                            ( Value /$6d5c93-arg -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Char/digitValue( Value /this -> TVArg /head = Value /head ) )
                         ]
                     }
                 )
@@ -1960,15 +1928,7 @@ Prgm
                                     , /cs=TopType
                                     , /sign=TopType
                                     ) + /digitsValue./Data/String/$6d5c93
-                                    ( /$6d5c93-arg=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some( /value=/Data/Primitive/Integer )
-                                        , []
-                                        )
+                                    ( /$6d5c93-arg=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                     , /base=/Data/Primitive/Integer
                                     , /acc=/Data/Primitive/Integer
                                     , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
@@ -2278,7 +2238,7 @@ Prgm
                                 )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /first = Value /first )( Value /r -> TVArg /sep = Value /sep ) )
-                            ( Value /r -> ∀/Data/Algebra/Semigroup = /Data/String/join( Value /sep -> TVArg /sep = Value /sep )
+                            ( Value /r -> ∀/Data/String = /Data/String/join( Value /sep -> TVArg /sep = Value /sep )
                                 ( Value /parts -> /Data/List/Cons[ /T=∀/Data/String ]
                                     ( /head=∀/Data/String
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
@@ -3052,7 +3012,7 @@ Prgm
                 { csValue = "## Numbers as text" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+            ( Value /p -> ∀/Data/String = /Data/toStringBase
                 ( Value /base -> /Data/Primitive/Integer = CInt
                     { ciValue = 16 }
                 )
@@ -3065,7 +3025,7 @@ Prgm
                 { csValue = "ff" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+            ( Value /p -> ∀/Data/String = /Data/toStringBase
                 ( Value /base -> /Data/Primitive/Integer = CInt
                     { ciValue = 2 }
                 )
@@ -3078,7 +3038,7 @@ Prgm
                 { csValue = "101" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+            ( Value /p -> ∀/Data/String = /Data/toStringBase
                 ( Value /base -> /Data/Primitive/Integer = CInt
                     { ciValue = 10 }
                 )
@@ -3091,7 +3051,7 @@ Prgm
                 { csValue = "0" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/toStringBase
+            ( Value /p -> ∀/Data/String = /Data/toStringBase
                 ( Value /base -> /Data/Primitive/Integer = CInt
                     { ciValue = 10 }
                 )
@@ -3121,7 +3081,7 @@ Prgm
                 [mantissa] × 2^[exponent], and a double has 53 bits of mantissa and a least exponent of -1074." }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.5 }
@@ -3133,7 +3093,7 @@ Prgm
                 { csValue = "1.5" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 0.1 }
@@ -3145,7 +3105,7 @@ Prgm
                 { csValue = "0.1" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = /operator+
                         ( Value /l -> /Data/Primitive/Float = CFloat
@@ -3162,7 +3122,7 @@ Prgm
                 { csValue = "0.30000000000000004" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.0e-2 }
@@ -3174,7 +3134,7 @@ Prgm
                 { csValue = "1.0e-2" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1234567.0 }
@@ -3186,7 +3146,7 @@ Prgm
                 { csValue = "1234567.0" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.0e7 }
@@ -3198,7 +3158,7 @@ Prgm
                 { csValue = "1.0e7" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 123.456 }
@@ -3210,7 +3170,7 @@ Prgm
                 { csValue = "123.456" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 100.0 }
@@ -3222,7 +3182,7 @@ Prgm
                 { csValue = "100.0" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = /operator-
                         ( Value /l -> /Data/Primitive/Float = CFloat
@@ -3239,7 +3199,7 @@ Prgm
                 { csValue = "-2.5" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 0.0 }
@@ -3271,7 +3231,7 @@ Prgm
                 { csValue = "  not the ones it is written with." }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 5.0e-324 }
@@ -3283,7 +3243,7 @@ Prgm
                 { csValue = "5.0e-324" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 2.2250738585072014e-308 }
@@ -3295,7 +3255,7 @@ Prgm
                 { csValue = "2.2250738585072014e-308" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.7976931348623157e308 }
@@ -3307,7 +3267,7 @@ Prgm
                 { csValue = "1.7976931348623157e308" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 4.503599627370496e15 }
@@ -3319,7 +3279,7 @@ Prgm
                 { csValue = "4.503599627370496e15" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 9.007199254740992e15 }
@@ -3331,7 +3291,7 @@ Prgm
                 { csValue = "9.007199254740992e15" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 9.999999999999999e-2 }
@@ -3343,7 +3303,7 @@ Prgm
                 { csValue = "9.999999999999999e-2" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 9999999.0 }
@@ -3355,7 +3315,7 @@ Prgm
                 { csValue = "9999999.0" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 9999999.5 }
@@ -3367,7 +3327,7 @@ Prgm
                 { csValue = "9999999.5" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.0e22 }
@@ -3379,7 +3339,7 @@ Prgm
                 { csValue = "1.0e22" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.2345678901234568e17 }
@@ -3391,7 +3351,7 @@ Prgm
                 { csValue = "1.2345678901234568e17" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 1.0e-7 }
@@ -3403,7 +3363,7 @@ Prgm
                 { csValue = "1.0e-7" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 3.141592653589793 }
@@ -3415,7 +3375,7 @@ Prgm
                 { csValue = "3.141592653589793" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/floatText
+            ( Value /p -> ∀/Data/String = /Data/floatText
                 ( Value /parts -> ∀/Data/Primitive/FloatParts = /Data/Primitive/parts
                     ( Value /this -> /Data/Primitive/Float = CFloat
                         { cfValue = 9.999999999999999e22 }
@@ -4007,24 +3967,12 @@ Prgm
                 { csValue = "  below are shown [join]ed with a bar between them." }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "|" }
                 )
-                ( Value /parts -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/String ]
-                        ( /head=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                        )
-                    , []
-                    ) = /Data/String/split
+                ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
                     ( Value /sep -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "," }
@@ -4040,24 +3988,12 @@ Prgm
                 { csValue = "a|b||c" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "|" }
                 )
-                ( Value /parts -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/String ]
-                        ( /head=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                        )
-                    , []
-                    ) = /Data/String/split
+                ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
                     ( Value /sep -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = ", " }
@@ -4073,24 +4009,12 @@ Prgm
                 { csValue = "a|b" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "|" }
                 )
-                ( Value /parts -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/String ]
-                        ( /head=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                        )
-                    , []
-                    ) = /Data/String/split
+                ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
                     ( Value /sep -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "" }
@@ -4106,24 +4030,12 @@ Prgm
                 { csValue = "abc" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "|" }
                 )
-                ( Value /parts -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/String ]
-                        ( /head=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                        )
-                    , []
-                    ) = /Data/String/lines
+                ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/lines
                     ( Value /this -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "one
@@ -4137,24 +4049,12 @@ Prgm
                 { csValue = "one|two" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "|" }
                 )
-                ( Value /parts -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/String ]
-                        ( /head=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                        )
-                    , []
-                    ) = /Data/String/words
+                ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/words
                     ( Value /this -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "  some  words here " }
@@ -4166,7 +4066,7 @@ Prgm
                 { csValue = "some|words|here" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = ", " }
@@ -4234,24 +4134,12 @@ Prgm
                 { csValue = "a, b, c" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /Data/String/join
+            ( Value /p -> ∀/Data/String = /Data/String/join
                 ( Value /sep -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = ", " }
                 )
-                ( Value /parts -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/String ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/String ]
-                        ( /head=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                        )
-                    , []
-                    ) = /Data/String/split
+                ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
                     ( Value /sep -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "-" }

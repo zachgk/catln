@@ -143,6 +143,11 @@ data ConstraintDat p
   -- ('TypeCheck.Encode.topArgPropEqs').
   | PropEqInferred Int (p, p, p) p -- ^ Both Actual and Req, PropEqInferred (super, app, base) slot
   | AddArg Int (p, TypeVarAux) p -- ^ Both Actual and Req,
+  -- | What a call's declaration says one of its higher-order arguments returns, read with the
+  -- call's bindings, as a requirement on the result of the lambda the call is given:
+  -- @HoResultReq (call, fn) result@. @foldr@ declares @fn(..) -> $_B@, so a call choosing
+  -- @$_B=Integer@ requires its lambda to return an @Integer@ ('TypeCheck.Constrain').
+  | HoResultReq Int (p, ArgName) p -- ^ Req only
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | ConWhere Int p p p -- ^ Where has a predicates
@@ -201,6 +206,9 @@ mapMConDat f (PropEqInferred i (p1, pa, pb) p2) = do
   pa' <- f pa
   pb' <- f pb
   PropEqInferred i (p1', pa', pb') <$> f p2
+mapMConDat f (HoResultReq i (p1, argName) p2) = do
+  p1' <- f p1
+  HoResultReq i (p1', argName) <$> f p2
 mapMConDat f (AddArg i (p1, argName) p2) = do
   p1' <- f p1
   AddArg i (p1', argName) <$> f p2
@@ -361,6 +369,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
   show (PropEq i (s1, n) s2) = printf "(%s).(%s) %d== %s"  (show s1) (show n) i (show s2)
   show (PropEqInferred i (s1, sa, sb) s2) = printf "(%s).(inferred from %s over %s) %d== %s"  (show s1) (show sa) (show sb) i (show s2)
+  show (HoResultReq i (s1, argName) s2) = printf "(%s).(result of %s) %d=> %s" (show s1) (show argName) i (show s2)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)

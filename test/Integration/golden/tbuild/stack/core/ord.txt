@@ -347,24 +347,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/testOrdReflexive"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testOrdReflexive
-                            ( EAppVar
-                                { eavName = /O
-                                , eavMeta = ∀/Data/Algebra/Ordering[ /T=TopType ]
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /o -> $/O } )
-                            ( EAppArg { eaaArg = Value /t -> $/T } ) -> /Data/Primitive/Integer = 0
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/mkComparison"
                 , ObjectMapItem
                     { omiDecls =
@@ -441,11 +423,14 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Algebra/compare
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
+                            )
                             ( EAppArg { eaaArg = Value /a -> $/T } )
                             ( EAppArg { eaaArg = Value /b -> $/T } )
-                            ( EAppArg
-                                { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] }
-                            ) -> ∀/Data/Algebra/Comparison
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Algebra/Ordering } ) -> ∀/Data/Algebra/Comparison
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -468,45 +453,6 @@ Prgm
                             ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isEq
                             ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Algebra/testOrdAntisymmetric"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testOrdAntisymmetric
-                            ( EAppVar
-                                { eavName = /O
-                                , eavMeta = ∀/Data/Algebra/Ordering[ /T=TopType ]
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /o -> $/O } )
-                            ( EAppArg { eaaArg = Value /x -> $/T } )
-                            ( EAppArg { eaaArg = Value /y -> $/T } ) -> /Data/Primitive/Integer = 0
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Algebra/testOrdTransitive"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testOrdTransitive
-                            ( EAppVar
-                                { eavName = /O
-                                , eavMeta = ∀/Data/Algebra/Ordering[ /T=TopType ]
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /o -> $/O } )
-                            ( EAppArg { eaaArg = Value /x -> $/T } )
-                            ( EAppArg { eaaArg = Value /y -> $/T } )
-                            ( EAppArg { eaaArg = Value /z -> $/T } ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )
@@ -550,7 +496,7 @@ Prgm
                                 , eavMeta = ∀/Data/Algebra/Ord
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /this -> $/T } ) -> ∀/Data/Algebra/Ordering[ /T=TopType ]
+                            ( EAppArg { eaaArg = Value /this -> $/T } ) -> ∀/Data/Algebra/Ordering
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -630,9 +576,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Algebra/Comparison
@@ -652,8 +595,7 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Ordering
-            , cgcExtends =
-                [ ∀/Data/Algebra/Ordering[ /T=$_/T ] ]
+            , cgcExtends = [ ∀/Data/Algebra/Ordering ]
             , cgcDoc = Just ""
             }
         , CGClass
@@ -664,7 +606,7 @@ Prgm
             }
         , CGClass
             { cgcSealed = False
-            , cgcPartial = /Data/Algebra/Ordering[ /T=TopType ]
+            , cgcPartial = /Data/Algebra/Ordering
             , cgcExtends = []
             , cgcDoc = Just ""
             }
@@ -694,8 +636,8 @@ Prgm
                   as an [Eq] type names a canonical equivalence and derives [operator==], an [Ord] type names a
                   canonical ordering and derives [compareTo], and because comparing also decides equality every
                   [Ord] is an [Eq].
-                  Ordering mirrors equivalence exactly. [Ordering] is the class of orderings over a type [$T] (the
-                  analog of [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
+                  Ordering mirrors equivalence exactly. [Ordering] is the class of orderings (the analog of
+                  [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
                   type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
                   follows, and the comparison operators [operator<] / [operator<=] / [operator>] / [operator>=]
                   follow from [compareTo] in turn."
@@ -731,10 +673,17 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## The Ordering class
-                  An [Ordering] is the class of orderings over a type [$T], the analog of [Eqv]. Each object in
-                  the class is a single ordering and supplies [compare], which ranks two values of [$T] as
-                  [LessThan], [Equal], or [GreaterThan]. It is a class declaration: every object in the class
-                  defines it for its own type (see the per-type instances such as [IntOrdering] below)."
+                  An [Ordering] is the class of orderings, the analog of [Eqv]. Each object in the class is a
+                  single ordering over some type and supplies [compare], which ranks two values of that type as
+                  [LessThan], [Equal], or [GreaterThan].
+                  TODO As for [Eqv], the type an [Ordering] ranks is not data and so is not a type parameter.
+                  Once refinement types can state it, write it as what each ordering covers and drop the
+                  [#invalid] below:
+                  ```
+                  :Ordering.over -> TypeSet
+                  :Ordering.compare[$T](a -> $T, b -> $T) | this.over.superset($T) -> Comparison
+                  :$T.ord[$T -> /Data/Algebra/Ord] -> /Data/Algebra/Ordering | $out.over.superset($T)
+                  ```"
                 }
             )
         , /Catln/#md
@@ -842,14 +791,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLess
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 2 }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -866,14 +815,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isEq
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 3 }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -890,14 +839,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isGreater
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 4 }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -914,14 +863,14 @@ Prgm
                 { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLessEq
                         ( EAppArg
-                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
                                 ( /compareTo
                                     ( EAppArg
                                         { eaaArg = Value /other -> /Data/Primitive/Integer = 3 }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Primitive/Integer = 2 }
-                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             }
                         ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
@@ -992,25 +941,25 @@ Prgm
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Laws of ordering
                   Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
-                  arbitrary members of that instance's type ([$T])."
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Reflexivity: every value compares [Equal] to itself."
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a."
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Transitivity: a < b and b < c imply a < c, expressed as a material implication."
+                  arbitrary members of the type that instance ranks ([$T]): reflexivity (every value compares
+                  [Equal] to itself), antisymmetry (a < b exactly when b > a) and transitivity (a < b and b < c
+                  imply a < c, as a material implication).
+                  TODO The laws are set aside while [compare] is [#invalid], for the reason the [Eqv] laws in
+                  [Data/Algebra/eq] are. Restore them once [Ordering.over] can be stated:
+                  ```
+                  testOrdReflexive[$O -> Ordering[$T]](o -> $O, t -> $T) =
+                    #test
+                    #assert(test= o.compare(a= t, b= t).isEq)
+                    0
+                  testOrdAntisymmetric[$O -> Ordering[$T]](o -> $O, x -> $T, y -> $T) =
+                    #test
+                    #assert(test= o.compare(a= x, b= y).isLess == o.compare(a= y, b= x).isGreater)
+                    0
+                  testOrdTransitive[$O -> Ordering[$T]](o -> $O, x -> $T, y -> $T, z -> $T) =
+                    #test
+                    #assert(test= ~(o.compare(a= x, b= y).isLess && o.compare(a= y, b= z).isLess) || o.compare(a= x, b= z).isLess)
+                    0
+                  ```"
                 }
             )
         ]
