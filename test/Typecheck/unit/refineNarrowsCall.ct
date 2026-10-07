@@ -1,0 +1,27 @@
+annot(#noCore)
+
+#noCore
+# A call is read at what every refinement covering it promises, met with its declaration. Both
+  refinements of [tri] cover [tri(n= Z)], so it is within the [B] they share: [onZ] returns that.
+  Neither covers [tri(n -> Nat)] as a whole — only its [Z] part — so whether one of them applies to
+  such a call is not known, and [onNat] is read at the declaration alone.
+data(A)
+data(B)
+data(C)
+
+class(AB, [A, B])
+class(BC, [B, C])
+class(Tri, [AB, BC])
+class(Nat, [Z, S(n -> Nat)])
+
+tri(n -> Nat) -> Tri
+tri(n= Z)= B
+tri(n= S(n@m))= C
+tri(n -> Z) -> AB
+  #refine
+tri(n -> Z) -> BC
+  #refine
+
+onZ= tri(n= Z)
+
+onNat(n -> Nat)= tri(n= n)

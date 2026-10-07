@@ -221,7 +221,7 @@ evalCallTree  m (TCMatch destType opts) = do
     -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
     [] -> do
       Env{evTbEnv} <- get
-      case buildPartialCallTree evTbEnv [] S.empty PTopType MayHold (getValPartialType m) destType of
+      case buildPartialCallTree evTbEnv [] S.empty PTopType MayHold DestRequired (getValPartialType m) destType of
         CRes _ rebuilt | rebuilt /= TCMatch destType opts ->
           withEvalPush ("rebuild match with val " ++ show m) $ evalCallTree m rebuilt
         _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValPartialType m) (show opts)
@@ -601,7 +601,7 @@ callOnVal env@Env{evTbEnv} input = case valCallTree evTbEnv input of
 -- satisfies the destination would otherwise be handed back as it stands.
 valCallTree :: TBEnv -> Val -> Maybe TCallTree
 valCallTree tbEnv@TBEnv{tbTypeEnv} input = listToMaybe $ mapMaybe build [displayPartial tbTypeEnv False input, displayPartial tbTypeEnv True input]
-  where build src = cresToMaybe $ buildCallTree tbEnv [] S.empty PTopType MustCall (singletonType src) dshowDestType
+  where build src = cresToMaybe $ buildCallTree tbEnv [] S.empty PTopType MustCall DestRequired (singletonType src) dshowDestType
 
 -- | A value's type for building its display, read only as deep as the value's own shape: the call
 -- the display is asked through (@toString@'s or @dshow@'s argument), the value, and the value's

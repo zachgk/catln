@@ -142,8 +142,15 @@ objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
 -- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
 objArrGraphQueryRaw :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
-objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ universeObjectMapItem item
     where
+      item = H.lookupDefault mempty ptName tg
+      -- A refinement declaration is not an arrow a term is rewritten through: it is a further
+      -- promise about the result of the arrows that are. Offered as one, it became an alternative
+      -- beside the arms it refines, and the reach union then read the call as any of their results
+      -- (@tri(n -> Z) -> AB@ and @tri(n -> Z) -> BC@ beside the arm's @B@ gave all of @Tri@). So the
+      -- promises are the item's declarations and definitions, and each result is met with every
+      -- refinement covering the part of the source that promise accepts ('refinedDest').
       promises | prune     = mostSpecificPromises
                | otherwise = filter accepts
       -- Each declaration/definition is a PROMISE: given an input of one type, an output of a certain
@@ -199,10 +206,12 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
         -- If none of it is valid, then there is Nothing
         case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
           potentialSrc@(UnionType Nothing potSrcLeafs []) -> if not (isBottomType potentialSrc)
-            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [arrowDestType typeEnv vaenv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [map (refinedDest potentialSrcPartial) (arrowDestType typeEnv vaenv potentialSrcPartial oa) | potentialSrcPartial <- splitUnionType potSrcLeafs]
             else []
           _ -> error "Unexpected non-union in TryTArrow"
       tryTArrow ObjArr{oaArr=Nothing} = []
+
+      refinedDest src dest = foldl' (intersectTypesEnv typeEnv vaenv) dest (coveringRefinementResults typeEnv vaenv item src)
 
       joinPartialDestTypes :: [[Type]] -> [Type]
       joinPartialDestTypes [] = [BottomType]
@@ -288,20 +297,23 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
                          | oa <- flatObjectMapItem item ]
 
   typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
-    case declDests of
-      (_:_) -> unionAllTypes typeEnv declDests
-      -- No declaration (e.g. @sorted@): the return type is INFERRED from the definition arms —
-      -- 'PTopType' until they resolve, refining as they do. Each arm dest's own raw applied leaves
-      -- are then replaced by THEIR declared result (one level, declared-only, so this terminates):
-      -- @sorted@'s Cons arm dest @insert(raw)@ becomes @∀ConsList@, giving @sorted@ the @Cons@ its
-      -- arms produce so a requirement built from it admits @Cons@ instead of collapsing to @Nil@.
-      []    -> case [ armDest
-                    | oa@ObjArr{oaArr=Just{}} <- omiDefs item
-                    , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
-                    , armDest <- arrowDestType typeEnv vaenv partial oa ] of
-                 []       -> PTopType
-                 defDests -> unionAllTypes typeEnv (defDests ++ concatMap declResultOfRawLeaves defDests)
+    foldl' (intersectTypesEnv typeEnv vaenv) unrefined (coveringRefinementResults typeEnv vaenv item partial)
     where
+      -- What the declarations alone promise. Every refinement covering the call then narrows it
+      -- ('coveringRefinementResults'): each is a further promise about the same result.
+      unrefined = case declDests of
+        (_:_) -> unionAllTypes typeEnv declDests
+        -- No declaration (e.g. @sorted@): the return type is INFERRED from the definition arms —
+        -- 'PTopType' until they resolve, refining as they do. Each arm dest's own raw applied leaves
+        -- are then replaced by THEIR declared result (one level, declared-only, so this terminates):
+        -- @sorted@'s Cons arm dest @insert(raw)@ becomes @∀ConsList@, giving @sorted@ the @Cons@ its
+        -- arms produce so a requirement built from it admits @Cons@ instead of collapsing to @Nil@.
+        []    -> case [ armDest
+                      | oa@ObjArr{oaArr=Just{}} <- omiDefs item
+                      , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+                      , armDest <- arrowDestType typeEnv vaenv partial oa ] of
+                   []       -> PTopType
+                   defDests -> unionAllTypes typeEnv (defDests ++ concatMap declResultOfRawLeaves defDests)
       item = H.lookupDefault mempty pName tg
       declDests = [ dest
                   | oa@ObjArr{oaArr=Just{}} <- omiDecls item
@@ -446,6 +458,22 @@ exprVarArgsWithSrcs typeEnv os = joinAllPossVarArgMetaWithSrc typeEnv (map (uncu
 
 exprVarArgsWithObjSrcs :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> PossArgMetaMapWithSrc m
 exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, obj) -> (oaObjExpr obj, src)) os
+
+-- | The results that the refinement declarations of an item promise for a call, one per refinement
+-- whose input covers the WHOLE call.
+--
+-- A refinement is a further promise about the declared result on part of its domain
+-- (@isZero(n -> Z) -> True@ beside @isZero(n -> Nat) -> Boolean@), so what the call is declared to
+-- return is the declarations' result met with every one of these. A refinement that covers only
+-- part of the call says nothing about it: whether the call's value falls in the part it covers is
+-- not known, so it is left out rather than read as applying.
+coveringRefinementResults :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> TypeVarArgEnv -> ObjectMapItem e m -> PartialType -> [Type]
+coveringRefinementResults typeEnv vaenv item partial =
+  [ unionAllTypes typeEnv dests
+  | oa@ObjArr{oaArr=Just{}} <- omiRefineDecls item
+  , isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+  , let dests = arrowDestType typeEnv vaenv partial oa
+  , not (null dests) ]
 
 arrowDestType :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
 arrowDestType = arrowDestTypeBase False

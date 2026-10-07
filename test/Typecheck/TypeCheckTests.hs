@@ -13,7 +13,7 @@ module Typecheck.TypeCheckTests where
 import           Common.TestCommon     (findErrCt)
 import           Control.Monad.State   (evalStateT, execStateT, lift, runStateT)
 import           CRes
-import           CtService             (ctssBaseFiles, getTPrgm)
+import           CtService             (ctssBaseFiles, getTPrgm, getTPrgmJoined)
 import           Data.Graph            (graphFromEdges)
 import           Data.List             (isInfixOf, sort)
 import           Hedgehog
@@ -21,6 +21,7 @@ import qualified Hedgehog.Gen          as HG
 import           MapMeta
 import           Semantics             (testCtssConfig)
 import           Semantics.Prgm
+import           Semantics.Types
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog   as THG
 import           Test.Tasty.HUnit      (Assertion, assertEqual, assertFailure,
@@ -192,6 +193,27 @@ testFoldClassOp = testCase "a fold through a class-declared operator is within i
   assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sum"
   assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sumNil"
 
+-- | A call is read at the intersection of every refinement covering it, and a refinement covering
+-- only part of a call says nothing about it. @onZ@ calls @tri(n= Z)@, which both refinements cover
+-- (@-> AB@ and @-> BC@), so its result is the call form beside the @B@ they share; @onNat@ calls
+-- @tri@ on every @Nat@, which neither covers, so it keeps the declared @Tri@.
+-- Fixture: unit/refineNarrowsCall.ct.
+testRefineNarrowsCall :: TestTree
+testRefineNarrowsCall = testCase "a call is within every refinement covering it" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/refineNarrowsCall.ct"]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let resultOf name = [ getMetaType m | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), oaObjPath oa == name ]
+  case resultOf "/onZ" of
+    [UnionType Nothing leafs []] -> assertEqual "the forms onZ may take" ["/B", "/tri"] (sort [nameStr (ptName l) | l <- splitUnionType leafs])
+    t -> assertFailure ("onZ is not read within B: " ++ show t)
+  case resultOf "/onNat" of
+    [t@(UnionType (Just (PredsOne (PredClass c), _, _)) _ _)] -> assertEqual ("onNat keeps its declaration: " ++ show t) "/Tri" (nameStr (ptName c))
+    t -> assertFailure ("onNat is not read at its declaration: " ++ show t)
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -224,6 +246,7 @@ typecheckTests = do
     , testParamShadowsFunction
     , testHoleArm
     , testFoldClassOp
+    , testRefineNarrowsCall
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

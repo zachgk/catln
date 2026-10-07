@@ -25,8 +25,8 @@ import qualified Data.HashSet        as S
 import           Control.Monad
 import           Control.Monad.State
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (intercalate, nub, partition)
-import           Data.Maybe          (fromMaybe, isJust, isNothing)
+import           Data.List           (foldl', intercalate, nub, partition)
+import           Data.Maybe          (fromMaybe, isJust, isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -213,12 +213,20 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
 -- does not make @Nothing@ outside it.
 declaredCallResult :: FEnvTypeEnv -> TypeVarArgEnv -> PartialType -> Type
 declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case mapM fixedResult applying of
-  Just results@(_:_) -> unionAllTypes typeEnv results
+  Just results@(_:_) -> foldl' (intersectTypesEnv typeEnv vaenv) (unionAllTypes typeEnv results) refinedResults
   _                  -> PTopType
   where
     TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
+    item = H.lookupDefault mempty ptName tg
+    -- Each refinement covering the whole call is a further promise about its result, read under the
+    -- same rule as a declaration's ('fixedResult'); one covering only part of the call says nothing
+    -- about it ('coveringRefinementResults').
+    refinedResults = mapMaybe fixedResult
+      [ oa
+      | oa@ObjArr{oaArr=Just{}} <- omiRefineDecls item
+      , isSubtypeOfWithEnv typeEnv vaenv (singletonType p) (getMetaType (getExprMeta (oaObjExpr oa))) ]
     applying = [ oa
-               | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup ptName tg)
+               | oa@ObjArr{oaArr=Just{}} <- omiDecls item
                , let declType = getMetaType (getExprMeta (oaObjExpr oa))
                , Just declObj <- [maybeGetSingleton declType]
                , H.keysSet (ptArgs declObj) == H.keysSet callArgs
