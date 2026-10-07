@@ -8,7 +8,7 @@ import qualified Data.HashMap.Strict as H
 import           Hedgehog
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.Types     (mkName)
+import           Semantics.Types     (Constant (CStr), mkName)
 import           Syntax.Ct.Builder   (rawStr)
 import           Syntax.Ct.Formatter (formatRootPrgm)
 import           Syntax.Ct.Parser    (contents, pPrgm)
@@ -129,6 +129,32 @@ testCommentIndent = testGroup "CommentIndentTests" [
       Left err -> assertFailure err
       Right f  -> assertEqual "formatting a comment gave back different writing" ls (lines f)
 
+-- | An @import@ is read wherever it is written at the top level, in the order written, and only as
+-- the keyword: @annot(#noCore)@ is commonly written first, and a name that begins with @import@ is
+-- still the statement it names. Read only before the first statement, an import written after one
+-- was taken for a bare @import@ and a bare string, and the string crashed the desugarer.
+testImportPlacement :: TestTree
+testImportPlacement = testCase "an import is read wherever it is written at the top level" $
+  case runParser (contents pPrgm) "<imports>" src of
+    Left err -> assertFailure (show err)
+    Right (RawPrgm imports statements) -> do
+      assertEqual "the imports, in the order written" [Just "a.ct", Just "b.ct"] (map (written . impRaw) imports)
+      assertEqual "the statements: the annotation and the two declarations" 3 (length statements)
+  where
+    written (RawCExpr _ (CStr path)) = Just path
+    written _                        = Nothing
+    src = unlines
+      [ "annot(#noCore)"
+      , ""
+      , "import \"a.ct\""
+      , ""
+      , "importer(x)= x"
+      , ""
+      , "import \"b.ct\""
+      , ""
+      , "main= 1"
+      ]
+
 syntaxTests :: IO TestTree
 syntaxTests = do
   -- TODO: Add hs prgmDirs
@@ -145,6 +171,7 @@ syntaxTests = do
       testGroup "FormatTests" (map testPrgm allPrgms)
     , testGroup "ReparseTests" (map testReparse allPrgms)
     , testImportStr
+    , testImportPlacement
     , testCommentIndent
     ]
 

@@ -406,6 +406,16 @@ assertPageErrorSays page needle = do
   case res of
     CRes _ _  -> assertFailure "the page is written to fail, and it type-checked"
     CErr notes -> assertBool ("the error says " ++ show needle ++ ":\n" ++ prettyCNotes notes) (needle `isInfixOf` prettyCNotes notes)
+-- | An import written after another statement (@annot(#noCore)@ first) is read as an import, and
+-- the page it names is imported. Fixture: unit/importAfterAnnot.
+testImportAfterAnnot :: TestTree
+testImportAfterAnnot = testCase "an import written after another statement imports its page" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/importAfterAnnot/page.ct"]
+    getTPrgm ctss
+  case res of
+    CRes _ _ -> return ()
+    CErr ns  -> assertFailure (prettyCNotes ns)
 
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
@@ -446,6 +456,7 @@ typecheckTests = do
     , testWhereRefine
     , testDeclResult
     , testPassedOnLink
+    , testImportAfterAnnot
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

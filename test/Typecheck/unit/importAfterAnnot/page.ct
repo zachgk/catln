@@ -1,0 +1,10 @@
+annot(#noCore)
+
+import "lib.ct"
+
+# An import written after another statement. Imports were read only before the first statement, so
+# this one was taken for a bare [import] and a bare string, and the string crashed the desugarer.
+#noCore
+module(Pg)
+  keep(x -> /Lib/R) -> /Lib/R
+  keep(x)= x

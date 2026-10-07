@@ -128,6 +128,12 @@ declToObjArrow (inheritPath, inheritAnnots) oa@ObjArr{oaAnnots, oaArr} = oa3
       }
 
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
+-- A declaration declares something named. A statement that is only a constant (a string written
+-- alone on a line) names nothing, so it is refused as written rather than carried on until a later
+-- pass asks it for the name it does not have.
+desDecl _ RawObjArr{roaObj=Just obj} _
+  | isNothing (maybeExprPath obj) =
+      CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta obj) "A statement must declare or define something named. It is only a value, so it says nothing about any name."]
 desDecl statementEnv decl subStatements = do
   -- A condition refining a type names its arguments ('rawTypeCondPositional'); one that does not
   -- is refused here, where the arrow is still as written, rather than built without the value.

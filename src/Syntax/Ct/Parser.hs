@@ -21,6 +21,7 @@ import           Text.Megaparsec.Char
 
 import           CtConstants
 
+import           Data.Either                (lefts, rights)
 import           Data.List                  (intercalate)
 import           Data.Maybe
 import           Semantics.Prgm
@@ -34,9 +35,12 @@ import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import qualified Text.Megaparsec.Char.Lexer as L
 
+-- | An @import@ line. The keyword is followed by whitespace, so a name that only begins with it
+-- (@importer(..)@) is still read as the statement it is.
 pImport :: Parser RawFileImport
 pImport = do
-  _ <- symbol "import"
+  _ <- try (string "import" <* lookAhead (char ' ' <|> char '\t'))
+  sc
   imp <- term
   _ <- newline
   return $ mkRawFileImport imp
@@ -85,12 +89,17 @@ pNothingNewline = do
   _ <- newline
   return Nothing
 
+-- | A page: its imports and its statements. An @import@ may be written anywhere at the top level,
+-- among the statements as well as before them (@annot(#noCore)@ is commonly written first), and
+-- the imports are kept in the order they were written. Read only before the first statement, an
+-- import written after one was taken for two statements — a bare @import@ and a bare string — and
+-- the string crashed the desugarer.
 pPrgm :: Parser PPrgm
 pPrgm = do
   _ <- many newline
-  imports <- many pImport
-  statements <- many (Just <$> pStatementTree <|> pNothingNewline)
-  return $ RawPrgm imports (catMaybes statements)
+  items <- many (Just . Left <$> pImport <|> Just . Right <$> pStatementTree <|> pNothingNewline)
+  let items' = catMaybes items
+  return $ RawPrgm (lefts items') (rights items')
 
 contents :: Parser a -> Parser a
 contents p = do
