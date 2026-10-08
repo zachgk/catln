@@ -21,7 +21,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -38,7 +38,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -55,7 +55,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"In Progress"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -72,7 +72,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -175,7 +175,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo","tags":["#work"]}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -287,7 +287,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -304,7 +304,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -321,7 +321,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -424,7 +424,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -441,7 +441,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

@@ -1,0 +1,32 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests a /Data/Calendar/#dayPlanner over the vault running the Day Planner plugin, which
+                obsidianPlanner.ct reads. A day planner is the calendar's own answer drawn as the blocks of a day,
+                so it reaches what a calendar written here would and answers what it would.
+                The vault is named note by note for the reason obsidianPlanner.ct names it so. What the planner
+                finds is not written down here, for the reason calendar.ct gives: what answers it is CalendarTests." }
+            )
+        , Value #dayPlanner
+        ]
+    }

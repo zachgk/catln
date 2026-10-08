@@ -1,0 +1,1158 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "09:00 - 10:30 Write the report #task" }
+                            )
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = " " }
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "09:00 - 10:30 Write the report #task" }
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "{"statusName":"Todo","tags":["#task"]}" }
+                            )
+                            ( Value /time -> /Data/Maybe/Some
+                                ( /value=/Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 9 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 10 }
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 9 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 10 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Time/TimeRange
+                                    ( Value /start -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 9 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 9 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 9 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 10 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 10 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 30 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay -> /Data/Maybe/Some
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "1:30pm - 2:15pm Review the draft #task ⏫" }
+                            )
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = " " }
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "1:30pm - 2:15pm Review the draft #task" }
+                            )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "{"statusName":"Todo","tags":["#task"]}" }
+                            )
+                            ( Value /time -> /Data/Maybe/Some
+                                ( /value=/Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 13 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 15 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 14 }
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 13 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 15 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 14 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Time/TimeRange
+                                    ( Value /start -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 13 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 13 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 13 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 30 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 30 }
+                                        )
+                                    )
+                                    ( Value /end -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 15 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 14 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 14 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 14 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 15 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 15 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay -> /Data/Maybe/Some
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "11:00 Stand up" }
+                            )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ( Value /time -> /Data/Maybe/Some
+                                ( /value=/Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Time/TimeRange
+                                    ( Value /start -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 11 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 11 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 11 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 45 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay -> /Data/Maybe/Some
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Read the paper" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /plannedDay -> /Data/Maybe/Some
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "16:00 Call about the paper" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( Value /time -> /Data/Maybe/Some
+                                ( /value=/Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/TimeRange
+                                    ( /start=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            )
+                                        )
+                                    , /end=/Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Time/TimeRange
+                                    ( Value /start -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 16 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 0 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end -> /Data/Time/TimeOfDay
+                                        ( /minute=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            )
+                                        , /hour=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            )
+                                        ) = /Data/Time/TimeOfDay
+                                        ( Value /hour -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 16 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 16 }
+                                        )
+                                        ( Value /minute -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 45 }
+                                                ]
+                                            ) = CInt
+                                            { ciValue = 45 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay -> /Data/Maybe/Some
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 3 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "2026-01-03" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

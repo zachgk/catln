@@ -147,6 +147,14 @@ noteTaskDue = "due"
 noteTaskRecurrence = "recurrence"
 noteTaskRest = "rest"
 
+-- | What the Obsidian Day Planner plugin reads a checkbox as, which both readings of one carry: the
+-- block of the day its line writes at its start, and the day the plugin plans it for. They are
+-- fields of both because the plugin is a reading of the vault apart from the Tasks plugin, and a
+-- vault may run either without the other.
+noteTaskTime, noteTaskPlannedDay :: String
+noteTaskTime = "time"
+noteTaskPlannedDay = "plannedDay"
+
 -- | The members of the two classes those fields are typed by, which are the plugin's own seven
 -- kinds of status and six priorities.
 noteStatusTypePath, notePriorityPath :: String
@@ -175,10 +183,14 @@ timeRangeEnd = "end"
 -- which day it is assigned to. They are named here rather than where a task is because a calendar
 -- knows nothing about tasks: what joins the class and answers the method is written in @.ct@, so
 -- adding a kind of thing a calendar shows changes no Haskell.
-calendarAnnot, calendarEntryClass, calendarDayMethod :: String
+--
+-- 'calendarTimeMethod' is the second question, which is the span of its day an entry takes up where
+-- it takes up only part of it.
+calendarAnnot, calendarEntryClass, calendarDayMethod, calendarTimeMethod :: String
 calendarAnnot = "/Data/Calendar/#calendar"
 calendarEntryClass = "/Data/Calendar/CalendarEntry"
 calendarDayMethod = "/Data/Calendar/calendarDay"
+calendarTimeMethod = "/Data/Calendar/calendarTime"
 
 -- | The query a note writes in a block of code the Obsidian Tasks plugin reads, which is a fenced
 -- block whose info string is @tasks@. The query is carried as the text it was written as, for the

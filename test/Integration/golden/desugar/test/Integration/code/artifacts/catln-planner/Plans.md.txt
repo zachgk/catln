@@ -1,0 +1,166 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "08:00 - 09:00 Go to the gym #task ⏳ 2026-01-04" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "08:00 - 09:00 Go to the gym #task" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )
+                            ( Value /scheduled= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 4 }
+                                    )
+                                )
+                            )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo","tags":["#task"]}" }
+                            )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 8 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 9 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 4 }
+                                    )
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "10:00 Pick up the parcel [scheduled:: 2026-01-05]" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 45 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 5 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "10:00 Sometime, at ten" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 45 }
+                                        )
+                                    )
+                                )
+                            )( Value /plannedDay= Value /Data/Maybe/Nothing )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "Plans" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

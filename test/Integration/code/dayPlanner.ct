@@ -1,0 +1,13 @@
+import "core"
+import obsidian("artifacts/catln-planner")
+import obsidian("artifacts/catln-planner/Daily/2026-01-03.md")
+import obsidian("artifacts/catln-planner/Plans.md")
+
+
+# Tests a /Data/Calendar/#dayPlanner over the vault running the Day Planner plugin, which
+  obsidianPlanner.ct reads. A day planner is the calendar's own answer drawn as the blocks of a day,
+  so it reaches what a calendar written here would and answers what it would.
+  The vault is named note by note for the reason obsidianPlanner.ct names it so. What the planner
+  finds is not written down here, for the reason calendar.ct gives: what answers it is CalendarTests.
+#dayPlanner
+main{io -> IO}= io.exit(val= 0)

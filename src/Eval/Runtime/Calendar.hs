@@ -23,7 +23,8 @@
 module Eval.Runtime.Calendar where
 
 import           CRes                 (runCResT)
-import           CtConstants          (calendarDayMethod, calendarEntryClass)
+import           CtConstants          (calendarDayMethod, calendarEntryClass,
+                                       calendarTimeMethod)
 import           Data.Aeson           (ToJSON)
 import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
@@ -59,10 +60,20 @@ calendarPrims = [calendarEntries]
 -- 'ciDay' is absent for an entry which sits on no day. Such an entry is carried rather than dropped,
 -- because the gather found it and a calendar quietly showing less than it was handed would answer a
 -- narrower question than the one asked.
+--
+-- 'ciTime' is the span of its day an entry takes up, and is absent for one which takes up the whole
+-- day it sits on.
 data CalendarItem = CalendarItem { ciPage  :: String
                                  , ciExpr  :: String
                                  , ciDay   :: Maybe String
+                                 , ciTime  :: Maybe CalendarTime
                                  , ciValue :: Val
+                                 } deriving (Generic, ToJSON)
+
+-- | The span of a day an entry takes up, as the @HH:mm@ times it starts and ends at. An end at or
+-- before the start runs on past midnight, as a @\/Data\/Time\/TimeRange@ does.
+data CalendarTime = CalendarTime { ctStart :: String
+                                 , ctEnd   :: String
                                  } deriving (Generic, ToJSON)
 
 -- | What a calendar found, or why it found nothing.
@@ -121,15 +132,17 @@ calendarEntries = EEnvPrim "calendarEntries" prim
           -- As in 'Eval.Runtime.Tasks.taskList', an entry with no page to be written back to is
           -- reported rather than dropped.
           (_, Nothing) -> return $ Left $ printf "calendarEntries has no file path for %s, so its entries have nothing to be written back to" (show prgmName)
-          (_, Just disp) -> case orNotes $ ask (mkName calendarDayMethod) prgmName of
-            Left err    -> return $ Left err
-            Right asked -> traverseUntilLeft (entry asked disp) values
+          (_, Just disp) -> case (,) <$> orNotes (ask (mkName calendarDayMethod) prgmName) <*> orNotes (ask (mkName calendarTimeMethod) prgmName) of
+            Left err              -> return $ Left err
+            Right (askDay, askTime) -> traverseUntilLeft (entry askDay askTime disp) values
 
-    entry asked disp (e, value) = do
-      dayOf <- runCResT $ asked value
+    entry askDay askTime disp (e, value) = do
+      dayOf <- runCResT $ askDay value
+      timeOf <- runCResT $ askTime value
       return $ do
         day <- valDay =<< orNotes dayOf
-        return $ CalendarItem disp (UUID.toString $ getMetaId $ getExprMeta e) day value
+        time <- valTime =<< orNotes timeOf
+        return $ CalendarItem disp (UUID.toString $ getMetaId $ getExprMeta e) day time value
 
 -- | The types a calendar can show: the members of @\/Data\/Calendar\/CalendarEntry@, and the members
 -- of any of those which is itself a class, down to the types a value is actually declared as.
@@ -174,3 +187,12 @@ valDay :: Val -> Either String (Maybe String)
 valDay v = case valMaybe valDate v of
   Right day -> Right $ showGregorian <$> day
   Left err  -> Left $ printf "%s is not the day a calendar entry sits on: %s" (show v) err
+
+-- | The span of its day an answer of @calendarTime@ names, and nothing where it names none.
+valTime :: Val -> Either String (Maybe CalendarTime)
+valTime v = case valMaybe valTimeRange v of
+  Right range -> Right $ spanOf <$> range
+  Left err    -> Left $ printf "%s is not the span of a day a calendar entry takes up: %s" (show v) err
+  where
+    spanOf (start, end) = CalendarTime (clock start) (clock end)
+    clock (hour, minute) = printf "%02d:%02d" hour minute

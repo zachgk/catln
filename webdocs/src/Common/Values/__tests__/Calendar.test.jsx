@@ -100,6 +100,19 @@ describe('Calendar', () => {
     expect(container.querySelectorAll('.rbc-today').length).toBeGreaterThan(0)
   })
 
+  // An entry given a time of day is drawn over that time rather than across the whole day.
+  it('draws an entry with a time of day over that time', async () => {
+    const timed = { ...entry('id-1', 'Write', TODAY), ciTime: { ctStart: '09:00', ctEnd: '10:30' } }
+    const { container } = render(<Providers><Calendar {...calendared(null, timed, entry('id-2', 'Read', TODAY))} /></Providers>)
+
+    await showAs('Day')
+
+    const grid = container.querySelector('.rbc-time-content')
+    expect(within(grid).getByDisplayValue('Write')).toBeInTheDocument()
+    expect(within(grid).queryByDisplayValue('Read')).not.toBeInTheDocument()
+    expect(within(container.querySelector('.rbc-allday-cell')).getByDisplayValue('Read')).toBeInTheDocument()
+  })
+
   // The gather found these, so a calendar which quietly left them off would be showing less than it
   // was handed.
   it('shows the entries which sit on no day, apart from the days', () => {

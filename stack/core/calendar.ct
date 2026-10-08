@@ -42,6 +42,15 @@ module(Data/Calendar)
       The receiver is bound as [$E] and not as [$T] because [/Data/Maybe] names its own parameter
       [$T] and a parameter resolves by name, so a receiver of that name would be the same one.
 
+  :$E.calendarTime[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> /Data/Time/TimeRange..]
+    # [calendarTime] is the span of its day an entry takes up, where it takes up only part of it: a
+      meeting from nine until half past ten, or a block a day planner laid out. An entry which takes
+      up its whole day answers [/Data/Maybe/Nothing], and is drawn across the day rather than over
+      a time of it.
+      A second question rather than a richer answer to [calendarDay], so that a kind of thing which
+      sits on days and has no times of day — most of them — answers it with one arm, and the day it
+      sits on is asked the one way whether or not it has a time.
+
   annot(#calendar, isa= [/Catln/Doc/DocPage])
     # A calendar of everything the page it is written in reaches which sits on a day.
       It takes nothing. What to show is what is there: every [CalendarEntry] the evaluation covers,
@@ -70,12 +79,33 @@ module(Data/Calendar)
 
   every(Show/Calendar.., isa= [/Catln/Doc/DShow])
 
-  /Catln/Doc/dshow(s= #calendar) =
-    calendarEntries(annot) -> String
-      # [calendarEntries] renders everything the evaluation covers which sits on a day as JSON: each
-        the value it displays as, the day it sits on, and the page and expression it was written as.
-        Which values those are is asked of the class rather than listed, so a kind of thing joins a
-        calendar by saying it belongs and answering [calendarDay].
-      #runtime("calendarEntries")
+  calendarEntries(annot) -> String
+    # [calendarEntries] renders everything the evaluation covers which sits on a day as JSON: each
+      the value it displays as, the day it sits on and the span of it it takes up, and the page and
+      expression it was written as. Which values those are is asked of the class rather than listed,
+      so a kind of thing joins a calendar by saying it belongs and answering [calendarDay] and
+      [calendarTime].
+      Declared once for the two displays that ask it, a calendar and a day planner, which are two
+      ways of drawing the one answer.
+    #runtime("calendarEntries")
 
-    Show/Calendar(result= calendarEntries(annot= s))
+  /Catln/Doc/dshow(s= #calendar)= Show/Calendar(result= calendarEntries(annot= s))
+
+  annot(#dayPlanner, isa= [/Catln/Doc/DocPage])
+    # A day planner of everything the page it is written in reaches which sits on a day: the
+      calendar's answer drawn as the blocks of one day at a time, as the Obsidian Day Planner plugin
+      draws a day. Each entry with a time of day is drawn over that time, and each one sitting on the
+      day without one is drawn across the top of it, unscheduled.
+      It takes nothing, for the reason [#calendar] takes nothing, and asks what [#calendar] asks: a
+      planner is the calendar read a day at a time, so it is the same question drawn another way
+      rather than a question of its own.
+      Marked as a page of its own, as [#calendar] is.
+
+  data(Show/DayPlanner(result -> String))
+    # [Show/DayPlanner] shows what a day planner found, which is what a calendar finds and carried
+      the same way: see [Show/Calendar]. Which day is drawn, and whether a week is drawn instead, is
+      decided where it is drawn, as a calendar's view is.
+
+  every(Show/DayPlanner.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #dayPlanner)= Show/DayPlanner(result= calendarEntries(annot= s))

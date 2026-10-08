@@ -1,0 +1,54 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests importing an Obsidian vault which runs the Day Planner community plugin beside the Tasks
+                  plugin. A checkbox of such a vault carries what the planner reads it as: the block of the day its
+                  line writes at its start, and the day it is planned for — the day of the daily note it is written
+                  in, or the day it schedules where it is written anywhere else.
+                  The vault asks every task of the Tasks plugin to carry #task, so the lines not carrying it are read
+                  as /Data/Note/Task/Simple and the ones carrying it as /Data/Note/Task/Obsidian, and the planner's
+                  reading is seen on both.
+                  The notes are named as well as the vault, for the reason obsidian.ct names its notes: a vault does
+                  not import the notes it holds, so a golden test walking out from here would reach the vault and
+                  stop.
+                  What a calendar of these notes shows is not asked here: the annotations of a page are evaluated
+                  for the file a test names and not for the pages it reaches, so what is written down here is the
+                  annotation and what answers it is CalendarTests."
+                }
+            )
+        , Value /Data/Calendar/#calendar
+        ]
+    }

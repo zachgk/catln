@@ -1,70 +1,28 @@
-import React, {useContext, useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
-import {Calendar as BigCalendar, dateFnsLocalizer} from 'react-big-calendar';
-import {format, getDay, parse, startOfWeek} from 'date-fns';
-import {enUS} from 'date-fns/locale';
-import {Link} from 'react-router-dom';
+import {Calendar as BigCalendar} from 'react-big-calendar';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-import {ConfigContext, ReloadContext, writeExpr} from '../Common';
-import {Value} from '../Value';
-
-// A day is written as a YYYY-MM-DD string everywhere a note is read, and the arithmetic on one goes
-// through UTC. new Date('2026-01-03') is midnight UTC, so reading it back with getDate() anywhere
-// behind UTC gives the second -- which would put an entry on the wrong day for half the world and
-// would make what a test sees depend on where it runs.
-function dayToDate(day) {
-  const [year, month, date] = day.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, date));
-}
-
-// The calendar draws in the reader's own zone, so a day that came in as UTC midnight is handed over
-// as local midnight of the same date rather than as the instant it names.
-function asLocalDay(day) {
-  const utc = dayToDate(day);
-  return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate());
-}
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  // Monday, which is the week Syntax.Obsidian.Query counts, so "this week" in a tasks query and a
-  // week of this calendar are the same seven days.
-  startOfWeek: () => startOfWeek(new Date(), {weekStartsOn: 1}),
-  getDay,
-  locales: {'en-US': enUS}
-});
+import {Undated, asLocalDay, entryStyles, localizer, timedSpan, useEntries} from './calendarShared';
 
 const useStyles = makeStyles({
+  ...entryStyles,
   calendar: {
     height: '36em'
-  },
-  error: {
-    color: 'red'
-  },
-  entry: {
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: '0.85em'
-  },
-  entryValue: {
-    flexGrow: 1,
-    overflow: 'hidden'
-  },
-  undated: {
-    marginTop: '1em'
-  },
-  undatedHeading: {
-    fontWeight: 'bold',
-    marginBottom: '0.25em'
-  },
-  page: {
-    marginLeft: '1em',
-    fontSize: '0.85em'
   }
 });
+
+// The event an entry is drawn as: across the whole of its day, or over the time of day it was given
+// where it was given one.
+export function entryEvent(item) {
+  if (item.ciTime) {
+    return {title: item.ciExpr, ...timedSpan(item), allDay: false, item};
+  }
+  const at = asLocalDay(item.ciDay);
+  return {title: item.ciExpr, start: at, end: at, allDay: true, item};
+}
 
 // What a calendar found, laid out on the days it found things on, a day, a week, a month or a list
 // at a time.
@@ -78,42 +36,21 @@ const useStyles = makeStyles({
 // would mark a day the answer it is drawing was not about -- and a reader in another zone, or a test
 // run on another date, would see a different calendar of the same answer.
 //
-// An entry is drawn as whatever draws a value of its kind, which is what lets a calendar show a kind
-// of thing it has never heard of. A change to one is written back to the page it came from and not
-// to the page showing the calendar, as a row of a task list is.
+// An entry given a time of day is drawn over that time in the day and week views, and one without
+// is drawn across its whole day.
 function Calendar(props) {
   const resultArg = props["/result"];
   const result = useMemo(() => JSON.parse(resultArg.contents), [resultArg]);
-  const reload = useContext(ReloadContext);
-  const config = useContext(ConfigContext);
-  const canEdit = config.isLoaded && !config.data?.readonly;
-  const [error, setError] = useState(null);
+  const {error, valueOf} = useEntries();
   const classes = useStyles();
 
-  const events = useMemo(() => result.crItems
-    .filter(item => item.ciDay)
-    .map(item => {
-      const at = asLocalDay(item.ciDay);
-      return {title: item.ciExpr, start: at, end: at, allDay: true, item};
-    }), [result]);
+  const events = useMemo(() => result.crItems.filter(item => item.ciDay).map(entryEvent), [result]);
 
   const undated = result.crItems.filter(item => !item.ciDay);
 
-  const save = async (item, src) => {
-    setError(null);
-    const res = await writeExpr(item.ciPage, item.ciExpr, src);
-    if (res.ok) {
-      reload();
-    } else {
-      setError(res.message);
-    }
-  };
-
   const entry = item => (
     <span className={classes.entry}>
-      <span className={classes.entryValue}>
-        <Value data={item.ciValue} update={canEdit ? (src => save(item, src)) : undefined} />
-      </span>
+      <span className={classes.entryValue}>{valueOf(item)}</span>
     </span>
   );
 
@@ -136,30 +73,9 @@ function Calendar(props) {
         endAccessor="end"
         components={{event: ({event}) => entry(event.item)}}
       />
-      {undated.length > 0 && (
-        <div className={classes.undated} data-testid="calendar-undated">
-          {/* Shown rather than dropped: the gather found these, and a calendar quietly showing less
-              than it was handed would be answering a narrower question than the one asked. */}
-          <div className={classes.undatedHeading}>On no day</div>
-          {undated.map(item => (
-            <div key={item.ciExpr} className={classes.entry}>
-              <span className={classes.entryValue}>
-                <Value data={item.ciValue} update={canEdit ? (src => save(item, src)) : undefined} />
-              </span>
-              <Link className={classes.page} to={`/docs/${encodeURIComponent(item.ciPage)}`}>{pageName(item.ciPage)}</Link>
-            </div>
-          ))}
-        </div>
-      )}
+      <Undated items={undated} valueOf={valueOf} classes={classes} />
     </div>
   );
-}
-
-// The name a page is known by, which is the file it is written in without the path to it. The whole
-// path is what the link goes to; a list gathered from a few pages is read by which page each came
-// from rather than by where those pages sit.
-function pageName(page) {
-  return page.split('/').pop();
 }
 
 export default Calendar;

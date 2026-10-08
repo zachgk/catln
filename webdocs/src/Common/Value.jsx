@@ -18,6 +18,7 @@ import ObsidianTask from './Values/ObsidianTask';
 import TaskList from './Values/TaskList';
 import TaskQuery from './Values/TaskQuery';
 import Calendar from './Values/Calendar';
+import DayPlanner from './Values/DayPlanner';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
 import Rendered from './Values/Rendered';
@@ -102,6 +103,9 @@ function Value(props) {
     // the page it came from and is written back there rather than through whatever is showing it.
     case "/Data/Calendar/Show/Calendar":
       return <Calendar {...val.args} />;
+    // The same answer read as the blocks of a day. No update for the calendar's reason.
+    case "/Data/Calendar/Show/DayPlanner":
+      return <DayPlanner {...val.args} />;
     // The page a page is written over, shown as the address it names rather than as a frame of that
     // page. The frame belongs to whatever is laying the page out around it, so a page carrying an
     // overlay is one frame and one link rather than two frames.

@@ -56,12 +56,17 @@ calendaringPages = ctssBaseFiles testCtssConfig [calendarPage]
 -- The whole of the way, as @ObsidianQueryTests.answeredBy@ takes a query: the pages are compiled,
 -- the annotation is evaluated, and the value it displays as is what comes back.
 calendaredBy :: CTSS -> FilePath -> IO Calendared
-calendaredBy ctss page = do
+calendaredBy = displayedAs "/Data/Calendar/Show/Calendar"
+
+-- | The answer a page's one display of the given kind carries, which a calendar and a day planner
+-- both carry the same way.
+displayedAs :: String -> CTSS -> FilePath -> IO Calendared
+displayedAs display ctss page = do
   prgmName <- pageAt page ctss
   annots <- runCResT $ getEvalAnnots ctss prgmName
   case annots of
     CErr notes -> assertFailure $ "the page did not compile: " ++ prettyCNotes notes
-    CRes _ vals -> case [args | (_, TupleVal name args) <- vals, name == "/Data/Calendar/Show/Calendar"] of
+    CRes _ vals -> case [args | (_, TupleVal name args) <- vals, name == display] of
       [args] -> case H.lookup "/result" args of
         Just (StrVal json) -> maybe (assertFailure $ "the answer is not JSON: " ++ json) return $
           decode (TLE.encodeUtf8 (TL.pack json))
@@ -169,5 +174,84 @@ testCalendaring = withResource calendaringPages (const $ return ()) $ \held -> t
       "2026-01-03" (calendaredToday calendar)
                                                                                                ]
 
+-- | The page the planner calendar below is written in, which reaches a vault running the Day
+-- Planner beside the Tasks plugin.
+plannerPage :: FilePath
+plannerPage = "test/Integration/code/obsidianPlanner.ct"
+
+-- | What each task of the planner vault says, beside the day the Day Planner plans it for.
+--
+-- Sorted by what each says rather than in the order they are found, because which of a task and the
+-- tasks written under it is gathered first is not what is being asked.
+plannedDays :: [(Maybe String, Maybe String)]
+plannedDays = sort [
+  (Just "09:00 - 10:30 Write the report #task", Just "2026-01-03"),
+  (Just "11:00 Stand up", Just "2026-01-03"),
+  (Just "1:30pm - 2:15pm Review the draft #task", Just "2026-01-03"),
+  (Just "Read the paper", Just "2026-01-03"),
+  (Just "16:00 Call about the paper", Just "2026-01-03"),
+  (Just "08:00 - 09:00 Go to the gym #task", Just "2026-01-04"),
+  (Just "10:00 Pick up the parcel [scheduled:: 2026-01-05]", Just "2026-01-05"),
+  (Just "10:00 Sometime, at ten", Nothing)
+                   ]
+
+testPlannerCalendaring :: TestTree
+testPlannerCalendaring = withResource (ctssBaseFiles testCtssConfig [plannerPage]) (const $ return ()) $ \held -> testGroup "a calendar of a vault running the Day Planner" [
+
+  -- Every task of a daily note sits on the note's day, with a time or without one, and whichever of
+  -- the two readings the Tasks plugin gave it. A task anywhere else sits on the day it schedules,
+  -- in either way the planner reads a scheduled day; and one scheduling none sits on no day,
+  -- although it writes a time.
+  testCase "on the day each task is planned for" $ do
+    ctss <- held
+    calendar <- calendaredBy ctss plannerPage
+    assertEqual "the calendar could not be answered" Nothing (calendaredError calendar)
+    assertEqual "a task did not sit on the day it is planned for"
+      plannedDays (sort $ map (\v -> (saysOf v, dayOf v)) (calendaredItems calendar)),
+
+  -- A block written with an end takes up that span of its day, in either clock; one written without
+  -- lasts the 45 minutes the vault's planner is set to; and a line writing no time takes up the
+  -- whole of its day.
+  testCase "over the span of its day each block takes up" $ do
+    ctss <- held
+    calendar <- calendaredBy ctss plannerPage
+    assertEqual "a block did not take up the span of the day it writes" (sort [
+      (Just "09:00 - 10:30 Write the report #task", Just ("09:00", "10:30")),
+      (Just "11:00 Stand up", Just ("11:00", "11:45")),
+      (Just "1:30pm - 2:15pm Review the draft #task", Just ("13:30", "14:15")),
+      (Just "Read the paper", Nothing),
+      (Just "16:00 Call about the paper", Just ("16:00", "16:45")),
+      (Just "08:00 - 09:00 Go to the gym #task", Just ("08:00", "09:00")),
+      (Just "10:00 Pick up the parcel [scheduled:: 2026-01-05]", Just ("10:00", "10:45")),
+      (Just "10:00 Sometime, at ten", Just ("10:00", "10:45"))
+                                                                              ]) (sort $ map (\v -> (saysOf v, timeOf v)) (calendaredItems calendar))
+                                                                                                     ]
+
+-- | The page a day planner over the planner vault is written in.
+dayPlannerPage :: FilePath
+dayPlannerPage = "test/Integration/code/dayPlanner.ct"
+
+testDayPlanning :: TestTree
+testDayPlanning = withResource (ctssBaseFiles testCtssConfig [dayPlannerPage]) (const $ return ()) $ \held -> testGroup "the day planner a page wrote, answered by the compiler" [
+
+  -- A day planner is the calendar's answer drawn another way, so it carries what a calendar of the
+  -- same pages carries: each task on its planned day, over the span of it its block takes up.
+  testCase "with each block on its day and over its span" $ do
+    ctss <- held
+    planned <- displayedAs "/Data/Calendar/Show/DayPlanner" ctss dayPlannerPage
+    assertEqual "the planner could not be answered" Nothing (calendaredError planned)
+    assertEqual "a block was not on its day" plannedDays (sort $ map (\v -> (saysOf v, dayOf v)) (calendaredItems planned))
+    assertEqual "a block was not over its span" (Just ("13:30", "14:15"))
+      (lookup (Just "1:30pm - 2:15pm Review the draft #task") (map (\v -> (saysOf v, timeOf v)) (calendaredItems planned)) >>= id)
+    assertEqual "the planner did not carry the day it was answered on" "2026-01-03" (calendaredToday planned)
+                                                                                                                                   ]
+
+-- | The span of its day an entry of the answer takes up, and nothing for one taking up all of it.
+timeOf :: Value -> Maybe (String, String)
+timeOf (Object o) | Just (Object t) <- KM.lookup "ciTime" o
+                  , Just (String start) <- KM.lookup "ctStart" t
+                  , Just (String end) <- KM.lookup "ctEnd" t = Just (T.unpack start, T.unpack end)
+timeOf _ = Nothing
+
 calendarTests :: TestTree
-calendarTests = testGroup "CalendarTests" [testCalendaring]
+calendarTests = testGroup "CalendarTests" [testCalendaring, testPlannerCalendaring, testDayPlanning]

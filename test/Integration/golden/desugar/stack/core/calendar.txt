@@ -10,7 +10,19 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshow( Value s= Value #calendar )= Show/Calendar
                             ( Value result= calendarEntries( Value annot= Value s ) )
+                        , /Catln/Doc/dshow( Value s= Value #dayPlanner )= Show/DayPlanner
+                            ( Value result= calendarEntries( Value annot= Value s ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/Calendar/calendarEntries"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Calendar/calendarEntries( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -24,19 +36,28 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/dshow./Data/Calendar/calendarEntries"
+                ( "/Data/Calendar/#calendar"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value annot ) -> ∀/Data/String ]
+                    { omiDecls = [ Value /Data/Calendar/#calendar ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
             ,
-                ( "/Data/Calendar/#calendar"
+                ( "/Data/Calendar/calendarTime"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Data/Calendar/#calendar ]
+                    { omiDecls =
+                        [ /Data/Calendar/calendarTime[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/#dayPlanner"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Calendar/#dayPlanner ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -52,10 +73,23 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Calendar/Show/DayPlanner"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/Show/DayPlanner( Value /result -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -66,6 +100,7 @@ Prgm
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Catln/Doc/DShow ]
                 , /Data/Calendar/Show/Calendar..
+                , /Data/Calendar/Show/DayPlanner..
                 ]
             , cgcDoc = Just "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
               [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
@@ -78,7 +113,10 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Catln/Doc/DocPage
-            , cgcExtends = [ /Data/Calendar/#calendar ]
+            , cgcExtends =
+                [ /Data/Calendar/#calendar
+                , /Data/Calendar/#dayPlanner
+                ]
             , cgcDoc = Nothing
             }
         , CGClass

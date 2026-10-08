@@ -33,17 +33,23 @@ import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TLE
 import           Data.Time.Calendar       (Day, toGregorian)
 import           Semantics.Prgm
-import           Semantics.Types          (Constant (CStr), makeAbsoluteName,
-                                           mkName, partialKey)
+import           Semantics.Types          (ArgName, Constant (CStr),
+                                           makeAbsoluteName, mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           Syntax.Obsidian.Cache    (ObsidianCache, cachedNoteLinks,
                                            flushObsidianCache, keepOnlyNotes,
                                            newObsidianCache, recordNoteLinks)
-import           Syntax.Obsidian.Settings (StatusKind (..), TaskSettings,
-                                           TaskStatus (..), readTaskSettings,
-                                           statusFor, taskSettingsFiles, tsKind,
-                                           tsName)
+import           Syntax.Obsidian.Planner  (Minutes, WrittenBlock (..), noteDay,
+                                           resolveEnd, scheduledDay,
+                                           timeRangeAtStart)
+import           Syntax.Obsidian.Settings (PlannerSettings (..),
+                                           StatusKind (..), TaskSettings,
+                                           TaskStatus (..),
+                                           plannerSettingsFiles,
+                                           readPlannerSettings,
+                                           readTaskSettings, statusFor,
+                                           taskSettingsFiles, tsKind, tsName)
 import           Syntax.Obsidian.Task     (ObsidianTask (..), TaskPriority (..),
                                            obsidianTask, readIsoDay)
 import           System.Directory
@@ -113,6 +119,9 @@ data ObsidianReader = ObsidianReader {
   -- settings, so a vault whose settings were read for each of them would read one small file once
   -- for every note in it.
   orTasks   :: IORef (H.HashMap FilePath (Maybe TaskSettings)),
+  -- | What each vault this read has reached says about the Day Planner plugin, and nothing where
+  -- it does not run it. Kept as 'orTasks' is and for its reason.
+  orPlanner :: IORef (H.HashMap FilePath (Maybe PlannerSettings)),
   -- | What an earlier run recorded of the vaults this read reaches, and what this read has to write
   -- back to them. Absent for a read which is to read every note it reaches.
   --
@@ -129,8 +138,9 @@ newObsidianReader :: ReadEnv -> IO ImportReader
 newObsidianReader env = do
   indexes <- newIORef H.empty
   tasks <- newIORef H.empty
+  planner <- newIORef H.empty
   cache <- traverse newObsidianCache (reCacheRoot env)
-  let reader = ObsidianReader env indexes tasks cache
+  let reader = ObsidianReader env indexes tasks planner cache
   return $ readyReader (obsidianPreload reader) (obsidianParse reader) (mapM_ flushObsidianCache cache)
 
 -- | Which of the two an obsidian import names: a vault, or a note and the vault holding it.
@@ -237,9 +247,11 @@ noteParse reader vault note = do
   contents <- readFile note
   index <- vaultIndex reader vault
   settings <- vaultTaskSettings reader vault
+  planner <- vaultPlannerSettings reader vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink index) $ wikiLinks note contents
   forM_ (orCache reader) $ \cache -> recordNoteLinks cache vault note linked
-  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement settings (wikiHref vault index) (takeBaseName note) contents]) (Just contents) (Just $ noteReads vault note linked)
+  let notePlanner = fmap (\p -> NotePlanner p (noteDay (pstDailyNotes p) vault note) []) planner
+  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement settings notePlanner (wikiHref vault index) (takeBaseName note) contents]) (Just contents) (Just $ noteReads vault note linked)
 
 -- | Where a note sits in the graph: the notes it links to, out of what an earlier run recorded of
 -- it, and out of the note itself where there is no record of it to take them from.
@@ -273,11 +285,11 @@ noteImports = map (mkRawFileImport . rawStr)
 -- must read that page again and no other — otherwise a note linked to from a hundred notes is a
 -- hundred notes read again every time it is typed into.
 --
--- The vault's own Tasks settings are read as well, whether or not they are there. They decide what
--- every checkbox of the note is read as, so a note read before the plugin was turned on is a note
--- read wrongly afterwards; naming them here is what has the note read again when they change. They
--- are named as files rather than reached through the vault because a reading of a tree walks past a
--- dotted entry, and Obsidian keeps them in one.
+-- The vault's own Tasks and Day Planner settings are read as well, whether or not they are there.
+-- They decide what every checkbox of the note is read as, so a note read before a plugin was turned
+-- on is a note read wrongly afterwards; naming them here is what has the note read again when they
+-- change. They are named as files rather than reached through the vault because a reading of a tree
+-- walks past a dotted entry, and Obsidian keeps them in one.
 --
 -- NOT read from the vault, though the whole vault is what the links resolved against. A note added
 -- anywhere under the vault could turn a link that resolved to nothing into an import, and saying so
@@ -287,7 +299,7 @@ noteImports = map (mkRawFileImport . rawStr)
 -- that did resolve is watched through the note it resolved to, so deleting, moving or renaming that
 -- note is seen.
 noteReads :: FilePath -> FilePath -> [FilePath] -> [ReadPath]
-noteReads vault note linked = ReadFile note : map ReadFile (taskSettingsFiles vault) ++ map ReadExists linked
+noteReads vault note linked = ReadFile note : map ReadFile (nub $ taskSettingsFiles vault ++ plannerSettingsFiles vault) ++ map ReadExists linked
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --
@@ -311,11 +323,41 @@ noteReads vault note linked = ReadFile note : map ReadFile (taskSettingsFiles va
 -- Where a wiki link points is carried down the same way and for the same reason. Which note a link
 -- names is the vault's to say, and it is said once for the vault ('wikiHref') rather than worked out
 -- again wherever a link happens to be written.
-notePageStatement :: Maybe TaskSettings -> (String -> Maybe String) -> String -> String -> RawStatementTree RawExpr ()
-notePageStatement settings href title contents = RawStatementTree (RawDeclStatement page) (concatMap (partStatements settings href) $ noteParts contents)
+--
+-- What the Day Planner reads a checkbox as is carried down the same way, with the starts of every
+-- block the note writes beside it: a block written without an end may end where the next block of
+-- the same note starts, which no one line can say.
+notePageStatement :: Maybe TaskSettings -> Maybe NotePlanner -> (String -> Maybe String) -> String -> String -> RawStatementTree RawExpr ()
+notePageStatement settings planner href title contents = RawStatementTree (RawDeclStatement page) (concatMap (partStatements settings planner' href) parts)
   where
+    parts = noteParts contents
+    planner' = fmap (\p -> p{npStarts = noteBlockStarts parts}) planner
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
+
+-- | What a vault running the Day Planner makes of one note: the vault's settings, the day the note
+-- is the daily note of if it is one, and the start of every block the note writes.
+data NotePlanner = NotePlanner {
+  npSettings :: PlannerSettings,
+  npDay      :: Maybe Day,
+  npStarts   :: [Minutes]
+                               }
+
+-- | The starts of every block a note's checkboxes write, at every depth.
+noteBlockStarts :: [NotePart] -> [Minutes]
+noteBlockStarts = concatMap aux
+  where
+    aux (NoteTask _ says under) = [wbStart block | Just (block, _) <- [timeRangeAtStart (dropWhile isSpace says)]] ++ noteBlockStarts under
+    aux _ = []
+
+-- | What the Day Planner reads one checkbox as: the block of the day it writes, given the end the
+-- vault gives it, and the day it is planned for — the day of the daily note it is written in, or
+-- the day it is scheduled for where it is written anywhere else. Nothing of either in a vault that
+-- does not run the plugin.
+plannedReading :: Maybe NotePlanner -> String -> (Maybe (Minutes, Minutes), Maybe Day)
+plannedReading Nothing _ = (Nothing, Nothing)
+plannedReading (Just NotePlanner{npSettings, npDay, npStarts}) says = (resolveEnd npSettings npStarts . fst <$> timeRangeAtStart line, npDay <|> scheduledDay line)
+  where line = dropWhile isSpace says
 
 -- | The statements one part of a note is read as: what the part says, and what the page says
 -- because of it.
@@ -324,9 +366,9 @@ notePageStatement settings href title contents = RawStatementTree (RawDeclStatem
 -- this note is written over, which is a reading of the note rather than a part of it, so it is a
 -- statement of its own standing beside the properties it was read out of — where the note writes
 -- them, as a task is declared where the note writes its checkbox.
-partStatements :: Maybe TaskSettings -> (String -> Maybe String) -> NotePart -> [RawStatementTree RawExpr ()]
-partStatements settings href part@(NoteFrontmatter properties) = partStatement settings href part : map overlayStatement (maybeToList $ frontmatterUrl properties)
-partStatements settings href part = [partStatement settings href part]
+partStatements :: Maybe TaskSettings -> Maybe NotePlanner -> (String -> Maybe String) -> NotePart -> [RawStatementTree RawExpr ()]
+partStatements settings planner href part@(NoteFrontmatter properties) = partStatement settings planner href part : map overlayStatement (maybeToList $ frontmatterUrl properties)
+partStatements settings planner href part = [partStatement settings planner href part]
 
 -- | The statement one part of a note is declared by.
 --
@@ -343,21 +385,42 @@ partStatements settings href part = [partStatement settings href part]
 -- across the breaks — so it is markdown that can be read for its links by itself. What is left out
 -- by that falls out rather than being said: a link written on a checkbox line is not in any run of
 -- writing, and a task carries the line it was written as, so it is left as it was written.
-partStatement :: Maybe TaskSettings -> (String -> Maybe String) -> NotePart -> RawStatementTree RawExpr ()
-partStatement _ href (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment (embedWikiLinks href writing))) []
-partStatement _ _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
-partStatement _ _ (NoteQuery query) = RawStatementTree (RawAnnot (rawTasksQuery query)) []
-partStatement settings href (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings href) under)
+partStatement :: Maybe TaskSettings -> Maybe NotePlanner -> (String -> Maybe String) -> NotePart -> RawStatementTree RawExpr ()
+partStatement _ _ href (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment (embedWikiLinks href writing))) []
+partStatement _ _ _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
+partStatement _ _ _ (NoteQuery query) = RawStatementTree (RawAnnot (rawTasksQuery query)) []
+partStatement settings planner href (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings planner href) under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
     taskExpr = case settings of
-      Just settings' | Just read' <- obsidianTask settings' says -> obsidianTaskExpr (statusFor settings' symbol) symbol read'
+      Just settings' | Just read' <- obsidianTask settings' says -> obsidianTaskExpr (statusFor settings' symbol) symbol read' planned
       _ -> simpleTaskExpr
 
-    simpleTaskExpr = rawVal noteSimpleTaskPath `applyRawArgs` [
+    planned = plannedReading planner says
+
+    simpleTaskExpr = rawVal noteSimpleTaskPath `applyRawArgs` ([
       (Just $ partialKey (mkName noteTaskContents), rawStr (trim says)),
       (Just $ partialKey (mkName noteTaskState), rawVal (if symbol `elem` ["x", "X"] then truePrim else falsePrim))
-                                                              ]
+                                                              ] ++ plannedArgs planned)
+
+-- | The arguments a task is given for what the Day Planner reads it as.
+plannedArgs :: (Maybe (Minutes, Minutes), Maybe Day) -> [(Maybe ArgName, RawExpr ())]
+plannedArgs (time, day) = [
+  (Just $ partialKey (mkName noteTaskTime), rawMaybe rawTimeRange time),
+  (Just $ partialKey (mkName noteTaskPlannedDay), rawMaybe rawDate day)
+                          ]
+
+-- | A block of a day, as the @\/Data\/Time\/TimeRange@ it is declared as.
+rawTimeRange :: (Minutes, Minutes) -> RawExpr ()
+rawTimeRange (start, end) = rawVal timeRangePath `applyRawArgs` [
+  (Just $ partialKey (mkName timeRangeStart), rawTimeOfDay start),
+  (Just $ partialKey (mkName timeRangeEnd), rawTimeOfDay end)
+                                                                ]
+  where
+    rawTimeOfDay minutes = rawVal timeOfDayPath `applyRawArgs` [
+      (Just $ partialKey (mkName timeOfDayHour), rawInt (toInteger (minutes `div` 60))),
+      (Just $ partialKey (mkName timeOfDayMinute), rawInt (toInteger (minutes `mod` 60)))
+                                                               ]
 
 -- | A checkbox of a vault running the Obsidian Tasks plugin, as the value it is declared as.
 --
@@ -365,8 +428,8 @@ partStatement settings href (NoteTask symbol says under) = RawStatementTree (Raw
 -- named beside it; everything else the line said travels in 'CtConstants.noteTaskRest' as JSON. The
 -- type's own comment in @stack\/core\/note.ct@ says why it is split that way and what would undo the
 -- split.
-obsidianTaskExpr :: TaskStatus -> String -> ObsidianTask -> RawExpr ()
-obsidianTaskExpr status symbol task = rawVal noteObsidianTaskPath `applyRawArgs` [
+obsidianTaskExpr :: TaskStatus -> String -> ObsidianTask -> (Maybe (Minutes, Minutes), Maybe Day) -> RawExpr ()
+obsidianTaskExpr status symbol task planned = rawVal noteObsidianTaskPath `applyRawArgs` ([
   (Just $ partialKey (mkName noteTaskContents), rawStr (otContents task)),
   (Just $ partialKey (mkName noteTaskSymbol), rawStr symbol),
   (Just $ partialKey (mkName noteTaskStatusType), rawVal (statusTypeMember (tsKind status))),
@@ -377,7 +440,7 @@ obsidianTaskExpr status symbol task = rawVal noteObsidianTaskPath `applyRawArgs`
   (Just $ partialKey (mkName noteTaskDue), rawMaybe rawDate (readIsoDay =<< otDue task)),
   (Just $ partialKey (mkName noteTaskRecurrence), rawMaybeStr (otRecurrence task)),
   (Just $ partialKey (mkName noteTaskRest), rawStr (taskRestJson status task))
-                                                                                 ]
+                                                                                 ] ++ plannedArgs planned)
 
 -- | A value which may be absent, as the arm of a @\/Data\/Maybe@ it is.
 rawMaybe :: (a -> RawExpr ()) -> Maybe a -> RawExpr ()
@@ -904,6 +967,18 @@ vaultTaskSettings reader vault = do
     Nothing -> do
       settings <- readTaskSettings vault
       modifyIORef' (orTasks reader) $ H.insert vault settings
+      return settings
+
+-- | What a vault says about the Day Planner plugin, reading it if this read has not, as
+-- 'vaultTaskSettings' reads the Tasks plugin's.
+vaultPlannerSettings :: ObsidianReader -> FilePath -> IO (Maybe PlannerSettings)
+vaultPlannerSettings reader vault = do
+  found <- readIORef (orPlanner reader)
+  case H.lookup vault found of
+    Just settings -> return settings
+    Nothing -> do
+      settings <- readPlannerSettings vault
+      modifyIORef' (orPlanner reader) $ H.insert vault settings
       return settings
 
 -- | The wiki links a note writes, in the order it writes them.

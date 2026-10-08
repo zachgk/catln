@@ -1,0 +1,46 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a /Data/Calendar/#dayPlanner over the vault running the Day Planner plugin, which
+                  obsidianPlanner.ct reads. A day planner is the calendar's own answer drawn as the blocks of a day,
+                  so it reaches what a calendar written here would and answers what it would.
+                  The vault is named note by note for the reason obsidianPlanner.ct names it so. What the planner
+                  finds is not written down here, for the reason calendar.ct gives: what answers it is CalendarTests."
+                }
+            )
+        , Value /Data/Calendar/#dayPlanner
+        ]
+    }

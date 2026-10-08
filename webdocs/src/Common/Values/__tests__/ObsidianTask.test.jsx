@@ -95,6 +95,12 @@ describe('ObsidianTask', () => {
     expect(screen.getByText('due: 2026-01-04')).toBeInTheDocument()
   })
 
+  it('shows the day the Day Planner plans a task for', () => {
+    render(<Providers><ObsidianTask {...task({'/plannedDay': someDate(2026, 1, 3)})} /></Providers>)
+
+    expect(screen.getByText('planned: 2026-01-03')).toBeInTheDocument()
+  })
+
   it('shows the day a task may be started on', () => {
     render(<Providers><ObsidianTask {...task({'/start': someDate(2026, 1, 2)})} /></Providers>)
 

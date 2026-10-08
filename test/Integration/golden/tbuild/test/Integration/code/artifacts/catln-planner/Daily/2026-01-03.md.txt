@@ -1,0 +1,1269 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30 Write the report #task"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30 Write the report #task"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo","tags":["#task"]}"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /time -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/TimeRange
+                                        ( /start=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 0 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 9 }
+                                                    ]
+                                                )
+                                            )
+                                        , /end=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 30 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 10 }
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/TimeRange
+                                            ( /start=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 0 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 9 }
+                                                        ]
+                                                    )
+                                                )
+                                            , /end=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 30 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 10 }
+                                                        ]
+                                                    )
+                                                )
+                                            ) = /Data/Time/TimeRange
+                                            ( EAppArg
+                                                { eaaArg = Value /start -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 0 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 9 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 9 }
+                                                                ]
+                                                            ) = 9
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 0 }
+                                                                ]
+                                                            ) = 0
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /end -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 30 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 10 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 10 }
+                                                                ]
+                                                            ) = 10
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 30 }
+                                                                ]
+                                                            ) = 30
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/Date
+                                        ( /year=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 2026 }
+                                                ]
+                                            )
+                                        , /month=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 1 }
+                                                ]
+                                            )
+                                        , /day=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 3 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/Date
+                                            ( /year=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 2026 }
+                                                    ]
+                                                )
+                                            , /month=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 1 }
+                                                    ]
+                                                )
+                                            , /day=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 3 }
+                                                    ]
+                                                )
+                                            ) = /Data/Time/Date
+                                            ( EAppArg
+                                                { eaaArg = Value /year -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 2026 }
+                                                        ]
+                                                    ) = 2026
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /month -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 1 }
+                                                        ]
+                                                    ) = 1
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /day -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 3 }
+                                                        ]
+                                                    ) = 3
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1:30pm - 2:15pm Review the draft #task ⏫"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1:30pm - 2:15pm Review the draft #task"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo","tags":["#task"]}"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /time -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/TimeRange
+                                        ( /start=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 30 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 13 }
+                                                    ]
+                                                )
+                                            )
+                                        , /end=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 15 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 14 }
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/TimeRange
+                                            ( /start=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 30 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 13 }
+                                                        ]
+                                                    )
+                                                )
+                                            , /end=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 15 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 14 }
+                                                        ]
+                                                    )
+                                                )
+                                            ) = /Data/Time/TimeRange
+                                            ( EAppArg
+                                                { eaaArg = Value /start -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 30 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 13 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 13 }
+                                                                ]
+                                                            ) = 13
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 30 }
+                                                                ]
+                                                            ) = 30
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /end -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 15 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 14 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 14 }
+                                                                ]
+                                                            ) = 14
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 15 }
+                                                                ]
+                                                            ) = 15
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/Date
+                                        ( /year=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 2026 }
+                                                ]
+                                            )
+                                        , /month=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 1 }
+                                                ]
+                                            )
+                                        , /day=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 3 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/Date
+                                            ( /year=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 2026 }
+                                                    ]
+                                                )
+                                            , /month=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 1 }
+                                                    ]
+                                                )
+                                            , /day=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 3 }
+                                                    ]
+                                                )
+                                            ) = /Data/Time/Date
+                                            ( EAppArg
+                                                { eaaArg = Value /year -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 2026 }
+                                                        ]
+                                                    ) = 2026
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /month -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 1 }
+                                                        ]
+                                                    ) = 1
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /day -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 3 }
+                                                        ]
+                                                    ) = 3
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( EAppArg
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "11:00 Stand up"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/True = Value /Data/Primitive/True } )
+                            ( EAppArg
+                                { eaaArg = Value /time -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/TimeRange
+                                        ( /start=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 0 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 11 }
+                                                    ]
+                                                )
+                                            )
+                                        , /end=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 45 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 11 }
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/TimeRange
+                                            ( /start=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 0 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 11 }
+                                                        ]
+                                                    )
+                                                )
+                                            , /end=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 45 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 11 }
+                                                        ]
+                                                    )
+                                                )
+                                            ) = /Data/Time/TimeRange
+                                            ( EAppArg
+                                                { eaaArg = Value /start -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 0 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 11 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 11 }
+                                                                ]
+                                                            ) = 11
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 0 }
+                                                                ]
+                                                            ) = 0
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /end -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 45 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 11 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 11 }
+                                                                ]
+                                                            ) = 11
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 45 }
+                                                                ]
+                                                            ) = 45
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/Date
+                                        ( /year=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 2026 }
+                                                ]
+                                            )
+                                        , /month=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 1 }
+                                                ]
+                                            )
+                                        , /day=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 3 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/Date
+                                            ( /year=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 2026 }
+                                                    ]
+                                                )
+                                            , /month=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 1 }
+                                                    ]
+                                                )
+                                            , /day=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 3 }
+                                                    ]
+                                                )
+                                            ) = /Data/Time/Date
+                                            ( EAppArg
+                                                { eaaArg = Value /year -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 2026 }
+                                                        ]
+                                                    ) = 2026
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /month -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 1 }
+                                                        ]
+                                                    ) = 1
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /day -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 3 }
+                                                        ]
+                                                    ) = 3
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /Data/Note/Task/Simple
+                            ( EAppArg
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read the paper"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
+                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/Date
+                                        ( /year=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 2026 }
+                                                ]
+                                            )
+                                        , /month=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 1 }
+                                                ]
+                                            )
+                                        , /day=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 3 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/Date
+                                            ( /year=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 2026 }
+                                                    ]
+                                                )
+                                            , /month=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 1 }
+                                                    ]
+                                                )
+                                            , /day=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 3 }
+                                                    ]
+                                                )
+                                            ) = /Data/Time/Date
+                                            ( EAppArg
+                                                { eaaArg = Value /year -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 2026 }
+                                                        ]
+                                                    ) = 2026
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /month -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 1 }
+                                                        ]
+                                                    ) = 1
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /day -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 3 }
+                                                        ]
+                                                    ) = 3
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /Data/Note/Task/Simple
+                            ( EAppArg
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16:00 Call about the paper"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
+                            ( EAppArg
+                                { eaaArg = Value /time -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/TimeRange
+                                        ( /start=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 0 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 16 }
+                                                    ]
+                                                )
+                                            )
+                                        , /end=/Data/Time/TimeOfDay
+                                            ( /minute=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 45 }
+                                                    ]
+                                                )
+                                            , /hour=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 16 }
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/TimeRange
+                                            ( /start=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 0 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 16 }
+                                                        ]
+                                                    )
+                                                )
+                                            , /end=/Data/Time/TimeOfDay
+                                                ( /minute=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 45 }
+                                                        ]
+                                                    )
+                                                , /hour=UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 16 }
+                                                        ]
+                                                    )
+                                                )
+                                            ) = /Data/Time/TimeRange
+                                            ( EAppArg
+                                                { eaaArg = Value /start -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 0 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 16 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 16 }
+                                                                ]
+                                                            ) = 16
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 0 }
+                                                                ]
+                                                            ) = 0
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /end -> /Data/Time/TimeOfDay
+                                                    ( /minute=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 45 }
+                                                            ]
+                                                        )
+                                                    , /hour=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 16 }
+                                                            ]
+                                                        )
+                                                    ) = /Data/Time/TimeOfDay
+                                                    ( EAppArg
+                                                        { eaaArg = Value /hour -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 16 }
+                                                                ]
+                                                            ) = 16
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /minute -> UnionType
+                                                            ( Nothing
+                                                            , ∅
+                                                            ,
+                                                                [ CInt
+                                                                    { ciValue = 45 }
+                                                                ]
+                                                            ) = 45
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
+                                    ( /value=/Data/Time/Date
+                                        ( /year=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 2026 }
+                                                ]
+                                            )
+                                        , /month=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 1 }
+                                                ]
+                                            )
+                                        , /day=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 3 }
+                                                ]
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/Time/Date
+                                            ( /year=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 2026 }
+                                                    ]
+                                                )
+                                            , /month=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 1 }
+                                                    ]
+                                                )
+                                            , /day=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 3 }
+                                                    ]
+                                                )
+                                            ) = /Data/Time/Date
+                                            ( EAppArg
+                                                { eaaArg = Value /year -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 2026 }
+                                                        ]
+                                                    ) = 2026
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /month -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 1 }
+                                                        ]
+                                                    ) = 1
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /day -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 3 }
+                                                        ]
+                                                    ) = 3
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( EAppArg
+                                { eaaArg = Value /title -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

@@ -76,6 +76,9 @@ function ObsidianTask(props) {
     ["scheduled", someDate(props["/scheduled"])],
     ["repeats", some(props["/recurrence"])],
     ["starts", someDate(props["/start"])],
+    // The day the Day Planner plans the task for, which a daily note gives every task in it. Its
+    // time of day is not shown apart, as the line already says it.
+    ["planned", someDate(props["/plannedDay"])],
     ["created", rest.created],
     // The date a task was finished or dropped, which is one field because a task is one or the
     // other and never both. Which of the two it is, is the status.

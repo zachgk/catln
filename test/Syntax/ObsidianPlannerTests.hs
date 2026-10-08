@@ -8,6 +8,9 @@
 module Syntax.ObsidianPlannerTests where
 
 import           Data.Time.Calendar       (fromGregorian)
+import           Syntax.Ct.Prgm           (RawPrgm (..))
+import           Syntax.Obsidian.Parser   (NotePlanner (..), notePageStatement,
+                                           unparseNote)
 import           Syntax.Obsidian.Planner
 import           Syntax.Obsidian.Settings (DailyNoteSettings (..),
                                            DateToken (..), PlannerSettings (..),
@@ -134,6 +137,22 @@ testResolveEnds = testCase "a block without an end lasts as the vault says" $ do
   assertEqual "until the next" [(600, 620), (540, 560), (620, 650)] (resolveEnds defaultPlannerSettings{pstExtendUntilNext = True} blocks)
   assertEqual "past midnight" [(1430, 20)] (resolveEnds defaultPlannerSettings{pstDefaultDuration = 30} [WrittenBlock 1430 Nothing])
 
+-- | A note read by the planner is written back as it was written. The planner's reading is beside
+-- the line rather than taken out of it, so the times and the scheduled day are still in the line
+-- that is written back.
+testPlannedNoteRoundTrip :: TestTree
+testPlannedNoteRoundTrip = testCase "a note the planner read is written back as it was" $ do
+  let note = unlines [
+        "# Day planner",
+        "",
+        "- [ ] 09:00 - 10:30 Write the report",
+        "- [x] 11:00 Stand up",
+        "  - [ ] 1:30pm Nested",
+        "- [ ] 10:00 Pick up the parcel [scheduled:: 2026-01-05]"
+                     ]
+  let planner = NotePlanner defaultPlannerSettings (Just $ fromGregorian 2026 1 3) []
+  assertEqual "" (Just note) (unparseNote $ RawPrgm [] [notePageStatement Nothing (Just planner) (const Nothing) "2026-01-03" note])
+
 obsidianPlannerTests :: TestTree
 obsidianPlannerTests = testGroup "ObsidianPlanner" [
   testGroup "Settings" [
@@ -147,6 +166,7 @@ obsidianPlannerTests = testGroup "ObsidianPlanner" [
     testNoteDay,
     testTimeRanges,
     testScheduledDay,
-    testResolveEnds
+    testResolveEnds,
+    testPlannedNoteRoundTrip
                       ]
                                                    ]

@@ -352,7 +352,7 @@ rewrite = rewriteWith Nothing
 -- running no plugin, because how a checkbox of a vault running one is read is
 -- 'Syntax.ObsidianTaskTests' and what a note holding one is written back as is 'testRewriteTasks'.
 rewriteWith :: Maybe TaskSettings -> String -> Maybe String
-rewriteWith settings note = unparseNote $ RawPrgm [] [notePageStatement settings vaultHref "A note" note]
+rewriteWith settings note = unparseNote $ RawPrgm [] [notePageStatement settings Nothing vaultHref "A note" note]
 
 -- | The writing of a note as its page holds it: the comments its runs of writing are read as, at
 -- whatever depth they are written, since the writing under a checkbox is writing of the note too.
@@ -361,7 +361,7 @@ rewriteWith settings note = unparseNote $ RawPrgm [] [notePageStatement settings
 -- what is tested is what a reader of the page sees rather than a function the page might not be
 -- using.
 writingOf :: String -> [String]
-writingOf note = aux [notePageStatement Nothing vaultHref "A note" note]
+writingOf note = aux [notePageStatement Nothing Nothing vaultHref "A note" note]
   where
     aux trees = concat [written tree ++ aux under | tree@(RawStatementTree _ under) <- trees]
     written (RawStatementTree (RawAnnot annot) []) | named mdAnnot annot = maybeToList $ rawArgStr mdAnnotText annot
@@ -529,7 +529,7 @@ testOverlayStatement = testGroup "the page a note is written over is declared be
   testCase "and not when there are no properties" $ assertEqual "" [] $ overlaysOf "The note.\n"
                                                                                                      ]
   where
-    overlaysOf note = case notePageStatement Nothing vaultHref "A note" note of
+    overlaysOf note = case notePageStatement Nothing Nothing vaultHref "A note" note of
       RawStatementTree _ parts -> [rawArgStr overlayAnnotUrl annot | RawStatementTree (RawAnnot annot) [] <- parts, named overlayAnnot annot]
 
 -- | The properties are written back between the delimiters they were found between, and the note
