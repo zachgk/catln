@@ -28,9 +28,9 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Integer
                                     , /l=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
+                                    , /other=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
                                     )
                                 )
                             , []

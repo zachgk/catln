@@ -10225,6 +10225,9 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           -- their partials, the var's binding concretely under the ambient env, the meet re-met
           -- with the binding to keep its variables; the slot install re-meets it with each slot.
           let subBinding = H.lookupDefault PTopType (extKey v) vaenv
+          let argVarLink = case (v, subBinding) of
+                (TVArg _, TypeVar vn@(TVVar _) loc _) | loc /= TVParent, H.member (extKey vn) vaenv -> Just (TypeVar vn TVExt PTopType)
+                _ -> Nothing
           let met = intersectTypesEnv typeEnv vaenv (concreteAtUnder supPartialList subBinding) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> concreteUnder sup <$> slotRead sup) supPartialList)
           let tp' = resolvedMeet subBinding met
           let vaenv' = H.insert (extKey v) tp' vaenv
@@ -10258,6 +10261,15 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- as the ⊤ it denotes (the frame-exit rule above).
                 (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVExt subI2 <- subType, H.member (extKey (TVVar vn)) vaenv ->
                   Just $ typeSetAux propName (TypeVar (TVVar vn) TVExt subI2) p
+                -- The same link reached through an ARGUMENT: a definition's parameter typed by one
+                -- of the definition's own variables (@bap[$M](m -> $M, ..)@ binds @/m ↦ $/M@) is
+                -- that variable wherever the body uses it, so the slot it fills (@mmap(m= m)@)
+                -- holds the variable as the enclosing scope's reference — not its current bound,
+                -- which made the body's result the bound's (@mmap@'s @$M@ read as @∀Monad@) and
+                -- left the definition promising "some Monad" rather than its own @$M@. Once
+                -- stored, the link is kept.
+                (_, Just supTp) | TVArg _ <- propName, Just lnk <- argVarLink, supTp == PTopType || supTp == lnk ->
+                  Just $ typeSetAux propName lnk p
                 (_, Just supTp) -> Just $ typeSetAux propName (resolvedMeet supTp met) p
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
           (vaenv', superType', subType)

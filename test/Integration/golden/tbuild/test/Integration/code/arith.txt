@@ -18,27 +18,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Float
                                     , /l=/Data/Primitive/Float
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Float =
-                                    ( /operator//
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Float = 6.0 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Float =
+                                        ( /operator//
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Float = 6.0 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
+                                            ) ↦ /Data/Primitive/Float
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
-                                        ) ↦ /Data/Primitive/Float
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -60,27 +73,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Float
                                     , /l=/Data/Primitive/Float
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Float =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Float = 1.0 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Float =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Float = 1.0 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
+                                            ) ↦ /Data/Primitive/Float
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
-                                        ) ↦ /Data/Primitive/Float
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -115,27 +141,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /operator-
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 5 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 5 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
+                                            ) ↦ /Data/Primitive/Integer
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
-                                        ) ↦ /Data/Primitive/Integer
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -169,27 +208,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Float
                                     , /l=/Data/Primitive/Float
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Float =
-                                    ( /operator-
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Float = 5.0 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Float =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Float = 5.0 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                                            ) ↦ /Data/Primitive/Float
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
-                                        ) ↦ /Data/Primitive/Float
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -211,27 +263,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /operator*
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 2 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 2 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
+                                            ) ↦ /Data/Primitive/Integer
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
-                                        ) ↦ /Data/Primitive/Integer
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 6 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Integer = 6 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -253,27 +318,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Float
                                     , /l=/Data/Primitive/Float
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Float =
-                                    ( /operator*
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Float = 2.0 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Float =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Float = 2.0 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                                            ) ↦ /Data/Primitive/Float
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
-                                        ) ↦ /Data/Primitive/Float
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Float = 6.0 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Float = 6.0 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Float
+                                    , /other=/Data/Primitive/Float
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -295,27 +373,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /operator%
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 7 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator%
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 7 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
+                                            ) ↦ /Data/Primitive/Integer
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
-                                        ) ↦ /Data/Primitive/Integer
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -337,27 +428,40 @@ Prgm
                                 ( /operator==
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
                                         )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/Primitive/Integer
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                , /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }

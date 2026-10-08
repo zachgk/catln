@@ -32,26 +32,44 @@ Prgm
                                     ( /r=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     , /l=∀/Data/String
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/equal
+                                    ( /this=∀/Data/String
+                                    , /other=∀/Data/String
                                     )
                                 )
                             , []
-                            ) = /operator==
-                            ( EAppArg
-                                { eaaArg = Value /l -> ∀/Data/String =
-                                    ( /Data/toString
-                                        ( EAppArg
-                                            { eaaArg = Value /this -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ ∀/Data/String
+                            ) =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /Data/toString
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                                    }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
                                     )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
-                                }
+                                ,
+                                    ( /Data/charsEqual
+                                        ( /a=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        , /b=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ) + /Data/Algebra/equal
+                                        ( /this=∀/Data/String
+                                        , /other=∀/Data/String
+                                        )
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }
