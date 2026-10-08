@@ -20,6 +20,14 @@ const useStyles = makeStyles({
   done: {
     color: 'gray',
     textDecoration: 'line-through'
+  },
+  // One line in a small space: the box loses its padding and the writing is smaller, so the two fit
+  // in a block of a calendar's day as short as its default one.
+  denseBox: {
+    padding: '0 4px 0 0'
+  },
+  denseContents: {
+    fontSize: '0.85rem'
   }
 });
 
@@ -38,7 +46,7 @@ function taskSource(contents, done) {
 // per edit rather than once per keystroke. Without an update neither can be edited — a task shown
 // where nothing can be written is still a task to read.
 function Task(props) {
-  const {update} = props;
+  const {update, dense} = props;
   const contents = props["/contents"].contents;
   const done = props["/state"].name === TRUE;
   const classes = useStyles();
@@ -68,11 +76,12 @@ function Task(props) {
         checked={done}
         disabled={!update}
         size="small"
+        className={dense ? classes.denseBox : undefined}
         inputProps={{'aria-label': contents}}
         onChange={toggle}
       />
       <InputBase
-        className={`${classes.contents} ${done ? classes.done : ''}`}
+        className={`${classes.contents} ${done ? classes.done : ''} ${dense ? classes.denseContents : ''}`}
         value={draft}
         readOnly={!update}
         fullWidth

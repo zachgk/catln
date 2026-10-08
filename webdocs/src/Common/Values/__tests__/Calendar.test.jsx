@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
@@ -98,6 +98,16 @@ describe('Calendar', () => {
     expect(screen.getByText('January 2026')).toBeInTheDocument()
     // And the day it marks is that day rather than one of June 2030, which is what the clock says.
     expect(container.querySelectorAll('.rbc-today').length).toBeGreaterThan(0)
+  })
+
+  // A month far from the one the calendar opened on is reached by naming a day of it.
+  it('turns to a day named in the field for it', () => {
+    render(<Providers><Calendar {...calendared(null, entry('id-1', 'Later', '2026-09-14'))} /></Providers>)
+
+    fireEvent.change(screen.getByTestId('go-to-day'), { target: { value: '2026-09-14' } })
+
+    expect(screen.getByText('September 2026')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Later')).toBeInTheDocument()
   })
 
   // An entry given a time of day is drawn over that time rather than across the whole day.

@@ -1,16 +1,21 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
 import {Calendar as BigCalendar} from 'react-big-calendar';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-import {Undated, asLocalDay, entryStyles, localizer, timedSpan, useEntries} from './calendarShared';
+import {GoToDay, Undated, asLocalDay, entryStyles, localizer, timeGridStyles, timedSpan, useEntries} from './calendarShared';
 
 const useStyles = makeStyles({
   ...entryStyles,
   calendar: {
-    height: '36em'
+    height: '36em',
+    ...timeGridStyles(false)
+  },
+  calendarWeek: {
+    height: '36em',
+    ...timeGridStyles(true)
   }
 });
 
@@ -43,6 +48,8 @@ function Calendar(props) {
   const result = useMemo(() => JSON.parse(resultArg.contents), [resultArg]);
   const {error, valueOf} = useEntries();
   const classes = useStyles();
+  const [date, setDate] = useState(() => asLocalDay(result.crToday));
+  const [view, setView] = useState('month');
 
   const events = useMemo(() => result.crItems.filter(item => item.ciDay).map(entryEvent), [result]);
 
@@ -50,7 +57,9 @@ function Calendar(props) {
 
   const entry = item => (
     <span className={classes.entry}>
-      <span className={classes.entryValue}>{valueOf(item)}</span>
+      {/* Dense in the views drawing an entry into the grid of days, and whole in the agenda, which
+          lists each entry on a line of its own. */}
+      <span className={classes.entryValue}>{valueOf(item, view !== 'agenda')}</span>
     </span>
   );
 
@@ -61,13 +70,16 @@ function Calendar(props) {
   return (
     <div data-testid="calendar">
       {error && <div className={classes.error} data-testid="calendar-error">save failed: {error}</div>}
+      <GoToDay date={date} onChange={setDate} />
       <BigCalendar
-        className={classes.calendar}
+        className={view === 'week' ? classes.calendarWeek : classes.calendar}
         localizer={localizer}
         events={events}
-        defaultDate={asLocalDay(result.crToday)}
+        date={date}
+        onNavigate={setDate}
+        view={view}
+        onView={setView}
         getNow={() => asLocalDay(result.crToday)}
-        defaultView="month"
         views={['day', 'week', 'month', 'agenda']}
         startAccessor="start"
         endAccessor="end"

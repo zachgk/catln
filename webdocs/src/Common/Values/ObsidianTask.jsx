@@ -33,6 +33,24 @@ const useStyles = makeStyles({
   done: {
     color: 'gray',
     textDecoration: 'line-through'
+  },
+  // One line in a small space: the writing is cut short where it does not fit, rather than wrapped
+  // below the edge of the block holding it.
+  dense: {
+    flexWrap: 'nowrap',
+    minWidth: 0,
+    // Absolute, as a dense Task's is, so that the two readings of a checkbox are one size wherever
+    // they are drawn rather than each relative to whatever holds it.
+    fontSize: '0.85rem'
+  },
+  denseBox: {
+    padding: '0 4px 0 0'
+  },
+  denseDescription: {
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
   }
 });
 
@@ -89,6 +107,27 @@ function ObsidianTask(props) {
     ["priority", priority]
   ];
 
+  const shown = fields.filter(([, value]) => value);
+
+  // Dense, the task is its box and what it says on one line, and the fields beside it are left to
+  // the tooltip: a block of a calendar's day is too short to hold them, and the time and day they
+  // would most often say are what the calendar is already drawing.
+  if (props.dense) {
+    const tooltip = [description, rest.statusName, ...shown.map(([label, value]) => `${label}: ${value}`)].filter(Boolean).join('\n');
+    return (
+      <span className={`${classes.task} ${classes.dense}`} title={tooltip}>
+        <Checkbox
+          checked={done}
+          disabled
+          size="small"
+          className={classes.denseBox}
+          inputProps={{'aria-label': description}}
+        />
+        <span className={`${classes.description} ${classes.denseDescription} ${done ? classes.done : ''}`}>{description}</span>
+      </span>
+    );
+  }
+
   return (
     <span className={classes.task}>
       <Checkbox
@@ -101,7 +140,7 @@ function ObsidianTask(props) {
       {/* The status is shown by the name the vault gave it, which is the only thing that says what
           a box holding something other than a space or an x means. */}
       {rest.statusName ? <Chip label={rest.statusName} size="small" variant="outlined" /> : null}
-      {fields.filter(([, value]) => value).map(([label, value]) => (
+      {shown.map(([label, value]) => (
         <Chip key={label} label={`${label}: ${value}`} size="small" variant="outlined" />
       ))}
       {(rest.tags || []).map(tag => (

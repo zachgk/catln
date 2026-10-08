@@ -101,6 +101,21 @@ describe('ObsidianTask', () => {
     expect(screen.getByText('planned: 2026-01-03')).toBeInTheDocument()
   })
 
+  // Dense, a task is its box and what it says, on one line; what the chips would say is in its
+  // tooltip instead.
+  it('draws itself on one line when dense, with its fields in the tooltip', () => {
+    render(<Providers><ObsidianTask dense {...task({
+      '/priority': member('/Data/Note/Priority/High'),
+      '/plannedDay': someDate(2026, 1, 3),
+    })} /></Providers>)
+
+    expect(screen.getByText('Ship it')).toBeInTheDocument()
+    expect(screen.queryByText('priority: high')).not.toBeInTheDocument()
+    const line = screen.getByText('Ship it').parentElement
+    expect(line.getAttribute('title')).toContain('priority: high')
+    expect(line.getAttribute('title')).toContain('planned: 2026-01-03')
+  })
+
   it('shows the day a task may be started on', () => {
     render(<Providers><ObsidianTask {...task({'/start': someDate(2026, 1, 2)})} /></Providers>)
 

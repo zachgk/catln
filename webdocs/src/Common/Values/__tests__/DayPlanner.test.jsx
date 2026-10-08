@@ -1,10 +1,10 @@
 import React from 'react'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
 import { ConfigContext, ReloadContext } from '../../Common'
-import DayPlanner from '../DayPlanner'
+import DayPlanner, { openingTime } from '../DayPlanner'
 
 const theme = createTheme()
 
@@ -103,6 +103,76 @@ describe('DayPlanner', () => {
     expect(screen.queryByDisplayValue('Write')).not.toBeInTheDocument()
     // Turned over rather than asked for again.
     expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  // A day far from the one the planner opened on is reached by naming it, rather than by turning over
+  // a day at a time to get there.
+  it('turns to a day named in the field for it', () => {
+    render(<Providers><DayPlanner {...planned(
+      null,
+      entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }),
+      entry('id-2', 'Later', '2026-03-10', { ctStart: '14:00', ctEnd: '15:00' }),
+    )} /></Providers>)
+
+    expect(screen.getByTestId('go-to-day')).toHaveValue(TODAY)
+    fireEvent.change(screen.getByTestId('go-to-day'), { target: { value: '2026-03-10' } })
+
+    expect(screen.getByText(/Mar 10/)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Later')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('Write')).not.toBeInTheDocument()
+    expect(screen.getByTestId('go-to-day')).toHaveValue('2026-03-10')
+  })
+
+  // A browser reports a date field changed at every keystroke, with the year typed so far. Those are
+  // not days to turn to, and turning to them would write them back under the reader's fingers.
+  it('waits for a whole year before turning to a typed day', () => {
+    render(<Providers><DayPlanner {...planned(null, entry('id-2', 'Later', '2026-03-10', { ctStart: '14:00', ctEnd: '15:00' }))} /></Providers>)
+    const field = screen.getByTestId('go-to-day')
+
+    for (const typed of ['0002-03-10', '0020-03-10', '0202-03-10']) {
+      fireEvent.change(field, { target: { value: typed } })
+      expect(screen.getByText(/Jan 03/)).toBeInTheDocument()
+      expect(field).toHaveValue(typed)
+    }
+    fireEvent.change(field, { target: { value: '2026-03-10' } })
+
+    expect(screen.getByText(/Mar 10/)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Later')).toBeInTheDocument()
+  })
+
+  // The field follows the toolbar too, so it always names the day that is showing.
+  it('names the day the toolbar turned to', async () => {
+    render(<Providers><DayPlanner {...planned(null, entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }))} /></Providers>)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+    expect(screen.getByTestId('go-to-day')).toHaveValue('2026-01-04')
+  })
+
+  // A block of the day holds its entry on one line, which a block a week wide has room for too.
+  it('draws a block of a week on one line', async () => {
+    const { container } = render(<Providers><DayPlanner {...planned(null, entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '09:45' }))} /></Providers>)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Week' }))
+
+    const block = container.querySelector('.rbc-time-content .rbc-event')
+    expect(within(block).getByDisplayValue('Write')).toBeInTheDocument()
+  })
+
+  // A day opens at its first block, and a week at the first block of any of its days, so that no
+  // block of what is showing starts out scrolled above it. A day with no block opens in the morning.
+  it('opens at the earliest block of what is showing', () => {
+    const at = (day, hours, minutes) => { const d = new Date(2026, 0, day); d.setHours(hours, minutes); return d }
+    const events = [
+      { allDay: false, start: at(3, 9, 0) },
+      { allDay: false, start: at(4, 8, 0) },
+      { allDay: true, start: at(3, 0, 0) },
+    ]
+    const opened = (date, view) => { const t = openingTime(events, date, view); return [t.getHours(), t.getMinutes()] }
+
+    expect(opened(new Date(2026, 0, 3), 'day')).toEqual([9, 0])
+    expect(opened(new Date(2026, 0, 3), 'week')).toEqual([8, 0])
+    expect(opened(new Date(2026, 0, 5), 'day')).toEqual([6, 0])
   })
 
   // The answer carries a day and not a time, so there is no now to draw a line at.

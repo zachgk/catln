@@ -31,9 +31,13 @@ import {BuildFile, CatlnResult} from './Values/BuildResult';
 // means is the caller's: an AnnotPage recompiles itself with the new annotation, and a docs page
 // will rewrite the expression in its source. A value with no update is simply not editable, so
 // every display component has to work without one.
+//
+// A Value may also be asked to be dense, which is how a value drawn into a small space -- a block of
+// a calendar's day -- is drawn: on one line, with what does not fit cut short rather than wrapped out
+// of sight. A display with no dense form of its own ignores it.
 function Value(props) {
   let val = props.data;
-  const {update} = props;
+  const {update, dense} = props;
   switch(val.tag) {
   case "IntVal":
   case "FloatVal":
@@ -82,12 +86,12 @@ function Value(props) {
     // A task is not a display standing in for something else, it is the value the note declares. So
     // it is the one value here that update edits into the page rather than into an annotation.
     case "/Data/Note/Task/Simple":
-      return <Task {...val.args} update={update} />;
+      return <Task {...val.args} update={update} dense={dense} />;
     // The same checkbox in a vault running the Obsidian Tasks plugin, read apart into the fields the
     // plugin wrote into the line. No update: reading a line apart is what the importer does, and
     // writing one back from its parts is not something it can do yet.
     case "/Data/Note/Task/Obsidian":
-      return <ObsidianTask {...val.args} />;
+      return <ObsidianTask {...val.args} dense={dense} />;
     // A list of tasks gathered across notes. It gets no update: each of its rows is written back to
     // the note that row came from, which the row carries and the list on this page does not know.
     case "/Data/Note/Show/TaskList":
