@@ -347,7 +347,7 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv, tbUntyped} os srcType@PartialType{ptNam
     -- A call of one of the object's arguments (@fn(v= x)@ for a higher-order @fn@) returns
     -- what the argument returns: its input object resolved through the environment's arrows
     -- ('hoSlotResult').
-    argArrows = map ((srcType, Nothing,) . (`TCArg` nameStr srcName) . hoSlotResult tbTypeEnv H.empty (partialToKey srcType) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
+    argArrows = map ((srcType, Nothing,) . (`TCArg` nameStr srcName) . hoSlotResult tbTypeEnv H.empty (partialToKey srcType) . abType) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
 
 -- | Whether the type graph rewrites this leaf — whether it is a call rather than a value. A data
 -- construction and a curried partial application are accepted by no arrow and are already values;
@@ -553,7 +553,7 @@ buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force basis srcType de
     -- whose bindings say what they are here (@T ↦ True@ from @l@). Read unresolved, a link is
     -- the ⊤ it denotes, and every arm of @equal@ accepts it.
     osEnv = case exprVarArgsWithObjSrcs tbTypeEnv os of
-      [vaenv] -> ambientEnv (H.filter (/= PTopType) (fmap snd vaenv))
+      [vaenv] -> ambientEnv (H.filter (/= PTopType) (fmap abType vaenv))
       _       -> H.empty
     srcType' = substituteTVExt tbTypeEnv osEnv srcType
     destType' = substituteTVExt tbTypeEnv osEnv destType
@@ -570,9 +570,9 @@ buildCallTreeAt _ _ _ _ MayHold _ _ PTopType = return TCTId
 buildCallTreeAt _ _ _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
 buildCallTreeAt env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound force basis (TypeVar v _ i) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
   [vaenv] -> case H.lookup v vaenv of
-    Just (_, srcType') -> buildCallTree env objSrcs visitedArrows bound force basis (intersectTypes tbTypeEnv srcType' i) destType
+    Just ArgBind{abType=srcType'} -> buildCallTree env objSrcs visitedArrows bound force basis (intersectTypes tbTypeEnv srcType' i) destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
-  vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
+  vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show $ map (fmap abType) vaenvs)
 -- A source with no concrete leaves but a predicate top (a rel/class form such as @~Boolean@
 -- represented as @UnionType (Just (PredRel Boolean, _)) [] []@) carries its members only in the
 -- predicate, so expand it to the member union and build from that. Without this it would yield an
@@ -852,7 +852,7 @@ toTExprDest env0@TBEnv{tbTypeEnv} os e m = do
   let argFnTree = case maybeGetSingleton srcT of
         Just sp ->
           case mapMaybe (lookupArgLoose (partialToKey sp)) (exprVarArgsWithObjSrcs tbTypeEnv os) of
-            ((_, argT):_) -> Just $ TCArg (hoSlotResult tbTypeEnv H.empty (partialToKey sp) argT) (nameStr (ptName sp))
+            (ArgBind{abType=argT}:_) -> Just $ TCArg (hoSlotResult tbTypeEnv H.empty (partialToKey sp) argT) (nameStr (ptName sp))
             []            -> Nothing
         _ -> Nothing
   -- An applied term may stand unrewritten: rewriting is a chain, and the consumer's own followup

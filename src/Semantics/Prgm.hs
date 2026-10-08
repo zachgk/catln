@@ -400,9 +400,46 @@ instance Semigroup (Prgm e m) where
 instance Monoid (Prgm e m) where
   mempty = Prgm mempty mempty []
 
--- | Represents the VarArgMap by extracting information from a partial
-type ArgMetaMapWithSrcItem m = ([(Expr m, Meta m)], Type)
-type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([(Expr m, Meta m)], Type)
+-- | What one argument or type variable is bound to at a call, with the expressions that bind it.
+--
+-- A type variable is bound by each argument whose declared type is the variable itself
+-- (@(l :: $T == r :: $T)@), and each such DIRECT occurrence is one of its members, so they JOIN
+-- ('abJoin'). Every other reading constrains the one value and MEETS ('abMeet'): an argument
+-- bound twice, a linked dimension (@lst -> ConsList[$T]@, 'linkedDimBinds'), the variable's own
+-- slot on the call ('EAppVar'). The binding is the two met ('abType'). They are kept apart while the
+-- bindings are combined so the result does not depend on the order the readings arrive in: the
+-- call's own @[$T]@ slot coming first must not turn the occurrences after it into a meet.
+data ArgBind m = ArgBind
+  { abMetas :: [(Expr m, Meta m)]
+  , abJoin  :: Maybe Type -- ^ The join of the direct occurrences; 'Nothing' where there are none
+  , abMeet  :: Type       -- ^ The meet of every other reading; ⊤ where there are none
+  , abType  :: Type       -- ^ The binding: 'abJoin' met with 'abMeet'
+  }
+
+-- | A reading that constrains the value: it meets the others.
+meetBind :: [(Expr m, Meta m)] -> Type -> ArgBind m
+meetBind ms t = ArgBind ms Nothing t t
+
+-- | A direct occurrence of a type variable: it joins the other direct occurrences. A ⊤ says nothing
+-- (an argument the source does not spell), so it is no member and joins nothing.
+directBind :: [(Expr m, Meta m)] -> Type -> ArgBind m
+directBind ms PTopType = meetBind ms PTopType
+directBind ms t        = ArgBind ms (Just t) PTopType t
+
+mergeArgBind :: (TypeGraph tg) => TypeEnv tg -> ArgBind m -> ArgBind m -> ArgBind m
+mergeArgBind typeEnv (ArgBind m1s j1 o1 _) (ArgBind m2s j2 o2 _) = ArgBind (m1s ++ m2s) j o t
+  where
+    j = case (j1, j2) of
+      (Nothing, _)     -> j2
+      (_, Nothing)     -> j1
+      (Just a, Just b) -> Just (unionTypes typeEnv a b)
+    o = intersectTypes typeEnv o1 o2
+    t = case j of
+      Nothing -> o
+      Just j' -> intersectTypes typeEnv o j'
+
+type ArgMetaMapWithSrcItem m = ArgBind m
+type ArgMetaMapWithSrc m = H.HashMap TypeVarAux (ArgBind m)
 
 -- | Represents multiple possible 'ArgMetaMapWithSrc' that can be achieved by different matches (can choose with match)
 type PossArgMetaMapWithSrc m = [ArgMetaMapWithSrc m]
@@ -509,23 +546,23 @@ instance ExprClass Expr where
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
                     (lt@(UnionType Nothing _ _), rt) | isJust (maybeGetSingleton lt) -> concatMap findArrowMatches bases'
                       where
-                        findArrowMatches base' = case typeGraphQuery typeEnv (ambientEnv $ (fmap snd base')) $ getSingleton lt of
+                        findArrowMatches base' = case typeGraphQuery typeEnv (ambientEnv $ (fmap abType base')) $ getSingleton lt of
                           [] -> [H.empty]
-                          qr -> let fromEachArrow = fmap (\qrt -> envAmbient $ fst $ intersectTypesWithVarEnv typeEnv (ambientEnv $ (fmap snd base')) qrt rt) qr
-                                in joinPossVarArgMetaWithSrc typeEnv (map (fmap ([],)) fromEachArrow) [base']
+                          qr -> let fromEachArrow = fmap (\qrt -> envAmbient $ fst $ intersectTypesWithVarEnv typeEnv (ambientEnv $ (fmap abType base')) qrt rt) qr
+                                in joinPossVarArgMetaWithSrc typeEnv (map (fmap (meetBind [])) fromEachArrow) [base']
                     _ -> [H.empty]
                   _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)
         _ -> bases'
         where
           bases' = exprVarArgsWithSrc typeEnv base src
           condArgs = exprAppliedArgsMap cond
-      aux (AliasExpr base n) = map (H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src)) (exprVarArgsWithSrc typeEnv base src)
+      aux (AliasExpr base n) = map (H.insertWith (mergeArgBind typeEnv) (TVArg $ inExprSingleton n) (meetBind [(n, getExprMeta base)] (singletonType src))) (exprVarArgsWithSrc typeEnv base src)
       aux (TupleApply _ (_, be) arg) = joinPossVarArgMetaWithSrc typeEnv (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
         where
           fromArg :: (MetaDat m, Show m) => EApp Expr m -> [ArgMetaMapWithSrc m]
           fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArgLoose (inExprSingleton obj) src of
             Just (UnionType Nothing srcArg []) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
-            Just t@(UnionType (Just _) _ _) -> [(,t) <$> exprVarArgs e]
+            Just t@(UnionType (Just _) _ _) -> [(`meetBind` t) <$> exprVarArgs e]
             _ -> [H.empty]
           fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
           fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)})
@@ -540,7 +577,9 @@ instance ExprClass Expr where
             , Just (UnionType Nothing srcArg []) <- typeGetArg argKey src
             = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
             | otherwise = case getMetaType arrM of
-                (TypeVar v _ _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType srcArgOut) mainArg]
+                (TypeVar v _ _) -> [H.insertWith (mergeArgBind typeEnv) v (bindOcc v [(obj, arrM)] (fromMaybe PTopType srcArgOut)) mainArg]
+                  where bindOcc TVVar{} = directBind
+                        bindOcc _       = meetBind
                 -- A declared argument spelled as a class application linking the object's
                 -- variables (@lst -> List[/T=$_/T]@) BINDS those variables from the source
                 -- content's linked dimension (@lst=Cons[/T=Integer](…)@ binds @/T=Integer@) —
@@ -550,7 +589,7 @@ instance ExprClass Expr where
                 -- linked result (@-> List[/T=$_/T]@) always presented at the variable's declared
                 -- bound instead of the call's element type.
                 declT -> [foldr insertLinked mainArg (linkedDimBinds typeEnv declT (fromMaybe PTopType srcArgOut))]
-                  where insertLinked (v, d) = H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], d)
+                  where insertLinked (v, d) = H.insertWith (mergeArgBind typeEnv) v (meetBind [(obj, arrM)] d)
             where
               structKey = inExprSingleton obj
               -- What the source passes for this argument, read as the argument's declared type
@@ -581,14 +620,14 @@ instance ExprClass Expr where
               -- the desugared @main@ wrapper's @TVArg /io@ return resolves to ⊤ against the
               -- generic @/ContextIn[$V](value=$V)..@ hop and TreeBuild reports
               -- "Arrow has indeterminate return type".
-              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)],
+              mainArg = H.singleton (TVArg bindKey) (meetBind [(obj, arrM)] $
                 case typeGetArgLoose structKey src of
                   Just t | t /= PTopType -> t
                   _                      -> getMetaType arrM)
           -- The variable's value read OUT of the source's slot, in the point's currency: the slot may
           -- name the source's other parameters (@/M=∀Monad[/T=$^A]@ — 'siblingRefsToParent'),
           -- which outside the source are its bindings ('slotAtPoint').
-          fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], slotAtPoint typeEnv H.empty src (H.lookupDefault PTopType vn (ptVars src)))]
+          fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) (meetBind [(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)] (slotAtPoint typeEnv H.empty src (H.lookupDefault PTopType vn (ptVars src))))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
@@ -677,37 +716,9 @@ linkedDimBinds typeEnv declT content = case declT of
       Nothing | H.null (ptVars l) && H.null (ptArgs l) -> Just Nothing
               | otherwise -> Nothing
 
-mergeVarArgMetaWithSrcItem :: (TypeGraph tg) => TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
-mergeVarArgMetaWithSrcItem typeEnv (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
-
--- | Combines the bindings two parts of an object's match make. An ARGUMENT binds once, so two
--- readings of it are two constraints on one value and meet. A type VARIABLE is bound by each
--- argument whose declared type is the variable itself (@(l :: $T == r :: $T)@), and each such
--- argument is one of its members: from those DIRECT occurrences the variable's value at the call
--- is their JOIN — the same rule as the type algebra's pointer-occurrence join
--- ('Semantics.Types.intersectPartialsBaseN'). Meeting them collapsed a mixed call
--- (@Some(1) == Nothing@) to @T = ∅@, and every type spelled through @$T@ in the body then read as
--- empty.
---
--- Any other binding still meets: a linked dimension (@lst -> ConsList[$T]@, 'linkedDimBinds') and
--- the variable's own slot on the call ('fromArg' on 'EAppVar'). Those can present the variable's
--- declared bound rather than evidence (@sorted[/T=∀Ord](lst=Cons[/T=Integer](…))@, or a set built
--- from @empty@), and joined, that bound absorbed the element type the other occurrences carry.
---
--- A ⊤ contributes nothing to the join: it is what a binding that says nothing reads as, not a
--- member of the variable, so joined it would erase every occurrence's value.
+-- | Combines the bindings two parts of an object's match make ('mergeArgBind').
 joinPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m
-joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWithKey merge aVarArgMap bVarArgMap | aVarArgMap <- aVarArgMaps, bVarArgMap <- bVarArgMaps]
-  where
-    merge TVVar{} (m1s, t1) (m2s, t2)
-      | all direct m1s && all direct m2s = (m1s ++ m2s, joinOcc t1 t2)
-    merge _ a b                       = mergeVarArgMetaWithSrcItem typeEnv a b
-    direct (_, m) = case getMetaType m of
-      TypeVar{} -> True
-      _         -> False
-    joinOcc PTopType t = t
-    joinOcc t PTopType = t
-    joinOcc t1 t2      = unionTypes typeEnv t1 t2
+joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWith (mergeArgBind typeEnv) aVarArgMap bVarArgMap | aVarArgMap <- aVarArgMaps, bVarArgMap <- bVarArgMaps]
 
 joinAllPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossArgMetaMapWithSrc m
 joinAllPossVarArgMetaWithSrc _ []     = [H.empty]

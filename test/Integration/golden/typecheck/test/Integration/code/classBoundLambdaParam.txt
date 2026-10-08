@@ -140,7 +140,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/False = /headTo( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
+            ( Value /p -> ∀/Data/Primitive/Boolean = /headTo( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
                 ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==
                     ( Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
                     ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some

@@ -578,7 +578,7 @@ arrowDestTypeDispatch :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat
 arrowDestTypeDispatch = arrowDestTypeBase True
 
 arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
-arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . withScope . withDeclaredArgResults . ambientEnv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
+arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . withScope . withDeclaredArgResults . ambientEnv . fmap abType) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
     -- An arrow the querying scope itself adds to its environment — an argument of the enclosing
     -- definition, or a lambda the call is given ('ArgObj') — is defined IN that scope, so its
@@ -850,4 +850,4 @@ metaTypeVar m = case getMetaType m of
   _             -> Nothing
 
 isSubtypeOfWithObjSrcs :: (TypeGraph tg, Show m, MetaDat m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> Type -> Type -> Bool
-isSubtypeOfWithObjSrcs typeEnv objSrcs subType supType = any (\vaenv -> isSubtypeOfWithEnv typeEnv (ambientEnv $ (fmap snd vaenv)) subType supType) (exprVarArgsWithObjSrcs typeEnv objSrcs)
+isSubtypeOfWithObjSrcs typeEnv objSrcs subType supType = any (\vaenv -> isSubtypeOfWithEnv typeEnv (ambientEnv $ (fmap abType vaenv)) subType supType) (exprVarArgsWithObjSrcs typeEnv objSrcs)

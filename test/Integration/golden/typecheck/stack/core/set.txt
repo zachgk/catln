@@ -36,7 +36,18 @@ Prgm
                                     ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                 ) = Value /Data/Set/empty
                             )
-                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/List/filter
+                            ( Value /items -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/Monad[ /T=∀/Data/Algebra/Ord ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
+                                    , /tail=/Data/List/Nil
+                                    )
+                                , []
+                                ) = /Data/List/filter
                                 ( Value /lst ->
                                     ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
                                 )
