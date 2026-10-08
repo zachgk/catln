@@ -157,7 +157,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String = /Data/toString
+                        [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> /Data/String/Text
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=/Data/List/Nil
+                                )
+                            ) = /Data/toString
                             ( Value /this -> /Data/Char = /Data/fromCode( Value /code -> TVArg /n = Value /n ) )
                         ]
                     }

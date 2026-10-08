@@ -19,13 +19,13 @@ import           Data.List             (isInfixOf, sort)
 import           Hedgehog
 import qualified Hedgehog.Gen          as HG
 import           MapMeta
-import           Semantics             (testCtssConfig)
+import           Semantics             (mkTypeEnv, testCtssConfig)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog   as THG
-import           Test.Tasty.HUnit      (Assertion, assertEqual, assertFailure,
-                                        testCase)
+import           Test.Tasty.HUnit      (Assertion, assertBool, assertEqual,
+                                        assertFailure, testCase)
 import           Testing.Generation    (genPrgms)
 import           Text.Printf
 import           TypeCheck             (typecheckPrgm)
@@ -194,9 +194,10 @@ testFoldClassOp = testCase "a fold through a class-declared operator is within i
   assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sumNil"
 
 -- | A call is read at the intersection of every refinement covering it, and a refinement covering
--- only part of a call says nothing about it. @onZ@ calls @tri(n= Z)@, which both refinements cover
--- (@-> AB@ and @-> BC@), so its result is the call form beside the @B@ they share; @onNat@ calls
--- @tri@ on every @Nat@, which neither covers, so it keeps the declared @Tri@.
+-- only part of a call says nothing about it. @tri@ is a primitive, so only its declaration and
+-- refinements say what it returns. @onZ@ calls @tri(n= Z)@, which both refinements cover (@-> AB@
+-- and @-> BC@), so what it settles to is within the @B@ they share; @onNat@ calls @tri@ on every
+-- @Nat@, which neither covers, so it keeps the declared @Tri@, @A@ and @C@ included.
 -- Fixture: unit/refineNarrowsCall.ct.
 testRefineNarrowsCall :: TestTree
 testRefineNarrowsCall = testCase "a call is within every refinement covering it" $ do
@@ -206,13 +207,19 @@ testRefineNarrowsCall = testCase "a call is within every refinement covering it"
   prgm <- case res of
     CRes _ p -> return p
     CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
-  let resultOf name = [ getMetaType m | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), oaObjPath oa == name ]
-  case resultOf "/onZ" of
-    [UnionType Nothing leafs []] -> assertEqual "the forms onZ may take" ["/B", "/tri"] (sort [nameStr (ptName l) | l <- splitUnionType leafs])
-    t -> assertFailure ("onZ is not read within B: " ++ show t)
-  case resultOf "/onNat" of
-    [t@(UnionType (Just (PredsOne (PredClass c), _, _)) _ _)] -> assertEqual ("onNat keeps its declaration: " ++ show t) "/Tri" (nameStr (ptName c))
-    t -> assertFailure ("onNat is not read at its declaration: " ++ show t)
+  let typeEnv = mkTypeEnv prgm
+  -- What a definition's result settles to: its type without the unevaluated @tri@ call form.
+  let settledResultOf name = [ settled (getMetaType m) | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), oaObjPath oa == name ]
+      settled (UnionType mTop leafs consts) = UnionType mTop (joinUnionType [l | l <- splitUnionType leafs, nameStr (ptName l) /= "/tri"]) consts
+      settled t = t
+      within name t = case settledResultOf name of
+        [r] -> isSubtypeOf typeEnv r t
+        rs  -> error ("one result for " ++ show name ++ ", found " ++ show rs)
+      admits name t = case settledResultOf name of
+        [r] -> isSubtypeOf typeEnv t r
+        rs  -> error ("one result for " ++ show name ++ ", found " ++ show rs)
+  assertBool ("onZ is within B: " ++ show (settledResultOf "/onZ")) (within "/onZ" (typeVal "/B"))
+  assertBool ("onNat admits A and C: " ++ show (settledResultOf "/onNat")) (admits "/onNat" (typeVal "/A") && admits "/onNat" (typeVal "/C"))
 
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion

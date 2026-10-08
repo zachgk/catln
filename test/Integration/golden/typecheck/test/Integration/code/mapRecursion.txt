@@ -68,36 +68,36 @@ Prgm
                                 [ /K=∀/ROrd
                                 , /V=$_/V
                                 ]
-                            , /left=∀/RTree
+                            , /left=/RNode
                                 [ /K=∀/ROrd
                                 , /V=$_/V
                                 ]
-                            ) = /RNode
-                            ( Value /left -> UnionType
-                                ( Just
-                                    ( PredClass /RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /RNode
+                                ( /value=$/V
+                                , /key=∀/ROrd
+                                , /right=∀/RTree
                                     [ /K=∀/ROrd
-                                    , /V=TopType
+                                    , /V=$_/V
                                     ]
-                                    ( /value=$/V
-                                    , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
-                                    )
-                                , []
+                                , /left=∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$_/V
+                                    ]
+                                )
+                            ) = /RNode
+                            ( Value /left -> /RNode
+                                [ /K=∀/ROrd
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=∀/ROrd
+                                , /right=∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$_/V
+                                    ]
                                 ) = /rput( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                             )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )
                         , /rputStep( Value /cmp -> /RGt = Value /RGt )
@@ -116,40 +116,40 @@ Prgm
                             ]
                             ( /value=$/V
                             , /key=∀/ROrd
-                            , /right=∀/RTree
+                            , /right=/RNode
                                 [ /K=∀/ROrd
                                 , /V=$_/V
                                 ]
+                                ( /value=$/V
+                                , /key=∀/ROrd
+                                , /right=∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$_/V
+                                    ]
+                                )
                             , /left=∀/RTree
                                 [ /K=∀/ROrd
                                 , /V=$_/V
                                 ]
                             ) = /RNode( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )
-                            ( Value /right -> UnionType
-                                ( Just
-                                    ( PredClass /RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /RNode
+                            ( Value /right -> /RNode
+                                [ /K=∀/ROrd
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=∀/ROrd
+                                , /right=∀/RTree
                                     [ /K=∀/ROrd
-                                    , /V=TopType
+                                    , /V=$_/V
                                     ]
-                                    ( /value=$/V
-                                    , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
-                                    )
-                                , []
+                                , /left=∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$_/V
+                                    ]
                                 ) = /rput( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                             )
                         ]
@@ -392,34 +392,20 @@ Prgm
                                     , /V=TopType
                                     ]
                                 )
-                            )( Value /key -> ∀/ROrd )( Value /value ) -> UnionType
-                            ( Just
-                                ( PredClass /RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$_/MV
-                                    ] && PredClass /RIMap
-                                    [ /K=TopType
-                                    , /V=TopType
-                                    ]
-                                , fromList []
-                                , []
-                                )
-                            , /RNode
+                            )( Value /key -> ∀/ROrd )( Value /value ) -> /RNode
+                            [ /K=∀/ROrd
+                            , /V=TopType
+                            ]
+                            ( /value=$/V
+                            , /key=∀/ROrd
+                            , /right=∀/RTree
                                 [ /K=∀/ROrd
-                                , /V=TopType
+                                , /V=$_/V
                                 ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$_/V
-                                    ]
-                                , /left=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$_/V
-                                    ]
-                                )
-                            , []
+                            , /left=∀/RTree
+                                [ /K=∀/ROrd
+                                , /V=$_/V
+                                ]
                             ) = /rputStep
                             ( Value /cmp -> ∀/RCmp = /rcmp( Value /a -> TVArg /key = Value /key )( Value /b -> TVArg /nk = Value /nk ) )( Value /left -> TVArg /left = Value /left )( Value /nk -> TVArg /nk = Value /nk )( Value /nv -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                         ]

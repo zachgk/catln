@@ -1214,17 +1214,11 @@ Prgm
                                         { eaaArg = Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] }
                                     )
                                 }
-                            ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /length
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /consts = ( Value /consts ↦ TVArg /consts ) }
-                                ) ↦ /Data/Primitive/Integer| PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                )
+                                ) ↦ /Data/Primitive/Integer
                             )
                         , /Test/constCount
                             ( EAppArg
@@ -1273,17 +1267,11 @@ Prgm
                                         }
                                     )
                                 }
-                            ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /length
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /items = ( Value /items ↦ TVArg /items ) }
-                                ) ↦ /Data/Primitive/Integer| PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                )
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -1520,9 +1508,9 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> /Data/Primitive/True =
                     ( /Test/isType
-                        ( EAppArg { eaaArg = Value /b -> /Catln/ObjectBasis/TypeObj = Value /Catln/ObjectBasis/TypeObj } ) ↦ ∀/Data/Primitive/Boolean
+                        ( EAppArg { eaaArg = Value /b -> /Catln/ObjectBasis/TypeObj = Value /Catln/ObjectBasis/TypeObj } ) ↦ /Data/Primitive/True
                     )
                 }
             )
@@ -1533,9 +1521,9 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> /Data/Primitive/False =
                     ( /Test/isType
-                        ( EAppArg { eaaArg = Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj } ) ↦ ∀/Data/Primitive/Boolean
+                        ( EAppArg { eaaArg = Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj } ) ↦ /Data/Primitive/False
                     )
                 }
             )

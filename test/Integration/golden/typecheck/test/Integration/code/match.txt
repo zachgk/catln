@@ -62,22 +62,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs( Value /x -> /Data/Primitive/Integer ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /abs.$490dbb
-                                    ( /$490dbb-arg=/Data/Primitive/Integer
-                                    , /x=/Data/Primitive/Integer
-                                    ) + /operator*[ /T=∀/Data/Algebra/Ring ]
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
+                        [ /abs( Value /x -> /Data/Primitive/Integer ) ->
+                            ( /abs.$490dbb
+                                ( /$490dbb-arg=/Data/Primitive/Integer
+                                , /x=/Data/Primitive/Integer
+                                ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /abs.$490dbb( Value /x -> TVArg /x = Value /x )
                             ( Value /$490dbb-arg -> TVArg /x = Value /x )
                         ]

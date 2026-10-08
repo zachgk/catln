@@ -149,8 +149,15 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
       -- promise about the result of the arrows that are. Offered as one, it became an alternative
       -- beside the arms it refines, and the reach union then read the call as any of their results
       -- (@tri(n -> Z) -> AB@ and @tri(n -> Z) -> BC@ beside the arm's @B@ gave all of @Tri@). So the
-      -- promises are the item's declarations and definitions, and each result is met with every
-      -- refinement covering the part of the source that promise accepts ('refinedDest').
+      -- promises are the item's declarations and definitions, and the result of each one with no
+      -- body is met with every refinement covering the part of the source it accepts ('refinedDest').
+      --
+      -- A definition's result is what its body computes, which the reach follows further; a
+      -- refinement is a claim about it, checked on its own (its proof or derived tests). Met with
+      -- the claim, a computed result outside it — a refinement that is wrong — read as no value at
+      -- all, and the definition failed to type-check rather than the refinement failing to hold. A
+      -- declaration or primitive has nothing but its promises to say what it returns, so there the
+      -- refinements are what is known.
       promises | prune     = mostSpecificPromises
                | otherwise = filter accepts
       -- Each declaration/definition is a PROMISE: given an input of one type, an output of a certain
@@ -206,12 +213,14 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
         -- If none of it is valid, then there is Nothing
         case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
           potentialSrc@(UnionType Nothing potSrcLeafs []) -> if not (isBottomType potentialSrc)
-            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [map (refinedDest potentialSrcPartial) (arrowDestType typeEnv vaenv potentialSrcPartial oa) | potentialSrcPartial <- splitUnionType potSrcLeafs]
+            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [map (refinedDest oa potentialSrcPartial) (arrowDestType typeEnv vaenv potentialSrcPartial oa) | potentialSrcPartial <- splitUnionType potSrcLeafs]
             else []
           _ -> error "Unexpected non-union in TryTArrow"
       tryTArrow ObjArr{oaArr=Nothing} = []
 
-      refinedDest src dest = foldl' (intersectTypesEnv typeEnv vaenv) dest (coveringRefinementResults typeEnv vaenv item src)
+      refinedDest oa src dest = case oaArr oa of
+        Just (Nothing, _) -> foldl' (intersectTypesEnv typeEnv vaenv) dest (coveringRefinementResults typeEnv vaenv item src)
+        _                 -> dest
 
       joinPartialDestTypes :: [[Type]] -> [Type]
       joinPartialDestTypes [] = [BottomType]

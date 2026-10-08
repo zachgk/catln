@@ -62,8 +62,8 @@ unionReachesTree :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> ReachesTree
 -- union (a wrapper @pureConsInt(raw)@ beside its @Cons@ result, or @restToString(raw)@ beside its
 -- @String@) is left exact, preserving raw-vs-settled dispatch keying. The coverage is the WHOLE
 -- union, so a settled sibling provided by another reach child is seen.
-unionReachesTree typeEnv vaenv (ReachesPartialTree children) =
-  presentRawResult typeEnv vaenv u
+unionReachesTree typeEnv vaenv tree@(ReachesPartialTree children) =
+  presentRawResult typeEnv vaenv (completePartials typeEnv vaenv tree) u
   where
     -- Flattened single-compaction union: each child contributes its source key and its
     -- subtree's union as separate operands ('unionAllTypesWithEnvOnce' merges all positive
@@ -222,10 +222,19 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
 -- contains the whole original union): a form whose declared result is ALREADY present adds
 -- nothing, so a leaf standing beside what it produces is kept exact. One level only: the query
 -- inspects direct arguments.
-presentRawResult :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-presentRawResult typeEnv vaenv t@(UnionType Nothing leafs _) =
-  foldr addResult t (splitUnionType leafs)
+--
+-- Only a leaf whose reach is not COMPLETE is asked ('completePartials'). A complete leaf already
+-- has in the union everything it evaluates to: the arrows accepting it cover it ('typeGraphQuery'
+-- keeps a set of promises covering the source), and everything they produce was followed to the
+-- end. Its declared result is then no more information, only less precise: @isZero(n= Z)@ reaches
+-- the @True@ its arm returns, and adding the declared @Boolean@ read the call as either. A leaf is
+-- complete when it is within the complete partials, which the union may have joined.
+presentRawResult :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> Type -> Type
+presentRawResult typeEnv vaenv complete t@(UnionType Nothing leafs _) =
+  foldr addResult t (filter (not . isComplete) (splitUnionType leafs))
   where
+    completeType = UnionType Nothing (joinUnionType complete) []
+    isComplete l = not (null complete) && isSubtypeOfWithEnv typeEnv vaenv (singletonType l) completeType
     -- A 'PTopType' result (a genuinely undeclared function) carries no settled data to admit and
     -- would only widen the union to Top, so it is not added; only a concrete or class-top result is.
     addResult l acc =
@@ -235,7 +244,40 @@ presentRawResult typeEnv vaenv t@(UnionType Nothing leafs _) =
            else unionTypesWithEnv typeEnv vaenv r acc
     isTop PTopType = True
     isTop _        = False
-presentRawResult _ _ t = t
+presentRawResult _ _ _ t = t
+
+-- | The partials whose reach the tree followed to the end, so that what they evaluate to is all in
+-- the union ('presentRawResult').
+--
+-- A partial is complete when the arrows accepting it were followed and every result they give is
+-- complete in turn. A result is complete when each of its forms is: settled data; a call form
+-- complete itself; a call form cut where it was already being reached, which is the recursion of
+-- one of its own ancestors and gives nothing they do not; or a call form no arrow accepts whose
+-- declared result is presented in its place. A result the reach stopped at (a predicate top) is
+-- complete only with no call form beside it. Anything else is a form nothing says the value of —
+-- a generated match helper no arrow accepted, with no declaration — and the partials above it keep
+-- their declared result: being followed one level says nothing about what is below.
+completePartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> [PartialType]
+completePartials typeEnv vaenv = go S.empty
+  where
+    go anc (ReachesPartialTree children) = concat [ [p | partialComplete anc p sub] ++ go (S.insert p anc) sub | (p, sub) <- H.toList children ]
+    go anc (ReachesTypeTree children) = concatMap (go anc . snd) (H.elems children)
+    go _ ReachesLeaf = []
+
+    partialComplete anc p ReachesLeaf = settled p || S.member p anc || presented p
+    partialComplete anc p (ReachesTypeTree children) = all (resultComplete (S.insert p anc)) (H.toList children)
+    partialComplete _ _ ReachesPartialTree{} = False
+
+    resultComplete anc (_, (_, ReachesPartialTree forms)) = all (uncurry (partialComplete anc)) (H.toList forms)
+    resultComplete _ (dest, (_, ReachesLeaf)) = case dest of
+      UnionType _ leafs _ -> all settled (splitUnionType leafs)
+      _                   -> True
+    resultComplete anc (_, (_, ReachesTypeTree results)) = all (resultComplete anc) (H.toList results)
+
+    settled p = not (null (typeGraphData typeEnv (ptName p)))
+    presented p = case typeGraphDeclaredResult typeEnv vaenv p of
+      PTopType -> False
+      r        -> not (isBottomType r)
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     (UnionType (Just _) _ _) = ReachesLeaf

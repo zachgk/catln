@@ -212,17 +212,11 @@ Prgm
                         [ /Data/List/filter
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ( /fn( Value /v ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /lst = Value /lst )
-                            ( /fn( Value /v ) -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=TopType ]
+                            ( /fn( Value /v ) ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
                                     ( /head=TopType
                                     , /tail=/Data/List/Nil
                                     )
-                                , []
                                 ) = /filter./Data/List/keepIf( Value /v -> TVArg /v = Value /v )
                                 ( Value /keep -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
@@ -381,7 +375,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/pureConsInt( Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            , /tail=/Data/List/Nil
                             ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v )
                         ]
                     }
@@ -728,10 +722,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/count
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            ( /fn( Value /v ) ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) = /length
+                            ( /fn( Value /v ) ) -> /Data/Primitive/Integer = /length
                             ( Value /this -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/filter( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
@@ -2414,7 +2405,7 @@ Prgm
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/rel
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/rel
                 ( Value /a -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -2453,7 +2444,7 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( Value /this -> ∀/Data/Algebra/Eqv = /Data/Algebra/eq
+                ( Value /this -> /Data/List/ConsEqv = /Data/Algebra/eq
                     ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -2638,7 +2629,7 @@ Prgm
                             )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
-                    ( Value /this -> ∀/Data/Algebra/Ordering = /Data/Algebra/ord
+                    ( Value /this -> /Data/List/ConsOrdering = /Data/Algebra/ord
                         ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil

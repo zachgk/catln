@@ -201,7 +201,18 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] =
+                            ) -> /Data/List/Cons
+                            [ /T=/Data/Map/Entry
+                                ( /value=∀/Data/ToString
+                                , /key=∀/Data/ToString
+                                )
+                            ]
+                            ( /head=/Data/Map/Entry
+                                ( /value=∀/Data/ToString
+                                , /key=∀/Data/ToString
+                                )
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
+                            ) =
                             ( /Data/Map/ascending
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) }
@@ -245,7 +256,18 @@ Prgm
                                             }
                                         )
                                     }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
+                                ) ↦ /Data/List/Cons
+                                [ /T=/Data/Map/Entry
+                                    ( /value=∀/Data/ToString
+                                    , /key=∀/Data/ToString
+                                    )
+                                ]
+                                ( /head=/Data/Map/Entry
+                                    ( /value=∀/Data/ToString
+                                    , /key=∀/Data/ToString
+                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
+                                )
                             )
                         ]
                     }
@@ -341,7 +363,18 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ] =
+                            ) -> /Data/List/Cons
+                            [ /T=/Data/Map/Entry
+                                ( /value=∀/Data/ToString
+                                , /key=∀/Data/ToString
+                                )
+                            ]
+                            ( /head=/Data/Map/Entry
+                                ( /value=∀/Data/ToString
+                                , /key=∀/Data/ToString
+                                )
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
+                            ) =
                             ( /Data/Map/descending
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) }
@@ -385,7 +418,18 @@ Prgm
                                             }
                                         )
                                     }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
+                                ) ↦ /Data/List/Cons
+                                [ /T=/Data/Map/Entry
+                                    ( /value=∀/Data/ToString
+                                    , /key=∀/Data/ToString
+                                    )
+                                ]
+                                ( /head=/Data/Map/Entry
+                                    ( /value=∀/Data/ToString
+                                    , /key=∀/Data/ToString
+                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Map/Entry.. ]
+                                )
                             )
                         ]
                     }

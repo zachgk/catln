@@ -167,17 +167,11 @@ Prgm
                                         { eaaArg = Value /statements -> ∀/Data/List[ /T=/Catln/RawStatementTree.. ] }
                                     )
                                 }
-                            ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /length
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /statements = ( Value /statements ↦ TVArg /statements ) }
-                                ) ↦ /Data/Primitive/Integer| PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                )
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -234,17 +228,11 @@ Prgm
                                         }
                                     )
                                 }
-                            ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /length
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                ) ↦ /Data/Primitive/Integer| PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                )
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }

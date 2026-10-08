@@ -806,10 +806,7 @@ Prgm
                                     ]
                                 )
                                 ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
-                            ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) = /length( Value /this -> TVArg /consts = Value /consts )
+                            ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /consts = Value /consts )
                         , /Test/constCount
                             ( Value /t -> /Catln/Type/TypeVar
                                 ( /aux=∀/Catln/TypeVarAux
@@ -847,10 +844,7 @@ Prgm
                                         ]..
                                     ]
                                 )
-                            ) -> /Data/Primitive/Integer| PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) = /length( Value /this -> TVArg /items = Value /items )
+                            ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /items = Value /items )
                         ]
                     }
                 )
@@ -1020,13 +1014,13 @@ Prgm
                 a page nothing imports is a page nothing checks." }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Test/isType( Value /b -> /Catln/ObjectBasis/TypeObj = Value /Catln/ObjectBasis/TypeObj ) )
+            ( Value /p -> /Data/Primitive/True = /Test/isType( Value /b -> /Catln/ObjectBasis/TypeObj = Value /Catln/ObjectBasis/TypeObj ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Test/isType( Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj ) )
+            ( Value /p -> /Data/Primitive/False = /Test/isType( Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "False" }

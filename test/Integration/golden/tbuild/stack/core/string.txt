@@ -1043,14 +1043,20 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
                             )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) =
                             ( /Data/wholeDigit
                                 ( EAppArg
                                     { eaaArg = Value /ds -> TVArg /ds = ( Value /ds ↦ TVArg /ds ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                )
                             )
                         ]
                     }
@@ -1103,9 +1109,16 @@ Prgm
                                         ( /operator++
                                             ( EAppArg
                                                 { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                        )
+                                                    ) = /Data/String/Text
                                                     ( EAppArg
-                                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                                        { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                                            ( /head=/Data/Char
+                                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                            ) =
                                                             ( /Data/appendChars
                                                                 ( EAppArg
                                                                     { eaaArg = Value /l ->
@@ -1177,7 +1190,10 @@ Prgm
                                                                             }
                                                                         )
                                                                     }
-                                                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                )
                                                             )
                                                         }
                                                     )
@@ -1269,9 +1285,16 @@ Prgm
                                 { eaaArg = Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] }
                             )
                             ( EAppArg { eaaArg = Value /point -> /Data/Primitive/Integer } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            ) = /Data/String/Text
                             ( EAppArg
-                                { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) =
                                     ( /Data/appendChars
                                         ( EAppArg
                                             { eaaArg = Value /l ->
@@ -1343,7 +1366,10 @@ Prgm
                                                     }
                                                 )
                                             }
-                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
                                     )
                                 }
                             )
@@ -2001,7 +2027,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/String/reverseChars
                                 ( EAppArg
                                     { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
@@ -2018,7 +2047,10 @@ Prgm
                                             { eaaArg = Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                         )
                                     }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         ]
                     }
@@ -2222,17 +2254,32 @@ Prgm
                                 }
                             ) -> /Data/List/Cons
                             [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             ]
                             ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
                                 { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) = /Data/String/Text
                                     ( EAppArg
-                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                        { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            ) =
                                             ( /Data/String/reverseChars
                                                 ( EAppArg
                                                     { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
@@ -2247,7 +2294,10 @@ Prgm
                                                         )
                                                     }
                                                 )
-                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                )
                                             )
                                         }
                                     )
@@ -3213,22 +3263,42 @@ Prgm
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/String/charsStartWith
                                 ( EAppArg
-                                    { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                    { eaaArg = Value /cs ->
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        ) =
                                         ( /Data/String/reverseChars
                                             ( EAppArg
                                                 { eaaArg = Value /cs -> TVArg /cs = ( Value /cs ↦ TVArg /cs ) }
                                             )
-                                            ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                )
+                                            )
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /prefix -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                    { eaaArg = Value /prefix ->
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        ) =
                                         ( /Data/String/reverseChars
                                             ( EAppArg
                                                 { eaaArg = Value /cs -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                                             )
-                                            ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                )
+                                            )
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -3555,27 +3625,53 @@ Prgm
                                     )
                                 }
                             ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( /chars=
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
                             ( EAppArg
-                                { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                { eaaArg = Value /chars ->
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) =
                                     ( /Data/String/reverseChars
                                         ( EAppArg
                                             { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
                                                 ( /Data/String/dropSpace
                                                     ( EAppArg
-                                                        { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                                        { eaaArg = Value /cs ->
+                                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                )
+                                                            ) =
                                                             ( /Data/String/reverseChars
                                                                 ( EAppArg
                                                                     { eaaArg = Value /cs -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
                                                                 )
-                                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                    ( /head=/Data/Char
+                                                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                    )
+                                                                )
                                                             )
                                                         }
                                                     ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                                                 )
                                             }
                                         )
-                                        ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
                                     )
                                 }
                             )
@@ -4294,14 +4390,25 @@ Prgm
                                 }
                             ) -> /Data/List/Cons[ /T=∀/Data/String ]
                             ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
                             ) = /Data/List/Cons
                             ( EAppArg
                                 { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) = /Data/String/Text
                                     ( EAppArg
-                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                        { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            ) =
                                             ( /Data/String/reverseChars
                                                 ( EAppArg
                                                     { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
@@ -4316,7 +4423,10 @@ Prgm
                                                         )
                                                     }
                                                 )
-                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                )
                                             )
                                         }
                                     )
@@ -4539,11 +4649,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
+                                    { eaaArg = Value /this -> /Data/StrEqv =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Eqv
+                                            ) ↦ /Data/StrEqv
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -4654,15 +4764,31 @@ Prgm
                                     )
                                 }
                             ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( /chars=
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
                             ( EAppArg
-                                { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                { eaaArg = Value /chars ->
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) =
                                     ( /Data/String/reverseChars
                                         ( EAppArg
                                             { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
                                                 ( /Data/String/dropSpace
                                                     ( EAppArg
-                                                        { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                                        { eaaArg = Value /cs ->
+                                                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                )
+                                                            ) =
                                                             ( /Data/String/reverseChars
                                                                 ( EAppArg
                                                                     { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
@@ -4673,14 +4799,24 @@ Prgm
                                                                         )
                                                                     }
                                                                 )
-                                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                                                    ( /head=/Data/Char
+                                                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                                    )
+                                                                )
                                                             )
                                                         }
                                                     ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                                                 )
                                             }
                                         )
-                                        ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
                                     )
                                 }
                             )
@@ -5156,14 +5292,30 @@ Prgm
                                     )
                                 }
                             ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( /chars=
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
                             ( EAppArg
-                                { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                { eaaArg = Value /chars ->
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) =
                                     ( /Data/String/reverseChars
                                         ( EAppArg
                                             { eaaArg = Value /cs -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
                                         )
-                                        ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
                                     )
                                 }
                             )
@@ -5243,11 +5395,17 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) =
                             ( /Data/atLeastZero
                                 ( EAppArg
                                     { eaaArg = Value /ds -> TVArg /ds = ( Value /ds ↦ TVArg /ds ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                )
                             )
                         , /Data/fractionDigits
                             ( EAppArg
@@ -5283,11 +5441,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
+                                    { eaaArg = Value /this -> /Data/StrOrdering =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Ordering
+                                            ) ↦ /Data/StrOrdering
                                         )
                                     }
                                 ) ↦ ∀/Data/Algebra/Comparison
@@ -5742,17 +5900,32 @@ Prgm
                                 }
                             ) -> /Data/List/Cons
                             [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             ]
                             ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
                                 { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) = /Data/String/Text
                                     ( EAppArg
-                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                        { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            ) =
                                             ( /Data/String/reverseChars
                                                 ( EAppArg
                                                     { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
@@ -5767,7 +5940,10 @@ Prgm
                                                         )
                                                     }
                                                 )
-                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                ( EAppArg { eaaArg = Value /acc -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                                )
                                             )
                                         }
                                     )
@@ -6107,11 +6283,21 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                        ( /head=/Data/Char
+                        , /tail=/Data/List/Nil
+                        )
+                    ) =
                     ( /toString
                         ( EAppArg
                             { eaaArg = Value /this -> /Data/Char = 'a' }
-                        ) ↦ ∀/Data/String
+                        ) ↦ /Data/String/Text
+                        ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=/Data/List/Nil
+                            )
+                        )
                     )
                 }
             )

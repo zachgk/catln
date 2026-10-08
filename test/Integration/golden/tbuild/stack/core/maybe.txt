@@ -655,10 +655,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                { eaaArg = Value /p -> /Data/Primitive/True =
                     ( /Data/Algebra/isGreater
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> /Data/Algebra/GreaterThan =
                                 ( /compareTo
                                     ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
@@ -667,10 +667,10 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ /Data/Algebra/GreaterThan
                                 )
                             }
-                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                        ) ↦ /Data/Primitive/True
                     )
                 }
             )
@@ -711,7 +711,7 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
+                            { eaaArg = Value /this -> /Data/MaybeEqv =
                                 ( /eq
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -719,7 +719,7 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Eqv
+                                    ) ↦ /Data/MaybeEqv
                                 )
                             }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -733,7 +733,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                { eaaArg = Value /p -> /Data/Primitive/False =
                     ( /rel
                         ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ( EAppArg
@@ -744,12 +744,12 @@ Prgm
                             }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
+                            { eaaArg = Value /this -> /Data/MaybeEqv =
                                 ( /eq
-                                    ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Algebra/Eqv
+                                    ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ /Data/MaybeEqv
                                 )
                             }
-                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                        ) ↦ /Data/Primitive/False
                     )
                 }
             )
@@ -770,10 +770,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                { eaaArg = Value /p -> /Data/Primitive/True =
                     ( /Data/Algebra/isLess
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> /Data/Algebra/LessThan =
                                 ( /compare
                                     ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
@@ -784,15 +784,15 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
+                                        { eaaArg = Value /this -> /Data/MaybeOrdering =
                                             ( /ord
-                                                ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Algebra/Ordering
+                                                ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ /Data/MaybeOrdering
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ /Data/Algebra/LessThan
                                 )
                             }
-                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                        ) ↦ /Data/Primitive/True
                     )
                 }
             )
@@ -823,7 +823,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
+                                        { eaaArg = Value /this -> /Data/MaybeOrdering =
                                             ( /ord
                                                 ( EAppArg
                                                     { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
@@ -831,7 +831,7 @@ Prgm
                                                             { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
                                                         )
                                                     }
-                                                ) ↦ ∀/Data/Algebra/Ordering
+                                                ) ↦ /Data/MaybeOrdering
                                             )
                                         }
                                     ) ↦ ∀/Data/Algebra/Comparison

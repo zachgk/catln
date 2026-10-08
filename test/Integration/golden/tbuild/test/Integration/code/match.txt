@@ -92,22 +92,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /abs.$490dbb
-                                    ( /$490dbb-arg=/Data/Primitive/Integer
-                                    , /x=/Data/Primitive/Integer
-                                    ) + /operator*[ /T=∀/Data/Algebra/Ring ]
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
+                            ( /abs.$490dbb
+                                ( /$490dbb-arg=/Data/Primitive/Integer
+                                , /x=/Data/Primitive/Integer
+                                ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) =
                             ( /abs.$490dbb
                                 ( EAppArg
@@ -115,17 +107,11 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /$490dbb-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Ring
-                                    , fromList []
-                                    , []
-                                    )
-                                , /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ) ↦
+                                ( /operator*[ /T=∀/Data/Algebra/Ring ]
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
-                                    )
-                                , []
+                                    ) + /Data/Primitive/Integer
                                 )
                             )
                         ]

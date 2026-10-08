@@ -176,7 +176,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/Primitive/BoolEqv = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -242,43 +242,43 @@ Prgm
                 { csValue = "  on it." }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator~( Value /a -> /Data/Primitive/True = Value /Data/Primitive/True ) )
+            ( Value /p -> /Data/Primitive/False = /operator~( Value /a -> /Data/Primitive/True = Value /Data/Primitive/True ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
+            ( Value /p -> /Data/Primitive/True = /operator&&( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
+            ( Value /p -> /Data/Primitive/False = /operator&&( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
+            ( Value /p -> /Data/Primitive/True = /operator||( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
+            ( Value /p -> /Data/Primitive/False = /operator||( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator^( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
+            ( Value /p -> /Data/Primitive/True = /operator^( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator^( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
+            ( Value /p -> /Data/Primitive/False = /operator^( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "False" }

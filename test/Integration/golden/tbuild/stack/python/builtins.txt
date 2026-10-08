@@ -255,7 +255,12 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Python/Builtins/chr
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String =
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/String/Text
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=/Data/List/Nil
+                                )
+                            ) =
                             ( /Data/toString
                                 ( EAppArg
                                     { eaaArg = Value /this -> /Data/Char =
@@ -265,7 +270,12 @@ Prgm
                                             ) ↦ /Data/Char
                                         )
                                     }
-                                ) ↦ ∀/Data/String
+                                ) ↦ /Data/String/Text
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=/Data/List/Nil
+                                    )
+                                )
                             )
                         ]
                     }

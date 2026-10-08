@@ -545,11 +545,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
+                                    { eaaArg = Value /this -> /Data/Primitive/IntOrdering =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Eqv
+                                            ) ↦ /Data/Primitive/IntOrdering
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -565,11 +565,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv =
+                                    { eaaArg = Value /this -> /Data/Primitive/FloatOrdering =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Eqv
+                                            ) ↦ /Data/Primitive/FloatOrdering
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -639,11 +639,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
+                                    { eaaArg = Value /this -> /Data/Primitive/IntOrdering =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Ordering
+                                            ) ↦ /Data/Primitive/IntOrdering
                                         )
                                     }
                                 ) ↦ ∀/Data/Algebra/Comparison
@@ -659,11 +659,11 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering =
+                                    { eaaArg = Value /this -> /Data/Primitive/FloatOrdering =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Ordering
+                                            ) ↦ /Data/Primitive/FloatOrdering
                                         )
                                     }
                                 ) ↦ ∀/Data/Algebra/Comparison

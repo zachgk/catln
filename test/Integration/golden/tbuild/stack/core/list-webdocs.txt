@@ -374,7 +374,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
-                            ) -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] =
+                            ) -> /Data/List/Cons[ /T=∀/Data/ToString ]
+                            ( /head=∀/Data/ToString
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                            ) =
                             ( /Data/List/onto
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
@@ -391,7 +394,10 @@ Prgm
                                             { eaaArg = Value /tail -> TVArg /stack = ( Value /stack ↦ TVArg /stack ) }
                                         )
                                     }
-                                ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                ) ↦ /Data/List/Cons[ /T=∀/Data/ToString ]
+                                ( /head=∀/Data/ToString
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                )
                             )
                         ]
                     }

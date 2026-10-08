@@ -54,19 +54,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs( Value /x -> /Data/Primitive/Integer ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
+                        [ /abs( Value /x -> /Data/Primitive/Integer ) ->
+                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /abs.$bfef16-0( Value /$bfef16-arg -> TVArg /x = Value /x )
                         ]
                     }
@@ -130,7 +122,7 @@ Prgm
                 because each calls @abs(0)@ and nothing else, and at zero both arms answer zero." }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Catln/Doc/DShow ) = /abs
+            ( Value /p -> /Data/Primitive/Integer = /abs
                 ( Value /x -> /Data/Primitive/Integer = CInt
                     { ciValue = 5 }
                 )
@@ -140,7 +132,7 @@ Prgm
                 { csValue = "5" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Catln/Doc/DShow ) = /abs
+            ( Value /p -> /Data/Primitive/Integer = /abs
                 ( Value /x -> /Data/Primitive/Integer = /operator-
                     ( Value /a -> /Data/Primitive/Integer = CInt
                         { ciValue = 5 }

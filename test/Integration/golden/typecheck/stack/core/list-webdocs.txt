@@ -255,7 +255,10 @@ Prgm
                                 ) = /Data/List/Cons( Value /head -> ∀/Data/ToString )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                             )
-                            ( Value /stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] = /Data/List/onto( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> /Data/List/Cons[ /T=∀/Data/ToString ]
+                            ( /head=∀/Data/ToString
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                            ) = /Data/List/onto( Value /lst -> TVArg /tail = Value /tail )
                             ( Value /stack -> /Data/List/Cons[ /T=∀/Data/ToString ]
                                 ( /head=∀/Data/ToString
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
@@ -452,8 +455,41 @@ Prgm
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /v ) -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/Steps
-                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Catln/Doc/Show/Steps
-                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/fmapSteps( Value /lst -> TVArg /lst = Value /lst )
+                            ( /steps=
+                                ( /Data/List/Nil + /Data/List/Cons
+                                    [ /T=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] )
+                                    )
+                                )
+                            ) = /Catln/Doc/Show/Steps
+                            ( Value /steps ->
+                                ( /Data/List/Nil + /Data/List/Cons
+                                    [ /T=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=∀/Data/String
+                                        , /input=∀/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] )
+                                    )
+                                ) = /Data/List/fmapSteps( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /v ) -> ∀/Data/ToString = /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = CInt
                                     { ciValue = 0 }

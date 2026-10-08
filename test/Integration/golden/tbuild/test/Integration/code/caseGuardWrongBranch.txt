@@ -72,36 +72,20 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
+                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) =
                             ( /abs.$bfef16-0
                                 ( EAppArg
                                     { eaaArg = Value /$bfef16-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Ring
-                                    , fromList []
-                                    , []
-                                    )
-                                ,
-                                    ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
-                                        ( /r=/Data/Primitive/Integer
-                                        , /l=/Data/Primitive/Integer
-                                        )
-                                    )
-                                , []
+                                ) ↦
+                                ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
                                 )
                             )
                         ]
@@ -189,11 +173,11 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /abs
                         ( EAppArg
                             { eaaArg = Value /x -> /Data/Primitive/Integer = 5 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Ring && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -204,7 +188,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /abs
                         ( EAppArg
                             { eaaArg = Value /x -> /Data/Primitive/Integer =
@@ -214,7 +198,7 @@ Prgm
                                     ) ↦ /Data/Primitive/Integer
                                 )
                             }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Ring && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )

@@ -547,7 +547,10 @@ Prgm
                                 { ciValue = 0 }
                             ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/wholeDigits
-                            ( Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/wholeDigit( Value /ds -> TVArg /ds = Value /ds )( Value /n -> TVArg /n = Value /n )
+                            ( Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value /n -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/wholeDigit( Value /ds -> TVArg /ds = Value /ds )( Value /n -> TVArg /n = Value /n )
                         ]
                     }
                 )
@@ -575,8 +578,15 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                                    ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/appendChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    ) = /Data/String/Text
+                                    ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ) = /Data/appendChars
                                         ( Value /l ->
                                             ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
                                                 ( /head=/Data/Char
@@ -666,8 +676,15 @@ Prgm
                             )
                         , /Data/floatDigitsText
                             ( Value /digits -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value /point -> /Data/Primitive/Integer ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/appendChars
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            ) = /Data/String/Text
+                            ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/appendChars
                                 ( Value /l ->
                                     ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
                                         ( /head=/Data/Char
@@ -948,7 +965,10 @@ Prgm
                                 ) = /Data/List/Cons( Value /head -> /Data/Char )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             )
-                            ( Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars( Value /cs -> TVArg /tail = Value /tail )
+                            ( Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/String/reverseChars( Value /cs -> TVArg /tail = Value /tail )
                             ( Value /acc -> /Data/List/Cons[ /T=/Data/Char ]
                                 ( /head=/Data/Char
                                 , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
@@ -1065,15 +1085,30 @@ Prgm
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> /Data/List/Cons
                             [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             ]
                             ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( Value /head -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                                ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/Text
+                                ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/String/reverseChars
                                     ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                         ( /head=/Data/Char
                                         , /tail=∀/Data/List/ConsList[ /T=$_/T ]
@@ -1504,8 +1539,20 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
                                 ( Value /chars@Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> ∀/Data/Primitive/Boolean = /Data/String/charsStartWith
-                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars( Value /cs -> TVArg /cs = Value /cs )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil ) )
-                            ( Value /prefix -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars( Value /cs -> TVArg /s = Value /s )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil ) )
+                            ( Value /cs ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/reverseChars( Value /cs -> TVArg /cs = Value /cs )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
+                            )
+                            ( Value /prefix ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/reverseChars( Value /cs -> TVArg /s = Value /s )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
+                            )
                         ]
                     }
                 )
@@ -1664,10 +1711,27 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
                                 ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars
+                            ( /chars=
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
+                            ( Value /chars ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/reverseChars
                                 ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/dropSpace
-                                    ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars( Value /cs -> TVArg /chars = Value /chars )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil ) )
+                                    ( Value /cs ->
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        ) = /Data/String/reverseChars( Value /cs -> TVArg /chars = Value /chars )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
+                                    )
                                 )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         ]
@@ -1968,12 +2032,23 @@ Prgm
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> /Data/List/Cons[ /T=∀/Data/String ]
                             ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
                             ) = /Data/List/Cons
                             ( Value /head -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                                ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/Text
+                                ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/String/reverseChars
                                     ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                         ( /head=/Data/Char
                                         , /tail=∀/Data/List/ConsList[ /T=$_/T ]
@@ -2089,7 +2164,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/StrEqv = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -2150,10 +2225,26 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
                                 ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars
+                            ( /chars=
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
+                            ( Value /chars ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/reverseChars
                                 ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/dropSpace
-                                    ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars
+                                    ( Value /cs ->
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        ) = /Data/String/reverseChars
                                         ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/dropSpace( Value /cs -> TVArg /chars = Value /chars ) )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
                                     )
                                 )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
@@ -2390,8 +2481,20 @@ Prgm
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
                                 ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars( Value /cs -> TVArg /chars = Value /chars )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil ) )
+                            ( /chars=
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/String/Text
+                            ( Value /chars ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/reverseChars( Value /cs -> TVArg /chars = Value /chars )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
+                            )
                         ]
                     }
                 )
@@ -2443,7 +2546,10 @@ Prgm
                             ( Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value /n -> /Data/Primitive/Integer ) | /operator<=( Value /l -> TVArg /n = Value /n )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/atLeastZero( Value /ds -> TVArg /ds = Value /ds )
+                            ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/atLeastZero( Value /ds -> TVArg /ds = Value /ds )
                         , /Data/fractionDigits
                             ( Value /ds -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/fractionDigit( Value /ds -> TVArg /ds = Value /ds )( Value /n -> TVArg /n = Value /n )
                         ]
@@ -2457,7 +2563,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/StrOrdering = /ord( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -2664,15 +2770,30 @@ Prgm
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> /Data/List/Cons
                             [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             ]
                             ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( Value /head -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
-                                ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/String/reverseChars
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ) = /Data/String/Text
+                                ( Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/String/reverseChars
                                     ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                         ( /head=/Data/Char
                                         , /tail=∀/Data/List/ConsList[ /T=$_/T ]
@@ -2919,7 +3040,12 @@ Prgm
                 which builds a list's text out of strings and so imports this page." }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/String = /toString
+            ( Value /p -> /Data/String/Text
+                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                    ( /head=/Data/Char
+                    , /tail=/Data/List/Nil
+                    )
+                ) = /toString
                 ( Value /this -> /Data/Char = CChar
                     { chValue = 'a' }
                 )

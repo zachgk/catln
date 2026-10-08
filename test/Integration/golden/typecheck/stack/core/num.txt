@@ -363,9 +363,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/Primitive/IntOrdering = /eq( Value /this -> TVArg /this = Value /this ) )
                         , /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/Primitive/FloatOrdering = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -417,9 +417,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/Primitive/IntOrdering = /ord( Value /this -> TVArg /this = Value /this ) )
                         , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> /Data/Primitive/FloatOrdering = /ord( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
