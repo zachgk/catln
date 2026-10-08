@@ -96,7 +96,7 @@ makeBaseFEnv instruments prgm = FEnv{
   }
   where
     baseTypeEnv = mkTypeEnv prgm
-    tokenedTypeEnv = baseTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph baseTypeEnv))}
+    tokenedTypeEnv = stampQueryToken baseTypeEnv
 
 mkVarMetaDat :: EncodeState -> Pnt -> VarMetaDat
 mkVarMetaDat (EncodeOut obj) p = VarMetaDat (Just p) obj

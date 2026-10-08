@@ -26,6 +26,7 @@
 
 module Semantics.Types where
 
+import           Control.Applicative ((<|>))
 import           Control.Exception   (evaluate)
 import           Control.Monad       (foldM, when)
 import           CtConstants
@@ -197,10 +198,12 @@ data TypePredicate
   -- exclusion and widen to @/Integer@.
   --
   -- A stand-in. What it states is a refinement of the value, and the long-term home for it is a
-  -- 'PredExpr' refinement type — @Integer__neq(-51)@, or @(Integer | $this != -51)@ — once the
-  -- 'PredExpr' and refinement machinery can decide one. Until then a predicate atom of its own is
-  -- the closer substitute: its meaning is exactly "the value equals this constant", decided
-  -- against constants and nothing else, and it should not grow into a refinement language.
+  -- 'PredExpr' refinement type — @Integer__neq(-51)@, or @(Integer | $this != -51)@. A 'PredExpr'
+  -- is decided on a value shape by evaluating it through the graph ('typeGraphPredExprHolds'),
+  -- which cannot yet tell one constant from another (a constant is one leaf). Until it can, a
+  -- predicate atom of its own is the closer substitute: its meaning is exactly "the value equals
+  -- this constant", decided against constants and nothing else, and it should not grow into a
+  -- refinement language.
   | PredConstEq { pceConst :: Constant }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
@@ -717,8 +720,15 @@ class TypeGraph tg where
   typeGraphQueryAllWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
   typeGraphQueryAllWithReason = typeGraphQueryWithReason
 
-  -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
-  typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe [PartialType]
+  -- | Whether the value predicate @pred@ (a 'PredExpr' partial, @$this@ standing for the value)
+  -- holds of every value of the shape @val@: @Just True@ when, evaluated on the shape, it reaches
+  -- only @True@; @Just False@ when it reaches only something else; 'Nothing' when the graph cannot
+  -- follow it to the end (a primitive it bottoms out at, a shape some arm leaves open). The
+  -- predicate is read as the reach reads a call: the arrows accepting it, followed to the end
+  -- ('Semantics.TypeGraph.completePartials'), so the answer is what evaluation would give for
+  -- every value of the shape. Undecided is the default: a graph with no arrows decides nothing.
+  typeGraphPredExprHolds :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe Bool
+  typeGraphPredExprHolds _ _ _ _ = Nothing
 
   -- | Returns the data-definition object partials for a type name, carrying the declared
   -- relationship between its 'ptVars' (type parameters) and 'ptArgs' (fields). Empty if the
@@ -773,7 +783,6 @@ instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
   typeGraphQueryWithReason _ _ _ = []
-  typeGraphExpandPredExpr _ _ _ = Nothing
   typeGraphData _ _ = []
   typeGraphDeclaredResult _ _ _ = PTopType
   typeGraphDeclaredArgResults _ _ = []
@@ -823,6 +832,16 @@ data TypeEnv tg = TypeEnv {
   -- function's answer. Any DERIVED env (the 'mkReachesEnv' arg merge, or any other
   -- modification beyond the behavior flags the memo keys on) must carry 'Nothing'.
   teQueryCacheKey     :: Maybe Int,
+  -- | The identity a value-predicate decision is remembered under ('predExprHoldsOn'): the token
+  -- of the env whose GRAPH this one reads, carried through the merge that adds a scope's local
+  -- arrows ('TypeCheck.TypeUtils.withLocalArrows'). A decision depends on the graph alone, so
+  -- every constraint of an epoch shares one memo rather than each minting its own, which left
+  -- the same predicate re-evaluated under every constraint's token. A predicate naming one of
+  -- the local arrows ('teLocalNames') is not remembered this way, since those differ per scope.
+  teDecisionKey       :: Maybe Int,
+  -- | The names of the arrows local to the scope this env was merged for (a definition's
+  -- arguments, a call's lambdas), which the graph holds beside the program's own.
+  teLocalNames        :: S.HashSet TypeName,
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -836,7 +855,7 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing Nothing S.empty (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'. The class arm's parts are named so that a
 -- program handed one can tell them apart.
@@ -1080,7 +1099,7 @@ instance Monoid ClassGraph where
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
   -- A merged env is a DIFFERENT value: it never carries a query-cache token.
-  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing (mkSatCache cg' n')
+  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
@@ -1307,18 +1326,27 @@ classRecursiveMembership typeEnv = go S.empty
     go path n
       | S.member n path = True
       | otherwise = case H.lookup n (scClasses (teSatCache typeEnv)) of
-          Just ClassSatInfo{csiTypes} -> any (go (S.insert n path)) (S.toList (S.unions (map typeRefNames csiTypes)))
+          Just ClassSatInfo{csiTypes} -> any (go (S.insert n path)) (S.toList (S.unions (map typeRefNamesDeep csiTypes)))
           Nothing                     -> False
-    typeRefNames :: Type -> S.HashSet TypeName
-    typeRefNames (UnionType mTop pos _) = S.unions $
-      maybe S.empty topRefNames mTop : map partialRefNames (splitUnionType pos)
-    typeRefNames _ = S.empty
-    topRefNames (preds, negLeafs, _) = S.union (predsRefNames preds) (S.unions (map partialRefNames (splitUnionType negLeafs)))
-    partialRefNames PartialType{ptName, ptVars, ptArgs, ptPreds} = S.unions $
-      S.singleton ptName : predsRefNames ptPreds : map typeRefNames (H.elems ptVars ++ H.elems ptArgs)
-    predsRefNames (PredsAnd ps) = S.unions (map predsRefNames ps)
-    predsRefNames (PredsNot p)  = predsRefNames p
-    predsRefNames (PredsOne a)  = partialRefNames (predAtomPartial a)
+
+-- | Every name a type refers to, at any depth: its leaves, their slots, and their predicates.
+typeRefNamesDeep :: Type -> S.HashSet TypeName
+typeRefNamesDeep (UnionType mTop pos _) = S.unions $
+  maybe S.empty topRefNames mTop : map partialRefNamesDeep (splitUnionType pos)
+  where topRefNames (preds, negLeafs, _) = S.union (predsRefNamesDeep preds) (S.unions (map partialRefNamesDeep (splitUnionType negLeafs)))
+typeRefNamesDeep _ = S.empty
+
+-- | Every name a partial refers to, at any depth ('typeRefNamesDeep').
+partialRefNamesDeep :: PartialType -> S.HashSet TypeName
+partialRefNamesDeep PartialType{ptName, ptVars, ptArgs, ptPreds} = S.unions $
+  S.singleton ptName : predsRefNamesDeep ptPreds : map typeRefNamesDeep (H.elems ptVars ++ H.elems ptArgs)
+
+predsRefNamesDeep :: TypePredicates -> S.HashSet TypeName
+predsRefNamesDeep PredsNone     = S.empty
+predsRefNamesDeep (PredsAnd ps) = S.unions (map predsRefNamesDeep ps)
+predsRefNamesDeep (PredsNot p)  = predsRefNamesDeep p
+predsRefNamesDeep (PredsOne a)  = partialRefNamesDeep (predAtomPartial a)
+  where
     predAtomPartial (PredClass p)   = p
     predAtomPartial (PredRel p)     = p
     predAtomPartial (PredExpr p)    = p
@@ -1875,7 +1903,10 @@ expandPredicate typeEnv vaenv (PredClass clss) = expandClassPartial typeEnv vaen
 expandPredicate typeEnv vaenv (PredRel rel)    = expandRelPartial typeEnv vaenv rel
 -- A constant equality holds of exactly that constant.
 expandPredicate _ _ (PredConstEq c) = constantType c
-expandPredicate typeEnv vaenv (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (\ps -> UnionType Nothing (joinUnionType ps) []) (typeGraphExpandPredExpr typeEnv vaenv e)
+-- A value predicate has no enumeration of its own: it is decided per value shape, where a leaf
+-- carries it ('compactFalsePredExprLeafs', 'isSubPartialOfWithEnv'), so its expansion is the
+-- universe it filters, kept symbolic.
+expandPredicate _ _ (PredExpr e)     = TopType H.empty (PredsOne $ PredExpr e)
 
 -- | 'expandPredicates' under the restricted-intersection-operand contract of
 -- 'expandClassPartialWithinNames': only POSITIVE class\/relation atoms are name-restricted.
@@ -2339,16 +2370,13 @@ expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negP
         t -> expandTypesWithNamesFullAux visited typeEnv vaenv t allowedNames
     -- A constant is no named leaf: the atom's one value lies outside every name listing.
     expandPredsWithNamesFull (PredsOne (PredConstEq _)) = (H.empty, True)
+    -- A value predicate is decided per value shape where a leaf carries it (see
+    -- 'expandPredicate'): within the names, it is each name with the predicate attached, which
+    -- compaction then decides leaf by leaf ('compactFalsePredExprLeafs').
     expandPredsWithNamesFull (PredsOne (PredExpr e)) =
-      case typeGraphExpandPredExpr typeEnv vaenv e of
-        Nothing ->
-          let filteredPartials = filter (\PartialType{ptName=n} -> S.member n allowedNames) $ topTypeAsPartials typeEnv
-              leafsWithPred = joinUnionType $ map (`partialAddPreds` PredsOne (PredExpr e)) filteredPartials
-          in (leafsWithPred, hasUniverseOutside)
-        Just ps ->
-          let fullLeafs = joinUnionType ps
-          in (H.filterWithKey (\k _ -> S.member k allowedNames) fullLeafs,
-              any (\k -> not $ S.member k allowedNames) (H.keys fullLeafs))
+      let filteredPartials = filter (\PartialType{ptName=n} -> S.member n allowedNames) $ topTypeAsPartials typeEnv
+          leafsWithPred = joinUnionType $ map (`partialAddPreds` PredsOne (PredExpr e)) filteredPartials
+      in (leafsWithPred, hasUniverseOutside)
 
     subtractNeg :: PartialLeafs -> PartialLeafs
     subtractNeg leafs
@@ -4641,12 +4669,31 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     -- expand into leafs, so it goes to the whole subtype relation, which expands them within
     -- the leaf's name. When the engine cannot encode the PREDICATES (a 'PredExpr'), expansion
     -- has nothing more to offer: the atom stays attached to every leaf it expands to and the
-    -- question comes back here. It stays unproven ('False').
+    -- question comes back here. A value predicate is then decided on the sub leaf itself
+    -- ('predExprHoldsOn'): the sub is within the super's predicate when the predicate holds of
+    -- every value of its shape, or when the sub already carries the same predicate. The rest of
+    -- the super's conjunction goes the way it did; one value predicate left undecided keeps the
+    -- whole unproven ('False'). A negated value predicate is not split out — the formula is
+    -- decided whole, as before.
     leafCtxPredsCover = superPreds /= PredsNone
       && case typeCoveredSymbolic typeEnv vaenv' ProveEmpty (singletonType sub) superTop of
            Just covered -> covered
-           Nothing      -> isJust (predsSatDNF True superPreds) && isSubtypeOfWithEnv typeEnv vaenv' (singletonType sub) superTop
+           -- Without a value predicate the formula is asked exactly as spelled: a respelling here
+           -- would change the key the recursion's cycle cuts are made on.
+           Nothing | null superExprAtoms -> isJust (predsSatDNF True superPreds) && isSubtypeOfWithEnv typeEnv vaenv' (singletonType sub) superTop
+                   | otherwise -> all exprAtomHolds superExprAtoms && (superRest == PredsNone || (isJust (predsSatDNF True superRest) && isSubtypeOfWithEnv typeEnv vaenv' (singletonType sub) superRestTop))
     superTop = UnionType (Just (superPreds, H.empty, [])) H.empty []
+    superRestTop = UnionType (Just (superRest, H.empty, [])) H.empty []
+    (superExprAtoms, superRest) = case tryPredsToList superPreds of
+      Just atoms -> ([e | PredExpr e <- atoms], case [a | a <- atoms, not (isPredExpr a)] of
+                                                  []   -> PredsNone
+                                                  [a]  -> PredsOne a
+                                                  rest -> mkAnd (map PredsOne rest))
+      Nothing    -> ([], superPreds)
+    isPredExpr PredExpr{} = True
+    isPredExpr _          = False
+    subExprAtoms = maybe [] (\atoms -> [e | PredExpr e <- atoms]) (tryPredsToList subPreds)
+    exprAtomHolds e = e `elem` subExprAtoms || predExprHoldsOn typeEnv vaenv' sub e == Just True
 
     -- @hasAllPreds needed given@: the sub's formula @given@ implies the super's @needed@.
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
@@ -5742,6 +5789,7 @@ compactPartialLeafs typeEnv vaenv =
   . compactModedPredLeafs typeEnv
   . compactDisconnectedPreds typeEnv vaenv
   . map compactOwnVarRefs
+  . compactFalsePredExprLeafs typeEnv vaenv
   . compactBottomType
   . splitUnionType
 
@@ -5753,8 +5801,9 @@ compactPartialLeafs typeEnv vaenv =
 -- the class-pred expansion) over-keeps or over-drops some piece. Distributing the
 -- predicate over the interval is exact, and each exact piece is then decided by the
 -- per-leaf rules, reaching the same canonical form as the materialized-meet route. A
--- leaf whose predicates hold only 'PredExpr' content is left moded: no rule can decide
--- an expression predicate either way, so the undecomposed moded spelling stays canonical.
+-- leaf whose predicates hold only 'PredExpr' content is left moded: a value predicate is
+-- decided on the leaf as it is spelled ('compactFalsePredExprLeafs'), never by decomposing
+-- it, so the undecomposed moded spelling stays canonical.
 compactModedPredLeafs :: (TypeGraph tg) => TypeEnv tg -> [PartialType] -> [PartialType]
 compactModedPredLeafs typeEnv = concatMap decompose
   where
@@ -5888,6 +5937,80 @@ decideInFlight k decision = unsafePerformIO $ do
       modifyIORef' negPredDecideInFlightRef (S.delete k)
       return r
 {-# NOINLINE decideInFlight #-}
+
+-- | Whether a leaf's value predicate holds on it ('typeGraphPredExprHolds'), the leaf read without
+-- its own predicates: they are what is being decided, and a leaf that carries the predicate is
+-- the same values as the bare leaf it holds on. Evaluating the predicate reaches through the
+-- graph, whose meets compact the leaves they produce; a leaf carrying this same predicate there
+-- would re-pose this decision from inside itself, so a re-entered decision is left undecided
+-- ('decideInFlight'), which keeps the leaf as it is.
+--
+-- The predicate is evaluated with no bindings. A refinement's predicate names @$this@ and
+-- functions, nothing of the scope it is read in, so its answer is the same wherever the leaf flows
+-- and is remembered per reaches env by the leaf and predicate alone (the var env of the question
+-- is not part of the key, which would be a different key at every constraint). One that does
+-- refer to the scope — a variable, or a name an argument of the definition shadows, which the
+-- reach would otherwise read as the function of that name — is left undecided. One that does not
+-- name @$this@ at all (an arm's guard, typed with its arguments' types: @a.head == b.head@ on
+-- @Char@s) is the same proposition on every value, and is remembered without the leaf.
+--
+-- An answer is stored whether or not a cycle cut touched it, unlike a subtype answer
+-- ('subtypeMemoRef'). A cut keeps a leaf spelled with its predicate or answers a subtype question
+-- conservatively, both of which can only over-approximate the result the predicate reaches; an
+-- over-approximation within @True@ or disjoint from it says the same of what it covers, so a cut
+-- can make an answer 'Nothing', never a wrong 'Just'.
+predExprHoldsOn :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe Bool
+predExprHoldsOn typeEnv vaenv leaf e
+  | typeContainsTypeVar (singletonType e) || any shadowed (S.toList names) = Nothing
+  | any local (S.toList names) = decide
+  | otherwise = case teDecisionKey typeEnv <|> teQueryCacheKey typeEnv of
+  Nothing -> decide
+  Just tok -> unsafePerformIO $ do
+    _ <- evaluate (forcePartialType bare `seq` forcePartialType e)
+    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), keyLeaf, e)
+    gens <- readIORef predDecideMemoRef
+    case lookup tok gens >>= H.lookup key of
+      Just r -> return r
+      Nothing -> do
+        r <- evaluate decide
+        -- More generations than the query memos keep: the per-epoch tokens rotate past the
+        -- page's static env, whose decisions are asked throughout, and the maps are small.
+        atomicModifyIORef' predDecideMemoRef $ \gens2 ->
+          let mTok = fromMaybe H.empty (lookup tok gens2)
+              rest = filter ((/= tok) . fst) gens2
+          in ((tok, H.insert key r mTok) : take 7 rest, ())
+        return r
+  where
+    bare = leaf{ptPreds=PredsNone}
+    names = partialRefNamesDeep e
+    shadowed n = H.member (extKey (TVArg (partialKey n))) vaenv
+    local n = any (\l -> relativeNameMatches n l || relativeNameMatches l n) (S.toList (teLocalNames typeEnv))
+    mentionsThis = any ((== macroThisKey) . nameStr) (S.toList names)
+    keyLeaf = if mentionsThis then Just bare else Nothing
+    inFlightLeaf = fromMaybe e keyLeaf
+    decide = decideInFlight (inFlightLeaf, PredsOne (PredExpr e)) (typeGraphPredExprHolds typeEnv H.empty bare e)
+
+type PredDecideMemoKey = (Int, (Bool, Bool, Bool), Maybe PartialType, PartialType)
+
+{-# NOINLINE predDecideMemoRef #-}
+predDecideMemoRef :: IORef [(Int, H.HashMap PredDecideMemoKey (Maybe Bool))]
+predDecideMemoRef = unsafePerformIO (newIORef [])
+
+-- | Drops a leaf whose value predicate is decided FALSE on it: @S(n=Z)|$this.isZ == True@ holds no
+-- value, as the meet of an argument with a refinement it is outside. A predicate decided true is
+-- left on the leaf: dropping it would respell the leaf, and a spelling must not depend on which
+-- graph decided it — the type checker verifies a narrowing under the environment of the typed
+-- dependencies alone ('TypeCheck.Common.verifyScheme'), where a predicate over the program being
+-- checked is not decidable, and a leaf respelled where it is would be reported there as growth.
+-- Emptied, a leaf is a narrowing under every environment; a predicate that holds answers the
+-- subtype question instead ('isSubPartialOfWithEnv'). Only a positive conjunction is decided: a
+-- negated value predicate is left to the formula rules.
+compactFalsePredExprLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
+compactFalsePredExprLeafs typeEnv vaenv = filter (not . decidedFalse)
+  where
+    decidedFalse p = case tryPredsToList (ptPreds p) of
+      Just atoms -> any (\e -> predExprHoldsOn typeEnv vaenv p e == Just False) [e | PredExpr e <- atoms]
+      Nothing    -> False
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.

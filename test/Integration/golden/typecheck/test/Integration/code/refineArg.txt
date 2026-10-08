@@ -1,0 +1,203 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator==( Value /l -> /Data/Primitive/True )( Value /r -> /Data/Primitive/True ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator==( Value /l -> /Data/Primitive/False )( Value /r -> /Data/Primitive/False ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator==( Value /l -> /Data/Primitive/True )( Value /r -> /Data/Primitive/False ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator==( Value /l -> /Data/Primitive/False )( Value /r -> /Data/Primitive/True ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Z"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Z ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/True"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Data/Primitive/True
+                        , Value /Data/Primitive/True
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/isZ"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isZ( Value /this -> ∀/Nat ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /isZero( Value /n -> TVArg /this = Value /this ) ]
+                    }
+                )
+            ,
+                ( "/h"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /h( Value /a -> ∀/Nat ) -> /Z| PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~isZ( /this=~/$this )
+                            ) = Value /Z
+                        ]
+                    }
+                )
+            ,
+                ( "/okZ"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /okZ ->
+                            ( /Z + /f( /a=/Z ) ) = /f
+                            ( Value /a -> /Z| PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~isZ( /this=~/$this )
+                                ) = Value /Z
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/False"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Data/Primitive/False
+                        , Value /Data/Primitive/False
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/isZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /isZero( Value /n -> ∀/Nat ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isZero( Value /n -> /Z = Value /Z ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /isZero
+                            ( Value /n -> /S( /n=∀/Nat ) = /S( Value /n@Value /m -> ∀/Nat ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/S"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /S( Value /n -> ∀/Nat ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f
+                            ( Value /a ->
+                                ( TopType | PredExpr /operator==
+                                    ( /r=/Data/Primitive/True
+                                    , /l=~isZ( /this=~/$this )
+                                    ) && PredRel Nat
+                                )
+                            ) -> ∀/Nat = Value /a
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Primitive/Boolean
+            , cgcExtends =
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Nat
+            , cgcExtends =
+                [ /Z
+                , /S( /n=∀/Nat )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "An argument refined by a value predicate, passed a value the predicate is decided on.
+                [Nat_isZ] is [Nat | $this.isZ == True]. The call [f(a= Z)] is typed with its argument met with
+                the refinement, [Z | $this.isZ == True], and building it asks whether a [Z] is within that: the
+                predicate evaluated on [Z] through the type graph reaches only [True], so it is. Before the type
+                checker decided value predicates, the build found no arrow from [Z] to the refined slot.
+                Written without the core library, so the predicate bottoms out at arms rather than primitives." }
+            )
+        ]
+    }

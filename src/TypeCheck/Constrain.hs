@@ -24,7 +24,7 @@ import           Data.Maybe
 import qualified Data.Zip            as Z
 
 import           Control.Monad.State
-import           Semantics           (unsafeFreshQueryToken)
+import           Semantics           (stampQueryToken)
 import           Semantics.Prgm      (Meta (..), ObjArr (..),
                                       ObjectBasis (ArgObj), exprAppliedArgs,
                                       exprVarArgs)
@@ -619,7 +619,7 @@ runConstraintsIdx limit cons = do
       -- generation's entries ('objArrGraphQuery' resets on a new token).
       let reachesTypeEnv' = if envUnchanged
             then feReachesTypeEnv env
-            else reachesTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph reachesTypeEnv))}
+            else stampQueryToken reachesTypeEnv
       modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv', feReachesVPart = reachesVPart,
                        feUniverseKey = u,
                        feInputArrowNames = inputArrowNames,

@@ -437,7 +437,7 @@ toPrgms vprgms = do
 --
 -- The graph changes, so the query cache gets a fresh token rather than sharing the starting one.
 solvedVerifyTypeEnv :: ObjectMap Expr TypedMetaDat -> FEnv -> FEnvTypeEnv
-solvedVerifyTypeEnv solved FEnv{feTypeEnv, feTTypeGraphCleared} = env{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph env))}
+solvedVerifyTypeEnv solved FEnv{feTypeEnv, feTTypeGraphCleared} = stampQueryToken env
   where
     env = feTypeEnv{teTypeGraph = ObjArrTypeGraph (mapMetaObjectMap clearMetaDat solved <> feTTypeGraphCleared)}
 

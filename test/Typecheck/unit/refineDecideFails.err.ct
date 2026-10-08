@@ -1,0 +1,32 @@
+annot(#noCore)
+
+# The twin of refineDecide.ct that passes an [S] where a [Nat_isZ] is required. On [S(n= Z)] the
+  predicate [$this.isZ == True] reaches only [False], so the argument holds no value, which is an
+  error: the page is written to fail.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+f(a -> Nat_isZ) -> Nat= a
+
+bad= f(a= S(n= Z))

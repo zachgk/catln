@@ -15,6 +15,7 @@ import           Control.Monad.State   (evalStateT, execStateT, lift, runStateT)
 import           CRes
 import           CtService             (ctssBaseFiles, getTPrgm, getTPrgmJoined)
 import           Data.Graph            (graphFromEdges)
+import qualified Data.HashMap.Strict   as H
 import           Data.List             (isInfixOf, sort)
 import           Hedgehog
 import qualified Hedgehog.Gen          as HG
@@ -221,6 +222,44 @@ testRefineNarrowsCall = testCase "a call is within every refinement covering it"
   assertBool ("onZ is within B: " ++ show (settledResultOf "/onZ")) (within "/onZ" (typeVal "/B"))
   assertBool ("onNat admits A and C: " ++ show (settledResultOf "/onNat")) (admits "/onNat" (typeVal "/A") && admits "/onNat" (typeVal "/C"))
 
+-- | A value predicate is decided against a known value shape through the type graph. @Nat_isZ@ is
+-- @Nat | $this.isZ == True@: on @Z@ it reaches only @True@, so @h@'s @Z@ is guaranteed within its
+-- declared @Nat_isZ@ and @okZ@'s @f(a= Z)@ settles to the @Z@ it passes; on every @Nat@ it reaches
+-- both, so @onNat@'s argument keeps the predicate. The twin error page passes an @S@, on which it
+-- reaches only @False@. Fixtures: unit/refineDecide.ct, unit/refineDecideFails.err.ct.
+testRefineDecide :: TestTree
+testRefineDecide = testCase "a value predicate is decided on a known value" $ do
+  let page = "test/Typecheck/unit/refineDecide.ct"
+  assertResultGuaranteed page "/h"
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let typeEnv = mkTypeEnv prgm
+  let resultOf name = [ getMetaType m | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), oaObjPath oa == name ]
+      leafsOf (UnionType _ leafs _) = splitUnionType leafs
+      leafsOf _                     = []
+      -- What a result settles to: its leaves without the unevaluated @f@ call forms.
+      settled t = UnionType Nothing (joinUnionType [l | l <- leafsOf t, nameStr (ptName l) /= "/f"]) []
+      -- The predicates on the @a@ argument of each @f@ call form in a result.
+      argPreds t = [ ptPreds a | l <- leafsOf t, nameStr (ptName l) == "/f", (k, aT) <- H.toList (ptArgs l), nameStr (pkName k) == "/a", a <- leafsOf aT ]
+      hasPredExpr preds = maybe False (any isPredExpr) (tryPredsToList preds)
+      isPredExpr PredExpr{} = True
+      isPredExpr _          = False
+      -- Whether the predicate is still stated anywhere in a result: on its top (the arm's generic
+      -- @a@, every @Nat@ within the refinement) or on an @f@ call's argument.
+      keepsPredicate t = topHas t || any hasPredExpr (argPreds t)
+      topHas (UnionType (Just (preds, _, _)) _ _) = hasPredExpr preds
+      topHas _                                    = False
+  case resultOf "/okZ" of
+    [r] -> assertBool ("okZ settles to Z: " ++ show r) (isSubtypeOf typeEnv (settled r) (typeVal "/Z"))
+    rs  -> assertFailure ("one result for okZ, found " ++ show rs)
+  case resultOf "/onNat" of
+    [r] -> assertBool ("onNat keeps the predicate undecided: " ++ show r) (keepsPredicate r)
+    rs  -> assertFailure ("one result for onNat, found " ++ show rs)
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -254,6 +293,7 @@ typecheckTests = do
     , testHoleArm
     , testFoldClassOp
     , testRefineNarrowsCall
+    , testRefineDecide
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

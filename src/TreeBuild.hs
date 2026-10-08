@@ -95,7 +95,7 @@ buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
     -- lives for the whole build of one program — exactly the shape the typechecker's per-epoch
     -- reaches env has.
     tbTypeEnv0 = (mkTypeEnv prgm){tePrgmEnv=True, teArgModeProjection=True}
-    tbTypeEnv' = tbTypeEnv0{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph tbTypeEnv0))}
+    tbTypeEnv' = stampQueryToken tbTypeEnv0
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow $ flatObjectMap prgmObjMap
 
     -- | A definition with no type at all, which is what a definition that failed to typecheck leaves
@@ -774,7 +774,7 @@ withCallArrows env@TBEnv{tbTypeEnv} e = case callLambdas e of
   lams -> let arrows = [ ObjArr (Just obj) ArgObj Nothing [] (Just (Nothing, arrM)) | ObjArr{oaObj=Just obj, oaArr=Just (_, arrM)} <- lams ]
               objMap = objectMapFromList arrows
               merged0 = mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> tbTypeEnv
-          in env{tbTypeEnv = merged0{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph merged0))}}
+          in env{tbTypeEnv = withLocalArrowsOf (ObjArrTypeGraph objMap) tbTypeEnv merged0}
 
 -- | The lambdas given along a call's application chain (@f(a)(fn(v)= body)@): each argument whose
 -- object is applied to parameters and which has a body.

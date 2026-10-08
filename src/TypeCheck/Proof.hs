@@ -138,7 +138,7 @@ proveRefinement tprgm preDef RefinementProof{rpName, rpRefine, rpDef, rpOverlap}
     defPos = case getMetaPos . getExprMeta =<< oaObj rpDef of
       Just pos -> Just pos
       Nothing  -> getMetaPos . getExprMeta =<< (fst =<< oaArr rpDef)
-    predNote claim = ["The claim states value predicates, which the type checker can not decide yet" | hasPredExpr claim]
+    predNote claim = ["The claim states value predicates, which the type checker could not decide on this result" | hasPredExpr claim]
     hasPredExpr (UnionType (Just (preds, _, _)) _ _) = predsHasExpr preds
     hasPredExpr _                                    = False
     predsHasExpr (PredsOne PredExpr{}) = True

@@ -1,0 +1,39 @@
+annot(#noCore)
+
+# A value predicate is decided against a known value shape by evaluating it through the type graph.
+  [Nat_isZ] is [Nat | $this.isZ == True]. On [Z] the predicate reaches only [True], so [Z] is within
+  the refinement: [h] returns a [Z] where a [Nat_isZ] is declared, and [okZ] passes one where a
+  [Nat_isZ] is required. On every [Nat] it reaches [True] and [False], so [onNat]'s argument keeps
+  the predicate undecided. The twin page refineDecideFails.err.ct passes an [S], on which it reaches
+  only [False].
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+f(a -> Nat_isZ) -> Nat= a
+
+okZ= f(a= Z)
+
+onNat(n -> Nat)= f(a= n)
+
+h(a -> Nat) -> Nat_isZ= Z

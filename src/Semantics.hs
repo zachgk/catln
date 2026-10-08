@@ -18,7 +18,7 @@ import qualified Data.HashMap.Strict as H
 
 import           Control.Exception   (bracket_, evaluate)
 import           CtConstants         (builtinAnnotNames, errPageSuffix,
-                                      operatorHasArrow)
+                                      macroThisKey)
 import           Data.Graph          (graphFromEdges)
 import           Data.Hashable       (hash)
 import qualified Data.HashSet        as S
@@ -29,6 +29,8 @@ import           Data.List           (foldl', isPrefixOf, isSuffixOf, partition,
 import           Data.Maybe
 import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
+import           Semantics.TypeGraph (ReachesEnv (..), completePartials,
+                                      reachesPartials, unionReachesTree)
 import           Semantics.Types
 import           System.Directory    (doesDirectoryExist, getHomeDirectory)
 import           System.FilePath     (joinPath)
@@ -84,6 +86,23 @@ unsafeFreshQueryToken :: tg -> Int
 unsafeFreshQueryToken g = unsafePerformIO $ do
   _ <- evaluate g
   atomicModifyIORef' queryTokenRef (\n -> (n + 1, n + 1))
+
+-- | Stamps an env that reads its own graph with a fresh token: the reach-query memo's identity
+-- ('teQueryCacheKey') and the identity value-predicate decisions are remembered under
+-- ('teDecisionKey'), which the merges below carry.
+stampQueryToken :: TypeEnv tg -> TypeEnv tg
+stampQueryToken env = env{teQueryCacheKey = Just tok, teDecisionKey = Just tok}
+  where tok = unsafeFreshQueryToken (teTypeGraph env)
+
+-- | A merged env with a scope's local arrows added to @base@ (@merged = local <> base@): a
+-- different value, so it is minted its own query token, but it reads the base's graph with the
+-- local arrows beside it, so a decision keys on the base's identity unless it names one of them
+-- ('teLocalNames').
+withLocalArrowsOf :: ObjArrTypeGraph e m -> TypeEnv tg -> TypeEnv tg -> TypeEnv tg
+withLocalArrowsOf (ObjArrTypeGraph (ObjectMap local)) base merged =
+  merged{ teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph merged))
+        , teDecisionKey = teDecisionKey base
+        , teLocalNames = S.union (H.keysSet local) (teLocalNames base) }
 
 -- | The query keys whose answers are being computed right now, by hash. See the re-entrancy note
 -- in 'objArrGraphQuery'.
@@ -252,9 +271,54 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
     | decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName name) tg)
     , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
     , not (null (exprAppliedArgs aObj)) ]
- -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
-  typeGraphExpandPredExpr typeEnv _vaenv partial | nameStr (ptName partial) == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
-  typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
+  -- The predicate is evaluated on the shape the way the derived refinement tests evaluate it on a
+  -- value ('Eval.Testing' binds @$this@ and reduces the application tree bottom-up through the
+  -- evaluator): @$this@ is the shape, an argument is reduced first, and an application is read at
+  -- what the reach gives it — the settled forms every arrow accepting it produces, followed to the
+  -- end. A reach cut short decides nothing: a predicate bottoming out at a primitive
+  -- (@Integer_nonNeg@'s @>=@) reaches its declared @Boolean@, which is neither only @True@ nor only
+  -- not, so the predicate stays on the leaf for the derived tests and the runtime.
+  --
+  -- The predicate keeps the spelling it was written in (@~isZ@, @nonNeg@), and the graph is keyed
+  -- by absolute name, so an application is resolved as 'Eval.Testing' resolves it; one that
+  -- matches several names, or none, is not followed.
+  typeGraphPredExprHolds typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv val e = do
+    r <- predResult (singletonType val) e
+    if isBottomType r then Nothing
+    else if isSubtypeOfWithEnv typeEnv vaenv r trueType then Just True
+    else if isBottomType (intersectTypesEnv typeEnv vaenv r trueType) then Just False
+    else Nothing
+    where
+      predResult value p
+        | nameStr (ptName p) == macroThisKey = Just value
+        | otherwise = do
+            args <- traverse (argResult value) (ptArgs p)
+            name <- resolveName (ptName p)
+            let p' = p{ptName=name, ptArgs=args, ptPreds=PredsNone}
+            if settled p'
+              then Just (singletonType p')
+              else do
+                let tree = reachesPartials (ReachesEnv typeEnv vaenv S.empty) [p']
+                if p' `elem` completePartials typeEnv vaenv tree
+                  then Just (settledPart (unionReachesTree typeEnv vaenv tree))
+                  else Nothing
+      -- An operand is settled data or a constant, an application spelled as a leaf, or the
+      -- relation or expression top the condition's spelling gives a method call and @$this@
+      -- (@~isZ(/this=~/$this)@).
+      argResult value t = case t of
+        UnionType Nothing leafs _ | all settled (splitUnionType leafs) -> Just t
+        UnionType Nothing leafs [] | [l] <- splitUnionType leafs -> predResult value l
+        TopType _ (PredsOne (PredRel p)) -> predResult value p
+        TopType _ (PredsOne (PredExpr p)) -> predResult value p
+        _ -> Nothing
+      settled p = not (null (typeGraphData typeEnv (ptName p)))
+      settledPart (UnionType mTop leafs consts) = UnionType mTop (joinUnionType (filter settled (splitUnionType leafs))) consts
+      settledPart t = t
+      resolveName n
+        | H.member n tg = Just n
+        | otherwise = case relativeNameFilter n (H.keys tg) of
+            [k] -> Just k
+            _   -> Nothing
 
   typeGraphData TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap dataPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
     where
@@ -393,7 +457,13 @@ buildCtssConfig = unsafePerformIO $ do
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing (mkSatCache classGraph typeNames)
+-- The env is stamped with a query token here, as it is made: it is a value built from one program,
+-- and every change a consumer makes to it afterwards is a flag the memos key on (the evaluator's
+-- projection, the tree builder's closed world), or a merge, which clears the token. Without one,
+-- an env that lives for a whole phase — the evaluator's, consulted at every dispatch — remembered
+-- nothing, and a value predicate on a leaf it compared was evaluated through the graph at every
+-- comparison.
+mkTypeEnv (Prgm objMap classGraph _) = stampQueryToken $ TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing Nothing S.empty (mkSatCache classGraph typeNames)
   where
     -- Every name an argument pattern binds, with the arg keys that pattern gives it, recursing
     -- through the patterns written inside its arguments. Read by 'declaredArgKeys' for a name

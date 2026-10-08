@@ -1,0 +1,35 @@
+annot(#noCore)
+
+#noCore
+# An argument refined by a value predicate, passed a value the predicate is decided on.
+  [Nat_isZ] is [Nat | $this.isZ == True]. The call [f(a= Z)] is typed with its argument met with
+  the refinement, [Z | $this.isZ == True], and building it asks whether a [Z] is within that: the
+  predicate evaluated on [Z] through the type graph reaches only [True], so it is. Before the type
+  checker decided value predicates, the build found no arrow from [Z] to the refined slot.
+  Written without the core library, so the predicate bottoms out at arms rather than primitives.
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+f(a -> Nat_isZ) -> Nat= a
+
+okZ= f(a= Z)
+
+h(a -> Nat) -> Nat_isZ= Z
