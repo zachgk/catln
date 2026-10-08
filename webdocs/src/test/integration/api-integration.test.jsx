@@ -16,6 +16,7 @@
  */
 
 import {rawExprMeta, statementBody} from '../../Common/RawPrgm'
+import {dateText, someValue} from '../../Common/Values/time'
 
 const API_BASE = 'http://localhost:31204'
 const READONLY_API_BASE = 'http://localhost:8080'
@@ -676,9 +677,10 @@ describe('Backend API contract', () => {
       return JSON.parse(task.ptTask.args['/rest'].contents)
     }
 
-    // A /Data/Maybe as the value it holds, or null where it holds none.
+    // A /Data/Maybe of a day as the day it holds, written as YYYY-MM-DD, or null where it holds none.
+    // A task's days arrive as /Data/Time/Date values, read where the note was read.
     function some(value) {
-      return value.name === '/Data/Maybe/Some' ? value.args['/value'].contents : null
+      return dateText(someValue(value))
     }
 
     async function tasks() {
