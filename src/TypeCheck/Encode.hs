@@ -264,7 +264,15 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       -- denotes. The two spellings are the same SET, so the later projection is judged a no-op and
       -- the erased one is what every consumer then reads (measured: a lambda parameter's declared
       -- type, which reaches the lambda through that bound).
-      modify $ addConstraints ([EqReqAct 34 vm' | EncodeIn <- [est]] ++ [AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm'])
+      -- An input object's own variable is written into the object's slot by 'PropEq' 51 rather than
+      -- 27: the object binds the variables of this constraint scope, so the value's references to
+      -- its siblings are, inside the slot, references to the object's own parameters
+      -- ('TypeCheck.Constrain' reads them across that boundary). A call's @[$T=..]@ binds none of
+      -- them.
+      let varPropId = case est of
+            EncodeIn{} -> 51
+            _          -> 27
+      modify $ addConstraints ([EqReqAct 34 vm' | EncodeIn <- [est]] ++ [AddArg 27 (baseM', TVVar vn) m', PropEq varPropId (m', TVVar vn) vm'])
       return $ EAppVar vn vm'
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args
       a' <- fromExpr est a

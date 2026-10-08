@@ -3857,6 +3857,17 @@ slotUnionCovers typeEnv vaenv covers sub sup =
                         , argModeCovers (normalizePtArgMode typeEnv supP) (normalizePtArgMode typeEnv sub)]
         in length family > 1 && covers sv (unionAllTypesWithEnv typeEnv vaenv family)
 
+-- | What a cover comparison reads for a parameter the SUB does not spell, given the super's value
+-- for it. An unspelled parameter is the ⊤ it denotes ('PartialType'), except a HOP parameter: an
+-- input object's link to the enclosing partial's variable of that name (@fn[/A=$^A](v=$/A)@,
+-- 'hopInputObject'). It carries the enclosing binding into the object's arguments and says
+-- nothing of its own, so an input object that does not spell it (a call's own @fn(v=Integer)@) has
+-- the same link: read as ⊤ it would fall outside the super's @$^A@ wherever the enclosing @/A@ is
+-- bound, though both accept the same values.
+unspelledSubParam :: TypeVarName -> Type -> Type
+unspelledSubParam k (TypeVar v@(TVVar k') TVParent _) | k' == k = TypeVar v TVParent PTopType
+unspelledSubParam _ _ = PTopType
+
 -- | A partial's parameters as its VALUES carry them. A parameter the DECLARATION ties to a field
 -- (@head -> $T@) is that field's value on every value of this shape, so @Cons[/T=⊤](head=W)@ and
 -- @Cons[/T=W](head=$/T)@ spell the same set (a ??-interval piece and its enumerated difference
@@ -3969,7 +3980,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- derive the same parameter.
     subVarsFull = H.mapWithKey (ptVarEff typeEnv vaenv sub) subVarsSpelled
     subVarsSpelled | teArgModeProjection typeEnv = ptVars sub
-                   | otherwise                   = H.union (ptVars sub) (PTopType <$ ptVars sup)
+                   | otherwise                   = H.union (ptVars sub) (H.mapWithKey unspelledSubParam (ptVars sup))
     -- A sub-side slot holding an internal POINTER (@/head=$T@, an arg or var naming one of
     -- the partial's own parameters, 'TVInt') denotes that parameter's binding: read it
     -- through before deciding (single step, as 'compactOwnVarRefs' materializes). SUB side
@@ -4877,7 +4888,7 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     subEff = withEffectivePtVars typeEnv vaenv sub
     hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff (fmap freeExt sbFull)) (fmap freeExt sp)
       where sbFull | teArgModeProjection typeEnv = sb
-                   | otherwise                   = H.union sb (PTopType <$ sp)
+                   | otherwise                   = H.union sb (H.mapWithKey unspelledSubParam sp)
     freeExt = freeTVExtToTopDeep vaenv
     varOk PTopType _ | teArgModeProjection typeEnv = True
     varOk a b
@@ -7511,7 +7522,21 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   -- only, read as ⊤. Its meets are then recorded under that layer rather than the ambient one,
   -- and 'parentToOwn' hands them back as the enclosing partial's own on return.
   let parentSeed = H.fromList [ (VarKey TVParent v, PTopType) | (VarKey TVInt v, _) <- H.toList vaenv ]
-  (varsVaenvs, vars') <- unzip <$> intersectMapVars parentSeed aVars bVars
+  -- A parameter's value may name a SIBLING parameter, as a parent reference from the partial
+  -- nested in it (@f[/M=∀Mon[/T=$^A], /A=⊤]@ — 'siblingRefsToParent'): the parameters are one
+  -- system, not independent meets. So the var meets also see this partial's own parameters, as
+  -- the layer a nested partial's parent references name, and what they learn about them is met
+  -- into those parameters' slots: a call's @/M=Bx[/T=X]@ against @∀Mon[/T=$^A]@ binds @/A=X@.
+  -- Those readings are this partial's own and are not handed to the caller.
+  let ownKeys = S.fromList [ VarKey TVInt (TVVar n) | n <- H.keys aVars ++ H.keys bVars ]
+  let ownSeed = H.fromList [ (k, PTopType) | k <- S.toList ownKeys ]
+  (varsVaenvs0, vars0) <- unzip <$> intersectMapVars (H.union parentSeed ownSeed) aVars bVars
+  let ownDiscovered = H.fromListWith (intersectTypesEnv typeEnv vaenv)
+        [ (n, t) | env <- H.elems varsVaenvs0, (k@(VarKey TVInt (TVVar n)), t) <- H.toList env, S.member k ownKeys, t /= PTopType, not (isTypeVar t) ]
+  vars' <- traverse (\(n, v) -> case H.lookup n ownDiscovered of
+                        Just d -> let v' = intersectTypesEnv typeEnv vaenv v d in if isBottomType v' then Nothing else Just (n, v')
+                        Nothing -> Just (n, v)) (H.toList vars0) >>= Just . H.fromList
+  let varsVaenvs = fmap (H.filterWithKey (\k _ -> not (S.member k ownKeys))) varsVaenvs0
   -- Args (unlike vars) are intersected without killing the partial when a value intersects to
   -- bottom: such an arg simply cannot be present. For a *required* arg (a lower-bounded side
   -- lists it) that makes the partial uninhabited; for an *optional* arg (a lower-unbounded mode)
@@ -7571,9 +7596,21 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
             UnionType Nothing leafs cs -> UnionType Nothing (joinUnionType (map onInputObj (splitUnionType leafs))) cs
             _                          -> t
         where
-          onInputObj p = p{ptVars = fmap onParam (ptVars p)}
-          onParam (TypeVar v TVParent i) | Just b <- H.lookup v ownResolved = meetInner typeEnv vaenv b i
-          onParam x = x
+          -- A hop parameter carries the enclosing partial's binding in to the object's arguments,
+          -- so the arguments that point at it read that binding (@fn[/A=$^A](v=$/A)@ under
+          -- @/A=Integer@ reads @v=Integer@), and the parameter itself is read as that binding
+          -- while staying the parent reference: it is the object's link to the enclosing partial,
+          -- and an input object that does not spell it has the same link ('unspelledSubParam').
+          -- Replaced by the bare binding it was an input object a call's own @fn(v=Integer)@ is
+          -- not within (the call's unspelled @/A@ reads ⊤), though the two accept the same values.
+          onInputObj p = p{ ptVars = H.mapWithKey (\n pv -> case (pv, H.lookup n resolved) of
+                                                       (TypeVar v TVParent _, Just b) -> TypeVar v TVParent b
+                                                       _                              -> pv) (ptVars p)
+                          , ptArgs = fmap readHop (ptArgs p) }
+            where
+              resolved = H.fromList [ (n, meetInner typeEnv vaenv b i) | (n, TypeVar v TVParent i) <- H.toList (ptVars p), Just b <- [H.lookup v ownResolved] ]
+              readHop (TypeVar (TVVar n) TVInt i) | Just b <- H.lookup n resolved = meetInner typeEnv vaenv b i
+              readHop x = x
   let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) (H.mapWithKey readInputObjParents aArgs)) (fmap (deepVaenv,) (H.mapWithKey readInputObjParents bArgs))
   let args' = fmap snd argsMap
   -- An arg whose met value denotes ∅ cannot be present (see the arg-mode reasoning below). The
@@ -9587,11 +9624,21 @@ tagParentVarRefs = onType
     onTop sc (preds, negLeafs, ncs) =
       (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
     onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
-        ptVars  = H.mapWithKey (onVarSlot sc) ptVars,
+        ptVars  = H.mapWithKey (\k -> siblingRefs k . onVarSlot sc k) ptVars,
         ptArgs  = H.mapWithKey (\k -> onDirect sc' . hopInput sc' k) ptArgs,
         ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
       }
-      where sc' = S.fromList (map TVVar (H.keys ptVars))
+      where
+        sc' = S.fromList (map TVVar (H.keys ptVars))
+        -- A parameter's value may name a SIBLING parameter of the same partial: the bound of
+        -- @f[$M -> Mon[$T -> $_A], $A]@'s @$M@ names @f@'s own @$A@. The reference sits on the
+        -- partial nested in the value (@Mon@), whose immediately enclosing partial is @f@, so it is a
+        -- parent reference (@/M=∀Mon[/T=$^A]@): read as the ambient @$_A@ it is not @f@'s @/A@ at
+        -- all, and the meet could never bind @/A@ from what the call's @/M@ is. Only a sibling: a
+        -- reference to anything else in a bound names the scope containing the binder and keeps
+        -- its spelling, and a reference to the parameter's own name (@Cons[$T -> $_T]@) is that
+        -- containing scope's variable of the same name.
+        siblingRefs k = siblingRefsToParent (S.fromList [TVVar n | n <- H.keys ptVars, n /= k])
     -- A DIRECT slot value names the partial it is a slot of, and that is what 'TVInt' spells
     -- (@/Cons(/head=$/T)@); there is no separate parent for it to name. So a bare outer
     -- spelling in that position naming a parameter the partial binds (@Just[$T](val -> $_T)@,
@@ -9636,6 +9683,36 @@ tagParentVarRefs = onType
     onDirect sc (TypeVar v@(TVVar _) TVExt i) | S.member v sc = TypeVar v TVInt (onSlot sc i)
     onDirect sc (TypeVar v loc i) = TypeVar v loc (onSlot sc i)
     onDirect sc t                 = onSlot sc t
+
+-- | A parameter's value entering its partial's slot: the references it makes to SIBLING
+-- parameters (@sib@) from the partials nested at its top (@Mon[/T=$_A]@ as @f@'s @/M@) name the
+-- slot's partial, one level out, so they are spelled as parent references (@Mon[/T=$^A]@).
+-- References deeper in, or to any other variable, keep their spelling ('tagParentVarRefs' gives
+-- the one-level rule).
+siblingRefsToParent :: S.HashSet TypeVarAux -> Type -> Type
+siblingRefsToParent = mapNestedVarRefs toParent
+  where toParent sib (TypeVar v TVExt i) | S.member v sib = TypeVar v TVParent i
+        toParent _ t = t
+
+-- | The inverse of 'siblingRefsToParent': a parameter's value leaving its partial's slot for a
+-- frame in which the partial's parameters are the AMBIENT variables (the declaration's own
+-- constraint scope), so a parent reference to a sibling is the ambient reference to it.
+siblingRefsToAmbient :: S.HashSet TypeVarAux -> Type -> Type
+siblingRefsToAmbient = mapNestedVarRefs toAmbient
+  where toAmbient sib (TypeVar v TVParent i) | S.member v sib = TypeVar v TVExt i
+        toAmbient _ t = t
+
+-- | Rewrites the variable references in the parameter values of the partials at a type's top
+-- (and in its predicate tops' partials), one level in and no deeper.
+mapNestedVarRefs :: (S.HashSet TypeVarAux -> Type -> Type) -> S.HashSet TypeVarAux -> Type -> Type
+mapNestedVarRefs f sib t0
+  | S.null sib = t0
+  | otherwise = onType t0
+  where
+    onType (UnionType mtop pos consts) = UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+    onType t = t
+    onTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+    onLeaf p = p{ptVars = fmap (f sib) (ptVars p)}
 
 -- | 'tagParentVarRefs' for a producer holding a 'PartialType' directly — the class graph's own
 -- declaration and member templates — rather than a 'Type'. The partial is the outermost thing in

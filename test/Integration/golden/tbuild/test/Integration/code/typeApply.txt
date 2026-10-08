@@ -80,7 +80,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/String =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/String =
                                         ( /Data/toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /v = ( Value /v ↦ TVArg /v ) }
@@ -122,14 +122,14 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
                                         ( /operator+
                                             ( EAppArg
                                                 { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                            ) ↦ ∀/Data/Algebra/Add
+                                            ) ↦ /Data/Primitive/Integer
                                         )
                                     }
                                 ) ↦ ∀/Data/Functor[ /T=TopType ]

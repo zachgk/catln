@@ -1,0 +1,10 @@
+annot(#noCore)
+
+# A declaration whose variable is bounded by a class linking a sibling variable, as core's
+# [mmap[$M -> Monad[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M]: [$A] is [m]'s element
+# only through [$M]'s bound, and the [v] its lambda is given is that element.
+#noCore
+module(Sb)
+  data(X)
+  class(Mon[$T], [Bx[$T -> $_T](value -> $_T)])
+  f[$M -> Mon[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M

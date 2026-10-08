@@ -449,11 +449,17 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Functor/fmap
-                                ( /fn( /v=TopType )=/fn( /v=TopType )
-                                , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                [ /F=
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=∀/Data/ToString ] )
+                                , /B=TopType
+                                , /A=∀/Data/ToString
+                                ]
+                                ( /fn( /v=TopType )=/fn[ /A=∀/Data/ToString ]( /v=∀/Data/ToString )
+                                , /lst=
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=$_/A ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/Functor/fmap
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( /fn( Value /v ) -> ∀/Data/ToString )
+                                ( /fn( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/Steps
                             ( /steps=
                                 ( /Data/List/Nil + /Data/List/Cons
@@ -497,11 +503,17 @@ Prgm
                             )
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Monad/mmap
-                                ( /fn( /v=TopType )=/fn( /v=TopType )
-                                , /m=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                [ /B=TopType
+                                , /M=
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=∀/Data/ToString ] )
+                                , /A=∀/Data/ToString
+                                ]
+                                ( /fn( /v=TopType )=/fn[ /A=∀/Data/ToString ]( /v=∀/Data/ToString )
+                                , /m=
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=$_/A ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/Monad/mmap
                                 ( Value /m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                                ( /fn( Value /v ) -> ∀/Data/ToString )
+                                ( /fn( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )
                             ) -> /Catln/Doc/Show/Steps
                             ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Catln/Doc/Show/Steps
                             ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/mmapSteps( Value /m -> TVArg /m = Value /m )

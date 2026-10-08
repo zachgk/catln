@@ -1325,6 +1325,117 @@ propDataIsaBindsClassParam = property $ do
 -- @fn[/B=X+Y](acc=X+Y)@ (which contains it), the result must still be within the first: core's
 -- @sum@ stored such a meet as its requirement, and reading the pointer as ⊤ there gave the
 -- concrete @X+Y@ back, which the narrowing check refused as a widening.
+-- | A variable linked only through a sibling variable's bound is bound by the meet. @f[$M ->
+-- Mon[$T -> $_A], $A](m -> $M, ..)@ met with a call binding @/M@ to a @Bx[/T=X]@ binds @/A=X@:
+-- @$_A@ in @/M@'s bound names @f@'s own @/A@, so the element the call's @/M@ carries is @/A@'s
+-- value. Left at ⊤, the lambda @f@ is given (@fn(v -> $_A)@) reads its @v@ as ⊤ (core's @mmap@
+-- over a list typed @fn(v)= [v, v]@ as a list of anything).
+propSiblingBoundLinks :: Property
+propSiblingBoundLinks = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingBound.ct"
+  let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/f" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    (t:_) -> return t
+    []    -> fail "f not declared"
+  declLeaf <- case declT of
+    UnionType Nothing leafs [] | [p] <- splitUnionType leafs -> return p
+    _ -> fail "decl is not one leaf"
+  let findName n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return nm
+        []     -> fail $ printf "%s not found" n
+  xN <- findName "X"
+  bxN <- findName "Bx"
+  let x = singletonType (partialVal xN)
+  (mKey, aKey) <- case (filter (("/M" `isSuffixOf`) . nameStr . pkName) (H.keys (ptVars declLeaf)), filter (("/A" `isSuffixOf`) . nameStr . pkName) (H.keys (ptVars declLeaf))) of
+    ([m], [a]) -> return (m, a)
+    _          -> fail "f's parameters not found"
+  argM <- case [ k | k <- H.keys (ptArgs declLeaf), "/m" `isSuffixOf` nameStr (pkName k) ] of
+    [k] -> return k
+    _   -> fail "no m arg"
+  valueKey <- case [ k | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv bxN, k <- H.keys dArgs ] of
+    (k:_) -> return k
+    []    -> fail "Bx declares no field"
+  tKey <- case [ k | PartialType{ptVars=dVars} <- typeGraphData typeEnv bxN, k <- H.keys dVars ] of
+    (k:_) -> return k
+    []    -> fail "Bx declares no parameter"
+  let bx = singletonType (partialVal bxN){ptVars = H.singleton tKey x, ptArgs = H.singleton valueKey x}
+  let call = singletonType (partialVal (ptName declLeaf)){ptVars = H.singleton mKey bx, ptArgs = H.insert argM bx (ptArgs declLeaf)}
+  annotate $ printf "decl = %s" (show declT)
+  annotate $ printf "call = %s" (show call)
+  let met = intersectTypesEnv typeEnv H.empty call declT
+  annotate $ printf "call ∩ decl = %s" (show met)
+  aVal <- case maybeGetSingleton met of
+    Just p  -> return (H.lookupDefault PTopType aKey (ptVars p))
+    Nothing -> fail "meet is not one partial"
+  annotate $ printf "/A = %s" (show aVal)
+  assertTimed "/A ⊆ X" $ isSubtypeOf typeEnv aVal x
+
+-- | 'propSiblingBoundLinks' with the call's @/M@ a class top of a SUBCLASS (@∀Opt[/T=X]@, every
+-- @Opt@ a @Mon@), as core's @bindap@ over a @Maybe[$T -> Integer]@: the meet keeps @/M@ within
+-- @∀Opt[/T=X]@ and binds @/A=X@, also when the call spells @/M@ only through @m@ and its lambda
+-- slot as a call does (@fn(v=X)@). That call is within its own meet: the portion of it the
+-- declaration accepts is all of it. The meet's input object keeps its hop parameter
+-- (@fn[/A=$^A](v=X)@), and the call's unspelled one reads as the same link
+-- ('unspelledSubParam'); read as ⊤ it fell outside the bound @/A=X@, so a requirement could not
+-- choose the declaration's arrow and @bindap@'s result widened to @Monad[/T=⊤] && Maybe[/T=⊤]@.
+propSiblingBoundClassTop :: Property
+propSiblingBoundClassTop = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingBoundClass.ct"
+  let typeEnv@TypeEnv{teNames, teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/f" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    (t:_) -> return t
+    []    -> fail "f not declared"
+  declLeaf <- case declT of
+    UnionType Nothing leafs [] | [p] <- splitUnionType leafs -> return p
+    _ -> fail "decl is not one leaf"
+  xN <- case [nm | nm <- S.toList teNames, "/X" `isSuffixOf` nameStr nm] of
+    (nm:_) -> return nm
+    []     -> fail "X not found"
+  optPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "/Opt" `isSuffixOf` nameStr (ptName cpt)] of
+    (cpt:_) -> return cpt
+    []      -> fail "Opt class not found"
+  let x = singletonType (partialVal xN)
+  (mKey, aKey) <- case (filter (("/M" `isSuffixOf`) . nameStr . pkName) (H.keys (ptVars declLeaf)), filter (("/A" `isSuffixOf`) . nameStr . pkName) (H.keys (ptVars declLeaf))) of
+    ([m], [a]) -> return (m, a)
+    _          -> fail "f's parameters not found"
+  argM <- case [ k | k <- H.keys (ptArgs declLeaf), "/m" `isSuffixOf` nameStr (pkName k) ] of
+    [k] -> return k
+    _   -> fail "no m arg"
+  let optX = UnionType (Just (PredsOne (PredClass optPt{ptVars = fmap (const x) (ptVars optPt)}), H.empty, [])) H.empty []
+  let call = singletonType (partialVal (ptName declLeaf)){ptVars = H.singleton mKey optX, ptArgs = H.insert argM optX (ptArgs declLeaf)}
+  annotate $ printf "decl = %s" (show declT)
+  annotate $ printf "call = %s" (show call)
+  let met = intersectTypesEnv typeEnv H.empty call declT
+  annotate $ printf "call ∩ decl = %s" (show met)
+  (mVal, aVal) <- case maybeGetSingleton met of
+    Just p  -> return (H.lookupDefault PTopType mKey (ptVars p), H.lookupDefault PTopType aKey (ptVars p))
+    Nothing -> fail "meet is not one partial"
+  annotate $ printf "/M = %s, /A = %s" (show mVal) (show aVal)
+  assertTimed "/M ⊆ ∀Opt[/T=X]" $ isSubtypeOf typeEnv mVal optX
+  assertTimed "/A ⊆ X" $ isSubtypeOf typeEnv aVal x
+  -- The same call spelled as its act is: @/M@ not among its parameters, bound only through the
+  -- argument it types (@m -> $M@) — the reach query's meet of a call with the declaration.
+  -- The call's lambda slot as a call spells it: the input object with its parameter at the
+  -- value the call gives it and no hop parameter (@fn(v=X)@, where the declaration spells
+  -- @fn[/A=$^A](v=$/A)@).
+  (fnKey, fnObj) <- case [ (k, o) | (k, v) <- H.toList (ptArgs declLeaf), not (S.null (pkArgs k)), Just o <- [maybeGetSingleton v] ] of
+    [kv] -> return kv
+    _    -> fail "no higher-order arg"
+  let callFn = singletonType fnObj{ptVars = H.empty, ptArgs = fmap (const x) (ptArgs fnObj)}
+  let callArg = singletonType (partialVal (ptName declLeaf)){ptVars = H.singleton aKey x, ptArgs = H.insert fnKey callFn (H.insert argM optX (ptArgs declLeaf))}
+  let metArg = intersectTypesEnv typeEnv H.empty callArg declT
+  annotate $ printf "argument-only call ∩ decl = %s" (show metArg)
+  (mVal', aVal') <- case maybeGetSingleton metArg of
+    Just p  -> return (H.lookupDefault PTopType mKey (ptVars p), H.lookupDefault PTopType aKey (ptVars p))
+    Nothing -> fail "argument-only meet is not one partial"
+  annotate $ printf "argument-only /M = %s, /A = %s" (show mVal') (show aVal')
+  assertTimed "argument-only: /M ⊆ ∀Opt[/T=X]" $ isSubtypeOf typeEnv (slotAtPoint typeEnv H.empty (fromJust (maybeGetSingleton metArg)) mVal') optX
+  -- The meet is the portion of the call the declaration accepts, and it accepts all of it: the
+  -- call is within its own meet (the coverage a requirement's choice of arrow is guarded by).
+  assertTimed "argument-only: call ⊆ call ∩ decl" $ isSubtypeOf typeEnv callArg metArg
+
 propHoSlotParentMeet :: Property
 propHoSlotParentMeet = property $ do
   prgm <- lift $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
@@ -1588,6 +1699,8 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
       , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)
       , HG.testProperty "propHoSlotParentMeet" (withTests 1 propHoSlotParentMeet)
+      , HG.testProperty "propSiblingBoundLinks" (withTests 1 propSiblingBoundLinks)
+      , HG.testProperty "propSiblingBoundClassTop" (withTests 1 propSiblingBoundClassTop)
       , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)

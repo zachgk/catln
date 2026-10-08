@@ -84,6 +84,10 @@ data SType = SType {
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
 
+-- | Applies a rewrite to each of a scheme's type channels.
+mapSTypeTypes :: (Type -> Type) -> SType -> SType
+mapSTypeTypes f s@SType{stypeAct, stypeReq, stypeReqDecl} = s{stypeAct = f stypeAct, stypeReq = f stypeReq, stypeReqDecl = f stypeReqDecl}
+
 data SchemeActReq = SchemeAct | SchemeReq
   deriving (Eq, Show)
 

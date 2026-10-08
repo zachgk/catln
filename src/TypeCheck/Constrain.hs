@@ -363,9 +363,20 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (EqReqAct i p@SType{
 computeConstraint env con@(Constraint _ _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
-computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
+computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv'' vaenv, conDat=PropEq i (super', name) sub'})
   where
-    (vaenv', super', sub') = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name sub
+    (vaenv', super', sub0) = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name (if binder then mapSTypeTypes toSlot sub else sub)
+    -- An input object's own variable ('PropEq' 51, 'TypeCheck.Encode'): the object binds this
+    -- scope's variables, so the variable's value is spelled with them AMBIENT on its point and with
+    -- them as the object's own parameters in the slot. Its references to its siblings cross that
+    -- boundary each way: entering the slot they name the object one level out (parent references,
+    -- 'siblingRefsToParent'), and returning to the point they are the ambient variables again.
+    binder = i == 51
+    siblings = S.fromList [ v | v@(TVVar _) <- H.keys vaenv, v /= name ]
+    toSlot = siblingRefsToParent siblings
+    toPoint = siblingRefsToAmbient siblings
+    sub' = if binder then mapSTypeTypes toPoint sub0 else sub0
+    vaenv'' = if binder then fmap (mapSTypeTypes toPoint) vaenv' else vaenv'
 computeConstraint env con@(Constraint _ _ vaenv (PropEqInferred i (super, app, base) sub)) = case inferredArgName base app of
     Just name -> let (vaenv', super', sub') = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name sub
                  in (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEqInferred i (super', app, base) sub'})

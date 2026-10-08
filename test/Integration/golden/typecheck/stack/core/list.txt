@@ -2211,10 +2211,10 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/List/Cons[ /T=∀/Data/ToString ]
-                ( /head=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/ToString )
+                ( /head=/Data/Primitive/Integer
                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                 ) = /Data/Functor/fmap
-                ( Value /lst -> /Data/List/Cons
+                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -2247,7 +2247,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -2724,7 +2724,7 @@ Prgm
         , /Catln/#print
             ( Value /p ->
                 ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow ) = /Data/Monad/mmap
-                ( Value /m -> /Data/List/Cons
+                ( Value /m -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -2743,7 +2743,7 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( /fn( Value /v ) -> /Data/List/Cons
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
@@ -2759,7 +2759,7 @@ Prgm
         , /Catln/#print
             ( Value /p ->
                 ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow ) = /Data/Monad/mmap
-                ( Value /m -> /Data/List/Cons
+                ( Value /m -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -2778,15 +2778,15 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( /fn( Value /v ) -> /Data/List/Cons
-                    ( /head=TopType
-                    , /tail=/Data/List/Cons[ /T=TopType ]
-                        ( /head=$/T
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )
-                    ( Value /tail -> /Data/List/Cons[ /T=TopType ]
-                        ( /head=$/T
+                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )

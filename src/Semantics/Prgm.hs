@@ -585,7 +585,10 @@ instance ExprClass Expr where
                 case typeGetArgLoose structKey src of
                   Just t | t /= PTopType -> t
                   _                      -> getMetaType arrM)
-          fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
+          -- The variable's value read OUT of the source's slot, in the point's currency: the slot may
+          -- name the source's other parameters (@/M=∀Monad[/T=$^A]@ — 'siblingRefsToParent'),
+          -- which outside the source are its bindings ('slotAtPoint').
+          fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], slotAtPoint typeEnv H.empty src (H.lookupDefault PTopType vn (ptVars src)))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
 

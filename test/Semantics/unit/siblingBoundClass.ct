@@ -1,0 +1,12 @@
+annot(#noCore)
+
+# [siblingBound.ct] with the call's [$M] a CLASS top of a subclass, as core's [bindap] over a
+# [Maybe[$T -> Integer]]: [Opt] is a [Mon] (every [Opt[$T]] is a [Mon[$T]]), and a call binding
+# [/M=∀Opt[/T=X]] keeps [/M] that narrow and binds [/A=X].
+#noCore
+module(Sc)
+  data(X)
+  class(Mon[$T])
+  class(Opt[$T], [Bx[$T -> $_T](value -> $_T)])
+  every(/Sc/Opt[$T -> $_T], isa= [/Sc/Mon])
+  f[$M -> /Sc/Mon[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M
