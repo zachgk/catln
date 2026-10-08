@@ -7,7 +7,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- This module reads what a vault says about the Obsidian Tasks community plugin.
+-- This module reads what a vault says about the Obsidian Tasks and Day Planner community plugins.
 --
 -- A checkbox in a vault running that plugin is not the checkbox markdown describes. The plugin
 -- writes a task's dates, priority, recurrence and links into the line beside the box, and the vault
@@ -15,6 +15,12 @@
 -- and whether a line has to carry a particular word before it counts as a task at all. None of that
 -- can be worked out from a note. It is written in the vault's own configuration, so reading a note
 -- of such a vault means reading the vault's configuration first.
+--
+-- It reads what a vault says about the Day Planner community plugin in the same way and for the same
+-- reason. That plugin reads a time at the start of a line as a block of the day the line is planned
+-- for, and which day that is, and how long a block written without an end lasts, are both the
+-- vault's to say: the day is the one the Daily Notes core plugin names the note for, and the length
+-- is a setting of the planner's own.
 --
 -- Every name here is Obsidian's or the plugin's rather than ours — the file names, the keys, the
 -- values those keys take. They are written down in this one module so that the reading of a
@@ -223,3 +229,150 @@ instance FromJSON StatusKind where
     "NON_TASK"    -> KNonTask
     "EMPTY"       -> KEmpty
     _             -> KTodo
+
+-- | The id Obsidian knows the Day Planner plugin by.
+dayPlannerPluginId :: String
+dayPlannerPluginId = "obsidian-day-planner"
+
+-- | Where a vault keeps what its Daily Notes core plugin is set to: which folder the daily notes are
+-- written in, and the format a daily note's name is written in.
+dailyNotesFile :: FilePath -> FilePath
+dailyNotesFile vault = vault </> ".obsidian" </> "daily-notes.json"
+
+-- | The files a vault says how it plans its days in, whether or not they are there, for the reason
+-- 'taskSettingsFiles' names its own.
+plannerSettingsFiles :: FilePath -> [FilePath]
+plannerSettingsFiles vault = [communityPluginsFile vault, pluginDataFile vault dayPlannerPluginId, dailyNotesFile vault]
+
+-- | What one vault is set to, of the settings which decide what a line of a planned day says.
+--
+-- The plugin keeps much more — colours, what its timeline shows, the calendars it subscribes to. A
+-- time block written without an end is the one place a setting changes what a line SAYS, so the two
+-- settings deciding that end are read and nothing else of the plugin's is.
+data PlannerSettings = PlannerSettings {
+  -- | How long a block written without an end lasts.
+  pstDefaultDuration :: Int,
+  -- | Whether a block written without an end lasts until the next block of its note begins instead.
+  pstExtendUntilNext :: Bool,
+  -- | Where the vault keeps its daily notes, which is what says which day a note plans.
+  pstDailyNotes      :: DailyNoteSettings
+                                       }
+  deriving (Eq, Show)
+
+-- | Which notes are daily notes, and which day each is: the folder they are written in, relative to
+-- the vault and @""@ for the vault itself, and the format a daily note's name is written in.
+data DailyNoteSettings = DailyNoteSettings {
+  dnsFolder :: FilePath,
+  dnsFormat :: [DateToken]
+                                           }
+  deriving (Eq, Show)
+
+-- | What the plugins are set to before a vault has said otherwise, which is what a vault with no
+-- files for them is running — taken from the Day Planner's own @defaultSettings@ and from the Daily
+-- Notes plugin's default format.
+defaultPlannerSettings :: PlannerSettings
+defaultPlannerSettings = PlannerSettings 30 False defaultDailyNoteSettings
+
+defaultDailyNoteSettings :: DailyNoteSettings
+defaultDailyNoteSettings = DailyNoteSettings "" defaultDailyNoteFormat
+
+-- | The name the Daily Notes plugin gives a daily note when the vault names no format: @YYYY-MM-DD@.
+defaultDailyNoteFormat :: [DateToken]
+defaultDailyNoteFormat = [DYear4, DLiteral "-", DMonth2, DLiteral "-", DDay2]
+
+-- | What a vault is set to for planning its days, or nothing where it does not run the Day Planner.
+--
+-- Read as 'readTaskSettings' reads its plugin, and answering missing files the way it does: a vault
+-- which has not turned the plugin on plans nothing, and one which has turned it on and has no file
+-- for it, or no file for its daily notes, is running on the defaults. A file which is there and
+-- cannot be read is reported, and so is a daily note format this cannot read a day out of — reading
+-- every daily note of such a vault as though it planned no day would be answering a question we
+-- failed to ask.
+readPlannerSettings :: FilePath -> IO (Maybe PlannerSettings)
+readPlannerSettings vault = do
+  enabled <- readEnabledPlugins vault
+  if dayPlannerPluginId `notElem` enabled
+    then return Nothing
+    else do
+      planner <- readJsonOr defaultPlannerSettings "Day Planner plugin's" (pluginDataFile vault dayPlannerPluginId)
+      daily <- readJsonOr defaultDailyNoteSettings "Daily Notes plugin's" (dailyNotesFile vault)
+      return $ Just planner{pstDailyNotes = daily}
+
+-- | A settings file read as JSON, or the given defaults where there is no such file.
+readJsonOr :: (FromJSON a) => a -> String -> FilePath -> IO a
+readJsonOr defaults whose path = do
+  there <- doesFileExist path
+  if not there
+    then return defaults
+    else do
+      read' <- A.eitherDecodeFileStrict path
+      case read' of
+        Right settings -> return settings
+        Left err -> fail $ printf "The %s settings at %s could not be read: %s" whose path err
+
+-- | Read a key at a time over the defaults, as the plugin reads its own file.
+instance FromJSON PlannerSettings where
+  parseJSON = withObject "PlannerSettings" $ \o -> do
+    duration <- o .:? "defaultDurationMinutes" .!= pstDefaultDuration defaultPlannerSettings
+    extend <- o .:? "extendDurationUntilNext" .!= pstExtendUntilNext defaultPlannerSettings
+    return $ PlannerSettings duration extend defaultDailyNoteSettings
+
+-- | An empty format is how the Daily Notes plugin writes that it uses its default, so it is read as
+-- the default rather than as a name with nothing in it.
+instance FromJSON DailyNoteSettings where
+  parseJSON = withObject "DailyNoteSettings" $ \o -> do
+    folder <- o .:? "folder" .!= ""
+    format <- o .:? "format" .!= ""
+    tokens <- if null (trimFormat format)
+      then return defaultDailyNoteFormat
+      else either fail return $ dateFormatTokens (trimFormat format)
+    return $ DailyNoteSettings (trimFolder folder) tokens
+    where
+      trimFormat = dropWhile (== ' ') . reverse . dropWhile (== ' ') . reverse
+      -- A folder is written relative to the vault, with or without slashes around it.
+      trimFolder = reverse . dropWhile (== '/') . reverse . dropWhile (== '/') . trimFormat
+
+-- | One piece of a date format, as Moment.js — which the Daily Notes plugin formats names with —
+-- reads one.
+data DateToken
+  = DYear4
+  | DYear2
+  | DMonth2
+  | DMonth1
+  | DMonthName
+  | DMonthShort
+  | DDay2
+  | DDay1
+  | DDayOrdinal
+  | DWeekdayName
+  | DWeekdayShort
+  | DLiteral String
+  deriving (Eq, Show)
+
+-- | The pieces of a Moment.js date format, or why it cannot be read.
+--
+-- Only the pieces a name naming a single day is written with are read: the year, the month, the
+-- day of the month and the day of the week, in each of the ways Moment writes them, and text
+-- written between brackets or as anything which is no letter. A format writing anything else —
+-- a week of the year, an hour — is reported rather than read past, because Moment would read those
+-- letters as pieces of a date too, and reading them as text would take a note's name to name a day
+-- it does not.
+dateFormatTokens :: String -> Either String [DateToken]
+dateFormatTokens = fmap joinLiterals . aux
+  where
+    joinLiterals (DLiteral a : DLiteral b : rest) = joinLiterals (DLiteral (a ++ b) : rest)
+    joinLiterals (t : rest)                       = t : joinLiterals rest
+    joinLiterals []                               = []
+    aux [] = Right []
+    aux ('[':rest) = case break (== ']') rest of
+      (lit, _:rest') -> (DLiteral lit :) <$> aux rest'
+      _ -> Left "a daily note format opens a bracket it never closes"
+    aux s@(c:rest) = case [(tok, rest') | (spelling, tok) <- spellings, Just rest' <- [stripSpelling spelling s]] of
+      ((tok, rest'):_) -> (tok :) <$> aux rest'
+      []
+        | isLetter c -> Left $ printf "the daily note format piece starting at %s is not one a day's name is read with" (show s)
+        | otherwise -> (DLiteral [c] :) <$> aux rest
+    -- Longest first, so that @MMMM@ is not read as two @MM@s.
+    spellings = [("YYYY", DYear4), ("YY", DYear2), ("MMMM", DMonthName), ("MMM", DMonthShort), ("MM", DMonth2), ("M", DMonth1), ("Do", DDayOrdinal), ("DD", DDay2), ("D", DDay1), ("dddd", DWeekdayName), ("ddd", DWeekdayShort)]
+    stripSpelling spelling s = if take (length spelling) s == spelling then Just (drop (length spelling) s) else Nothing
+    isLetter c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
