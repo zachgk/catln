@@ -4,6 +4,8 @@ import makeStyles from '@mui/styles/makeStyles';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 
+import {dateText, someValue} from './time';
+
 // The status a done box wears, which is the one the checkbox reads. Which character means which
 // status is the vault's to say, so what is read is the status and never the character in the box.
 const DONE = "/Data/Note/StatusType/Done";
@@ -34,11 +36,17 @@ const useStyles = makeStyles({
   }
 });
 
-// A /Data/Maybe as the value it holds, or null where it holds none. A task's dates are written this
-// way because a task has a due date or has not got one, and an empty string would be a third thing
-// that is neither.
+// A /Data/Maybe of a string as the string it holds, or null where it holds none. A task's fields are
+// written this way because a task has a recurrence or has not got one, and an empty string would be
+// a third thing that is neither.
 function some(value) {
-  return value && value.name === "/Data/Maybe/Some" ? value.args["/value"].contents : null;
+  const held = someValue(value);
+  return held ? held.contents : null;
+}
+
+// A /Data/Maybe of a /Data/Time/Date as the day it holds, written as a note writes it.
+function someDate(value) {
+  return dateText(someValue(value));
 }
 
 // One task of a note in a vault running the Obsidian Tasks plugin, as the checkbox it was written as
@@ -64,10 +72,10 @@ function ObsidianTask(props) {
   // Each field is shown only where the task carries one, so a plain checkbox is shown as a plain
   // checkbox rather than as a row of empty labels.
   const fields = [
-    ["due", some(props["/due"])],
-    ["scheduled", some(props["/scheduled"])],
+    ["due", someDate(props["/due"])],
+    ["scheduled", someDate(props["/scheduled"])],
     ["repeats", some(props["/recurrence"])],
-    ["starts", rest.start],
+    ["starts", someDate(props["/start"])],
     ["created", rest.created],
     // The date a task was finished or dropped, which is one field because a task is one or the
     // other and never both. Which of the two it is, is the status.

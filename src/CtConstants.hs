@@ -155,6 +155,21 @@ notePriorityPath = "/Data/Note/Priority"
 notePropertiesAnnot = "/Data/Note/#properties"
 notePropertiesAnnotText = "text"
 
+-- | Days and times of day, declared in @stack\/core\/time.ct@. A day a note writes is read into a
+-- 'timeDatePath' where it is read, and a block of a planned day into a 'timeRangePath' of two
+-- 'timeOfDayPath's, so that what Catln is handed is a value with an order rather than text.
+timeDatePath, timeDateYear, timeDateMonth, timeDateDay, timeOfDayPath, timeOfDayHour, timeOfDayMinute, timeRangePath, timeRangeStart, timeRangeEnd :: String
+timeDatePath = "/Data/Time/Date"
+timeDateYear = "year"
+timeDateMonth = "month"
+timeDateDay = "day"
+timeOfDayPath = "/Data/Time/TimeOfDay"
+timeOfDayHour = "hour"
+timeOfDayMinute = "minute"
+timeRangePath = "/Data/Time/TimeRange"
+timeRangeStart = "start"
+timeRangeEnd = "end"
+
 -- | A calendar, declared in @stack\/core\/calendar.ct@. 'calendarEntryClass' is the class of things
 -- a calendar can show and 'calendarDayMethod' the one question asked of a member of it, which is
 -- which day it is assigned to. They are named here rather than where a task is because a calendar

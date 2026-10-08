@@ -71,9 +71,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian( Value /contents -> ∀/Data/String )( Value /symbol -> ∀/Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> ∀/Data/String )( Value /priority -> ∀/Data/Note/Priority )
-                            ( Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
                             ( Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /rest -> ∀/Data/String )
                         ]
                     , omiRuntimeDecls = []
@@ -111,6 +111,29 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/soonerDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/soonerDay
+                            ( Value a -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Note/soonerDay( Value a= Value /Data/Maybe/Nothing )( Value b ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value b
+                        , /Data/Note/soonerDay
+                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Note/soonerDay
+                            ( Value a= /Data/Maybe/Some( Value value@Value av ) )
+                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) ) | /operator<=( Value /l= Value av )( Value /r= Value bv ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value av )
+                        , /Data/Note/soonerDay
+                            ( Value a= /Data/Maybe/Some( Value value@Value av ) )
+                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value bv )
+                        ]
+                    }
+                )
+            ,
                 ( "/Catln/Doc/dshow./Data/Note/taskList"
                 , ObjectMapItem
                     { omiDecls = []
@@ -137,9 +160,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Calendar/calendarDay
-                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
+                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
-                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = firstDay( Value a= Value start )( Value b= Value scheduled )( Value c= Value due )
+                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = soonerDay( Value a= Value start )
+                            ( Value b= soonerDay( Value a= Value scheduled )( Value b= Value due ) )
                         ]
                     }
                 )
@@ -170,26 +194,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Note/firstDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/firstDay
-                            ( Value a -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Note/firstDay
-                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )
-                            ( Value b= /Data/Maybe/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value c
-                        ]
                     }
                 )
             ,
@@ -480,11 +484,11 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" }
+                { csValue = "A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the" }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "  the day it may be begun." }
+                { csValue = "  day it may be begun." }
             )
         , /Catln/#print
             ( Value /p= /operator==
@@ -500,13 +504,29 @@ Prgm
                             { csValue = "Water the plants" }
                         )( Value priority= Value Priority/None )
                         ( Value start= /Data/Maybe/Some
-                            ( Value value= CStr
-                                { csValue = "2026-01-02" }
+                            ( Value value= /Data/Time/Date
+                                ( Value year= CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value month= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value day= CInt
+                                    { ciValue = 2 }
+                                )
                             )
                         )( Value scheduled= Value /Data/Maybe/Nothing )
                         ( Value due= /Data/Maybe/Some
-                            ( Value value= CStr
-                                { csValue = "2026-01-04" }
+                            ( Value value= /Data/Time/Date
+                                ( Value year= CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value month= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value day= CInt
+                                    { ciValue = 4 }
+                                )
                             )
                         )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr
@@ -515,8 +535,85 @@ Prgm
                     )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CStr
-                        { csValue = "2026-01-02" }
+                    ( Value value= /Data/Time/Date
+                        ( Value year= CInt
+                            { ciValue = 2026 }
+                        )
+                        ( Value month= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value day= CInt
+                            { ciValue = 2 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A task written with a day it may be begun after the day it is due sits on the due day, which is" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  the sooner." }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= calendarDay
+                    ( Value /this= Task/Obsidian
+                        ( Value contents= CStr
+                            { csValue = "Late start" }
+                        )
+                        ( Value symbol= CStr
+                            { csValue = " " }
+                        )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr
+                            { csValue = "Late start" }
+                        )( Value priority= Value Priority/None )
+                        ( Value start= /Data/Maybe/Some
+                            ( Value value= /Data/Time/Date
+                                ( Value year= CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value month= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value day= CInt
+                                    { ciValue = 9 }
+                                )
+                            )
+                        )( Value scheduled= Value /Data/Maybe/Nothing )
+                        ( Value due= /Data/Maybe/Some
+                            ( Value value= /Data/Time/Date
+                                ( Value year= CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value month= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value day= CInt
+                                    { ciValue = 4 }
+                                )
+                            )
+                        )( Value recurrence= Value /Data/Maybe/Nothing )
+                        ( Value rest= CStr
+                            { csValue = "{}" }
+                        )
+                    )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= /Data/Time/Date
+                        ( Value year= CInt
+                            { ciValue = 2026 }
+                        )
+                        ( Value month= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value day= CInt
+                            { ciValue = 4 }
+                        )
                     )
                 )
             )
@@ -541,8 +638,16 @@ Prgm
                             { csValue = "Ship it" }
                         )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
                         ( Value due= /Data/Maybe/Some
-                            ( Value value= CStr
-                                { csValue = "2026-01-04" }
+                            ( Value value= /Data/Time/Date
+                                ( Value year= CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value month= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value day= CInt
+                                    { ciValue = 4 }
+                                )
                             )
                         )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr
@@ -551,8 +656,16 @@ Prgm
                     )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CStr
-                        { csValue = "2026-01-04" }
+                    ( Value value= /Data/Time/Date
+                        ( Value year= CInt
+                            { ciValue = 2026 }
+                        )
+                        ( Value month= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value day= CInt
+                            { ciValue = 4 }
+                        )
                     )
                 )
             )

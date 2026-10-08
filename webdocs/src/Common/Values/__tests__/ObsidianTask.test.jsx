@@ -14,6 +14,18 @@ function some(value) {
 
 const NOTHING = { tag: 'TupleVal', name: '/Data/Maybe/Nothing', args: {} }
 
+function int(contents) {
+  return { tag: 'IntVal', contents }
+}
+
+// A /Data/Maybe of a /Data/Time/Date, which is how a task's days arrive: read into a day where the
+// note was read, rather than the text of one.
+function someDate(year, month, day) {
+  return { tag: 'TupleVal', name: '/Data/Maybe/Some', args: { '/value': {
+    tag: 'TupleVal', name: '/Data/Time/Date', args: { '/year': int(year), '/month': int(month), '/day': int(day) }
+  } } }
+}
+
 function str(contents) {
   return { tag: 'StrVal', contents }
 }
@@ -31,6 +43,7 @@ function task({rest = {}, ...fields} = {}) {
     '/statusType': member('/Data/Note/StatusType/Todo'),
     '/description': str('Ship it'),
     '/priority': member('/Data/Note/Priority/None'),
+    '/start': NOTHING,
     '/scheduled': NOTHING,
     '/due': NOTHING,
     '/recurrence': NOTHING,
@@ -77,9 +90,15 @@ describe('ObsidianTask', () => {
   })
 
   it('shows a date carried as a field of its own', () => {
-    render(<Providers><ObsidianTask {...task({'/due': some('2026-01-04')})} /></Providers>)
+    render(<Providers><ObsidianTask {...task({'/due': someDate(2026, 1, 4)})} /></Providers>)
 
     expect(screen.getByText('due: 2026-01-04')).toBeInTheDocument()
+  })
+
+  it('shows the day a task may be started on', () => {
+    render(<Providers><ObsidianTask {...task({'/start': someDate(2026, 1, 2)})} /></Providers>)
+
+    expect(screen.getByText('starts: 2026-01-02')).toBeInTheDocument()
   })
 
   // A field of the value and a field out of the JSON are shown the same way, so which of them is

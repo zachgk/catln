@@ -23,15 +23,13 @@
 module Eval.Runtime.Calendar where
 
 import           CRes                 (runCResT)
-import           CtConstants          (calendarDayMethod, calendarEntryClass,
-                                       ctMaybeNothing, ctMaybeSome,
-                                       ctMaybeSomeValue)
+import           CtConstants          (calendarDayMethod, calendarEntryClass)
 import           Data.Aeson           (ToJSON)
 import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
 import           Data.List            (nub, sortOn)
 import           Data.Maybe           (mapMaybe)
-import           Data.Time.Calendar   (Day)
+import           Data.Time.Calendar   (Day, showGregorian)
 import qualified Data.UUID            as UUID
 import           Eval.Common
 import           Eval.Runtime.WebDocs (askService, encodeJsonText, noService,
@@ -169,7 +167,10 @@ entryMembers typeEnv = nub $ declaredAs S.empty (mkName calendarEntryClass)
     memberName t = ptName <$> maybe (maybeGetClassSingleton t) Just (maybeGetSingleton t)
 
 -- | The day an answer of @calendarDay@ names, and nothing where it names none.
+--
+-- Handed on as the @YYYY-MM-DD@ it is written as, because that is how a day travels as JSON and how
+-- whatever draws the calendar reads one.
 valDay :: Val -> Either String (Maybe String)
-valDay (TupleVal name _) | name == ctMaybeNothing = Right Nothing
-valDay (TupleVal name args) | name == ctMaybeSome = Just <$> valStrArg name ctMaybeSomeValue args
-valDay v = Left $ printf "%s is not the day a calendar entry sits on" (show v)
+valDay v = case valMaybe valDate v of
+  Right day -> Right $ showGregorian <$> day
+  Left err  -> Left $ printf "%s is not the day a calendar entry sits on: %s" (show v) err

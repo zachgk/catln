@@ -16,9 +16,9 @@ module(Data/RSS)
       three the feed has. It is what says that an entry read today and the same entry read a week
       ago are one entry, so an entry keeps its place on the page rather than arriving again each
       time the feed is asked.
-      [published] is the date as the feed wrote it, and is a string for the reason
-      [/Data/Note/Task/Obsidian]'s dates are: Catln has no date to read one into, and inventing one
-      here would be inventing it for the whole language rather than for a feed.
+      [published] is the date as the feed wrote it, and is a string because what a feed writes is an
+      instant — a day, a time and a zone — and [/Data/Time] has days and times of day but no zones
+      to read one into yet.
       [description] is the entry's writing exactly as the feed wrote it, which is markup rather than
       prose — a comic strip's entry is an @img@ tag and nothing else. It is carried as it was
       written and read apart by whatever shows it, so that nothing the feed said is lost between

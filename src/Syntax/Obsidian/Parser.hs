@@ -31,6 +31,7 @@ import           Data.Maybe               (fromMaybe, isNothing, listToMaybe,
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TLE
+import           Data.Time.Calendar       (Day, toGregorian)
 import           Semantics.Prgm
 import           Semantics.Types          (Constant (CStr), makeAbsoluteName,
                                            mkName, partialKey)
@@ -44,7 +45,7 @@ import           Syntax.Obsidian.Settings (StatusKind (..), TaskSettings,
                                            statusFor, taskSettingsFiles, tsKind,
                                            tsName)
 import           Syntax.Obsidian.Task     (ObsidianTask (..), TaskPriority (..),
-                                           obsidianTask)
+                                           obsidianTask, readIsoDay)
 import           System.Directory
 import           System.FilePath          (makeRelative, takeBaseName,
                                            takeDirectory, (</>))
@@ -371,17 +372,33 @@ obsidianTaskExpr status symbol task = rawVal noteObsidianTaskPath `applyRawArgs`
   (Just $ partialKey (mkName noteTaskStatusType), rawVal (statusTypeMember (tsKind status))),
   (Just $ partialKey (mkName noteTaskDescription), rawStr (otDescription task)),
   (Just $ partialKey (mkName noteTaskPriority), rawVal (priorityMember (otPriority task))),
-  (Just $ partialKey (mkName noteTaskStart), rawMaybeStr (otStart task)),
-  (Just $ partialKey (mkName noteTaskScheduled), rawMaybeStr (otScheduled task)),
-  (Just $ partialKey (mkName noteTaskDue), rawMaybeStr (otDue task)),
+  (Just $ partialKey (mkName noteTaskStart), rawMaybe rawDate (readIsoDay =<< otStart task)),
+  (Just $ partialKey (mkName noteTaskScheduled), rawMaybe rawDate (readIsoDay =<< otScheduled task)),
+  (Just $ partialKey (mkName noteTaskDue), rawMaybe rawDate (readIsoDay =<< otDue task)),
   (Just $ partialKey (mkName noteTaskRecurrence), rawMaybeStr (otRecurrence task)),
   (Just $ partialKey (mkName noteTaskRest), rawStr (taskRestJson status task))
                                                                                  ]
 
 -- | A value which may be absent, as the arm of a @\/Data\/Maybe@ it is.
+rawMaybe :: (a -> RawExpr ()) -> Maybe a -> RawExpr ()
+rawMaybe _ Nothing = rawVal ctMaybeNothing
+rawMaybe write (Just v) = rawVal ctMaybeSome `applyRawArgs` [(Just $ partialKey (mkName ctMaybeSomeValue), write v)]
+
 rawMaybeStr :: Maybe String -> RawExpr ()
-rawMaybeStr Nothing = rawVal ctMaybeNothing
-rawMaybeStr (Just v) = rawVal ctMaybeSome `applyRawArgs` [(Just $ partialKey (mkName ctMaybeSomeValue), rawStr v)]
+rawMaybeStr = rawMaybe rawStr
+
+-- | A day, as the @\/Data\/Time\/Date@ it is declared as.
+--
+-- Read out of the line here, once, so that what Catln is handed is a day with an order rather than
+-- the text of one. The line itself is carried whole beside it, so the text is still what is written
+-- back.
+rawDate :: Day -> RawExpr ()
+rawDate day = rawVal timeDatePath `applyRawArgs` [
+  (Just $ partialKey (mkName timeDateYear), rawInt year),
+  (Just $ partialKey (mkName timeDateMonth), rawInt (toInteger month)),
+  (Just $ partialKey (mkName timeDateDay), rawInt (toInteger dayOfMonth))
+                                                  ]
+  where (year, month, dayOfMonth) = toGregorian day
 
 -- | The member of @\/Data\/Note\/StatusType@ a kind of status is.
 statusTypeMember :: StatusKind -> String

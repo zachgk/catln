@@ -2,6 +2,7 @@ import "core/bool.ct"
 import "core/calendar.ct"
 import "core/maybe.ct"
 import "core/string.ct"
+import "core/time.ct"
 import "core/webdoc.ct"
 
 
@@ -77,7 +78,7 @@ module(Data/Note)
       medium and low rather than at either end, because that is where a task nobody gave a priority
       to sorts among ones somebody did.
 
-  data(Task/Obsidian(contents -> String, symbol -> String, statusType -> StatusType, description -> String, priority -> Priority, start -> /Data/Maybe[$T -> String], scheduled -> /Data/Maybe[$T -> String], due -> /Data/Maybe[$T -> String], recurrence -> /Data/Maybe[$T -> String], rest -> String))
+  data(Task/Obsidian(contents -> String, symbol -> String, statusType -> StatusType, description -> String, priority -> Priority, start -> /Data/Maybe[$T -> /Data/Time/Date..], scheduled -> /Data/Maybe[$T -> /Data/Time/Date..], due -> /Data/Maybe[$T -> /Data/Time/Date..], recurrence -> /Data/Maybe[$T -> String], rest -> String))
     # A [Task/Obsidian] is a checkbox in a vault running the Obsidian Tasks plugin, which writes a
       task's dates, priority, recurrence and links into the line beside the box.
       It carries that line as [contents], exactly as it was written, and everything else beside it
@@ -95,9 +96,9 @@ module(Data/Note)
       [description] is what the line says once the plugin's own writing is off it, which no reader
       can work out without knowing what the vault is set to — so it is carried rather than left to
       be derived. The tags stay in it, as the plugin leaves them there.
-      The dates are carried as the @YYYY-MM-DD@ strings they were written as. Catln has no date to
-      read them into, and inventing one here would be inventing it for the whole language rather
-      than for a note.
+      The days are read into [/Data/Time/Date]s where the line is read, so a task's days are days
+      with an order rather than the text of them. A day written that does not exist, such as
+      @2026-02-30@, is no day the task carries: it is left in what the line says, as @📅 lunch@ is.
       The three days a task may be done on — [start], [scheduled] and [due] — are fields together,
       where the first of them used to travel in [rest]. They are the three [/Data/Calendar/calendarDay]
       reads to say which day a task sits on, and a day read out of JSON is a day only Haskell can
@@ -107,16 +108,8 @@ module(Data/Note)
       completion, the id, the ids it waits on, and the block link — are read exactly as these are
       and are carried together in [rest] as JSON, which is what [Show/TaskList] does with a whole
       list of tasks and what [Show/Properties] does with a block of properties. That is not because
-      they are worth less, and no longer because the width cannot be compiled: seventeen fields here
-      leave @catln epochs@ and @catln tbuild@ on a page which declares nothing within a second of
-      where they are without them, and the ten-task fixture builds in 62s against a 58s floor.
-      What they wait on is the integration suite, which does not survive the change. Made fields,
-      the suite runs over an hour against the twenty-two minutes it takes now, holds 6.5GB, and
-      writes no goldens at all before it is killed — reproduced at both @-O0@ and @-O1@, so it is
-      not a build-flag artifact. Every per-page measurement says the width is free and the suite
-      says it is not, and the two are not yet reconciled: what differs is that the suite compiles
-      every test page against one universe rather than a page at a time. Until that is understood
-      this type stays as it is, because a change that cannot be tested cannot be trusted.
+      they are worth less. Making them fields once blew the integration suite up past an hour, and
+      that has since been fixed, so they can be made fields as the need for each arrives.
       The done and the cancelled date are one thing among those, not two: a task is done or it is
       cancelled and never both, and [statusType] already says which of the two a task with such a
       date is.
@@ -137,41 +130,39 @@ module(Data/Note)
     # A checkbox read as a checkbox sits on no day. Such a line carries no dates at all — that is
       the whole of what reading a box without the plugin's reading of it leaves — so this is what it
       has to say rather than what it has not got round to saying.
-  :Task/Obsidian(contents, symbol, statusType, description, priority, start, scheduled, due, recurrence, rest).calendarDay= firstDay(a= start, b= scheduled, c= due)
-    # A task the plugin manages sits on the first of the three days it may name: the day it may be
-      begun, the day it is scheduled for, then the day it is due.
+  :Task/Obsidian(contents, symbol, statusType, description, priority, start, scheduled, due, recurrence, rest).calendarDay= soonerDay(a= start, b= soonerDay(a= scheduled, b= due))
+    # A task the plugin manages sits on the soonest of the three days it may name: the day it may
+      be begun, the day it is scheduled for, and the day it is due. That is the day a query asking
+      what happens answers too, so a task is on the one day however it is asked about.
       Every field is named although three are read. A receiver naming only some of them is a
       receiver for a task which has only those, which no task is, so the arm is never reached; and
       writing the rest as a [.._] parses and typechecks and then fails to evaluate, which is a hole
       in the evaluator rather than something to write around. So they are written out.
-      The first and not the soonest. Those three mean "may begin", "planned for" and "due by", so a
-      task whose days run in the order they describe has its first-named day be its soonest, and the
-      two readings are the one day. They part only for a task written with a start after its due,
-      where this shows the start and a query asking what happens would answer the due. Answering
-      soonest here would mean comparing two days, and a day is a [String], which has an equality and
-      no order — so the reading that needs no comparison is the one that can be written at all.
 
-  firstDay(a -> /Data/Maybe[$T -> String], b -> /Data/Maybe[$T -> String], c -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]
-    # The first of three days which is there, and nothing where none of them is.
-      Three arms rather than a condition, because a guard on an arm of a [case] does not choose
-      between the arms and there is nothing to compare here anyway: which day is first is which of
-      the three is a [/Data/Maybe/Some], which the arms match on directly.
-      Kept here beside the one arm that asks it rather than put among the [/Data/Maybe] operations.
-      It is named for what it does for a task, and a second caller is what would make it worth
-      naming for what it does to a [/Data/Maybe].
-  firstDay(a= /Data/Maybe/Some(value), b, c)= /Data/Maybe/Some(value= value)
-  firstDay(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value), c)= /Data/Maybe/Some(value= value)
-  firstDay(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing, c)= c
+  soonerDay(a -> /Data/Maybe[$T -> /Data/Time/Date..], b -> /Data/Maybe[$T -> /Data/Time/Date..]) -> /Data/Maybe[$T -> /Data/Time/Date..]
+    # The sooner of two days which may be absent: whichever is there where only one is, and nothing
+      where neither is.
+      Kept here beside the arm that asks it rather than put among the [/Data/Maybe] operations. It
+      is named for what it does for a task, and a second caller is what would make it worth naming
+      for what it does to a [/Data/Maybe].
+  soonerDay(a= /Data/Maybe/Nothing, b)= b
+  soonerDay(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= /Data/Maybe/Some(value= value)
+  soonerDay(a= /Data/Maybe/Some(value@av), b= /Data/Maybe/Some(value@bv)) | av <= bv= /Data/Maybe/Some(value= av)
+  soonerDay(a= /Data/Maybe/Some(value@av), b= /Data/Maybe/Some(value@bv)) else = /Data/Maybe/Some(value= bv)
 
   # A checkbox read as a checkbox sits on no day, whichever way its box is written.
   > (Task/Simple(contents= "read it", state= False).calendarDay == /Data/Maybe/Nothing)
     >>> True
-  # A task naming a day it may be begun and a day it is due sits on the first of the three, which is
-  #   the day it may be begun.
-  > (Task/Obsidian(contents= "Water the plants", symbol= " ", statusType= StatusType/Todo, description= "Water the plants", priority= Priority/None, start= /Data/Maybe/Some(value= "2026-01-02"), scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= "2026-01-04"), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= "2026-01-02"))
+  # A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the
+  #   day it may be begun.
+  > (Task/Obsidian(contents= "Water the plants", symbol= " ", statusType= StatusType/Todo, description= "Water the plants", priority= Priority/None, start= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 2)), scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 4)), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 2)))
+    >>> True
+  # A task written with a day it may be begun after the day it is due sits on the due day, which is
+  #   the sooner.
+  > (Task/Obsidian(contents= "Late start", symbol= " ", statusType= StatusType/Todo, description= "Late start", priority= Priority/None, start= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 9)), scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 4)), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 4)))
     >>> True
   # A task naming only the day it is due sits on that day, the two before it being absent.
-  > (Task/Obsidian(contents= "Ship it", symbol= " ", statusType= StatusType/Todo, description= "Ship it", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= "2026-01-04"), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= "2026-01-04"))
+  > (Task/Obsidian(contents= "Ship it", symbol= " ", statusType= StatusType/Todo, description= "Ship it", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 4)), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 4)))
     >>> True
   # A task naming none of the three sits on no day, which is an answer and not a task left out.
   > (Task/Obsidian(contents= "Book", symbol= " ", statusType= StatusType/Todo, description= "Book", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Nothing, recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Nothing)

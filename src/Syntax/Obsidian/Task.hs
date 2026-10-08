@@ -32,9 +32,11 @@ import           Data.Aeson               (FromJSON (..), decode, withObject,
 import           Data.Char                (isAlpha, isAlphaNum, isDigit,
                                            isSpace)
 import           Data.List                (dropWhileEnd, isPrefixOf, isSuffixOf)
-import           Data.Maybe               (fromMaybe, listToMaybe, mapMaybe)
+import           Data.Maybe               (fromMaybe, isJust, listToMaybe,
+                                           mapMaybe)
 import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TLE
+import           Data.Time.Calendar       (Day, fromGregorianValid)
 import           Syntax.Obsidian.Settings (TaskFormat (..), TaskSettings (..))
 
 -- | How urgent a task is, as the plugin's six priorities.
@@ -293,11 +295,19 @@ tags = filter isTag . words
 splitIds :: String -> [String]
 splitIds v = filter (not . null) $ map trim $ splitOn ',' v
 
+-- | Whether a string is a day written as @YYYY-MM-DD@, and a day that exists.
+--
+-- A day that does not exist, such as @2026-02-30@, is not a date the line carries: it is left in what
+-- the line says, as @📅 lunch@ is, rather than taken off the line as a field which no day can be
+-- read out of.
 isDate :: String -> Bool
-isDate d = length d == 10 && all digitAt [0, 1, 2, 3, 5, 6, 8, 9] && all dashAt [4, 7]
-  where
-    digitAt i = isDigit (d !! i)
-    dashAt i = d !! i == '-'
+isDate = isJust . readIsoDay
+
+-- | A day written as @YYYY-MM-DD@, which is a day that exists.
+readIsoDay :: String -> Maybe Day
+readIsoDay [y1, y2, y3, y4, '-', m1, m2, '-', d1, d2]
+  | all isDigit [y1, y2, y3, y4, m1, m2, d1, d2] = fromGregorianValid (read [y1, y2, y3, y4]) (read [m1, m2]) (read [d1, d2])
+readIsoDay _ = Nothing
 
 isRecurrence :: String -> Bool
 isRecurrence v = not (null v) && all (\c -> isAlphaNum c || c `elem` [' ', ',', '!']) v

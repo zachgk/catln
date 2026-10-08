@@ -73,9 +73,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian( Value /contents -> ∀/Data/String )( Value /symbol -> ∀/Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> ∀/Data/String )( Value /priority -> ∀/Data/Note/Priority )
-                            ( Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
                             ( Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /rest -> ∀/Data/String )
                         ]
                     , omiRuntimeDecls = []
@@ -113,6 +113,30 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/soonerDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/soonerDay
+                            ( Value /a -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Note/soonerDay( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value /b
+                        , /Data/Note/soonerDay
+                            ( Value /a -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value -> /Data/Time/Date.. ) )( Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
+                        , /Data/Note/soonerDay
+                            ( Value /a -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value@Value /av -> /Data/Time/Date.. ) )
+                            ( Value /b -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value@Value /bv -> /Data/Time/Date.. ) ) | /operator<=( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value -> TVArg /av = Value /av )
+                        , /Data/Note/soonerDay
+                            ( Value /a -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value@Value /av -> /Data/Time/Date.. ) )
+                            ( Value /b -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value@Value /bv -> /Data/Time/Date.. ) ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some( Value /value -> TVArg /bv = Value /bv )
+                        ]
+                    }
+                )
+            ,
                 ( "/Catln/Doc/dshow./Data/Note/taskList"
                 , ObjectMapItem
                     { omiDecls = []
@@ -147,21 +171,22 @@ Prgm
                         , /Data/Calendar/calendarDay
                             ( Value /this -> /Data/Note/Task/Obsidian
                                 ( /recurrence=∀/Data/Maybe[ /T=∀/Data/String ]
-                                , /due=∀/Data/Maybe[ /T=∀/Data/String ]
-                                , /start=∀/Data/Maybe[ /T=∀/Data/String ]
+                                , /due=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                , /start=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
                                 , /priority=∀/Data/Note/Priority
-                                , /scheduled=∀/Data/Maybe[ /T=∀/Data/String ]
+                                , /scheduled=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
                                 , /statusType=∀/Data/Note/StatusType
                                 , /description=∀/Data/String
                                 , /contents=∀/Data/String
                                 , /symbol=∀/Data/String
                                 , /rest=∀/Data/String
                                 ) = /Task/Obsidian( Value /contents -> ∀/Data/String )( Value /symbol -> ∀/Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> ∀/Data/String )( Value /priority -> ∀/Data/Note/Priority )
-                                ( Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                                ( Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                                ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                                ( Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                                ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                                ( Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
                                 ( Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /rest -> ∀/Data/String )
-                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Note/firstDay( Value /a -> TVArg /start = Value /start )( Value /b -> TVArg /scheduled = Value /scheduled )( Value /c -> TVArg /due = Value /due )
+                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Note/soonerDay( Value /a -> TVArg /start = Value /start )
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Note/soonerDay( Value /a -> TVArg /scheduled = Value /scheduled )( Value /b -> TVArg /due = Value /due ) )
                         ]
                     }
                 )
@@ -192,30 +217,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Note/firstDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/firstDay
-                            ( Value /a -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Note/firstDay
-                            ( Value /a -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) )
-                            ( Value /b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
-                        , /Data/Note/firstDay( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /b -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) )
-                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
-                        , /Data/Note/firstDay( Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /c
-                        ]
                     }
                 )
             ,
@@ -500,7 +501,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Nothing = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Simple
                         ( /contents=/Data/String/Text
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -520,37 +521,43 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" }
+                { csValue = "A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "  the day it may be begun." }
+                { csValue = "  day it may be begun." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some
-                    [ /T=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ]
-                    ( /value=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ) = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /due=/Data/Maybe/Some
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ]
-                            ( /value=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             )
                         , /start=/Data/Maybe/Some
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ]
-                            ( /value=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             )
                         , /priority=/Data/Note/Priority/None
                         , /scheduled=/Data/Maybe/Nothing
@@ -577,27 +584,61 @@ Prgm
                             { csValue = "Water the plants" }
                         )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
                         ( Value /start -> /Data/Maybe/Some
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ]
-                            ( /value=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                { csValue = "2026-01-02" }
+                            ( Value /value -> /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                ) = /Data/Time/Date
+                                ( Value /year -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value /month -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /day -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2 }
+                                )
                             )
                         )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ( Value /due -> /Data/Maybe/Some
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ]
-                            ( /value=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                { csValue = "2026-01-04" }
+                            ( Value /value -> /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                ) = /Data/Time/Date
+                                ( Value /year -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value /month -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /day -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 4 }
+                                )
                             )
                         )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ( Value /rest -> /Data/String/Text
@@ -607,15 +648,195 @@ Prgm
                     )
                 )
                 ( Value /r -> /Data/Maybe/Some
-                    [ /T=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    [ /T=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
                     ]
-                    ( /value=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ( /value=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
                     ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                        { csValue = "2026-01-02" }
+                    ( Value /value -> /Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        ) = /Data/Time/Date
+                        ( Value /year -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2026 }
+                        )
+                        ( Value /month -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /day -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A task written with a day it may be begun after the day it is due sits on the due day, which is" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  the sooner." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
+                    ( Value /this -> /Data/Note/Task/Obsidian
+                        ( /recurrence=/Data/Maybe/Nothing
+                        , /due=/Data/Maybe/Some
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            ]
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            )
+                        , /start=/Data/Maybe/Some
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            ]
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            )
+                        , /priority=/Data/Note/Priority/None
+                        , /scheduled=/Data/Maybe/Nothing
+                        , /statusType=/Data/Note/StatusType/Todo
+                        , /description=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /contents=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /symbol=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /rest=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ) = /Data/Note/Task/Obsidian
+                        ( Value /contents -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "Late start" }
+                        )
+                        ( Value /symbol -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = " " }
+                        )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                        ( Value /description -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "Late start" }
+                        )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
+                        ( Value /start -> /Data/Maybe/Some
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            ]
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                ) = /Data/Time/Date
+                                ( Value /year -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value /month -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /day -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 9 }
+                                )
+                            )
+                        )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                        ( Value /due -> /Data/Maybe/Some
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            ]
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                ) = /Data/Time/Date
+                                ( Value /year -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value /month -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /day -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 4 }
+                                )
+                            )
+                        )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                        ( Value /rest -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "{}" }
+                        )
+                    )
+                )
+                ( Value /r -> /Data/Maybe/Some
+                    [ /T=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ]
+                    ( /value=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        ) = /Data/Time/Date
+                        ( Value /year -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2026 }
+                        )
+                        ( Value /month -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /day -> /Data/Primitive/Integer = CInt
+                            { ciValue = 4 }
+                        )
                     )
                 )
             )
@@ -630,21 +851,21 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Some
-                    [ /T=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ]
-                    ( /value=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ) = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /due=/Data/Maybe/Some
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ]
-                            ( /value=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             )
                         , /start=/Data/Maybe/Nothing
                         , /priority=/Data/Note/Priority/None
@@ -672,15 +893,32 @@ Prgm
                             { csValue = "Ship it" }
                         )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ( Value /due -> /Data/Maybe/Some
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ]
-                            ( /value=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /value=/Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
                             ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                { csValue = "2026-01-04" }
+                            ( Value /value -> /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                ) = /Data/Time/Date
+                                ( Value /year -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2026 }
+                                )
+                                ( Value /month -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /day -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 4 }
+                                )
                             )
                         )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ( Value /rest -> /Data/String/Text
@@ -690,15 +928,32 @@ Prgm
                     )
                 )
                 ( Value /r -> /Data/Maybe/Some
-                    [ /T=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    [ /T=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
                     ]
-                    ( /value=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ( /value=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
                     ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                        { csValue = "2026-01-04" }
+                    ( Value /value -> /Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        ) = /Data/Time/Date
+                        ( Value /year -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2026 }
+                        )
+                        ( Value /month -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /day -> /Data/Primitive/Integer = CInt
+                            { ciValue = 4 }
+                        )
                     )
                 )
             )
@@ -713,7 +968,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Maybe/Nothing = /calendarDay
+                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /due=/Data/Maybe/Nothing

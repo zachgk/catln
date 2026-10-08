@@ -1,5 +1,6 @@
 import "core/maybe.ct"
 import "core/string.ct"
+import "core/time.ct"
 import "core/webdoc.ct"
 
 
@@ -32,10 +33,8 @@ module(Data/Calendar)
       SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
       sake of one caller. It moves there when there is a second one.
 
-  :$E.calendarDay[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> String]
-    # [calendarDay] is the day an entry is assigned to, as the @YYYY-MM-DD@ string it is written as.
-      A day is a string here as it is everywhere a note is read: Catln has no date, and inventing
-      one for a calendar would be inventing it for the whole language rather than for a calendar.
+  :$E.calendarDay[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> /Data/Time/Date..]
+    # [calendarDay] is the day an entry is assigned to, as the [/Data/Time/Date] it is.
       An entry which sits on no day answers [/Data/Maybe/Nothing]. That is an answer and not a failure to
       give one — an undated entry is shown apart from the days rather than dropped, because a
       calendar quietly showing less than it was handed would be answering a narrower question than

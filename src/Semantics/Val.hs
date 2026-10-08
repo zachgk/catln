@@ -34,6 +34,7 @@ import           Data.Aeson
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           Data.List           (intercalate)
+import           Data.Time.Calendar  (Day, fromGregorianValid)
 import           Text.Printf
 
 -- | An evaluated value.
@@ -169,6 +170,46 @@ valMaybeStrArg name argName args = do
     TupleVal m _ | m == ctMaybeNothing -> Right Nothing
     TupleVal m inner | m == ctMaybeSome -> Just <$> valStrArg name ctMaybeSomeValue inner
     _ -> Left $ printf "The %s of a %s is %s, which is not a Maybe String" (runtimeArgKey argName) name (show v)
+
+-- | The same, where the argument is a whole number.
+valIntArg :: (RuntimeValue r) => String -> String -> Args r -> Either String Integer
+valIntArg name argName args = do
+  v <- valArg name argName args
+  case v of
+    IntVal i -> Right i
+    _        -> Left $ printf "The %s of a %s is %s, which is not an Integer" (runtimeArgKey argName) name (show v)
+
+-- | The same, where the argument may be absent, read by the given reader where it is there.
+valMaybeArg :: (RuntimeValue r) => (Val r -> Either String a) -> String -> String -> Args r -> Either String (Maybe a)
+valMaybeArg readInner name argName args = do
+  v <- valArg name argName args
+  valMaybe readInner v
+
+-- | A @\/Data\/Maybe@ as the value it holds, read by the given reader, or nothing.
+valMaybe :: (RuntimeValue r) => (Val r -> Either String a) -> Val r -> Either String (Maybe a)
+valMaybe _ (TupleVal m _) | m == ctMaybeNothing = Right Nothing
+valMaybe readInner (TupleVal m inner) | m == ctMaybeSome = Just <$> (readInner =<< valArg m ctMaybeSomeValue inner)
+valMaybe _ v = Left $ printf "%s is not a Maybe" (show v)
+
+-- | A @\/Data\/Time\/Date@ as the day it is. A date naming no day that exists is reported rather
+-- than moved onto a day that does.
+valDate :: (RuntimeValue r) => Val r -> Either String Day
+valDate (TupleVal name args) | name == timeDatePath = do
+  year <- valIntArg name timeDateYear args
+  month <- valIntArg name timeDateMonth args
+  day <- valIntArg name timeDateDay args
+  maybe (Left $ printf "%d-%d-%d is no day that exists" year month day) Right $ fromGregorianValid year (fromInteger month) (fromInteger day)
+valDate v = Left $ printf "%s is not a %s" (show v) timeDatePath
+
+-- | A @\/Data\/Time\/TimeOfDay@ as its hour and minute.
+valTimeOfDay :: (RuntimeValue r) => Val r -> Either String (Integer, Integer)
+valTimeOfDay (TupleVal name args) | name == timeOfDayPath = (,) <$> valIntArg name timeOfDayHour args <*> valIntArg name timeOfDayMinute args
+valTimeOfDay v = Left $ printf "%s is not a %s" (show v) timeOfDayPath
+
+-- | A @\/Data\/Time\/TimeRange@ as its start and end.
+valTimeRange :: (RuntimeValue r) => Val r -> Either String ((Integer, Integer), (Integer, Integer))
+valTimeRange (TupleVal name args) | name == timeRangePath = (,) <$> (valTimeOfDay =<< valArg name timeRangeStart args) <*> (valTimeOfDay =<< valArg name timeRangeEnd args)
+valTimeRange v = Left $ printf "%s is not a %s" (show v) timeRangePath
 
 -- | A list of values as the value of a @\/Data\/List@ holding them, which is the inverse of
 -- 'valList'. Used to build a result in Haskell where the program did not build one itself.

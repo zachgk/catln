@@ -105,6 +105,9 @@ applyRawExprEVars base vars = case base of
 rawStr :: (MetaDat m) => String -> RawExpr m
 rawStr = RawCExpr emptyMetaN . CStr
 
+rawInt :: (MetaDat m) => Integer -> RawExpr m
+rawInt = RawCExpr emptyMetaN . CInt
+
 rawComment :: (MetaDat m, Show m) => String -> RawExpr m
 rawComment s = rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), rawStr s)]
 

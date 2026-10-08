@@ -44,7 +44,7 @@ import           Data.Time.Calendar       (Day, DayOfWeek (..), addDays,
                                            gregorianMonthLength, toGregorian)
 import           Syntax.Obsidian.Settings (StatusKind (..))
 import           Syntax.Obsidian.Task     (TaskPriority (..), isDate, isInfix,
-                                           trim)
+                                           readIsoDay, trim)
 
 -- | One query: what a task must be to be found, the order to give what is found, and how much of it
 -- to show.
@@ -480,13 +480,7 @@ resolveWords today ws = case ws of
 -- | A date written out as @YYYY-MM-DD@, which is how a task writes one and how a query is best
 -- written.
 readDate :: String -> Maybe Day
-readDate d
-  | isDate d, [y, m, dd] <- map read (splitDashes d) = Just $ fromGregorian y (fromInteger m) (fromInteger dd)
-  | otherwise = Nothing
-  where
-    splitDashes s = case break ('-' ==) s of
-      (before, _:rest) -> before : splitDashes rest
-      (before, [])     -> [before]
+readDate = readIsoDay
 
 -- | Which day of the week a word names, if it names one.
 weekday :: String -> Maybe DayOfWeek

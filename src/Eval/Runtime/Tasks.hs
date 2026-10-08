@@ -238,9 +238,9 @@ queryTask within (TupleVal name args)
       description <- valStrArg name noteTaskDescription args
       kind <- valMemberArg name noteTaskStatusType statusTypeKind "a status type" args
       priority <- valMemberArg name noteTaskPriority memberPriority "a priority" args
-      start <- valMaybeStrArg name noteTaskStart args
-      scheduled <- valMaybeStrArg name noteTaskScheduled args
-      due <- valMaybeStrArg name noteTaskDue args
+      start <- valMaybeArg valDate name noteTaskStart args
+      scheduled <- valMaybeArg valDate name noteTaskScheduled args
+      due <- valMaybeArg valDate name noteTaskDue args
       recurrence <- valMaybeStrArg name noteTaskRecurrence args
       rest <- readRest =<< valStrArg name noteTaskRest args
       return QueryTask{
@@ -249,9 +249,9 @@ queryTask within (TupleVal name args)
         qtDescription = description,
         qtTags = trTags rest,
         qtPriority = priority,
-        qtDue = readDate =<< due,
-        qtScheduled = readDate =<< scheduled,
-        qtStart = readDate =<< start,
+        qtDue = due,
+        qtScheduled = scheduled,
+        qtStart = start,
         qtCreated = readDate =<< trCreated rest,
         -- The one date a finished task and a dropped one both write, read as whichever of the two
         -- its status says it is. A task is done or it is cancelled and never both.
