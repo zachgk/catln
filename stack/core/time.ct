@@ -1,0 +1,384 @@
+import "core/bool.ct"
+import "core/cons.ct"
+import "core/data.ct"
+import "core/maybe.ct"
+import "core/ord.ct"
+import "core/string.ct"
+
+
+module(Data/Time)
+  # # Dates and times
+    A [Date] is a day of the proleptic Gregorian calendar and a [TimeOfDay] is a minute within a
+    day. Both are data rather than text: a day written as @2026-01-03@ is read into a [Date] once,
+    where it is written, and from then on is a value with an order and an arithmetic.
+    There is no zone here and no instant. A day planned in a note is the day the note names wherever
+    it is read, and a time of day is the time on the reader's own clock, so neither is pinned to a
+    place on the earth. An instant would be a [Date], a [TimeOfDay] and a zone, and is left until
+    something needs one.
+  # ## Days
+  data(Date(year -> Integer, month -> Integer, day -> Integer))
+    # A [Date] is the day [day] of the month [month] (1 to 12) of the year [year], counting years
+      as the Gregorian calendar does backwards as well as forwards. A [Date] built directly is not
+      checked; [parseDate] and the arithmetic below make only days that exist.
+
+  isLeapYear(year -> Integer) -> Boolean
+    # [isLeapYear] is whether [year] has a 29th of February: every fourth year, except every
+      hundredth, except every four hundredth.
+  isLeapYear(year)= year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+
+  > isLeapYear(year= 2024)
+    >>> True
+  > isLeapYear(year= 1900)
+    >>> False
+  > isLeapYear(year= 2000)
+    >>> True
+  > isLeapYear(year= 2026)
+    >>> False
+  daysInMonth(year -> Integer, month -> Integer) -> Integer
+    # [daysInMonth] is how many days the month [month] of the year [year] has.
+  daysInMonth(year, month) | month == 2= februaryDays(leap= isLeapYear(year= year))
+  daysInMonth(year, month) | month == 4 || month == 6 || month == 9 || month == 11= 30
+  daysInMonth(year, month) else = 31
+
+  februaryDays(leap -> Boolean) -> Integer
+    # [februaryDays] is how many days February has in a leap year and in any other.
+  februaryDays(leap= True)= 29
+  februaryDays(leap= False)= 28
+
+  > daysInMonth(year= 2024, month= 2)
+    >>> 29
+  > daysInMonth(year= 2026, month= 2)
+    >>> 28
+  > daysInMonth(year= 2026, month= 4)
+    >>> 30
+  > daysInMonth(year= 2026, month= 12)
+    >>> 31
+  # ## Counting days
+    A day is counted as how many days it is after the 1st of January 1970, which turns adding days
+    and comparing days into adding and comparing numbers. The count and its reverse are Howard
+    Hinnant's: the year is started in March so that the leap day falls at its end, and is counted in
+    eras of 400 years, which every Gregorian calendar repeats exactly.
+  :Date...daysSinceEpoch -> Integer
+    # [daysSinceEpoch] is how many days the date is after the 1st of January 1970, and negative for
+      a day before it.
+  :Date(year, month, day).daysSinceEpoch =
+    fromMarch(y -> Integer, mp -> Integer) -> Integer
+    fromMarch(y, mp)= fromEra(era= y // 400, yoe= y - (y // 400) * 400, doy= (153 * mp + 2) // 5 + day - 1)
+
+    fromEra(era -> Integer, yoe -> Integer, doy -> Integer) -> Integer
+    fromEra(era, yoe, doy)= era * 146097 + yoe * 365 + yoe // 4 - yoe // 100 + doy - 719468
+
+    startOfYear(y -> Integer, m -> Integer) -> Integer
+    startOfYear(y, m) | m <= 2= fromMarch(y= y - 1, mp= m + 9)
+    startOfYear(y, m) else = fromMarch(y= y, mp= m - 3)
+    startOfYear(y= year, m= month)
+
+  > Date(year= 1970, month= 1, day= 1).daysSinceEpoch
+    >>> 0
+  > Date(year= 2026, month= 1, day= 3).daysSinceEpoch
+    >>> 20456
+  > Date(year= 1969, month= 12, day= 31).daysSinceEpoch
+    >>> -1
+  fromDaysSinceEpoch(days -> Integer) -> Date..
+    # [fromDaysSinceEpoch] is the date [days] days after the 1st of January 1970, the reverse of
+      [daysSinceEpoch].
+  fromDaysSinceEpoch(days) =
+    ofEra(era -> Integer, doe -> Integer) -> Date..
+    ofEra(era, doe)= ofYear(era= era, doe= doe, yoe= (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365)
+
+    ofYear(era -> Integer, doe -> Integer, yoe -> Integer) -> Date..
+    ofYear(era, doe, yoe)= ofDay(y= yoe + era * 400, doy= doe - (365 * yoe + yoe // 4 - yoe // 100))
+
+    ofDay(y -> Integer, doy -> Integer) -> Date..
+    ofDay(y, doy)= ofMonth(y= y, doy= doy, mp= (5 * doy + 2) // 153)
+
+    ofMonth(y -> Integer, doy -> Integer, mp -> Integer) -> Date..
+    ofMonth(y, doy, mp) | mp < 10= Date(year= y, month= mp + 3, day= doy - (153 * mp + 2) // 5 + 1)
+    ofMonth(y, doy, mp) else = Date(year= y + 1, month= mp - 9, day= doy - (153 * mp + 2) // 5 + 1)
+
+    ofEra(era= (days + 719468) // 146097, doe= (days + 719468) % 146097)
+
+  > fromDaysSinceEpoch(days= 20456)
+    >>> 2026-01-03
+  > fromDaysSinceEpoch(days= 0 - 1)
+    >>> 1969-12-31
+  > fromDaysSinceEpoch(days= 19782)
+    >>> 2024-02-29
+  :Date...addDays(n -> Integer) -> Date..
+    # [addDays] is the date [n] days after this one, or before it for a negative [n], carrying
+      across the ends of months and years.
+  :Date(year, month, day).addDays(n)= fromDaysSinceEpoch(days= Date(year= year, month= month, day= day).daysSinceEpoch + n)
+
+  > Date(year= 2026, month= 1, day= 31).addDays(n= 1)
+    >>> 2026-02-01
+  > Date(year= 2024, month= 2, day= 28).addDays(n= 1)
+    >>> 2024-02-29
+  > Date(year= 2026, month= 1, day= 1).addDays(n= 0 - 1)
+    >>> 2025-12-31
+  :Date...weekday -> Integer
+    # [weekday] is the day of the week the date falls on, numbered as ISO 8601 numbers them: 1 for
+      Monday through 7 for Sunday. The 1st of January 1970 was a Thursday.
+  :Date(year, month, day).weekday= (Date(year= year, month= month, day= day).daysSinceEpoch + 3) % 7 + 1
+
+  > Date(year= 2026, month= 1, day= 3).weekday
+    >>> 6
+  > Date(year= 1970, month= 1, day= 1).weekday
+    >>> 4
+  # ## Writing and reading days
+  padded(n -> Integer, width -> Integer) -> String
+    # [padded] writes [n] in decimal with zeros before it up to [width] digits.
+  padded(n, width) | n.toString.length < width= "0" ++ padded(n= n, width= width - 1)
+  padded(n, width) else = n.toString
+
+  every(Date.., isa= [/Data/ToString])
+
+  :Date(year, month, day).toString= padded(n= year, width= 4) ++ "-" ++ padded(n= month, width= 2) ++ "-" ++ padded(n= day, width= 2)
+    # A [Date] is written as ISO 8601 writes it: @YYYY-MM-DD@.
+
+  > Date(year= 2026, month= 1, day= 3)
+    >>> 2026-01-03
+  natural(s -> String) -> /Data/Maybe[$T -> Integer]
+    # [natural] reads [s] as a whole number written in decimal digits alone, with no sign. A string
+      holding anything else, or nothing, has [/Data/Maybe/Nothing].
+  natural(s= String/Text(chars)) =
+    allDigits(cs -> /Data/List/ConsList[$T -> Char]) -> Boolean
+    allDigits(cs= /Data/List/Nil)= True
+    allDigits(cs= /Data/List/Cons(head, tail))= head.isDigit && allDigits(cs= tail)
+
+    digitsOnly(digits -> Boolean, text -> String) -> /Data/Maybe[$T -> Integer]
+    digitsOnly(digits= True, text)= text.parseInteger
+    digitsOnly(digits= False, text)= /Data/Maybe/Nothing
+    digitsOnly(digits= allDigits(cs= chars), text= String/Text(chars= chars))
+
+  > (natural(s= "042") == /Data/Maybe/Some(value= 42))
+    >>> True
+  > (natural(s= "+42") == /Data/Maybe/Nothing)
+    >>> True
+  > (natural(s= "") == /Data/Maybe/Nothing)
+    >>> True
+  parseDate(s -> String) -> /Data/Maybe[$T -> Date..]
+    # [parseDate] reads a day written as ISO 8601 writes one, @YYYY-MM-DD@, with every digit there.
+      Anything else, and a day that does not exist such as the 30th of February, has
+      [/Data/Maybe/Nothing].
+  parseDate(s) | s.length == 10 && s.at(index= 4) == /Data/Maybe/Some(value= '-') && s.at(index= 7) == /Data/Maybe/Some(value= '-')= dateOf(y= natural(s= s.take(n= 4)), m= natural(s= s.slice(start= 5, end= 7)), d= natural(s= s.drop(n= 8)))
+  parseDate(s) else = /Data/Maybe/Nothing
+
+  dateOf(y -> /Data/Maybe[$T -> Integer], m -> /Data/Maybe[$T -> Integer], d -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Date..]
+    # [dateOf] is the date of the year, month and day read, where all three were read and name a day
+      that exists.
+  dateOf(y= /Data/Maybe/Some(value@yv), m= /Data/Maybe/Some(value@mv), d= /Data/Maybe/Some(value@dv)) | mv >= 1 && mv <= 12 && dv >= 1 && dv <= daysInMonth(year= yv, month= mv)= /Data/Maybe/Some(value= Date(year= yv, month= mv, day= dv))
+  dateOf(y= /Data/Maybe/Some(value@yv), m= /Data/Maybe/Some(value@mv), d= /Data/Maybe/Some(value@dv)) else = /Data/Maybe/Nothing
+  dateOf(y= /Data/Maybe/Nothing, m, d)= /Data/Maybe/Nothing
+  dateOf(y= /Data/Maybe/Some(value), m= /Data/Maybe/Nothing, d)= /Data/Maybe/Nothing
+  dateOf(y= /Data/Maybe/Some(value@yv), m= /Data/Maybe/Some(value@mv), d= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+
+  > (parseDate(s= "2026-01-03") == /Data/Maybe/Some(value= Date(year= 2026, month= 1, day= 3)))
+    >>> True
+  > (parseDate(s= "2024-02-29") == /Data/Maybe/Some(value= Date(year= 2024, month= 2, day= 29)))
+    >>> True
+  > (parseDate(s= "2026-02-29") == /Data/Maybe/Nothing)
+    >>> True
+  > (parseDate(s= "2026-13-01") == /Data/Maybe/Nothing)
+    >>> True
+  > (parseDate(s= "lunch") == /Data/Maybe/Nothing)
+    >>> True
+  # ## Ordering days
+    Days are ordered by when they fall, which is the order of their counts.
+  every(Date.., isa= [/Data/Algebra/Ord])
+
+  data(DateOrdering, isa= [/Data/Algebra/Ordering])
+    # [DateOrdering] orders two dates by which falls first.
+
+# The arms answering the [/Data/Algebra/Ord] methods are written in that module, as [/Data/Maybe]'s
+#   are, so that the names they answer are the class's own rather than new ones of this module.
+#   Each date is written out again from its fields rather than named as [this], because a receiver
+#   taken apart into its fields is not also bound whole.
+module(Data/Algebra)
+  :/Data/Time/DateOrdering.compare(a -> /Data/Time/Date.., b -> /Data/Time/Date..)= a.daysSinceEpoch.compareTo(other= b.daysSinceEpoch)
+
+  :/Data/Time/Date(year, month, day).ord= /Data/Time/DateOrdering
+
+  :/Data/Time/Date(year, month, day).compareTo(other= /Data/Time/Date(year@oy, month@om, day@od))= /Data/Time/DateOrdering.compare(a= /Data/Time/Date(year= year, month= month, day= day), b= /Data/Time/Date(year= oy, month= om, day= od))
+
+  :/Data/Time/Date(year, month, day).eq= /Data/Time/DateOrdering
+
+  :/Data/Time/Date(year, month, day).equal(other= /Data/Time/Date(year@oy, month@om, day@od))= /Data/Time/DateOrdering.rel(a= /Data/Time/Date(year= year, month= month, day= day), b= /Data/Time/Date(year= oy, month= om, day= od))
+module(Data/Time)
+  > (Date(year= 2026, month= 1, day= 3) == Date(year= 2026, month= 1, day= 3))
+    >>> True
+  > (Date(year= 2025, month= 12, day= 31) < Date(year= 2026, month= 1, day= 1))
+    >>> True
+  > (Date(year= 2026, month= 2, day= 1) < Date(year= 2026, month= 1, day= 31))
+    >>> False
+  # ## Times of day
+  data(TimeOfDay(hour -> Integer, minute -> Integer))
+    # A [TimeOfDay] is the minute [minute] (0 to 59) of the hour [hour] (0 to 23) of a day, on a
+      24-hour clock.
+
+  :TimeOfDay...minutesSinceMidnight -> Integer
+    # [minutesSinceMidnight] is how many minutes into its day the time is.
+  :TimeOfDay(hour, minute).minutesSinceMidnight= hour * 60 + minute
+
+  fromMinutesSinceMidnight(minutes -> Integer) -> TimeOfDay..
+    # [fromMinutesSinceMidnight] is the time [minutes] minutes into a day, counted round the clock:
+      a count past the end of the day starts the next one again from midnight, and a negative count
+      is counted back from the midnight that ends the day.
+  fromMinutesSinceMidnight(minutes)= TimeOfDay(hour= (minutes % 1440) // 60, minute= minutes % 60)
+
+  :TimeOfDay...addMinutes(n -> Integer) -> TimeOfDay..
+    # [addMinutes] is the time [n] minutes after this one round the clock, so that 23:45 and thirty
+      minutes is 00:15. What day that falls on is not a time of day's to say.
+  :TimeOfDay(hour, minute).addMinutes(n)= fromMinutesSinceMidnight(minutes= hour * 60 + minute + n)
+
+  every(TimeOfDay.., isa= [/Data/ToString])
+
+  :TimeOfDay(hour, minute).toString= padded(n= hour, width= 2) ++ ":" ++ padded(n= minute, width= 2)
+    # A [TimeOfDay] is written on a 24-hour clock as @HH:mm@.
+
+  > TimeOfDay(hour= 9, minute= 5)
+    >>> 09:05
+  > TimeOfDay(hour= 23, minute= 45).addMinutes(n= 30)
+    >>> 00:15
+  > TimeOfDay(hour= 0, minute= 10).addMinutes(n= 0 - 20)
+    >>> 23:50
+  every(TimeOfDay.., isa= [/Data/Algebra/Ord])
+
+  data(TimeOfDayOrdering, isa= [/Data/Algebra/Ordering])
+    # [TimeOfDayOrdering] orders two times by which comes first in a day.
+module(Data/Algebra)
+  :/Data/Time/TimeOfDayOrdering.compare(a -> /Data/Time/TimeOfDay.., b -> /Data/Time/TimeOfDay..)= a.minutesSinceMidnight.compareTo(other= b.minutesSinceMidnight)
+
+  :/Data/Time/TimeOfDay(hour, minute).ord= /Data/Time/TimeOfDayOrdering
+
+  :/Data/Time/TimeOfDay(hour, minute).compareTo(other= /Data/Time/TimeOfDay(hour@oh, minute@om))= /Data/Time/TimeOfDayOrdering.compare(a= /Data/Time/TimeOfDay(hour= hour, minute= minute), b= /Data/Time/TimeOfDay(hour= oh, minute= om))
+
+  :/Data/Time/TimeOfDay(hour, minute).eq= /Data/Time/TimeOfDayOrdering
+
+  :/Data/Time/TimeOfDay(hour, minute).equal(other= /Data/Time/TimeOfDay(hour@oh, minute@om))= /Data/Time/TimeOfDayOrdering.rel(a= /Data/Time/TimeOfDay(hour= hour, minute= minute), b= /Data/Time/TimeOfDay(hour= oh, minute= om))
+module(Data/Time)
+  > (TimeOfDay(hour= 9, minute= 30) < TimeOfDay(hour= 10, minute= 0))
+    >>> True
+  > (TimeOfDay(hour= 9, minute= 30) == TimeOfDay(hour= 9, minute= 30))
+    >>> True
+  # ## Reading times of day
+    A time is read as a note writes one: on a 24-hour clock with a colon or a dot between the hour
+    and the minutes, @9:30@ or @09.30@; or on a 12-hour clock with @am@ or @pm@ after it, in either
+    case and with or without a space, where the colon may be left out too, @9:30pm@ or @930 PM@.
+    The minutes are always two digits. This is what the Obsidian Day Planner plugin reads at the
+    start of a line.
+  parseTimeOfDay(s -> String) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [parseTimeOfDay] reads a time of day written either way, or has [/Data/Maybe/Nothing] for
+      anything else, including a time that does not exist such as 25:00 or 13pm.
+  parseTimeOfDay(s)= clockOf(t= s.trim.toLower)
+
+  clockOf(t -> String) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [clockOf] reads a time already trimmed and in lower case, by the clock its ending says.
+  clockOf(t) | t.endsWith(suffix= "am")= twelveHour(clock= clockParts(clock= t.take(n= t.length - 2).trimEnd, bare= True), pm= False)
+  clockOf(t) | t.endsWith(suffix= "pm")= twelveHour(clock= clockParts(clock= t.take(n= t.length - 2).trimEnd, bare= True), pm= True)
+  clockOf(t) else = twentyFourHour(clock= clockParts(clock= t, bare= False))
+
+  clockParts(clock -> String, bare -> Boolean) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [clockParts] reads the hour and minutes [clock] writes, as a [TimeOfDay] whose hour is not yet
+      checked against either clock. They are written apart by a colon or a dot, or where [bare] is
+      [True], may be written together as the three or four digits of @930@ or @1130@.
+  clockParts(clock, bare) | clock.contains(sub= ":")= partsOf(parts= clock.split(sep= ":"))
+  clockParts(clock, bare) else = dottedOrBare(clock= clock, bare= bare)
+
+  dottedOrBare(clock -> String, bare -> Boolean) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [dottedOrBare] reads a clock written with no colon: with a dot, or with nothing at all where
+      that is allowed.
+  dottedOrBare(clock, bare) | clock.contains(sub= ".")= partsOf(parts= clock.split(sep= "."))
+  dottedOrBare(clock, bare) | bare && clock.length >= 3 && clock.length <= 4= partsOf(parts= [clock.take(n= clock.length - 2), clock.drop(n= clock.length - 2)])
+  dottedOrBare(clock, bare) else = /Data/Maybe/Nothing
+
+  partsOf(parts -> /Data/List/ConsList[$T -> String]) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [partsOf] is the hour and minutes of exactly two pieces: an hour of one or two digits and
+      minutes of exactly two, below 60.
+  partsOf(parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Nil))) | h.length >= 1 && h.length <= 2 && m.length == 2= minutesOf(hour= natural(s= h), minute= natural(s= m))
+  partsOf(parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Nil))) else = /Data/Maybe/Nothing
+  partsOf(parts= /Data/List/Nil)= /Data/Maybe/Nothing
+  partsOf(parts= /Data/List/Cons(head, tail= /Data/List/Nil))= /Data/Maybe/Nothing
+  partsOf(parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Cons(head, tail))))= /Data/Maybe/Nothing
+
+  minutesOf(hour -> /Data/Maybe[$T -> Integer], minute -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [minutesOf] is the time of an hour and minutes both read, with the minutes below 60.
+  minutesOf(hour= /Data/Maybe/Some(value@h), minute= /Data/Maybe/Some(value@m)) | m < 60= /Data/Maybe/Some(value= TimeOfDay(hour= h, minute= m))
+  minutesOf(hour= /Data/Maybe/Some(value@h), minute= /Data/Maybe/Some(value@m)) else = /Data/Maybe/Nothing
+  minutesOf(hour= /Data/Maybe/Nothing, minute)= /Data/Maybe/Nothing
+  minutesOf(hour= /Data/Maybe/Some(value), minute= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+
+  twentyFourHour(clock -> /Data/Maybe[$T -> TimeOfDay..]) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [twentyFourHour] keeps a time read on a 24-hour clock where its hour is one, 0 to 23.
+  twentyFourHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute))) | hour <= 23= /Data/Maybe/Some(value= TimeOfDay(hour= hour, minute= minute))
+  twentyFourHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute))) else = /Data/Maybe/Nothing
+  twentyFourHour(clock= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+
+  twelveHour(clock -> /Data/Maybe[$T -> TimeOfDay..], pm -> Boolean) -> /Data/Maybe[$T -> TimeOfDay..]
+    # [twelveHour] turns a time read on a 12-hour clock, whose hour is 1 to 12, into the time it is
+      on a 24-hour one: 12am is midnight and 12pm is noon.
+  twelveHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute)), pm) | hour >= 1 && hour <= 12= /Data/Maybe/Some(value= TimeOfDay(hour= hour % 12 + afternoon(pm= pm), minute= minute))
+  twelveHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute)), pm) else = /Data/Maybe/Nothing
+  twelveHour(clock= /Data/Maybe/Nothing, pm)= /Data/Maybe/Nothing
+
+  afternoon(pm -> Boolean) -> Integer
+    # [afternoon] is how many hours a 12-hour clock's half of the day starts after midnight.
+  afternoon(pm= True)= 12
+  afternoon(pm= False)= 0
+
+  > (parseTimeOfDay(s= "9:30") == /Data/Maybe/Some(value= TimeOfDay(hour= 9, minute= 30)))
+    >>> True
+  > (parseTimeOfDay(s= "09.00") == /Data/Maybe/Some(value= TimeOfDay(hour= 9, minute= 0)))
+    >>> True
+  > (parseTimeOfDay(s= "9:30pm") == /Data/Maybe/Some(value= TimeOfDay(hour= 21, minute= 30)))
+    >>> True
+  > (parseTimeOfDay(s= "930 PM") == /Data/Maybe/Some(value= TimeOfDay(hour= 21, minute= 30)))
+    >>> True
+  > (parseTimeOfDay(s= "12:15am") == /Data/Maybe/Some(value= TimeOfDay(hour= 0, minute= 15)))
+    >>> True
+  > (parseTimeOfDay(s= "25:00") == /Data/Maybe/Nothing)
+    >>> True
+  > (parseTimeOfDay(s= "13pm") == /Data/Maybe/Nothing)
+    >>> True
+  > (parseTimeOfDay(s= "930") == /Data/Maybe/Nothing)
+    >>> True
+  # ## Lengths of time and spans of a day
+  data(Duration(minutes -> Integer))
+    # A [Duration] is a length of time, counted in whole minutes.
+
+  every(Duration.., isa= [/Data/ToString])
+
+  :Duration(minutes).toString | minutes < 60= minutes.toString ++ "m"
+    # A [Duration] is written in hours and minutes, leaving out whichever is none: @45m@, @2h@,
+      @1h 30m@.
+  :Duration(minutes).toString else = hoursText(minutes= minutes)
+
+  hoursText(minutes -> Integer) -> String
+    # [hoursText] writes a length of an hour or more, as hours and whatever minutes are left over.
+  hoursText(minutes) | minutes % 60 == 0= (minutes // 60).toString ++ "h"
+  hoursText(minutes) else = (minutes // 60).toString ++ "h " ++ (minutes % 60).toString ++ "m"
+
+  > Duration(minutes= 90)
+    >>> 1h 30m
+  > Duration(minutes= 120)
+    >>> 2h
+  > Duration(minutes= 45)
+    >>> 45m
+  data(TimeRange(start -> TimeOfDay.., end -> TimeOfDay..))
+    # A [TimeRange] is the span of a day from [start] to [end]. An [end] at or before [start] runs on
+      past midnight into the next day.
+
+  :TimeRange...duration -> Duration..
+    # [duration] is how long the range lasts, round the clock where it runs past midnight.
+  :TimeRange(start, end).duration= Duration(minutes= (end.minutesSinceMidnight - start.minutesSinceMidnight) % 1440)
+
+  every(TimeRange.., isa= [/Data/ToString])
+
+  :TimeRange(start, end).toString= start.toString ++ " - " ++ end.toString
+    # A [TimeRange] is written as its two times with a dash between them, as a note writes one.
+
+  > TimeRange(start= TimeOfDay(hour= 9, minute= 0), end= TimeOfDay(hour= 10, minute= 30))
+    >>> 09:00 - 10:30
+  > TimeRange(start= TimeOfDay(hour= 9, minute= 0), end= TimeOfDay(hour= 10, minute= 30)).duration
+    >>> 1h 30m
+  > TimeRange(start= TimeOfDay(hour= 23, minute= 0), end= TimeOfDay(hour= 1, minute= 0)).duration
+    >>> 2h
