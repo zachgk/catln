@@ -37,7 +37,7 @@ import           Data.Maybe
 import           Data.UUID                  (UUID)
 import           Eval                       (evalBaseEnv, evalBuildPrgm,
                                              evalDShowAnnot, evalExpr,
-                                             evalValEq)
+                                             evalValEq, valWithinType)
 import           Eval.Common
 import           Eval.ExprBuilder
 import qualified Hedgehog
@@ -442,94 +442,10 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
     -- A refinement claim is stored as a type predicate on the declared return — a @PredExpr@ holding
     -- a symbolic application tree such as @operator==(r=True, l=nonNeg(this=$this))@ (the desugaring
     -- of @Integer_nonNeg@'s @$this.nonNeg == True@), with @$this@ standing for the value refined.
-    -- Rather than teach the type layer to decide such predicates, we decide them in the EVALUATOR:
-    -- bind @$this@ to the candidate value and reduce the tree to a concrete value, dispatching each
-    -- application through the normal tree builder + evaluator. This keeps the type system simple and
-    -- reuses the same machinery that matches values during dispatch (see 'valMatchesType').
-    constToVal (CInt n)   = IntVal n
-    constToVal (CFloat f) = FloatVal f
-    constToVal (CStr s)   = StrVal s
-    constToVal (CChar ch) = CharVal ch
-    -- A symbolic predicate may carry a relative function name (e.g. @nonNeg@ rather than
-    -- @/Data/Primitive/nonNeg@); the object map is keyed by absolute names, so resolve against it.
-    resolveName n = case filter (relativeNameMatches n) (H.keys om) of
-      (k:_) -> k
-      []    -> n
-    -- The build destination for dispatching one application of the predicate. It must be the
-    -- function's NOMINAL return type expanded to its data leaves (e.g. @Boolean@ → @{True, False}@),
-    -- NOT the type stored on a body-carrying definition: that stored type includes the body's own
-    -- unevaluated application as a positive leaf (e.g. @nonNeg@'s type is @operator>=(Int,Int) |
-    -- isa Boolean@), so building the body against it would find it already a subtype and skip
-    -- evaluating it. Expanding the @isa@/class predicate to its members gives a nominal target that
-    -- the unevaluated application is NOT a subtype of, so the call is actually built and run.
-    funcRetDest nm = cleanDest $ case H.lookup nm om of
-      Just o -> case [getMetaType m | d <- omiDecls o ++ omiRuntimeDecls o ++ omiDefs o, Just (_, m) <- [oaArr d]] of
-        (t:_) -> t
-        []    -> boolType
-      Nothing -> boolType
-    -- Drop the body's positive leaf but keep the @isa@/class predicate top, then expand that to its
-    -- member data leaves. Expansion only fires through the predicate path, so the class must stay a
-    -- predicate (not be reduced to a bare leaf) for @Boolean@ → @{True, False}@ to happen.
-    cleanDest t = case t of
-      UnionType (Just (preds, neg, ncs)) _ cs ->
-        UnionType Nothing (expandTypeWithNames typeEnv H.empty (UnionType (Just (preds, neg, ncs)) H.empty cs) teNames) []
-      _ -> clearUnionTypePreds t
-    -- Reduce a predicate operand TYPE to a value. The operands of a symbolic predicate are either
-    -- constants (@UnionType Nothing _ [c]@), the @$this@ placeholder, or a nested relation/expr
-    -- application carried as a @PredRel@\/@PredExpr@ singleton top — all routed to 'evalPredPartial'.
-    evalPredType thisVal t = case t of
-      UnionType Nothing _ (cst:_)                     -> return (constToVal cst)
-      UnionType (Just (PredsOne (PredRel p), _, _)) _ _  -> evalPredPartial thisVal p
-      UnionType (Just (PredsOne (PredExpr p), _, _)) _ _ -> evalPredPartial thisVal p
-      _ -> case maybeGetSingleton t of
-        Just p  -> evalPredPartial thisVal p
-        Nothing -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Unsupported refinement predicate operand %s" (show t)]
-    -- Reduce a symbolic predicate partial to a concrete value. @$this@ becomes the candidate value;
-    -- a nullary partial (a value such as @True@) becomes that value; an application has its argument
-    -- types reduced to values first (bottom-up, so the argument types are concrete), then it is
-    -- dispatched through 'buildRoot' + 'evalExpr' to its declared return — running the @#runtime@
-    -- primitives a refinement bottoms out at.
-    evalPredPartial thisVal p
-      | nameStr (ptName p) == macroThisKey = return thisVal
-      | H.null (ptArgs p)        = return $ TupleVal (nameStr (resolveName (ptName p))) H.empty
-      | otherwise = do
-          argVals <- mapM (\(k, at) -> (nameStr (pkName k),) <$> evalPredType thisVal at) (H.toList (ptArgs p))
-          let nm = resolveName (ptName p)
-          let input = TupleVal (nameStr nm) (H.fromList argVals)
-          let inputE = valToEExpr input
-          tree <- asCResT $ buildRoot (evTbEnv env) inputE (getExprPartialType inputE) (funcRetDest nm)
-          fst <$> runStateT (evalExpr tree) env
-
-    typePreds (UnionType (Just (preds, _, _)) _ _) = preds
-    typePreds _                                    = PredsNone
-    predAtoms (PredsOne a)  = [a]
-    predAtoms (PredsAnd ps) = concatMap predAtoms ps
-    predAtoms (PredsNot p)  = predAtoms p
-    collectPredExprs preds = [p | PredExpr p <- predAtoms preds]
-
-    -- The structural ("base type") claim of a refinement type, as a positive leaf type to check the
-    -- value against. The base is carried as an @isa@/class predicate (e.g. @Integer@), so turn those
-    -- predicate partials into leaves directly — @Integer@ is a primitive that does not expand to
-    -- members, so it must be used as the leaf @{Integer}@ rather than expanded; the predicate also
-    -- carries a relative name, so resolve it to absolute to match the value's type. Falls back to the
-    -- type's own positive leaves for a refinement stated on a concrete type.
-    structuralTarget t = case [c{ptName = resolveName (ptName c)} | a <- predAtoms (typePreds t), c <- relClassOf a] of
-      cs@(_:_) -> UnionType Nothing (joinUnionType cs) []
-      []       -> clearUnionTypePreds t
-      where
-        relClassOf (PredRel c)   = [c]
-        relClassOf (PredClass c) = [c]
-        relClassOf (PredExpr _)  = []
-        relClassOf PredConstEq{} = []
-
-    -- Whether a value matches a (possibly predicated) type: structurally a subtype of the base-type
-    -- claim AND every value @PredExpr@ predicate evaluates to @True@ against it.
-    valMatchesType val t = do
-      results <- mapM (evalPredPartial val) (collectPredExprs (typePreds t))
-      let structuralOk = isSubtypeOf typeEnv (singletonType (getValPartialType val)) (structuralTarget t)
-      return $ structuralOk && all isTrue results
-    isTrue (TupleVal n _) = n == truePrim
-    isTrue _              = False
+    -- Whether a value matches it is the question the runtime asks of a value held to a refinement
+    -- ('Eval.valWithinType'): within the shape, and every predicate the type layer could not decide
+    -- evaluating to @True@ on it.
+    valMatchesType val t = fst <$> runStateT (valWithinType val t) env
 
     mkRefinementTest omi defOa dom refRet = TestDesc testName (nameStr (oaObjPath defOa)) (oaTestId defOa) TestRefinementAgreement (PropCheck (checkPropWithTimeout True prop))
       where

@@ -1,0 +1,185 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer| PredExpr /operator==
+                                                                ( /r=/Data/Primitive/True
+                                                                , /l=~nonNeg( /this=~/$this )
+                                                                ) =
+                                                                ( /onInt
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 3 }
+                                                                    ) ↦ /Data/Primitive/Integer| PredExpr /operator==
+                                                                    ( /r=/Data/Primitive/True
+                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                    )
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /keep
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 2 }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /narrow
+                                                        ( EAppArg
+                                                            { eaaArg = Value /n -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/narrow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /narrow
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( Value /n |
+                                ( /operator>=
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/onInt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /onInt
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer| PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) =
+                            ( /f
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                ) ↦ /Data/Primitive/Integer| PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/keep"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /keep
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            ) =
+                            ( Value /n ↦
+                                ( TopType | PredExpr /operator==
+                                    ( /r=/Data/Primitive/True
+                                    , /l=~nonNeg( /this=~/$this )
+                                    ) && PredRel Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f
+                            ( EAppArg
+                                { eaaArg = Value /a ->
+                                    ( TopType | PredExpr /operator==
+                                        ( /r=/Data/Primitive/True
+                                        , /l=~nonNeg( /this=~/$this )
+                                        ) && PredRel Integer
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /a ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A refinement the type checker cannot decide is evaluated at runtime on the value held to it.
+                  [Integer_nonNeg] is [Integer | $this.nonNeg == True], and [nonNeg] bottoms out at the [#runtime]
+                  [>=], which the type graph cannot follow: on every [Integer] the predicate is undecided. So
+                  [onInt] passes its argument to the refined [f] on the strength of its shape, and the predicate is
+                  evaluated on the value when [f] is dispatched; [keep] returns its argument where a
+                  [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [narrow] is a value
+                  narrowed by a condition, evaluated where it is written. Each holds here, so the run exits 0. The
+                  runs where they do not hold are asserted in Eval.RefinementRuntimeTests."
+                }
+            )
+        ]
+    }

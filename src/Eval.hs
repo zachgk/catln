@@ -208,9 +208,13 @@ evalCallTree  m (TCMatch destType opts) = do
   let pats = map singletonType (H.keys opts)
   let valP = reKeyP $ getValDispatchPartial evTypeEnv False pats depth m
   let valPOut = reKeyP $ getValDispatchPartial evTypeEnv True pats depth m
-  let optMatches optType = isSubtypePartialOf evTypeEnv valP (singletonType $ reKeyP optType)
-        || (valPOut /= valP && isSubtypePartialOf evTypeEnv valPOut (singletonType $ reKeyP optType))
-  case H.toList $ H.filterWithKey (\optType _ -> optMatches optType) opts of
+  -- Membership with the arm's value predicates evaluated on the value ('valWithinTypeAs'): an arm
+  -- refined by a predicate the type layer could not decide is taken when the predicate holds.
+  let optMatches optType = do
+        inP <- valWithinTypeAs valP m (singletonType $ reKeyP optType)
+        if inP || valPOut == valP then return inP else valWithinTypeAs valPOut m (singletonType $ reKeyP optType)
+  matching <- filterM (optMatches . fst) (H.toList opts)
+  case matching of
     [(_, resArrowTree)] -> do
       withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
     -- No statically-built arm matches the concrete runtime value. An arm can be dropped at build
@@ -231,19 +235,15 @@ evalCallTree v (TCSeq a b) = do
   evalCallTree v' b
 evalCallTree m (TCCond _ []) = evalError $ printf "Found no matching conditions in evalTree for val %s (val type %s)" (show m) (show $ getValPartialType m)
 evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
-  Env{evTypeEnv} <- get
   -- The value's partial is tried in both slot conventions, like the 'TCMatch' branch above: a
   -- closure argument's slot in the arm's object holds either the closure's input signature or
   -- the output contract delivered from the declaration.
-  let condMatches armOa =
-        let armT = simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr armOa
-            depth = 1 + typePatternDepth armT
-            valT = simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv False [armT] depth m
-            valTOut = simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv True [armT] depth m
-        in isSubtypeOf evTypeEnv valT armT || (valTOut /= valT && isSubtypeOf evTypeEnv valTOut armT)
+  -- Membership with the arm's value predicates evaluated on the value ('valMatchesArm'); the
+  -- arm's guard, which its object's type also carries as a predicate over the arm's arguments,
+  -- is evaluated below as the condition it was built as.
+  armMatches <- maybe (return True) (valMatchesArm m . getExprType . oaObjExpr . snd) cond
   cond' <- case cond of
-    -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf
-    Just (_, oa) | not (condMatches oa) -> return False
+    Just _ | not armMatches -> return False
     Nothing -> return True
     Just (ifCondTrees, ifObj) -> do
       Env{evArgs} <- get
@@ -259,6 +259,15 @@ evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   if cond'
     then withEvalPush ("then for " ++ show cond) $ evalCallTree m ifThenTree
     else withEvalPush ("else for " ++ show cond) $ evalCallTree m (TCCond resType restIfTrees)
+-- A value held to a type it is within by its shape but whose value predicates the type layer
+-- could not decide: it passes when they hold of it, evaluated here ('valWithinType'), and is a
+-- failed run otherwise. The static decision stands where it was made: a value decided outside the
+-- type is an error at the build, not a check left to here.
+evalCallTree v (TCRefine t) = do
+  ok <- withEvalPush (printf "refinement %s" (show t)) $ valMatchesArm v t
+  if ok
+    then return v
+    else evalError $ printf "The value %s is outside the refinement %s" (show v) (show t)
 evalCallTree input (TCArg _ name) = do
   Env{evArgs} <- get
   case H.lookup name evArgs of
@@ -300,15 +309,13 @@ evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it shoul
 -- values as constants), not Haskell structural equality, so a type with a custom equality behaves
 -- as the user expects. If a value's type has no 'Eq', that surfaces as a build error here.
 evalNonLinearEq :: Val -> EObjArr -> EvalM Bool
-evalNonLinearEq (TupleVal _ tupleArgs) ifObj = allM
+evalNonLinearEq (TupleVal _ tupleArgs) ifObj = allM id
   [ evalValEq va vb
   | grp <- exprNonLinearArgGroups (oaObjExpr ifObj)
   , ((ea, _), (eb, _)) <- zip grp (tail grp)
   , Just va <- [H.lookup (nameStr (exprPath ea)) tupleArgs]
   , Just vb <- [H.lookup (nameStr (exprPath eb)) tupleArgs]
   ]
-  where
-    allM = foldr (\mb acc -> mb >>= \b -> if b then acc else return False) (return True)
 evalNonLinearEq _ _ = return True
 
 -- | Whether two runtime values are equal under their type's 'Eq', by building and evaluating
@@ -319,6 +326,125 @@ evalValEq v1 v2 = do
   let eqExpr = eVal operatorEq `eApply` (operatorArgL, valToEExpr v1) `eApply` (operatorArgR, valToEExpr v2)
   tree <- liftCRes $ buildRoot evTbEnv eqExpr (getExprPartialType eqExpr) boolType
   (== true) <$> evalExpr tree
+
+-- | Whether a runtime value is within a type, its value predicates evaluated on the value.
+--
+-- The type layer answers first: a predicate it decided through the graph (a @Z@ within
+-- @Nat_isZ@) or one the value's own type carries needs no evaluation. What it leaves undecided
+-- is the residue a refinement has at runtime — a predicate bottoming out at a @#runtime@
+-- primitive, @>=@ under @Integer_nonNeg@ — and that is evaluated on the value it is stated of
+-- ('evalPredExprOn'): the type's own predicates and a leaf's on the value, a slot's on the value
+-- in that slot. A value outside the type's shape is outside it whatever the predicates say, and a
+-- predicate naming a scope's variable rather than @$this@ (an arm's guard, typed with the arm's
+-- arguments) is not evaluated here but where it is written ('TCCond', 'TWhere').
+valWithinType :: Val -> Type -> EvalM Bool
+valWithinType = valMatchesArm
+
+-- | 'valWithinType' with the value's partial read as the caller reads it for dispatch
+-- ('getValDispatchPartial'): as deep as the arms look, in the slot convention they use, which is
+-- how a constant in a pattern's slot (@head= '\\'@) is matched. The value in a slot is read the same
+-- way against the slot's type ('valMatchesArm'), and only a slot whose type carries a predicate is
+-- read at all: the shape was decided whole above.
+valWithinTypeAs :: PartialType -> Val -> Type -> EvalM Bool
+valWithinTypeAs vp v t = do
+  Env{evTypeEnv} <- get
+  let within = isSubtypePartialOf evTypeEnv vp
+  if within t then return True
+  else if not (typeHasPredExpr t) || not (within (typeWithoutPredExprs t)) then return False
+  else case t of
+    UnionType mTop leafs _ -> do
+      topOk <- maybe (return True) (\(preds, _, _) -> atomsHold preds) mTop
+      -- The leaves the value's shape is in; none when its shape is a constant of the type or the
+      -- top alone admits it.
+      let shapeLeafs = [l | l <- splitUnionType leafs, within (singletonType (partialWithoutPredExprs l))]
+      leafOk <- if null shapeLeafs then return True else anyM leafHolds shapeLeafs
+      return (topOk && leafOk)
+    _ -> return False
+  where
+    atomsHold preds = allM (\e -> (== true) <$> evalPredExprOn v e) (predsValueExprAtoms preds)
+    leafHolds l = do
+      ok <- atomsHold (ptPreds l)
+      if not ok then return False else case v of
+        TupleVal _ args -> allM (\(k, slotT) -> maybe (return True) (`valMatchesArm` slotT) (H.lookup (nameStr (pkName k)) args)) [ (k, slotT) | (k, slotT) <- H.toList (ptArgs l), typeHasPredExpr slotT ]
+        _               -> return True
+
+-- | Whether a value is within an arm's object type (or a destination spelled like one), read as
+-- dispatch reads it: as deep as the type's pattern, in both slot conventions a closure argument
+-- may take ('getValDispatchPartial'), with higher-order argument keys reduced to their names
+-- ('simplifyArgKeys') — and its value predicates evaluated ('valWithinTypeAs').
+valMatchesArm :: Val -> Type -> EvalM Bool
+valMatchesArm v t0 = do
+  Env{evTypeEnv} <- get
+  let t = simplifyArgKeys t0
+      depth = 1 + typePatternDepth t
+      valP = getSingleton $ simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv False [t] depth v
+      valPOut = getSingleton $ simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv True [t] depth v
+  inP <- valWithinTypeAs valP v t
+  if inP || valPOut == valP then return inP else valWithinTypeAs valPOut v t
+
+-- | A value predicate evaluated on a value: the 'PredExpr' partial reduced to what it comes to with
+-- @$this@ standing for the value — the desugaring of @Integer_nonNeg@'s @$this.nonNeg == True@ is
+-- @operator==(r=True, l=nonNeg(this=$this))@. A nullary partial is that value; an application has
+-- its operands reduced first, bottom-up, and is then dispatched through the tree builder and the
+-- evaluator to its declared result, which runs the @#runtime@ primitives a refinement bottoms out
+-- at. The same reduction the type graph performs over types ('typeGraphPredExprHolds'), on a value.
+evalPredExprOn :: Val -> PartialType -> EvalM Val
+evalPredExprOn thisVal p
+  | nameStr (ptName p) == macroThisKey = return thisVal
+  | H.null (ptArgs p) = do
+      nm <- resolveName (ptName p)
+      return $ TupleVal (nameStr nm) H.empty
+  | otherwise = do
+      argVals <- mapM (\(k, at) -> (nameStr (pkName k),) <$> operand at) (H.toList (ptArgs p))
+      nm <- resolveName (ptName p)
+      Env{evTbEnv} <- get
+      dest <- funcRetDest nm
+      let input = TupleVal (nameStr nm) (H.fromList argVals)
+      let inputE = valToEExpr input
+      tree <- liftCRes $ buildRoot evTbEnv inputE (getExprPartialType inputE) dest
+      withEvalPush (printf "predicate %s" (show p)) $ evalExpr tree
+  where
+    -- An operand is a constant, the @$this@ placeholder, or a nested application carried as a
+    -- leaf or as the relation/expression top the condition's spelling gives a method call.
+    operand t = case t of
+      UnionType Nothing _ (cst:_)                        -> return (constToVal cst)
+      UnionType (Just (PredsOne (PredRel q), _, _)) _ _  -> evalPredExprOn thisVal q
+      UnionType (Just (PredsOne (PredExpr q), _, _)) _ _ -> evalPredExprOn thisVal q
+      _ -> case maybeGetSingleton t of
+        Just q  -> evalPredExprOn thisVal q
+        Nothing -> evalError $ printf "Unsupported refinement predicate operand %s" (show t)
+    constToVal (CInt n)   = IntVal n
+    constToVal (CFloat f) = FloatVal f
+    constToVal (CStr s)   = StrVal s
+    constToVal (CChar ch) = CharVal ch
+    -- The predicate keeps the spelling it was written in (@nonNeg@); the object map is keyed by
+    -- absolute name.
+    resolveName n = do
+      Env{evObjMap=ObjectMap om} <- get
+      return $ case filter (relativeNameMatches n) (H.keys om) of
+        (k:_) -> k
+        []    -> n
+    -- The destination one application is built toward: the function's NOMINAL declared result,
+    -- expanded to its data leaves (@Boolean@ → @{True, False}@) — not the type stored on a
+    -- body-carrying definition, which keeps the body's own unevaluated application as a leaf the
+    -- input would already be within, leaving it unevaluated.
+    funcRetDest nm = do
+      Env{evObjMap=ObjectMap om, evTypeEnv} <- get
+      let declared = case H.lookup nm om of
+            Just o -> case [getMetaType m | d <- omiDecls o ++ omiRuntimeDecls o ++ omiDefs o, Just (_, m) <- [oaArr d]] of
+              (t:_) -> t
+              []    -> boolType
+            Nothing -> boolType
+      return $ case declared of
+        UnionType (Just (preds, neg, ncs)) _ cs ->
+          UnionType Nothing (expandTypeWithNames evTypeEnv H.empty (UnionType (Just (preds, neg, ncs)) H.empty cs) (teNames evTypeEnv)) []
+        t -> clearUnionTypePreds t
+
+allM :: Monad m => (a -> m Bool) -> [a] -> m Bool
+allM f = foldr (\x acc -> f x >>= \b -> if b then acc else return False) (return True)
+
+anyM :: Monad m => (a -> m Bool) -> [a] -> m Bool
+anyM f = foldr (\x acc -> f x >>= \b -> if b then return True else acc) (return False)
 
 evalExpr :: TExpr EvalMetaDat -> EvalM Val
 -- evalExpr e | trace (printf "eval %s" (show e)) False = undefined
@@ -333,7 +459,15 @@ evalExpr (TValue m _) = do
   return $ TupleVal (nameStr ptName) H.empty
 evalExpr (THoleExpr m h) = liftCRes $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr (TAliasExpr b _) = evalExpr b
-evalExpr (TWhere _ b _) = evalExpr b
+-- A value narrowed by a condition is the value when the condition holds of it, and nothing
+-- otherwise: the condition is built toward 'boolType' ('TreeBuild.toTExpr') and evaluated here,
+-- in the scope the value is written in, which its own arguments are read from.
+evalExpr (TWhere _ b c) = do
+  v <- evalExpr b
+  c' <- withEvalPush (printf "where %s" (show c)) $ evalExpr c
+  if c' == true
+    then return v
+    else evalError $ printf "The value %s does not satisfy its condition %s" (show v) (show c)
 evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
   Env{evArgs} <- get
   TupleVal n args <- evalExpr b

@@ -1,0 +1,11 @@
+import "core"
+
+
+# An argument outside a refinement the type checker could not decide: [-3] is passed to the
+  refined [f] through [onInt], whose argument is every [Integer], and the predicate evaluated on
+  it at the dispatch is false, so the run fails there.
+f(a -> Integer_nonNeg) -> Integer= a
+
+onInt(n -> Integer) -> Integer= f(a= n)
+
+main{io -> IO}= io.exit(val= onInt(n= -3))

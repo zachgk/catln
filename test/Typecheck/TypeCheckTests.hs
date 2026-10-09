@@ -260,6 +260,17 @@ testRefineDecide = testCase "a value predicate is decided on a known value" $ do
     [r] -> assertBool ("onNat keeps the predicate undecided: " ++ show r) (keepsPredicate r)
     rs  -> assertFailure ("one result for onNat, found " ++ show rs)
 
+-- | A value predicate the type checker cannot decide is the runtime's to evaluate, not a failure
+-- of the guarantee: @onNat@ passes every @Nat@ where a @Nat_isZ@ is required and @h@ returns one
+-- where a @Nat_isZ@ is declared, and neither is reported as not guaranteed. A result the predicate
+-- is decided false on is still refused statically (the twin error page). Fixtures:
+-- unit/refineRuntime.ct, unit/refineRuntimeFails.err.ct.
+testRefineRuntime :: TestTree
+testRefineRuntime = testCase "an undecided value predicate is left to the runtime" $ do
+  let page = "test/Typecheck/unit/refineRuntime.ct"
+  assertResultGuaranteed page "/onNat"
+  assertResultGuaranteed page "/h"
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -294,6 +305,7 @@ typecheckTests = do
     , testFoldClassOp
     , testRefineNarrowsCall
     , testRefineDecide
+    , testRefineRuntime
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

@@ -142,6 +142,12 @@ cutReachesTree _ _ _ ReachesLeaf = ReachesLeaf
 -- more specific promises, and a recursive call judged through its own definitions only comes
 -- back to itself. A form with no guaranteed promise that is not within @req@ fails, and so does
 -- one re-entered along its own path, which proves nothing about where it ends.
+--
+-- A value predicate the type layer leaves undecided is not a failure of the guarantee but the
+-- residue the runtime evaluates: a value held to a refinement, or accepted by a promise refined by
+-- one, is within it when its shape is, and the predicate is evaluated on the value where it is
+-- built ('TreeBuild.refinesTo', dispatch on the refined arm). One decided against the value — a
+-- meet the type layer emptied — is the genuine negative it was.
 typeGuaranteedWithin :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
 typeGuaranteedWithin typeEnv vaenv req = typeOk S.empty
   where
@@ -150,23 +156,28 @@ typeGuaranteedWithin typeEnv vaenv req = typeOk S.empty
     -- covered source then reads exactly as the source: covered by its own spelling, whatever the
     -- variable stands for (@toString(this=$_B)@ with @$_B@ unbound).
     typeOk visited t0
-      | isSubtypeOfWithEnv typeEnv vaenv t req = True
+      | within t req = True
       | otherwise = case t of
           UnionType Nothing leafs consts -> all (partialOk visited) (splitUnionType leafs ++ map constantPartialType consts)
           _                              -> False
       where t = substituteTVExt typeEnv vaenv t0
     partialOk visited p
-      | isSubtypeOfWithEnv typeEnv vaenv (singletonType p) req = True
+      | within (singletonType p) req = True
       -- A bare reference to one of the definition's own arguments is that argument, as
       -- 'reachesPartials' reads it: an argument shadows every other name it matches, so
       -- @step(count, ..)= count@ is the parameter even where a function @/Data/List/count@ is
       -- imported, whose arrows would otherwise be the only promises asked.
       | H.null (ptArgs p), H.null (ptVars p), Just argValue <- H.lookup (extKey (TVArg (partialKey (ptName p)))) vaenv = typeOk visited argValue
       | S.member p visited = False
-      | otherwise = not (null kept) && isSubtypeOfWithEnv typeEnv vaenv (singletonType p) (unionAllTypesWithEnvOnce typeEnv vaenv (map (srcVarsOnly p) kept))
+      | otherwise = not (null kept) && within (singletonType p) (unionAllTypesWithEnvOnce typeEnv vaenv (map (srcVarsOnly p) kept))
       where
         visited' = S.insert p visited
         kept = [ coveredSrc | (_, coveredSrc, dest) <- typeGraphQueryAllWithReason typeEnv vaenv p, typeOk visited' dest ]
+    -- Within, or within by shape and not decided outside: the value predicates are the runtime's.
+    within sub sup = isSubtypeOfWithEnv typeEnv vaenv sub sup
+      || (typeHasPredExpr sup
+          && isSubtypeOfWithEnv typeEnv vaenv sub (typeWithoutPredExprs sup)
+          && not (isBottomType (intersectTypesEnv typeEnv vaenv sub sup)))
     -- What a promise covers is the source met with its object, and the meet brings the promise's
     -- own parameters along (@toString(this=∀ToString)@ meeting @toString[$T](this -> $T)@ covers
     -- @toString[/T=∀ToString](this=$/T)@). Those name the promise's scope, set by its arguments;

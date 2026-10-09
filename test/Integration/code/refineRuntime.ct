@@ -1,0 +1,20 @@
+import "core"
+
+
+# A refinement the type checker cannot decide is evaluated at runtime on the value held to it.
+  [Integer_nonNeg] is [Integer | $this.nonNeg == True], and [nonNeg] bottoms out at the [#runtime]
+  [>=], which the type graph cannot follow: on every [Integer] the predicate is undecided. So
+  [onInt] passes its argument to the refined [f] on the strength of its shape, and the predicate is
+  evaluated on the value when [f] is dispatched; [keep] returns its argument where a
+  [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [narrow] is a value
+  narrowed by a condition, evaluated where it is written. Each holds here, so the run exits 0. The
+  runs where they do not hold are asserted in Eval.RefinementRuntimeTests.
+f(a -> Integer_nonNeg) -> Integer= a
+
+onInt(n -> Integer) -> Integer= f(a= n)
+
+keep(n -> Integer) -> Integer_nonNeg= n
+
+narrow(n -> Integer) -> Integer= n | n >= 0
+
+main{io -> IO}= io.exit(val= onInt(n= 3) - keep(n= 2) - narrow(n= 1))

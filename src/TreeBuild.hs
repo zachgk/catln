@@ -178,8 +178,20 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
                -- siblings were dropped and 'buildGuards' then emitted the lone survivor
                -- unconditionally — the guard was never evaluated.
                (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> engineAux (opt:accArrows) accOpts True opts
+               -- An arm refined by a value predicate the source is not within statically is a
+               -- guard too: whether it applies is decided on the value ('Eval.valWithinType').
+               _ | runtimeRefined optType -> engineAux (opt:accArrows) accOpts True opts
                _ -> engineAux (opt:accArrows) (optType:accOpts) accHasConds opts
         else engineAux accArrows accOpts accHasConds opts
+
+    -- An arm whose object carries a value predicate, where the source is not within the object
+    -- by the type layer's decision: a value of the source may fall outside it, so it counts toward
+    -- coverage no more than a guarded arm does, and is dispatched by its predicate at runtime.
+    -- The source is read without its own value predicates: a call's argument slot is met with
+    -- the parameter's refinement by inference (@f(a= Integer|nonNeg)@ for @f(a= n)@ on every
+    -- @Integer@), which is what the value is held to, not what is known of it; what is known is
+    -- the shape, and a predicate decided on it (@Z@ within @Nat_isZ@) still answers.
+    runtimeRefined optType = typeHasValuePredExpr (singletonType optType) && not (isSubtypeOf tbTypeEnv (typeWithoutPredExprs fullType) (singletonType optType))
 
     -- Materialized accumulation (out-of-fragment fallback):
     -- TODO: This would be drastically improved with type difference
@@ -212,6 +224,9 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
                -- TODO Remove need for this additional check by using refinement types
                (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> aux (opt:accArrows) accType True opts
 
+               -- A refined arm the source is not within is guarded by its predicate (see above).
+               _ | runtimeRefined optType -> aux (opt:accArrows) accType True opts
+
                -- Increase the a
                -- Add to accumulation and add the arrow
                -- TODO: Should use ((optType - accType) ∩ fullType) for insertion, otherwise order may not be correct in matching and match not precise
@@ -223,7 +238,7 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
 -- | It will return one that is sufficient, if available.
 -- | Otherwise, it will combine them with a 'TCCond' to form a sequence of arrows to check
 joinArrowsWithCond :: TBEnv -> PartialType -> Type -> [ResBuildEnvItem] -> CRes TCallTree
-joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcType guards of
+joinArrowsWithCond env@TBEnv{tbTypeEnv} srcType destType guards = case completeTreeSet env srcType guards of
   -- Static coverage failed even though arrows were found and none of them are guarded by a
   -- where-condition. This is the typeclass/virtual-dispatch case: the source has an abstract
   -- class-bounded region (e.g. a generic @(_ :: $T == _ :: $T)[$T -> Eq]@ applied to an
@@ -244,10 +259,13 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
     -- than from the 'ObjArr' because a non-linear arm with no where-condition produces the same
     -- EMPTY condition list as an arm with no guard at all, so the two are told apart by asking the
     -- object for its non-linear groups as well.
+    -- An arm refined by a value predicate the source is not within statically has the predicate
+    -- to decide on the value as well ('runtimeRefined' in 'completeTreeSet').
     decidesNothing :: Maybe ([TExpr EvalMetaDat], EObjArr) -> Bool
     decidesNothing Nothing = True
     decidesNothing (Just (conds, oa)) =
       all ((== trueType) . getExprType) conds && null (exprNonLinearArgGroups (oaObjExpr oa))
+        && not (typeHasValuePredExpr (getExprType (oaObjExpr oa)) && not (isSubtypeOf tbTypeEnv (typeWithoutPredExprs (singletonType srcType)) (getExprType (oaObjExpr oa))))
     buildGuards :: [ResBuildEnvItem] -> CRes TCallTree
     buildGuards arrows = do
       ifTreePairs <- forM arrows $ \(_, moa, arrTree) -> do
@@ -276,6 +294,10 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
         -- becomes a single-branch 'TCCond' so 'Eval' evaluates the condition, and says it found no
         -- matching condition when it does not hold.
         [(cond, t)] | decidesNothing cond -> return t
+        -- A LONE arm with nothing to decide but its refinement is the refinement check followed by
+        -- the arm ('TCRefine'): a value outside it is reported as outside the refinement, where a
+        -- 'TCCond' with no other branch could only say that no branch applied.
+        [(Just ([], oa), t)] | null (exprNonLinearArgGroups (oaObjExpr oa)) -> return $ TCSeq (TCRefine (getExprType (oaObjExpr oa))) t
         _ -> return $ TCCond destType ifTreePairs
 
 -- | This handles the behavior for the else arrows
@@ -341,6 +363,10 @@ buildPartialCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> CallForce 
 buildPartialCallTree env@TBEnv{tbTypeEnv} os _ _ force _ srcType destType
   | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType
   , not (force == MustCall && typeGraphRewrites env srcType) = return TCTId
+  -- Within the destination by its shape, held back only by value predicates the type layer left
+  -- undecided: the value stays as it is and the predicates are evaluated on it ('TCRefine').
+  | Just refine <- refinesTo env os (singletonType srcType) destType
+  , not (force == MustCall && typeGraphRewrites env srcType) = refine
 buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound _force basis srcType destType = do
   wrapCRes (printf "Failed to build arrow tree from %s to %s\n\t(bound: %s)\n\t(objSrcs: %s)" (show srcType) (show destType) (show bound) (show $ map fst os)) $ do
     resArrows <- findResArrows env os srcType
@@ -500,6 +526,19 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound _force basis sr
       | reachesTo tbTypeEnv H.empty (singletonType srcType) destType = []
       | otherwise = [MkCNote $ BuildTreeCErr Nothing $ printf "The type %s does not reach the destination %s" (show srcType) (show destType)]
 
+-- | The tree for a source within a destination by its shape but not by the destination's value
+-- predicates: the value as it is, with the predicates evaluated on it at runtime ('TCRefine'),
+-- which is the fallback a refinement has where the type layer decides nothing. A source the type
+-- layer decided OUTSIDE the destination (its meet with it is empty: an @S(n= Z)@ held to
+-- @Nat_isZ@) is an error here, as every other source nothing converts is; it is never left to the
+-- runtime. 'Nothing' when the shape itself is not within, which the arrows may still reach.
+refinesTo :: TBEnv -> [ObjSrc] -> Type -> Type -> Maybe (CRes TCallTree)
+refinesTo TBEnv{tbTypeEnv} os srcType destType
+  | not (typeHasPredExpr destType) = Nothing
+  | not (isSubtypeOfWithObjSrcs tbTypeEnv os srcType (typeWithoutPredExprs destType)) = Nothing
+  | isBottomType (intersectTypes tbTypeEnv srcType destType) = Just $ CErr [MkCNote $ BuildTreeCErr Nothing $ printf "The value %s is outside the refinement %s" (show srcType) (show destType)]
+  | otherwise = Just $ return $ TCRefine destType
+
 -- | Builds a call tree to convert something from 'srcType' to 'destType'. The @bound@ is a
 -- sound upper bound on the runtime value here, threaded down from outer calls
 -- (see 'buildPartialCallTree'); pass 'PTopType' at roots.
@@ -525,6 +564,7 @@ buildCallTreeAt :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> CallForce -> De
 -- it is because the destination accepts it. Under 'MustCall' the question is settled per leaf in
 -- 'buildPartialCallTree', which is the only level that can see whether the type graph rewrites it.
 buildCallTreeAt TBEnv{tbTypeEnv} os _ _ MayHold _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
+buildCallTreeAt env os _ _ MayHold _ srcType destType | Just refine <- refinesTo env os srcType destType = refine
 -- buildCallTree _ os _ _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
 buildCallTreeAt _ _ _ _ MayHold _ _ PTopType = return TCTId
 buildCallTreeAt _ _ _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
@@ -602,9 +642,11 @@ toTExpr env os (AliasExpr b a) = do
   b' <- toTExpr env os b
   a' <- toTExpr env os a
   return $ TAliasExpr b' a'
+-- A value narrowed by a condition: the condition is built toward 'boolType', as an arm's guard
+-- is ('buildGuards'), for 'Eval' to decide on the value.
 toTExpr env os (EWhere m b a) = do
   b' <- toTExpr env os b
-  a' <- toTExpr env os a
+  a' <- toTExprDest env os a (emptyMetaT boolType)
   return $ TWhere m b' a'
 toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- case arg of
@@ -710,6 +752,13 @@ toTObjPattern env os (TupleApply m (bm, be) arg) = do
     EAppVar vn vm -> return $ EAppVar vn vm
     EAppSpread a  -> EAppSpread <$> toTExpr env os a
   return $ TTupleApply m (bm, be') arg'
+-- An arm's guard stays as written on the pattern: the condition 'Eval' decides is built from the
+-- arm's own expression by 'buildGuards' ('exprWhereConds'), so building it here toward 'boolType'
+-- as a body's @where@ is ('toTExpr') would only repeat that work in the pattern.
+toTObjPattern env os (EWhere m b a) = do
+  b' <- toTObjPattern env os b
+  a' <- toTExpr env os a
+  return $ TWhere m b' a'
 toTObjPattern env os e = toTExpr env os e
 
 -- | The Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root

@@ -1014,6 +1014,7 @@ instance Show TCallTree where
   show (TCMatch _ opts) = printf "TCMatch (%s)" (show opts)
   show (TCSeq a b)      = printf "TCSeq (%s) (%s)" (show a) (show b)
   show (TCCond t ifs)   = printf "TCCond %s (%s)" (show t) (show ifs)
+  show (TCRefine t)     = printf "TCRefine %s" (show t)
   show (TCArg t _)      = printf "TCArg %s" (show t)
   show (TCObjArr oa)    = printf "TCObjArr (%s)" (show oa)
   show (TCPrim oa _)    = printf "TCPrim (%s)" (show oa)
@@ -1024,6 +1025,7 @@ data TCallTree
   | TCMatch Type (H.HashMap PartialType TCallTree)
   | TCSeq TCallTree TCallTree
   | TCCond Type [(Maybe ([TExpr EvalMetaDat], EObjArr), TCallTree)] -- [((if, ifObj), then)]
+  | TCRefine Type -- ^ The value as it is, when its value predicates hold of it ('Eval.valWithinType')
   | TCArg Type String
   | TCObjArr EObjArr
   | TCPrim EObjArr EPrim

@@ -1,0 +1,42 @@
+annot(#noCore)
+
+# A value predicate the type checker cannot decide is the runtime's to evaluate, not a failure of
+  the guarantee. [Nat_isZ] is [Nat | $this.isZ == True]. [onNat] passes every [Nat] to [f], which
+  requires a [Nat_isZ]: on every [Nat] the predicate reaches [True] and [False], so [f] is
+  accepted by its shape and the predicate is decided on each value at the call. [h] returns every
+  [Nat] where a [Nat_isZ] is declared, which is the same question of its result. Neither is
+  reported as a result not guaranteed. The twin page refineRuntimeFails.err.ct returns an [S], on
+  which the predicate is decided false, and that is refused statically.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+f(a -> Nat_isZ) -> Nat= a
+
+onNat(n -> Nat) -> Nat= f(a= n)
+
+h(a -> Nat) -> Nat_isZ= a
+
+g(x -> Nat) -> IO= IO
+
+main -> IO= g(x= h(a= onNat(n= Z)))

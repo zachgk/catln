@@ -1418,6 +1418,60 @@ tryPredsToList (PredsOne p)  = Just [p]
 tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps
 tryPredsToList (PredsNot _)  = Nothing
 
+-- | The value-predicate atoms ('PredExpr') of a positive conjunction. A formula with a negation in
+-- it is decided whole and gives none.
+predsExprAtoms :: TypePredicates -> [PartialType]
+predsExprAtoms preds = maybe [] (\atoms -> [e | PredExpr e <- atoms]) (tryPredsToList preds)
+
+-- | The value-predicate atoms stated OF THE VALUE — naming @$this@, and no variable of a scope —
+-- which are the ones evaluated on a runtime value held to the type ('Eval.valWithinType'). A
+-- predicate that does not name the value is a condition on the scope it was written in: an arm's
+-- guard or a value's @where@, typed over that scope's arguments (@a.isZ == True@ with @a@ read at
+-- its type), which is evaluated where it is written, as the condition it is.
+predsValueExprAtoms :: TypePredicates -> [PartialType]
+predsValueExprAtoms = filter valueExpr . predsExprAtoms
+  where
+    valueExpr e = not (typeContainsTypeVar (singletonType e)) && any ((== macroThisKey) . nameStr) (S.toList (partialRefNamesDeep e))
+
+-- | A positive conjunction without its value-predicate atoms; a formula with a negation is kept.
+predsWithoutExprAtoms :: TypePredicates -> TypePredicates
+predsWithoutExprAtoms preds = case tryPredsToList preds of
+  Just atoms -> case [a | a <- atoms, not (isExprAtom a)] of
+    []   -> PredsNone
+    [a]  -> PredsOne a
+    rest -> mkAnd (map PredsOne rest)
+  Nothing -> preds
+  where
+    isExprAtom PredExpr{} = True
+    isExprAtom _          = False
+
+-- | A type without its value predicates at any depth: what a value is held to by its shape, the
+-- predicates being what is decided or evaluated on it besides ('Eval.valWithinType').
+typeWithoutPredExprs :: Type -> Type
+typeWithoutPredExprs (UnionType mTop leafs consts) = UnionType (fmap top mTop) (joinUnionType (map partialWithoutPredExprs (splitUnionType leafs))) consts
+  where top (preds, negs, ncs) = (predsWithoutExprAtoms preds, joinUnionType (map partialWithoutPredExprs (splitUnionType negs)), ncs)
+typeWithoutPredExprs (TypeVar v l inner) = TypeVar v l (typeWithoutPredExprs inner)
+
+partialWithoutPredExprs :: PartialType -> PartialType
+partialWithoutPredExprs p@PartialType{ptVars, ptArgs, ptPreds} =
+  p{ptVars = fmap typeWithoutPredExprs ptVars, ptArgs = fmap typeWithoutPredExprs ptArgs, ptPreds = predsWithoutExprAtoms ptPreds}
+
+-- | Whether a type carries a value predicate at any depth, in a positive conjunction.
+typeHasPredExpr :: Type -> Bool
+typeHasPredExpr = typeHasExprAtom (not . null . predsExprAtoms)
+
+-- | Whether a type carries a value predicate stated of the value alone ('predsValueExprAtoms') at
+-- any depth.
+typeHasValuePredExpr :: Type -> Bool
+typeHasValuePredExpr = typeHasExprAtom (not . null . predsValueExprAtoms)
+
+typeHasExprAtom :: (TypePredicates -> Bool) -> Type -> Bool
+typeHasExprAtom has = typeHas
+  where
+    typeHas (UnionType mTop leafs _) = maybe False (\(preds, negs, _) -> has preds || any partialHas (splitUnionType negs)) mTop || any partialHas (splitUnionType leafs)
+    typeHas (TypeVar _ _ inner) = typeHas inner
+    partialHas PartialType{ptVars, ptArgs, ptPreds} = has ptPreds || any typeHas ptVars || any typeHas ptArgs
+
 
 -- | Helper function for conditional trace debugging
 debugTrace :: (TypeGraph tg) => TypeEnv tg -> String -> a -> a

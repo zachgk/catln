@@ -1,0 +1,8 @@
+import "core"
+
+
+# A value narrowed by a condition it does not satisfy: [narrow]'s condition is evaluated where it
+  is written, on [-1], and the run fails there.
+narrow(n -> Integer) -> Integer= n | n >= 0
+
+main{io -> IO}= io.exit(val= narrow(n= -1))

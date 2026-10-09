@@ -1,0 +1,114 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= /operator-
+                                ( Value /l= /operator-
+                                    ( Value /l= onInt
+                                        ( Value n= CInt
+                                            { ciValue = 3 }
+                                        )
+                                    )
+                                    ( Value /r= keep
+                                        ( Value n= CInt
+                                            { ciValue = 2 }
+                                        )
+                                    )
+                                )
+                                ( Value /r= narrow
+                                    ( Value n= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/narrow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ narrow( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value n | /operator>=( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/onInt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ onInt( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = f( Value a= Value n ) ]
+                    }
+                )
+            ,
+                ( "/keep"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ keep( Value n -> /Data/Primitive/Integer ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            ) = Value n
+                        ]
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ f
+                            ( Value a ->
+                                ( TopType | PredExpr /operator==
+                                    ( /r=/Data/Primitive/True
+                                    , /l=~nonNeg( /this=~/$this )
+                                    ) && PredRel Integer
+                                )
+                            ) -> /Data/Primitive/Integer = Value a
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A refinement the type checker cannot decide is evaluated at runtime on the value held to it.
+                [Integer_nonNeg] is [Integer | $this.nonNeg == True], and [nonNeg] bottoms out at the [#runtime]
+                [>=], which the type graph cannot follow: on every [Integer] the predicate is undecided. So
+                [onInt] passes its argument to the refined [f] on the strength of its shape, and the predicate is
+                evaluated on the value when [f] is dispatched; [keep] returns its argument where a
+                [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [narrow] is a value
+                narrowed by a condition, evaluated where it is written. Each holds here, so the run exits 0. The
+                runs where they do not hold are asserted in Eval.RefinementRuntimeTests." }
+            )
+        ]
+    }
