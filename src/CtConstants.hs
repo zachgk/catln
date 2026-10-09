@@ -192,6 +192,18 @@ calendarEntryClass = "/Data/Calendar/CalendarEntry"
 calendarDayMethod = "/Data/Calendar/calendarDay"
 calendarTimeMethod = "/Data/Calendar/calendarTime"
 
+-- | What a day planner lays out along a day, declared in @stack\/core\/calendar.ct@. 'eventClass' is
+-- the class of things taking up a block of a day, and 'eventSpanMethod' and 'eventDayMethod' the
+-- two questions asked of a member: the block it takes up, and the day it takes it up on.
+--
+-- 'noteEventPath' is the one member a note declares that is no task: a line the Day Planner reads a
+-- block off which has no checkbox.
+eventClass, eventSpanMethod, eventDayMethod, noteEventPath :: String
+eventClass = "/Data/Calendar/Event"
+eventSpanMethod = "/Data/Calendar/eventSpan"
+eventDayMethod = "/Data/Calendar/eventDay"
+noteEventPath = "/Data/Note/Event"
+
 -- | The query a note writes in a block of code the Obsidian Tasks plugin reads, which is a fenced
 -- block whose info string is @tasks@. The query is carried as the text it was written as, for the
 -- reason 'notePropertiesAnnot' carries a block of properties that way: the block is written back

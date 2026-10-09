@@ -199,6 +199,60 @@ module(Data/Note)
   # A task naming none of the three sits on no day, which is an answer and not a task left out.
   > (Task/Obsidian(contents= "Book", symbol= " ", statusType= StatusType/Todo, description= "Book", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Nothing, recurrence= /Data/Maybe/Nothing, rest= "{}", time= /Data/Maybe/Nothing, plannedDay= /Data/Maybe/Nothing).calendarDay == /Data/Maybe/Nothing)
     >>> True
+  data(Event(contents -> String, time -> /Data/Time/TimeRange.., plannedDay -> /Data/Maybe[$T -> /Data/Time/Date..]))
+    # An [Event] is a line of a note the Obsidian Day Planner reads a block of the day off without
+      it being a task: a bullet such as @- 12:00 - 13:00 Lunch@, which is something that happens
+      rather than something to do. Its [contents] are the line as it was written, time and all, and
+      its [time] and [plannedDay] are what the plugin reads it as, as they are of a [Task].
+      A line is read as one only where it writes a time, so unlike a task's its [time] is always
+      there. A bullet writing none is writing of the note and is left as writing.
+
+  every(/Data/Note/Event.., isa= [/Data/Calendar/Event])
+  every(/Data/Note/Event.., isa= [/Data/Calendar/CalendarEntry])
+  every(/Data/Note/Event.., isa= [/Catln/Doc/DShow])
+    # An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
+      write the change back to the note it was read from.
+  every(Task/Simple..(time -> /Data/Maybe/Some..[$T -> /Data/Time/TimeRange..]), isa= [/Data/Calendar/Event])
+  every(Task/Obsidian..(time -> /Data/Maybe/Some..[$T -> /Data/Time/TimeRange..]), isa= [/Data/Calendar/Event])
+    # A task is an event where it has a block of the day, and only there. Said of the tasks whose
+      [time] is a [/Data/Maybe/Some] rather than of [Task], because a task with no time has no span
+      to be drawn over: it is still an entry of a calendar, and a day planner draws it apart from
+      its blocks.
+      The spread is written before the argument rather than after it. @Task/Simple..(time -> T)@ is
+      a task whose [time] is a T and whose other fields are as [Task/Simple] declares them, where
+      @Task/Simple(time -> T)@ would be a value with a [time] and nothing else, which no task is.
+
+  :/Data/Note/Event(contents, time, plannedDay).eventSpan= time
+
+  :/Data/Note/Event(contents, time, plannedDay).eventDay= plannedDay
+
+  :/Data/Note/Event(contents, time, plannedDay).calendarDay= plannedDay
+
+  :/Data/Note/Event(contents, time, plannedDay).calendarTime= /Data/Maybe/Some(value= time)
+    # An event takes up the block its line writes on the day the Day Planner plans it for, which is
+      what it is asked as an event and as an entry of a calendar alike.
+
+  :Task/Simple(contents, state, time= /Data/Maybe/Some(value), plannedDay).eventSpan= value
+
+  :Task/Simple(contents, state, time= /Data/Maybe/Some(value), plannedDay).eventDay= plannedDay
+
+  :Task/Obsidian(contents, symbol, statusType, description, priority, start, scheduled, due, recurrence, rest, time= /Data/Maybe/Some(value), plannedDay).eventSpan= value
+
+  :Task/Obsidian(contents, symbol, statusType, description, priority, start, scheduled, due, recurrence, rest, time= /Data/Maybe/Some(value), plannedDay).eventDay= plannedDay
+    # A task with a block of the day takes it up on the day the Day Planner plans it for. That is
+      the planner's day and not [calendarDay]'s: a calendar places a task the Tasks plugin manages on
+      the soonest of the days it names, where the planner lays out only what it plans, so a timed
+      task due tomorrow and planned for no day is a block of no day here.
+
+  # A bullet the Day Planner reads is an event taking up the block it writes.
+  > /Data/Note/Event(contents= "12:00 - 13:00 Lunch", time= /Data/Time/TimeRange(start= /Data/Time/TimeOfDay(hour= 12, minute= 0), end= /Data/Time/TimeOfDay(hour= 13, minute= 0)), plannedDay= /Data/Maybe/Nothing).eventSpan
+    >>> 12:00 - 13:00
+  # A checkbox given a time is an event too, taking up the block its time says.
+  > Task/Simple(contents= "09:00 - 10:30 Write", state= False, time= /Data/Maybe/Some(value= /Data/Time/TimeRange(start= /Data/Time/TimeOfDay(hour= 9, minute= 0), end= /Data/Time/TimeOfDay(hour= 10, minute= 30))), plannedDay= /Data/Maybe/Nothing).eventSpan
+    >>> 09:00 - 10:30
+  # And so is a task the Tasks plugin manages, on the day it is planned for.
+  > (Task/Obsidian(contents= "16:00 Call", symbol= " ", statusType= StatusType/Todo, description= "16:00 Call", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 9)), recurrence= /Data/Maybe/Nothing, rest= "{}", time= /Data/Maybe/Some(value= /Data/Time/TimeRange(start= /Data/Time/TimeOfDay(hour= 16, minute= 0), end= /Data/Time/TimeOfDay(hour= 16, minute= 30))), plannedDay= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 3))).eventDay == /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 3)))
+    >>> True
   annot(#taskList)
 
   data(Show/TaskList(tasks -> String))

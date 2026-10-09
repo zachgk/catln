@@ -15,6 +15,7 @@ import Test from './Values/Test';
 import HTMLShow from './Values/HTMLShow';
 import Task from './Values/Task';
 import ObsidianTask from './Values/ObsidianTask';
+import NoteEvent from './Values/NoteEvent';
 import TaskList from './Values/TaskList';
 import TaskQuery from './Values/TaskQuery';
 import Calendar from './Values/Calendar';
@@ -92,6 +93,10 @@ function Value(props) {
     // writing one back from its parts is not something it can do yet.
     case "/Data/Note/Task/Obsidian":
       return <ObsidianTask {...val.args} dense={dense} />;
+    // A line of a note the Day Planner reads a block of the day off without it being a task. Shown
+    // and not yet edited, as nothing writes one back from its fields.
+    case "/Data/Note/Event":
+      return <NoteEvent {...val.args} dense={dense} />;
     // A list of tasks gathered across notes. It gets no update: each of its rows is written back to
     // the note that row came from, which the row carries and the list on this page does not know.
     case "/Data/Note/Show/TaskList":

@@ -243,7 +243,19 @@ testDayPlanning = withResource (ctssBaseFiles testCtssConfig [dayPlannerPage]) (
     assertEqual "a block was not on its day" plannedDays (sort $ map (\v -> (saysOf v, dayOf v)) (calendaredItems planned))
     assertEqual "a block was not over its span" (Just ("13:30", "14:15"))
       (lookup (Just "1:30pm - 2:15pm Review the draft #task") (map (\v -> (saysOf v, timeOf v)) (calendaredItems planned)) >>= id)
-    assertEqual "the planner did not carry the day it was answered on" "2026-01-03" (calendaredToday planned)
+    assertEqual "the planner did not carry the day it was answered on" "2026-01-03" (calendaredToday planned),
+
+  -- Its blocks are the events, and a task given a time is one: each is asked the span it takes up.
+  -- A task with no time is no event, and is carried as an entry of the day with no span, to be
+  -- drawn apart from the blocks rather than left off.
+  testCase "with its events as blocks and a task with no time apart from them" $ do
+    ctss <- held
+    planned <- displayedAs "/Data/Calendar/Show/DayPlanner" ctss dayPlannerPage
+    assertEqual "the planner could not be answered" Nothing (calendaredError planned)
+    let spans = map (\v -> (saysOf v, timeOf v)) (calendaredItems planned)
+    assertEqual "a task with no time was not carried apart from the blocks" [Just "Read the paper"] [says | (says, Nothing) <- spans]
+    assertEqual "a block was not over its span" (Just ("16:00", "16:45")) (lookup (Just "16:00 Call about the paper") spans >>= id)
+    assertEqual "a value was carried twice" (length (nub $ map fst spans)) (length spans)
                                                                                                                                    ]
 
 -- | The span of its day an entry of the answer takes up, and nothing for one taking up all of it.

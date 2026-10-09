@@ -11,7 +11,7 @@ Prgm
                         [ /Catln/Doc/dshow( Value /s -> /Data/Calendar/#calendar = Value /Data/Calendar/#calendar ) -> /Data/Calendar/Show/Calendar( /result=∀/Data/String ) = /Data/Calendar/Show/Calendar
                             ( Value /result -> ∀/Data/String = /Data/Calendar/calendarEntries( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow( Value /s -> /Data/Calendar/#dayPlanner = Value /Data/Calendar/#dayPlanner ) -> /Data/Calendar/Show/DayPlanner( /result=∀/Data/String ) = /Data/Calendar/Show/DayPlanner
-                            ( Value /result -> ∀/Data/String = /Data/Calendar/calendarEntries( Value /annot -> /s = Value /s ) )
+                            ( Value /result -> ∀/Data/String = /Data/Calendar/plannerEntries( Value /annot -> /s = Value /s ) )
                         ]
                     }
                 )
@@ -30,6 +30,26 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/plannerEntries"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Calendar/plannerEntries( Value /annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/eventSpan"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/eventSpan[ /E : ∀/Data/Calendar/Event ]( Value /this -> $/E ) -> /Data/Time/TimeRange.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -83,10 +103,23 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Calendar/eventDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/eventDay[ /E : ∀/Data/Calendar/Event ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -134,6 +167,24 @@ Prgm
               [calendarDay] is declared here and answered elsewhere, and this file sits below the files
               holding its members rather than above them. The layering that forces is the one wanted anyway."
             }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Calendar/Event
+            , cgcExtends = []
+            , cgcDoc = Just "An [Event] is something that takes up a block of a day: a meeting from nine until half past
+              ten, or a line a day planner reads a time off. It is what a day planner lays out, and the
+              whole of what one lays out along a day.
+              A narrower class than [CalendarEntry] rather than an answer it gives, because whether a thing
+              is an event is what it is and not a question it answers: a task given a time is one, and the
+              same task with none is not. So a kind of thing joins as an event where it has a time, by
+              saying so of the values that do, and has nothing to answer for the ones that do not. Both are
+              what a day planner is asked for. Its blocks are the events, which every one of has a span to
+              be drawn over; and a task on the day with no time is drawn apart from them, as an entry of
+              the calendar it still is.
+              Membership is declared by the member, as it is for [CalendarEntry] and for its reason, and its
+              questions are answered where the member is declared and not here, for the second reason given
+              there."
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -171,6 +222,23 @@ Prgm
                 it is. That file does not reach the webdocs, and having it reach them would put it in the
                 SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
                 sake of one caller. It moves there when there is a second one." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "An [Event] is something that takes up a block of a day: a meeting from nine until half past
+                ten, or a line a day planner reads a time off. It is what a day planner lays out, and the
+                whole of what one lays out along a day.
+                A narrower class than [CalendarEntry] rather than an answer it gives, because whether a thing
+                is an event is what it is and not a question it answers: a task given a time is one, and the
+                same task with none is not. So a kind of thing joins as an event where it has a time, by
+                saying so of the values that do, and has nothing to answer for the ones that do not. Both are
+                what a day planner is asked for. Its blocks are the events, which every one of has a span to
+                be drawn over; and a task on the day with no time is drawn apart from them, as an entry of
+                the calendar it still is.
+                Membership is declared by the member, as it is for [CalendarEntry] and for its reason, and its
+                questions are answered where the member is declared and not here, for the second reason given
+                there." }
             )
         ]
     }
