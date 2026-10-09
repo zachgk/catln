@@ -96,7 +96,7 @@ export function useEntries() {
   // size where it is listed apart from the days.
   const valueOf = (item, dense = false) => <Value data={item.ciValue} dense={dense} update={canEdit ? (src => save(item, src)) : undefined} />;
 
-  return {error, valueOf};
+  return {error, setError, valueOf, canEdit, reload};
 }
 
 // A day as the YYYY-MM-DD a date field holds, in the reader's own zone, as a day is read everywhere
@@ -155,6 +155,15 @@ export function timeGridStyles(weekly) {
       alignItems: 'flex-start',
       gap: 6,
       padding: '1px 4px'
+    },
+    // Where a block can be dragged, its label and writing are inside the wrapper that holds its
+    // resize handles rather than in the block itself, so that wrapper is laid out the same way. The
+    // handles are placed absolutely at its edges, so they are not part of the row.
+    '& .rbc-time-view .rbc-addons-dnd-resizable': {
+      display: 'flex',
+      flexFlow: 'row nowrap',
+      alignItems: 'flex-start',
+      gap: 6
     },
     '& .rbc-time-view .rbc-event-label': {
       flex: 'none',

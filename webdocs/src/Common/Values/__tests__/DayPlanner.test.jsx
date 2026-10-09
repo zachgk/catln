@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
 import { ConfigContext, ReloadContext } from '../../Common'
-import DayPlanner, { openingTime } from '../DayPlanner'
+import DayPlanner, { createOps, editOps, openingTime, placedValue } from '../DayPlanner'
 
 const theme = createTheme()
 
@@ -56,6 +56,9 @@ function saved() {
 describe('DayPlanner', () => {
   beforeEach(() => {
     global.fetch = vi.fn(saved)
+    // Where the pages can be written the planner is selectable, and react-big-calendar asks what is
+    // under the pointer on every click, which jsdom has no layout to answer.
+    document.elementFromPoint = () => null
   })
 
   afterEach(() => {
@@ -209,5 +212,90 @@ describe('DayPlanner', () => {
     expect(url).toContain(encodeURIComponent(NOTE))
     expect(url).toContain('id-1')
     await waitFor(() => expect(reload).toHaveBeenCalled())
+  })
+  // Where pages can be written, the plugin's edit modes are offered; where they cannot, nothing is.
+  it('offers the edit modes only where the pages can be written', () => {
+    const { unmount } = render(<Providers><DayPlanner {...planned(null, entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }))} /></Providers>)
+    expect(screen.getByRole('button', { name: 'Push neighbors' })).toBeInTheDocument()
+    unmount()
+
+    render(<Providers readonly><DayPlanner {...planned(null, entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }))} /></Providers>)
+    expect(screen.queryByRole('button', { name: 'Push neighbors' })).not.toBeInTheDocument()
+  })
+
+  it('says where nothing shown is from a note to create a block in', () => {
+    const fromNoNote = { ...entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }), ciValue: { tag: 'TupleVal', name: '/Other/Thing', args: {} } }
+    render(<Providers><DayPlanner {...planned(null, fromNoNote)} /></Providers>)
+    expect(screen.getByTestId('planner-no-create')).toBeInTheDocument()
+  })
+})
+
+// The events the planner draws the entries above as, built the way it builds them.
+const local = (hours, minutes = 0, day = 3) => { const d = new Date(2026, 0, day); d.setHours(hours, minutes, 0, 0); return d }
+function block(id, contents, from, to, name = '/Data/Note/Task/Simple') {
+  const item = entry(id, contents, TODAY, { ctStart: '00:00', ctEnd: '00:00' })
+  item.ciValue.name = name
+  return { id, allDay: false, start: local(...from), end: local(...to), item }
+}
+
+describe('editing a day planner', () => {
+  // A moved block is written back whole with its time and day changed, which the importer writes
+  // into its line.
+  it('writes a moved block back as its value with its new time and day', () => {
+    const write = block('id-1', 'Write', [9], [10])
+    const { ops } = editOps([write], { event: write, start: local(11), end: local(12) }, 'move')
+    expect(ops).toEqual([{ tag: 'Replace', page: NOTE, metaId: 'id-1', src: expect.stringContaining('time= /Data/Maybe/Some(value= /Data/Time/TimeRange(start= /Data/Time/TimeOfDay(hour= 11, minute= 0), end= /Data/Time/TimeOfDay(hour= 12, minute= 0)))') }])
+    expect(ops[0].src).toContain('plannedDay= /Data/Maybe/Some(value= /Data/Time/Date(year= 2026, month= 1, day= 3))')
+    expect(ops[0].src).toContain('contents= "Write"')
+  })
+
+  // An entry dragged out of the strip onto the day is given the plugin's default length.
+  it('gives an entry dragged onto the day the default length', () => {
+    const read = { ...block('id-2', 'Read', [0], [0]), allDay: true }
+    const { changes } = editOps([read], { event: read, start: local(14), end: local(14) }, 'move')
+    expect(changes[0].end).toEqual(local(14, 30))
+  })
+
+  // A block put across the top of a day has its time taken off, which an event cannot have.
+  it('takes the time off a task put across the top of a day, and refuses to for an event', () => {
+    const write = block('id-1', 'Write', [9], [10])
+    const { ops } = editOps([write], { event: write, start: local(0, 0, 4), end: local(0, 0, 4), isAllDay: true }, 'move')
+    expect(ops[0].src).toContain('time= /Data/Maybe/Nothing')
+    expect(ops[0].src).toContain('day= 4')
+
+    const lunch = block('id-3', 'Lunch', [12], [13], '/Data/Note/Event')
+    expect(editOps([lunch], { event: lunch, start: local(0), end: local(0), isAllDay: true }, 'move').error).toMatch(/event/)
+  })
+
+  // Pushing writes every block it pushed, in the one batch.
+  it('writes back the blocks a push moved', () => {
+    const a = block('id-a', 'A', [9], [10])
+    const b = block('id-b', 'B', [10], [11])
+    const { ops } = editOps([a, b], { event: a, start: local(9, 30), end: local(10, 30) }, 'push')
+    expect(ops.map(o => o.metaId)).toEqual(['id-a', 'id-b'])
+    expect(ops[1].src).toContain('start= /Data/Time/TimeOfDay(hour= 10, minute= 30)')
+  })
+
+  // A copy is a new block written after the original, which is left where it was.
+  it('writes a copy after the original', () => {
+    const write = block('id-1', 'Write', [9], [10])
+    const { ops } = editOps([write], { event: write, start: local(15), end: local(16) }, 'copy')
+    expect(ops).toEqual([expect.objectContaining({ tag: 'InsertAfter', metaId: 'id-1' })])
+  })
+
+  // An event's time is its span and not a span it may not have.
+  it('writes an event with its span rather than a maybe of one', () => {
+    const lunch = block('id-3', 'Lunch', [12], [13], '/Data/Note/Event')
+    expect(placedValue(lunch.item.ciValue, { ...lunch, start: local(12, 30), end: local(13, 30) }).args['/time'].name).toBe('/Data/Time/TimeRange')
+  })
+
+  // A created block is a task or a bullet over the span it was drawn on, on its day.
+  it('creates a task or a bullet over the span drawn', () => {
+    const [task] = createOps(NOTE, { start: local(8), end: local(8, 30) }, 'Stretch', 'task')
+    expect(task.tag).toBe('Create')
+    expect(task.page).toBe(NOTE)
+    expect(task.src.startsWith('/Data/Note/Task/Simple(contents= "Stretch", state= /Data/Primitive/False, time= /Data/Maybe/Some')).toBe(true)
+    const [bullet] = createOps(NOTE, { start: local(8), end: local(8, 30) }, 'Stretch', 'bullet')
+    expect(bullet.src.startsWith('/Data/Note/Event(contents= "Stretch", time= /Data/Time/TimeRange')).toBe(true)
   })
 })

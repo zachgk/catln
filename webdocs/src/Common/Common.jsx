@@ -698,6 +698,28 @@ async function writeExpr(prgmName, metaID, src) {
   }
 }
 
+// Several edits written back together, as one write per page they reach: a block moved, and the
+// blocks it pushed out of its way. Each is a replace of an expression, an insert of a new one after
+// it, or a value created on the day it names, which the page's syntax places where that day's are
+// written. Either all of them are written or none is.
+async function writeExprs(ops) {
+  try {
+    const res = await fetch('/api/write-exprs', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(ops)
+    });
+    const json = await res.json();
+    if (res.status === 200 && json.tag === 'Success') {
+      return {ok: true};
+    }
+    const notes = json.tag === 'ResFail' ? json.contents : null;
+    return {ok: false, message: notes?.map(n => n.msg).join('; ') || res.statusText || 'unknown error'};
+  } catch (e) {
+    return {ok: false, message: e.message};
+  }
+}
+
 // A type or class page is a #type annotation, so linking to one means asking the compiler to
 // evaluate that annotation rather than routing to a page that fetches for itself.
 function typeAnnotLink(name) {
@@ -838,6 +860,7 @@ export {
   annotApi,
   callApi,
   writeExpr,
+  writeExprs,
   tagJoin,
   useQuery,
   useApi,

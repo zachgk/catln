@@ -25,9 +25,6 @@ const useStyles = makeStyles({
   // in a block of a calendar's day as short as its default one.
   denseBox: {
     padding: '0 4px 0 0'
-  },
-  denseContents: {
-    fontSize: '0.85rem'
   }
 });
 
@@ -81,7 +78,10 @@ function Task(props) {
         onChange={toggle}
       />
       <InputBase
-        className={`${classes.contents} ${done ? classes.done : ''} ${dense ? classes.denseContents : ''}`}
+        className={`${classes.contents} ${done ? classes.done : ''}`}
+        // Through sx rather than a class: InputBase sets its own size, and its styles are injected
+        // after this module's, so a class naming the same property loses to it.
+        sx={dense ? {fontSize: '0.85rem'} : undefined}
         value={draft}
         readOnly={!update}
         fullWidth

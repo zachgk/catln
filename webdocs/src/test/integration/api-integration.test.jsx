@@ -17,6 +17,8 @@
 
 import {rawExprMeta, statementBody} from '../../Common/RawPrgm'
 import {dateText, someValue} from '../../Common/Values/time'
+import {valueSource} from '../../Common/Values/source'
+import {createOps, placedValue} from '../../Common/Values/plannerEdits'
 
 const API_BASE = 'http://localhost:31204'
 const READONLY_API_BASE = 'http://localhost:8080'
@@ -1128,6 +1130,111 @@ describe('Backend API contract', () => {
       expect(data).toHaveProperty('contents')
       expect(['Success', 'ResFail']).toContain(data.tag)
     }
+  })
+
+  // A day planner's edits, written back through /api/write-exprs into the copy of the Day Planner
+  // vault the backend is given (scripts/run-integration.sh), so a move that writes a daily note that
+  // was not there is written into a vault thrown away afterwards.
+  describe('a day planner edit', () => {
+    // A write reads again every page it reached, which compiles them again: longer than a read.
+    const WRITE_TIMEOUT = 180000
+
+    const DAILY = 'catln-planner/Daily/2026-01-03.md'
+
+    async function pageFor(suffix) {
+      return (await sidebarPages()).map(p => p.sbPath).find(p => p.endsWith(suffix))
+    }
+
+    // Every declaration of a page with the value it was compiled to, at any depth.
+    function declared(statementTrees, found = []) {
+      for (const {rstStatement: statement, rstChildren: subStatements} of statementTrees) {
+        if (statement.tag === 'RawDeclStatement') {
+          const meta = statementMeta(statement)
+          if (meta?.getMetaDat?.[2]) found.push({metaId: meta.getMetaId, value: meta.getMetaDat[2]})
+        }
+        declared(subStatements, found)
+      }
+      return found
+    }
+
+    async function noteOf(page) {
+      const read = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(page)}`)).contents[0]
+      return {decls: declared(read.pgPrgm.rprgmStatements), source: read.pgSource}
+    }
+
+    function writeExprs(ops) {
+      return fetch(`${API_BASE}/api/write-exprs`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(ops),
+      })
+    }
+
+    const local = (day, hours, minutes = 0) => { const d = new Date(2026, 0, day); d.setHours(hours, minutes, 0, 0); return d }
+    const contentsOf = decl => decl.value.args['/contents'].contents
+
+    // A block moved within its day has its time written over the one its line wrote, in the vault's
+    // format and with its end; the lines around it are written as they were.
+    it('writes a block moved within its day into its line', async () => {
+      const page = await pageFor(DAILY)
+      expect(page).toBeDefined()
+      const {decls} = await noteOf(page)
+      const standUp = decls.find(d => contentsOf(d) === '11:00 Stand up')
+      expect(standUp).toBeDefined()
+
+      const res = await writeExprs([{tag: 'Replace', page, metaId: standUp.metaId, src: valueSource(placedValue(standUp.value, {allDay: false, start: local(3, 12), end: local(3, 12, 30)}))}])
+      expect((await res.json()).tag).toBe('Success')
+
+      const {source} = await noteOf(page)
+      expect(source).toContain('- [x] 12:00 - 12:30 Stand up')
+      expect(source).toContain('- [ ] 09:00 - 10:30 Write the report #task')
+      expect(source).toContain('- [ ] 1:30pm - 2:15pm Review the draft #task')
+    }, WRITE_TIMEOUT)
+
+    // A block of a daily note moved to another day is taken out of the note and written under the
+    // planner's heading of that day's note, which is written where there was none.
+    it('moves a block moved to another day into that day\'s note', async () => {
+      const page = await pageFor(DAILY)
+      const {decls} = await noteOf(page)
+      const lunch = decls.find(d => contentsOf(d) === '12:00 - 13:00 Lunch')
+      expect(lunch).toBeDefined()
+
+      const res = await writeExprs([{tag: 'Replace', page, metaId: lunch.metaId, src: valueSource(placedValue(lunch.value, {allDay: false, start: local(5, 12), end: local(5, 13)}))}])
+      expect((await res.json()).tag).toBe('Success')
+
+      expect((await noteOf(page)).source).not.toContain('Lunch')
+      const moved = await pageFor('catln-planner/Daily/2026-01-05.md')
+      expect(moved).toBeDefined()
+      expect((await noteOf(moved)).source).toBe('# Day planner\n\n- 12:00 - 13:00 Lunch\n')
+    }, WRITE_TIMEOUT)
+
+    // A block created on a day goes into that day's note, as a moved one does.
+    it('creates a block in the note of its day', async () => {
+      const page = await pageFor(DAILY)
+      const [op] = createOps(page, {start: local(6, 8), end: local(6, 8, 30)}, 'Stretch', 'task')
+
+      const res = await writeExprs([op])
+      expect((await res.json()).tag).toBe('Success')
+
+      const created = await pageFor('catln-planner/Daily/2026-01-06.md')
+      expect(created).toBeDefined()
+      expect((await noteOf(created)).source).toBe('# Day planner\n\n- [ ] 08:00 - 08:30 Stretch\n')
+    }, WRITE_TIMEOUT)
+
+    // Edits written together are written all or none: one naming an expression that is not there
+    // leaves the other unwritten.
+    it('writes nothing of a batch one edit of which cannot be written', async () => {
+      const page = await pageFor(DAILY)
+      const before = await noteOf(page)
+      const write = before.decls.find(d => contentsOf(d) === '09:00 - 10:30 Write the report #task')
+
+      const res = await writeExprs([
+        {tag: 'Replace', page, metaId: write.metaId, src: valueSource(placedValue(write.value, {allDay: false, start: local(3, 7), end: local(3, 8)}))},
+        {tag: 'Replace', page, metaId: '00000000-0000-0000-0000-000000000001', src: 'main'},
+      ])
+      expect((await res.json()).tag).not.toBe('Success')
+      expect((await noteOf(page)).source).toBe(before.source)
+    }, WRITE_TIMEOUT)
   })
 
   describe('writes', () => {

@@ -4,6 +4,10 @@ set -euo pipefail
 API_PORT=31204
 READONLY_PORT=8080
 BACKEND_PIDS=()
+# A copy of the Day Planner vault, which the tests of a planner's edits write into: moving a block to
+# another day writes a daily note that was not there, which a test could not take back through the
+# API, so they write into a copy that is thrown away rather than into the fixture.
+PLANNER_COPY="$(mktemp -d)"
 
 cleanup() {
   for pid in ${BACKEND_PIDS[@]+"${BACKEND_PIDS[@]}"}; do
@@ -13,6 +17,7 @@ cleanup() {
       wait "$pid" 2>/dev/null || true
     fi
   done
+  rm -rf "$PLANNER_COPY"
 }
 trap cleanup EXIT
 
@@ -102,7 +107,12 @@ echo "Starting Catln backend on port ${API_PORT}..."
 # no #debug reports is also worth checking and is what every other page here is.
 # debugNested.ct is the page whose functions are written over several lines -- intermediate lines, a
 # nested helper, a branch and a bind -- which is what a run read by the functions it wrote regroups.
-stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct test/Integration/code/debugNested.ct --api &
+# dayPlanner.ct is loaded from a copy of itself and of the vault it plans, for the reason the copy
+# is made above.
+mkdir -p "$PLANNER_COPY/artifacts"
+cp -r test/Integration/code/artifacts/catln-planner "$PLANNER_COPY/artifacts/"
+cp test/Integration/code/dayPlanner.ct "$PLANNER_COPY/"
+stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct test/Integration/code/debugNested.ct "$PLANNER_COPY/dayPlanner.ct" --api &
 BACKEND_PIDS+=($!)
 await_backend "$API_PORT" "${BACKEND_PIDS[0]}"
 warm_backend "$API_PORT"
