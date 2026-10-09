@@ -27,13 +27,18 @@ import           Control.Monad            (guard)
 import           Data.Char                (isAlphaNum, isDigit, isSpace,
                                            toLower)
 import           Data.List                (isPrefixOf, sort, stripPrefix)
-import           Data.Maybe               (fromMaybe, listToMaybe, mapMaybe)
-import           Data.Time.Calendar       (Day, fromGregorianValid)
+import           Data.Maybe               (fromMaybe, isJust, listToMaybe,
+                                           mapMaybe)
+import           Data.Time.Calendar       (Day, DayOfWeek (..), dayOfWeek,
+                                           fromGregorianValid, showGregorian,
+                                           toGregorian)
 import           Syntax.Obsidian.Settings (DailyNoteSettings (..),
-                                           DateToken (..), PlannerSettings (..))
+                                           DateToken (..), PlannerSettings (..),
+                                           TimeToken (..))
 import           Syntax.Obsidian.Task     (readIsoDay)
 import           System.FilePath          (dropExtension, makeRelative,
-                                           splitDirectories, (</>))
+                                           splitDirectories, (<.>), (</>))
+import           Text.Printf              (printf)
 
 -- | A time of day, as the minutes since its midnight.
 type Minutes = Int
@@ -223,3 +228,95 @@ oneOrTwoDigits s = [(read ds, rest) | n <- [2, 1], (ds, rest) <- [splitAt n s], 
 monthNames, weekdayNames :: [String]
 monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+-- | Where the daily note of a day is: the reversion of 'noteDay', naming the note in the vault's
+-- daily notes folder with the day written in its format.
+dailyNotePath :: DailyNoteSettings -> FilePath -> Day -> FilePath
+dailyNotePath DailyNoteSettings{dnsFolder, dnsFormat} vault day = folder </> dayText dnsFormat day <.> "md"
+  where folder = if null dnsFolder then vault else vault </> dnsFolder
+
+-- | A day written in a daily note format: the reversion of 'dayInFormat'.
+dayText :: [DateToken] -> Day -> String
+dayText tokens day = concatMap piece tokens
+  where
+    (year, month, dayOfMonth) = toGregorian day
+    piece DYear4        = printf "%04d" year
+    piece DYear2        = printf "%02d" (year `mod` 100)
+    piece DMonth2       = printf "%02d" month
+    piece DMonth1       = show month
+    piece DMonthName    = monthNames !! (month - 1)
+    piece DMonthShort   = take 3 (monthNames !! (month - 1))
+    piece DDay2         = printf "%02d" dayOfMonth
+    piece DDay1         = show dayOfMonth
+    piece DDayOrdinal   = show dayOfMonth ++ ordinal dayOfMonth
+    piece DWeekdayName  = weekdayName
+    piece DWeekdayShort = take 3 weekdayName
+    piece (DLiteral l)  = l
+    weekdayName = weekdayNames !! (fromEnum (dayOfWeek day) - fromEnum Monday)
+    ordinal n
+      | n `mod` 100 `elem` [11, 12, 13] = "th"
+      | n `mod` 10 == 1 = "st"
+      | n `mod` 10 == 2 = "nd"
+      | n `mod` 10 == 3 = "rd"
+      | otherwise = "th"
+
+-- | A time of day written in the format the plugin writes one with.
+timeText :: [TimeToken] -> Minutes -> String
+timeText tokens minutes = concatMap piece tokens
+  where
+    (hour, minute) = (minutes `mod` 1440) `divMod` 60
+    hour12 = if hour `mod` 12 == 0 then 12 else hour `mod` 12
+    piece (THour24 width)    = padded width hour
+    piece (THour12 width)    = padded width hour12
+    piece (TMinute width)    = padded width minute
+    piece (TMeridiem upper)  = (if upper then id else map toLower) (if hour < 12 then "AM" else "PM")
+    piece (TLiteral l)       = l
+    padded width n = let shown = show n in replicate (width - length shown) '0' ++ shown
+
+-- | A line with the block of the day it writes at its start replaced, as the plugin rewrites a line
+-- whose block it moved: the block written in place of the one the line wrote, or in front of what
+-- the line says where it wrote none, and the block taken off where it is to have none.
+--
+-- A block is always written with its end, in the vault's format, as the plugin writes one. So a
+-- line written without an end, or in the other clock, is written back the plugin's way once it is
+-- moved, and left exactly as it was until then.
+withBlock :: [TimeToken] -> Maybe (Minutes, Minutes) -> String -> String
+withBlock format block line = case (block, timeRangeAtStart line) of
+  (Just range, Just (_, rest)) -> written range rest
+  (Just range, Nothing)        -> written range line
+  (Nothing, Just (_, rest))    -> rest
+  (Nothing, Nothing)           -> line
+  where
+    written (start, end) rest = timeText format start ++ " - " ++ timeText format end ++ (if null rest then "" else ' ' : rest)
+
+-- | A line scheduled for another day: the day it schedules rewritten where it schedules one, in
+-- whichever of the ways 'scheduledDay' reads it was written, and @⏳@ and the day written at its end
+-- where it schedules none — before a block link, which has to stay the last thing on a line.
+withScheduledDay :: Day -> String -> String
+withScheduledDay day line = fromMaybe appended (rewritten line)
+  where
+    iso = showGregorian day
+    rewritten [] = Nothing
+    rewritten str@(c:rest)
+      | Just after <- stripPrefix "\x23F3" str
+      , (space, value) <- span isSpace after
+      , isDay value = Just ("\x23F3" ++ space ++ iso ++ drop 10 value)
+      | Just field <- inlineField "[" "]" str = Just field
+      | Just field <- inlineField "(" ")" str = Just field
+      | otherwise = (c :) <$> rewritten rest
+    inlineField open close str = do
+      afterOpen <- stripPrefix open str
+      let (space1, keyed) = span isSpace afterOpen
+      afterKey <- stripPrefix "scheduled" keyed
+      let (space2, colons) = span isSpace afterKey
+      afterColons <- stripPrefix "::" colons
+      let (space3, value) = span isSpace afterColons
+      guard $ isDay value && close `isPrefixOf` drop 10 value
+      return (open ++ space1 ++ "scheduled" ++ space2 ++ "::" ++ space3 ++ iso ++ drop 10 value)
+    isDay value = isJust (readIsoDay (take 10 value))
+    appended = case blockLinkAtEnd line of
+      Just (before, link) -> before ++ " \x23F3 " ++ iso ++ " " ++ link
+      Nothing             -> line ++ " \x23F3 " ++ iso
+    blockLinkAtEnd l = case break (== ' ') (reverse l) of
+      (link@(_:_), ' ':before) | '^' == last link, all (\c -> isAlphaNum c || c == '-') (init link) -> Just (reverse (dropWhile isSpace before), reverse link)
+      _ -> Nothing

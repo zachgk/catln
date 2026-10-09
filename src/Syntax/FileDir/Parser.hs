@@ -55,7 +55,7 @@ newtype FileDirReader = FileDirReader {
 -- No reversion: the files of the directory are the source, each of them written back as itself by
 -- whatever reads it, so the page assembled from them has no text of its own to be written back.
 fileDirSyntax :: ImportSyntax
-fileDirSyntax = ImportSyntax newFileDirReader (const Nothing) importedLinkDir Nothing
+fileDirSyntax = ImportSyntax newFileDirReader (const Nothing) importedLinkDir Nothing Nothing Nothing
 
 newFileDirReader :: ReadEnv -> IO ImportReader
 newFileDirReader env = do

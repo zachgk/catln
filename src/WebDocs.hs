@@ -34,7 +34,8 @@ import           Control.Concurrent            (threadDelay)
 import           Control.Concurrent.STM        (STM, atomically, orElse,
                                                 readTVar, registerDelay, retry)
 import           Control.Exception             (SomeException, evaluate, try)
-import           Control.Monad                 (unless, when)
+import           Control.Monad                 (foldM, forM, forM_, unless,
+                                                when)
 import           Control.Monad.Trans           (lift)
 import           CRes
 import           CtConstants                   (libraryAssetTypes, printAnnot,
@@ -61,6 +62,7 @@ import           Syntax.Ct.Desugarf            (desFinalPass, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.Formatter           (formatExpr)
 import           Syntax.Ct.MapRawMeta          (addRawPrgmMetaIDs,
+                                                insertRawExprAfter,
                                                 mapMetaRawPrgm, replaceRawExpr)
 import           Syntax.Ct.Parser.Expr         (pExpr)
 import           Syntax.Ct.Parser.Syntax       (ParseMetaDat)
@@ -120,6 +122,57 @@ neighbours :: (Eq a) => a -> [a] -> (Maybe a, Maybe a)
 neighbours x xs = case break (== x) xs of
   (before, _:after) -> (listToMaybe $ reverse before, listToMaybe after)
   _                 -> (Nothing, Nothing)
+
+-- | One edit of several written back together by @\/api\/write-exprs@: an expression of a page
+-- replaced, a new one declared right after one, or a new value created beside a page, where that
+-- page's syntax puts values like it.
+--
+-- Each names the page by the name the webdocs know it by and the expression by its meta id, as
+-- @\/api\/write-expr@ does, and gives the new expression as Catln source.
+data WriteOp
+  = WriteReplace { woPage :: String, woMetaId :: String, woSrc :: String }
+  | WriteInsertAfter { woPage :: String, woMetaId :: String, woSrc :: String }
+  | WriteCreate { woPage :: String, woSrc :: String }
+
+instance A.FromJSON WriteOp where
+  parseJSON = A.withObject "WriteOp" $ \o -> do
+    tag <- o A..: "tag"
+    case tag :: String of
+      "Replace"     -> WriteReplace <$> o A..: "page" <*> o A..: "metaId" <*> o A..: "src"
+      "InsertAfter" -> WriteInsertAfter <$> o A..: "page" <*> o A..: "metaId" <*> o A..: "src"
+      "Create"      -> WriteCreate <$> o A..: "page" <*> o A..: "src"
+      _             -> fail $ printf "%s is not an edit of a page" tag
+
+-- | Writes several edits back as one, each page they reach written once.
+--
+-- Every edit is read and applied before anything is written, so an edit naming an expression that
+-- is not there, or giving source that does not parse, writes nothing at all: a block pushed out of
+-- the way of one that could not be moved stays where it was. The pages are written in the order the
+-- edits first reach them, and the values created after them.
+writeOps :: CTSS -> [WriteOp] -> CResT IO ()
+writeOps ctss ops = do
+  read' <- forM ops $ \op -> do
+    prgmName <- lift $ mkDesCanonicalImportStr buildCtssConfig (woPage op)
+    expr <- case runParser pExpr "<expr>" (woSrc op) of
+      Left err     -> fail $ show $ errorBundlePretty err
+      Right parsed -> return parsed
+    return (op, prgmName, expr)
+  edited <- foldM edit [] [(op, prgmName, expr) | (op, prgmName, expr) <- read', not (creates op)]
+  forM_ (reverse edited) $ \(prgmName, prgm) -> setRawPrgm ctss prgmName prgm
+  forM_ [(prgmName, expr) | (op, prgmName, expr) <- read', creates op] $ uncurry (placeRawExpr ctss)
+  where
+    creates WriteCreate{} = True
+    creates _             = False
+
+    edit pages (op, prgmName, expr) = do
+      prgm <- maybe (getRawPrgmOf ctss prgmName) return (lookup prgmName pages)
+      metaID <- maybe (fail $ printf "The expression id %s is not an id" (woMetaId op)) return $ fromText $ T.toStrict $ T.pack $ woMetaId op
+      let applied = case op of
+            WriteInsertAfter{} -> insertRawExprAfter metaID expr prgm
+            _                  -> replaceRawExpr metaID expr prgm
+      case applied of
+        Nothing -> fail $ printf "The page %s holds no expression %s to edit" (woPage op) (woMetaId op)
+        Just prgm' -> return $ (prgmName, prgm') : filter ((/= prgmName) . fst) pages
 
 maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson res = do
@@ -454,6 +507,18 @@ docApiBase readonly ctss = do
         case replaceRawExpr metaID' expr rawPrgm of
           Nothing -> fail $ printf "The page %s holds no expression %s to replace" prgmName (T.unpack metaID)
           Just rawPrgm' -> setRawPrgm ctss prgmName' rawPrgm'
+    maybeJson resp
+
+  -- Several edits written back together: a block of a day planner moved, with the blocks it pushed
+  -- out of its way, or copied, or created. They are one edit to whoever made them, so they are
+  -- written as one ('writeOps') — all of them or, where any cannot be, none.
+  --
+  -- Guarded by @--readonly@ and does its own reading, for the same reasons as @/api/write@.
+  post "/api/write-exprs" $ do
+    ops <- jsonData
+    resp <- liftAndCatchIO $ runCResT $ if readonly
+      then fail "Saving is disabled because the doc server is running with --readonly"
+      else writeOps ctss ops
     maybeJson resp
 
   -- A page is shown from its own program and the programs it imports, so a read of any of those

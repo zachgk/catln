@@ -484,6 +484,30 @@ unparseImport imp prgm = do
     Just src -> return src
     Nothing  -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show syntax)
 
+-- | Writes a page back as every file writing it back reaches, the page's own first: what the
+-- syntax's 'isWriteBack' writes where it has one, and the page's own file as 'unparseImport' writes it
+-- where it has none.
+writeBackImport :: FileImport -> RawPrgm () -> CResT IO [(FilePath, String)]
+writeBackImport imp prgm = do
+  (_, syntax') <- asCResT $ importSyntax imp
+  case isWriteBack syntax' of
+    Just writeBack -> lift (writeBack imp prgm) >>= either fail return
+    Nothing -> do
+      src <- asCResT $ unparseImport imp prgm
+      case impDisp imp of
+        Just file -> return [(file, src)]
+        Nothing   -> fail $ printf "No file path available for %s" (show imp)
+
+-- | Writes a new value where the syntax of a page puts values like it, beside that page
+-- ('Syntax.Ct.Prgm.isPlace'): as every file that writes. A syntax with nowhere of its own to put one
+-- is reported rather than given the value to write into the page itself.
+placeImport :: FileImport -> RawExpr () -> CResT IO [(FilePath, String)]
+placeImport imp expr = do
+  (syntax, syntax') <- asCResT $ importSyntax imp
+  case isPlace syntax' of
+    Just place -> lift (place imp expr) >>= either fail return
+    Nothing -> fail $ printf "A page read as %s has nowhere to create a value beside %s" (show syntax) (show $ impRaw imp)
+
 -- | The directory a relative link written in a page's documentation resolves against.
 --
 -- Asked of the syntax which read the page, as 'unparseImport' asks it how to write the page back and

@@ -67,7 +67,7 @@ data RssReader = RssReader {
 -- No reversion: a feed is somebody else's writing and there is nothing to write a page of it back
 -- to, so 'Syntax.Parsers.unparseImport' reports that rather than saving it as something else.
 rssSyntax :: ImportSyntax
-rssSyntax = ImportSyntax (newRssReaderWith fetchFeed) (const Nothing) rssLinkDir Nothing
+rssSyntax = ImportSyntax (newRssReaderWith fetchFeed) (const Nothing) rssLinkDir Nothing Nothing Nothing
 
 -- | The reader one read reads feeds with, asking them however it is told to.
 newRssReaderWith :: (String -> IO (Maybe String)) -> ReadEnv -> IO ImportReader

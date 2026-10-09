@@ -82,7 +82,7 @@ findExistingPath (p:ps) = do
 -- read can answer — see 'isSupportedFileExtension'. The comment on 'Syntax.Ct.Prgm.ReadEnv' names
 -- this as the reason the importers are carried there.
 dirSyntax :: ImportSyntax
-dirSyntax = ImportSyntax dirReader (const Nothing) importedLinkDir Nothing
+dirSyntax = ImportSyntax dirReader (const Nothing) importedLinkDir Nothing Nothing Nothing
   where
     dirReader env = return $ readyReader (withDirPath $ dirPreload $ reImporters env) (withDirPath dirParse) (return ())
 

@@ -128,7 +128,7 @@ readNativeImport e = do
 -- an importer says only how to read. A @.py@ page could not be written back before this either
 -- ('Syntax.Python.Parser.pySyntax' answers nothing), so nothing is lost that was there.
 nativeSyntax :: ImportSyntax
-nativeSyntax = ImportSyntax reader (const Nothing) importedLinkDir Nothing
+nativeSyntax = ImportSyntax reader (const Nothing) importedLinkDir Nothing Nothing Nothing
   where
     reader env = return ImportReader{
       irPreload = nativePreload env,

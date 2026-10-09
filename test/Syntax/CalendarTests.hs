@@ -190,7 +190,10 @@ plannedDays = sort [
   (Just "1:30pm - 2:15pm Review the draft #task", Just "2026-01-03"),
   (Just "Read the paper", Just "2026-01-03"),
   (Just "16:00 Call about the paper", Just "2026-01-03"),
+  (Just "17:00 - 17:30 Write up the call", Just "2026-01-03"),
+  (Just "12:00 - 13:00 Lunch", Just "2026-01-03"),
   (Just "08:00 - 09:00 Go to the gym #task", Just "2026-01-04"),
+  (Just "15:00 - 16:00 Dentist \x23F3 2026-01-04", Just "2026-01-04"),
   (Just "10:00 Pick up the parcel [scheduled:: 2026-01-05]", Just "2026-01-05"),
   (Just "10:00 Sometime, at ten", Nothing)
                    ]
@@ -221,6 +224,9 @@ testPlannerCalendaring = withResource (ctssBaseFiles testCtssConfig [plannerPage
       (Just "1:30pm - 2:15pm Review the draft #task", Just ("13:30", "14:15")),
       (Just "Read the paper", Nothing),
       (Just "16:00 Call about the paper", Just ("16:00", "16:45")),
+      (Just "17:00 - 17:30 Write up the call", Just ("17:00", "17:30")),
+      (Just "12:00 - 13:00 Lunch", Just ("12:00", "13:00")),
+      (Just "15:00 - 16:00 Dentist \x23F3 2026-01-04", Just ("15:00", "16:00")),
       (Just "08:00 - 09:00 Go to the gym #task", Just ("08:00", "09:00")),
       (Just "10:00 Pick up the parcel [scheduled:: 2026-01-05]", Just ("10:00", "10:45")),
       (Just "10:00 Sometime, at ten", Just ("10:00", "10:45"))

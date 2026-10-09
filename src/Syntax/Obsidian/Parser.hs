@@ -13,7 +13,7 @@
 module Syntax.Obsidian.Parser where
 
 import           Control.Applicative      ((<|>))
-import           Control.Monad            (forM_, guard)
+import           Control.Monad            (forM, forM_, guard)
 import           CtConstants
 import           Data.Aeson               (object, (.=))
 import qualified Data.Aeson               as A
@@ -26,23 +26,24 @@ import           Data.IORef               (IORef, modifyIORef', newIORef,
 import           Data.List                (dropWhileEnd, intercalate, isInfixOf,
                                            isPrefixOf, isSuffixOf, nub,
                                            stripPrefix)
-import           Data.Maybe               (fromMaybe, isNothing, listToMaybe,
-                                           mapMaybe, maybeToList)
+import           Data.Maybe               (fromMaybe, isJust, isNothing,
+                                           listToMaybe, mapMaybe, maybeToList)
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TLE
-import           Data.Time.Calendar       (Day, toGregorian)
+import           Data.Time.Calendar       (Day, fromGregorianValid, toGregorian)
 import           Semantics.Prgm
-import           Semantics.Types          (ArgName, Constant (CStr),
+import           Semantics.Types          (ArgName, Constant (CInt, CStr),
                                            makeAbsoluteName, mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           Syntax.Obsidian.Cache    (ObsidianCache, cachedNoteLinks,
                                            flushObsidianCache, keepOnlyNotes,
                                            newObsidianCache, recordNoteLinks)
-import           Syntax.Obsidian.Planner  (Minutes, WrittenBlock (..), noteDay,
-                                           resolveEnd, scheduledDay,
-                                           timeRangeAtStart)
+import           Syntax.Obsidian.Planner  (Minutes, WrittenBlock (..),
+                                           dailyNotePath, noteDay, resolveEnd,
+                                           scheduledDay, timeRangeAtStart,
+                                           withBlock, withScheduledDay)
 import           Syntax.Obsidian.Settings (PlannerSettings (..),
                                            StatusKind (..), TaskSettings,
                                            TaskStatus (..),
@@ -84,7 +85,7 @@ obsidianConfigDir = ".obsidian"
 -- Only a note is written back. A vault is a directory, whose notes are pages of their own and are
 -- each written back as themselves, so it has no source text of its own for a reversion to produce.
 obsidianSyntax :: ImportSyntax
-obsidianSyntax = ImportSyntax newObsidianReader unparseNote noteLinkDir Nothing
+obsidianSyntax = ImportSyntax newObsidianReader unparseNote noteLinkDir Nothing (Just writeNoteBack) (Just placeNew)
 
 -- | Where a relative link written in a note resolves: the vault holding it.
 --
@@ -330,7 +331,9 @@ noteReads vault note linked = ReadFile note : map ReadFile (nub $ taskSettingsFi
 notePageStatement :: Maybe TaskSettings -> Maybe NotePlanner -> (String -> Maybe String) -> String -> String -> RawStatementTree RawExpr ()
 notePageStatement settings planner href title contents = RawStatementTree (RawDeclStatement page) (concatMap (partStatements settings planner' href) parts)
   where
-    parts = noteParts contents
+    -- A bullet writing a time is an event only to a vault that runs the Day Planner. Anywhere else it
+    -- is writing of the note, and left as the writing it is.
+    parts = notePartsWith (isJust planner) contents
     planner' = fmap (\p -> p{npStarts = noteBlockStarts parts}) planner
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
@@ -347,8 +350,10 @@ data NotePlanner = NotePlanner {
 noteBlockStarts :: [NotePart] -> [Minutes]
 noteBlockStarts = concatMap aux
   where
-    aux (NoteTask _ says under) = [wbStart block | Just (block, _) <- [timeRangeAtStart (dropWhile isSpace says)]] ++ noteBlockStarts under
-    aux _ = []
+    aux (NoteTask _ says under) = startOf says ++ noteBlockStarts under
+    aux (NoteEvent says under)  = startOf says ++ noteBlockStarts under
+    aux _                       = []
+    startOf says = [wbStart block | Just (block, _) <- [timeRangeAtStart (dropWhile isSpace says)]]
 
 -- | What the Day Planner reads one checkbox as: the block of the day it writes, given the end the
 -- vault gives it, and the day it is planned for — the day of the daily note it is written in, or
@@ -389,6 +394,19 @@ partStatement :: Maybe TaskSettings -> Maybe NotePlanner -> (String -> Maybe Str
 partStatement _ _ href (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment (embedWikiLinks href writing))) []
 partStatement _ _ _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
 partStatement _ _ _ (NoteQuery query) = RawStatementTree (RawAnnot (rawTasksQuery query)) []
+-- A bullet the Day Planner reads a block off is an event, declared where it was written as a task is.
+-- What it has no block for it is no event of — a vault not running the plugin, which 'noteParts'
+-- never breaks one out for anyway — and it is written as the writing it was.
+partStatement settings planner href (NoteEvent says under) = case plannedReading planner says of
+  (Just time, day) -> RawStatementTree (RawDeclStatement event) (map (partStatement settings planner href) under)
+    where
+      event = RawObjArr (Just eventExpr) TypeObj Nothing [] Nothing Nothing
+      eventExpr = rawVal noteEventPath `applyRawArgs` [
+        (Just $ partialKey (mkName noteTaskContents), rawStr (trim says)),
+        (Just $ partialKey (mkName noteTaskTime), rawTimeRange time),
+        (Just $ partialKey (mkName noteTaskPlannedDay), rawMaybe rawDate day)
+                                                      ]
+  (Nothing, _) -> partStatement settings planner href (NoteWriting (unlines (writeNotePart (NoteEvent says under))))
 partStatement settings planner href (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings planner href) under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
@@ -536,11 +554,209 @@ rawTasksQuery query = rawVal noteTasksAnnot `applyRawArgs` [(Just $ partialKey (
 -- A program which is not a note is written as nothing rather than as an empty note, so a page the
 -- reversion does not recognise is never written over.
 unparseNote :: RawPrgm () -> Maybe String
-unparseNote (RawPrgm _ [RawStatementTree (RawDeclStatement page) parts])
+unparseNote = fmap fst . unparseNoteWith Nothing
+
+-- | What writing a note back needs to know of where it is written, past the program: what its vault
+-- plans days by, and the day the note is the daily note of if it is one.
+data NoteWriting = NoteWriting' {
+  nwSettings :: PlannerSettings,
+  nwDay      :: Maybe Day
+                                }
+
+-- | A part of a note moved onto another day, which is written into that day's daily note rather
+-- than into the note it was written in.
+type Relocation = (Day, NotePart)
+
+-- | 'unparseNote', in a vault running the Day Planner: a task or an event whose block of the day or
+-- day it is planned for was changed is written back with its line changed to say so, as the plugin
+-- writes a block it moved.
+--
+-- What changed is told apart from what did not by reading each line as it was written, under the
+-- vault's settings, and comparing that with the fields the part is declared with. A part whose fields
+-- say what its line says — every part an edit did not touch, and every one written back without
+-- those fields at all — is written exactly as it was. So a block written without an end, or in the
+-- other clock, is left as it was written until it is moved, and is written the plugin's way then.
+--
+-- A part planned for another day in a daily note is not written here at all. It belongs in that
+-- day's note, so it is answered as a relocation for 'writeNoteBack' to write there, with everything
+-- written under it. A part elsewhere is scheduled for its new day on its line.
+unparseNoteWith :: Maybe NoteWriting -> RawPrgm () -> Maybe (String, [Relocation])
+unparseNoteWith writing (RawPrgm _ [RawStatementTree (RawDeclStatement page) parts])
   | Just pageExpr <- roaObj page, named notePagePath pageExpr = do
-      parts' <- mapM notePart $ filter (not . derivedStatement) parts
-      return $ unlines $ writeNoteParts parts'
-unparseNote _ = Nothing
+      let parts' = filter (not . derivedStatement) parts
+      -- The starts of the blocks as the note writes them now, which is what a block written without
+      -- an end is read against.
+      starts <- noteBlockStarts <$> mapM notePart parts'
+      placed <- mapM (placedPart writing starts) parts'
+      return (unlines $ writeNoteParts (concatMap snd placed), concatMap fst placed)
+unparseNoteWith _ _ = Nothing
+
+-- | A statement of a note's page as the part it is written back as, changed as its fields say, or
+-- moved to another day: as nothing here and a relocation, with whatever under it moved as well.
+placedPart :: Maybe NoteWriting -> [Minutes] -> RawStatementTree RawExpr () -> Maybe ([Relocation], [NotePart])
+placedPart writing starts statement@(RawStatementTree (RawDeclStatement decl) under) = do
+  part <- notePart statement
+  placedUnder <- mapM (placedPart writing starts) under
+  let moved = concatMap fst placedUnder
+  let part' = withUnder (concatMap snd placedUnder) part
+  case (writing, roaObj decl, partSays part') of
+    (Just writing', Just expr, Just says) -> do
+      (says', day') <- replanned writing' starts expr says
+      let rewritten = withSays says' part'
+      return $ case day' of
+        Just day -> ((day, rewritten) : moved, [])
+        Nothing  -> (moved, [rewritten])
+    _ -> return (moved, [part'])
+  where
+    withUnder u (NoteTask symbol says _) = NoteTask symbol says u
+    withUnder u (NoteEvent says _)       = NoteEvent says u
+    withUnder _ p                        = p
+    withSays says (NoteTask symbol _ u) = NoteTask symbol says u
+    withSays says (NoteEvent _ u)       = NoteEvent says u
+    withSays _ p                        = p
+    partSays (NoteTask _ says _) = Just says
+    partSays (NoteEvent says _)  = Just says
+    partSays _                   = Nothing
+placedPart _ _ statement = ([], ) . return <$> notePart statement
+
+-- | What a task or an event's line says once its fields are written into it, and the day it is to
+-- be moved to where it is moved out of its daily note.
+--
+-- A field the declaration does not give is a field it does not change. A field it gives that
+-- cannot be read as one is a declaration that cannot be written back, which is answered as such
+-- rather than written as though the field were absent.
+replanned :: NoteWriting -> [Minutes] -> RawExpr () -> String -> Maybe (String, Maybe Day)
+replanned NoteWriting'{nwSettings, nwDay} starts expr says = do
+  let (readTime, readDay) = plannedReading (Just (NotePlanner nwSettings nwDay starts)) says
+  time <- case rawArg noteTaskTime expr of
+    Nothing -> return readTime
+    Just t | named noteEventPath expr -> Just <$> rawTimeRangeOf t
+           | otherwise -> rawMaybeOf rawTimeRangeOf t
+  day <- maybe (return readDay) (rawMaybeOf rawDateOf) (rawArg noteTaskPlannedDay expr)
+  let says' = if time == readTime then says else withBlock (pstTimestampFormat nwSettings) time says
+  case (day == readDay, nwDay, day) of
+    (True, _, _)                -> return (says', Nothing)
+    -- Out of its daily note, and onto the note of the day it is now planned for.
+    (False, Just _, Just day')  -> return (says', Just day')
+    (False, Nothing, Just day') -> return (withScheduledDay day' says', Nothing)
+    -- Planned for no day is not something a moved block is, and nothing says which day to take the
+    -- line off.
+    (False, _, Nothing)         -> Nothing
+
+-- | A block of the day, out of the @\/Data\/Time\/TimeRange@ it is declared as: the reversion of
+-- 'rawTimeRange'.
+rawTimeRangeOf :: RawExpr () -> Maybe (Minutes, Minutes)
+rawTimeRangeOf e = do
+  guard $ named timeRangePath e
+  (,) <$> (minutesOf =<< rawArg timeRangeStart e) <*> (minutesOf =<< rawArg timeRangeEnd e)
+  where
+    minutesOf t = do
+      guard $ named timeOfDayPath t
+      hour <- rawArgInt timeOfDayHour t
+      minute <- rawArgInt timeOfDayMinute t
+      return $ fromInteger (hour * 60 + minute)
+
+-- | A day, out of the @\/Data\/Time\/Date@ it is declared as: the reversion of 'rawDate'.
+rawDateOf :: RawExpr () -> Maybe Day
+rawDateOf e = do
+  guard $ named timeDatePath e
+  year <- rawArgInt timeDateYear e
+  month <- rawArgInt timeDateMonth e
+  day <- rawArgInt timeDateDay e
+  fromGregorianValid year (fromInteger month) (fromInteger day)
+
+-- | A value which may be absent, out of the arm of @\/Data\/Maybe@ it is declared as: the reversion
+-- of 'rawMaybe'.
+rawMaybeOf :: (RawExpr () -> Maybe a) -> RawExpr () -> Maybe (Maybe a)
+rawMaybeOf readValue e
+  | named ctMaybeNothing e = Just Nothing
+  | named ctMaybeSome e = Just <$> (readValue =<< rawArg ctMaybeSomeValue e)
+  | otherwise = Nothing
+
+-- | The integer a named argument is given, if it is given one written out as an integer.
+rawArgInt :: String -> RawExpr () -> Maybe Integer
+rawArgInt name e = case rawArg name e of
+  Just (RawCExpr _ (CInt n)) -> Just n
+  _                          -> Nothing
+
+-- | Writes a note back as every file it is written into: the note itself, and the daily note of
+-- every day a part of it was moved to ('unparseNoteWith').
+--
+-- The vault's settings are read here, as writing back happens outside any read and has no read's
+-- reader to ask. A note in no vault running the Day Planner is written as 'unparseNote' writes it.
+--
+-- A moved part goes under the planner's heading of the day's note, after what is listed there
+-- already, as the plugin puts one; the heading is written where the note has none, and the note
+-- where the vault has none. Two parts moved to one day are written into it together, in the order
+-- the note held them.
+writeNoteBack :: FileImport -> RawPrgm () -> IO (Either String [(FilePath, String)])
+writeNoteBack imp prgm = case impDisp imp of
+  Nothing -> return $ Left $ printf "No file path available for %s" (show imp)
+  Just note -> do
+    vault <- noteVault note
+    settings <- maybe (return Nothing) readPlannerSettings vault
+    let writing = (\s -> NoteWriting' s (noteDay (pstDailyNotes s) (fromMaybe note vault) note)) <$> settings
+    case (unparseNoteWith writing prgm, vault, settings) of
+      (Nothing, _, _) -> return $ Left $ printf "The page %s can not be written back as a note" (show $ impRaw imp)
+      (Just (written, []), _, _) -> return $ Right [(note, written)]
+      (Just (written, moved), Just vault', Just settings') -> do
+        others <- forM (nub $ map fst moved) $ \day -> onDay settings' vault' day [part | (d, part) <- moved, d == day]
+        return $ Right $ (note, written) : others
+      (Just _, _, _) -> return $ Left $ printf "%s moved a block to another day outside a vault running the Day Planner" (show $ impRaw imp)
+
+-- | The daily note of a day, with parts written into it under the planner's heading: what it is
+-- written as, and where.
+onDay :: PlannerSettings -> FilePath -> Day -> [NotePart] -> IO (FilePath, String)
+onDay settings vault day parts = do
+  let path = dailyNotePath (pstDailyNotes settings) vault day
+  there <- doesFileExist path
+  before <- if there then readFile path else return ""
+  -- Forced before it is written over, as it is read lazily from the file being written.
+  length before `seq` return (path, placedUnderHeading (pstPlannerHeading settings) parts before)
+
+-- | Writes a new task or event into the vault a note is in: into the daily note of the day it is
+-- planned for, under the planner's heading, as the plugin writes a block created on its timeline.
+--
+-- It is written as a line of that note would be once moved there, by the reading that writes a moved
+-- line back: what it says, with its block written in front. A value planned for no day, or a vault
+-- not running the Day Planner, has no daily note for it to go into, and is reported rather than put
+-- into the note it was asked beside.
+placeNew :: FileImport -> RawExpr () -> IO (Either String [(FilePath, String)])
+placeNew imp expr = case impDisp imp of
+  Nothing -> return $ Left $ printf "No file path available for %s" (show imp)
+  Just page -> do
+    vault <- noteVault page
+    settings <- maybe (return Nothing) readPlannerSettings vault
+    case (vault, settings, rawMaybeOf rawDateOf =<< rawArg noteTaskPlannedDay expr) of
+      (Nothing, _, _) -> return $ Left $ printf "%s is in no vault to write a new block into" page
+      (_, Nothing, _) -> return $ Left $ printf "The vault %s is in does not run the Day Planner, so it has no day to write a new block into" page
+      (Just vault', Just settings', Just (Just day)) -> do
+        let statement = RawStatementTree (RawDeclStatement (RawObjArr (Just expr) TypeObj Nothing [] Nothing Nothing)) []
+        case placedPart (Just $ NoteWriting' settings' (Just day)) [] statement of
+          Just ([], parts) -> Right . return <$> onDay settings' vault' day parts
+          _ -> return $ Left $ printf "%s can not be written as a line of a note" (show expr)
+      _ -> return $ Left "A new block is planned for no day, so it has no daily note to go into"
+
+-- | A note with parts written into it under a heading: after the last thing written under the
+-- heading where the note has it, and under a new heading at the end of the note where it has not.
+--
+-- The heading is found at any level, as the plugin finds it, and what is under it runs until the
+-- next heading of the same level or above.
+placedUnderHeading :: String -> [NotePart] -> String -> String
+placedUnderHeading heading parts note = unlines $ case break isPlannerHeading ls of
+  (before, h : after) ->
+    let level = fromMaybe 1 (headingLevel h)
+        (section, rest) = break (maybe False (<= level) . headingLevel) after
+        (blankEnd, content) = span isBlank (reverse section)
+    in before ++ [h] ++ (if null content then [""] else reverse content) ++ added ++ reverse blankEnd ++ rest
+  (_, []) -> dropWhileEnd isBlank ls ++ ["" | not (all isBlank ls)] ++ ["# " ++ heading, ""] ++ added
+  where
+    ls = lines note
+    added = writeNoteParts parts
+    isPlannerHeading l = isJust (headingLevel l) && trim (dropWhile (== '#') l) == heading
+    headingLevel l = case span (== '#') l of
+      (hashes@(_:_), ' ':_) | length hashes <= 6 -> Just (length hashes)
+      _                                          -> Nothing
 
 -- | Whether a statement of a note's page was derived from the note rather than read out of it.
 --
@@ -577,6 +793,10 @@ notePart (RawStatementTree (RawDeclStatement task) under)
       says <- rawArgStr noteTaskContents taskExpr
       symbol <- rawArgStr noteTaskSymbol taskExpr
       NoteTask symbol says <$> mapM notePart under
+  -- An event is written back from the line it was read as, as a task is.
+  | Just eventExpr <- roaObj task, named noteEventPath eventExpr = do
+      says <- rawArgStr noteTaskContents eventExpr
+      NoteEvent says <$> mapM notePart under
 notePart _ = Nothing
 
 -- | Whether an expression is the value of the given name.
@@ -614,6 +834,11 @@ writeNoteParts :: [NotePart] -> [String]
 writeNoteParts parts = concat $ zipWith separated (Nothing : map Just parts) parts
   where
     separated before part = ["" | maybe False (apartFrom part) before] ++ writeNotePart part
+    -- Writing which is itself items of the list a task or an event is an item of goes on with that
+    -- list rather than being set apart from it: a bullet written beside timed ones is one list with
+    -- them, and a blank line between would break it in two.
+    apartFrom (NoteWriting writing) before | listItem before, startsItem writing = False
+    apartFrom part (NoteWriting writing) | listItem part, endsItem writing = False
     apartFrom NoteWriting{} _     = True
     apartFrom _ NoteWriting{}     = True
     -- The properties are a block of their own and the note begins after them, which is how
@@ -624,6 +849,12 @@ writeNoteParts parts = concat $ zipWith separated (Nothing : map Just parts) par
     apartFrom NoteQuery{} _       = True
     apartFrom _ NoteQuery{}       = True
     apartFrom _ _                 = False
+    listItem NoteTask{}  = True
+    listItem NoteEvent{} = True
+    listItem _           = False
+    startsItem = maybe False isItem . listToMaybe . lines
+    endsItem = maybe False isItem . listToMaybe . reverse . lines
+    isItem = isJust . listMarker . dropWhile isSpace
 
 -- | The lines one part of a note is written as: its writing as it was found, or its checkbox
 -- followed by whatever is written inside it, indented under it.
@@ -643,9 +874,15 @@ writeNotePart (NoteQuery query) = (marks ++ noteTasksInfoString) : body ++ [mark
 writeNotePart (NoteTask symbol says under) = dropWhileEnd isSpace (box ++ says) : map indentLine (writeNoteParts under)
   where
     box = "- [" ++ symbol ++ "] "
-    -- A blank line is written with nothing on it rather than with the indentation of the block it
-    -- sits in, so that writing a note back does not leave trailing spaces through it.
-    indentLine l = if isBlank l then l else "  " ++ l
+-- An event is written with a @-@ however its bullet was written, as a checkbox is.
+writeNotePart (NoteEvent says under) = dropWhileEnd isSpace ("- " ++ says) : map indentLine (writeNoteParts under)
+
+-- | A line written under a list item, indented under it.
+--
+-- A blank line is written with nothing on it rather than with the indentation of the block it sits
+-- in, so that writing a note back does not leave trailing spaces through it.
+indentLine :: String -> String
+indentLine l = if isBlank l then l else "  " ++ l
 
 -- | What a note is written as: the writing of it, and the tasks that break the writing.
 data NotePart
@@ -659,6 +896,12 @@ data NotePart
   -- @[-]@ for one dropped, and markdown knows neither. What the character means is worked out where
   -- the vault's settings are known ('partStatement'); what is written here is what was written.
   | NoteTask String String [NotePart]
+  -- | A bullet the Obsidian Day Planner reads a block of the day off: what the line says after its
+  -- bullet, which starts with the time it writes, and what is written under it, as for a task.
+  --
+  -- Only read where the vault runs the plugin ('notePartsWith'). It carries no bullet character, as
+  -- a task carries none: an item is written back with a @-@ however it was written.
+  | NoteEvent String [NotePart]
   -- | The properties a note opens with, as the lines they are written between the @---@ as. The
   -- delimiters are the shape of the block rather than anything it says, so they are written again
   -- rather than carried; everything between them is carried exactly as it was found, because the
@@ -691,9 +934,16 @@ data NotePart
 -- note opens with them at most once, and a @---@ written anywhere else — under a checkbox included
 -- — is a rule of the writing rather than the edge of a block of properties.
 noteParts :: String -> [NotePart]
-noteParts contents = case splitFrontmatter (lines contents) of
-  Just (properties, rest) -> NoteFrontmatter (intercalate "\n" properties) : noteLineParts rest
-  Nothing                 -> noteLineParts (lines contents)
+noteParts = notePartsWith False
+
+-- | 'noteParts', breaking the note at the bullets the Day Planner reads a block of the day off as
+-- well where it is told to. That is the vault's to say rather than markdown's — a bullet writing a
+-- time is writing of the note to a vault not running the plugin — so it is told rather than looked
+-- at here.
+notePartsWith :: Bool -> String -> [NotePart]
+notePartsWith readsEvents contents = case splitFrontmatter (lines contents) of
+  Just (properties, rest) -> NoteFrontmatter (intercalate "\n" properties) : noteLineParts readsEvents rest
+  Nothing                 -> noteLineParts readsEvents (lines contents)
 
 -- | The properties a note opens with and the note written after them, if it opens with a block of
 -- them at all.
@@ -793,8 +1043,8 @@ webAddress :: String -> Maybe String
 webAddress v = if "://" `isInfixOf` v then Just v else Nothing
 
 -- | 'noteParts' over lines, which is what the writing under a checkbox is already broken into.
-noteLineParts :: [String] -> [NotePart]
-noteLineParts = go Nothing []
+noteLineParts :: Bool -> [String] -> [NotePart]
+noteLineParts readsEvents = go Nothing []
   where
     go _ acc [] = writingPart acc
     go Nothing acc (l:ls)
@@ -803,7 +1053,9 @@ noteLineParts = go Nothing []
           writingPart acc ++ (NoteQuery (intercalate "\n" body) : go Nothing [] ls')
       | Just (fence, _) <- fenceOpen l = go (Just fence) (l:acc) ls
       | Just (symbol, says) <- taskLine l = let (under, fence', ls') = taskWriting (indentation l) Nothing ls in
-          writingPart acc ++ (NoteTask symbol says (noteLineParts under) : go fence' [] ls')
+          writingPart acc ++ (NoteTask symbol says (noteLineParts readsEvents under) : go fence' [] ls')
+      | readsEvents, Just says <- eventLine l = let (under, fence', ls') = taskWriting (indentation l) Nothing ls in
+          writingPart acc ++ (NoteEvent says (noteLineParts readsEvents under) : go fence' [] ls')
     go fence acc (l:ls)
       | Just open <- fence, fenceClose open l = go Nothing (l:acc) ls
       | otherwise = go fence (l:acc) ls
@@ -870,6 +1122,15 @@ taskLine line = do
   case afterMarker of
     ('[':box:']':rest) | box /= ']', null rest || isSpace (head rest) -> Just ([box], drop 1 rest)
     _ -> Nothing
+
+-- | What a bullet says after its bullet, if it is one the Day Planner reads a block of the day off:
+-- a list item which is no checkbox and whose writing starts with a time.
+eventLine :: String -> Maybe String
+eventLine line = do
+  guard $ isNothing $ taskLine line
+  says <- listMarker $ dropWhile isSpace line
+  _ <- timeRangeAtStart says
+  return says
 
 -- | What a list item is written after, if a line begins one: a bullet or a number, and the space it
 -- is followed by.

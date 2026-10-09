@@ -163,6 +163,22 @@ replaceRawExpr metaID expr (RawPrgm imports statementTrees) = case unzip $ map r
 
     names e = getMetaId (getExprMeta e) == metaID
 
+-- | Declares an expression right after the one a meta id names, as a statement of its own beside
+-- it: a copy of a task written under the task it was copied from.
+--
+-- The new statement is declared as the named one is, with nothing written under it. An id which
+-- names no declaration is answered with nothing, as 'replaceRawExpr' answers one.
+insertRawExprAfter :: UUID -> RawExpr () -> RawPrgm () -> Maybe (RawPrgm ())
+insertRawExprAfter metaID expr (RawPrgm imports statementTrees) = case insertIn statementTrees of
+  (statementTrees', True) -> Just (RawPrgm imports statementTrees')
+  _                       -> Nothing
+  where
+    insertIn trees = let (trees', found) = unzip (map insertTree trees) in (concat trees', or found)
+
+    insertTree tree@(RawStatementTree (RawDeclStatement roa@RawObjArr{roaObj=Just o}) _)
+      | getMetaId (getExprMeta o) == metaID = ([tree, RawStatementTree (RawDeclStatement roa{roaObj=Just expr}) []], True)
+    insertTree (RawStatementTree s tree) = let (tree', found) = insertIn tree in ([RawStatementTree s tree'], found)
+
 -- | The ids of the expressions a page declares or annotates, in the order the page writes them.
 --
 -- The same statements 'replaceRawExpr' can replace, walked the same way, so an id here is one that

@@ -710,7 +710,24 @@ data ImportSyntax = ImportSyntax {
   -- for the reason 'isUnparse' and 'isLinkDir' are: which page a syntax's import means is the
   -- syntax's own business, and a second table beside the table of syntaxes could drift out of step
   -- with it.
-  isPagePath :: Maybe FilePath
+  isPagePath :: Maybe FilePath,
+  -- | Writes a page back where writing it back is more than 'isUnparse' can say: as every file the
+  -- write reaches, the page's own first, or why it cannot be written. 'Nothing' for a syntax whose
+  -- reversion is the whole of it, which is every syntax but one.
+  --
+  -- A reversion says what one page's file holds, and only out of the program. Writing a note back
+  -- can need more than that: what its vault is set to, which says how a line moved to another time
+  -- is written, and the other notes a line moved to another day is written into. So it is asked
+  -- with the page it writes and in 'IO', and answers with each file it writes.
+  isWriteBack :: Maybe (FileImport -> RawPrgm () -> IO (Either String [(FilePath, String)])),
+  -- | Writes a new value where values like it are written, beside a page of this syntax: as every
+  -- file that writes, or why it cannot be written. 'Nothing' for a syntax with nowhere of its own to
+  -- put one, which is every syntax but one.
+  --
+  -- Where a value goes can be the syntax's to say rather than the caller's. A block of the day
+  -- created in a day planner goes into the daily note of its day, which the caller cannot name and
+  -- which may not be written yet; the page is only which vault it goes into.
+  isPlace     :: Maybe (FileImport -> RawExpr () -> IO (Either String [(FilePath, String)]))
                                  }
 
 -- | One read's reading of one syntax, holding whatever that syntax keeps for the length of a read.
@@ -757,7 +774,7 @@ eagerPreload parsed@ParsedImport{piPrgm=RawPrgm imports _, piReads} = PreloadImp
 -- | A syntax which needs nothing of a read at all: its pages are read out of the files they name
 -- and out of nothing else, so the reader made for each read is the same reader every time.
 statelessSyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> (RawPrgm () -> Maybe String) -> ImportSyntax
-statelessSyntax preload parse unparse = ImportSyntax (const $ return $ readyReader preload parse (return ())) unparse importedLinkDir Nothing
+statelessSyntax preload parse unparse = ImportSyntax (const $ return $ readyReader preload parse (return ())) unparse importedLinkDir Nothing Nothing Nothing
 
 -- | Where a relative link resolves for a syntax whose pages are read from the directory they sit in,
 -- which is the directory they sit in. Every syntax but the one which reads a page out of a

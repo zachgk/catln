@@ -33,8 +33,8 @@ import           Data.Hashable           (hash)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.IORef              (modifyIORef', newIORef, readIORef)
-import           Data.List               (elemIndex, intercalate, partition,
-                                          sortOn)
+import           Data.List               (elemIndex, intercalate, isPrefixOf,
+                                          partition, sortOn)
 import           Data.Maybe
 import           Data.Time.Calendar      (Day)
 import           Data.Time.Clock         (getCurrentTime, utctDay)
@@ -80,7 +80,9 @@ import           Syntax.Ct.Prgm
 import           Syntax.InferImport      (findImportPath)
 import           Syntax.Native.Parser    (isNativeImport)
 import           Syntax.Parsers
-import           System.FilePath         (takeDirectory)
+import           System.Directory        (createDirectoryIfMissing)
+import           System.FilePath         (addTrailingPathSeparator,
+                                          takeDirectory)
 import           Text.Megaparsec         (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms, typecheckPrgmsWith)
@@ -1235,10 +1237,53 @@ getRawPrgmOf ctss@(CTSS ssmv _) prgmName = do
 -- The reversion belongs to the parser which read the page, so a page whose syntax cannot be written
 -- back fails here rather than being written as something else. What it produces is the page's new
 -- source, so the write itself is 'setSource' and everything that guards a write guards this one too.
+--
+-- Writing a page back may reach other files than its own: a line of a daily note moved to another
+-- day is written into that day's note ('Syntax.Ct.Prgm.isWriteBack'). Those are written first, so
+-- that the one read of the page after its own write finds them written, and every page they are
+-- read as or listed by is read again rather than answered from what it said before — including a
+-- note written where none was, which is new to the vault listing it.
 setRawPrgm :: CTSS -> FileImport -> PPrgm -> CResT IO ()
 setRawPrgm ctss prgmName prgm = do
-  src <- asCResT $ unparseImport prgmName prgm
-  setSource ctss prgmName src
+  written <- writeBackImport prgmName prgm
+  case written of
+    (file, src) : others | Just file == impDisp prgmName -> do
+      lift $ ctssWriteFiles ctss others
+      setSource ctss prgmName src
+    _ -> fail $ printf "Writing %s back did not write it first" (show $ impRaw prgmName)
+
+-- | Writes a new value where the syntax of a page puts values like it ('placeImport'), and reads
+-- the pages again so that it is held.
+placeRawExpr :: CTSS -> FileImport -> RawExpr () -> CResT IO ()
+placeRawExpr ctss prgmName expr = do
+  written <- placeImport prgmName expr
+  lift $ ctssWriteFiles ctss written
+  void $ lift $ ctssReadOf ctss [prgmName]
+
+-- | Writes files a write of a page reached beyond the page itself, and marks every page they reach
+-- to be read again ('ctssStaleWritten'). Read again by whatever reads next, which for a write is the
+-- read that follows it.
+ctssWriteFiles :: CTSS -> [(FilePath, String)] -> IO ()
+ctssWriteFiles ctss files = do
+  forM_ files $ \(file, src) -> do
+    createDirectoryIfMissing True (takeDirectory file)
+    writeFile file src
+  ctssStaleWritten ctss (map fst files)
+
+-- | Marks every page a write of these files reaches to be read again: each page read from one of
+-- them, and each page listing the directory one is in — which is how a page learns of a file written
+-- where there was none.
+ctssStaleWritten :: CTSS -> [FilePath] -> IO ()
+ctssStaleWritten _ [] = return ()
+ctssStaleWritten (CTSS ssmv _) paths = modifyMVar_ ssmv $ \ctssdat ->
+  return $ ctssMapPages forget ctssdat
+  where
+    dirs = map takeDirectory paths
+    reached k = case impDisp k of
+      Just disp -> disp `elem` paths || any (\dir -> disp == dir || (addTrailingPathSeparator disp `isPrefixOf` dir)) dirs
+      Nothing   -> False
+    forget k ssf | reached k = ssf{ssfRead = (ssfRead ssf){rpReads = Nothing}}
+                 | otherwise = ssf
 
 -- | Overwrite the source file backing a page, then re-read so the change is picked up.
 -- Only pages already in the service graph with source text can be written, which confines

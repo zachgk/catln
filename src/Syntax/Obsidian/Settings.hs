@@ -37,7 +37,7 @@ import           Data.Aeson        (FromJSON (parseJSON), Value, withObject,
                                     withText, (.!=), (.:?))
 import qualified Data.Aeson        as A
 import           Data.Aeson.Types  (Parser)
-import           Data.List         (find)
+import           Data.List         (find, stripPrefix)
 import qualified Data.Text         as T
 import           System.Directory  (doesFileExist)
 import           System.FilePath   ((</>))
@@ -246,16 +246,20 @@ plannerSettingsFiles vault = [communityPluginsFile vault, pluginDataFile vault d
 
 -- | What one vault is set to, of the settings which decide what a line of a planned day says.
 --
--- The plugin keeps much more — colours, what its timeline shows, the calendars it subscribes to. A
--- time block written without an end is the one place a setting changes what a line SAYS, so the two
--- settings deciding that end are read and nothing else of the plugin's is.
+-- The plugin keeps much more — colours, what its timeline shows, the calendars it subscribes to. What
+-- is read is what decides what a line says and how a line is written: the two settings deciding the
+-- end of a block written without one, and the two the plugin writes a moved block back with.
 data PlannerSettings = PlannerSettings {
   -- | How long a block written without an end lasts.
   pstDefaultDuration :: Int,
   -- | Whether a block written without an end lasts until the next block of its note begins instead.
   pstExtendUntilNext :: Bool,
   -- | Where the vault keeps its daily notes, which is what says which day a note plans.
-  pstDailyNotes      :: DailyNoteSettings
+  pstDailyNotes      :: DailyNoteSettings,
+  -- | How the plugin writes a time of day when it writes a block back.
+  pstTimestampFormat :: [TimeToken],
+  -- | The heading of a daily note the plugin puts a block moved onto that day under.
+  pstPlannerHeading  :: String
                                        }
   deriving (Eq, Show)
 
@@ -271,7 +275,11 @@ data DailyNoteSettings = DailyNoteSettings {
 -- files for them is running — taken from the Day Planner's own @defaultSettings@ and from the Daily
 -- Notes plugin's default format.
 defaultPlannerSettings :: PlannerSettings
-defaultPlannerSettings = PlannerSettings 30 False defaultDailyNoteSettings
+defaultPlannerSettings = PlannerSettings 30 False defaultDailyNoteSettings defaultTimestampFormat "Day planner"
+
+-- | How the plugin writes a time of day when the vault names no format: @HH:mm@.
+defaultTimestampFormat :: [TimeToken]
+defaultTimestampFormat = [THour24 2, TLiteral ":", TMinute 2]
 
 defaultDailyNoteSettings :: DailyNoteSettings
 defaultDailyNoteSettings = DailyNoteSettings "" defaultDailyNoteFormat
@@ -315,7 +323,12 @@ instance FromJSON PlannerSettings where
   parseJSON = withObject "PlannerSettings" $ \o -> do
     duration <- o .:? "defaultDurationMinutes" .!= pstDefaultDuration defaultPlannerSettings
     extend <- o .:? "extendDurationUntilNext" .!= pstExtendUntilNext defaultPlannerSettings
-    return $ PlannerSettings duration extend defaultDailyNoteSettings
+    timestamp <- o .:? "timestampFormat" .!= ""
+    timestamp' <- if null timestamp
+      then return defaultTimestampFormat
+      else either fail return $ timeFormatTokens timestamp
+    heading <- o .:? "plannerHeading" .!= pstPlannerHeading defaultPlannerSettings
+    return $ PlannerSettings duration extend defaultDailyNoteSettings timestamp' heading
 
 -- | An empty format is how the Daily Notes plugin writes that it uses its default, so it is read as
 -- the default rather than as a name with nothing in it.
@@ -376,3 +389,32 @@ dateFormatTokens = fmap joinLiterals . aux
     spellings = [("YYYY", DYear4), ("YY", DYear2), ("MMMM", DMonthName), ("MMM", DMonthShort), ("MM", DMonth2), ("M", DMonth1), ("Do", DDayOrdinal), ("DD", DDay2), ("D", DDay1), ("dddd", DWeekdayName), ("ddd", DWeekdayShort)]
     stripSpelling spelling s = if take (length spelling) s == spelling then Just (drop (length spelling) s) else Nothing
     isLetter c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+
+-- | One piece of a Moment.js time format, as the Day Planner writes a time of day with one: an hour
+-- of a 24-hour or a 12-hour clock or a minute, at least as many digits wide as given, the half of the
+-- day in either case, or writing of its own.
+data TimeToken
+  = THour24 Int
+  | THour12 Int
+  | TMinute Int
+  | TMeridiem Bool
+  | TLiteral String
+  deriving (Eq, Show)
+
+-- | The pieces of a Moment.js time format, or why it cannot be read: the reading 'dateFormatTokens'
+-- gives a date format, over the pieces a time is written with.
+timeFormatTokens :: String -> Either String [TimeToken]
+timeFormatTokens = aux
+  where
+    aux [] = Right []
+    aux ('[':rest) = case break (== ']') rest of
+      (lit, _:rest') -> (TLiteral lit :) <$> aux rest'
+      _              -> Left "a time format opens a bracket it never closes"
+    aux s@(c:rest) = case [(tok, rest') | (spelling, tok) <- spellings, Just rest' <- [stripPrefix spelling s]] of
+      ((tok, rest'):_) -> (tok :) <$> aux rest'
+      []
+        | isAsciiLetter c -> Left $ printf "the time format piece starting at %s is not one a time is written with" (show s)
+        | otherwise -> (TLiteral [c] :) <$> aux rest
+    -- Longest first, so that @HH@ is not read as two @H@s.
+    spellings = [("HH", THour24 2), ("H", THour24 1), ("hh", THour12 2), ("h", THour12 1), ("mm", TMinute 2), ("m", TMinute 1), ("A", TMeridiem True), ("a", TMeridiem False)]
+    isAsciiLetter c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')

@@ -205,6 +205,86 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/Event"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Event
+                            ( Value /contents= CStr
+                                { csValue = "17:00 - 17:30 Write up the call" }
+                            )
+                            ( Value /time= /Data/Time/TimeRange
+                                ( Value /start= /Data/Time/TimeOfDay
+                                    ( Value /hour= CInt
+                                        { ciValue = 17 }
+                                    )
+                                    ( Value /minute= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                                ( Value /end= /Data/Time/TimeOfDay
+                                    ( Value /hour= CInt
+                                        { ciValue = 17 }
+                                    )
+                                    ( Value /minute= CInt
+                                        { ciValue = 30 }
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Event
+                            ( Value /contents= CStr
+                                { csValue = "12:00 - 13:00 Lunch" }
+                            )
+                            ( Value /time= /Data/Time/TimeRange
+                                ( Value /start= /Data/Time/TimeOfDay
+                                    ( Value /hour= CInt
+                                        { ciValue = 12 }
+                                    )
+                                    ( Value /minute= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                                ( Value /end= /Data/Time/TimeOfDay
+                                    ( Value /hour= CInt
+                                        { ciValue = 13 }
+                                    )
+                                    ( Value /minute= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
@@ -222,6 +302,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         ]

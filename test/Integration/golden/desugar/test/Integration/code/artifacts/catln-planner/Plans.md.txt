@@ -142,6 +142,51 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/Event"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Event
+                            ( Value /contents= CStr
+                                { csValue = "15:00 - 16:00 Dentist ⏳ 2026-01-04" }
+                            )
+                            ( Value /time= /Data/Time/TimeRange
+                                ( Value /start= /Data/Time/TimeOfDay
+                                    ( Value /hour= CInt
+                                        { ciValue = 15 }
+                                    )
+                                    ( Value /minute= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                                ( Value /end= /Data/Time/TimeOfDay
+                                    ( Value /hour= CInt
+                                        { ciValue = 16 }
+                                    )
+                                    ( Value /minute= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 4 }
+                                    )
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
@@ -159,6 +204,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         ]
