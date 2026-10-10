@@ -76,7 +76,33 @@ describe('DayPlanner', () => {
 
     const timeline = container.querySelector('.rbc-time-content')
     expect(within(timeline).getByDisplayValue('Write')).toBeInTheDocument()
-    expect(within(container.querySelector('.rbc-allday-cell')).getByDisplayValue('Read')).toBeInTheDocument()
+    expect(within(screen.getByTestId('planner-unscheduled')).getByDisplayValue('Read')).toBeInTheDocument()
+    expect(within(timeline).queryByDisplayValue('Read')).not.toBeInTheDocument()
+  })
+
+  // The strip holds what sits on the days drawn and nothing of any other day, and each of its
+  // entries is dragged the way anything outside the calendar is, so that the calendar takes it up.
+  it('draws the entries of the day with no time in a strip of their own, to be dragged', () => {
+    render(<Providers><DayPlanner {...planned(
+      null,
+      entry('id-2', 'Read', TODAY),
+      entry('id-4', 'Later', '2026-01-04'),
+    )} /></Providers>)
+
+    const strip = screen.getByTestId('planner-unscheduled')
+    expect(within(strip).getByDisplayValue('Read')).toBeInTheDocument()
+    expect(within(strip).queryByDisplayValue('Later')).not.toBeInTheDocument()
+    expect(within(strip).getByTestId('planner-unscheduled-entry')).toHaveAttribute('draggable', 'true')
+  })
+
+  // Read only, an entry of the strip is not dragged, and an empty strip is not drawn at all.
+  it('neither drags the strip nor draws an empty one where nothing can be written', () => {
+    const { unmount } = render(<Providers readonly><DayPlanner {...planned(null, entry('id-2', 'Read', TODAY))} /></Providers>)
+    expect(screen.getByTestId('planner-unscheduled-entry')).toHaveAttribute('draggable', 'false')
+    unmount()
+
+    render(<Providers readonly><DayPlanner {...planned(null, entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }))} /></Providers>)
+    expect(screen.queryByTestId('planner-unscheduled')).not.toBeInTheDocument()
   })
 
   // The day it opens on is the day the answer was worked out on, and not the day a clock says.
@@ -198,6 +224,40 @@ describe('DayPlanner', () => {
     render(<Providers><DayPlanner {...planned('This evaluation is not of one page.')} /></Providers>)
 
     expect(screen.getByTestId('planner-error')).toHaveTextContent('not of one page')
+  })
+
+  // A block taken hold of and let go of over the strip has its time taken off, which is written back
+  // as its value with no time on the day it was on.
+  it('takes the time off a block let go of over the strip', async () => {
+    const { container } = render(<Providers><DayPlanner {...planned(
+      null,
+      entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }),
+    )} /></Providers>)
+
+    fireEvent.mouseDown(container.querySelector('.rbc-time-content .rbc-event'))
+    fireEvent.mouseUp(screen.getByTestId('planner-unscheduled'))
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+    const [url, request] = global.fetch.mock.calls[0]
+    expect(url).toBe('/api/write-exprs')
+    const [op] = JSON.parse(request.body)
+    expect(op).toMatchObject({ tag: 'Replace', metaId: 'id-1' })
+    expect(op.src).toContain('time= /Data/Maybe/Nothing')
+    expect(op.src).toContain('day= 3')
+  })
+
+  // A block taken hold of and let go of anywhere else is not taken off its time by the strip.
+  it('leaves a block let go of anywhere but the strip to the calendar', async () => {
+    const { container } = render(<Providers><DayPlanner {...planned(
+      null,
+      entry('id-1', 'Write', TODAY, { ctStart: '09:00', ctEnd: '10:30' }),
+    )} /></Providers>)
+
+    const block = container.querySelector('.rbc-time-content .rbc-event')
+    fireEvent.mouseDown(block)
+    fireEvent.mouseUp(block)
+
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   // A block is written back to the note it came from, as an entry of the calendar is.

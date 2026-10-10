@@ -142,13 +142,13 @@ export function GoToDay({date, onChange}) {
 
 // How the blocks of a day are laid out where an entry is drawn over the time it takes up. The time a
 // block spans is written beside what it holds rather than above it, and the hours are drawn tall
-// enough that a block of three quarters of an hour holds a line of writing. Where the days are drawn
-// a week at a time the time is left off, as there is no room for it beside the writing and the grid
-// already says it.
+// enough that a block of half an hour -- the length a block is given by default -- holds a line.
+// Where the days are drawn a week at a time the time is left off, as there is no room for it beside
+// the writing and the grid already says it.
 export function timeGridStyles(weekly) {
   return {
     '& .rbc-timeslot-group': {
-      minHeight: '3em'
+      minHeight: '4em'
     },
     '& .rbc-time-view .rbc-event': {
       flexFlow: 'row nowrap',
