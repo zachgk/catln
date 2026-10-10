@@ -22,10 +22,11 @@ refinementRuntimeTests = withResource fixtures (const $ return ()) $ \getCtss ->
   [ failsWith getCtss "an argument outside its refinement fails the refined arm's dispatch" "argOutside.ct" "is outside the refinement"
   , failsWith getCtss "a result outside its declared refinement fails as it is returned" "resultOutside.ct" "is outside the refinement"
   , failsWith getCtss "a value not satisfying its condition fails where the condition is written" "whereOutside.ct" "does not satisfy its condition"
+  , failsWith getCtss "a result outside the refinement written over $out fails as it is returned" "outOutside.ct" "is outside the refinement"
   ]
   where
     -- One service for every fixture, so the library they import is built once.
-    fixtures = ctssBaseFiles testCtssConfig (map fixture ["argOutside.ct", "resultOutside.ct", "whereOutside.ct"]) :: IO CTSS
+    fixtures = ctssBaseFiles testCtssConfig (map fixture ["argOutside.ct", "resultOutside.ct", "whereOutside.ct", "outOutside.ct"]) :: IO CTSS
     fixture name = "test/Integration/code/artifacts/refineRuntime/" ++ name
     failsWith getCtss title page needle = testCase title $ do
       ctss <- getCtss

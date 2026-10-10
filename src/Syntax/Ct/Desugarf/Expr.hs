@@ -66,7 +66,25 @@ semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = e' `setExp
     m = getExprMeta e'
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
-semiDesExpr sdm obj (RawWhere m base cond) = EWhere m (semiDesExpr sdm obj base) (semiDesExpr SDOutput obj cond)
+-- A condition refining a TYPE is written over the value of that type, which it names @$this@ or,
+-- as what an arrow produces, @$out@ ('thisMacro', 'outMacro'). Nothing else binds either name:
+-- the value is bound under the one spelling 'macroThisKey' wherever a value predicate is decided
+-- ('Semantics.typeGraphPredExprHolds', 'Eval.evalPredExprOn'), the spelling the type-property
+-- forms below desugar to directly. Left as written, the name was a relative value name nothing
+-- resolved and the condition was never evaluated. A condition on a body or a pattern is over
+-- the scope's own arguments and keeps its names.
+semiDesExpr sdm obj (RawWhere m base cond) = EWhere m (semiDesExpr sdm obj base) cond'
+  where
+    cond0 = semiDesExpr SDOutput obj cond
+    cond' = case sdm of
+      SDType -> mapExprValues refinedValue cond0
+      _      -> cond0
+    -- The parser types a value by the name it is written with ('relTypeVal'), so the type is
+    -- renamed with it.
+    refinedValue (vm, n)
+      | nameStr n `elem` [thisMacro, outMacro] = Value (mWithType (relTypeVal n') vm) n'
+      | otherwise = Value vm n
+      where n' = mkName macroThisKey
 semiDesExpr sdm obj (RawTypeProp m base (TypePropProj t v)) = semiDesExpr sdm obj (RawWhere m base (rawVal operatorEq `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal (nameStr t))), (Just $ partialKey (mkName operatorArgR), v)])) -- $this.even == v
 -- A relation type property @base__rel(v)@ refines @base@ to the values for which the boolean
 -- relation @rel@ holds against @v@ — e.g. @Int__gte(0)@ is @Int where $this.gte(r= 0)@. Mirrors the
@@ -180,6 +198,63 @@ semiDesExpr sdm obj (RawMethod m base method) = (`setExprMeta` m) $ semiDesExpr 
 semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m (mkName ctListNil))
 semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m (mkName ctListCons) `applyRawArgs` [(Just $ partialKey (mkName ctListConsHead), l), (Just $ partialKey (mkName ctListConsTail), RawList (emptyMetaM m) ls)])
 semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (show e)
+
+-- | The expression with every value rewritten: the values applied, aliased, conditioned on and
+-- passed as argument values, not the names arguments are passed under.
+mapExprValues :: ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
+mapExprValues f = go
+  where
+    go (Value m n)                 = f (m, n)
+    go e@CExpr{}                   = e
+    go e@HoleExpr{}                = e
+    go (AliasExpr b a)             = AliasExpr (go b) (go a)
+    go (EWhere m b c)              = EWhere m (go b) (go c)
+    go (TupleApply m (bm, be) app) = TupleApply m (bm, go be) (goApp app)
+    goApp (EAppArg oa)   = EAppArg oa{oaArr=fmap (first (fmap go)) (oaArr oa)}
+    goApp (EAppSpread e) = EAppSpread (go e)
+    goApp a@EAppVar{}    = a
+
+-- | A condition in a type position of the arrow that applies an argument by position
+-- (@Nat | isZero($out)@), if there is one: in the result type or an argument's type, read
+-- through brackets, applications and the types' own refinements. A condition on a type is kept
+-- as the single partial of a 'PredExpr', which names its arguments. The argument a positional
+-- value fills is inferred by the type checker ('TypeCheck.Encode', @AddInferArg@) for an
+-- expression it encodes, which a type's condition is not, so the position cannot be named here;
+-- the condition is refused ('Syntax.Ct.Desugarf.desDecl') rather than built without the value.
+rawTypeCondPositional :: PObjArr -> Maybe PExpr
+rawTypeCondPositional roa = listToMaybe $ filter positional $ concatMap typeConds (maybeToList (roaArr roa >>= snd)) ++ maybe [] objConds (roaObj roa)
+  where
+    -- The conditions in the types of an object's arguments. The object's own condition is the
+    -- arrow's guard, over its arguments, and is encoded as an expression.
+    objConds (RawTupleApply _ (_, b) args)   = objConds b ++ concatMap (argConds . snd) args
+    objConds (RawVarsApply _ b vs)           = objConds b ++ concatMap argConds vs
+    objConds (RawContextApply _ (_, b) args) = objConds b ++ concatMap argConds args
+    objConds (RawParen e)                    = objConds e
+    objConds (RawWhere _ b _)                = objConds b
+    objConds (RawMethod _ b e)               = objConds b ++ objConds e
+    objConds _                               = []
+    argConds arg = concatMap typeConds (maybeToList (roaArr arg >>= snd)) ++ maybe [] objConds (roaObj arg)
+    -- The conditions a type expression is refined by, at its root and in its arguments' types.
+    typeConds (RawWhere _ b c)             = typeConds b ++ [c]
+    typeConds (RawParen e)                 = typeConds e
+    typeConds (RawTupleApply _ (_, b) args) = typeConds b ++ concatMap (argConds . snd) args
+    typeConds (RawVarsApply _ b vs)        = typeConds b ++ concatMap argConds vs
+    typeConds (RawTypeProp _ b _)          = typeConds b
+    typeConds _                            = []
+    -- Whether a condition applies an argument by position anywhere within it.
+    positional (RawTupleApply _ (_, b) args) = positional b || any positionalApplied args
+    positional (RawParen e)                  = positional e
+    positional (RawMethod _ b e)             = positional b || positional e
+    positional (RawWhere _ b c)              = positional b || positional c
+    positional (RawAliasExpr b a)            = positional b || positional a
+    positional (RawVarsApply _ b _)          = positional b
+    positional (RawList _ ls)                = any positional ls
+    positional _                             = False
+    positionalApplied (True, _)                                           = False -- a spread passes its values under their names
+    positionalApplied (False, RawObjArr{roaObj=Just _, roaArr=Nothing})   = True
+    positionalApplied (False, RawObjArr{roaObj=Nothing})                  = True
+    positionalApplied (False, RawObjArr{roaArr=Just (Just v, _)})         = positional v
+    positionalApplied _                                                   = False
 
 -- | Desugars a "TheExpr type" by applying the type to a default name
 desugarTheExpr :: PExpr -> (PExpr, Name)

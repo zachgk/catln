@@ -13,9 +13,11 @@ module Typecheck.TypeCheckTests where
 import           Common.TestCommon     (findErrCt)
 import           Control.Monad.State   (evalStateT, execStateT, lift, runStateT)
 import           CRes
+import           CtConstants           (macroThisKey, outMacro, thisMacro)
 import           CtService             (ctssBaseFiles, getTPrgm, getTPrgmJoined)
 import           Data.Graph            (graphFromEdges)
 import qualified Data.HashMap.Strict   as H
+import qualified Data.HashSet          as S
 import           Data.List             (isInfixOf, sort)
 import           Hedgehog
 import qualified Hedgehog.Gen          as HG
@@ -271,6 +273,43 @@ testRefineRuntime = testCase "an undecided value predicate is left to the runtim
   assertResultGuaranteed page "/onNat"
   assertResultGuaranteed page "/h"
 
+-- | The value a condition refining a type is written over is named @$this@, or @$out@ as what the
+-- arrow produces. Both desugar to the one name the value is bound under where a predicate is
+-- decided ('CtConstants.macroThisKey'), so @h@'s @Nat | $out.isZ == True@ is @Nat_isZ@: decided on
+-- the @Z@ it returns (and refused on the @S@ the twin error pages return), while @hRt@'s is left to
+-- the runtime. A condition applying an argument by position cannot name it in the predicate and is
+-- refused as written. Fixtures: unit/refineOut.ct, unit/refineOut{,Fn,This}Fails.err.ct,
+-- unit/refineOutPositional.err.ct.
+testRefineOut :: TestTree
+testRefineOut = testCase "$out and $this in a type's condition name the refined value" $ do
+  let page = "test/Typecheck/unit/refineOut.ct"
+  assertResultGuaranteed page "/hRt"
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let resultOf name = [ getMetaType m | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), nameStr (oaObjPath oa) == name ]
+  let checkResult name = case resultOf name of
+        [r] -> do
+          let names = map nameStr (S.toList (typeRefNamesDeep r))
+          assertBool (name ++ " binds the refined value under " ++ macroThisKey ++ ": " ++ show r) (macroThisKey `elem` names)
+          assertBool (name ++ " leaves no written macro name unbound: " ++ show r) (not (any (`elem` names) [thisMacro, outMacro]))
+        rs  -> assertFailure ("one result for " ++ name ++ ", found " ++ show rs)
+  mapM_ checkResult (["/h", "/hFn", "/hThis", "/hRt"] :: [String])
+  assertPageErrorSays "test/Typecheck/unit/refineOutPositional.err.ct" "by position"
+
+-- | The page fails with an error whose text contains @needle@.
+assertPageErrorSays :: String -> String -> Assertion
+assertPageErrorSays page needle = do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgm ctss
+  case res of
+    CRes _ _  -> assertFailure "the page is written to fail, and it type-checked"
+    CErr notes -> assertBool ("the error says " ++ show needle ++ ":\n" ++ prettyCNotes notes) (needle `isInfixOf` prettyCNotes notes)
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -306,6 +345,7 @@ typecheckTests = do
     , testRefineNarrowsCall
     , testRefineDecide
     , testRefineRuntime
+    , testRefineOut
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

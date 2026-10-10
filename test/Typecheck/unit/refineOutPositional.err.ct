@@ -1,0 +1,34 @@
+annot(#noCore)
+
+# A type's condition applying an argument by position. The condition is kept as a predicate's one
+  partial, which names its arguments, and which argument [$out] fills is inferred only for an
+  expression the type checker encodes, which a type's condition is not: the page is refused as
+  written rather than built without the value (testRefineOut in TypeCheckTests reads the error).
+  Named, [isZero(n= $out) == True], it is the hFn of refineOut.ct.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+h(a -> Nat) -> (Nat | isZero($out))= Z
+
+g(x -> Nat) -> IO= IO
+
+main -> IO= g(x= h(a= Z))

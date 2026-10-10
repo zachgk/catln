@@ -325,6 +325,15 @@ thisKey, macroThisKey :: String
 thisKey = "/this"
 macroThisKey = "/$this"
 
+-- | The value a condition refining a type is written over, as it is written: @$this@ is the value
+-- of the type the condition refines, and @$out@ is that same value named as what an arrow
+-- produces, the spelling for the condition on an arrow's result type
+-- (@-> (Integer | even(x= $out))@), where @this@ is a method's receiver. Both desugar to
+-- 'macroThisKey', the one name the value is bound under wherever a value predicate is decided.
+thisMacro, outMacro :: String
+thisMacro = "$this"
+outMacro = "$out"
+
 classPlaceholderStr :: String
 classPlaceholderStr = "/Catln/classPlaceholder"
 

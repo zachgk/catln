@@ -16,23 +16,30 @@ Prgm
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /operator-
-                                    ( Value /l -> /Data/Primitive/Integer| PredExpr /operator==
-                                        ( /r=/Data/Primitive/True
-                                        , /l=~nonNeg( /this=~/$this )
-                                        ) = /onInt
-                                        ( Value /n -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 3 }
+                                    ( Value /l -> /Data/Primitive/Integer = /operator-
+                                        ( Value /l -> /Data/Primitive/Integer| PredExpr /operator==
+                                            ( /r=/Data/Primitive/True
+                                            , /l=~nonNeg( /this=~/$this )
+                                            ) = /onInt
+                                            ( Value /n -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 3 }
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = /keep
+                                            ( Value /n -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 2 }
+                                            )
                                         )
                                     )
-                                    ( Value /r -> /Data/Primitive/Integer = /keep
+                                    ( Value /r -> /Data/Primitive/Integer = /narrow
                                         ( Value /n -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 2 }
+                                            { ciValue = 1 }
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer = /narrow
+                                ( Value /r -> /Data/Primitive/Integer = /keepOut
                                     ( Value /n -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 1 }
+                                        { ciValue = 0 }
                                     )
                                 )
                             )( Value /this -> TVArg /io = Value /io )
@@ -84,6 +91,22 @@ Prgm
                     }
                 )
             ,
+                ( "/keepOut"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /keepOut( Value /n -> /Data/Primitive/Integer ) ->
+                            ( TopType | PredRel Integer && PredExpr /operator==
+                                ( /r=~True
+                                , /l=~nonNeg( /this=~/$this )
+                                )
+                            ) = Value /n
+                        ]
+                    }
+                )
+            ,
                 ( "/f"
                 , ObjectMapItem
                     { omiDecls = []
@@ -109,6 +132,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -119,9 +143,10 @@ Prgm
                 [>=], which the type graph cannot follow: on every [Integer] the predicate is undecided. So
                 [onInt] passes its argument to the refined [f] on the strength of its shape, and the predicate is
                 evaluated on the value when [f] is dispatched; [keep] returns its argument where a
-                [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [narrow] is a value
-                narrowed by a condition, evaluated where it is written. Each holds here, so the run exits 0. The
-                runs where they do not hold are asserted in Eval.RefinementRuntimeTests." }
+                [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [keepOut] declares
+                the same refinement in full, its condition written over [$out], the result the arrow produces;
+                [narrow] is a value narrowed by a condition, evaluated where it is written. Each holds here, so
+                the run exits 0. The runs where they do not hold are asserted in Eval.RefinementRuntimeTests." }
             )
         ]
     }

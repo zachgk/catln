@@ -33,6 +33,7 @@ import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Desugarf.Nested
 import           Syntax.Ct.Desugarf.Passes
 import           Syntax.Ct.Desugarf.Preprocessors
+import           Syntax.Ct.Formatter              (formatExpr)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Utils
@@ -128,6 +129,11 @@ declToObjArrow (inheritPath, inheritAnnots) oa@ObjArr{oaAnnots, oaArr} = oa3
 
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do
+  -- A condition refining a type names its arguments ('rawTypeCondPositional'); one that does not
+  -- is refused here, where the arrow is still as written, rather than built without the value.
+  case rawTypeCondPositional decl of
+    Just cond -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta cond) $ printf "The condition %s refining a type applies an argument by position, and which argument it fills cannot be inferred for a condition on a type: name the argument" (formatExpr cond)]
+    Nothing   -> return ()
   preprocessed <- declPreprocessors (decl, subStatements)
   case preprocessed of
     [] -> do

@@ -1,0 +1,39 @@
+annot(#noCore)
+
+#noCore
+# A result type's condition written over [$out], the value the arrow produces, and over [$this],
+  the value of the type it refines: both name the one value a predicate is decided on, so
+  [Nat | $out.isZ == True] is [Nat_isZ] written in full. [h], [hFn] and [hThis] return a [Z], on
+  which the predicate is decided true; [hRt] returns every [Nat], on which it is undecided, so
+  its result is held to the refinement at runtime. Written without the core library, so the
+  predicate bottoms out at arms rather than primitives.
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+h(a -> Nat) -> (Nat | $out.isZ == True)= Z
+
+hFn(a -> Nat) -> (Nat | isZero(n= $out) == True)= Z
+
+hThis(a -> Nat) -> (Nat | $this.isZ == True)= Z
+
+hRt(a -> Nat) -> (Nat | $out.isZ == True)= a
+
+okZ= hRt(a= h(a= hFn(a= hThis(a= Z))))

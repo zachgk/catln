@@ -1,0 +1,45 @@
+annot(#noCore)
+
+# The value a condition refining a type is written over is named [$this], or [$out] as what the
+  arrow produces, the spelling for a result type's condition. [h] declares [Nat | $out.isZ == True],
+  which is [Nat_isZ] written in full; [hFn] applies the predicate as a named function; [hThis]
+  names the value [$this]. Each returns [Z], on which the predicate is decided true, and [hRt]
+  returns every [Nat], on which it is undecided and left to the runtime: none is reported as a
+  result not guaranteed. The twin error pages refineOutFails.err.ct, refineOutFnFails.err.ct and
+  refineOutThisFails.err.ct return an [S], on which the predicate is decided false, and are refused
+  statically, which they were not while the written name was left unbound.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+h(a -> Nat) -> (Nat | $out.isZ == True)= Z
+
+hFn(a -> Nat) -> (Nat | isZero(n= $out) == True)= Z
+
+hThis(a -> Nat) -> (Nat | $this.isZ == True)= Z
+
+hRt(a -> Nat) -> (Nat | $out.isZ == True)= a
+
+g(x -> Nat) -> IO= IO
+
+main -> IO= g(x= hRt(a= h(a= hFn(a= hThis(a= Z)))))

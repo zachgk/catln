@@ -1,0 +1,287 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator==
+                            ( EAppArg { eaaArg = Value /l -> /Data/Primitive/True } )
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/True } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator==
+                            ( EAppArg { eaaArg = Value /l -> /Data/Primitive/False } )
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/False } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator==
+                            ( EAppArg { eaaArg = Value /l -> /Data/Primitive/True } )
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/False } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator==
+                            ( EAppArg { eaaArg = Value /l -> /Data/Primitive/False } )
+                            ( EAppArg { eaaArg = Value /r -> /Data/Primitive/True } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Z"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Z ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/hThis"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /hThis
+                            ( EAppArg { eaaArg = Value /a -> ∀/Nat } ) -> /Z| PredExpr /operator==
+                            ( /r=~True
+                            , /l=~isZ( /this=~/$this )
+                            ) = Value /Z
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/True"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Data/Primitive/True
+                        , Value /Data/Primitive/True
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/isZ"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isZ
+                            ( EAppArg { eaaArg = Value /this -> ∀/Nat } ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                            ( /isZero
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/h"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /h
+                            ( EAppArg { eaaArg = Value /a -> ∀/Nat } ) -> /Z| PredExpr /operator==
+                            ( /r=~True
+                            , /l=~isZ( /this=~/$this )
+                            ) = Value /Z
+                        ]
+                    }
+                )
+            ,
+                ( "/hRt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /hRt
+                            ( EAppArg { eaaArg = Value /a -> ∀/Nat } ) ->
+                            ( TopType | PredRel Nat && PredExpr /operator==
+                                ( /r=~True
+                                , /l=~isZ( /this=~/$this )
+                                )
+                            ) =
+                            ( Value /a ↦
+                                ( TopType | PredRel Nat && PredExpr /operator==
+                                    ( /r=~True
+                                    , /l=~isZ( /this=~/$this )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/okZ"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /okZ ->
+                            ( /Z + /hRt( /a=/Z ) ) =
+                            ( /hRt
+                                ( EAppArg
+                                    { eaaArg = Value /a -> /Z =
+                                        ( /h
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> /Z =
+                                                    ( /hFn
+                                                        ( EAppArg
+                                                            { eaaArg = Value /a -> /Z =
+                                                                ( /hThis
+                                                                    ( EAppArg { eaaArg = Value /a -> /Z = Value /Z } ) ↦ /Z
+                                                                )
+                                                            }
+                                                        ) ↦ /Z
+                                                    )
+                                                }
+                                            ) ↦ /Z
+                                        )
+                                    }
+                                ) ↦ /Z
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/False"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Data/Primitive/False
+                        , Value /Data/Primitive/False
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/isZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /isZero
+                            ( EAppArg { eaaArg = Value /n -> ∀/Nat } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isZero
+                            ( EAppArg { eaaArg = Value /n -> /Z = Value /Z } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /isZero
+                            ( EAppArg
+                                { eaaArg = Value /n -> /S( /n=∀/Nat ) = /S
+                                    ( EAppArg { eaaArg = Value /n@Value /m -> ∀/Nat } )
+                                }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/S"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /S
+                            ( EAppArg { eaaArg = Value /n -> ∀/Nat } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/hFn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /hFn
+                            ( EAppArg { eaaArg = Value /a -> ∀/Nat } ) -> /Z| PredExpr /operator==
+                            ( /r=~True
+                            , /l=~isZero( /n=~/$this )
+                            ) = Value /Z
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Primitive/Boolean
+            , cgcExtends =
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Nat
+            , cgcExtends =
+                [ /Z
+                , /S( /n=∀/Nat )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A result type's condition written over [$out], the value the arrow produces, and over [$this],
+                  the value of the type it refines: both name the one value a predicate is decided on, so
+                  [Nat | $out.isZ == True] is [Nat_isZ] written in full. [h], [hFn] and [hThis] return a [Z], on
+                  which the predicate is decided true; [hRt] returns every [Nat], on which it is undecided, so
+                  its result is held to the refinement at runtime. Written without the core library, so the
+                  predicate bottoms out at arms rather than primitives."
+                }
+            )
+        ]
+    }
