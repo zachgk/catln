@@ -27,7 +27,8 @@
 module Semantics.Types where
 
 import           Control.Applicative ((<|>))
-import           Control.Exception   (evaluate)
+import           Control.Concurrent  (ThreadId, myThreadId)
+import           Control.Exception   (bracket_, evaluate)
 import           Control.Monad       (foldM, guard, when)
 import           CtConstants
 import           Data.Aeson
@@ -38,12 +39,13 @@ import           Data.Graph          (graphFromEdges, vertices)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.IORef          (IORef, atomicModifyIORef', modifyIORef',
-                                      newIORef, readIORef)
+import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
+                                      readIORef)
 import           Data.List           (foldl', intercalate, isPrefixOf,
                                       partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
+import qualified Data.Map.Strict     as M
 import           Data.Maybe
 import           Data.Proxy          (Proxy (..))
 import           Data.String         (IsString (..))
@@ -4257,13 +4259,49 @@ type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(VarKey, Type)], SatUse
 satMemoRef :: IORef [(Int, H.HashMap SatMemoKey Bool)]
 satMemoRef = unsafePerformIO (newIORef [])
 
--- | The keys whose decision is currently BEING computed, on the (single-threaded)
--- evaluation stack. Never reset and never capped: its size is bounded by the recursion
--- depth, and dropping a marker mid-derivation would silently re-open the very cycle the
--- marker refutes.
+-- | The goals a derivation is in the middle of, kept apart for each thread deriving.
+--
+-- A goal in flight is one on the CURRENT derivation's own path: met again, it is a cycle, and
+-- each user answers it the way its cycle rule says. That reading holds only of the path the
+-- goal was met on. The doc server answers requests on threads of their own, so two derivations
+-- can run at once, and a goal one of them is in the middle of is no cycle of the other's —
+-- answering it as one (a 'False' for "no finite witness") is an answer about a different
+-- derivation. Two requests for one page then disagreed about whether a value was a member of a
+-- class, the planner showed a timed task as unscheduled or dropped it, and which one depended on
+-- how the requests happened to overlap.
+--
+-- So each thread has a set of its own. A derivation stays on the thread forcing it: a thunk
+-- another thread demands meanwhile blocks that thread until the first finishes it
+-- ('unsafePerformIO' is not duplicated), so a cycle is always met on the thread it is a cycle
+-- of. A thread's set is dropped when it empties, so the map holds only threads mid-derivation
+-- rather than every thread a server has run.
+type InFlight k = IORef (M.Map ThreadId (S.HashSet k))
+
+newInFlight :: IO (InFlight k)
+newInFlight = newIORef M.empty
+
+-- | Runs a derivation of a goal with the goal marked in flight on this thread, or answers the
+-- re-entry where this thread's derivation already has it in flight.
+--
+-- The mark is taken off however the derivation ends. One left behind by a derivation that threw
+-- would refute its goal on every later derivation of this thread as though it were a cycle.
+inFlightOn :: (Eq k, Hashable k) => InFlight k -> k -> IO a -> IO a -> IO a
+inFlightOn ref k reentered derive = do
+  thread <- myThreadId
+  inflight <- M.findWithDefault S.empty thread <$> readIORef ref
+  if S.member k inflight
+    then reentered
+    else bracket_
+      (atomicModifyIORef' ref $ \m -> (M.insertWith S.union thread (S.singleton k) m, ()))
+      (atomicModifyIORef' ref $ \m -> (M.update (\s -> let s' = S.delete k s in if S.null s' then Nothing else Just s') thread m, ()))
+      derive
+
+-- | The keys whose decision is currently BEING computed, on each thread's evaluation stack
+-- ('InFlight'). Never capped: its size is bounded by the recursion depth, and dropping a marker
+-- mid-derivation would silently re-open the very cycle the marker refutes.
 {-# NOINLINE satInFlightRef #-}
-satInFlightRef :: IORef (S.HashSet SatMemoKey)
-satInFlightRef = unsafePerformIO (newIORef S.empty)
+satInFlightRef :: InFlight SatMemoKey
+satInFlightRef = unsafePerformIO newInFlight
 
 -- | Is some (finite) value able to satisfy the goal? Conservative towards 'True'.
 -- 'satUse' says which answer the caller relies on. Under 'ProveEmpty' a positive class
@@ -4295,18 +4333,14 @@ satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
     case lookup tok gens0 >>= H.lookup key of
       Just r -> return r
       Nothing -> do
-        inFlight <- readIORef satInFlightRef
-        if key `S.member` inFlight
-          then noteCycleCut False -- in-flight re-entry: a cyclic derivation, no finite witness
-          else do
-            atomicModifyIORef' satInFlightRef $ \s -> (S.insert key s, ())
-            r <- evaluate (satGoalRaw typeEnv vaenv satUse hyps goal)
-            atomicModifyIORef' satInFlightRef $ \s -> (S.delete key s, ())
-            atomicModifyIORef' satMemoRef $ \gens2 ->
-              let mTok = fromMaybe H.empty (lookup tok gens2)
-                  rest = filter ((/= tok) . fst) gens2
-              in ((tok, H.insert key r mTok) : take 2 rest, ())
-            return r
+        -- An in-flight re-entry is a cyclic derivation, which has no finite witness.
+        inFlightOn satInFlightRef key (noteCycleCut False) $ do
+          r <- evaluate (satGoalRaw typeEnv vaenv satUse hyps goal)
+          atomicModifyIORef' satMemoRef $ \gens2 ->
+            let mTok = fromMaybe H.empty (lookup tok gens2)
+                rest = filter ((/= tok) . fst) gens2
+            in ((tok, H.insert key r mTok) : take 2 rest, ())
+          return r
 
 satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> SatGoal -> Bool
 satGoalRaw typeEnv0 vaenv satUse hyps goal0
@@ -4791,8 +4825,8 @@ isSubPartialOfWithEnv typeEnv vaenv sub0 super0 = isSubPartialOfWithEnvN typeEnv
 -- deliberately shallow), so a hit is the same goal, never a collision.
 type SubPartialKey = (Bool, Bool, [(VarKey, Type)], PartialType, PartialType)
 
--- | The sub-partial goals whose answer is currently BEING computed, on the (single-threaded)
--- evaluation stack — the materialized counterpart of 'satInFlightRef'.
+-- | The sub-partial goals whose answer is currently BEING computed, on each thread's evaluation
+-- stack ('InFlight') — the materialized counterpart of 'satInFlightRef'.
 --
 -- The symbolic engine terminates on a recursive class because its hypothesis stack refutes a
 -- goal that recurs on its own derivation path. The MATERIALIZED path — the fallback every
@@ -4812,8 +4846,8 @@ type SubPartialKey = (Bool, Bool, [(VarKey, Type)], PartialType, PartialType)
 -- Never reset and never capped, for the reason 'satInFlightRef' gives: its size is bounded by
 -- the recursion depth, and dropping a marker mid-derivation would re-open the cycle it refutes.
 {-# NOINLINE subPartialInFlightRef #-}
-subPartialInFlightRef :: IORef (S.HashSet SubPartialKey)
-subPartialInFlightRef = unsafePerformIO (newIORef S.empty)
+subPartialInFlightRef :: InFlight SubPartialKey
+subPartialInFlightRef = unsafePerformIO newInFlight
 
 -- | How many in-flight re-entries have answered early so far: the cycle cuts of
 -- 'subPartialInFlightRef', 'satInFlightRef', 'innerRejectsInFlightRef' and
@@ -4821,6 +4855,12 @@ subPartialInFlightRef = unsafePerformIO (newIORef S.empty)
 -- answer computed while one fired may depend on which goals were in flight above it; the
 -- result memos compare this counter before and after a computation and store only answers
 -- no cut touched.
+--
+-- One counter for every thread, where the in-flight sets are one per thread ('InFlight'). It
+-- decides only whether an answer is stored, and counting other threads' cuts as well as this
+-- one's can only withhold a store, never keep an answer one of this thread's cuts touched — so
+-- sharing it costs some answers recomputed and nothing worse, where a counter per thread would
+-- be a count kept for every thread a server ever ran, with nowhere to drop it.
 {-# NOINLINE cycleCutCountRef #-}
 cycleCutCountRef :: IORef Int
 cycleCutCountRef = unsafePerformIO (newIORef 0)
@@ -4832,14 +4872,8 @@ noteCycleCut r = atomicModifyIORef' cycleCutCountRef (\n -> (n + 1, ())) >> retu
 isSubPartialOfWithEnvN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnvN typeEnv vaenv sub super = unsafePerformIO $ do
   let k = (tePrgmEnv typeEnv, teArgModeProjection typeEnv, L.sort (H.toList vaenv), sub, super)
-  inflight <- readIORef subPartialInFlightRef
-  if S.member k inflight
-    then noteCycleCut False
-    else do
-      modifyIORef' subPartialInFlightRef (S.insert k)
-      r <- evaluate (isSubPartialOfWithEnvNRaw typeEnv vaenv sub super)
-      modifyIORef' subPartialInFlightRef (S.delete k)
-      return r
+  inFlightOn subPartialInFlightRef k (noteCycleCut False) $
+    evaluate (isSubPartialOfWithEnvNRaw typeEnv vaenv sub super)
 
 isSubPartialOfWithEnvNRaw :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 -- Projection (loose) keyset feasibility, used by matching\/dispatch consumers via
@@ -6486,19 +6520,12 @@ reduceNegPredLeaf typeEnv vaenv p
 -- decision, one level down. A re-entered decision is left undecided: the conjunct stays attached,
 -- which spells the same set, so the marker chooses a spelling and never an answer.
 {-# NOINLINE negPredDecideInFlightRef #-}
-negPredDecideInFlightRef :: IORef (S.HashSet (PartialType, TypePredicates))
-negPredDecideInFlightRef = unsafePerformIO (newIORef S.empty)
+negPredDecideInFlightRef :: InFlight (PartialType, TypePredicates)
+negPredDecideInFlightRef = unsafePerformIO newInFlight
 
 decideInFlight :: (PartialType, TypePredicates) -> Maybe Bool -> Maybe Bool
-decideInFlight k decision = unsafePerformIO $ do
-  inflight <- readIORef negPredDecideInFlightRef
-  if S.member k inflight
-    then noteCycleCut Nothing
-    else do
-      modifyIORef' negPredDecideInFlightRef (S.insert k)
-      r <- evaluate decision
-      modifyIORef' negPredDecideInFlightRef (S.delete k)
-      return r
+decideInFlight k decision = unsafePerformIO $
+  inFlightOn negPredDecideInFlightRef k (noteCycleCut Nothing) (evaluate decision)
 {-# NOINLINE decideInFlight #-}
 
 -- | Whether a leaf's value predicate holds on it ('typeGraphPredExprHolds'), the leaf read without
@@ -8711,8 +8738,8 @@ foldDiscovered typeEnv vaenv vaenv' t =
 -- WITHOUT the environment: a cycle whose env grows each lap would never re-hit an env-keyed
 -- entry, and the marker exists to stop exactly that.
 {-# NOINLINE innerRejectsInFlightRef #-}
-innerRejectsInFlightRef :: IORef (S.HashSet (TypeVarAux, Type, Type))
-innerRejectsInFlightRef = unsafePerformIO (newIORef S.empty)
+innerRejectsInFlightRef :: InFlight (TypeVarAux, Type, Type)
+innerRejectsInFlightRef = unsafePerformIO newInFlight
 
 -- | Whether an occurrence's own inner rules the meet out: an occurrence denotes
 -- @⟦var⟧ ⊓ ⟦inner⟧@, so @$v∩{I} ⊓ t@ is empty as soon as @I ⊓ t@ is, whatever the binding says.
@@ -8725,14 +8752,8 @@ innerRejectsMeet typeEnv vaenv v inner other
   | inner == PTopType = False
   | otherwise = unsafePerformIO $ do
       let k = (v, inner, other)
-      inflight <- readIORef innerRejectsInFlightRef
-      if S.member k inflight
-        then noteCycleCut False
-        else do
-          modifyIORef' innerRejectsInFlightRef (S.insert k)
-          r <- evaluate (isBottomType (intersectTypesEnv typeEnv vaenv inner other))
-          modifyIORef' innerRejectsInFlightRef (S.delete k)
-          return r
+      inFlightOn innerRejectsInFlightRef k (noteCycleCut False) $
+        evaluate (isBottomType (intersectTypesEnv typeEnv vaenv inner other))
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type
