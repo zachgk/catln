@@ -417,6 +417,11 @@ class ExprClass e where
   -- | Returns the value at the base of an expression, if it exists
   maybeExprPathM :: e m -> Maybe (TypeName, Meta m)
 
+  -- | The base and condition of an expression that is a @where@ at its root (@a | a.isZ == True@).
+  -- Only the desugared 'Expr' has one; the raw forms read as having none.
+  exprWhereCond :: e m -> Maybe (e m, e m)
+  exprWhereCond _ = Nothing
+
   -- | Returns all arguments applied to a value
   exprAppliedArgs :: (Show m, MetaDat m) => e m -> [ObjArr e m]
 
@@ -455,6 +460,9 @@ instance ExprClass Expr where
   maybeExprPathM (AliasExpr b _)         = maybeExprPathM b
   maybeExprPathM (EWhere _ b _)          = maybeExprPathM b
   maybeExprPathM _                       = Nothing
+
+  exprWhereCond (EWhere _ b c) = Just (b, c)
+  exprWhereCond _              = Nothing
 
   exprAppliedArgs (Value _ _)               = []
   exprAppliedArgs CExpr{}                   = []

@@ -24,6 +24,7 @@ import           Data.Maybe
 import qualified Data.Zip            as Z
 
 import           Control.Monad.State
+import           CtConstants         (macroThisKey)
 import           Semantics           (stampQueryToken)
 import           Semantics.Prgm      (Meta (..), ObjArr (..),
                                       ObjectBasis (ArgObj), exprAppliedArgs,
@@ -405,22 +406,40 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (SetArgMode i mode s
     -- type as well as the actual (both are upper bounds — see 'SType'); mirror it on each side.
     destReq' = intersectTypes feTypeEnv (argModeType (ambientEnv (fmap (stypeReq . snd) vaenv)) srcReq) destReq
     destReqDecl' = intersectTypes feTypeEnv (argModeType (ambientEnv (fmap (stypeReqDecl . snd) vaenv)) srcReqDecl) destReqDecl
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (ConWhere i base cond res)) = (False, con{conDat=ConWhere i base cond res'}) -- TODO Currently using temp equals relationship, switch to actual constraint
+-- A @where@ is its base's value, within the condition: the result is the base refined by the
+-- condition's FORM as a predicate ('TypeCheck.Encode.condPredForm'), the condition as written with
+-- the base's value named @$this@ and the scope's other arguments as their variables. The form is
+-- what the type layer can decide and the runtime can evaluate: substituted at a call
+-- (`arrowDestType` reads predicates under the call's bindings), @k(a= S(n= Z))@'s result
+-- @S(n= Z) | $this.isZ == True@ is decided false and empty. Read from the condition's actual type
+-- instead, the predicate carried the operands' REACHED values (@==(l= {True, False}, r= True)@),
+-- which say nothing of the value, and a condition whose actual was not one partial carried none.
+-- A condition the form cannot state (applying an argument by position, a bare argument) refines
+-- nothing here; it is still evaluated where it is written ('Eval' @TWhere@, the arm's guard).
+--
+-- The scope's arguments are the constraint's own environment: a bare name among them is the
+-- argument, shadowing any function it would otherwise name (as 'Semantics.TypeGraph.reachesPartials'
+-- reads it); a bare name outside it is the relation it names, resolved where the predicate is
+-- decided (@~True@).
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (ConWhere i form baseVar base cond res)) = (False, con{conDat=ConWhere i form baseVar base cond res'})
   where
-    vaenv' = ambientEnv (fmap (stypeAct . snd) vaenv)
-    tp'' = case maybeGetSingleton (stypeAct cond) of
-      Just tp' -> intersectTypesEnv feTypeEnv vaenv' (stypeAct res) $ typeAddPreds (stypeAct base) (PredsOne $ PredExpr tp')
-      Nothing -> stypeAct res
-    -- The where condition refines an upper bound on the result, so it applies to the required type
-    -- as well as the actual (both are upper bounds — see 'SType'); refine each side against its own
-    -- ambient var-env, keyed on the same condition value.
-    tpReq'' = case maybeGetSingleton (stypeAct cond) of
-      Just tp' -> intersectTypesEnv feTypeEnv (ambientEnv (fmap (stypeReq . snd) vaenv)) (stypeReq res) $ typeAddPreds (stypeReq base) (PredsOne $ PredExpr tp')
-      Nothing -> stypeReq res
-    tpReqDecl'' = case maybeGetSingleton (stypeAct cond) of
-      Just tp' -> intersectTypesEnv feTypeEnv (ambientEnv (fmap (stypeReqDecl . snd) vaenv)) (stypeReqDecl res) $ typeAddPreds (stypeReqDecl base) (PredsOne $ PredExpr tp')
-      Nothing -> stypeReqDecl res
-    res' = res{stypeAct=tp'', stypeReq=tpReq'', stypeReqDecl=tpReqDecl''}
+    isArg n = H.member (TVArg (partialKey n)) vaenv
+    preds = maybe PredsNone (PredsOne . PredExpr) (form >>= resolve)
+    resolve p
+      | isArg (ptName p) = Nothing
+      | otherwise = Just (resolveArgs p)
+    resolveArgs p = p{ptArgs=fmap operand (ptArgs p)}
+    operand (TopType negs (PredsOne (PredRel q)))
+      | H.null (ptArgs q), isArg (ptName q) = if Just (ptName q) == baseVar
+          then relTypeVal (mkName macroThisKey)
+          else TypeVar (TVArg (partialKey (ptName q))) TVInt PTopType
+      | otherwise = TopType negs (PredsOne (PredRel (resolveArgs q)))
+    operand t = t
+    -- The condition refines an upper bound on the result, so it applies to the required type as
+    -- well as the actual (both are upper bounds — see 'SType'); refine each side against its own
+    -- ambient var-env.
+    refine side = intersectTypesEnv feTypeEnv (ambientEnv (fmap (side . snd) vaenv)) (side res) $ typeAddPreds (side base) preds
+    res' = res{stypeAct=refine stypeAct, stypeReq=refine stypeReq, stypeReqDecl=refine stypeReqDecl}
 computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeAct children

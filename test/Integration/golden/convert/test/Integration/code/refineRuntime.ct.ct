@@ -9,8 +9,11 @@ import "core"
   evaluated on the value when [f] is dispatched; [keep] returns its argument where a
   [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [keepOut] declares
   the same refinement in full, its condition written over [$out], the result the arrow produces;
-  [narrow] is a value narrowed by a condition, evaluated where it is written. Each holds here, so
-  the run exits 0. The runs where they do not hold are asserted in Eval.RefinementRuntimeTests.
+  [narrow] is a value narrowed by a condition, evaluated where it is written; [narrowDecl]'s
+  condition is the declared refinement's own predicate, so the declaration is established by the
+  condition's form and the value is checked once, where the condition is written. Each holds
+  here, so the run exits 0. The runs where they do not hold are asserted in
+  Eval.RefinementRuntimeTests.
 f(a -> Integer_nonNeg) -> Integer= a
 
 onInt(n -> Integer) -> Integer= f(a= n)
@@ -21,4 +24,6 @@ keepOut(n -> Integer) -> (Integer | $out.nonNeg == True)= n
 
 narrow(n -> Integer) -> Integer= n | n >= 0
 
-main{io -> IO}= io.exit(val= onInt(n= 3) - keep(n= 2) - narrow(n= 1) - keepOut(n= 0))
+narrowDecl(n -> Integer) -> Integer_nonNeg= n | n.nonNeg == True
+
+main{io -> IO}= io.exit(val= onInt(n= 3) - keep(n= 2) - narrow(n= 1) - keepOut(n= 0) + narrowDecl(n= 0))

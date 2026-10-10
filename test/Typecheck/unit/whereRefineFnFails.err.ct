@@ -1,0 +1,33 @@
+annot(#noCore)
+
+# A call of a body refined by a condition applying a function to the value, passing a value the
+  predicate is decided false on: [kFn] returns [a | isZero(n= a)], so [kFn(a= S(n= Z))] is
+  [S(n= Z) | isZero(n= $this)], which reaches only [False]; the result is empty and the page is
+  refused statically. The twin page whereRefine.ct has the calls that hold.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+kFn(a -> Nat) -> Nat= a | isZero(n= a)
+
+g(x -> Nat) -> IO= IO
+
+main -> IO= g(x= kFn(a= S(n= Z)))

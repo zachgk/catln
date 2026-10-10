@@ -150,7 +150,7 @@ data ConstraintDat p
   | HoResultReq Int (p, ArgName) p -- ^ Req only
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
-  | ConWhere Int p p p -- ^ Where has a predicates
+  | ConWhere Int (Maybe PartialType) (Maybe TypeName) p p p -- ^ Where: the condition's form as a predicate ('TypeCheck.Encode.condPredForm'), the base's name when it is bare, base, cond, result
   | UnionOf Int p [p] -- ^ Both Actual and Req
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
@@ -218,10 +218,10 @@ mapMConDat f (AddInferArg i p1 p2) = do
 mapMConDat f (SetArgMode i m p1 p2) = do
   p1' <- f p1
   SetArgMode i m p1' <$> f p2
-mapMConDat f (ConWhere i p1 p2 p3) = do
+mapMConDat f (ConWhere i form baseVar p1 p2 p3) = do
   p1' <- f p1
   p2' <- f p2
-  ConWhere i p1' p2' <$> f p3
+  ConWhere i form baseVar p1' p2' <$> f p3
 mapMConDat f (UnionOf i p1 p2s) = do
   p1' <- f p1
   p2s' <- mapM f p2s
@@ -374,7 +374,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
   show (SetArgMode i False s t) = printf "%s.. %d⊇ %s" (show s) i (show t)
-  show (ConWhere i b c r) = printf "%s %d| %s = %s" (show b) i (show c) (show r)
+  show (ConWhere i form _ b c r) = printf "%s %d| %s (%s) = %s" (show b) i (show c) (maybe "no predicate" show form) (show r)
   show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)
 
 instance (Show p) => Show (Constraint p) where

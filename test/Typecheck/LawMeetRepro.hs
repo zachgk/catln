@@ -239,7 +239,7 @@ conSTypes d = case d of
   HoResultReq _ (a, _) b            -> [a, b]
   AddInferArg _ a b                 -> [a, b]
   SetArgMode _ _ a b                -> [a, b]
-  ConWhere _ a b c                  -> [a, b, c]
+  ConWhere _ _ _ a b c              -> [a, b, c]
   UnionOf _ p ps                    -> p : ps
 
 -- | Replay the fragment's epochs one constraint at a time, mirroring

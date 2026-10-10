@@ -1947,9 +1947,24 @@ topTypeAsPartials TypeEnv{teNames} = map ((\p -> p{ptArgMode=PtArgUnbounded}) . 
 expandPredicates :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Type
 expandPredicates _       _     PredsNone    = PTopType
 expandPredicates typeEnv vaenv (PredsOne p) = expandPredicate typeEnv vaenv p
-expandPredicates typeEnv vaenv (PredsAnd ps) = case map (expandPredicates typeEnv vaenv) ps of
-  [] -> BottomType
-  ts -> foldr1 (intersectTypesEnv typeEnv vaenv) ts
+-- A value predicate's expansion is symbolic, a top carrying it ('expandPredicate'), so meeting
+-- the conjuncts' expansions would meet two such tops: 'intersectTypesWithVarEnv' merges them
+-- into one top and compacts it, and compaction asks whether the conjunction is empty
+-- ('predsEmpty') by expanding it — this very expansion, without end (a body's condition met with
+-- a declared refinement spelled the same way, @a | a.isZ == True@ under @-> Nat_isZ@). The
+-- value predicates are attached, as they are, to the expansion of the other conjuncts, which is
+-- what the meet of the tops is.
+expandPredicates typeEnv vaenv conj@(PredsAnd ps)
+  | not (null exprAtoms) = attach (expandPredicates typeEnv vaenv (predsWithoutExprAtoms conj)) (mkAnd (map (PredsOne . PredExpr) exprAtoms))
+  | otherwise = case map (expandPredicates typeEnv vaenv) ps of
+      [] -> BottomType
+      ts -> foldr1 (intersectTypesEnv typeEnv vaenv) ts
+  where
+    exprAtoms = predsExprAtoms conj
+    attach BottomType _                   = BottomType
+    attach t@TopType{} atoms              = typeAddPreds t atoms
+    attach t@(UnionType Nothing _ []) atoms = typeAddPreds t atoms
+    attach t atoms                        = intersectTypesEnv typeEnv vaenv t (TopType H.empty atoms)
 expandPredicates typeEnv vaenv (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPredicates typeEnv vaenv p
 
 expandPredicate :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> Type

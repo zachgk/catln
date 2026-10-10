@@ -14,30 +14,50 @@ Prgm
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = /operator-
+                            ( Value /val -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = /operator-
                                     ( Value /l -> /Data/Primitive/Integer = /operator-
-                                        ( Value /l -> /Data/Primitive/Integer| PredExpr /operator==
-                                            ( /r=/Data/Primitive/True
-                                            , /l=~nonNeg( /this=~/$this )
-                                            ) = /onInt
-                                            ( Value /n -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 3 }
+                                        ( Value /l -> /Data/Primitive/Integer = /operator-
+                                            ( Value /l -> /Data/Primitive/Integer| PredExpr /operator==
+                                                ( /r=/Data/Primitive/True
+                                                , /l=~nonNeg( /this=~/$this )
+                                                ) = /onInt
+                                                ( Value /n -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 3 }
+                                                )
+                                            )
+                                            ( Value /r -> /Data/Primitive/Integer = /keep
+                                                ( Value /n -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 2 }
+                                                )
                                             )
                                         )
-                                        ( Value /r -> /Data/Primitive/Integer = /keep
+                                        ( Value /r -> /Data/Primitive/Integer| PredExpr /operator>=
+                                            ( /r=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 0 }
+                                                    ]
+                                                )
+                                            , /l=~/$this
+                                            ) = /narrow
                                             ( Value /n -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 2 }
+                                                { ciValue = 1 }
                                             )
                                         )
                                     )
-                                    ( Value /r -> /Data/Primitive/Integer = /narrow
+                                    ( Value /r -> /Data/Primitive/Integer = /keepOut
                                         ( Value /n -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 1 }
+                                            { ciValue = 0 }
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer = /keepOut
+                                ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                    ( /r=~True
+                                    , /l=~nonNeg( /this=~/$this )
+                                    ) = /narrowDecl
                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
                                     )
@@ -53,7 +73,17 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /narrow( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value /n | /operator>=( Value /l -> TVArg /n = Value /n )
+                        [ /narrow( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer| PredExpr /operator>=
+                            ( /r=UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CInt
+                                        { ciValue = 0 }
+                                    ]
+                                )
+                            , /l=~/$this
+                            ) = Value /n | /operator>=( Value /l -> TVArg /n = Value /n )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )
@@ -107,6 +137,26 @@ Prgm
                     }
                 )
             ,
+                ( "/narrowDecl"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /narrowDecl( Value /n -> /Data/Primitive/Integer ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer && PredExpr /operator==
+                                ( /r=~True
+                                , /l=~nonNeg( /this=~/$this )
+                                )
+                            ) = Value /n | /operator==
+                            ( Value /l -> ∀/Data/Primitive/Boolean = /Data/Primitive/nonNeg( Value /this -> TVArg /n = Value /n ) )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
+                        ]
+                    }
+                )
+            ,
                 ( "/f"
                 , ObjectMapItem
                     { omiDecls = []
@@ -133,6 +183,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -145,8 +196,11 @@ Prgm
                 evaluated on the value when [f] is dispatched; [keep] returns its argument where a
                 [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [keepOut] declares
                 the same refinement in full, its condition written over [$out], the result the arrow produces;
-                [narrow] is a value narrowed by a condition, evaluated where it is written. Each holds here, so
-                the run exits 0. The runs where they do not hold are asserted in Eval.RefinementRuntimeTests." }
+                [narrow] is a value narrowed by a condition, evaluated where it is written; [narrowDecl]'s
+                condition is the declared refinement's own predicate, so the declaration is established by the
+                condition's form and the value is checked once, where the condition is written. Each holds
+                here, so the run exits 0. The runs where they do not hold are asserted in
+                Eval.RefinementRuntimeTests." }
             )
         ]
     }

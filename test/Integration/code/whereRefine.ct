@@ -1,0 +1,39 @@
+annot(#noCore)
+
+#noCore
+# A body's condition refines its value by the condition's form: [a | a.isZ == True] is [a] within
+  [$this.isZ == True], the predicate [Nat_isZ] desugars to, so [kDecl] is within its declared
+  [Nat_isZ] by the predicate itself, and [kZ] settles to the [Z] it passes, on which the predicate
+  is decided true. A condition on another argument ([kOther]) is a predicate over that argument's
+  variable; a bare argument as the condition ([kArg]) states no predicate. Written without the
+  core library, so the predicate bottoms out at arms rather than primitives.
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+k(a -> Nat) -> Nat= a | a.isZ == True
+
+kDecl(a -> Nat) -> Nat_isZ= a | a.isZ == True
+
+kOther(a -> Nat, b -> Nat) -> Nat= a | b.isZ == True
+
+kArg(a -> Nat, b -> Boolean) -> Nat= a | b
+
+kZ= kDecl(a= k(a= Z))

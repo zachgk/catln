@@ -144,7 +144,13 @@ fromExpr est (EWhere m base cond) = do
   cond' <- fromExpr condEst cond
   bool <- fresh $ TypeCheckResult [] $ SType PTopType boolType boolType Nothing "ifGuardBool"
   let bool' = Meta boolType (getMetaPos $ getExprMeta cond) nil (mkVarMetaDat est bool)
-  modify $ addConstraints [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (getExprMeta base') (getExprMeta cond') m']
+  -- The value the condition refines is the base's when the base is a bare argument (@a | a.isZ
+  -- == True@, read as one by the constraint against its scope); an arm's guard is on the arm's
+  -- object and refines no one value.
+  let baseVar = case (est, base) of
+        (EncodeOut{}, Value _ n) -> Just n
+        _                        -> Nothing
+  modify $ addConstraints [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (condPredForm cond) baseVar (getExprMeta base') (getExprMeta cond') m']
   return $ EWhere m' base' cond'
 fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   m' <- fromMeta BAct est m $ printf "Tuple Meta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
@@ -364,6 +370,29 @@ topArgPropEqs definedNames obj' = go obj'
       | otherwise                         = [PropEq 47 (whole, TVArg $ inExprSingleton nObj) (hoSlotPoint nObj nArrM)]
     argLink _ _ (EAppSpread ae) = go ae
     argLink _ _ _ = []
+
+-- | The form of a @where@ condition as the predicate it states, the spelling a type's own
+-- condition desugars to (@Nat_isZ@ is @Nat | $this.isZ == True@, stored as the 'PredExpr'
+-- @/operator==(/r=~True, /l=~isZ(/this=~/$this))@): the condition's applications with their
+-- argument values, a constant as its type, a bare name as the relation it names ('relTypeVal')
+-- and an application as its own form. Which bare names are the scope's arguments is the
+-- constraint's to read, against the environment it is scoped in ('TypeCheck.Constrain', the
+-- @ConWhere@ case): the refined value becomes 'macroThisKey', another argument its variable. A
+-- condition the form cannot state — an argument applied by position, a hole, an alias — states
+-- no predicate.
+condPredForm :: PExpr -> Maybe PartialType
+condPredForm = root
+  where
+    root (Value _ n) = Just (partialVal n)
+    root (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just argObj@Value{}, oaArr=Just (Just v, _)})) = do
+      p <- root be
+      vT <- operand v
+      return p{ptArgs=H.insert (inExprSingleton argObj) vT (ptArgs p)}
+    root _ = Nothing
+    operand (CExpr _ c)    = Just (constantType c)
+    operand (Value _ n)    = Just (relTypeVal n)
+    operand e@TupleApply{} = (\p -> TopType H.empty (PredsOne (PredRel p))) <$> root e
+    operand _              = Nothing
 
 -- | The absolute names that something in the program defines: the declared types and values of
 -- the typechecked type graph, plus those the batch being encoded is adding ('feLocalDefNames').

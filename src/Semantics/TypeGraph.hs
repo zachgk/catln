@@ -167,7 +167,7 @@ typeGuaranteedWithin typeEnv vaenv req = typeOk S.empty
       -- 'reachesPartials' reads it: an argument shadows every other name it matches, so
       -- @step(count, ..)= count@ is the parameter even where a function @/Data/List/count@ is
       -- imported, whose arrows would otherwise be the only promises asked.
-      | H.null (ptArgs p), H.null (ptVars p), Just argValue <- H.lookup (extKey (TVArg (partialKey (ptName p)))) vaenv = typeOk visited argValue
+      | H.null (ptArgs p), H.null (ptVars p), Just argValue <- H.lookup (extKey (TVArg (partialKey (ptName p)))) vaenv = typeOk visited (intersectTypesEnv typeEnv vaenv argValue (TopType H.empty (ptPreds p)))
       | S.member p visited = False
       | otherwise = not (null kept) && within (singletonType p) (unionAllTypesWithEnvOnce typeEnv vaenv (map (srcVarsOnly p) kept))
       where
@@ -208,7 +208,16 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
   where
     reachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> ReachesTree
     reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf
-    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | extKey (TVArg (partialKey argName)) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt PTopType) ("arg", ReachesLeaf)
+    -- A bare reference to an argument is the argument. Its predicates (a body's @a | a.isZ ==
+    -- True@ types @a | PredExpr …@) are the occurrence's inner, which is what an occurrence
+    -- denotes: the variable within that bound. Only a closed inner is installed (the 'TypeVar'
+    -- discipline); a predicate over other arguments is left to where the condition is written.
+    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName, ptPreds} | extKey (TVArg (partialKey argName)) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt inner) ("arg", ReachesLeaf)
+      where
+        inner = case ptPreds of
+          PredsNone -> PTopType
+          _ | typeHasTypeVars (TopType H.empty ptPreds) -> PTopType
+            | otherwise -> TopType H.empty ptPreds
     reachesPartial env@ReachesEnv{rTypeEnv, rVisited, rVaenv} partial = do
 
       let ttypes = typeGraphQueryWithReason rTypeEnv rVaenv partial

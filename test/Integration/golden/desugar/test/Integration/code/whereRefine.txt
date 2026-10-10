@@ -1,0 +1,220 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/kArg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ kArg( Value a -> ∀/Nat )( Value b -> ∀/Data/Primitive/Boolean ) -> ∀/Nat = Value a | Value b ]
+                    }
+                )
+            ,
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator==( Value l -> /Data/Primitive/True )( Value r -> /Data/Primitive/True ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator==( Value l -> /Data/Primitive/False )( Value r -> /Data/Primitive/False ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator==( Value l -> /Data/Primitive/True )( Value r -> /Data/Primitive/False ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator==( Value l -> /Data/Primitive/False )( Value r -> /Data/Primitive/True ) -> ∀/Data/Primitive/Boolean = Value False
+                        ]
+                    }
+                )
+            ,
+                ( "/Z"
+                , ObjectMapItem
+                    { omiDecls = [ Value Z ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/kOther"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ kOther( Value a -> ∀/Nat )( Value b -> ∀/Nat ) -> ∀/Nat = Value a | /operator==
+                            ( Value /l= isZ( Value /this= Value b ) )( Value /r= Value True )
+                        ]
+                    }
+                )
+            ,
+                ( "/k"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ k( Value a -> ∀/Nat ) -> ∀/Nat = Value a | /operator==
+                            ( Value /l= isZ( Value /this= Value a ) )( Value /r= Value True )
+                        ]
+                    }
+                )
+            ,
+                ( "/kZ"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value kZ= kDecl
+                            ( Value a= k( Value a= Value Z ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/True"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Data/Primitive/True
+                        , Value /Data/Primitive/True
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value #noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/isZ"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ isZ( Value /this -> ∀/Nat ) -> ∀/Data/Primitive/Boolean = isZero( Value n= Value this ) ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/False"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Data/Primitive/False
+                        , Value /Data/Primitive/False
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/isZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ isZero( Value n -> ∀/Nat ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ isZero( Value n= Value Z ) -> ∀/Data/Primitive/Boolean = Value True
+                        , isZero
+                            ( Value n= S( Value n@Value m ) ) -> ∀/Data/Primitive/Boolean = Value False
+                        ]
+                    }
+                )
+            ,
+                ( "/kDecl"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ kDecl( Value a -> ∀/Nat ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~isZ( /this=~/$this )
+                                ) && PredRel Nat
+                            ) = Value a | /operator==
+                            ( Value /l= isZ( Value /this= Value a ) )( Value /r= Value True )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/S"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ S( Value /n -> ∀/Nat ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Primitive/Boolean
+            , cgcExtends =
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Nat
+            , cgcExtends =
+                [ /Z
+                , /S( /n=∀/Nat )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value #noCore
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A body's condition refines its value by the condition's form: [a | a.isZ == True] is [a] within
+                [$this.isZ == True], the predicate [Nat_isZ] desugars to, so [kDecl] is within its declared
+                [Nat_isZ] by the predicate itself, and [kZ] settles to the [Z] it passes, on which the predicate
+                is decided true. A condition on another argument ([kOther]) is a predicate over that argument's
+                variable; a bare argument as the condition ([kArg]) states no predicate. Written without the
+                core library, so the predicate bottoms out at arms rather than primitives." }
+            )
+        ]
+    }

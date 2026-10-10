@@ -602,11 +602,22 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
       -- _ | trace (printf "arrowDestType from %s with %s to %s.\n\t\tVanev: %s" (show src) (show oa) (show joined) (show vaenv)) False -> undefined
       -- A body that is an argument reference (@= x@) or a call of a higher-order argument
       -- (@= fn(v= x)@): the argument's result — for a higher-order argument, its input object
-      -- resolved through the environment's arrows ('hoSlotResult').
-      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch (substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
+      -- resolved through the environment's arrows ('hoSlotResult'). A body that is the argument
+      -- within a condition (@= a | a.isZ == True@, whose path is the argument's) is the
+      -- argument's result within the condition's predicates, which the body's where carries
+      -- ('TypeCheck.Constrain', the @ConWhere@ case); read as the bare argument, the condition
+      -- was lost at every call, and @k(a= S(n= Z))@ read as @S(n= Z)@ where it is empty.
+      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch (withinWhere n . substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
       _                              -> joinedDispatch
       where
         substitute = substituteTVExt typeEnv vaenv
+        withinWhere n t = case exprWhereCond n of
+          Just _  -> intersectTypes typeEnv t (substitute (TopType H.empty (wherePreds (getExprType n))))
+          Nothing -> t
+        -- The predicates a where's type carries: on its one leaf (@/a | PredExpr …@) or its top.
+        wherePreds (UnionType (Just (preds, _, _)) _ _) = preds
+        wherePreds (UnionType Nothing leafs []) | [l] <- splitUnionType leafs = ptPreds l
+        wherePreds _ = PredsNone
         expr' = fmap (substitute . getExprType) oaArrExpr
         -- Re-link the declared result's Top class-parameter slots to the type variables the source
         -- bound before substituting: an accessor result parameterized by the receiver's own type

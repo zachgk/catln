@@ -300,6 +300,43 @@ testRefineOut = testCase "$out and $this in a type's condition name the refined 
   mapM_ checkResult (["/h", "/hFn", "/hThis", "/hRt"] :: [String])
   assertPageErrorSays "test/Typecheck/unit/refineOutPositional.err.ct" "by position"
 
+-- | A body's condition refines its value by the condition's FORM ('TypeCheck.Encode.condPredForm'):
+-- @k@'s @a | a.isZ == True@ types as @a@ within @$this.isZ == True@, the predicate @Nat_isZ@
+-- desugars to, so @kDecl@ is guaranteed within its declared @Nat_isZ@ by the predicate and
+-- @kZ@'s @k(a= Z)@ settles to @Z@. A condition on another argument is a predicate over that
+-- argument's variable, not a value predicate; a bare argument as the condition states none. The
+-- twin error pages pass an @S@, on which the predicate is decided false. Fixtures:
+-- unit/whereRefine.ct, unit/whereRefineFails.err.ct, unit/whereRefineFnFails.err.ct.
+testWhereRefine :: TestTree
+testWhereRefine = testCase "a body's condition refines its value by the condition's form" $ do
+  let page = "test/Typecheck/unit/whereRefine.ct"
+  assertResultGuaranteed page "/kDecl"
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let typeEnv = mkTypeEnv prgm
+  let bodyOf name = [ getExprType e | oa@ObjArr{oaArr=Just (Just e, _)} <- flatObjectMap (prgmObjMap prgm), nameStr (oaObjPath oa) == name ]
+      resultOf name = [ getMetaType m | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), nameStr (oaObjPath oa) == name ]
+      leafsOf (UnionType _ leafs _) = splitUnionType leafs
+      leafsOf _                     = []
+      settled t = UnionType Nothing (joinUnionType [l | l <- leafsOf t, nameStr (ptName l) /= "/k"]) []
+      one name xs f = case xs of
+        [x] -> f x
+        _   -> assertFailure ("one " ++ name ++ ", found " ++ show xs)
+  one "body of k" (bodyOf "/k") $ \b ->
+    assertBool ("k's condition is a predicate on the refined value: " ++ show b) (typeHasValuePredExpr b && macroThisKey `elem` map nameStr (S.toList (typeRefNamesDeep b)))
+  one "body of kFn" (bodyOf "/kFn") $ \b ->
+    assertBool ("kFn's condition is a predicate on the refined value: " ++ show b) (typeHasValuePredExpr b)
+  one "body of kOther" (bodyOf "/kOther") $ \b ->
+    assertBool ("kOther's condition is a predicate over the other argument, not the value: " ++ show b) (typeHasPredExpr b && not (typeHasValuePredExpr b))
+  one "body of kArg" (bodyOf "/kArg") $ \b ->
+    assertBool ("kArg's bare condition states no predicate: " ++ show b) (not (typeHasPredExpr b))
+  one "result of kZ" (resultOf "/kZ") $ \r ->
+    assertBool ("kZ settles to Z: " ++ show r) (isSubtypeOf typeEnv (settled r) (typeVal "/Z"))
+
 -- | The page fails with an error whose text contains @needle@.
 assertPageErrorSays :: String -> String -> Assertion
 assertPageErrorSays page needle = do
@@ -346,6 +383,7 @@ typecheckTests = do
     , testRefineDecide
     , testRefineRuntime
     , testRefineOut
+    , testWhereRefine
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

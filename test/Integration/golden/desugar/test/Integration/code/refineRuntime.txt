@@ -9,27 +9,34 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator-
+                            ( Value val= /operator+
                                 ( Value /l= /operator-
                                     ( Value /l= /operator-
-                                        ( Value /l= onInt
-                                            ( Value n= CInt
-                                                { ciValue = 3 }
+                                        ( Value /l= /operator-
+                                            ( Value /l= onInt
+                                                ( Value n= CInt
+                                                    { ciValue = 3 }
+                                                )
+                                            )
+                                            ( Value /r= keep
+                                                ( Value n= CInt
+                                                    { ciValue = 2 }
+                                                )
                                             )
                                         )
-                                        ( Value /r= keep
+                                        ( Value /r= narrow
                                             ( Value n= CInt
-                                                { ciValue = 2 }
+                                                { ciValue = 1 }
                                             )
                                         )
                                     )
-                                    ( Value /r= narrow
+                                    ( Value /r= keepOut
                                         ( Value n= CInt
-                                            { ciValue = 1 }
+                                            { ciValue = 0 }
                                         )
                                     )
                                 )
-                                ( Value /r= keepOut
+                                ( Value /r= narrowDecl
                                     ( Value n= CInt
                                         { ciValue = 0 }
                                     )
@@ -95,6 +102,23 @@ Prgm
                     }
                 )
             ,
+                ( "/narrowDecl"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ narrowDecl( Value n -> /Data/Primitive/Integer ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            ) = Value n | /operator==
+                            ( Value /l= nonNeg( Value /this= Value n ) )( Value /r= Value True )
+                        ]
+                    }
+                )
+            ,
                 ( "/f"
                 , ObjectMapItem
                     { omiDecls = []
@@ -121,6 +145,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -132,8 +157,11 @@ Prgm
                 evaluated on the value when [f] is dispatched; [keep] returns its argument where a
                 [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [keepOut] declares
                 the same refinement in full, its condition written over [$out], the result the arrow produces;
-                [narrow] is a value narrowed by a condition, evaluated where it is written. Each holds here, so
-                the run exits 0. The runs where they do not hold are asserted in Eval.RefinementRuntimeTests." }
+                [narrow] is a value narrowed by a condition, evaluated where it is written; [narrowDecl]'s
+                condition is the declared refinement's own predicate, so the declaration is established by the
+                condition's form and the value is checked once, where the condition is written. Each holds
+                here, so the run exits 0. The runs where they do not hold are asserted in
+                Eval.RefinementRuntimeTests." }
             )
         ]
     }
