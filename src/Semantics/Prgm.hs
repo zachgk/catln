@@ -23,6 +23,7 @@ module Semantics.Prgm where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
 import           GHC.Generics        (Generic)
 
 import           Control.Monad       (join)
@@ -562,7 +563,15 @@ instance ExprClass Expr where
           fromArg :: (MetaDat m, Show m) => EApp Expr m -> [ArgMetaMapWithSrc m]
           fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArgLoose (inExprSingleton obj) src of
             Just (UnionType Nothing srcArg []) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
-            Just t@(UnionType (Just _) _ _) -> [(`meetBind` t) <$> exprVarArgs e]
+            -- A pattern destructuring a CLASS-typed slot (@cs= Cons(head, tail)@ against
+            -- @∀ConsList[/T=Char]@) matches the class's members of the pattern's name, so it binds
+            -- what those members hold (@head=Char@), as a union's leaves are matched one by one
+            -- above. A class with no such member binds the pattern's variables to the slot.
+            Just t@(UnionType (Just _) _ _)
+              | isJust (maybeExprPath e)
+              , members@(_:_) <- splitUnionType (expandTypeWithNames typeEnv H.empty t (S.singleton (pkName (inExprSingleton e))))
+              -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) members
+              | otherwise -> [(`meetBind` t) <$> exprVarArgs e]
             _ -> [H.empty]
           fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
           fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)})

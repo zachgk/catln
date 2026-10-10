@@ -26,11 +26,14 @@ import           Eval.Common
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
-import           TreeBuild           (buildArrow)
+import           TreeBuild           (buildArrow, withArgArrows)
 
-evalStartEArrow :: PartialType -> AnyObjArr -> Args -> EvalM (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
-evalStartEArrow srcType oa newArgs = do
-  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugClosed, evTreebugClaimed, evTreebugNextId} <- get
+-- | Enters an arrow for a source. An arm is built for the source in the environment holding the
+-- arrows of the closures the source's arguments are ('withArgArrows'): a higher-order slot holds
+-- the closure's input object, and the arm's body reaches what the closure returns through its arrow.
+evalStartEArrow :: PartialType -> [ObjArr Expr EvalMetaDat] -> AnyObjArr -> Args -> EvalM (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
+evalStartEArrow srcType closures oa newArgs = do
+  env@Env{evExEnv, evTbEnv, evClosureEnvs, evArgs, evCoverage, evTreebugOpen, evTreebugClosed, evTreebugClaimed, evTreebugNextId} <- get
   let env' = env{
                 evArgs=newArgs
                 -- The enclosing call's finished calls go aside with the arrow being entered, and this
@@ -40,21 +43,29 @@ evalStartEArrow srcType oa newArgs = do
                 , evTreebugClaimed = S.empty
                 , evTreebugNextId = evTreebugNextId + 1
                 }
+  let cacheKey' oa' = (srcType, [ getMetaType arrM | ObjArr{oaArr=Just (_, arrM)} <- closures ], oa')
   case oa of
     Right oa' -> do
       put env'
       return (getOaArrExpr oa', oaAnnots oa', evArgs)
     Left oa' -> do
+      let cacheKey = cacheKey' oa'
       let env'' = env'{evCoverage = H.insertWith (+) oa' 1 evCoverage}
-      case H.lookup (srcType, oa') evExEnv of
+      case H.lookup cacheKey evExEnv of
         Just (tree, annots') -> do
           put env''
           return (tree, annots', evArgs)
         Nothing -> do
-          maybeArrow' <- liftCRes $ buildArrow evTbEnv srcType oa'
+          let closuresKey = [ (getExprType (oaObjExpr c), getMetaType arrM) | c@ObjArr{oaArr=Just (_, arrM)} <- closures ]
+          let (buildEnv, closureEnvs') = case closures of
+                [] -> (evTbEnv, evClosureEnvs)
+                _  -> case H.lookup closuresKey evClosureEnvs of
+                  Just e  -> (e, evClosureEnvs)
+                  Nothing -> let e = withArgArrows evTbEnv closures in (e, H.insert closuresKey e evClosureEnvs)
+          maybeArrow' <- liftCRes $ buildArrow buildEnv srcType oa'
           case maybeArrow' of
             Just (_, arrow'@(tree, annots')) -> do
-              let env''' = env'' {evExEnv = H.insert (srcType, oa') arrow' evExEnv}
+              let env''' = env'' {evExEnv = H.insert cacheKey arrow' evExEnv, evClosureEnvs = closureEnvs'}
               put env'''
               return (tree, annots', evArgs)
             Nothing -> evalError $ printf "Failed to find arrow in eval resArrow: %s" (show oa')

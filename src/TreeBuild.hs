@@ -542,6 +542,20 @@ refinesTo TBEnv{tbTypeEnv} os srcType destType
 -- | Builds a call tree to convert something from 'srcType' to 'destType'. The @bound@ is a
 -- sound upper bound on the runtime value here, threaded down from outer calls
 -- (see 'buildPartialCallTree'); pass 'PTopType' at roots.
+-- | What the object sources a tree is built for bind: the call's arguments and the definition's
+-- variables as this call has them. A binding the sources do not settle (several readings, or ⊤)
+-- is left out, so it reads as the declaration states it.
+--
+-- Only the BINDERS among the sources bind: the definition's object and each lambda's pattern, the
+-- objects that take arguments. The stack also holds each call argument being built (@cs= tail@,
+-- @head= head@), whose object is the argument's key: read as a binder, @head= head@ would bind
+-- @head@ to the slot's declared type and shadow the pattern that bound it.
+objSrcsEnv :: (TypeGraph tg) => TypeEnv tg -> [ObjSrc] -> TypeVarArgEnv
+objSrcsEnv typeEnv os0 = case exprVarArgsWithObjSrcs typeEnv os of
+  [vaenv] -> ambientEnv (H.filter (/= PTopType) (fmap abType vaenv))
+  _       -> H.empty
+  where os = [ src | src@(_, oa) <- os0, not (null (exprAppliedArgs (oaObjExpr oa))) ]
+
 buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> CallForce -> DestBasis -> Type -> Type -> CRes TCallTree
 buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force basis srcType destType
   | not (H.null osEnv)
@@ -552,9 +566,7 @@ buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force basis srcType de
     -- @(l :: $T == r :: $T)@ is @equal(this=$_T, other=$_T)@): the tree is built for one call,
     -- whose bindings say what they are here (@T ↦ True@ from @l@). Read unresolved, a link is
     -- the ⊤ it denotes, and every arm of @equal@ accepts it.
-    osEnv = case exprVarArgsWithObjSrcs tbTypeEnv os of
-      [vaenv] -> ambientEnv (H.filter (/= PTopType) (fmap abType vaenv))
-      _       -> H.empty
+    osEnv = objSrcsEnv tbTypeEnv os
     srcType' = substituteTVExt tbTypeEnv osEnv srcType
     destType' = substituteTVExt tbTypeEnv osEnv destType
 buildCallTree env os visitedArrows bound force basis srcType destType = buildCallTreeAt env os visitedArrows bound force basis srcType destType
@@ -650,8 +662,8 @@ toTExpr env os (EWhere m b a) = do
   return $ TWhere m b' a'
 toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- case arg of
-    EAppVar _ _ -> toTExprDest env os be m
-    _           -> toTExprDest env os be (baseBuildMeta env os be bm)
+    EAppVar _ _ -> toTExprDestBase env os be m
+    _           -> toTExprDestBase env os be (baseBuildMeta env os be bm)
   arg' <- case arg of
     EAppArg a     -> EAppArg <$> toTEObjArr env os True a
     EAppVar vn vm -> return $ EAppVar vn vm
@@ -818,9 +830,16 @@ toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, o
 -- to the lambda's result ('hoSlotResult'). The same per-call scope the typechecker gives a call's
 -- constraints ('TypeCheck.Encode.attachCallArrs').
 withCallArrows :: TBEnv -> Expr TBMetaDat -> TBEnv
-withCallArrows env@TBEnv{tbTypeEnv} e = case callLambdas e of
+withCallArrows env e = withArgArrows env (callLambdas e)
+
+-- | The environment extended with the arrows a set of lambdas add: each one's object its pattern
+-- @fn(/v=..)@, its result its body. A call's lambdas at build time ('withCallArrows'), and at run
+-- time the closures a call is given ('Eval.evalObjArrCaptured'), whose arrows an arm's body reaches
+-- through the input object each one's slot holds ('hoSlotResult').
+withArgArrows :: TBEnv -> [ObjArr Expr TBMetaDat] -> TBEnv
+withArgArrows env@TBEnv{tbTypeEnv} lams = case lams of
   []   -> env
-  lams -> let arrows = [ ObjArr (Just obj) ArgObj Nothing [] (Just (Nothing, arrM)) | ObjArr{oaObj=Just obj, oaArr=Just (_, arrM)} <- lams ]
+  _    -> let arrows = [ ObjArr (Just obj) ArgObj Nothing [] (Just (Nothing, arrM)) | ObjArr{oaObj=Just obj, oaArr=Just (_, arrM)} <- lams ]
               objMap = objectMapFromList arrows
               merged0 = mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> tbTypeEnv
           in env{tbTypeEnv = withLocalArrowsOf (ObjArrTypeGraph objMap) tbTypeEnv merged0}
@@ -834,14 +853,29 @@ callLambdas (TupleApply _ (_, be) arg) = case arg of
 callLambdas _ = []
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
+toTExprDest = toTExprDestWith True
+
+-- | 'toTExprDest' for the BASE of an application: a call still being assembled, which nothing
+-- dispatches on (the call it becomes reads every argument, its own and its base's), so its
+-- arguments are read as the base's own type gives them.
+toTExprDestBase :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
+toTExprDestBase = toTExprDestWith False
+
+toTExprDestWith :: Bool -> TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show (getMetaType m)) (show $ map fst os)) False = undefined
 -- A hole is not converted toward its destination: it produces no value, failing where a run
 -- reaches it, so there is nothing to convert — and its type (⊤) has no arrows to build from.
-toTExprDest env0 os e@HoleExpr{} _ = toTExpr env0 os e
-toTExprDest env0@TBEnv{tbTypeEnv} os e m = do
+toTExprDestWith _ env0 os e@HoleExpr{} _ = toTExpr env0 os e
+toTExprDestWith readArgRefs env0@TBEnv{tbTypeEnv} os e m = do
   e' <- toTExpr env0 os e
   let env = withCallArrows env0 e
-  let srcT = getMetaType $ getExprMeta e'
+  -- The call is built for the arguments its object sources bind, which TreeBuild knows more
+  -- precisely than the inferred type it was typechecked with: each slot valued by a reference to
+  -- one of the enclosing definition's arguments is that argument here ('applyArgRefBindings', the
+  -- same reading an arm's result is given).
+  let srcT0 = getMetaType $ getExprMeta e'
+  let srcT | readArgRefs = applyArgRefBindings tbTypeEnv e (exprArgRefBindings (objSrcsEnv tbTypeEnv os) e) srcT0
+           | otherwise   = srcT0
   ct <- buildCallTree env os S.empty PTopType MayHold DestInferred srcT (getMetaType m)
   -- A reference to an argument of the enclosing definition — bare (@= v@) or applied
   -- (@fn(v= x)@ where @fn@ is a parameter) — is unreduced. When the destination is generic

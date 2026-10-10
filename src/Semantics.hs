@@ -685,26 +685,13 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
         -- Only rewrite a body that directly CONSTRUCTS a data value (@Cons(head=x)@): its applied
         -- arguments are the constructor's fields. A function/operator body (@a && b@, @f(a=..)@) has
         -- applied arguments that are the callee's parameters, not the result's fields, so leave it.
-        isDataConstruction = case maybeExprPath =<< oaArrExpr of
-          Just n  -> not (null (typeGraphData typeEnv n))
-          Nothing -> False
-        joinedResolved | isDataConstruction = applyResolvedFields typeEnv resolvedFields joined
-                       | otherwise          = applyResolvedCallArgs joined
-        -- The same holds for a body that CALLS a function (@getL(m= left, key= key)@): its raw
-        -- call form stores each argument with the body's abstract type, @getL(m=Top, key=Top)@
-        -- for a generated match arm whose inputs only its call site types. The call is applied to
-        -- the very values the arm's own arguments are bound to, so each slot valued by a bare
-        -- argument reference is read through the vaenv, narrowing it to the binding
-        -- (@getL(m=BinTree[K=Ord], key=Ord)@). A narrower source only narrows the slot, so the
-        -- read is monotone.
-        applyResolvedCallArgs (UnionType Nothing leafs consts)
-          | Just callee <- maybeExprPath =<< oaArrExpr
-          , not (H.null argRefFields) =
-            UnionType Nothing (joinUnionType [ if relativeNameMatches callee (ptName l) then l{ptArgs = H.mapWithKey resolveSlot (ptArgs l)} else l | l <- splitUnionType leafs ]) consts
-        applyResolvedCallArgs t = t
-        resolveSlot k slot = case H.lookup k argRefFields of
-          Just fv | not (isTypeVar fv) -> intersectTypes typeEnv slot fv
-          _                            -> slot
+        -- A body that constructs a value or calls a function is read with the values its argument
+        -- references are bound to ('applyArgRefBindings'); a construction also takes the fields
+        -- valued by an application of one of the object's own arguments ('resolvedFields').
+        joinedResolved = case oaArrExpr of
+          Just b | isDataConstruction typeEnv b -> applyArgRefBindings typeEnv b resolvedFields joined
+                 | otherwise                    -> applyArgRefBindings typeEnv b argRefFields joined
+          Nothing -> joined
         -- DISPATCH ONLY ('arrowDestTypeDispatch'): the presented dest must be what the BUILT arm
         -- returns. The arm's body compiles toward the arrow's result meta ('TreeBuild.buildArrow'),
         -- so a body-meta leaf the graph can still rewrite (a raw applied term such as
@@ -744,15 +731,7 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
           , Just out <- [hoSlotResult typeEnv vaenv (inExprSingleton valExpr) <$> typeGetArgLoose (inExprSingleton valExpr) srcPartial]
           , out /= PTopType
           , not (isTypeVar out) ]
-        -- A bare argument reference (@head=x@): the field is the argument's bound value.
-        argRefFields = H.fromList
-          [ (inExprSingleton (oaObjExpr a), fv)
-          | Just b <- [oaArrExpr]
-          , a <- exprAppliedArgs b
-          , Just (Just valExpr, _) <- [oaArr a]
-          , isJust (maybeExprPath valExpr)
-          , null (exprAppliedArgs valExpr)
-          , Just fv <- [H.lookup (extKey (TVArg (inExprSingleton valExpr))) vaenv] ]
+        argRefFields = maybe H.empty (exprArgRefBindings vaenv) oaArrExpr
         -- The applied argument's slot holds what the argument RETURNS, which for a lambda whose
         -- body is itself a call is the raw call partial (@/operator+(l=Integer, r=Integer)@) —
         -- at the type level a term may always stay unrewritten, so 'arrowConstrainUbs' keeps the
@@ -822,6 +801,50 @@ reduceAppliedTypeDeep typeEnv vaenv t@(UnionType Nothing leafs []) = case splitU
       { ptArgs = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptArgs
       , ptVars = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptVars }
 reduceAppliedTypeDeep _ _ t = t
+
+-- | Whether an expression directly CONSTRUCTS a data value (@Cons(head=x)@): its applied arguments
+-- are the constructor's fields. A function or operator application (@a && b@, @f(a=..)@) has applied
+-- arguments that are the callee's parameters, not the result's fields.
+isDataConstruction :: (TypeGraph tg, ExprClass e) => TypeEnv tg -> e m -> Bool
+isDataConstruction typeEnv e = case maybeExprPath e of
+  Just n  -> not (null (typeGraphData typeEnv n))
+  Nothing -> False
+
+-- | The bindings of an application's ARGUMENT REFERENCES: each applied argument whose value is a
+-- bare reference to one of the enclosing object's arguments (@head=x@, @m= m@) is that argument's
+-- bound value in the env.
+exprArgRefBindings :: (ExprClass e, Show m, Show (e m), MetaDat m) => TypeVarArgEnv -> e m -> H.HashMap ArgName Type
+exprArgRefBindings vaenv e = H.fromList
+  [ (inExprSingleton (oaObjExpr a), fv)
+  | a <- exprAppliedArgs e
+  , Just (Just valExpr, _) <- [oaArr a]
+  , isJust (maybeExprPath valExpr)
+  , null (exprAppliedArgs valExpr)
+  , Just fv <- [H.lookup (extKey (TVArg (inExprSingleton valExpr))) vaenv] ]
+
+-- | An application's type read with the values its argument references are bound to
+-- ('exprArgRefBindings'). The type is the abstract one the expression was inferred with, where an
+-- argument reference is the argument's declared type (@getL(m=Top, key=Top)@ for a generated
+-- match arm whose inputs only its call site types); where a call is being built, or an arm's
+-- result read, for particular bindings, each slot is what that argument is here. A construction
+-- sets each field and binds the data parameter it defines ('applyResolvedFields':
+-- @Cons(head=x)@ under @x=Integer@ is @Cons[/T=Integer](head=Integer)@); a call narrows each slot to
+-- the binding (@mmap(m= m)@ under @m=Some(Integer)@ is @mmap(m=Some(Integer))@). Both the
+-- result an arm presents ('arrowDestTypeBase') and the source of a call built inside an arm
+-- ('TreeBuild.toTExprDest') are read this way, so the two sides of a call agree on what its
+-- arguments are. A narrower binding only narrows the slot.
+applyArgRefBindings :: (TypeGraph tg, ExprClass e) => TypeEnv tg -> e m -> H.HashMap ArgName Type -> Type -> Type
+applyArgRefBindings typeEnv e bindings t
+  | H.null bindings = t
+  | isDataConstruction typeEnv e = applyResolvedFields typeEnv bindings t
+  | otherwise = case (maybeExprPath e, t) of
+      (Just callee, UnionType Nothing leafs consts) ->
+        UnionType Nothing (joinUnionType [ if relativeNameMatches callee (ptName l) then l{ptArgs = H.mapWithKey readSlot (ptArgs l)} else l | l <- splitUnionType leafs ]) consts
+      _ -> t
+  where
+    readSlot k slot = case H.lookup k bindings of
+      Just fv | not (isTypeVar fv) -> intersectTypes typeEnv slot fv
+      _                            -> slot
 
 -- | Set resolved field values on a constructed type and bind the data parameters those fields
 -- define. For @Cons(head=x)@ resolved to @head=Integer@, the Cons declaration links @head -> $T@,

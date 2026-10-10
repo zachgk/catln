@@ -128,12 +128,19 @@ evalObjArr = evalObjArrCaptured H.empty
 evalObjArrCaptured :: Args -> Val -> AnyObjArr -> EvalM Val
 evalObjArrCaptured captured input oa = do
   let newArrArgs = H.union (buildArrArgs oa input) captured
-  -- The src partial seeds the arm-body rebuild's var/arg environment, where a function-typed
-  -- slot's VALUE is its output type (the input signature lives in the key — the typechecker's
-  -- pointer-slot convention). The input-signature form would bind an arm's output var to the
-  -- signature (@$M := /fn(/v=Int)@) and leave the body's argument application unable to reach
-  -- a concrete destination type.
-  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialTypeOut input) oa newArrArgs
+  -- The arm is built for the input as its arguments are: a closure argument's slot holds the
+  -- closure's input object (@/fn(/v=..)@), as a typed arm's higher-order slot does, and the arm's
+  -- body reaches what it returns through the closure's arrow, which the build is given.
+  let closures = valClosureArrows input
+  -- Read as deep as the arm's own object looks ('getValDispatchPartial'), as dispatch reads it:
+  -- past that a value is its constructors' declared forms with their parameters bound. The arm is
+  -- built for what this input is to it, and what the build reads of the input reaches every call
+  -- in the arm ('TreeBuild.toTExprDest' reads arguments through it), so the whole value — a
+  -- string read as one cell per character — would make every one of them as deep as the value.
+  Env{evTypeEnv} <- get
+  let armT = either (getExprType . oaObjExpr) (getExprType . oaObjExpr) oa
+  let srcP = getValDispatchPartial evTypeEnv [armT] (1 + typePatternDepth armT) input
+  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow srcP closures oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
             mark <- gets evalTreebugMark
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
@@ -200,19 +207,14 @@ evalCallTree  m (TCMatch destType opts) = do
   -- function-signature key @/fn(/v=..)@ on the typed arrow) before matching, mirroring
   -- the 'simplifyArgKeys' handling in the 'TCCond' branch below.
   let reKeyP p = p{ptArgs = H.mapKeys (partialKey . pkName) (ptArgs p)}
-  -- A closure argument's slot in a typed arm holds either the closure's input signature or the
-  -- output contract delivered from the declaration; the value-derived partial only carries the
-  -- input signature, so also try the output form ('getValPartialTypeOut') before failing an arm.
-  -- Both are read only as deep as the arms look ('getValDispatchPartial').
+  -- A closure argument's slot holds the closure's input object, as a typed arm's higher-order slot
+  -- does. The value is read only as deep as the arms look ('getValDispatchPartial').
   let depth = 1 + maximum (0 : map (typePatternDepth . singletonType) (H.keys opts))
   let pats = map singletonType (H.keys opts)
-  let valP = reKeyP $ getValDispatchPartial evTypeEnv False pats depth m
-  let valPOut = reKeyP $ getValDispatchPartial evTypeEnv True pats depth m
+  let valP = reKeyP $ getValDispatchPartial evTypeEnv pats depth m
   -- Membership with the arm's value predicates evaluated on the value ('valWithinTypeAs'): an arm
   -- refined by a predicate the type layer could not decide is taken when the predicate holds.
-  let optMatches optType = do
-        inP <- valWithinTypeAs valP m (singletonType $ reKeyP optType)
-        if inP || valPOut == valP then return inP else valWithinTypeAs valPOut m (singletonType $ reKeyP optType)
+  let optMatches optType = valWithinTypeAs valP m (singletonType $ reKeyP optType)
   matching <- filterM (optMatches . fst) (H.toList opts)
   case matching of
     [(_, resArrowTree)] -> do
@@ -235,9 +237,8 @@ evalCallTree v (TCSeq a b) = do
   evalCallTree v' b
 evalCallTree m (TCCond _ []) = evalError $ printf "Found no matching conditions in evalTree for val %s (val type %s)" (show m) (show $ getValPartialType m)
 evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
-  -- The value's partial is tried in both slot conventions, like the 'TCMatch' branch above: a
-  -- closure argument's slot in the arm's object holds either the closure's input signature or
-  -- the output contract delivered from the declaration.
+  -- The value's partial is read as the 'TCMatch' branch above reads it: a closure argument's slot
+  -- holds the closure's input object, as the arm's object's higher-order slot does.
   -- Membership with the arm's value predicates evaluated on the value ('valMatchesArm'); the
   -- arm's guard, which its object's type also carries as a predicate over the arm's arguments,
   -- is evaluated below as the condition it was built as.
@@ -369,18 +370,16 @@ valWithinTypeAs vp v t = do
         _               -> return True
 
 -- | Whether a value is within an arm's object type (or a destination spelled like one), read as
--- dispatch reads it: as deep as the type's pattern, in both slot conventions a closure argument
--- may take ('getValDispatchPartial'), with higher-order argument keys reduced to their names
--- ('simplifyArgKeys') — and its value predicates evaluated ('valWithinTypeAs').
+-- dispatch reads it: as deep as the type's pattern ('getValDispatchPartial'), with higher-order
+-- argument keys reduced to their names ('simplifyArgKeys') — and its value predicates evaluated
+-- ('valWithinTypeAs').
 valMatchesArm :: Val -> Type -> EvalM Bool
 valMatchesArm v t0 = do
   Env{evTypeEnv} <- get
   let t = simplifyArgKeys t0
       depth = 1 + typePatternDepth t
-      valP = getSingleton $ simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv False [t] depth v
-      valPOut = getSingleton $ simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv True [t] depth v
-  inP <- valWithinTypeAs valP v t
-  if inP || valPOut == valP then return inP else valWithinTypeAs valPOut v t
+      valP = getSingleton $ simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv [t] depth v
+  valWithinTypeAs valP v t
 
 -- | A value predicate evaluated on a value: the 'PredExpr' partial reduced to what it comes to with
 -- @$this@ standing for the value — the desugaring of @Integer_nonNeg@'s @$this.nonNeg == True@ is
@@ -530,6 +529,7 @@ evalBaseEnvService service prgm@Prgm{prgmObjMap} = Env {
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,
+        evClosureEnvs = H.empty,
         evService = service,
         evAnnotObj = Nothing,
         evCallStack = [],
@@ -694,7 +694,7 @@ renderValTextIn env@Env{evExEnv} v
 -- ends.
 dshowVal :: Env -> Val -> IO (Maybe Val, ResExEnv)
 dshowVal env@Env{evTypeEnv, evExEnv} v
-  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ displayPartial evTypeEnv False input) dshowDestType = do
+  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ displayPartial evTypeEnv input) dshowDestType = do
       called <- callOnVal env input
       case called of
         Just (shown, built) -> do
@@ -720,22 +720,14 @@ callOnVal env@Env{evTbEnv} input = case valCallTree evTbEnv input of
       (val, Env{evExEnv}) <- cresToMaybe res
       return (val, evExEnv)
 
--- | The call tree a runtime value takes toward @DShow@, from the first of its type's two spellings
--- that builds one.
---
--- Both spellings, as 'evalCallTree' tries both when it dispatches ('TCMatch'). A higher-order
--- argument's slot is keyed one way on a runtime value — the bare name, holding the closure's input
--- signature — and the other way on a typed arm — the signature as the key, holding the output
--- contract. 'getValPartialTypeOut' is the second spelling, and it recurses, so it reaches a closure
--- nested inside the value, which is deeper than any closure dispatch normally sees and deeper than the
--- top-level re-keying reaches. A call display's @fmap@ is exactly the case ('attachCallShows'): its
--- display cannot be selected under the first spelling and can under the second.
+-- | The call tree a runtime value takes toward @DShow@, built where the closures the value holds
+-- are arrows ('valClosureArrows'): a call display's @fmap@ reaches what its function returns
+-- through the closure's arrow, as its higher-order slot holds only the closure's input object.
 --
 -- 'MustCall' rather than 'MayHold': the point is to reach the arm, and a source that already
 -- satisfies the destination would otherwise be handed back as it stands.
 valCallTree :: TBEnv -> Val -> Maybe TCallTree
-valCallTree tbEnv@TBEnv{tbTypeEnv} input = listToMaybe $ mapMaybe build [displayPartial tbTypeEnv False input, displayPartial tbTypeEnv True input]
-  where build src = cresToMaybe $ buildCallTree tbEnv [] S.empty PTopType MustCall DestRequired (singletonType src) dshowDestType
+valCallTree tbEnv@TBEnv{tbTypeEnv} input = cresToMaybe $ buildCallTree (withArgArrows tbEnv (valClosureArrows input)) [] S.empty PTopType MustCall DestRequired (singletonType (displayPartial tbTypeEnv input)) dshowDestType
 
 -- | A value's type for building its display, read only as deep as the value's own shape: the call
 -- the display is asked through (@toString@'s or @dshow@'s argument), the value, and the value's
@@ -745,8 +737,8 @@ valCallTree tbEnv@TBEnv{tbTypeEnv} input = listToMaybe $ mapMaybe build [display
 -- and a value holding strings is a @Cons@ per character: printing a build result holding a page of
 -- HTML did not finish. What the display's arms need deeper than the value's fields is read off the
 -- value when the tree runs, by the dispatch that chooses among them ('evalCallTree').
-displayPartial :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat) -> Bool -> Val -> PartialType
-displayPartial typeEnv out = getValDispatchPartial typeEnv out [] displayDepth
+displayPartial :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat) -> Val -> PartialType
+displayPartial typeEnv = getValDispatchPartial typeEnv [] displayDepth
   where displayDepth = 3
 
 -- | Whether a value is data all the way down: no closure, IO handle, or other runtime-only value in

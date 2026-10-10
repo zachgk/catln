@@ -423,6 +423,12 @@ data Env = Env { evObjMap         :: EObjectMap
                , evArgs           :: Args
                , evExEnv          :: ResExEnv
                , evTbEnv          :: TBEnv
+               -- | 'evTbEnv' extended with the arrows of a set of closures ('valClosureArrows'),
+               -- keyed by those arrows' objects and results. An arm entered with closures is built
+               -- where they are arrows, and each extension is a type environment with a cache of its
+               -- own; made afresh for every arm built it would start every build with that cache
+               -- cold.
+               , evClosureEnvs    :: H.HashMap [(Type, Type)] TBEnv
                -- | The compilation service this evaluation may ask about the pages there are, and
                -- about the stages of them it cannot reach on its own.
                --
@@ -888,8 +894,7 @@ getValPartialType :: Val -> PartialType
 getValPartialType IntVal{} = intLeaf
 getValPartialType FloatVal{} = floatLeaf
 getValPartialType CharVal{} = charLeaf
-getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
-  where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialType argVal)
+getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map (\(argName, argVal) -> (valArgKey argName argVal, singletonType $ getValPartialType argVal)) $ H.toList args}
 getValPartialType (ObjArrVal oa _) = getSingleton $ getExprType $ oaObjExpr oa
 getValPartialType IOVal{}     = ioLeaf
 getValPartialType LLVMVal{} = resultLeaf
@@ -902,22 +907,27 @@ getValPartialType LLVMQueue{} = queueLeaf
 getValPartialType LLVMIO{} = ioLeaf
 getValPartialType NoVal = error "getValPartialType of NoVal"
 
--- | Like 'getValPartialType', but a closure argument ('ObjArrVal') contributes its declared
--- OUTPUT type as the argument slot instead of its input signature. A typed arm's higher-order
--- slot holds whichever form typechecking delivered: the input signature (@/fn(/v=..)@) or the
--- output contract propagated from the declaration's pointer slot (@/fn=∀Monad[..]@). Dispatch
--- matching tries 'getValPartialType' first and falls back to this form.
-getValPartialTypeOut :: Val -> PartialType
-getValPartialTypeOut (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+-- | The arrows of the closures a value holds, at any depth: each closure ('ObjArrVal') adds the
+-- arrow from its object (the pattern's type, under the pattern's name) to its result, as
+-- 'TreeBuild.withCallArrows' gives a call's lambda. A value's higher-order slots hold the closures'
+-- input objects, so a tree built for the value reaches what each returns through these.
+valClosureArrows :: Val -> [ObjArr Expr EvalMetaDat]
+valClosureArrows (TupleVal _ args) = concatMap arrowsOf (H.elems args)
   where
-    -- The closure slot is keyed with the closure's parameter names ('pkArgs'), matching the
-    -- typed structural key (@/fn(/v)@) so 'typeGetArgLoose' finds it; a bare key would miss
-    -- and fall back to the arm's unresolved contract meta.
-    fromArg (argName, argVal@(ObjArrVal oa _)) | Just (_, arrM) <- oaArr oa =
-      ((partialToKey (getValPartialType argVal)){pkName=mkName argName}, getMetaType arrM)
-    fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialTypeOut argVal)
-getValPartialTypeOut v = getValPartialType v
+    arrowsOf (ObjArrVal ObjArr{oaObj=Just o, oaArr=Just (_, arrM)} _) = [ObjArr (Just (Value (getExprMeta o) (exprPath o))) ArgObj Nothing [] (Just (Nothing, arrM))]
+    arrowsOf v = valClosureArrows v
+valClosureArrows _ = []
 
+-- | The key a value's argument is filled under. A closure argument ('ObjArrVal') is keyed with
+-- its parameters (@/fn(/v)@), as a typed higher-order slot is: the slot holds the closure's input
+-- object, and the key names the arguments that object takes. Only its arguments: a typed slot is
+-- keyed by what is written on it ('Semantics.Prgm.inExprSingleton'), and the variables of the
+-- closure's object (its hop parameters, @fn[/A=..]@) are not written there. Keyed by the bare name it would not be
+-- the slot an arm's object spells, and a definition's argument read from the value would find
+-- nothing there. Every other argument is keyed by its name.
+valArgKey :: String -> Val -> PartialKey
+valArgKey argName argVal@ObjArrVal{} = (partialKey (mkName argName)){pkArgs = H.keysSet (ptArgs (getValPartialType argVal))}
+valArgKey argName _                 = partialKey (mkName argName)
 
 -- | How deep a type's constructor patterns look: one for each constructor, nested through the
 -- arguments a constructor spells, and nothing for a class, a variable or ⊤, which name no
@@ -944,15 +954,13 @@ typePatternDepth _ = 0
 --
 -- A tuple with no data declaration (a call, a context) is read whole, as there is no declared form
 -- to stand for it.
-getValDispatchPartial :: (TypeGraph tg) => TypeEnv tg -> Bool -> [Type] -> Int -> Val -> PartialType
-getValDispatchPartial typeEnv out pats d v@(TupleVal name args)
+getValDispatchPartial :: (TypeGraph tg) => TypeEnv tg -> [Type] -> Int -> Val -> PartialType
+getValDispatchPartial typeEnv pats d v@(TupleVal name args)
   | d > 0 = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   | otherwise = case typeGraphData typeEnv (mkName name) of
       (dp:_) -> dp{ptVars = H.union (boundVars dp) (ptVars dp)}
-      []     -> if out then getValPartialTypeOut v else getValPartialType v
+      []     -> getValPartialType v
   where
-    fromArg (argName, argVal@(ObjArrVal oa _)) | out, Just (_, arrM) <- oaArr oa =
-      ((partialToKey (getValPartialType argVal)){pkName=mkName argName}, getMetaType arrM)
     -- A primitive argument is typed as the constant it is (@{0}@) where an arm names a constant in
     -- its slot (@isZero(x= 0)@): that arm asks whether the value is that constant, and the
     -- primitive is not within it. Elsewhere it stays its primitive, as reading a value no more
@@ -960,7 +968,7 @@ getValDispatchPartial typeEnv out pats d v@(TupleVal name args)
     -- is not read as a member of a class bounding that record ('Semantics.Types' does not place
     -- @Node(key={1}, ..)@ in @Map[K=Ord]@), so a constant nobody asked for loses arms that apply.
     fromArg (argName, argVal) | isConstantVal argVal, any hasConsts (slotPats argName) = (partialKey (mkName argName), getValType argVal)
-    fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValDispatchPartial typeEnv out (slotPats argName) (d - 1) argVal)
+    fromArg (argName, argVal) = (valArgKey argName argVal, singletonType $ getValDispatchPartial typeEnv (slotPats argName) (d - 1) argVal)
     -- The arms' types for one argument of this tuple: its slot in each arm leaf of this name.
     slotPats argName = [ t | UnionType _ leafs _ <- pats, p <- splitUnionType leafs
                            , relativeNameMatches (ptName p) (mkName name)
@@ -972,10 +980,10 @@ getValDispatchPartial typeEnv out pats d v@(TupleVal name args)
     isConstantVal CharVal{}  = True
     isConstantVal _          = False
     boundVars dp = H.fromList
-      [ (k, singletonType $ getValDispatchPartial typeEnv out [] 0 argVal)
+      [ (k, singletonType $ getValDispatchPartial typeEnv [] 0 argVal)
       | (argName, argVal) <- H.toList args
       , Just (TypeVar (TVVar k) TVInt _) <- [H.lookup (partialKey (mkName argName)) (ptArgs dp)] ]
-getValDispatchPartial _ out _ _ v = if out then getValPartialTypeOut v else getValPartialType v
+getValDispatchPartial _ _ _ v = getValPartialType v
 
 --- ResArrowTree
 data MacroData = MacroData {
@@ -987,7 +995,10 @@ type ResBuildEnvFunction = TCallTree
 type ResBuildPrims = H.HashMap TypeName (Either EPrim MacroFunction)
 type ResBuildEnvItem = (PartialType, Maybe (ObjArr Expr EvalMetaDat), ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
-type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])
+-- | Built arm trees, keyed by the source they were built for, the results of the closures that
+-- source's arguments hold (the arrows the arm reaches its higher-order arguments through, which
+-- the source's input objects do not spell), and the arm.
+type ResExEnv = H.HashMap (PartialType, [Type], ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName    :: String
