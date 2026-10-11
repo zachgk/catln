@@ -183,9 +183,9 @@ hsRawPrgm = "hsrawprgm"
 --
 -- In @core\/@ for the reason the other two are: that is what 'Syntax.Ct.Prgm.isCorePage' answers
 -- from, and so what keeps 'Syntax.Parsers.pageImports' from handing this page the standard library.
--- Nothing in @stack\/@ may write this import except a page declaring an importer, and no page of
--- @stack\/core\/@ may write it at all — this page reaches @core\/list.ct@ through @hsprgm()@, and the
--- core reaching back into it is the cycle @stack\/core\/result.ct@ measures at 700 seconds.
+-- No page of @stack\/core\/@ may write this import — this page reaches @core\/list.ct@ through
+-- @hsprgm()@, and the core reaching back into it is the cycle @stack\/core\/result.ct@ measures at
+-- 700 seconds.
 hsRawPrgmPagePath :: FilePath
 hsRawPrgmPagePath = "core/hsrawprgm.ct"
 
@@ -212,5 +212,21 @@ hsRawPrgmStatements = map commentSt [
   "These are the compiler's types for a program as the parser produced it, before desugaring reduces what was written to what it means. They are reached by writing `import hsrawprgm()`.",
   "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the sixteen it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run.",
   "So that page is what a program READING a program reads, and this is what a program PRODUCING one writes. An importer is the case: it is handed a file and answers with a `/Catln/ImportResult` holding a page of this.",
-  "The standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page declaring an importer writes it and pays for it."
-                                    ] ++ renderCtDecls hsRawPrgmPage
+  "It is also what a page is written as, which is what a program showing a page as it was written reads: `/Catln/pageAt` answers with one.",
+  "The core of the standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page which needs it writes it and pays for it."
+                                    ] ++ renderCtDecls hsRawPrgmPage ++ [hsPageAtStatement]
+
+-- | The one definition the page supplies rather than a type: a way to be given a page as written.
+--
+-- Written here rather than derived, for the reason 'hsPrgmForStatement' is: it is the compiler saying
+-- what it will answer, and a page that does not declare @\/Catln\/RawPrgm@ could not say what it
+-- returns.
+hsPageAtStatement :: RawStatementTree RawExpr ()
+hsPageAtStatement = RawStatementTree (RawDeclStatement decl) (map commentSt [
+  "Answers with the page read from [source], as it was written.",
+  "The page is one the program being evaluated was read from, under the path its positions carry. A page the evaluation was not handed is reported rather than read, so what is answered is always what the program was compiled from."
+                                                                          ])
+  where
+    decl = RawObjArr (Just obj) FunctionObj Nothing [runtimeAnnotOf "pageAt"] (Just (Nothing, Just returns)) Nothing
+    obj = rawVal (ctBuiltinNamespace ++ "pageAt") `applyRawIArgs` [(partialKey (mkName "source"), IArgM (Just (rawVal strPrim)))]
+    returns = rawSpreadVal (ctBuiltinNamespace ++ "RawPrgm")

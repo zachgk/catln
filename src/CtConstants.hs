@@ -93,6 +93,17 @@ dshowName, dshowArg :: String
 dshowName = "/Catln/Doc/dshow"
 dshowArg = "s"
 
+-- | The class of what a language model can be shown, the function resolving a value to what it is
+-- shown as, and the argument it takes it in, all declared in @stack\/llm\/main.ct@.
+--
+-- The counterpart of 'dshowClassName' and 'dshowName' for a reader that is a model rather than a
+-- person: a type may be displayed one way in the webdocs and written another way for a model. The
+-- two share the text of a @ToString@, which either reader can read.
+llmshowClassName, llmshowName, llmshowArg :: String
+llmshowClassName = "/Llm/LlmShow"
+llmshowName = "/Llm/llmshow"
+llmshowArg = "s"
+
 -- | The class of calls that have a display of their own, and the function resolving a call to that
 -- display, both declared in @stack\/core\/webdoc.ct@.
 --

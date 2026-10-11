@@ -373,12 +373,19 @@ data EPrim
   -- 'IO' — so an effect can only happen where a program holds an IO value and calls a method of it.
   -- 'Eval.evalCallTree' refuses one called on anything else.
   | EIOPrim String (IOHandle -> H.HashMap String Val -> IO (Either String Val))
+  -- | A primitive that evaluates more of the program: one showing values through a class of the
+  -- program has to build and run the arms of that class, which is an evaluation of its own. It runs
+  -- as a step of the evaluation that called it, so what it asks for is asked the way any other
+  -- step's is. It is handed no 'IOHandle', so it can perform no effect: evaluating Catln reaches one
+  -- only through an IO value, and none is passed to it.
+  | EEvalPrim String (H.HashMap String Val -> EvalM Val)
   deriving (Generic)
 
 ePrimName :: EPrim -> String
-ePrimName (EPrim n _)    = n
-ePrimName (EEnvPrim n _) = n
-ePrimName (EIOPrim n _)  = n
+ePrimName (EPrim n _)     = n
+ePrimName (EEnvPrim n _)  = n
+ePrimName (EIOPrim n _)   = n
+ePrimName (EEvalPrim n _) = n
 
 instance Eq EPrim where
   a == b = ePrimName a == ePrimName b
@@ -387,10 +394,14 @@ instance Hashable EPrim where
   hashWithSalt s p = s `hashWithSalt` ePrimName p
 
 instance ToJSON EPrim where
-  toJSON EPrim{}    = object ["type".=("EPrim" :: String)]
-  toJSON EEnvPrim{} = object ["type".=("EEnvPrim" :: String)]
-  toJSON EIOPrim{}  = object ["type".=("EIOPrim" :: String)]
+  toJSON EPrim{}     = object ["type".=("EPrim" :: String)]
+  toJSON EEnvPrim{}  = object ["type".=("EEnvPrim" :: String)]
+  toJSON EIOPrim{}   = object ["type".=("EIOPrim" :: String)]
+  toJSON EEvalPrim{} = object ["type".=("EEvalPrim" :: String)]
 
+
+-- | The pages a program was read from, as written, under the path each was parsed as.
+type EvalPages = H.HashMap String (RawPrgm ())
 
 -- | An arrow the evaluation is inside: the id of the node it will close as, the arrow itself, and
 -- the calls the ENCLOSING arrow had already finished when this one was entered.
@@ -447,6 +458,15 @@ data Env = Env { evObjMap         :: EObjectMap
                -- annotates. Nothing for a program's own annotation, which is written on the program
                -- rather than on any definition of it.
                , evAnnotObj       :: Maybe EObjArr
+               -- | The pages the program was read from, as written, under the names the positions
+               -- of what was parsed from them carry ('CtService.rawPagesByPath'). What a call asking
+               -- for the page it is written in is answered from ('Eval.Runtime.Prgm.pageAt'). Empty
+               -- for an evaluation whose caller holds no pages, where such a call is reported.
+               , evPages          :: EvalPages
+               -- | The pages being shown, by hash, while their annotations are evaluated
+               -- ('Eval.llmShowPage'). An annotation of a page being shown that asks for the page to
+               -- be shown again could only ever be answered by itself, so it is refused instead.
+               , evShowingPages   :: S.HashSet Int
                , evCallStack      :: [String]
                , evCoverage       :: H.HashMap EObjArr Int
                , evTreebugOpen    :: [EvalTreebugOpen]

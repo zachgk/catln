@@ -28,11 +28,12 @@ import           Eval.Common
 import           Eval.Runtime.WebDocs (filterByType)
 import           MapMeta              (clearMetaDat, mapMetaPrgm)
 import           Semantics.CtType     (toCt)
+import           Syntax.Ct.Prgm       ()
 import           Text.Printf
 
 -- | The primitives backing the compiler's own program types.
 prgmPrims :: [EPrim]
-prgmPrims = [prgmFor]
+prgmPrims = [prgmFor, pageAt]
 
 -- | The argument of @\/Catln\/prgmFor@ naming what to be given.
 prgmForNameArg :: String
@@ -54,3 +55,24 @@ prgmFor = EEnvPrim "prgmFor" prim
       Just (StrVal name) -> Right $ toCt $ mapMetaPrgm clearMetaDat $ filterByType name tbPrgm
       Just v -> Left $ printf "prgmFor was given %s, which is not a name" (show v)
       Nothing -> Left $ printf "prgmFor has no %s argument, only %s" prgmForNameArg (show $ H.keys args)
+
+-- | The argument of @\/Catln\/pageAt@ naming the page to be given.
+pageAtSourceArg :: String
+pageAtSourceArg = "/source"
+
+-- | Backs @\/Catln\/pageAt@: a page the program was read from, as it was written, as a
+-- @\/Catln\/RawPrgm@ a Catln program can read.
+--
+-- From the pages the evaluation was handed ('evPages') rather than read from the file, so what is
+-- answered is the page the program was compiled from, even where the file has changed since. A page
+-- it was not handed is reported: an evaluation whose caller holds no pages has none to give, and a
+-- page read again here would be a different page from the one compiled.
+pageAt :: EPrim
+pageAt = EEnvPrim "pageAt" prim
+  where
+    prim Env{evPages} args = case H.lookup pageAtSourceArg args of
+      Just (StrVal source) -> case H.lookup source evPages of
+        Just page -> Right $ toCt page
+        Nothing -> Left $ printf "pageAt was asked for %s, which is not a page this evaluation was handed (it holds %s)" source (show $ H.keys evPages)
+      Just v -> Left $ printf "pageAt was given %s, which is not a source" (show v)
+      Nothing -> Left $ printf "pageAt has no %s argument, only %s" pageAtSourceArg (show $ H.keys args)

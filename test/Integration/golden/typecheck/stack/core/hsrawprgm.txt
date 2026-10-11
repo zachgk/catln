@@ -187,6 +187,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/pageAt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/pageAt( Value /source -> ∀/Data/String ) -> /Catln/RawPrgm.. ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/RawStatement/RawAnnot"
                 , ObjectMapItem
                     { omiDecls =
@@ -419,6 +429,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/RawApplyTerm
@@ -572,7 +583,12 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "The standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page declaring an importer writes it and pays for it." }
+                { csValue = "It is also what a page is written as, which is what a program showing a page as it was written reads: `/Catln/pageAt` answers with one." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "The core of the standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page which needs it writes it and pays for it." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text

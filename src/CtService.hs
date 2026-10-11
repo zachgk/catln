@@ -48,7 +48,7 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EExpr, EPrgm, EvalMetaDat,
-                                          MockIO, SSF (..), TExpr,
+                                          EvalPages, MockIO, SSF (..), TExpr,
                                           TestKind (TestRefinementProof),
                                           TestResult, Val, esAsks, joinedStage,
                                           newEvalService, oaTestId,
@@ -1329,12 +1329,14 @@ getRawPrgmFrom prgmName ctss@(CTSS ssmv _) = do
 getEvaluated :: CTSS -> FileImport -> String -> CResT IO Integer
 getEvaluated ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
-  fst <$> evalRun fun prgmName base
+  pages <- lift $ ctssPagesOf ctss (Just prgmName)
+  fst <$> evalRun pages fun prgmName base
 
 getEvaluatedMock :: CTSS -> MockIO -> FileImport -> String -> CResT IO Integer
 getEvaluatedMock ctss mockIO prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
-  fst <$> evalRunMock mockIO fun prgmName base
+  pages <- lift $ ctssPagesOf ctss (Just prgmName)
+  fst <$> evalRunMock pages mockIO fun prgmName base
 
 getEvalBuild :: CTSS -> FileImport -> String -> CResT IO Val
 getEvalBuild ctss prgmName fun = do
@@ -1353,8 +1355,9 @@ getTestResults ctss = do
 -- page's 'ssfDes' — rather than from what the first solve inferred of it. The two are matched by
 -- the meta of the definition's object, which typechecking keeps.
 ctssDeriveTests :: CTSS -> GraphData TPrgm FileImport -> CResT IO [TestDesc]
-ctssDeriveTests (CTSS ssmv _) tprgms = do
-  evaluated <- evalTest tprgms
+ctssDeriveTests ctss@(CTSS ssmv _) tprgms = do
+  pages <- lift $ ctssPagesOf ctss Nothing
+  evaluated <- evalTest pages tprgms
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   dess <- asCResT $ mapM (\(_, name, _) -> requireComputed (ssfDes =<< graphLookup name ctssData)) (graphToNodes tprgms)
   let preDefs = H.fromList [(getMetaId $ getExprMeta $ oaObjExpr oa, oa) | des <- dess, oa <- flatObjectMap (prgmObjMap des)]
@@ -1447,7 +1450,8 @@ pageOwners tprgms = H.fromList
 getPrintGoldens :: CTSS -> CResT IO [(CodeRangeDat, String)]
 getPrintGoldens ctss = do
   base <- ctssGet ssfTPrgm ctss
-  evalPrints $ mconcat $ map fst3 $ graphToNodes base
+  pages <- lift $ ctssPagesOf ctss Nothing
+  evalPrints pages $ mconcat $ map fst3 $ graphToNodes base
 
 -- | The annotations a page writes, evaluated to the values they display as.
 --
@@ -1473,7 +1477,8 @@ getEvalAnnots ctss prgmName = do
       lift $ ctssReport ctss StepEvaluating 0 0 (impDisp prgmName)
       -- Evaluated here rather than left for whoever displays it, because what it asked the service
       -- about is only known once it has asked, and that record is kept with it.
-      annots <- lift $ runCResT $ evalAnnots (Just svc) prgmName tprgms
+      pages <- lift $ ctssPagesOf ctss (Just prgmName)
+      annots <- lift $ runCResT $ evalAnnots pages (Just svc) prgmName tprgms
       asks <- lift $ esAsks svc
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots, ssfAnnotAsks = asks}) ctss
       asCResT annots
@@ -1741,7 +1746,7 @@ instance CtServiceApi CTSS where
     ssfs <- scopeSSFs ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm fun =<< asCResT (joinedStage ssfTPrgm ssfs))
+    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm (rawPagesByPath scopeNodes) fun =<< asCResT (joinedStage ssfTPrgm ssfs))
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
@@ -1777,6 +1782,17 @@ scopeSources nodes = [(file, src) | (SSF{ssfSource=Just src}, imp, _) <- nodes, 
 scopeRaws :: [(SSF, FileImport, a)] -> [(String, RawPrgm ())]
 scopeRaws nodes = [(file, raw) | (SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
 
+-- | The parsed pages of a scope, as an evaluation is handed them ('Eval.Common.evPages').
+rawPagesByPath :: [(SSF, FileImport, a)] -> EvalPages
+rawPagesByPath = H.fromList . scopeRaws
+
+-- | The parsed pages the service holds, of a scope — a page and what it imports — or every page for
+-- a scope of 'Nothing', as an evaluation over that scope is handed them.
+ctssPagesOf :: CTSS -> Maybe FileImport -> IO EvalPages
+ctssPagesOf (CTSS ssmv _) scope = do
+  CTSSDat{ctssData} <- readMVar ssmv
+  return $ rawPagesByPath $ graphToNodes $ maybe ctssData (`graphFilterReaches` ctssData) scope
+
 -- | The name a debugged expression is parsed under, which its positions carry in place of a page's.
 debugExprFile :: String
 debugExprFile = "<debug>"
@@ -1801,7 +1817,7 @@ scopeSSFs ctss@(CTSS ssmv _) prgmName = do
 debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CResT IO DebugRun
 debugExprRun prgmName scopeNodes src = do
   (expr, prgm) <- asCResT $ debugExprCompile prgmName scopeNodes src
-  evalDebugExprPrgm expr prgm
+  evalDebugExprPrgm (rawPagesByPath scopeNodes) expr prgm
 
 -- | The expression a debugger was asked to run, compiled against a page, with the program it is run
 -- in.

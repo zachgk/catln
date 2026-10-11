@@ -35,9 +35,9 @@ import           Data.List                  (intercalate, nub, nubBy, sortOn,
                                              tails)
 import           Data.Maybe
 import           Data.UUID                  (UUID)
-import           Eval                       (evalBaseEnv, evalBuildPrgm,
-                                             evalDShowAnnot, evalExpr,
-                                             evalValEq, valWithinType)
+import           Eval                       (evalBaseEnv, evalBaseEnvWith,
+                                             evalBuildPrgm, evalDShowAnnot,
+                                             evalExpr, evalValEq, valWithinType)
 import           Eval.Common
 import           Eval.ExprBuilder
 import qualified Hedgehog
@@ -500,12 +500,12 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
             then Hedgehog.success
             else Hedgehog.footnote (printf "Refinement violated: no arm of %s on %s produced a result matching the claimed return %s. The arms produced:\n  %s" testName (show input) (show refRet) (intercalate "\n  " (map showArm results))) >> Hedgehog.failure
 
-evalTest :: EPrgmGraphData -> CResT IO [TestDesc]
-evalTest prgmGraphData = do
+evalTest :: EvalPages -> EPrgmGraphData -> CResT IO [TestDesc]
+evalTest pages prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  printTests <- lift $ derivePrintTests prgm
+  printTests <- lift $ derivePrintTests pages prgm
   return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm ++ printTests
   where
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
@@ -662,9 +662,9 @@ printGolden _          = Nothing
 -- | Build and evaluate every @#print@ reachable in the program to its rendered value, keeping
 -- only the string-serializable ones, paired with the source range of the print's @p@ argument
 -- (used by @catln test --update@ to locate and write goldens back).
-evalPrints :: EPrgm -> CResT IO [(CodeRangeDat, String)]
-evalPrints prgm = do
-  let env = evalBaseEnv prgm
+evalPrints :: EvalPages -> EPrgm -> CResT IO [(CodeRangeDat, String)]
+evalPrints pages prgm = do
+  let env = evalBaseEnvWith pages Nothing prgm
   results <- forM (collectPrintAnnots prgm) $ \(os, annot) -> do
     mval <- evalDShowAnnot env os annot
     return $ (,) <$> printRange annot <*> (mval >>= printGolden)
@@ -677,10 +677,10 @@ evalPrints prgm = do
 --
 -- Each print is evaluated here, as the tests are derived, rather than when its test is run: whether
 -- a print has a test at all is decided by what it evaluates to.
-derivePrintTests :: EPrgm -> IO [TestDesc]
-derivePrintTests prgm = catMaybes <$> mapM mkTest (collectPrintAnnots prgm)
+derivePrintTests :: EvalPages -> EPrgm -> IO [TestDesc]
+derivePrintTests pages prgm = catMaybes <$> mapM mkTest (collectPrintAnnots prgm)
   where
-    env = evalBaseEnv prgm
+    env = evalBaseEnvWith pages Nothing prgm
     mkTest (os, annot) = do
       shown <- runCResT $ evalDShowAnnot env os annot
       return $ case shown of

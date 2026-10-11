@@ -32,6 +32,7 @@ import           Eval.Runtime.Prgm     (prgmPrims)
 import           Eval.Runtime.System   (systemPrims)
 import           Eval.Runtime.Tasks    (tasksPrims)
 import           Eval.Runtime.WebDocs  (webDocsPrims)
+import           Text.Megaparsec       (sourceName)
 import           Text.Printf
 
 type Op = (String, Either EPrim MacroFunction)
@@ -283,6 +284,33 @@ llvm = ("llvm", Right (MacroFunction macroBuild))
           return $ Left val
         codegenPrgm _ _ _ _ = return ()
 
+-- | Completes a call with the page it is written in, as a @page@ argument read by
+-- @\/Catln\/pageAt@: a call of @lcm(input)@ written in a page is a call of @lcm(input, page)@.
+--
+-- A macro because only the call knows where it is written. The page is not what the call is
+-- completed with, only the source naming it: the page itself is a value as large as everything
+-- written on it, and a macro's value is built as a constant typed to exactly itself. Read at
+-- evaluation instead, it is one call, typed as @pageAt@ declares.
+--
+-- A call with no position is reported rather than completed with some other page. Neither is a call
+-- whose type is not one tuple, which has no one shape to add the argument to.
+callerPage :: Op
+callerPage = ("callerPage", Right (MacroFunction macroBuild))
+  where
+    pageAtName = "/Catln/pageAt"
+    macroBuild input MacroData{mdTbEnv=TBEnv{tbPrgm=Prgm{prgmObjMap=ObjectMap objMap}}} = do
+      source <- case getMetaPos (getExprMeta input) of
+        Just (start, _) -> return $ sourceName start
+        Nothing -> fail $ printf "%s asks for the page it is written in, but the call has no position to say which page that is" (show input)
+      pageType <- case H.lookup (mkName pageAtName) objMap of
+        Just ObjectMapItem{omiRuntimeDecls=(ObjArr{oaArr=Just (_, m)}:_)} -> return $ getMetaType m
+        _ -> fail $ printf "%s asks for the page it is written in, which is answered by %s, and nothing in the program declares it (it is declared by import hsrawprgm())" (show input) pageAtName
+      case maybeGetSingleton (getExprType input) of
+        Nothing -> fail $ printf "%s asks for the page it is written in, but it is not a call of one shape to add the page to: %s" (show input) (show $ getExprType input)
+        Just _ -> do
+          let pageCall = eVal pageAtName `eApply` ("/source", valToEExpr (StrVal source))
+          return $ Right $ input `eApplyOAs` [mkIOObjArr (emptyMetaT pageType) (partialKey (mkName "/page")) pageCall]
+
 primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
@@ -333,4 +361,4 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatCeil
             , intDiv
             ]
-    macros = [arrExists, contextMacro, llvm]
+    macros = [arrExists, contextMacro, llvm, callerPage]

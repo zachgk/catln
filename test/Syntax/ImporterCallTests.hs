@@ -156,6 +156,7 @@ testPyImportReadsAsTheSyntaxDoes = testCase "the Python primitive reads what the
       EPrim _ f    -> f
       EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
       EIOPrim _ _  -> const $ Left "the Python importer is not an IO primitive"
+      EEvalPrim _ _ -> const $ Left "the Python importer is not an evaluating primitive"
 
 -- | A file that is not there is reported, rather than raised out of the evaluation.
 testPyImportReportsAMissingFile :: TestTree
@@ -168,6 +169,7 @@ testPyImportReportsAMissingFile = testCase "a Python file that is not there is r
       EPrim _ f    -> f
       EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
       EIOPrim _ _  -> const $ Left "the Python importer is not an IO primitive"
+      EEvalPrim _ _ -> const $ Left "the Python importer is not an evaluating primitive"
 
 -- | An importer declared in Catln, used by the line after the one that imports it.
 --
