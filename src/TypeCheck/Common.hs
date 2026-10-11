@@ -735,7 +735,7 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     -- The old side may predate scope normalization (an Encode-time preset holding a foreign
     -- declaration's var spelling): read its out-of-scope vars as the ⊤ they denote before
     -- comparing, so replacing such a spelling by ⊤ is not reported as a lost variable.
-    verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt vaenv oldAct) act)
+    verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt typeEnv vaenv oldAct) act)
     verifySchemeReqLowers  = lowers req oldReq
     verifySchemeReqDeclLowers = lowers reqDecl oldReqDecl
     verifyCompacted = act == compactType typeEnv vaenv act

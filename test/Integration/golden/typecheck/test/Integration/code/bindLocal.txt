@@ -60,7 +60,7 @@ Prgm
                     , omiDefs =
                         [ /bindWithLocal
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=TopType ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
                             ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /bindWithLocal.$9471e8
                                 ( Value /$9471e8-arg -> TVArg /v = Value /v )
                             )

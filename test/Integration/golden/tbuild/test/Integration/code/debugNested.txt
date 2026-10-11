@@ -44,7 +44,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
                             ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) =
+                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=TopType ] ) =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -59,7 +59,7 @@ Prgm
                                         )
                                     }
                                 ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] )
+                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=TopType ] )
                             )
                         ]
                     }

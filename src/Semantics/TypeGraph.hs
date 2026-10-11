@@ -305,7 +305,7 @@ reaches _     (UnionType (Just _) _ _) = ReachesLeaf
 -- scope returns one of its variables (a definition's augmented @fn(v) -> $_B@). A concrete binding
 -- is reached through; a variable the scope has not bound yet is a link with nothing further to
 -- rewrite.
-reaches env (TypeVar v _ _) = case vaenvLookup (rVaenv env) v of
+reaches env (TypeVar v _ _) = case vaenvLookup (rTypeEnv env) (rVaenv env) v of
   PTopType  -> ReachesLeaf
   TypeVar{} -> ReachesLeaf
   bound     -> reaches env bound

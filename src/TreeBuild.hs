@@ -901,7 +901,11 @@ toTExprDestWith readArgRefs env0@TBEnv{tbTypeEnv} os e m = do
   -- toward its destination builds exactly as before, and only after 'argFnTree', so a reference to
   -- an enclosing definition's own argument keeps its 'TCArg'. A bare value reference
   -- (@\/Context(value= main)@) is a deferred value rather than a call, so applied args are required.
-  let mustCall = getMetaType m == PTopType && not (null (exprAppliedArgs e)) && case srcT of
+  --
+  -- The destination is read in this frame: a result spelled as a variable the frame has not bound
+  -- (@foldl@'s recursive arm, typed @$_B@) imposes no contract either, exactly as the ⊤ it reads as.
+  let destInFrame = substituteTVExt tbTypeEnv (objSrcsEnv tbTypeEnv os) (getMetaType m)
+  let mustCall = destInFrame == PTopType && not (null (exprAppliedArgs e)) && case srcT of
         UnionType _ srcLeafs _ -> any (typeGraphRewrites env) (splitUnionType srcLeafs)
         _                      -> False
   case ct of

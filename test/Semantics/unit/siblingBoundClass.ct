@@ -6,7 +6,10 @@ annot(#noCore)
 #noCore
 module(Sc)
   data(X)
+
   class(Mon[$T])
   class(Opt[$T], [Bx[$T -> $_T](value -> $_T)])
+
   every(/Sc/Opt[$T -> $_T], isa= [/Sc/Mon])
+
   f[$M -> /Sc/Mon[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M

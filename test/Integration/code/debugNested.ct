@@ -22,7 +22,7 @@ total(a -> Integer, b -> Integer) -> Integer =
   #debug(d= sum)
   scale(v= helper(y= sum)) + sum * sign(x= a)
 
-bump(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
+bump(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
   x<- m
 
   doubled= x + x

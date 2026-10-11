@@ -5,7 +5,7 @@ import "core"
 # The bind continuation contains a local declaration ([doubled]) between the bind and the result.
 # The inline desugar could not express this (it was a desugar error); the helper desugar carries the
 # whole continuation as a sub function, so its own local decls are preprocessed normally.
-bindWithLocal(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
+bindWithLocal(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
   x<- m
 
   doubled= x + x

@@ -64,9 +64,9 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
 -- they thread the environment through each nested scope (a 'TVExt' slot reads the outer binding),
 -- whereas a bare top-level variable is the one shape the meet mishandles (see 'intersectR').
 readTopVar :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-readTopVar typeEnv env (TypeVar (TVApplied b ovr) loc i) = applyTypeVarOverrides (fmap (readTopVar typeEnv env) ovr) (readTopVar typeEnv env (TypeVar b loc i))
+readTopVar typeEnv env (TypeVar (TVApplied b ovr) loc i) = applyTypeVarOverrides typeEnv (fmap (readTopVar typeEnv env) ovr) (readTopVar typeEnv env (TypeVar b loc i))
 -- The reference reading of an occurrence: @⟦var⟧ ∩ ⟦inner⟧@.
-readTopVar typeEnv env (TypeVar v _ i)                    = meetInner typeEnv env (vaenvLookup env v) (readTopVar typeEnv env i)
+readTopVar typeEnv env (TypeVar v _ i)                    = meetInner typeEnv env (vaenvLookup typeEnv env v) (readTopVar typeEnv env i)
 readTopVar _ _   t                                = t
 
 -- | Intersection for the property tests, threading a seed 'TypeVarArgEnv'. A bare top-level variable
@@ -913,7 +913,8 @@ propOutOfScopeParity gPrgm = property $ do
   prgm <- forAll gPrgm'
   vaenv <- forAll $ genVaenv prgm
   t <- forAll $ genType prgm
-  dropped <- timed "drop" $ dropOutOfScopeTVExt vaenv t
+  let typeEnv = mkTypeEnv prgm
+  dropped <- timed "drop" $ dropOutOfScopeTVExt typeEnv vaenv t
   annotate $ printf "dropped = %s" (show dropped)
   hasOutOfScopeTVExt vaenv t === (dropped /= t)
   S.null (outOfScopeTVExtVars vaenv t) === not (hasOutOfScopeTVExt vaenv t)
@@ -1184,7 +1185,7 @@ propOwnParamPointerCover = property $ do
   mKey <- case [k | k <- H.keys (ptVars monPt), "M" `isInfixOf` nameStr (pkName k)] of
     (k:_) -> return k
     []    -> fail "the Mon arm has no /M parameter"
-  let monTop = dropOutOfScopeTVExt H.empty <$> H.lookup mKey (ptVars monPt)
+  let monTop = dropOutOfScopeTVExt typeEnv H.empty <$> H.lookup mKey (ptVars monPt)
   let defT = singletonType monPt{ptVars = maybe H.empty (H.singleton mKey) monTop, ptArgs = H.insert fnKey PTopType (ptArgs monPt)}
   let armRel = TopType H.empty (PredsOne (PredRel monPt))
   let armsT = unionAllTypes typeEnv arms
@@ -1435,6 +1436,78 @@ propSiblingBoundClassTop = property $ do
   -- The meet is the portion of the call the declaration accepts, and it accepts all of it: the
   -- call is within its own meet (the coverage a requirement's choice of arrow is guarded by).
   assertTimed "argument-only: call ⊆ call ∩ decl" $ isSubtypeOf typeEnv callArg metArg
+
+-- | A call meeting the union of two declarations' objects, each bounding its variable by a class
+-- linking a sibling (core's @bindap@ arms over @Monad@ and @Functor@): the call binds the sibling
+-- from its @m@ (@/A=X@), which is what its lambda's parameter reads. The call spells no variable
+-- of its own, so both declarations accept the same calls and their portions are one set.
+propSiblingBoundOverloads :: Property
+propSiblingBoundOverloads = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingBoundOverload.ct"
+  let typeEnv@TypeEnv{teNames, teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declTs <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/f" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    ts@(_:_:_) -> return ts
+    _          -> fail "f is not declared twice"
+  let declU = unionAllTypes typeEnv declTs
+  declLeaf <- case declTs of
+    (UnionType Nothing leafs []:_) | (p:_) <- splitUnionType leafs -> return p
+    _ -> fail "decl is not a leaf"
+  xN <- case [nm | nm <- S.toList teNames, "/X" `isSuffixOf` nameStr nm] of
+    (nm:_) -> return nm
+    []     -> fail "X not found"
+  optPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "/Opt" `isSuffixOf` nameStr (ptName cpt)] of
+    (cpt:_) -> return cpt
+    []      -> fail "Opt class not found"
+  let x = singletonType (partialVal xN)
+  let optX = UnionType (Just (PredsOne (PredClass optPt{ptVars = fmap (const x) (ptVars optPt)}), H.empty, [])) H.empty []
+  argM <- case [ k | k <- H.keys (ptArgs declLeaf), "/m" `isSuffixOf` nameStr (pkName k) ] of
+    [k] -> return k
+    _   -> fail "no m arg"
+  (fnKey, fnObj) <- case [ (k, o) | (k, v) <- H.toList (ptArgs declLeaf), not (S.null (pkArgs k)), Just o <- [maybeGetSingleton v] ] of
+    [kv] -> return kv
+    _    -> fail "no higher-order arg"
+  let callFn = singletonType fnObj{ptVars = H.empty, ptArgs = fmap (const PTopType) (ptArgs fnObj)}
+  let call = singletonType (partialVal (ptName declLeaf)){ptArgs = H.fromList [(argM, optX), (fnKey, callFn)]}
+  annotate $ printf "decls = %s" (show declU)
+  annotate $ printf "call = %s" (show call)
+  let met = intersectTypesEnv typeEnv H.empty call declU
+  annotate $ printf "call ∩ decls = %s" (show met)
+  pieces <- case met of
+    UnionType Nothing leafs [] -> return (splitUnionType leafs)
+    _                          -> fail "meet is not a union of partials"
+  annotate $ printf "pieces = %s" (show pieces)
+  forM_ pieces $ \p -> do
+    let aVal = head ([ v | (k, v) <- H.toList (ptVars p), "/A" `isSuffixOf` nameStr (pkName k) ] ++ [PTopType])
+    annotate $ printf "piece %s: /A = %s" (show p) (show aVal)
+    assertTimed "each piece binds /A=X" $ isSubtypeOf typeEnv aVal x
+
+-- | Rebinding a data value's parameter ('applyTypeVarOverrides', the @$F[$T -> $_B]@ reading)
+-- re-derives the fields that parameter governs: @Bx[/T=X](/value=X)@ with @T@ rebound to @Y@
+-- holds a @Y@, and is not the @Bx[/T=Y](/value=X)@ no declaration admits.
+propAppliedDataFields :: Property
+propAppliedDataFields = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/appliedDataFields.ct"
+  let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
+  let findName n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
+        (nm:_) -> return nm
+        []     -> fail $ printf "%s not found" n
+  x <- singletonType . partialVal <$> findName "X"
+  y <- singletonType . partialVal <$> findName "Y"
+  bxN <- findName "Bx"
+  bxDecl <- case typeGraphData typeEnv bxN of
+    (d:_) -> return d
+    []    -> fail "Bx declares no fields"
+  tVar <- case [ k | k <- H.keys (ptVars bxDecl), "/T" `isSuffixOf` nameStr (pkName k) ] of
+    [k] -> return k
+    _   -> fail "Bx has no T"
+  let bxAt t = singletonType bxDecl{ptVars = H.singleton tVar t, ptArgs = fmap (const t) (ptArgs bxDecl)}
+  let applied = applyTypeVarOverrides typeEnv (H.singleton tVar y) (bxAt x)
+  annotate $ printf "Bx at X = %s" (show (bxAt x))
+  annotate $ printf "rebound to Y = %s" (show applied)
+  assertTimed "the rebound value is inhabited" $ not (isBottomType (intersectTypes typeEnv applied (bxAt y)))
+  assertTimed "the rebound value is a Bx at Y" $ isSubtypeOf typeEnv applied (bxAt y)
+  assertTimed "the rebound value holds no X" $ isBottomType (intersectTypes typeEnv applied (bxAt x))
 
 propHoSlotParentMeet :: Property
 propHoSlotParentMeet = property $ do
@@ -1701,6 +1774,8 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propHoSlotParentMeet" (withTests 1 propHoSlotParentMeet)
       , HG.testProperty "propSiblingBoundLinks" (withTests 1 propSiblingBoundLinks)
       , HG.testProperty "propSiblingBoundClassTop" (withTests 1 propSiblingBoundClassTop)
+      , HG.testProperty "propSiblingBoundOverloads" (withTests 1 propSiblingBoundOverloads)
+      , HG.testProperty "propAppliedDataFields" (withTests 1 propAppliedDataFields)
       , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)

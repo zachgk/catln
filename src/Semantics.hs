@@ -266,6 +266,13 @@ oaInputTemplates ObjArr{oaArr=Nothing} = []
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
   typeGraphQueryWithReason = objArrGraphQuery True
   typeGraphQueryAllWithReason = objArrGraphQuery False
+  typeGraphDeclaredVarBindings typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
+    case [ oa | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup pName tg)
+              , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) ] of
+      [decl] -> case exprVarArgsWithSrc typeEnv (oaObjExpr decl) partial of
+        [binds] -> H.fromList [ (v, abType b) | (v@TVVar{}, b) <- H.toList binds ]
+        _       -> H.empty
+      _ -> H.empty
   typeGraphDeclaredArgResults TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name =
     [ (inExprSingleton aObj, getMetaType aM)
     | decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName name) tg)
@@ -578,8 +585,22 @@ arrowDestTypeDispatch :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat
 arrowDestTypeDispatch = arrowDestTypeBase True
 
 arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> ObjArr e m -> [Type]
-arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . withScope . withDeclaredArgResults . ambientEnv . fmap abType) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
+arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (fromCallerScope . arrowDestTypeForVaenv . withScope . withDeclaredArgResults . ambientEnv . fmap abType) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
+    -- The source's external references are the QUERYING scope's variables: a call written in a
+    -- definition body passes its arguments as links to the definition's own variables
+    -- (@idf(/x=$_/Q)@ in @ident[$Q](y -> $Q)= idf(x= y)@). To the arrow they are values it knows
+    -- nothing more of, and its result is spelled in them — @idf@ returns its @x@, which is the
+    -- caller's @$_/Q@. They are renamed apart for the arrow's reading ('callerScopeName'), so a
+    -- variable of the arrow's own with the same name (@idf[$Q]@) cannot capture them, and named
+    -- back in the result. Read as the ⊤ they would denote in the arrow's scope instead, the
+    -- caller's link is gone from the result: the definition's own result reads ⊤ where it is
+    -- @$Q@. An arrow the querying scope itself adds ('ArgObj') is defined in that scope, so its
+    -- references are already the scope's own ('withScope').
+    linksCallerScope = oaBasis oa /= ArgObj
+    toCallerScope = renameExtVarAuxes (mapTypeVarAuxName callerScopeName)
+    fromCallerScope | linksCallerScope = renameExtVarAuxes (mapTypeVarAuxName fromCallerScopeName)
+                    | otherwise        = id
     -- An arrow the querying scope itself adds to its environment — an argument of the enclosing
     -- definition, or a lambda the call is given ('ArgObj') — is defined IN that scope, so its
     -- result is read with that scope's variables as well as its own match's: the augmented
@@ -590,15 +611,23 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
     -- name. The arrow's own bindings take precedence.
     withScope local
       | oaBasis oa == ArgObj = H.union local (H.mapWithKey scopeLink ambient)
-      | otherwise            = local
+      | otherwise            = H.union local callerLinks
+    -- The caller's renamed links stay what they are while the arrow reads them: each is bound to
+    -- itself, so substituting the arrow's result keeps the link rather than reading it as ⊤.
+    callerLinks = H.fromList [ (extKey v, TypeVar v TVExt PTopType) | v <- S.toList (typeExtVarAuxes srcSpelled) ]
     scopeLink (VarKey _ v) PTopType = TypeVar v TVExt PTopType
     scopeLink _ t                   = t
     -- The arm's higher-order arguments read as its declaration gives them: an unannotated
     -- @fn(v)@ is the declared @fn(v -> $_A) -> $_B@, so a result variable only the declaration
     -- spells (@$_B@, which the arm's body result is written in) is bound to what the call's
     -- argument returns — its input object resolved through the environment's arrows.
-    withDeclaredArgResults vaenv0 = foldr bindResult vaenv0 (typeGraphDeclaredArgResults typeEnv (ptName srcPartial))
+    withDeclaredArgResults vaenv0 = foldr bindResult (withDeclaredVars vaenv0) (typeGraphDeclaredArgResults typeEnv (ptName srcPartial))
       where
+        -- A variable only the declaration spells (@$M@, tied to @m@) is read as the declaration
+        -- binds it from this call ('typeGraphDeclaredVarBindings'); the arm's own bindings stay.
+        withDeclaredVars env = H.union (H.fromList
+          [ (extKey v, t) | (v, t) <- H.toList (typeGraphDeclaredVarBindings typeEnv H.empty srcPartial)
+                          , t /= PTopType, maybe True (== PTopType) (H.lookup (extKey v) env) ]) env
         bindResult (k, TypeVar v _ _) env
           | maybe True (== PTopType) (H.lookup (extKey v) env)
           , Just slot <- typeGetArgLoose k srcPartial
@@ -606,22 +635,35 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
           , res /= PTopType
           = H.insert (extKey v) res env
         bindResult _ env = env
-    srcPartial = case maybeGetSingleton $ substituteTVExt typeEnv H.empty $ singletonType src of
+    srcPartial = case maybeGetSingleton srcSpelled of
       Just s  -> s
       Nothing -> error $ printf "Non-singleton in arrowDestType"
+    srcSpelled | linksCallerScope = toCallerScope (singletonType src)
+               | otherwise        = substituteTVExt typeEnv H.empty (singletonType src)
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
       -- _ | trace (printf "arrowDestType from %s with %s to %s.\n\t\tVanev: %s" (show src) (show oa) (show joined) (show vaenv)) False -> undefined
       -- A body that is an argument reference (@= x@) or a call of a higher-order argument
       -- (@= fn(v= x)@): the argument's result — for a higher-order argument, its input object
-      -- resolved through the environment's arrows ('hoSlotResult'). A body that is the argument
+      -- resolved through the environment's arrows ('hoSlotResult').
+      --
+      -- An argument whose arrow this frame does not hold (a definition built for no particular
+      -- call, where no lambda is given) returns what its declaration says it does
+      -- (@fn(v -> $_A) -> $M@, the declared @$M@ read as the call binds it), the declaration
+      -- taking precedence over the slot as 'typeGraphDeclaredArgResults' has it.
+      --
+      -- A body that is the argument
       -- within a condition (@= a | a.isZ == True@, whose path is the argument's) is the
       -- argument's result within the condition's predicates, which the body's where carries
       -- ('TypeCheck.Constrain', the @ConWhere@ case); read as the bare argument, the condition
       -- was lost at every call, and @k(a= S(n= Z))@ read as @S(n= Z)@ where it is empty.
-      Just n | isJust (maybeExprPath n) -> withinDeclared $ maybe joinedDispatch (withinWhere n . substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
+      Just n | isJust (maybeExprPath n) -> withinDeclared $ maybe joinedDispatch (withinWhere n . orDeclaredArgResult (inExprSingleton n) . substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
       _                              -> withinDeclared joinedDispatch
       where
         substitute = substituteTVExt typeEnv vaenv
+        orDeclaredArgResult k PTopType = case lookup k (typeGraphDeclaredArgResults typeEnv (ptName srcPartial)) of
+          Just declared -> substitute declared
+          Nothing       -> PTopType
+        orDeclaredArgResult _ t = t
         withinWhere n t = case exprWhereCond n of
           Just _  -> within (substitute (TopType H.empty (carriedPreds (getExprType n)))) t
           Nothing -> t

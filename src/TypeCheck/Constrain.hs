@@ -50,7 +50,7 @@ setScheme env con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (c
     -- across epochs. In-scope variables (and bare top-level ones) stay symbolic.
     scopeKeys = fmap (const PTopType) (constraintVarArgEnv con)
     normalizeScope s@SType{stypeAct=act, stypeReq=req, stypeReqDecl=reqDecl} =
-      s{stypeAct=dropOutOfScopeTVExt (ambientEnv $ scopeKeys) act, stypeReq=dropOutOfScopeTVExt (ambientEnv $ scopeKeys) req, stypeReqDecl=dropOutOfScopeTVExt (ambientEnv $ scopeKeys) reqDecl}
+      s{stypeAct=dropOutOfScopeTVExt (feTypeEnv env) (ambientEnv $ scopeKeys) act, stypeReq=dropOutOfScopeTVExt (feTypeEnv env) (ambientEnv $ scopeKeys) req, stypeReqDecl=dropOutOfScopeTVExt (feTypeEnv env) (ambientEnv $ scopeKeys) reqDecl}
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ _ _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Actual type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req _ _ desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Required type contains bottomType") : notes)
@@ -180,7 +180,7 @@ addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
 -- (the constraint is retried each epoch), and a 'TVApplied' reference resolves through its
 -- base — a keyed lookup could never hit it. Measured 2026-09-18 (build/scratch/addargtrace.py,
 -- three core + five integration files): no type variable of any loc reaches this clause.
-addArgToType env vaenv (TypeVar v _ _) newArg = addArgToType env vaenv (vaenvLookup vaenv v) newArg
+addArgToType env vaenv (TypeVar v _ _) newArg = addArgToType env vaenv (vaenvLookup (feTypeEnv env) vaenv v) newArg
 addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ map singletonType kept
   where
     grafted = map fromPartial $ splitUnionType partials
@@ -712,7 +712,7 @@ verifyGuaranteedResults cons = do
         let vaenv = ambientEnv $ fmap (varValue . snd) (conVaenv rcon)
         let req = stypeReqDecl destS
         let src = case stypeAct srcS of
-              TypeVar v _ _ -> vaenvLookup vaenv v
+              TypeVar v _ _ -> vaenvLookup (feTypeEnv env) vaenv v
               t             -> t
         let guaranteed = isSubtypeOfWithEnv (feTypeEnv env) vaenv src req || case mkReachesEnv env rcon of
               TypeCheckResult _ renv -> typeGuaranteedWithin (rTypeEnv renv) vaenv req src

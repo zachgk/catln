@@ -4,7 +4,7 @@ import "core"
 # Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over
 # [Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A
 # bind-using function needs a declared return type to pin the [bindap] result.
-maybeBind(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
+maybeBind(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
   x<- m
 
   /Data/Maybe/Some(value= x + 1)

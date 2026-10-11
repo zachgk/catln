@@ -1,0 +1,12 @@
+annot(#noCore)
+
+# A data value re-applied with a new parameter binding ([$F[$T -> $_B]], as core's [bindap] [fmap]
+# arm declares its result): the fields the parameter governs follow the new binding. [Bx]'s [value]
+# is declared [$T], so rebinding [T] on [Bx[$T -> X](value= X)] gives a [Bx] whose [value] is the
+# new binding, not a [Bx] still holding an [X].
+#noCore
+module(Ad)
+  data(X)
+  data(Y)
+
+  class(Opt[$T], [Bx[$T -> $_T](value -> $T), Nx])

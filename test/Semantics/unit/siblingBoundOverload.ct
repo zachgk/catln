@@ -1,0 +1,17 @@
+annot(#noCore)
+
+# Two declarations of one function whose variables are bounded by classes linking a sibling, as
+# core's [bindap] arms over [Monad] ([mmap]) and over [Functor] ([fmap]). A call meets the union of
+# their objects, and each declaration binds its own sibling from the call's [m].
+#noCore
+module(So)
+  data(X)
+
+  class(Mon[$T])
+  class(Fun[$T])
+  class(Opt[$T], [Bx[$T -> $_T](value -> $_T)])
+
+  every(/So/Opt[$T -> $_T], isa= [/So/Mon, /So/Fun])
+
+  f[$M -> /So/Mon[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M
+  f[$F -> /So/Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F

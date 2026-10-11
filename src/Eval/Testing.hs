@@ -271,9 +271,9 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   , isJust (maybeGetSingleton dom)
   -- Only overlapping definitions that can actually agree are testable: their DECLARED result types
   -- must overlap too. Overloads that share an input shape but are declared to produce different
-  -- result types (e.g. the 'bindap' arms: a plain value vs a 'Functor' vs a 'Monad', which also
-  -- differ in what their function argument returns) are not meant to agree, so no agreement test is
-  -- derived for them.
+  -- result types are not meant to agree, so no agreement test is derived for them. (Arms whose
+  -- results do overlap but are alternatives, such as 'bindap''s 'fmap' and 'mmap' arms, say so with
+  -- @#exist@ instead.)
   , not (isBottomType (intersectTypes runEnv (clauseCod omi oaA) (clauseCod omi oaB)))
   -- A clause chosen by a condition rather than by its domain is not an overlapping definition. Two
   -- guarded arms of one function are the branches of a conditional — @greet(…) | formal= …@ beside

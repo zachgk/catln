@@ -6,5 +6,7 @@ annot(#noCore)
 #noCore
 module(Sb)
   data(X)
+
   class(Mon[$T], [Bx[$T -> $_T](value -> $_T)])
+
   f[$M -> Mon[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M

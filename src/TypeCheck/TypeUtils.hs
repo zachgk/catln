@@ -134,7 +134,7 @@ addInferArgToType _ _ (UnionType (Just _) _ _) = Nothing
 -- A type-variable source resolves through the constraint's env whatever its loc, and a miss is
 -- the ⊤ an unbound variable denotes — the rule and its measurement are at
 -- 'TypeCheck.Constrain.addArgToType'.
-addInferArgToType env vaenv (TypeVar t _ _) = addInferArgToType env vaenv (vaenvLookup vaenv t)
+addInferArgToType env vaenv (TypeVar t _ _) = addInferArgToType env vaenv (vaenvLookup (feTypeEnv env) vaenv t)
 addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing partials []) = Just $ unionAllTypes feTypeEnv partials'
   where
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
@@ -181,7 +181,7 @@ addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=Object
     -- The arrow's spelled type for the slot, with references out of the arrow's own scope
     -- read as the ⊤ they denote here (a bare top-level var names the arrow's scope too).
     spelledContent :: (MetaDat m, Show m) => Maybe (Meta m, Maybe (Expr m)) -> Type
-    spelledContent (Just (argM, _)) = case dropOutOfScopeTVExt H.empty (getMetaType argM) of
+    spelledContent (Just (argM, _)) = case dropOutOfScopeTVExt feTypeEnv H.empty (getMetaType argM) of
       TypeVar{} -> PTopType
       t         -> t
     spelledContent Nothing = PTopType
@@ -239,6 +239,28 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
       | outT /= PTopType, not (typeContainsTypeVar outT), arrowDestType typeEnv vaenv p oa == [outT] = Just outT
       where outT = getMetaType outM
     fixedResult _ = Nothing
+
+-- | What the declarations of a complete call form promise it evaluates to, when that promise is
+-- spelled in the calling scope's own variables: a call passing them as links (@idf(/x=$_/Q)@,
+-- @fm(/lst=$_/F)@) reaches a declared result that names them (@$_/Q@, @$_/F[/T=..]@). Every
+-- declaration applying to the call must give the same such result; otherwise 'Nothing'.
+-- 'declaredCallResult' reads the promises that hold for every call; this reads the ones that hold
+-- for the call in its scope.
+linkedCallResult :: FEnvTypeEnv -> TypeVarArgEnv -> PartialType -> Maybe Type
+linkedCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case nub (concat results) of
+  [r] | not (S.null (S.filter inScope (typeExtVarAuxes r))) -> Just r
+  _                                                         -> Nothing
+  where
+    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
+    applying = [ oa
+               | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup ptName tg)
+               , let declType = getMetaType (getExprMeta (oaObjExpr oa))
+               , Just declObj <- [maybeGetSingleton declType]
+               , H.keysSet (ptArgs declObj) == H.keysSet callArgs
+               , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType p) declType ]
+    results = [ arrowDestType typeEnv vaenv p oa | oa <- applying ]
+    inScope (TVApplied b _) = inScope b
+    inScope v               = H.member (extKey v) vaenv
 
 -- | Binds a call's declaration-output variable from the call site's destination.
 -- For a declaration whose output is a bare declared variable — @mk[$M -> Mk](v -> V) -> $M@ —
@@ -580,7 +602,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- graph presentation's out-of-scope external var spellings (source declarations' own
   -- parameters) as the ⊤ they denote ('dropOutOfScopeTVExt'), so denotationally-equal forms
   -- cannot flip between spellings across epochs.
-  let dropFree = dropOutOfScopeTVExt vaenv'
+  let dropFree = dropOutOfScopeTVExt reachesTypeEnv vaenv'
   let destByGraph0 = dropFree $ unionReachesTree reachesTypeEnv vaenv' reaches0
   -- A Top reach carries no information yet (some arm is still unresolved): there is nothing
   -- to choose among, so the requirement cannot engage — forcing a choice there would derive
@@ -594,7 +616,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- epochs ('verifySchemeActLowers'). A leaf with no @/T@ param (raw applied forms the result
   -- keeps for eval dispatch) is untouched. The reqForcesChoice GATE above still uses the raw
   -- @destByGraph0@, so this cannot change which arrows a requirement forces.
-  let resolveSelf = if destIsArrowResult then resolveTypeSelfRefs H.empty else id
+  let resolveSelf = if destIsArrowResult then resolveTypeSelfRefs reachesTypeEnv H.empty else id
   let destActR = resolveSelf destAct
   -- An argument slot (ArrowTo 10/15) is the value passed INTO another call, settled there (see
   -- the settle-forcing rule below).
@@ -609,6 +631,11 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- inference narrowing from ⊤ stops at what the generic @++@ gives any @Semigroup@, never
   -- reaching the @String@ @f@ is declared to return. An arm outside its declaration is reported
   -- by the guaranteed-result check ('TypeCheck.Constrain.verifyGuaranteedResults').
+  -- What the declarations applying to a single-call source promise, when that promise keeps a
+  -- link to one of this scope's own variables ('linkedCallResult').
+  let linkedDeclResult = case (destIsArrowResult, splitUnionType srcPartials, consts) of
+        (True, [p], []) -> linkedCallResult reachesTypeEnv vaenv' p
+        _               -> Nothing
   let srcDeclBound
         | destIsArgArm && null consts && not (H.null srcPartials) = unionAllTypes feTypeEnv (map (declaredCallResult reachesTypeEnv vaenv') (splitUnionType srcPartials))
         | otherwise = PTopType
@@ -704,8 +731,18 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- either spelling), and the pointer is what a downstream per-call read resolves — so losing it
   -- reads WIDER at every later consumer. The refused write re-runs next epoch, as the source
   -- side's does, once the requirement's own spelling has resolved.
-  let destFinal | typeVarLost destAct destFinal0 = destAct
-                | otherwise                      = destFinal0
+  -- A definition body's call passing the definition's own variables (@fm(lst= m)@ with
+  -- @m -> $F@) reaches its declaration's result spelled in them (@$_F[$T -> $_B]@), beside its
+  -- instance arms' results read at the variables' bounds and the call form itself. The union of
+  -- those cannot hold the link, and read through the variable's bound it is the definition's
+  -- bound again, not its result. The declaration's result is a promise about every value the
+  -- call evaluates to — an arm outside its declaration is an error ('verifyGuaranteedResults') —
+  -- so it bounds the point as the reach does, and the meet of the two is the link occurrence.
+  let destFinal1 = case linkedDeclResult of
+        Just l | isSubtypeOfWithEnv feTypeEnv vaenv' l destFinal0 -> l
+        _                                                         -> destFinal0
+  let destFinal | typeVarLost destAct destFinal1 = destAct
+                | otherwise                      = destFinal1
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   -- What the destination's declaration requires of it, resolved: the destination a variable given
@@ -713,7 +750,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- returned variable at ('outVarReqKey'). Its inferred value is not a requirement: a call whose
   -- arms settle on @dflt= False@ only happens to give @False@, and a lambda it is given need not.
   let destDecl = case destReqDecl of
-        TypeVar v _ _ -> vaenvLookup vaenv' v
+        TypeVar v _ _ -> vaenvLookup feTypeEnv vaenv' v
         t             -> t
   let srcBound = outVarBoundSrc env destFinal destDecl src
 
@@ -748,7 +785,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- (measured: the toString/@++@ family diverges to the 'runConstraints' limit).
   let declEngaged = case destReqDecl of
         PTopType -> False
-        TypeVar v _ _ -> case vaenvLookup vaenv' v of
+        TypeVar v _ _ -> case vaenvLookup feTypeEnv vaenv' v of
           PTopType                 -> False
           TypeVar v' _ _ | v' == v -> False
           _                        -> True
@@ -881,7 +918,7 @@ reqAdmitsForm _ _ PTopType _ = True
 -- A var requirement resolves through the env; a self-referential entry (which an
 -- unconstrained var may acquire during intersection) carries no information and licenses
 -- like ⊤ — following it verbatim would recurse forever ('isSubtypeOfWithEnv' parity).
-reqAdmitsForm typeEnv vaenv (TypeVar v _ _) l = case vaenvLookup vaenv v of
+reqAdmitsForm typeEnv vaenv (TypeVar v _ _) l = case vaenvLookup typeEnv vaenv v of
   TypeVar v' _ _ | v' == v -> True
   looked                   -> reqAdmitsForm typeEnv vaenv looked l
 reqAdmitsForm typeEnv vaenv req l =
