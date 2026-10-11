@@ -72,7 +72,7 @@ pageAt = EEnvPrim "pageAt" prim
   where
     prim Env{evPages} args = case H.lookup pageAtSourceArg args of
       Just (StrVal source) -> case H.lookup source evPages of
-        Just page -> Right $ toCt page
+        Just EvalPage{epRaw} -> Right $ toCt epRaw
         Nothing -> Left $ printf "pageAt was asked for %s, which is not a page this evaluation was handed (it holds %s)" source (show $ H.keys evPages)
       Just v -> Left $ printf "pageAt was given %s, which is not a source" (show v)
       Nothing -> Left $ printf "pageAt has no %s argument, only %s" pageAtSourceArg (show $ H.keys args)

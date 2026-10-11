@@ -400,8 +400,18 @@ instance ToJSON EPrim where
   toJSON EEvalPrim{} = object ["type".=("EEvalPrim" :: String)]
 
 
--- | The pages a program was read from, as written, under the path each was parsed as.
-type EvalPages = H.HashMap String (RawPrgm ())
+-- | A page a program was read from: as it was written, and what the compiler said about it.
+--
+-- The notes are lazy and stay so. They include what building the page's trees reported, and reading
+-- that builds them ('CtService.ctssPagesOf'), so only an evaluation that shows the page to a reader
+-- ('Eval.llmShowPage') pays for it.
+data EvalPage = EvalPage {
+  epRaw   :: RawPrgm (),
+  epNotes :: [CNote]
+  }
+
+-- | The pages a program was read from, under the path each was parsed as.
+type EvalPages = H.HashMap String EvalPage
 
 -- | An arrow the evaluation is inside: the id of the node it will close as, the arrow itself, and
 -- the calls the ENCLOSING arrow had already finished when this one was entered.

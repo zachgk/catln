@@ -33,7 +33,7 @@ import           Data.Hashable           (hash)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.IORef              (modifyIORef', newIORef, readIORef)
-import           Data.List               (elemIndex, intercalate, isPrefixOf,
+import           Data.List               (elemIndex, intercalate, isPrefixOf, nub,
                                           partition, sortOn)
 import           Data.Maybe
 import           Data.Time.Calendar      (Day)
@@ -48,7 +48,7 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EExpr, EPrgm, EvalMetaDat,
-                                          EvalPages, MockIO, SSF (..), TExpr,
+                                          EvalPage (..), EvalPages, MockIO, SSF (..), TExpr,
                                           TestKind (TestRefinementProof),
                                           TestResult, Val, esAsks, joinedStage,
                                           newEvalService, oaTestId,
@@ -83,7 +83,8 @@ import           Syntax.Parsers
 import           System.Directory        (createDirectoryIfMissing)
 import           System.FilePath         (addTrailingPathSeparator,
                                           takeDirectory)
-import           Text.Megaparsec         (errorBundlePretty, runParser)
+import           Text.Megaparsec         (errorBundlePretty, runParser,
+                                          sourceName)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms, typecheckPrgmsWith)
 import           TypeCheck.Common        (AnyInstrument, InstrumentResults,
@@ -1782,9 +1783,21 @@ scopeSources nodes = [(file, src) | (SSF{ssfSource=Just src}, imp, _) <- nodes, 
 scopeRaws :: [(SSF, FileImport, a)] -> [(String, RawPrgm ())]
 scopeRaws nodes = [(file, raw) | (SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
 
--- | The parsed pages of a scope, as an evaluation is handed them ('Eval.Common.evPages').
+-- | The parsed pages of a scope, as an evaluation is handed them ('Eval.Common.evPages'), each with
+-- what its stages said about it.
+--
+-- A stage's notes are of everything it was run over — a typecheck's are of its whole SCC — so a
+-- page keeps those placed in it, and those placed nowhere, which could be about any page of the
+-- stage. The notes are left unread ('epNotes'): reading the tree build's builds the page's trees.
 rawPagesByPath :: [(SSF, FileImport, a)] -> EvalPages
-rawPagesByPath = H.fromList . scopeRaws
+rawPagesByPath nodes = H.fromList [(file, EvalPage raw (notesOf file ssf)) | (ssf@SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
+  where
+    notesOf file SSF{ssfRaw, ssfDes, ssfTPrgm, ssfTBPrgm} = nub $ filter (inPage file) $ concat [stageNotes ssfRaw, stageNotes ssfDes, stageNotes ssfTPrgm, stageNotes ssfTBPrgm]
+    stageNotes :: Maybe (CRes r) -> [CNote]
+    stageNotes = maybe [] getCNotes
+    inPage file note = case posCNote note of
+      Just (start, _) -> sourceName start == file
+      Nothing         -> True
 
 -- | The parsed pages the service holds, of a scope — a page and what it imports — or every page for
 -- a scope of 'Nothing', as an evaluation over that scope is handed them.
