@@ -1,0 +1,1376 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/jsonEscapeChar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEscapeChar
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEscapeChar
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '"' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/List/append
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char = '\\' }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = '"' }
+                                                )
+                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        , /Data/jsonEscapeChar
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '\\' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/List/append
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char = '\\' }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = '\\' }
+                                                )
+                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        , /Data/jsonEscapeChar
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    ( /Data/code
+                                        ( EAppArg
+                                            { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 32 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/jsonEscapeControl
+                                ( EAppArg
+                                    { eaaArg = Value /c -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /rest -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        , /Data/jsonEscapeChar
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEscapeChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEscapeChars
+                            ( EAppArg
+                                { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEscapeChars
+                            ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( Value /rest ↦ ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /Data/jsonEscapeChars
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/jsonEscapeChar
+                                ( EAppArg
+                                    { eaaArg = Value /c -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                        ( /Data/jsonEscapeChars
+                                            ( EAppArg
+                                                { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /rest -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                            ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonQuote"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonQuote
+                            ( EAppArg { eaaArg = Value /s -> ∀/Data/String } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonQuote
+                            ( EAppArg
+                                { eaaArg = Value /s -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            ) = /Data/String/Text
+                            ( EAppArg
+                                { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Data/Char = '"' }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                            ( /Data/jsonEscapeChars
+                                                ( EAppArg
+                                                    { eaaArg = Value /cs -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /rest -> /Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/Char = '"' }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncode"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncode
+                            ( EAppArg { eaaArg = Value /value -> ∀/Data/Json } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncode
+                            ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "null"
+                        , /Data/jsonEncode
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Json/Bool( /value=/Data/Primitive/True ) = /Data/Json/Bool
+                                    ( EAppArg { eaaArg = Value /value -> /Data/Primitive/True = Value /Data/Primitive/True } )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "true"
+                        , /Data/jsonEncode
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Json/Bool( /value=/Data/Primitive/False ) = /Data/Json/Bool
+                                    ( EAppArg { eaaArg = Value /value -> /Data/Primitive/False = Value /Data/Primitive/False } )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "false"
+                        , /Data/jsonEncode
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Json/Number( /value=∀/Data/Primitive/Number ) = /Data/Json/Number
+                                    ( EAppArg { eaaArg = Value /value@Value /n -> ∀/Data/Primitive/Number } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/toString
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/jsonEncode
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str
+                                    ( EAppArg { eaaArg = Value /value@Value /s -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/jsonQuote
+                                ( EAppArg
+                                    { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/jsonEncode
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Json/Array
+                                    ( /entries=∀/Data/List/ConsList[ /T=∀/Data/Json ] ) = /Data/Json/Array
+                                    ( EAppArg
+                                        { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] }
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "["
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> ∀/Data/String =
+                                                    ( /Data/jsonEncodeEntries
+                                                        ( EAppArg
+                                                            { eaaArg = Value /entries -> TVArg /entries = ( Value /entries ↦ TVArg /entries ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "]"
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/jsonEncode
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Json/Object
+                                    ( /entries=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] ) = /Data/Json/Object
+                                    ( EAppArg
+                                        { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] }
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> ∀/Data/String =
+                                                    ( /Data/jsonEncodeMembers
+                                                        ( EAppArg
+                                                            { eaaArg = Value /members -> TVArg /entries = ( Value /entries ↦ TVArg /entries ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "}"
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEscapeControl"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEscapeControl
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEscapeControl
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '\n' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/List/append
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char = '\\' }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = 'n' }
+                                                )
+                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        , /Data/jsonEscapeControl
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '\r' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/List/append
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char = '\\' }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = 'r' }
+                                                )
+                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        , /Data/jsonEscapeControl
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '\t' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/List/append
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char = '\\' }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = 't' }
+                                                )
+                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        , /Data/jsonEscapeControl
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/List/append
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                    ( /head=/Data/Char
+                                                    , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                            ( /head=/Data/Char
+                                                            , /tail=/Data/List/Nil
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char = '\\' }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                    ( /head=/Data/Char
+                                                    , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                            ( /head=/Data/Char
+                                                            , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=/Data/List/Nil
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Char = 'u' }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                        ( /head=/Data/Char
+                                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                            ( /head=/Data/Char
+                                                            , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                                    ( /head=/Data/Char
+                                                                    , /tail=/Data/List/Nil
+                                                                    )
+                                                                )
+                                                            )
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/Char = '0' }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                                ( /head=/Data/Char
+                                                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                                    ( /head=/Data/Char
+                                                                    , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                                        ( /head=/Data/Char
+                                                                        , /tail=/Data/List/Nil
+                                                                        )
+                                                                    )
+                                                                ) = /Data/List/Cons
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /head -> /Data/Char = '0' }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                                        ( /head=/Data/Char
+                                                                        , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                                            ( /head=/Data/Char
+                                                                            , /tail=/Data/List/Nil
+                                                                            )
+                                                                        ) = /Data/List/Cons
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /head -> /Data/Char =
+                                                                                ( /Data/hexDigit
+                                                                                    ( EAppArg
+                                                                                        { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                                            ( /operator//
+                                                                                                ( EAppArg
+                                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                                                        ( /Data/code
+                                                                                                            ( EAppArg
+                                                                                                                { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                                                                                            ) ↦ /Data/Primitive/Integer
+                                                                                                        )
+                                                                                                    }
+                                                                                                )
+                                                                                                ( EAppArg
+                                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 16 }
+                                                                                                ) ↦ /Data/Primitive/Integer
+                                                                                            )
+                                                                                        }
+                                                                                    ) ↦ /Data/Char
+                                                                                )
+                                                                            }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                                                ( /head=/Data/Char
+                                                                                , /tail=/Data/List/Nil
+                                                                                ) = /Data/List/Cons
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /head -> /Data/Char =
+                                                                                        ( /Data/hexDigit
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                                                                                    ( /operator%
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                                                                ( /Data/code
+                                                                                                                    ( EAppArg
+                                                                                                                        { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                                                                                                    ) ↦ /Data/Primitive/Integer
+                                                                                                                )
+                                                                                                            }
+                                                                                                        )
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 16 }
+                                                                                                        ) ↦ /Data/Primitive/Integer
+                                                                                                    )
+                                                                                                }
+                                                                                            ) ↦ /Data/Char
+                                                                                        )
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                )
+                                                            }
+                                                        )
+                                                    }
+                                                )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncodeMember"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncodeMember
+                            ( EAppArg
+                                { eaaArg = Value /member -> /Data/Json/Member
+                                    ( /value=∀/Data/Json
+                                    , /key=∀/Data/String
+                                    )
+                                }
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncodeMember
+                            ( EAppArg
+                                { eaaArg = Value /member -> /Data/Json/Member
+                                    ( /value=∀/Data/Json
+                                    , /key=∀/Data/String
+                                    ) = /Data/Json/Member
+                                    ( EAppArg { eaaArg = Value /key -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Json } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /Data/jsonQuote
+                                                        ( EAppArg
+                                                            { eaaArg = Value /s -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ":"
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /Data/jsonEncode
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/hexDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/hexDigit
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Char
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/hexDigit
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                            ) -> /Data/Char =
+                            ( /Data/fromCode
+                                ( EAppArg
+                                    { eaaArg = Value /code -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 48 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Char
+                            )
+                        , /Data/hexDigit
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Char =
+                            ( /Data/fromCode
+                                ( EAppArg
+                                    { eaaArg = Value /code -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 87 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Char
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncodeEntries"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncodeEntries
+                            ( EAppArg
+                                { eaaArg = Value /entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] }
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncodeEntries
+                            ( EAppArg { eaaArg = Value /entries -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                        , /Data/jsonEncodeEntries
+                            ( EAppArg
+                                { eaaArg = Value /entries -> /Data/List/Cons[ /T=∀/Data/Json ]
+                                    ( /head=∀/Data/Json
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Json } )
+                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/jsonEncode
+                                ( EAppArg
+                                    { eaaArg = Value /value -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/jsonEncodeEntries
+                            ( EAppArg
+                                { eaaArg = Value /entries -> /Data/List/Cons[ /T=∀/Data/Json ]
+                                    ( /head=∀/Data/Json
+                                    , /tail=/Data/List/Cons[ /T=∀/Data/Json ]
+                                        ( /head=∀/Data/Json
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Json ]
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Json } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=∀/Data/Json ]
+                                            ( /head=$/T
+                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                            ) = /Data/List/Cons
+                                            ( EAppArg { eaaArg = Value /head@Value /h2 -> ∀/Data/Json } )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail@Value /t2 -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] }
+                                            )
+                                        }
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /Data/jsonEncode
+                                                        ( EAppArg
+                                                            { eaaArg = Value /value -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ","
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /Data/jsonEncodeEntries
+                                            ( EAppArg
+                                                { eaaArg = Value /entries -> /Data/List/Cons[ /T=∀/Data/Json ]
+                                                    ( /head=∀/Data/Json
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Json ]
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> TVArg /h2 = ( Value /h2 ↦ TVArg /h2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /tail -> TVArg /t2 = ( Value /t2 ↦ TVArg /t2 ) }
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncodeMembers"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncodeMembers
+                            ( EAppArg
+                                { eaaArg = Value /members -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] }
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncodeMembers
+                            ( EAppArg { eaaArg = Value /members -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                        , /Data/jsonEncodeMembers
+                            ( EAppArg
+                                { eaaArg = Value /members -> /Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                    ( /head=/Data/Json/Member..
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Json/Member.. } )
+                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/jsonEncodeMember
+                                ( EAppArg
+                                    { eaaArg = Value /member -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/jsonEncodeMembers
+                            ( EAppArg
+                                { eaaArg = Value /members -> /Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                    ( /head=/Data/Json/Member..
+                                    , /tail=/Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                        ( /head=/Data/Json/Member..
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ]
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Json/Member.. } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                            ( /head=/Data/Json/Member..
+                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                            ) = /Data/List/Cons
+                                            ( EAppArg { eaaArg = Value /head@Value /h2 -> /Data/Json/Member.. } )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail@Value /t2 -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] }
+                                            )
+                                        }
+                                    )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /Data/jsonEncodeMember
+                                                        ( EAppArg
+                                                            { eaaArg = Value /member -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ","
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /Data/jsonEncodeMembers
+                                            ( EAppArg
+                                                { eaaArg = Value /members -> /Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                                    ( /head=/Data/Json/Member..
+                                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ]
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> TVArg /h2 = ( Value /h2 ↦ TVArg /h2 ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /tail -> TVArg /t2 = ( Value /t2 ↦ TVArg /t2 ) }
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Writing JSON
+                  [jsonEncode] writes a [Json] out as the JSON text it is: the text a JSON file holds, or the
+                  body a JSON API is sent. Written in Catln over the characters of the text, so that what a
+                  string is escaped as is said here and nowhere else.
+                  Nothing is added to the text that JSON does not need: no spaces between the parts, and no line
+                  breaks."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                    ( /Data/jsonEncode
+                        ( EAppArg { eaaArg = Value /value -> /Data/Json/Null = Value /Data/Json/Null } ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "null"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Data/jsonEncode
+                        ( EAppArg
+                            { eaaArg = Value /value -> /Data/Json/Array
+                                ( /entries=/Data/List/Cons
+                                    [ /T=
+                                        ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Number( /value=/Data/Primitive/Integer ) + /Data/Json/Str
+                                            ( /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Integer )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
+                                        , /tail=/Data/List/Cons
+                                            [ /T=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        )
+                                    )
+                                ) = /Data/Json/Array
+                                ( EAppArg
+                                    { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Number( /value=/Data/Primitive/Integer ) + /Data/Json/Str
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Integer )
+                                        , /tail=/Data/List/Cons
+                                            [ /T=
+                                                ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
+                                            , /tail=/Data/List/Cons
+                                                [ /T=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                ]
+                                                ( /head=/Data/Json/Str
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Json/Number( /value=/Data/Primitive/Integer ) = /Data/Json/Number
+                                                ( EAppArg
+                                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=
+                                                    ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    )
+                                                ]
+                                                ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
+                                                , /tail=/Data/List/Cons
+                                                    [ /T=/Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    ]
+                                                    ( /head=/Data/Json/Str
+                                                        ( /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    , /tail=/Data/List/Nil
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Json/Bool( /value=/Data/Primitive/True ) = /Data/Json/Bool
+                                                        ( EAppArg { eaaArg = Value /value -> /Data/Primitive/True = Value /Data/Primitive/True } )
+                                                    }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /tail -> /Data/List/Cons
+                                                        [ /T=/Data/Json/Str
+                                                            ( /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
+                                                        ]
+                                                        ( /head=/Data/Json/Str
+                                                            ( /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/Json/Str
+                                                                ( /value=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                ) = /Data/Json/Str
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /value -> /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
+                                                                    }
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                )
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[1,true,"x"]"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Data/jsonEncode
+                        ( EAppArg
+                            { eaaArg = Value /value -> /Data/Json/Object
+                                ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=
+                                            ( /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Array( /entries=/Data/List/Nil ) )
+                                        , /key=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Member
+                                        ( /value=/Data/Json/Array( /entries=/Data/List/Nil )
+                                        , /key=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    )
+                                ) = /Data/Json/Object
+                                ( EAppArg
+                                    { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=
+                                                ( /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Array( /entries=/Data/List/Nil ) )
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Member
+                                            ( /value=/Data/Json/Array( /entries=/Data/List/Nil )
+                                            , /key=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        , /tail=/Data/List/Cons
+                                            [ /T=/Data/Json/Member
+                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Member
+                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Json/Member
+                                                ( /value=/Data/Json/Array( /entries=/Data/List/Nil )
+                                                , /key=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) = /Data/Json/Member
+                                                ( EAppArg
+                                                    { eaaArg = Value /key -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                                                    }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /value -> /Data/Json/Array( /entries=/Data/List/Nil ) = /Data/Json/Array
+                                                        ( EAppArg { eaaArg = Value /entries -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=/Data/Json/Member
+                                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                    , /key=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                ]
+                                                ( /head=/Data/Json/Member
+                                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                    , /key=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/Json/Member
+                                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                        , /key=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ) = /Data/Json/Member
+                                                        ( EAppArg
+                                                            { eaaArg = Value /key -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "b"
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /value -> /Data/Json/Number( /value=/Data/Primitive/Float ) = /Data/Json/Number
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /value -> /Data/Primitive/Float = 2.5 }
+                                                                )
+                                                            }
+                                                        )
+                                                    }
+                                                )
+                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"a":[],"b":2.5}"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Arrays and objects
+                  Their entries are written in order with a comma between each two."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Strings
+                  A string is written between double quotes. The two characters that would end it early — a
+                  double quote, and the backslash that escapes — are escaped, as is every control character,
+                  which JSON does not allow written as itself: the common ones by their short escapes and the rest
+                  by their code point. Every other character is written as itself."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Data/jsonQuote
+                        ( EAppArg
+                            { eaaArg = Value /s -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "say "hi"
+                              "
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""say \"hi\"\n""
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Data/jsonQuote
+                        ( EAppArg
+                            { eaaArg = Value /s -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a\b"
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""a\\b""
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Data/jsonQuote
+                        ( EAppArg
+                            { eaaArg = Value /s -> ∀/Data/String =
+                                ( /Data/toString
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Char =
+                                            ( /Data/fromCode
+                                                ( EAppArg
+                                                    { eaaArg = Value /code -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ /Data/Char
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/String
+                                )
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""\u0001""
+                }
+            )
+        ]
+    }

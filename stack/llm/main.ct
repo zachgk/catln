@@ -4,6 +4,7 @@ import "http"
 import "json/json.ct"
 import "json/encode.ct"
 import "json/decode.ct"
+import hsrawprgm()
 
 
 module(Llm)
@@ -36,6 +37,56 @@ module(Llm)
   llmWith(io, input, base= /Data/Maybe/Nothing, model, key)= /Data/Maybe/Nothing
   llmWith(io, input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Maybe/Nothing
   llmWith(io, input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key)= llmReply(response= /Data/jsonParse(text= io.httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))))
+
+  # ## Showing a model
+    What a model is shown of a value is its own question, as what a person is shown of one is
+    [/Catln/Doc/dshow]'s. A type may be displayed in the webdocs as markup, or as a chart, and be
+    written for a model as something else again. The two share the text of a [/Data/ToString],
+    which either reader can read, so a type need only say how a model sees it where that differs.
+  class(LlmShow)
+    # Represents values which can be shown to a language model.
+
+  llmshow(s -> LlmShow)= s
+    # [llmshow] resolves a value to what a language model is shown of it. The identity arm passes a
+      value that is already [LlmShow] straight through. A type is shown some other way by an arm of
+      its own, written beside it.
+
+  every(String, isa= [/Llm/LlmShow])
+  every(/Data/ToString, isa= [/Llm/LlmShow])
+    # Every [/Data/ToString] value is shown to a model as its text, the same text the webdocs show a
+      person ([/Catln/Doc/DShow]).
+
+  > llmshow(s= "text")
+    >>> text
+  > llmshow(s= 3)
+    >>> 3
+  # ## Asking about the program it is asked from
+    [lcm], a large code model, asks [llm] with the program it is written in. The page the call is
+    written on is put before what it asks, as it was written and with each of its annotations shown
+    with what it evaluates to: a `> expr` with its `>>>` result, and any other annotation a model
+    can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
+    page says it computes, and not only what it says.
+    The page is the one the program was compiled from, handed to the call by the compiler rather
+    than read again from the file: a call written as `io.lcm(input= ...)` is completed to
+    `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
+  :IO.lcm(input -> String) -> /Data/Maybe[$T -> String]
+    # [lcm] is the reply of the configured model to the prompt [input], asked with the page the call
+      is written in. It answers as [llm] does.
+    #runtime("callerPage")
+  :IO.lcm(input -> String, page -> /Catln/RawPrgm..)= this.llm(input= lcmPrompt(input= input, page= page))
+
+  lcmPrompt(input -> String) -> String
+    # [lcmPrompt] is what [lcm] asks the model: the page the call is written in, and then [input].
+      Asking a model reaches outside the program, while this does not, so it is what is checked of
+      [lcm] without asking anything.
+    #runtime("callerPage")
+  lcmPrompt(input -> String, page -> /Catln/RawPrgm..)= showPage(page= page) ++ "\n" ++ input
+
+  showPage(page -> /Catln/RawPrgm..) -> String
+    # [showPage] is the [page] as it was written, with each annotation of it a model can be shown
+      shown with what it evaluates to. An annotation which cannot be, or which fails to evaluate, is
+      written as it was.
+    #runtime("llmShowPage")
 
   # ## The request
   llmRequest(model -> String, input -> String) -> String

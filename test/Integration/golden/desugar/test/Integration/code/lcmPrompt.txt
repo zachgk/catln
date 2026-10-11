@@ -1,0 +1,86 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/#hint"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ #hint( Value /text -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println
+                                ( Value msg= /Llm/lcmPrompt
+                                    ( Value input= CStr
+                                        { csValue = "What does double do?" }
+                                    )
+                                )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ double( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ double( Value x ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value x ) ]
+                    }
+                )
+            ,
+                ( "/Llm/llmshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmshow
+                            ( Value s= #hint( Value text ) )= /operator++
+                            ( Value /l= CStr
+                                { csValue = "hint: " }
+                            )( Value /r= Value text )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
+                annotations shown, and then the question." }
+            )
+        , /Catln/#print
+            ( Value /p= double
+                ( Value x= CInt
+                    { ciValue = 2 }
+                )
+            )
+        , #hint
+            ( Value text= CStr
+                { csValue = "double never fails" }
+            )
+        ]
+    }

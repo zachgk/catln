@@ -1,0 +1,44 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Http/httpPost"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Http/httpPost( Value url -> ∀/Data/String )
+                            ( Value headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value body -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/String
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Http/Header"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Http/Header( Value /name -> ∀/Data/String )( Value /value -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# HTTP
+                Requests over the network. Sending one is a method of [/Catln/IO], because it reaches outside
+                the program: what comes back is decided by whatever answers, and sending it can change what
+                answers the next one. So a program can only send a request where it holds an IO value to send it
+                through.
+                This is not part of the standard library. A program which sends no request has no use for it,
+                and one that does writes `import "http"`." }
+            )
+        ]
+    }

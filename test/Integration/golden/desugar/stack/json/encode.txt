@@ -1,0 +1,474 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/jsonEscapeChar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEscapeChar( Value c -> /Data/Char )
+                            ( Value rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEscapeChar( Value c )( Value rest ) | /operator==( Value /l= Value c )
+                            ( Value /r= CChar
+                                { chValue = '"' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ( Value l= /Data/List/Cons
+                                ( Value /head= CChar
+                                    { chValue = '\\' }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CChar
+                                        { chValue = '"' }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )( Value r= Value rest )
+                        , /Data/jsonEscapeChar( Value c )( Value rest ) | /operator==( Value /l= Value c )
+                            ( Value /r= CChar
+                                { chValue = '\\' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ( Value l= /Data/List/Cons
+                                ( Value /head= CChar
+                                    { chValue = '\\' }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CChar
+                                        { chValue = '\\' }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )( Value r= Value rest )
+                        , /Data/jsonEscapeChar( Value c )( Value rest ) | /operator<
+                            ( Value /l= code( Value /this= Value c ) )
+                            ( Value /r= CInt
+                                { ciValue = 32 }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = jsonEscapeControl( Value c= Value c )( Value rest= Value rest )
+                        , /Data/jsonEscapeChar( Value c )( Value rest ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons( Value head= Value c )( Value tail= Value rest )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEscapeChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEscapeChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEscapeChars( Value cs= Value /Data/List/Nil )( Value rest ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value rest
+                        , /Data/jsonEscapeChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value rest ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = jsonEscapeChar( Value c= Value head )
+                            ( Value rest= jsonEscapeChars( Value cs= Value tail )( Value rest= Value rest ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonQuote"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonQuote( Value s -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonQuote
+                            ( Value s= String/Text( Value chars ) ) -> ∀/Data/String = String/Text
+                            ( Value chars= /Data/List/Cons
+                                ( Value head= CChar
+                                    { chValue = '"' }
+                                )
+                                ( Value tail= jsonEscapeChars( Value cs= Value chars )
+                                    ( Value rest= /Data/List/Cons
+                                        ( Value /head= CChar
+                                            { chValue = '"' }
+                                        )( Value /tail= Value /Data/List/Nil )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncode"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncode( Value value -> ∀/Data/Json ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncode( Value value= Value Json/Null ) -> ∀/Data/String = CStr
+                            { csValue = "null" }
+                        , /Data/jsonEncode
+                            ( Value value= Json/Bool( Value value= Value True ) ) -> ∀/Data/String = CStr
+                            { csValue = "true" }
+                        , /Data/jsonEncode
+                            ( Value value= Json/Bool( Value value= Value False ) ) -> ∀/Data/String = CStr
+                            { csValue = "false" }
+                        , /Data/jsonEncode
+                            ( Value value= Json/Number( Value value@Value n ) ) -> ∀/Data/String = toString( Value /this= Value n )
+                        , /Data/jsonEncode
+                            ( Value value= Json/Str( Value value@Value s ) ) -> ∀/Data/String = jsonQuote( Value s= Value s )
+                        , /Data/jsonEncode
+                            ( Value value= Json/Array( Value entries ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "[" }
+                                )
+                                ( Value /r= jsonEncodeEntries( Value entries= Value entries ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "]" }
+                            )
+                        , /Data/jsonEncode
+                            ( Value value= Json/Object( Value entries ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "{" }
+                                )
+                                ( Value /r= jsonEncodeMembers( Value members= Value entries ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "}" }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEscapeControl"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEscapeControl( Value c -> /Data/Char )
+                            ( Value rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEscapeControl( Value c )( Value rest ) | /operator==( Value /l= Value c )
+                            ( Value /r= CChar
+                                { chValue = '\n' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ( Value l= /Data/List/Cons
+                                ( Value /head= CChar
+                                    { chValue = '\\' }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CChar
+                                        { chValue = 'n' }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )( Value r= Value rest )
+                        , /Data/jsonEscapeControl( Value c )( Value rest ) | /operator==( Value /l= Value c )
+                            ( Value /r= CChar
+                                { chValue = '\r' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ( Value l= /Data/List/Cons
+                                ( Value /head= CChar
+                                    { chValue = '\\' }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CChar
+                                        { chValue = 'r' }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )( Value r= Value rest )
+                        , /Data/jsonEscapeControl( Value c )( Value rest ) | /operator==( Value /l= Value c )
+                            ( Value /r= CChar
+                                { chValue = '\t' }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ( Value l= /Data/List/Cons
+                                ( Value /head= CChar
+                                    { chValue = '\\' }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CChar
+                                        { chValue = 't' }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )( Value r= Value rest )
+                        , /Data/jsonEscapeControl( Value c )( Value rest ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ( Value l= /Data/List/Cons
+                                ( Value /head= CChar
+                                    { chValue = '\\' }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CChar
+                                        { chValue = 'u' }
+                                    )
+                                    ( Value /tail= /Data/List/Cons
+                                        ( Value /head= CChar
+                                            { chValue = '0' }
+                                        )
+                                        ( Value /tail= /Data/List/Cons
+                                            ( Value /head= CChar
+                                                { chValue = '0' }
+                                            )
+                                            ( Value /tail= /Data/List/Cons
+                                                ( Value /head= hexDigit
+                                                    ( Value n= /operator//
+                                                        ( Value /l= code( Value /this= Value c ) )
+                                                        ( Value /r= CInt
+                                                            { ciValue = 16 }
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /tail= /Data/List/Cons
+                                                    ( Value /head= hexDigit
+                                                        ( Value n= /operator%
+                                                            ( Value /l= code( Value /this= Value c ) )
+                                                            ( Value /r= CInt
+                                                                { ciValue = 16 }
+                                                            )
+                                                        )
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )( Value r= Value rest )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncodeMember"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncodeMember
+                            ( Value member -> /Data/Json/Member
+                                ( /value=∀/Data/Json
+                                , /key=∀/Data/String
+                                )
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncodeMember
+                            ( Value member= Json/Member( Value key )( Value value ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= jsonQuote( Value s= Value key ) )
+                                ( Value /r= CStr
+                                    { csValue = ":" }
+                                )
+                            )
+                            ( Value /r= jsonEncode( Value value= Value value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/hexDigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/hexDigit( Value n -> /Data/Primitive/Integer ) -> /Data/Char ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/hexDigit( Value n ) | /operator<( Value /l= Value n )
+                            ( Value /r= CInt
+                                { ciValue = 10 }
+                            ) -> /Data/Char = fromCode
+                            ( Value code= /operator+
+                                ( Value /l= CInt
+                                    { ciValue = 48 }
+                                )( Value /r= Value n )
+                            )
+                        , /Data/hexDigit( Value n ) -> /Data/Char = fromCode
+                            ( Value code= /operator+
+                                ( Value /l= CInt
+                                    { ciValue = 87 }
+                                )( Value /r= Value n )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncodeEntries"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncodeEntries
+                            ( Value entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncodeEntries( Value entries= Value /Data/List/Nil ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Data/jsonEncodeEntries
+                            ( Value entries= /Data/List/Cons( Value head )( Value tail= Value /Data/List/Nil ) ) -> ∀/Data/String = jsonEncode( Value value= Value head )
+                        , /Data/jsonEncodeEntries
+                            ( Value entries= /Data/List/Cons( Value head )
+                                ( Value tail= /Data/List/Cons( Value head@Value h2 )( Value tail@Value t2 ) )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= jsonEncode( Value value= Value head ) )
+                                ( Value /r= CStr
+                                    { csValue = "," }
+                                )
+                            )
+                            ( Value /r= jsonEncodeEntries
+                                ( Value entries= /Data/List/Cons( Value head= Value h2 )( Value tail= Value t2 ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEncodeMembers"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEncodeMembers
+                            ( Value members -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEncodeMembers( Value members= Value /Data/List/Nil ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Data/jsonEncodeMembers
+                            ( Value members= /Data/List/Cons( Value head )( Value tail= Value /Data/List/Nil ) ) -> ∀/Data/String = jsonEncodeMember( Value member= Value head )
+                        , /Data/jsonEncodeMembers
+                            ( Value members= /Data/List/Cons( Value head )
+                                ( Value tail= /Data/List/Cons( Value head@Value h2 )( Value tail@Value t2 ) )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= jsonEncodeMember( Value member= Value head ) )
+                                ( Value /r= CStr
+                                    { csValue = "," }
+                                )
+                            )
+                            ( Value /r= jsonEncodeMembers
+                                ( Value members= /Data/List/Cons( Value head= Value h2 )( Value tail= Value t2 ) )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# Writing JSON
+                [jsonEncode] writes a [Json] out as the JSON text it is: the text a JSON file holds, or the
+                body a JSON API is sent. Written in Catln over the characters of the text, so that what a
+                string is escaped as is said here and nowhere else.
+                Nothing is added to the text that JSON does not need: no spaces between the parts, and no line
+                breaks." }
+            )
+        , /Catln/#print
+            ( Value /p= jsonEncode( Value value= Value Json/Null ) )
+            ( Value /result= CStr
+                { csValue = "null" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonEncode
+                ( Value value= Json/Array
+                    ( Value entries= /Data/List/Cons
+                        ( Value /head= Json/Number
+                            ( Value value= CInt
+                                { ciValue = 1 }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= Json/Bool( Value value= Value True ) )
+                            ( Value /tail= /Data/List/Cons
+                                ( Value /head= Json/Str
+                                    ( Value value= CStr
+                                        { csValue = "x" }
+                                    )
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "[1,true,"x"]" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonEncode
+                ( Value value= Json/Object
+                    ( Value entries= /Data/List/Cons
+                        ( Value /head= Json/Member
+                            ( Value key= CStr
+                                { csValue = "a" }
+                            )
+                            ( Value value= Json/Array( Value entries= Value /Data/List/Nil ) )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= Json/Member
+                                ( Value key= CStr
+                                    { csValue = "b" }
+                                )
+                                ( Value value= Json/Number
+                                    ( Value value= CFloat
+                                        { cfValue = 2.5 }
+                                    )
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "{"a":[],"b":2.5}" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Arrays and objects
+                Their entries are written in order with a comma between each two." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Strings
+                A string is written between double quotes. The two characters that would end it early — a
+                double quote, and the backslash that escapes — are escaped, as is every control character,
+                which JSON does not allow written as itself: the common ones by their short escapes and the rest
+                by their code point. Every other character is written as itself." }
+            )
+        , /Catln/#print
+            ( Value /p= jsonQuote
+                ( Value s= CStr
+                    { csValue = "say "hi"
+                    " }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = ""say \"hi\"\n"" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonQuote
+                ( Value s= CStr
+                    { csValue = "a\b" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = ""a\\b"" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonQuote
+                ( Value s= toString
+                    ( Value /this= fromCode
+                        ( Value code= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = ""\u0001"" }
+            )
+        ]
+    }
