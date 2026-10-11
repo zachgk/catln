@@ -45,11 +45,17 @@ Prgm
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                                                                        ( /r=/Data/Primitive/True
+                                                                                        , /l=~nonNeg( /this=~/$this )
+                                                                                        ) =
                                                                                         ( /keep
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /n -> /Data/Primitive/Integer = 2 }
-                                                                                            ) ↦ /Data/Primitive/Integer
+                                                                                            ) ↦ /Data/Primitive/Integer| PredExpr /operator==
+                                                                                            ( /r=/Data/Primitive/True
+                                                                                            , /l=~nonNeg( /this=~/$this )
+                                                                                            )
                                                                                         )
                                                                                     }
                                                                                 ) ↦ /Data/Primitive/Integer
@@ -89,11 +95,17 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                                                ( /r=~True
+                                                                , /l=~nonNeg( /this=~/$this )
+                                                                ) =
                                                                 ( /keepOut
                                                                     ( EAppArg
                                                                         { eaaArg = Value /n -> /Data/Primitive/Integer = 0 }
-                                                                    ) ↦ /Data/Primitive/Integer
+                                                                    ) ↦ /Data/Primitive/Integer| PredExpr /operator==
+                                                                    ( /r=~True
+                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                    )
                                                                 )
                                                             }
                                                         ) ↦ /Data/Primitive/Integer
@@ -101,16 +113,26 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer| PredExpr /operator==
-                                                    ( /r=~True
-                                                    , /l=~nonNeg( /this=~/$this )
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer|
+                                                    ( PredExpr /operator==
+                                                        ( /r=/Data/Primitive/True
+                                                        , /l=~nonNeg( /this=~/$this )
+                                                        ) && PredExpr /operator==
+                                                        ( /r=~True
+                                                        , /l=~nonNeg( /this=~/$this )
+                                                        )
                                                     ) =
                                                     ( /narrowDecl
                                                         ( EAppArg
                                                             { eaaArg = Value /n -> /Data/Primitive/Integer = 0 }
-                                                        ) ↦ /Data/Primitive/Integer| PredExpr /operator==
-                                                        ( /r=~True
-                                                        , /l=~nonNeg( /this=~/$this )
+                                                        ) ↦ /Data/Primitive/Integer|
+                                                        ( PredExpr /operator==
+                                                            ( /r=/Data/Primitive/True
+                                                            , /l=~nonNeg( /this=~/$this )
+                                                            ) && PredExpr /operator==
+                                                            ( /r=~True
+                                                            , /l=~nonNeg( /this=~/$this )
+                                                            )
                                                         )
                                                     )
                                                 }

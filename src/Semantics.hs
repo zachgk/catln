@@ -607,17 +607,36 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
       -- argument's result within the condition's predicates, which the body's where carries
       -- ('TypeCheck.Constrain', the @ConWhere@ case); read as the bare argument, the condition
       -- was lost at every call, and @k(a= S(n= Z))@ read as @S(n= Z)@ where it is empty.
-      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch (withinWhere n . substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
-      _                              -> joinedDispatch
+      Just n | isJust (maybeExprPath n) -> withinDeclared $ maybe joinedDispatch (withinWhere n . substitute . hoSlotResult typeEnv vaenv (inExprSingleton n)) (H.lookup (extKey (TVArg $ inExprSingleton n)) vaenv)
+      _                              -> withinDeclared joinedDispatch
       where
         substitute = substituteTVExt typeEnv vaenv
         withinWhere n t = case exprWhereCond n of
-          Just _  -> intersectTypes typeEnv t (substitute (TopType H.empty (wherePreds (getExprType n))))
+          Just _  -> within (substitute (TopType H.empty (carriedPreds (getExprType n)))) t
           Nothing -> t
-        -- The predicates a where's type carries: on its one leaf (@/a | PredExpr …@) or its top.
-        wherePreds (UnionType (Just (preds, _, _)) _ _) = preds
-        wherePreds (UnionType Nothing leafs []) | [l] <- splitUnionType leafs = ptPreds l
-        wherePreds _ = PredsNone
+        -- The arrow's DECLARED result refines what the body gives at every call: a definition
+        -- @h(a -> Nat) -> Nat_isZ= a@ promises @a@ within @Nat_isZ@, so @h(a= S(n= Z))@ is
+        -- @S(n= Z) | $this.isZ == True@ — decided false, empty — where the body alone read
+        -- @S(n= Z)@ and the refinement was left to the runtime (the static-first rule). Only the
+        -- declaration's VALUE predicates are met here: its classes and shape are the result's
+        -- requirement, which acts by arrow choice ('TypeCheck.TypeUtils.arrowConstrainUbs'), and
+        -- a shape meet can respell a representation eval's value matching reads. The meta reads
+        -- as the declaration met with the inferred actual ('TypeCheck.Show.showM', and
+        -- 'TypeCheck.Decode.toMeta' once typed), so the predicates are on its top or its leaves.
+        withinDeclared = case predsExprAtoms (carriedPreds arr'0) of
+          []    -> id
+          atoms -> within (TopType H.empty (mkAnd (map (PredsOne . PredExpr) atoms)))
+        -- A value read within predicates. An occurrence keeps its link and takes the predicates
+        -- as its inner (@⟦v⟧ ∩ ⟦inner⟧@, closed inners only — 'TypeVar'): met as a type it would
+        -- read as the predicates alone, the binding lost.
+        within predTop t@(TypeVar v loc inner)
+          | typeHasTypeVars predTop = t
+          | otherwise               = TypeVar v loc (intersectTypes typeEnv inner predTop)
+        within predTop t = intersectTypes typeEnv t predTop
+        -- The predicates a type carries: on its top or on its one leaf (@/a | PredExpr …@).
+        carriedPreds (UnionType (Just (preds, _, _)) _ _) = preds
+        carriedPreds (UnionType Nothing leafs []) | [l] <- splitUnionType leafs = ptPreds l
+        carriedPreds _ = PredsNone
         expr' = fmap (substitute . getExprType) oaArrExpr
         -- Re-link the declared result's Top class-parameter slots to the type variables the source
         -- bound before substituting: an accessor result parameterized by the receiver's own type

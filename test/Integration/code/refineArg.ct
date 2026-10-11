@@ -6,6 +6,8 @@ annot(#noCore)
   the refinement, [Z | $this.isZ == True], and building it asks whether a [Z] is within that: the
   predicate evaluated on [Z] through the type graph reaches only [True], so it is. Before the type
   checker decided value predicates, the build found no arrow from [Z] to the refined slot.
+  [hGen] returns its argument where a [Nat_isZ] is declared: the declaration is undecided on every
+  [Nat], but a call is read within it, so [hGenZ] is a [Z] within the refinement.
   Written without the core library, so the predicate bottoms out at arms rather than primitives.
 module(Data/Primitive)
   data(Integer)
@@ -33,3 +35,7 @@ f(a -> Nat_isZ) -> Nat= a
 okZ= f(a= Z)
 
 h(a -> Nat) -> Nat_isZ= Z
+
+hGen(a -> Nat) -> Nat_isZ= a
+
+hGenZ= hGen(a= Z)

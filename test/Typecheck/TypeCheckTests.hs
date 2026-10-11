@@ -337,6 +337,36 @@ testWhereRefine = testCase "a body's condition refines its value by the conditio
   one "result of kZ" (resultOf "/kZ") $ \r ->
     assertBool ("kZ settles to Z: " ++ show r) (isSubtypeOf typeEnv (settled r) (typeVal "/Z"))
 
+-- | A definition's declared result refines what its body gives at every call
+-- ('Semantics.arrowDestType'): @hGen(a -> Nat) -> Nat_isZ= a@ is guaranteed by shape (undecided on
+-- every @Nat@), while @hZ@'s @hGen(a= Z)@ is read within the declaration and is a @Z@ within the
+-- refinement, and @onNat@'s @hGen(a= n)@ carries the predicate on. The twin error page calls it
+-- with an @S@, on which the predicate is decided false. Fixtures: unit/declResult.ct,
+-- unit/declResultFails.err.ct.
+testDeclResult :: TestTree
+testDeclResult = testCase "a declared result refines every call of the definition" $ do
+  let page = "test/Typecheck/unit/declResult.ct"
+  assertResultGuaranteed page "/hGen"
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let typeEnv = mkTypeEnv prgm
+  let resultOf name = [ getMetaType m | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm), nameStr (oaObjPath oa) == name ]
+      leafsOf (UnionType _ leafs _) = splitUnionType leafs
+      leafsOf _                     = []
+      settled t = UnionType Nothing (joinUnionType [l | l <- leafsOf t, nameStr (ptName l) /= "/hGen"]) []
+      one name xs f = case xs of
+        [x] -> f x
+        _   -> assertFailure ("one " ++ name ++ ", found " ++ show xs)
+  one "result of hZ" (resultOf "/hZ") $ \r -> do
+    assertBool ("hZ settles to Z: " ++ show r) (isSubtypeOf typeEnv (settled r) (typeVal "/Z"))
+    assertBool ("hZ settles to a Z within the refinement, not an empty result: " ++ show r) (not (isBottomType (settled r)))
+  one "result of onNat" (resultOf "/onNat") $ \r ->
+    assertBool ("onNat carries the declared predicate on: " ++ show r) (typeHasValuePredExpr r)
+
 -- | The page fails with an error whose text contains @needle@.
 assertPageErrorSays :: String -> String -> Assertion
 assertPageErrorSays page needle = do
@@ -384,6 +414,7 @@ typecheckTests = do
     , testRefineRuntime
     , testRefineOut
     , testWhereRefine
+    , testDeclResult
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

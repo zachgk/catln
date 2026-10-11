@@ -1,0 +1,35 @@
+annot(#noCore)
+
+# The twin of declResult.ct: [hGen] returns its argument where a [Nat_isZ] is declared, and [main]
+  calls it with an [S], on which the declared predicate is decided false. The call is read within
+  the declaration, so what it passes to [g] is empty and the page is refused — before this, the
+  body alone was read and the value was only refused when the arrow ran.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+  data(True)
+  data(False)
+
+  class(Boolean, [True, False])
+module(Catln)
+  data(IO)
+
+(_ :: Boolean == _ :: Boolean) -> Boolean
+(l :: True == r :: True)= True
+(l :: False == r :: False)= True
+(l :: True == r :: False)= False
+(l :: False == r :: True)= False
+
+class(Nat, [Z, S(n -> Nat)])
+
+isZero(n -> Nat) -> Boolean
+isZero(n= Z)= True
+isZero(n= S(n@m))= False
+
+:Nat.isZ -> Boolean= isZero(n= this)
+
+hGen(a -> Nat) -> Nat_isZ= a
+
+g(x -> Nat) -> IO= IO
+
+main -> IO= g(x= hGen(a= S(n= Z)))

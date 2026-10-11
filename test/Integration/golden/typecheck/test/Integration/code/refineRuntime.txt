@@ -26,7 +26,10 @@ Prgm
                                                     { ciValue = 3 }
                                                 )
                                             )
-                                            ( Value /r -> /Data/Primitive/Integer = /keep
+                                            ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                                ( /r=/Data/Primitive/True
+                                                , /l=~nonNeg( /this=~/$this )
+                                                ) = /keep
                                                 ( Value /n -> /Data/Primitive/Integer = CInt
                                                     { ciValue = 2 }
                                                 )
@@ -48,15 +51,23 @@ Prgm
                                             )
                                         )
                                     )
-                                    ( Value /r -> /Data/Primitive/Integer = /keepOut
+                                    ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                        ( /r=~True
+                                        , /l=~nonNeg( /this=~/$this )
+                                        ) = /keepOut
                                         ( Value /n -> /Data/Primitive/Integer = CInt
                                             { ciValue = 0 }
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
-                                    ( /r=~True
-                                    , /l=~nonNeg( /this=~/$this )
+                                ( Value /r -> /Data/Primitive/Integer|
+                                    ( PredExpr /operator==
+                                        ( /r=/Data/Primitive/True
+                                        , /l=~nonNeg( /this=~/$this )
+                                        ) && PredExpr /operator==
+                                        ( /r=~True
+                                        , /l=~nonNeg( /this=~/$this )
+                                        )
                                     ) = /narrowDecl
                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
