@@ -337,10 +337,12 @@ function Loading(props) {
 }
 
 function Notes(props) {
-  let {notes, noPosOnly} = props;
+  let {notes, notInlineOnly} = props;
 
-  if(noPosOnly) {
-    notes = notes.filter(note => !note.pos);
+  // A note on an expression is shown on that expression, which is found by its id: a position alone
+  // places a note nowhere, so a note with one but no id is still shown here.
+  if(notInlineOnly) {
+    notes = notes.filter(note => !note.id);
   }
 
   return (

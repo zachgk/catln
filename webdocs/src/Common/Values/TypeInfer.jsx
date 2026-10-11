@@ -57,7 +57,7 @@ function TypeInfer(props) {
   return (
     <CurMetaContext.Provider value={{curMeta, setCurMeta}}>
       <MetaContext.Provider value={Meta}>
-        <Notes notes={notes} noPosOnly />
+        <Notes notes={notes} notInlineOnly />
         <Grid container spacing={2} justify="center" className={classes.holdSideBySide}>
           <Grid size={{xs:6}} className={classes.sideBySide}>
             <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />

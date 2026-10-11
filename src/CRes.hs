@@ -18,7 +18,7 @@
 module CRes where
 
 import           Data.List              (intercalate, nub)
-import           Data.Maybe             (fromMaybe)
+import           Data.Maybe             (fromMaybe, listToMaybe, mapMaybe)
 import           GHC.Generics           (Generic)
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
@@ -109,9 +109,16 @@ instance Show CNoteI where
 
 instance CNoteTC CNoteI where
   metaCNote _ = Nothing
+  posCNote (GenCNote pos _) = pos
+  posCNote (GenCErr pos _) = pos
+  posCNote (GenMapCErr pos _ _) = pos
+  posCNote (BuildTreeCErr pos _) = pos
   posCNote (ParseCErr bundle) = Just (pos, pos)
     where pos = pstateSourcePos $ bundlePosState bundle
-  posCNote _ = Nothing
+  -- A wrapper is where the first of the notes it wraps that says where it is, is.
+  posCNote (WrapCN notes _) = listToMaybe $ mapMaybe posCNote notes
+  posCNote AssertCErr{} = Nothing
+  posCNote EvalCErr{} = Nothing
 
   typeCNote GenCNote{}       = CNoteWarn
   typeCNote (WrapCN notes _) = mconcat $ map typeCNote notes

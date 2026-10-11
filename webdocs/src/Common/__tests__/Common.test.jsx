@@ -509,18 +509,20 @@ describe('Notes', () => {
     expect(container.querySelector('pre')).toHaveTextContent('a warning')
   })
 
-  it('filters position-only notes when noPosOnly is true', () => {
+  it('leaves out the notes shown on their expression when notInlineOnly is true', () => {
     const notes = [
       { tp: 'CNoteError', msg: 'real error', pos: null },
-      { tp: 'CNoteWarning', msg: 'pos only', pos: { line: 1, col: 1 } },
+      { tp: 'CNoteError', msg: 'placed by pos alone', pos: { line: 1, col: 1 } },
+      { tp: 'CNoteWarning', msg: 'shown inline', pos: { line: 1, col: 1 }, id: 'abc' },
     ]
     const { container } = render(
       <Providers>
-        <Notes notes={notes} noPosOnly={true} />
+        <Notes notes={notes} notInlineOnly={true} />
       </Providers>
     )
     expect(container).toHaveTextContent('real error')
-    expect(container).not.toHaveTextContent('pos only')
+    expect(container).toHaveTextContent('placed by pos alone')
+    expect(container).not.toHaveTextContent('shown inline')
   })
 })
 
