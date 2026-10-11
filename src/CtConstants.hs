@@ -248,6 +248,14 @@ printAnnot = "/Catln/#print"
 printAnnotText = "p"
 resultAnnotText = "result"
 
+-- | What the compiler or an evaluation said about a statement, written under it for a reader of the
+-- page as @!!! kind: text@ lines ('Syntax.Ct.Results.notePage'). Only ever written: nothing parses
+-- @!!!@, so a page shown with its notes is shown them rather than given them.
+noteAnnot, noteAnnotKind, noteAnnotText :: String
+noteAnnot = "/Catln/#note"
+noteAnnotKind = "kind"
+noteAnnotText = "text"
+
 -- | The value a run records as it reaches it, declared in @stack/core/compile.ct@. Unlike the
 -- annotations above, 'debugAnnotArg' names an argument of the annotation once it has been
 -- EVALUATED, so it is the runtime argument key (leading @\/@) rather than the name a partial key is

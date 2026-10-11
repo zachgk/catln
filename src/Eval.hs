@@ -44,7 +44,7 @@ import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
 import           Syntax.Ct.Formatter     (formatRootPrgm)
 import           Syntax.Ct.Prgm          (RawPrgm (..), RawStatement (..),
                                           RawStatementTree (..))
-import           Syntax.Ct.Results       (showAnnotResults)
+import           Syntax.Ct.Results       (AnnotShown (..), showAnnotResults)
 import           Syntax.HsBuiltins.Types (oneFileResult, valResultFiles)
 import           Text.Printf
 import           TreeBuild
@@ -603,7 +603,7 @@ llmShowPage = EEvalPrim "llmShowPage" prim
       shown <- forM annots $ \(os, a) -> do
         res <- liftIO $ runCResT $ evalShowAnnot llmshowClass env' os a
         return $ case res of
-          CRes _ (Just (StrVal text)) -> Just (annotId a, text)
+          CRes _ (Just (StrVal text)) -> Just (annotId a, Shown text)
           _                           -> Nothing
       return $ StrVal $ formatRootPrgm $ showAnnotResults (H.fromList $ catMaybes shown) page
 

@@ -9,19 +9,26 @@
 --
 -- This module writes what a program's annotations evaluated to back into the program as written,
 -- as the @>>>@ lines of a print, for the program to be formatted with them
--- ('Syntax.Ct.Formatter.formatRootPrgm').
+-- ('Syntax.Ct.Formatter.formatRootPrgm'). What went wrong with the program is written into it the
+-- same way, as the @!!!@ lines of a note under the statement it is about.
 --------------------------------------------------------------------
 
 module Syntax.Ct.Results where
 
-import qualified Data.HashMap.Strict as H
-import           Data.Maybe          (fromMaybe)
-import           Data.UUID           (UUID)
+import           Control.Monad.Trans.Writer (execWriter, tell)
+import qualified Data.HashMap.Strict        as H
+import           Data.List                  (mapAccumL, maximumBy)
+import           Data.Maybe                 (fromMaybe, isNothing, mapMaybe)
+import           Data.Ord                   (comparing)
+import           Data.UUID                  (UUID)
+import           Text.Megaparsec            (SourcePos (..))
 
+import           CRes
 import           CtConstants
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
+import           Syntax.Ct.MapRawMeta       (mapMetaRawStatementM)
 import           Syntax.Ct.Prgm
 
 -- | Each annotation statement of a program, at whatever depth, rewritten as a statement.
@@ -58,15 +65,70 @@ setPrintResults goldens = mapRawAnnots fixAnnot
       = RawAnnot $ printWithResult (getExprMeta annot) pExpr golden
     fixAnnot annot = RawAnnot annot
 
--- | Each annotation shown with its value, given the values by the meta ID of their annotation.
+-- | What became of an annotation that was asked to be shown: the text it was shown as, or what
+-- went wrong in showing it.
+data AnnotShown
+  = Shown String
+  | ShownFailed [CNote]
+
+-- | Each annotation shown as what became of it, given that by the meta ID of the annotation.
 --
 -- A print is given its value as its result. Any other annotation with a value becomes a print of
 -- itself, so that every annotation shown with a value is written the one way: as an expression and
--- the @>>>@ lines under it. An annotation with no value is left as it was written, a print's result
--- included.
-showAnnotResults :: (MetaDat m, Show m) => H.HashMap UUID String -> RawPrgm m -> RawPrgm m
-showAnnotResults vals = mapRawAnnots fixAnnot
+-- the @>>>@ lines under it. An annotation that failed is left as it was written, a print's result
+-- included, with what it failed with noted under it. One with neither is left as it was written.
+showAnnotResults :: (MetaDat m, Show m) => H.HashMap UUID AnnotShown -> RawPrgm m -> RawPrgm m
+showAnnotResults vals (RawPrgm imports stmts) = RawPrgm imports (map fixTree stmts)
   where
-    fixAnnot annot = case H.lookup (getMetaId $ getExprMeta annot) vals of
-      Just val -> RawAnnot $ printWithResult (getExprMeta annot) (fromMaybe annot $ printAnnotArg annot) val
-      Nothing  -> RawAnnot annot
+    fixTree (RawStatementTree st subs) = case st of
+      RawAnnot annot -> case H.lookup (getMetaId $ getExprMeta annot) vals of
+        Just (Shown val) -> RawStatementTree (RawAnnot $ printWithResult (getExprMeta annot) (fromMaybe annot $ printAnnotArg annot) val) subs'
+        Just (ShownFailed notes) -> RawStatementTree st (map noteTree notes ++ subs')
+        Nothing -> RawStatementTree st subs'
+      _ -> RawStatementTree st subs'
+      where subs' = map fixTree subs
+
+-- | A note, as the statement writing it.
+--
+-- Written without where it is: it is written under the statement it is about, which says so.
+noteTree :: (MetaDat m, Show m) => CNote -> RawStatementTree RawExpr m
+noteTree note = RawStatementTree (RawAnnot annot) []
+  where
+    annot = rawVal noteAnnot `applyRawArgs` [(Just $ partialKey (mkName noteAnnotKind), rawStr kind), (Just $ partialKey (mkName noteAnnotText), rawStr (show note))]
+    kind = case typeCNote note of
+      CNoteError -> "error"
+      CNoteWarn  -> "warning"
+
+-- | Each note written under the statement it is about, which is the statement written last before
+-- where the note is: the innermost one, where a statement and one under it start at the same place.
+-- The notes of a statement are written first under it, so they follow the line they are about.
+--
+-- A note that says it is nowhere in the page — placed nowhere, in another page, or before its first
+-- statement — is about the page as a whole, and is written at its top.
+notePage :: (MetaDat m, Show m) => [CNote] -> RawPrgm m -> RawPrgm m
+notePage [] prgm = prgm
+notePage notes (RawPrgm imports stmts) = RawPrgm imports (map noteTree unplaced ++ snd (mapAccumL place 0 stmts))
+  where
+    starts = concatMap treeStarts stmts
+    treeStarts (RawStatementTree st subs) = statementStart st : concatMap treeStarts subs
+
+    placeOf note = do
+      (at, _) <- posCNote note
+      let before = [(start, i) | (i, Just start) <- zip [0 :: Int ..] starts, sourceName start == sourceName at, posKey start <= posKey at]
+      if null before
+        then Nothing
+        else Just $ snd $ maximumBy (comparing (\(start, i) -> (posKey start, i))) before
+    posKey pos = (sourceLine pos, sourceColumn pos)
+
+    placed = H.fromListWith (flip (++)) [(i, [note]) | note <- notes, Just i <- [placeOf note]]
+    unplaced = filter (isNothing . placeOf) notes
+
+    -- Numbered as 'starts' is, before the statements under it.
+    place i (RawStatementTree st subs) = (i', RawStatementTree st (map noteTree (H.lookupDefault [] i placed) ++ subs'))
+      where (i', subs') = mapAccumL place (i + 1) subs
+
+-- | Where a statement starts: the earliest place any part of it was written.
+statementStart :: (MetaDat m, Show m) => RawStatement RawExpr m -> Maybe SourcePos
+statementStart st = case mapMaybe (fmap fst) $ execWriter $ mapMetaRawStatementM (\_ m -> tell [getMetaPos m] >> return m) st of
+  []        -> Nothing
+  positions -> Just $ minimum positions
