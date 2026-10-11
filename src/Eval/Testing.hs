@@ -35,9 +35,11 @@ import           Data.List                  (intercalate, nub, nubBy, sortOn,
                                              tails)
 import           Data.Maybe
 import           Data.UUID                  (UUID)
-import           Eval                       (evalBaseEnv, evalBaseEnvWith,
-                                             evalBuildPrgm, evalDShowAnnot,
-                                             evalExpr, evalValEq, valWithinType)
+import           Eval                       (checkPrintGolden, evalBaseEnv,
+                                             evalBaseEnvWith, evalBuildPrgm,
+                                             evalDShowAnnot, evalExpr,
+                                             evalValEq, printRange,
+                                             printResultArg, valWithinType)
 import           Eval.Common
 import           Eval.ExprBuilder
 import qualified Hedgehog
@@ -636,22 +638,6 @@ collectPrintAnnots (Prgm objMap _ globalAnnots) =
   ++ [ ([(getExprPartialType $ oaObjExpr oa, oa)], a)
      | oa <- flatObjectMap objMap, a <- oaAnnots oa, isAnnot printAnnot a ]
 
--- | The expression of a @#print@'s @p@ argument, if present.
-printPArg :: EExpr -> Maybe EExpr
-printPArg annot = case H.lookup (partialKey (mkName printAnnotText)) (exprAppliedArgsMap annot) of
-  Just (Just (_, Just e)) -> Just e
-  _                       -> Nothing
-
--- | The stored golden string of a @#print@'s @result@ argument, if present.
-printResultArg :: EExpr -> Maybe String
-printResultArg annot = case H.lookup (partialKey (mkName resultAnnotText)) (exprAppliedArgsMap annot) of
-  Just (Just (_, Just (CExpr _ (CStr s)))) -> Just s
-  _                                        -> Nothing
-
--- | The source range of a @#print@ (taken from its @p@ argument, the only positioned part).
-printRange :: EExpr -> CodeRange
-printRange annot = maybe Nothing (getMetaPos . getExprMeta) (printPArg annot)
-
 -- | Only @#print@ values that render (through @DShow@) to a 'StrVal' can have a string-serialized
 -- golden. Returns the raw string for those, and 'Nothing' for any other DShow value (e.g. a
 -- visualization), which is not golden-checkable.
@@ -698,6 +684,4 @@ derivePrintTests pages prgm = catMaybes <$> mapM mkTest (collectPrintAnnots prgm
         desc = TestDesc testName owner ownerId TestPrintGolden . EvalCheck
         checkAction actual = asCResT $ case printResultArg annot of
           Nothing -> CErr [MkCNote $ GenCErr crange "Missing #result golden for print; run `catln test --update` to populate it"]
-          Just golden
-            | golden == actual -> CRes [] (TupleVal "()" H.empty)
-            | otherwise        -> CErr [MkCNote $ GenCErr crange $ printf "Print golden mismatch:\n  expected: %s\n  actual:   %s" golden actual]
+          Just _ -> TupleVal "()" H.empty <$ checkPrintGolden annot actual

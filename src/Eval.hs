@@ -21,7 +21,7 @@ import qualified Data.HashMap.Strict     as H
 import           Semantics.Prgm
 import           Semantics.Types
 
-import           Control.Applicative     ((<|>))
+import           Control.Applicative     (asum, (<|>))
 import           Control.Monad
 import           Data.Graph
 import           Data.Maybe
@@ -44,8 +44,10 @@ import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
 import           Syntax.Ct.Formatter     (formatRootPrgm)
 import           Syntax.Ct.Prgm          (RawPrgm (..), RawStatement (..),
                                           RawStatementTree (..))
-import           Syntax.Ct.Results       (AnnotShown (..), showAnnotResults)
+import           Syntax.Ct.Results       (AnnotShown (..), notePage,
+                                          showAnnotResults, statementStart)
 import           Syntax.HsBuiltins.Types (oneFileResult, valResultFiles)
+import           Text.Megaparsec         (sourceName)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -566,16 +568,20 @@ evalPrims :: ResBuildPrims
 evalPrims = H.fromList [(mkName (ePrimName p), Left p) | p <- [llmShowPage]]
 
 -- | Backs @\/Llm\/showPage@: a page as it was written, with each of its annotations a language model
--- can be shown given what it is shown as ('llmshowClass'), formatted as Catln source.
+-- can be shown given what it is shown as ('llmshowClass'), and what is wrong with the page written
+-- where it is wrong, formatted as Catln source.
 --
 -- The page's annotations are found in the program being evaluated by their meta, which the page and
 -- the program it was compiled into share. Each is shown in an evaluation of its own, as a page's
--- annotations are for its reader ('evalAnnots'): one that cannot be shown, or fails to be, is written
--- as it was rather than failing the rest.
+-- annotations are for its reader ('evalAnnots'): one that fails is written as it was, with what it
+-- failed with under it, rather than failing the rest. A print with a golden is checked as its test
+-- checks it ('checkPrintGolden'), and is written as it was, with the golden it no longer prints
+-- noted if it fails. What the compiler said about the page is noted where it said it
+-- ('Syntax.Ct.Results.notePage').
 --
 -- An annotation of the page that asks for the page to be shown again would be shown as part of
 -- answering itself, so the page is refused while it is being shown ('evShowingPages'), and that
--- annotation is written as it was.
+-- annotation is noted as refused.
 llmShowPage :: EPrim
 llmShowPage = EEvalPrim "llmShowPage" prim
   where
@@ -587,7 +593,7 @@ llmShowPage = EEvalPrim "llmShowPage" prim
 
     showPage :: RawPrgm () -> EvalM Val
     showPage page = do
-      env@Env{evTbEnv=TBEnv{tbPrgm=Prgm objMap _ globalAnnots}, evShowingPages} <- get
+      env@Env{evTbEnv=TBEnv{tbPrgm=Prgm objMap _ globalAnnots}, evShowingPages, evPages} <- get
       let pageHash = hash page
       when (S.member pageHash evShowingPages) $
         evalError "llmShowPage was asked to show a page while showing it, which only the page being shown can be answered by"
@@ -600,12 +606,32 @@ llmShowPage = EEvalPrim "llmShowPage" prim
                    , let os = [(getExprPartialType $ oaObjExpr oa, oa)]
                    , a <- oaAnnots oa
                    , S.member (annotId a) written ]
-      shown <- forM annots $ \(os, a) -> do
-        res <- liftIO $ runCResT $ evalShowAnnot llmshowClass env' os a
-        return $ case res of
-          CRes _ (Just (StrVal text)) -> Just (annotId a, Shown text)
-          _                           -> Nothing
-      return $ StrVal $ formatRootPrgm $ showAnnotResults (H.fromList $ catMaybes shown) page
+      shown <- forM annots $ \(os, a) -> fmap (annotId a,) <$> liftIO (showAnnot env' os a)
+      let notes = case pageFile page >>= (`H.lookup` evPages) of
+            Just EvalPage{epNotes} -> epNotes
+            Nothing                -> []
+      return $ StrVal $ formatRootPrgm $ notePage notes $ showAnnotResults (H.fromList $ catMaybes shown) page
+
+    showAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> IO (Maybe AnnotShown)
+    showAnnot env os a
+      | Just _ <- printResultArg a = do
+          res <- runCResT $ evalDShowAnnot env os a
+          return $ case res of
+            CErr notes -> Just $ ShownFailed notes
+            CRes _ (Just (StrVal actual)) -> case checkPrintGolden a actual of
+              CErr notes -> Just $ ShownFailed notes
+              CRes{}     -> Nothing
+            CRes{} -> Nothing
+      | otherwise = do
+          res <- runCResT $ evalShowAnnot llmshowClass env os a
+          return $ case res of
+            CErr notes                  -> Just $ ShownFailed notes
+            CRes _ (Just (StrVal text)) -> Just $ Shown text
+            CRes{}                      -> Nothing
+
+    -- The page a page was read from is the one its statements say they were written in.
+    pageFile (RawPrgm _ trees) = listToMaybe [sourceName start | tree <- trees, Just start <- [treeStart tree]]
+    treeStart (RawStatementTree st subs) = statementStart st <|> asum (map treeStart subs)
 
     rawPrgmAnnotIds (RawPrgm _ trees) = concatMap treeIds trees
     treeIds (RawStatementTree st subs) = stIds st ++ concatMap treeIds subs
@@ -667,6 +693,32 @@ evalBuildPrgm input srcType destType prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
+
+-- | The expression of a @#print@'s @p@ argument, if present.
+printPArg :: EExpr -> Maybe EExpr
+printPArg annot = case H.lookup (partialKey (mkName printAnnotText)) (exprAppliedArgsMap annot) of
+  Just (Just (_, Just e)) -> Just e
+  _                       -> Nothing
+
+-- | The stored golden string of a @#print@'s @result@ argument, if present.
+printResultArg :: EExpr -> Maybe String
+printResultArg annot = case H.lookup (partialKey (mkName resultAnnotText)) (exprAppliedArgsMap annot) of
+  Just (Just (_, Just (CExpr _ (CStr s)))) -> Just s
+  _                                        -> Nothing
+
+-- | The source range of a @#print@ (taken from its @p@ argument, the only positioned part).
+printRange :: EExpr -> CodeRange
+printRange annot = maybe Nothing (getMetaPos . getExprMeta) (printPArg annot)
+
+-- | Whether a @#print@ still prints what it was written to: its @result@ golden is what its value is
+-- now shown as ('evalDShowAnnot'). One with no golden has nothing to differ from.
+--
+-- Shared by the test a print is checked by and by a page shown with what is wrong with it
+-- ('llmShowPage'), so that the two cannot disagree on whether a print fails.
+checkPrintGolden :: EExpr -> String -> CRes ()
+checkPrintGolden annot actual = case printResultArg annot of
+  Just golden | golden /= actual -> CErr [MkCNote $ GenCErr (printRange annot) $ printf "Print golden mismatch:\n  expected: %s\n  actual:   %s" golden actual]
+  _ -> return ()
 
 -- | A class values are shown to some reader through, and the function showing a value as one of it.
 --
