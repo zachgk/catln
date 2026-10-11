@@ -473,8 +473,32 @@ genUnionType :: Prgm Expr () -> Gen Type
 genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
   where
     typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
-    canPred = not (null (graphToNodes cg))
+    canClassAtom = not (null (graphToNodes cg))
+    canExprAtom = not (null exprAtomFns)
+    canPred = canClassAtom || canExprAtom
     canLeaf = not (null leafSources)
+
+    -- The program's functions, with their declared argument keys: what a value predicate names.
+    exprAtomFns = [ (oaObjPath oa, [inExprSingleton (oaObjExpr a) | a <- exprAppliedArgs oe])
+                  | oa@ObjArr{oaBasis=FunctionObj, oaObj=Just oe} <- flatObjectMap objMap ]
+
+    -- | A value predicate ('PredExpr') in the two shapes the compiler produces, naming one of the
+    -- program's functions: a type property's refinement @Base_prop@, which desugars to
+    -- @/operator==(/r=True, /l=~prop(/this=~/$this))@, and a body condition's form @a | f(k= a)@,
+    -- which is @f(/k=~/$this)@ ('TypeCheck.Encode.condPredForm'). The value the predicate is over
+    -- is named 'macroThisKey', as everywhere a value predicate is decided. A generated program has
+    -- no arms for the function and no @==@, so deciding the atom through the graph answers
+    -- 'Nothing' and it is OPAQUE to the algebra — what every undecided refinement is to it. What
+    -- the atom exercises is that an opaque predicate is carried, merged, decided-by-syntax and
+    -- negated soundly wherever a predicate may sit.
+    genPredExprAtom :: Gen PartialType
+    genPredExprAtom = do
+      (fname, argKeys) <- HG.element exprAtomFns
+      let this = relTypeVal (mkName macroThisKey)
+      let prop = (partialVal fname){ptArgs = H.singleton (partialKey (mkName thisKey)) this}
+      HG.choice $
+        [ return (partialVal (mkName operatorEq)){ptArgs = H.fromList [(partialKey "/r", typeVal (mkName truePrim)), (partialKey "/l", relPartial prop)]} ]
+        ++ [ (\k -> (partialVal fname){ptArgs = H.singleton k this}) <$> HG.element argKeys | not (null argKeys) ]
 
     plain = uncurry (UnionType Nothing) <$> genPositives
 
@@ -520,10 +544,17 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       -- Weighted low: an unrolled expansion is the deepest and slowest type drawn here, and a
       -- small share is enough to reach every leaf position, negative and mixed included.
       , [ (1, recLeafs)                     | not (null recExpansions)  ]
+      -- A leaf refined by a value predicate (@Z | $this.isZ == True@, what a refined argument
+      -- slot or a body condition's value is typed as). Weighted low, like the expansion: a
+      -- small share reaches every leaf position.
+      , [ (1, pure <$> genRefinedLeaf)      | prgmHasPartial prgm && canExprAtom ]
       ]
-      -- TODO: a fourth source, a declaration refined by one of the program's type PROPERTIES
-      -- (@:Animal.fluffy@) as a 'PredExpr' on the leaf. A 'PredExpr' reaches the corpus today
-      -- only from a declaration's own @where@ clause ('genTypeFromExprWith').
+
+    genRefinedLeaf :: Gen PartialType
+    genRefinedLeaf = do
+      l <- genLeaf
+      e <- genPredExprAtom
+      return $ partialAddPreds l (PredsOne (PredExpr e))
 
     -- | One synthesized leaf, carrying an argument mode. Every leaf position fills from here, so
     -- a mode reaches a top's EXCLUSIONS and a mixed type's halves as well as a plain positive
@@ -604,7 +635,8 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
     -- Atom kinds mirror the compiler's name resolution ('resolveRelPartial'): a CLASS name
     -- resolves to a 'PredClass' (or stays a 'PredRel' while relative), while a data-TYPE name in
     -- type position resolves to a positive leaf - never a 'PredClass'. So 'PredClass' atoms are
-    -- generated only for class nodes; any node may appear as a 'PredRel'.
+    -- generated only for class nodes; any node may appear as a 'PredRel'. A VALUE predicate
+    -- ('genPredExprAtom') is the third kind, the refinement a top carries (@⊤ | $this.isZ == True@).
     genPreds :: Gen TypePredicates
     genPreds = do
       n     <- HG.frequency [(4, return 1), (1, return 2)]
@@ -613,7 +645,11 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       -- A quarter negated: positive class membership is the commoner shape in real programs.
       HG.frequency [(3, return conj), (1, return (predsNot conj))]
       where
-        genAtom = do
+        genAtom = HG.frequency $ concat
+          [ [ (4, genClassAtom)                | canClassAtom ]
+          , [ (1, PredExpr <$> genPredExprAtom) | canExprAtom  ]
+          ]
+        genClassAtom = do
           classNode <- HG.element $ graphToNodes cg
           case snd3 classNode of
             cls@PClassName{} -> do

@@ -141,10 +141,6 @@ proveRefinement tprgm preDef RefinementProof{rpName, rpRefine, rpDef, rpOverlap}
     predNote claim = ["The claim states value predicates, which the type checker could not decide on this result" | hasPredExpr claim]
     hasPredExpr (UnionType (Just (preds, _, _)) _ _) = predsHasExpr preds
     hasPredExpr _                                    = False
-    predsHasExpr (PredsOne PredExpr{}) = True
-    predsHasExpr (PredsOne _)          = False
-    predsHasExpr (PredsAnd ps)         = any predsHasExpr ps
-    predsHasExpr (PredsNot p)          = predsHasExpr p
 
 -- | Prove the refinement of an existential function: each overlapping definition is attempted as
 -- 'proveRefinement' proves it, and the claim holds when the overlaps of those that prove it cover

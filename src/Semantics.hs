@@ -284,7 +284,13 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- matches several names, or none, is not followed.
   typeGraphPredExprHolds typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv val e = do
     r <- predResult (singletonType val) e
-    if isBottomType r then Nothing
+    -- A predicate that reduces to no value at all: in the open world an arrow may yet accept the
+    -- application, so nothing is decided; in the closed world ('tePrgmEnv', the program as
+    -- written) every arrow is in hand and none does, so the predicate is never @True@ of the
+    -- value. The open world decides the same application FALSE through the declaration it
+    -- might come to satisfy (@length(this= Float)@ is an @Integer@ were @Float@ a @List@), and
+    -- a proof the open world makes must hold closed.
+    if isBottomType r then (if tePrgmEnv typeEnv then Just False else Nothing)
     else if isSubtypeOfWithEnv typeEnv vaenv r trueType then Just True
     else if isBottomType (intersectTypesEnv typeEnv vaenv r trueType) then Just False
     else Nothing
@@ -297,6 +303,11 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
             let p' = p{ptName=name, ptArgs=args, ptPreds=PredsNone}
             if settled p'
               then Just (singletonType p')
+              -- An application no arrow and no declaration accepts, in the closed world: a dead
+              -- end, which reduces to no value (see above). In the open world it stays an
+              -- incomplete reach, undecided.
+              else if tePrgmEnv typeEnv && null (typeGraphQuery typeEnv vaenv p')
+              then Just BottomType
               else do
                 let tree = reachesPartials (ReachesEnv typeEnv vaenv S.empty) [p']
                 if p' `elem` completePartials typeEnv vaenv tree

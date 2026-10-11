@@ -1308,11 +1308,15 @@ predsHasOpenAtom typeEnv
 -- leaf named as a class, stand for the members not yet declared and stay open. So does a call
 -- form: the ruling is about TYPES, and a function's call joins classes by what it rewrites to as
 -- well as by an @every@ naming it (core's @DShowCall@ members), so only a name with a data
--- definition ('typeGraphData') counts.
+-- definition ('typeGraphData') counts. A PRIMITIVE holding constants ('leafHoldsConstants') is in
+-- scope in every program — its constants are — whether or not a file spells @data(Integer)@, so
+-- its memberships are fixed too: a @Float@ constant is no @Fish@ in a program declaring no such
+-- thing, in the open world as in the closed.
 knownMemberName :: (TypeGraph tg) => TypeEnv tg -> TypeName -> Bool
 knownMemberName typeEnv n =
-  S.member n (teNames typeEnv) && nameStr n /= classPlaceholderStr && not (H.member n (scClasses (teSatCache typeEnv)))
-    && not (null (typeGraphData typeEnv n))
+  leafHoldsConstants (partialVal n)
+  || (S.member n (teNames typeEnv) && nameStr n /= classPlaceholderStr && not (H.member n (scClasses (teSatCache typeEnv)))
+    && not (null (typeGraphData typeEnv n)))
 
 -- | Whether class @c@'s membership structure is recursive: the class-reference graph
 -- reachable from @c@ — through its members' names and every class\/rel atom appearing at
@@ -1391,10 +1395,16 @@ predsEmpty :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates ->
 -- negation is satisfiable on its own). Restricting the (relatively expensive) expansion to that
 -- case keeps the common single-predicate subtype checks free.
 predsEmpty typeEnv vaenv preds@(PredsAnd ps) | length ps >= 2 =
-  -- Outside the symbolic fragment (a 'PredExpr', constants, an oversized formula): decide
-  -- by materialized expansion.
-  fromMaybe (isBottomType (expandPredicates typeEnv vaenv preds))
+  -- Where the symbolic engine refuses (constants, an oversized formula, a goal resting on an
+  -- opaque value predicate): decide by materialized expansion — only where the expansion is
+  -- EXACT ('predsPositiveSealed', the gate 'isSubtypeOfWithEnv' already applies to its own
+  -- expansion fallback). An unsealed class expands to its members so far, and a conjunction
+  -- empty on those alone (@Bag ∧ ~length ∧ ¬P@, with the engine refusing over @¬P@) is not empty
+  -- in the open world, where a later file may add the member that inhabits it.
+  fromMaybe (expansionExact && isBottomType (expandPredicates typeEnv vaenv preds))
     (predsEmptySymbolic typeEnv vaenv preds)
+  where
+    expansionExact = tePrgmEnv typeEnv || predsPositiveSealed typeEnv preds
 predsEmpty _       _     _                                    = False
 
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
@@ -1432,6 +1442,22 @@ predsValueExprAtoms :: TypePredicates -> [PartialType]
 predsValueExprAtoms = filter valueExpr . predsExprAtoms
   where
     valueExpr e = not (typeContainsTypeVar (singletonType e)) && any ((== macroThisKey) . nameStr) (S.toList (partialRefNamesDeep e))
+
+-- | The conjuncts of a formula, nested conjunctions flattened; any other formula is its own one
+-- conjunct.
+predsConjuncts :: TypePredicates -> [TypePredicates]
+predsConjuncts (PredsAnd qs) = concatMap predsConjuncts qs
+predsConjuncts q             = [q]
+
+-- | A value-predicate LITERAL: a 'PredExpr' atom or its negation. A literal names no member of its
+-- own and enumerates nothing: it narrows the set the formula's class and relation atoms describe,
+-- whatever it means. So it is transparent to every question about what those atoms enumerate
+-- (sealedness, exactness, boundedness — 'predsSealed', 'predsPositiveSealed',
+-- 'predsPositiveAtoms') and is carried symbolically through an expansion ('expandPredicates').
+isValuePredLiteral :: TypePredicates -> Bool
+isValuePredLiteral (PredsOne (PredExpr _))            = True
+isValuePredLiteral (PredsNot (PredsOne (PredExpr _))) = True
+isValuePredLiteral _                                  = False
 
 -- | A positive conjunction without its value-predicate atoms; a formula with a negation is kept.
 predsWithoutExprAtoms :: TypePredicates -> TypePredicates
@@ -1947,22 +1973,40 @@ topTypeAsPartials TypeEnv{teNames} = map ((\p -> p{ptArgMode=PtArgUnbounded}) . 
 expandPredicates :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Type
 expandPredicates _       _     PredsNone    = PTopType
 expandPredicates typeEnv vaenv (PredsOne p) = expandPredicate typeEnv vaenv p
--- A value predicate's expansion is symbolic, a top carrying it ('expandPredicate'), so meeting
--- the conjuncts' expansions would meet two such tops: 'intersectTypesWithVarEnv' merges them
--- into one top and compacts it, and compaction asks whether the conjunction is empty
--- ('predsEmpty') by expanding it — this very expansion, without end (a body's condition met with
--- a declared refinement spelled the same way, @a | a.isZ == True@ under @-> Nat_isZ@). The
--- value predicates are attached, as they are, to the expansion of the other conjuncts, which is
--- what the meet of the tops is.
+-- A value predicate's expansion is symbolic, a top carrying it ('expandPredicate'), and so is a
+-- negated one's (the complement of that top). Meeting the conjuncts' expansions would meet two
+-- such tops: 'intersectTypesWithVarEnv' merges them into one top and compacts it, and compaction
+-- asks whether the conjunction is empty ('predsEmpty') by expanding it — this very expansion,
+-- without end (a body's condition met with a declared refinement spelled the same way, @a |
+-- a.isZ == True@ under @-> Nat_isZ@; the union of two refinements, which is the complement of
+-- the meet of their negations). The value-predicate LITERALS, of either polarity, are attached
+-- as they are to the expansion of the other conjuncts, which is what the meet of the tops is. A
+-- literal beside its own negation constrains the one value both ways, so the conjunction is
+-- empty whatever the predicate means.
 expandPredicates typeEnv vaenv conj@(PredsAnd ps)
-  | not (null exprAtoms) = attach (expandPredicates typeEnv vaenv (predsWithoutExprAtoms conj)) (mkAnd (map (PredsOne . PredExpr) exprAtoms))
-  | otherwise = case map (expandPredicates typeEnv vaenv) ps of
+  | null literals = case map (expandPredicates typeEnv vaenv) ps of
       [] -> BottomType
       ts -> foldr1 (intersectTypesEnv typeEnv vaenv) ts
+  | any (\e -> e `elem` negated) positive = BottomType
+  | otherwise = attach othersExpanded (mkAnd literals)
   where
-    exprAtoms = predsExprAtoms conj
-    attach BottomType _                   = BottomType
-    attach t@TopType{} atoms              = typeAddPreds t atoms
+    (literals, others) = partition isValuePredLiteral (predsConjuncts conj)
+    othersExpanded = case others of
+      [] -> PTopType
+      _  -> expandPredicates typeEnv vaenv (mkAnd others)
+    positive = [e | PredsOne (PredExpr e) <- literals]
+    negated  = [e | PredsNot (PredsOne (PredExpr e)) <- literals]
+    attach BottomType _ = BottomType
+    -- A class top whose members are enumerable in full ('predsPositiveSealed') is attached per
+    -- member, so a literal decided on each member's shape decides the whole
+    -- ('compactFalsePredExprLeafs'): every Mammal is fluffy, so @⊤ | Mammal ∧ ¬fluffy@ is
+    -- empty, which the symbolic top cannot show. An open class, or one the expansion cannot
+    -- exhaust, keeps the literals on the top.
+    attach t@(TopType _ tps) atoms
+      | predsPositiveSealed typeEnv tps
+      , (leafs, False) <- expandTypesWithNamesFull typeEnv vaenv t (teNames typeEnv) =
+          compactType typeEnv vaenv (typeAddPreds (UnionType Nothing leafs []) atoms)
+      | otherwise = typeAddPreds t atoms
     attach t@(UnionType Nothing _ []) atoms = typeAddPreds t atoms
     attach t atoms                        = intersectTypesEnv typeEnv vaenv t (TopType H.empty atoms)
 expandPredicates typeEnv vaenv (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPredicates typeEnv vaenv p
@@ -2072,7 +2116,11 @@ predsPositiveSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
 predsPositiveSealed typeEnv = go
   where
     go (PredsOne p)  = atomEnumerable p
-    go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False: ⊤ is not enumerable
+    -- PredsNone = PredsAnd [] ↦ False: ⊤ is not enumerable, and neither is ⊤ narrowed by value
+    -- predicates alone ('isValuePredLiteral', transparent here).
+    go (PredsAnd ps) = case filter (not . isValuePredLiteral) ps of
+      []  -> False
+      ps' -> all go ps'
     -- Negated: an unsealed class here only shrinks the set — at ODD depth. Under a second
     -- negation it is positive again (@¬(¬Eq ∧ ~Cons) = Eq ∨ ¬~Cons@ grows with Eq), so the atoms
     -- at positive polarity inside must be enumerable too.
@@ -2099,7 +2147,11 @@ predsSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
 predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
   where
     go (PredsOne p)  = atomSealed p
-    go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False
+    -- PredsNone = PredsAnd [] ↦ False; a value predicate ('isValuePredLiteral') references no
+    -- class and is transparent, so ⊤ narrowed by value predicates alone is not sealed either.
+    go (PredsAnd ps) = case filter (not . isValuePredLiteral) ps of
+      []  -> False
+      ps' -> all go ps'
     go (PredsNot p)  = go p
     atomSealed (PredClass c)   = classSealed (ptName c)
     atomSealed (PredRel c)     = classSealed (ptName c)
@@ -2318,10 +2370,14 @@ predImpliesPartials typeEnv vaenv preds partials
 --
 -- Exhaustiveness of the atom's own members is a separate question, already answered by the
 -- caller's expansion flag: an unsealed class expands approximately and is rejected there.
+--
+-- A value predicate bounds nothing by name: @⊤ | $this.isZ == True@ is the universe narrowed by a
+-- condition, as open-ended as @⊤@ ('isValuePredLiteral').
 predsPositiveAtoms :: TypePredicates -> Bool
-predsPositiveAtoms (PredsOne _)  = True
-predsPositiveAtoms (PredsNot _)  = False
-predsPositiveAtoms (PredsAnd ps) = any predsPositiveAtoms ps
+predsPositiveAtoms (PredsOne (PredExpr _)) = False
+predsPositiveAtoms (PredsOne _)            = True
+predsPositiveAtoms (PredsNot _)            = False
+predsPositiveAtoms (PredsAnd ps)           = any predsPositiveAtoms ps
 
 -- | Returns only the 'PartialLeafs' of a type whose names are in 'allowedNames'.
 expandTypeWithNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> PartialLeafs
@@ -2437,15 +2493,23 @@ expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negP
           (H.filterWithKey (\k _ -> S.member k allowedNames) leafs,
            any (\k -> not $ S.member k allowedNames) (H.keys leafs))
         t -> expandTypesWithNamesFullAux visited typeEnv vaenv t allowedNames
-    -- A constant is no named leaf: the atom's one value lies outside every name listing.
-    expandPredsWithNamesFull (PredsOne (PredConstEq _)) = (H.empty, True)
+    -- A constant equality within the names: the constant's primitive leaf carrying the atom
+    -- (@/Float | PredConstEq c@, the one value @c@) when that name is allowed, and nothing
+    -- otherwise — never an empty expansion that would empty a conjunction it joins
+    -- (@/Float ∩ (⊤ | PredConstEq c ∧ ¬P)@ is the constant within @¬P@, not ∅). The value is a
+    -- single point of its name, so the expansion is exact for that name.
+    expandPredsWithNamesFull (PredsOne (PredConstEq c))
+      | S.member (ptName cLeaf) allowedNames = (joinUnionType [cLeaf{ptPreds = PredsOne (PredConstEq c)}], hasUniverseOutside)
+      | otherwise = (H.empty, True)
+      where cLeaf = constantPartialType c
     -- A value predicate is decided per value shape where a leaf carries it (see
     -- 'expandPredicate'): within the names, it is each name with the predicate attached, which
-    -- compaction then decides leaf by leaf ('compactFalsePredExprLeafs').
+    -- compaction then decides leaf by leaf ('compactFalsePredExprLeafs'). The ALLOWED names, not
+    -- the names the environment lists: @⊤ | P@ holds every value of every name, a primitive or a
+    -- type no file in scope declares included (open world), and reading such a name as outside
+    -- the universe made @/Float ∩ (⊤ | P)@ empty wherever @Float@ went undeclared.
     expandPredsWithNamesFull (PredsOne (PredExpr e)) =
-      let filteredPartials = filter (\PartialType{ptName=n} -> S.member n allowedNames) $ topTypeAsPartials typeEnv
-          leafsWithPred = joinUnionType $ map (`partialAddPreds` PredsOne (PredExpr e)) filteredPartials
-      in (leafsWithPred, hasUniverseOutside)
+      (joinUnionType $ map (`partialAddPreds` PredsOne (PredExpr e)) $ splitUnionType topFilteredLeafs, hasUniverseOutside)
 
     subtractNeg :: PartialLeafs -> PartialLeafs
     subtractNeg leafs
@@ -2731,7 +2795,38 @@ data SatAtom
   = SatClass PartialType   -- ^ the value has class C (a 'PredClass')
   | SatRel PartialType     -- ^ the value isa R (a 'PredRel')
   | SatLeafs [PartialType] -- ^ the value matches one of these concrete partials
+  | SatOpaque TypePredicate -- ^ the value satisfies a predicate the engine knows nothing of — a value
+                           -- predicate ('PredExpr') or a constant equality ('PredConstEq'): a
+                           -- propositional variable it can refute against its own negation
+                           -- ('satDNFConj', 'satGoalRaw') and otherwise drops before enumeration
+                           -- ('satGoalRaw'); a goal weakened that way yields no witness, only "may be
+                           -- inhabited" ('satGoalsDecided')
   deriving (Eq, Ord, Show, Generic, Hashable)
+
+-- | Whether a goal carries an opaque atom ('SatOpaque').
+satGoalHasOpaque :: SatGoal -> Bool
+satGoalHasOpaque (SatGoal pos neg) = any isOpaque pos || any isOpaque neg
+  where isOpaque SatOpaque{} = True
+        isOpaque _           = False
+
+-- | A goal without its opaque atoms: weaker, so unsatisfiable only where the goal is.
+satGoalStripOpaque :: SatGoal -> SatGoal
+satGoalStripOpaque (SatGoal pos neg) = SatGoal (filter (not . isOpaque) pos) (filter (not . isOpaque) neg)
+  where isOpaque SatOpaque{} = True
+        isOpaque _           = False
+
+-- | Three-valued answer to "is some goal of the disjunction satisfiable?" ('satGoal' on each):
+-- @Just False@ when none is (every goal is refuted, opaque atoms stripped or not — a weaker goal
+-- unsatisfiable is the goal unsatisfiable), @Just True@ when a goal WITHOUT opaque atoms is
+-- satisfiable (a witness the engine can vouch for), and 'Nothing' when only goals carrying
+-- opaque atoms are: the engine answered for the goal without them, which says nothing of the
+-- goal itself. Consumers whose negative is final ('typeCoveredSymbolic', 'predsEmptySymbolic')
+-- read 'Nothing' as a refusal and go on to the provers that decide a value predicate on a value.
+satGoalsDecided :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> [SatGoal] -> Maybe Bool
+satGoalsDecided typeEnv vaenv satUse goals
+  | any (\g -> not (satGoalHasOpaque g) && satGoal typeEnv vaenv satUse S.empty g) goals = Just True
+  | any (satGoal typeEnv vaenv satUse S.empty) goals = Nothing
+  | otherwise = Just False
 
 -- | A satisfiability goal: a single value satisfying all of 'sgPos' and none of 'sgNeg'.
 data SatGoal = SatGoal { sgPos :: [SatAtom], sgNeg :: [SatAtom] }
@@ -2771,6 +2866,7 @@ satGoalUnifyPos vaenv goal@(SatGoal pos neg)
     atomKP (SatClass p) = Just (0 :: Int, p)
     atomKP (SatRel p)   = Just (1, p)
     atomKP SatLeafs{}   = Nothing
+    atomKP SatOpaque{}  = Nothing
     mkAtom 0 p = SatClass p
     mkAtom _ p = SatRel p
     step kept atom = case atomKP atom of
@@ -2846,19 +2942,35 @@ satDNFConj = foldl step (Just [SatGoal [] []])
     weakerThan (SatGoal p1 n1) (SatGoal p2 n2) = p1 `subsetOf` p2 && n1 `subsetOf` n2
     subsetOf xs ys = all (`elem` ys) xs
 
--- | DNF of a predicate tree over 'SatAtom' literals under a polarity;
--- 'Nothing' outside the fragment ('PredExpr' needs the type graph).
+-- | DNF of a predicate tree over 'SatAtom' literals under a polarity; 'Nothing' outside the
+-- fragment (a constant in a union). A value predicate or a constant equality enters as the opaque 'SatOpaque'.
 predsSatDNF :: Bool -> TypePredicates -> Maybe [SatGoal]
 predsSatDNF pol (PredsOne p) = do
   a <- case p of
     PredClass c   -> Just (SatClass c)
     PredRel r     -> Just (SatRel r)
-    PredExpr _    -> Nothing
-    PredConstEq _ -> Nothing
+    PredExpr _    -> Just (SatOpaque p)
+    PredConstEq _ -> Just (SatOpaque p)
   Just [if pol then SatGoal [a] [] else SatGoal [] [a]]
 predsSatDNF pol (PredsNot p) = predsSatDNF (not pol) p
 predsSatDNF True (PredsAnd ps) = mapM (predsSatDNF True) ps >>= satDNFConj
 predsSatDNF False (PredsAnd ps) = concat <$> mapM (predsSatDNF False) ps
+
+-- | 'predsSatDNF' for the DISPATCH provers ('partialsOverlapSat', 'partialCoversSat',
+-- 'dispatchInFragment'), which keep a value predicate out of their fragment: dispatch on a
+-- refinement goes to the materialized accumulation, where the predicate is decided on the value
+-- ('TreeBuild.completeTreeSet'); an opaque atom here would read as "may escape" and refuse an arm.
+predsSatDNFNoExpr :: Bool -> TypePredicates -> Maybe [SatGoal]
+predsSatDNFNoExpr pol preds
+  | predsHasExpr preds = Nothing
+  | otherwise = predsSatDNF pol preds
+
+-- | Whether a formula holds a value predicate ('PredExpr') anywhere.
+predsHasExpr :: TypePredicates -> Bool
+predsHasExpr (PredsOne PredExpr{}) = True
+predsHasExpr (PredsOne _)          = False
+predsHasExpr (PredsAnd ps)         = any predsHasExpr ps
+predsHasExpr (PredsNot p)          = predsHasExpr p
 
 -- | DNF of "a value is a member of this type"; 'Nothing' outside the fragment.
 -- A 'TVInt' variable is local to its enclosing partial (e.g. a class member's own
@@ -3498,7 +3610,20 @@ partialHasEmptySlot typeEnv vaenv p@PartialType{ptVars, ptArgs} =
 -- ('partialUninhabitedByDecl') or an intrinsically-empty slot value ('partialHasEmptySlot').
 partialUninhabited :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
 partialUninhabited typeEnv vaenv p =
-  partialUninhabitedByDecl typeEnv vaenv p || partialHasEmptySlot typeEnv vaenv p
+  partialUninhabitedByDecl typeEnv vaenv p || partialHasEmptySlot typeEnv vaenv p || partialPredExprDecidedFalse typeEnv vaenv p
+
+-- | Whether a leaf is uninhabited because a value predicate it carries is decided FALSE on its
+-- shape ('predExprHoldsOn'): @Dog | weight($this)@ when @weight@ never reaches @True@ on a @Dog@.
+-- 'compactType' drops such a leaf ('compactFalsePredExprLeafs'); the subtype oracle, which never
+-- re-compacts its operands, reads it as empty through 'partialUninhabited' so the two agree.
+partialPredExprDecidedFalse :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
+partialPredExprDecidedFalse typeEnv vaenv p = any literalFalse (predsConjuncts (ptPreds p))
+  where
+    -- A value literal of either polarity ('isValuePredLiteral'): @Dog | ¬fluffy($this)@ is as
+    -- empty as @Cat | fluffy($this)@ when the predicate is decided the other way on the shape.
+    literalFalse (PredsOne (PredExpr e))            = predExprHoldsOn typeEnv vaenv p e == Just False
+    literalFalse (PredsNot (PredsOne (PredExpr e))) = predExprHoldsOn typeEnv vaenv p e == Just True
+    literalFalse _                                  = False
 
 -- | Whether a POSITIVE type denotes ∅ because every one of its leafs is uninhabited
 -- ('partialUninhabited'). @∅@ is a subset of everything, but the subtype oracle walks its
@@ -3549,7 +3674,7 @@ partialsOverlapSat typeEnv vaenv satUse hyps a0 b0 =
     argEnv = shadowBoundParams typeEnv [a0, b0] vaenv
     predsOk = case predsAnd (ptPreds a) (ptPreds b) of
       PredsNone -> True
-      preds -> case predsSatDNF True preds of
+      preds -> case predsSatDNFNoExpr True preds of
         Nothing  -> True
         Just dnf -> any (\g -> satGoal typeEnv vaenv satUse hyps
                           (mergeSatGoals g (SatGoal [SatLeafs [a{ptPreds=PredsNone}], SatLeafs [b{ptPreds=PredsNone}]] []))) dnf
@@ -3869,7 +3994,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- sup's own predicates must also hold of every sub value: sub ∧ ¬preds must be unsatisfiable
     supPredsCover = case ptPreds sup of
       PredsNone -> True
-      preds -> case predsSatDNF False preds of
+      preds -> case predsSatDNFNoExpr False preds of
         Nothing  -> False
         Just dnf -> not (any (\g -> satGoal typeEnv vaenv satUse hyps
                                (mergeSatGoals g (SatGoal [SatLeafs [sub{ptPreds=PredsNone}]] []))) dnf)
@@ -3877,6 +4002,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
 -- | SAT(m ∧ atom): can a value of concrete shape @m@ satisfy the atom? Conservative towards 'True'.
 satAdmits :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
 satAdmits typeEnv vaenv satUse hyps m atom = case atom of
+  SatOpaque _ -> True -- opaque: may admit (stripped before the engine reads a goal, 'satGoalRaw')
   SatLeafs ls -> any (partialsOverlapSat typeEnv vaenv satUse hyps m) ls
   -- A shape named by a type already in scope has its memberships fixed by what is declared now
   -- ('knownMemberName'): an open class gains new types, never this one. So the class's current
@@ -3936,6 +4062,7 @@ satEscapes typeEnv vaenv satUse hyps m0 atom
 -- | 'satEscapes' for a shape with no union-valued vars/args.
 satEscapesAtomic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
 satEscapesAtomic typeEnv vaenv satUse hyps m atom = case atom of
+  SatOpaque _ -> False -- opaque: no escape proven (stripped before the engine reads a goal, 'satGoalRaw')
   -- A cover need not be by ONE leaf: a family of leafs that differ from the shape only at one
   -- slot covers it jointly when their values there cover the shape's ('slotUnionCovers', the
   -- rule 'isSubtypeOfWithEnv'.'coveredBySlotUnion' applies, decided here with the engine's own
@@ -4092,12 +4219,16 @@ satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
 
 satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> SatGoal -> Bool
 satGoalRaw typeEnv0 vaenv satUse hyps goal0
-  | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
   -- @X ∧ ¬X@: an atom required positively and negatively at once is contradictory, whatever
   -- the atom means. The enumeration below cannot be trusted to detect this (a candidate on
   -- which BOTH the admit and the escape check are conservative reads as a witness - e.g.
   -- @Ord ∧ Eq ∧ ¬Eq@ found "satisfiable" through a parameterized class member), so decide it
-  -- syntactically first.
+  -- syntactically first — on the goal AS POSED, its opaque value-predicate atoms included
+  -- ('SatOpaque'): @P ∧ ¬P@ is empty whatever @P@ means. Everything below reads the goal without
+  -- them: the engine knows nothing of a value predicate, and a goal weakened by dropping one is
+  -- unsatisfiable only where the goal is, the direction the engine's answer is relied on for.
+  | any (`elem` sgNeg goal0) (sgPos goal0) = False
+  | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
   | any (`elem` sgNeg goal) (sgPos goal) = False
   -- A positive atom implying a negative one by declaration (@Fish ∧ ¬Animal@ under
   -- @every(Fish isa Animal)@) is contradictory in the open world, independent of the gate.
@@ -4124,7 +4255,7 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
     -- mark. Internal engine recursion stays hypothesis-guarded, and a nested decision that
     -- re-poses a goal still being decided is stopped by the in-flight marker in 'satGoal'.
     typeEnv = typeEnv0{teInSatDecision=True}
-    goal = satGoalUnifyPos vaenv (satGoalNorm goal0)
+    goal = satGoalUnifyPos vaenv (satGoalNorm (satGoalStripOpaque goal0))
     hyps' = S.insert goal hyps
 
     negAtomCoversUniverse (SatClass c) = maybe False (any candUniversal) (classSatCandidates typeEnv vaenv satUse c)
@@ -4174,6 +4305,7 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
           _                -> [lN]
           where lN = normalizePtArgMode typeEnv l
     genCandidates (SatClass c)  = classSatCandidates typeEnv vaenv satUse c
+    genCandidates (SatOpaque _)   = Nothing -- opaque: not enumerable (stripped before the engine reads a goal)
     -- A relation's type-route candidates come from the name universe ('scTypeNames'); an env
     -- without one (e.g. the reduced env of the class-graph 'Semigroup' merge) makes the
     -- enumeration silently incomplete - a goal with no candidates would read as refuted when
@@ -4242,6 +4374,7 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
         -- dropped members could only meet to ∅.
         refineByPos acc (SatClass c) = Just (refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c))
         refineByPos acc (SatLeafs ls) = refineMeetExact acc (UnionType Nothing (joinUnionType ls) [])
+        refineByPos acc (SatOpaque _)   = Just acc -- opaque: refines nothing
         -- A relation is satisfied through its name route OR a matching class (a disjunction),
         -- so the witness may only be refined when a SINGLE route is available: name route
         -- only (refine by the relation's shape at the witness's name — @~Cons[T=Eq](…)@
@@ -4272,7 +4405,7 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
 predsEmptySymbolic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Maybe Bool
 predsEmptySymbolic typeEnv vaenv preds = do
   goals <- predsSatDNF True preds
-  Just (not (any (satGoal typeEnv vaenv ProveEmpty S.empty) goals))
+  not <$> satGoalsDecided typeEnv vaenv ProveEmpty goals
 
 -- | Engine-backed subtype: @Just (t1 ⊆ t2)@, decided as emptiness of @t1 ∧ ¬t2@, when both
 -- types are within the decidable fragment. 'satUse' gates enumeration of t1's classes
@@ -4283,7 +4416,9 @@ typeCoveredSymbolic typeEnv vaenv satUse t1 t2 = do
   d2 <- typeSatDNF vaenv t2
   negConj <- satDNFConj (map satGoalNegChoices d2)
   goals <- satDNFConj [d1, negConj]
-  Just (not (any (satGoal typeEnv vaenv satUse S.empty) goals))
+  -- Covered when every escape goal is refuted; an escape the engine can vouch for refutes the
+  -- cover; an escape resting on an opaque value predicate decides nothing ('satGoalsDecided').
+  not <$> satGoalsDecided typeEnv vaenv satUse goals
 
 -- | Engine-backed implication between two class/relation atoms: @a1 ⟹ a2@ decided as emptiness
 -- of @a1 ∧ ¬a2@. 'satUse' gates enumeration of a1's class (the open-world gate).
@@ -4307,7 +4442,7 @@ dispatchInFragment :: PartialType -> Bool
 dispatchInFragment PartialType{ptVars, ptArgs, ptPreds} =
   predsInFrag ptPreds && all elemInFrag (H.elems ptVars) && all elemInFrag (H.elems ptArgs)
   where
-    predsInFrag = isJust . predsSatDNF True
+    predsInFrag = isJust . predsSatDNFNoExpr True
     elemInFrag PTopType = True
     elemInFrag TypeVar{} = True
     elemInFrag (UnionType _ _ (_:_)) = False -- constants: out of fragment
@@ -4382,17 +4517,20 @@ satLeafEscapesAll typeEnv0 vaenv hyps m negs0
     -- Enumerate the first enumerable atom of a positive conjunction, preferring a class
     -- (the most precise generator); remaining conjuncts are dropped (enlarging).
     enumAtomCases atoms = listToMaybe (mapMaybe enumAtom (L.sortOn atomPref atoms))
-    atomPref SatClass{} = 0 :: Int
-    atomPref SatRel{}   = 1
-    atomPref SatLeafs{} = 2
+    atomPref SatClass{}  = 0 :: Int
+    atomPref SatRel{}    = 1
+    atomPref SatLeafs{}  = 2
+    atomPref SatOpaque{} = 3
     enumAtom (SatClass c) = classSatCandidates typeEnv vaenv ProveEmpty c >>= mapM candCase
     enumAtom (SatRel r)   = relSatCandidates typeEnv vaenv ProveEmpty r >>= mapM candCase
     enumAtom (SatLeafs _) = Nothing -- cannot appear in a preds DNF
+    enumAtom (SatOpaque _)  = Nothing -- opaque: not enumerable
     candCase (CandLeaf tp) = Just (singletonType tp)
     candCase (CandGoal (SatGoal [a] [])) = case a of
       SatClass c  -> Just (classPartial c)
       SatRel r    -> Just (TopType H.empty (PredsOne (PredRel r)))
       SatLeafs ls -> Just (UnionType Nothing (joinUnionType ls) [])
+      SatOpaque q -> Just (TopType H.empty (PredsOne q))
     candCase CandGoal{} = Nothing -- a compound member goal: not expressible as a case type
 
 -- | Engine-backed completion check of 'completeTreeSet': every value of @full@ is matched
@@ -4781,11 +4919,12 @@ constantCoveredByLeafs :: Constant -> PartialLeafs -> Bool
 constantCoveredByLeafs c leafs = isSubtypeOfWithEnv emptyTypeEnv' H.empty (singletonType $ constantPartialType c) (UnionType Nothing leafsAtC [])
   where
     -- A leaf's 'PredConstEq' atoms are decided for this one constant first: @/Integer|¬PredConstEq(c)@
-    -- holds every integer but @c@, which the primitive-leaf test alone cannot tell apart.
-    leafsAtC
-      | any (predsHasConstEq . ptPreds) (splitUnionType leafs) =
-          joinUnionType [l{ptPreds = ps} | l <- splitUnionType leafs, Just ps <- [predsAtConst c (ptPreds l)]]
-      | otherwise = leafs
+    -- holds every integer but @c@, which the primitive-leaf test alone cannot tell apart. Only a
+    -- leaf whose formula is then TRUE at the constant — nothing left — can be shown to hold it:
+    -- there is no environment here to decide a class atom or a value predicate against (the
+    -- constant within one, @/Char | PredConstEq c ∧ ¬EqCO@, is how a meet spells it), and asking
+    -- the empty environment to expand a class it does not know is an error, not a refusal.
+    leafsAtC = joinUnionType [l{ptPreds = PredsNone} | l <- splitUnionType leafs, Just PredsNone <- [predsAtConst c (ptPreds l)]]
 
 -- | A predicate formula read at one constant: each 'PredConstEq' atom is decided (the value is that
 -- constant or it is not), giving 'Nothing' when the formula is then false and otherwise the formula
@@ -4823,22 +4962,31 @@ predsHasConstEq (PredsNot p)             = predsHasConstEq p
 -- constants they became:
 --
 --   * a leaf conjoining @PredConstEq c@ is at most the one value @c@: it becomes that constant
---     when the rest of the leaf holds it, and nothing otherwise;
+--     when the rest of the leaf holds it, and nothing otherwise — except that a VALUE predicate
+--     beside it ('isValuePredLiteral') is decided neither way on the constant, so the leaf stays,
+--     spelled as the constant within those predicates alone (@/Float | PredConstEq c ∧ P@), unless
+--     the union lists @c@ itself, which it is then inside of;
 --   * a @¬PredConstEq c@ conjunct excludes nothing from a leaf that cannot hold @c@, and nothing
 --     from a union that lists @c@ itself (@(l − {c}) ∪ {c} = l@), so it drops.
 --
 -- So the same set has one spelling: a constant is a constant, and an exclusion is spelled only
 -- where it removes a point.
-compactConstEqLeafs :: [Constant] -> PartialLeafs -> (PartialLeafs, [Constant])
-compactConstEqLeafs consts leafs
+compactConstEqLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [Constant] -> PartialLeafs -> (PartialLeafs, [Constant])
+compactConstEqLeafs typeEnv vaenv consts leafs
   | not (any (predsHasConstEq . ptPreds) ls) = (leafs, [])
   | otherwise = (joinUnionType [l | Left l <- res], [c | Right c <- res])
   where
     ls = splitUnionType leafs
     res = mapMaybe onLeaf ls
+    -- The leaf's formula read at the constant ('predsAtConstant'): false, and the leaf is empty;
+    -- true, and it is the constant; left over value predicates, and it is the constant within
+    -- them — unless the union lists the constant itself, which it is then inside of.
     onLeaf l = case [c | PredsOne (PredConstEq c) <- conjs (ptPreds l)] of
-      c:_ | Just ps <- predsAtConst c (ptPreds l)
-          , constantCoveredByLeafs c (joinUnionType [l{ptPreds = ps}]) -> Just (Right c)
+      c:_ | constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}]) -> case predsAtConstant typeEnv vaenv c (ptPreds l) of
+              Nothing        -> Nothing
+              Just PredsNone -> Just (Right c)
+              Just r | c `elem` consts -> Just (Right c)
+                     | otherwise       -> Just (Left l{ptPreds = rebuild (PredsOne (PredConstEq c) : conjs r)})
           | otherwise -> Nothing
       [] -> Just (Left l{ptPreds = rebuild (filter (not . vacuous l) (conjs (ptPreds l)))})
     vacuous l (PredsNot (PredsOne (PredConstEq c))) =
@@ -4849,6 +4997,78 @@ compactConstEqLeafs consts leafs
     rebuild []  = PredsNone
     rebuild [q] = q
     rebuild qs  = mkAnd qs
+
+-- | Where a constant stands relative to a predicate top @(preds, negLeafs, negConsts)@: 'Nothing'
+-- when it is outside — a class or relation atom it does not satisfy, an excluded constant, an
+-- excluded leaf holding it — @Just []@ when it is inside, and @Just lits@ when its membership
+-- turns on VALUE predicates decided neither way on it ('isValuePredLiteral'): the top's own value
+-- literals, and the negation of what an excluded leaf holding the constant's type still requires
+-- of it (@⊤ − (/Char | PredConstEq c ∧ ¬P)@ holds @c@ exactly where @¬P@ fails). The constant is
+-- then the leaf @/Char | PredConstEq c ∧ lits@, how a meet spells it ('intersectTypesWithVarEnv').
+-- 'constantInType' is the proven-membership reading of the same question.
+constantWithinTop :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Constant -> (TypePredicates, PartialLeafs, [Constant]) -> Maybe [TypePredicates]
+constantWithinTop typeEnv vaenv c (preds, negLeafs, negConsts)
+  | c `elem` negConsts = Nothing
+  | otherwise = do
+      residual <- predsAtConstant typeEnv vaenv c preds
+      excluded <- foldr excluding (Just []) (splitUnionType negLeafs)
+      let lits = predsConjuncts residual ++ excluded
+      -- Within @¬P@ by the top and within @P@ by an excluded leaf (@⊤|¬P − (/Integer | PredConstEq
+      -- c ∧ ¬P)@): the constant is outside, whatever @P@ means.
+      if any (\l -> predsNot l `elem` lits) lits then Nothing else Just lits
+  where
+    -- An excluded leaf read at the constant: one whose shape cannot hold @c@, or whose formula is
+    -- false at it, excludes nothing; one holding @c@ outright excludes it; one holding @c@ up to
+    -- value predicates excludes it exactly where they hold, so the constant stays within their
+    -- negation.
+    excluding _ Nothing    = Nothing
+    excluding l (Just acc)
+      | not (constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}])) = Just acc
+      | otherwise = case predsAtConstant typeEnv vaenv c (ptPreds l) of
+          Nothing        -> Just acc
+          Just PredsNone -> Nothing
+          Just r         -> Just (predsNot r : acc)
+
+-- | A predicate formula read at one constant, every atom the constant decides decided: a constant
+-- equality by the constant ('predsAtConst'), a class or relation atom by whether the constant's
+-- primitive type is within it (or provably outside it), and a value predicate left as it is — the
+-- constant neither satisfies nor fails it until it is evaluated. 'Nothing' when the formula is
+-- false at the constant, @Just PredsNone@ when true, and otherwise the formula over what is left
+-- undecided: @¬(Q ∧ ¬~pd)@ at a @Float@ is @¬Q@, since a @Float@ is no @pd@.
+predsAtConstant :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Constant -> TypePredicates -> Maybe TypePredicates
+predsAtConstant typeEnv vaenv c = go
+  where
+    cLeaf = singletonType (constantPartialType c)
+    go (PredsOne (PredConstEq c')) = if c == c' then Just PredsNone else Nothing
+    go p@(PredsOne PredExpr{}) = Just p
+    -- A class or relation atom in the computation's own world ('constantInType' says why).
+    go p@(PredsOne _)
+      | isSubtypeOfWithEnv typeEnv vaenv cLeaf (TopType H.empty p) = Just PredsNone
+      | isBottomType (intersectTypesEnv typeEnv vaenv cLeaf (TopType H.empty p)) = Nothing
+      | otherwise = Just p
+    go (PredsAnd ps) = mkAndOrNone . filter (/= PredsNone) <$> mapM go ps
+    go (PredsNot p) = case go p of
+      Nothing        -> Just PredsNone
+      Just PredsNone -> Nothing
+      Just q         -> Just (predsNot q)
+    mkAndOrNone [] = PredsNone
+    mkAndOrNone qs = mkAnd qs
+
+-- | Whether a constant is PROVEN outside a type — the other polarity of 'constantInType', which
+-- proves membership. A constant whose membership turns on an undecided predicate is neither:
+-- reading "not proven in" as "out" excluded the constants of @⊤ | ¬Lizard@ from it, and so
+-- proved @⊤ | ¬Lizard ⊆ ⊤ − {c}@ with @c@ a @Float@ the open world has not placed.
+constantOutsideType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Constant -> Type -> Bool
+constantOutsideType _ _ _ PTopType = False
+constantOutsideType typeEnv vaenv c (UnionType Nothing leafs cs) =
+  c `notElem` cs && all leafExcludes (splitUnionType leafs)
+  where
+    -- A leaf of another name cannot hold the constant; one of its name holds it unless its
+    -- formula is false at it.
+    leafExcludes l = not (constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}])) || isNothing (predsAtConstant typeEnv vaenv c (ptPreds l))
+constantOutsideType typeEnv vaenv c (UnionType (Just top) posLeafs posConsts) =
+  constantOutsideType typeEnv vaenv c (UnionType Nothing posLeafs posConsts) && isNothing (constantWithinTop typeEnv vaenv c top)
+constantOutsideType _ _ _ _ = False
 
 -- | Checks if a constant value is a member of a type.
 -- A constant is in a type if it appears in the constant list, or its parent partial type is in the type.
@@ -4862,10 +5082,12 @@ constantInType typeEnv vaenv c (UnionType (Just (preds, negLeafs, negConsts)) po
   || constantCoveredByLeafs c posLeafs
   || ( c `notElem` negConsts
        && not (constantCoveredByLeafs c negLeafs)
-       && isSubtypeOfWithEnv constEnv vaenv (singletonType $ constantPartialType c) (TopType H.empty preds)
+       -- Decided in the WORLD of the computation around it, as every other membership is: a
+       -- closed-world reading here (once the rule) proved a constant outside a value predicate
+       -- the open world leaves undecided (@fluffy(this= Float)@ with @Float@ no @Animal@), so a
+       -- union dropped the constant the open-world meet had just kept within the predicate.
+       && isSubtypeOfWithEnv typeEnv vaenv (singletonType $ constantPartialType c) (TopType H.empty preds)
      )
-  where
-    constEnv = typeEnv{tePrgmEnv = True}
 constantInType _ _ _ _ = False
 
 -- | Token-keyed memo for 'isSubtypeOfWithEnv', the same shape as the 'satGoal' and
@@ -4955,6 +5177,18 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1 (TypeVar v _ i) = case vaenvLookup vaenv 
 -- be vacuous (e.g. tautological preds ¬(A∧B) with A∧B unsatisfiable, making it ⊤), which the
 -- predicate clauses below decide exactly (⊤ is itself the pure top with 'PredsNone').
 isSubtypeOfWithEnvRaw _ _ PTopType (UnionType Nothing _ _) = False
+-- A leaf conjoining @PredConstEq c@ is at most the one value @c@, so it is within @t2@ whenever @c@
+-- is ('constantInType'): the constant within a value predicate (@/Float | PredConstEq c ∧ P@, how
+-- a meet spells it) is inside the constant @c@ and inside every type holding @c@. A guard: a
+-- membership not proven this way falls through to the clauses below (@… ∧ P ⊆ ⊤|P@ is proved by
+-- its predicates there).
+isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subLeafs []) t2
+  | not (null constEqLeafs)
+  , all (\c -> constantInType typeEnv vaenv c t2) constEqLeafs
+  , null others || isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType others) []) t2 = True
+  where
+    (constEqLeafs, others) = partitionEithers [ maybe (Right l) Left (leafConstEq l) | l <- splitUnionType subLeafs ]
+    leafConstEq l = listToMaybe [c | PredsOne (PredConstEq c) <- predsConjuncts (ptPreds l)]
 -- Mixed type on left (top + positive leafs/constants): (top ∪ pos ∪ cs) ⊆ t2 iff top ⊆ t2 ∧ (pos ∪ cs) ⊆ t2
 isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType (Just topData) pos cs) t2
   | not (H.null pos) || not (null cs) =
@@ -5008,12 +5242,15 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) (Union
 isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just topData) pos (_:_))
   | not (any leafHoldsConstants (splitUnionType subPartials)) =
       isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just topData) pos [])
-isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just _) _ _) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just (preds2, negLeafs2, negConsts2)) _ _) =
   -- Symbolic decision (emptiness of @t1 ∧ ¬t2@ against the class graph) avoids materializing
-  -- the predicate expansion; fall back to expansion outside the fragment.
+  -- the predicate expansion; fall back to expansion outside the fragment. The expansion reads
+  -- names and drops the super's excluded constants; they are put back ('excludeConstants'), since
+  -- a sub reaching this clause may hold constants (the clauses above strip them only when it
+  -- cannot) — a point leaf @/Char | P ∧ PredConstEq c@ is not inside @⊤ − {c}@.
   fromMaybe
     (let (filteredLeafs, _) = expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet subPartials)
-     in isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs []))
+     in isSubtypeOfWithEnv typeEnv vaenv t1 (excludeConstants negConsts2 (UnionType Nothing filteredLeafs [])))
     (typeCoveredSymbolic typeEnv vaenv ProveEmpty t1 t2)
   || positiveLeafsAllUninhabited typeEnv vaenv subPartials
   || leafPredsImplyTop
@@ -5057,14 +5294,20 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Un
     leafwise = case concatMap splitPartialByUnionVarArgs (splitUnionType subPartials) of
       ls@(_:_:_) -> all (\l -> isSubtypeOfWithEnv typeEnv vaenv (singletonType l) t2) ls
       _          -> False
-    -- A leaf whose own predicates imply the predicate universe's is inside it, when that
-    -- universe excludes no leafs: the formula alone decides membership, with no expansion. The
-    -- expansion above reads an OPEN class through its current members only, so it cannot see
-    -- that @ek|~C ⊆ ~C@ for a name that is not (yet) a member.
-    leafPredsImplyTop = case t2 of
-      UnionType (Just (preds, negLeafs, _)) _ _ | H.null negLeafs ->
-        all (\l -> ptPreds l /= PredsNone && predImplies typeEnv vaenv (ptPreds l) preds) (splitUnionType subPartials)
-      _ -> False
+    -- A leaf whose own predicates imply the predicate universe's is inside it, when the
+    -- universe's excluded leafs take nothing from it (each is disjoint from the leaf — an empty
+    -- meet is a proof, the meet being exact or wider): the formula alone decides membership,
+    -- with no expansion. The expansion above reads an OPEN class through its current members
+    -- only, so it cannot see that @ek|~C ⊆ ~C@ for a name that is not (yet) a member; and an
+    -- excluded leaf of another name carrying a value predicate (@⊤|Lizard − (True | fluffy($this))@)
+    -- is outside the symbolic engine's fragment, so without this a leaf it cannot touch
+    -- (@fluffy | Lizard@) went unproven.
+    -- ...and its excluded constants take nothing from it either: a point leaf
+    -- (@/Char | P ∧ PredConstEq c@) is not inside @⊤ − {c}@ ('constantOutsideType').
+    leafPredsImplyTop =
+      all (\l -> ptPreds l /= PredsNone && predImplies typeEnv vaenv (ptPreds l) preds2 && all (disjointLeafs l) (splitUnionType negLeafs2)
+                 && all (\c -> constantOutsideType typeEnv vaenv c (singletonType l)) negConsts2) (splitUnionType subPartials)
+    disjointLeafs l n = isBottomType (intersectTypesEnv typeEnv vaenv (singletonType l) (singletonType n))
 -- PosPartials-with-constants ⊆ t2: partials check + each constant must be in t2
 -- (Only for PosPartials: in NegPartials, cs are excluded constants, not members)
 isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
@@ -5084,7 +5327,7 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType (Just (p1, n1, nc1)) (H.null -> T
 -- (exact). Stripping nc2 up front keeps the rhs inside the symbolic engine's constant-free
 -- fragment for the clauses below.
 isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (UnionType (Just (p2, n2, nc2@(_:_))) (H.null -> True) []) =
-  all (\c -> not $ constantInType typeEnv vaenv c t1) nc2
+  all (\c -> constantOutsideType typeEnv vaenv c t1) nc2
   && isSubtypeOfWithEnv typeEnv vaenv t1 (TopType n2 p2)
 -- Pure NegPartials-top ⊆ pure NegPartials-top, SAME predicates: (U_p − n1 − nc1) ⊆ (U_p − n2)
 -- holds EXACTLY iff (U_p ∩ n2) ⊆ n1. Only the part of n2 inside the shared predicate universe
@@ -5162,8 +5405,11 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> 
     -- Re-express U_p1 - n1 as a positive type and recurse. Guarded on progress: when the predicate
     -- expands to the universe (e.g. p1 = PredsNone) the difference reproduces the same complement,
     -- which would recurse forever, so require the rewrite to differ from t1 (else conservative False).
+    -- Guarded on EXACTNESS as the other expansion fallbacks are ('predsPositiveSealed'): a
+    -- relation over a data name (@~#noCore@, two names in scope) is enumerated in full though no
+    -- class is sealed, and a value predicate carried along is transparent.
     oldReexpress
-      | tePrgmEnv typeEnv || predsSealed typeEnv p1
+      | tePrgmEnv typeEnv || predsPositiveSealed typeEnv p1
       , let t1' = snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])
       , t1' /= t1 = isSubtypeOfWithEnv typeEnv vaenv t1' t2
       | otherwise = False
@@ -5224,8 +5470,12 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H
     -- 'differenceTypeWithEnv', and decomposes it per-member through the positive/mixed branches: a
     -- member whose recursive element matches t2's reflexively short-circuits rather than re-expanding.
     -- Guarded on progress: when the expansion reproduces t1 (e.g. preds = PredsNone giving
-    -- 'PTopType') recursing would not progress, so give a conservative False.
-    (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds
+    -- 'PTopType') recursing would not progress, so give a conservative False. Guarded on
+    -- EXACTNESS as the symbolic refusal above is ('expansionExact'): the recursion is sound when
+    -- every positive atom is enumerated in full — a data name's extent is its own values, and a
+    -- value predicate is carried symbolically — while an unsealed class at negative polarity
+    -- only makes the expansion wider, which a cover it still passes is sound for.
+    (_, True)      | expansionExact
                    , let expanded = expandPredicates typeEnv vaenv preds
                    , expanded /= t1
                    -> isSubtypeOfWithEnv typeEnv vaenv expanded
@@ -5695,7 +5945,10 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
         partial' = partial{ptPreds = rebuildConjs residConjs}
         ownName = S.singleton (ptName partial')
 
-        asLeafs (UnionType Nothing leafs []) = leafs
+        -- A constant the meet produced (a leaf @/Char | PredConstEq c ∧ …@ whose predicates all
+        -- held, compacted to the point @c@) is that leaf again: the one spelling leafs have for
+        -- a point.
+        asLeafs (UnionType Nothing leafs consts) = H.unionWith S.union leafs (joinUnionType [ (constantPartialType c){ptPreds = PredsOne (PredConstEq c)} | c <- consts ])
         asLeafs (UnionType (Just (_, negLeafs, _)) posLeafs []) = H.unionWith S.union negLeafs posLeafs  -- shouldn't normally occur
         asLeafs t = error $ printf "compactPartialsWithClassPred: unexpected type %s" (show t)
 
@@ -6075,11 +6328,7 @@ predDecideMemoRef = unsafePerformIO (newIORef [])
 -- subtype question instead ('isSubPartialOfWithEnv'). Only a positive conjunction is decided: a
 -- negated value predicate is left to the formula rules.
 compactFalsePredExprLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
-compactFalsePredExprLeafs typeEnv vaenv = filter (not . decidedFalse)
-  where
-    decidedFalse p = case tryPredsToList (ptPreds p) of
-      Just atoms -> any (\e -> predExprHoldsOn typeEnv vaenv p e == Just False) [e | PredExpr e <- atoms]
-      Nothing    -> False
+compactFalsePredExprLeafs typeEnv vaenv = filter (not . partialPredExprDecidedFalse typeEnv vaenv)
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
@@ -6162,7 +6411,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
       | qs <- conjsOf q
       , kept <- filter (`notElem` ambient) qs
       , not (null kept)
-      , length kept < length qs = PredsNot (mkAnd kept)
+      , length kept < length qs = predsNot (mkAnd kept)
     unitProp x _ = x
     conjsOf (PredsAnd xs) = concatMap conjsOf xs
     conjsOf x             = [x]
@@ -6173,6 +6422,23 @@ compactType typeEnv vaenv t@(UnionType (Just (PredsNot (PredsOne (PredRel rp)), 
   | H.null negPartials && H.null posLeafs = case expandRelPartial typeEnv vaenv rp of
       (UnionType Nothing rp' []) -> UnionType (Just (PredsNone, rp', [])) H.empty []
       _               -> t
+-- An excluded leaf that is ONE CONSTANT within value predicates the top itself states (how a meet
+-- spells a constant met with the top, @/Integer | PredConstEq c ∧ P@ under @⊤ | P@ —
+-- 'intersectTypesWithVarEnv') excludes exactly the point @c@: it is spelled as the excluded
+-- constant, so @⊤|P − {c}@ and @⊤|P − (/Integer | PredConstEq c ∧ P)@ are one type. A residual
+-- the top does not state (a predicate of its own) keeps the leaf: it excludes @c@ only where that
+-- holds.
+compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs cs)
+  | not (H.null negLeafs)
+  , (asConsts@(_:_), keptLeafs) <- partitionEithers (map constOrLeaf (splitUnionType negLeafs)) =
+      compactType typeEnv vaenv $ UnionType (Just (preds, joinUnionType keptLeafs, L.nub (negConsts ++ asConsts))) posLeafs cs
+  where
+    topConjs = predsConjuncts preds
+    constOrLeaf l = case [c | PredsOne (PredConstEq c) <- predsConjuncts (ptPreds l)] of
+      [c] | Just ps <- predsAtConst c (ptPreds l)
+          , all (`elem` topConjs) (predsConjuncts ps)
+          , constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}]) -> Left c
+      _ -> Right l
 -- Top component with non-trivial preds and some exclusion (negated partials and/or excluded
 -- constants), no positive leafs. This is the residual @U_preds − negPartials − negConsts@ that a
 -- relation/class-top difference (@t1 ∩ ¬t2@) produces. Canonicalise it:
@@ -6197,7 +6463,10 @@ compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials, negConsts)) po
   where
     predUniverse  = TopType H.empty preds
     keptNegLeafs  = joinUnionType $ filter negLeafIntersects $ splitUnionType negPartials
-    keptNegConsts = filter (\c -> constantInType typeEnv vaenv c predUniverse) negConsts
+    -- An excluded constant drops only when it is PROVEN outside the domain ('constantWithinTop'
+    -- answers 'Nothing'): one whose membership turns on a value predicate may be in it, and its
+    -- exclusion then removes a point (@⊤|P − {c}@ is not @⊤|P@).
+    keptNegConsts = filter (\c -> isJust (constantWithinTop typeEnv vaenv c (preds, H.empty, []))) negConsts
     negLeafIntersects p = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType p) predUniverse
 -- ¬(unsatisfiable) = everything: top component is U, simplify to PredsNone (same oracle pair
 -- as the pure-top clause above).
@@ -6217,6 +6486,25 @@ compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, ncs)) posLeafs cs)
           topOnly = UnionType (Just (preds, negLeafs', ncs)) H.empty []
           redundantPos = joinUnionType $ filter (\p -> isSubtypeOfWithEnv typeEnv vaenv (singletonType p) topOnly) $ splitUnionType common
       in compactType typeEnv vaenv $ UnionType (Just (preds, negLeafs', ncs)) (subtractLeafs posLeafs redundantPos) cs
+-- A positive leaf that is ONE CONSTANT within predicates (@/Integer | PredConstEq c ∧ L@, how a
+-- meet or a union spells a constant held within a predicate) beside a top, when @L@ is exactly
+-- what the top's own formula requires at that constant ('predsAtConstant'): the leaf re-adds the
+-- point the top holds there, so it is redundant — and if the top excludes @c@, the two cancel
+-- (@(⊤|¬P − {c}) ∪ (/Integer | PredConstEq c ∧ ¬P)@ is @⊤|¬P@). The dual of the excluded-leaf
+-- rule above, so the two spellings a union's operand order produces are one.
+compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs cs)
+  | not (H.null posLeafs)
+  , (reAdded@(_:_), keptLeafs) <- partitionEithers (map constOrLeaf (splitUnionType posLeafs)) =
+      compactType typeEnv vaenv $ UnionType (Just (preds, negLeafs, filter (`notElem` reAdded) negConsts)) (joinUnionType keptLeafs) cs
+  where
+    constOrLeaf l = case [c | PredsOne (PredConstEq c) <- predsConjuncts (ptPreds l)] of
+      [c] | constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}])
+          , Just leafAtC <- predsAtConst c (ptPreds l)
+          , Just topAtC <- predsAtConstant typeEnv vaenv c preds
+          , sameConjuncts leafAtC topAtC
+          , not (constantCoveredByLeafs c negLeafs) -> Left c
+      _ -> Right l
+    sameConjuncts x y = L.sort (predsConjuncts x) == L.sort (predsConjuncts y)
 -- Cancel constants across the positive and subtractive components:
 --  * a positive constant also excluded by the top (c ∈ negConsts) whose point lies in the
 --    predicated region (U − negLeafs) cancels out of BOTH lists ((U − … − {c}) ∪ {c} restores the
@@ -6374,8 +6662,8 @@ compactType typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
 -- holds structurally: different union orderings that mix Just and Nothing forms produce
 -- equivalent pos components after compaction).
 compactType typeEnv vaenv (UnionType (Just topData) pos cs)
-  | (pos', eqCs@(_:_)) <- compactConstEqLeafs cs pos = compactType typeEnv vaenv (UnionType (Just topData) pos' (L.nub (cs ++ eqCs)))
-  | (pos', []) <- compactConstEqLeafs cs pos, pos' /= pos = compactType typeEnv vaenv (UnionType (Just topData) pos' cs)
+  | (pos', eqCs@(_:_)) <- compactConstEqLeafs typeEnv vaenv cs pos = compactType typeEnv vaenv (UnionType (Just topData) pos' (L.nub (cs ++ eqCs)))
+  | (pos', []) <- compactConstEqLeafs typeEnv vaenv cs pos, pos' /= pos = compactType typeEnv vaenv (UnionType (Just topData) pos' cs)
 compactType typeEnv vaenv (UnionType (Just topData) pos cs)
   | not (H.null pos) =
       -- Recurse into each leaf's nested arg/var types (as the Nothing-pos branch does), so a nested
@@ -6414,7 +6702,7 @@ compactType typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i o
       | otherwise = False
 -- PosPartials with constants: compact leafs, remove constants covered by leafs
 compactType typeEnv vaenv (UnionType Nothing partials0 consts0) =
-  let (partials, eqConsts) = compactConstEqLeafs consts0 partials0
+  let (partials, eqConsts) = compactConstEqLeafs typeEnv vaenv consts0 partials0
       consts = L.nub (consts0 ++ eqConsts)
       -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
       -- in canonical predicate form is recognised one level up.
@@ -6976,10 +7264,29 @@ unionTypesWithEnv typeEnv vaenv t1@(UnionType mTop1 pos1 cs1) t2@(UnionType mTop
                    | predImplies typeEnv vaenv p1 p2 = p2
                    | predImplies typeEnv vaenv p2 p1 = p1
                    | otherwise = predsNot $ predsAnd (predsNot p1) (predsNot p2)
-            -- A constant stays excluded from the union only if NEITHER side contains it
-            -- ((U−nc1) ∪ (U−nc2) excludes only nc1 ∩ nc2; membership is checked against the
-            -- full side, so a constant one side re-adds positively is not excluded either)
-            nc' = filter (\c -> not (constantInType typeEnv vaenv c t1) && not (constantInType typeEnv vaenv c t2)) (L.nub (nc1 ++ nc2))
+            -- A constant one side excludes, placed against each side: proven outside both
+            -- ('constantOutsideType') it stays excluded ((U−nc1) ∪ (U−nc2) excludes only nc1 ∩ nc2);
+            -- proven inside one ('constantInType' — a side that re-adds it positively included) it
+            -- is in the union; held by a side only WITHIN its value predicates
+            -- ('constantWithinTop') it is in the union exactly there, so it leaves the top and comes
+            -- back as the point within them (@/Char | PredConstEq c ∧ P@): @(⊤|P) ∪ (⊤ − {c})@ holds
+            -- @c@ iff @P@ does, where a bare @⊤@ read it as held outright.
+            placed = [ (c, placement c) | c <- L.nub (nc1 ++ nc2) ]
+            placement c
+              | all (constantOutsideType typeEnv vaenv c) [t1, t2] = Nothing
+              | any (constantInType typeEnv vaenv c) [t1, t2] = Just Nothing
+              | otherwise = Just (Just [ (constantPartialType c){ptPreds = mkAnd (PredsOne (PredConstEq c) : lits)}
+                                       | side <- [t1, t2], Just lits <- [withinSide c side] ])
+            -- The literals a side holds the constant within, or none when it is proven out of it.
+            -- A side whose top is decided but whose positive part may hold the constant is read as
+            -- holding it ('constantInType' above does not catch that), the wider reading.
+            withinSide c side = case side of
+              UnionType (Just td) _ _ | not (constantOutsideType typeEnv vaenv c side) -> case constantWithinTop typeEnv vaenv c td of
+                Just lits@(_:_) -> Just lits
+                _               -> Nothing
+              _ -> Nothing
+            nc' = [ c | (c, pl) <- placed, pl /= Just Nothing ]
+            withinLeafs = joinUnionType (concat [ ls | (_, Just (Just ls)) <- placed ])
             -- Excluded leaf regions: with the SAME predicate universe, n1 ∩ n2 is exact. With
             -- differing predicates it is not - an n1 leaf lying OUTSIDE U_p2 is in neither side
             -- (e.g. (U − /aaaaa) ∪ (U_{isa aaaab} − ∅): the /aaaaa leaf meets no n2 leaf yet must
@@ -6992,7 +7299,7 @@ unionTypesWithEnv typeEnv vaenv t1@(UnionType mTop1 pos1 cs1) t2@(UnionType mTop
               | p1 == p2 = snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2
               | otherwise = unionPartialLeafs [exclOutside n1 t2, exclOutside n2 t1]
         in compactType typeEnv vaenv $
-             UnionType (Just (preds', negLeafs', nc')) pos' cs'
+             UnionType (Just (preds', negLeafs', nc')) (H.unionWith S.union pos' withinLeafs) cs'
     msg = printf "[UNION] %s ∪ %s = %s" (show $ UnionType mTop1 pos1 cs1) (show $ UnionType mTop2 pos2 cs2) (show result)
 
 unionTypes :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Type
@@ -7799,12 +8106,19 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1, nc1)) (H.null
   let (vaenv', preds') = mergePredsAnd typeEnv vaenv ps1 ps2
   in (vaenv', compactType typeEnv vaenv' $ UnionType (Just (preds', unionPartialLeafs [np1, np2], L.nub $ nc1 ++ nc2)) H.empty [])
 -- PosPartials with constants ∩ Top: handle constant exclusion before leafs logic
-intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2@(UnionType (Just (preds, negLeafs, negConsts)) (H.null -> True) [])
+intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) (UnionType (Just (preds, negLeafs, negConsts)) (H.null -> True) [])
   | not (null posConsts) || not (null negConsts) =
       let (vaenv', baseResult) = intersectTypesWithVarEnv typeEnv vaenv
                                    (UnionType Nothing posLeafs [])
                                    (UnionType (Just (preds, negLeafs, [])) H.empty [])
-          survivingConsts = filter (\c -> constantInType typeEnv vaenv c t2) posConsts
+          -- A constant is in the top, out of it, or within the top's VALUE predicates, which are
+          -- decided neither way on it ('constantWithinTop'): kept as the leaf that spells exactly
+          -- that, the constant within the predicates (@/Float | PredConstEq c ∧ P@) — never dropped
+          -- (a meet is exact or wider, and dropping it read @c ∉ P@) nor kept bare (which read
+          -- @c ∈ P@, and lost the predicate the value is held to).
+          placed = [ (c, lits) | c <- posConsts, Just lits <- [constantWithinTop typeEnv vaenv c (preds, negLeafs, negConsts)] ]
+          survivingConsts = [ c | (c, []) <- placed ]
+          withinLits = [ (constantPartialType c){ptPreds = mkAnd (PredsOne (PredConstEq c) : lits)} | (c, lits@(_:_)) <- placed ]
       -- @(posLeafs ∪ posConsts) ∩ t2 = (posLeafs ∩ t2) ∪ (posConsts ∩ t2)@: rejoin the surviving
       -- constants onto the leaf part. 'unionTypesWithEnv' handles every shape of @baseResult@ — it
       -- drops a constant already covered by baseResult's leafs and folds it onto a Just-top's
@@ -7815,9 +8129,9 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2
           -- ('excludeConstants'), so @/Integer ∩ (⊤ − {c})@ is @/Integer|¬PredConstEq(c)@, not all
           -- of @/Integer@.
           leafPart = excludeConstants negConsts baseResult
-      in if null survivingConsts
+      in if null survivingConsts && null withinLits
            then (vaenv', leafPart)
-           else (vaenv', unionTypesWithEnv typeEnv vaenv' leafPart (UnionType Nothing H.empty survivingConsts))
+           else (vaenv', unionTypesWithEnv typeEnv vaenv' leafPart (UnionType Nothing (joinUnionType withinLits) survivingConsts))
 -- PosPartials ∩ Top(negLeafs, PredsNone) when negLeafs non-empty → subtract
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (UnionType (Just (PredsNone, negPartials, [])) (H.null -> True) [])
   | not (H.null negPartials) =
