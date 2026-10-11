@@ -622,10 +622,15 @@ pageImports imp prgm imports
   where
     includeCore = maybe True (\prgm' -> not (rawPrgmHasAnnot prgm' noCoreAnnot)) prgm
 
--- | The program as the page holds it: writing the page's imports rather than its own, and with its
--- meta ids named for the page.
-pagePrgm :: FileImport -> [RawFileImport] -> RawPrgm () -> RawPrgm ()
-pagePrgm imp imports (RawPrgm _ statements) = addRawPrgmMetaIDs (parseMetaIDScope imp) $ RawPrgm imports statements
+-- | The program as the page holds it: with its meta ids named for the page.
+--
+-- Its imports are the ones it writes, not the ones the page is given ('pageImports'). The page's
+-- edges are kept beside the program and are what compiling it follows ('Syntax.Ct.Desugarf.desPrgm'
+-- reads none from the program), so writing the given ones into the program only made it say
+-- something its source does not: every page shown, formatted or written back from it gained an
+-- @import "core"@ it never wrote.
+pagePrgm :: FileImport -> RawPrgm () -> RawPrgm ()
+pagePrgm imp = addRawPrgmMetaIDs (parseMetaIDScope imp)
 
 -- | The page a preload found: where it sits in the graph, and the program it holds where the
 -- preload had to read it.
@@ -637,14 +642,14 @@ preloadPage config importers imp PreloadImport{plImports, plExtraImports, plPars
   -- the notes of a vault — so none of them is written above any other and there is no order for one
   -- to see the others in.
   extras' <- mapM (canonicalImport config (pageImportCtx importers imp)) plExtraImports
-  return $ ReadPage (pagePrgm imp imports . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing []
+  return $ ReadPage (pagePrgm imp . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing []
 
 -- | What a parse gives a page: the program as the page holds it, and the edges that program writes.
 parsedPage :: CTSSConfig -> ImporterEnv -> FileImport -> ParsedImport -> IO (RawPrgm (), [FileImport])
 parsedPage config importers imp ParsedImport{piPrgm=prgm@(RawPrgm rawImports _)} = do
   let imports = pageImports imp (Just prgm) rawImports
   imports' <- canonicalImports config importers (Just imp) imports
-  return (pagePrgm imp imports prgm, imports')
+  return (pagePrgm imp prgm, imports')
 
 -- | Read one page as its program, on its own and out of no record. What a caller which is to work
 -- with a page's program rather than with a graph of them wants: the formatter, and the goldens.

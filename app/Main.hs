@@ -143,10 +143,8 @@ xLsp = do
 
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
-  -- Format the RAW parsed program (the source as written), NOT the result of the full parse
-  -- pipeline: 'Syntax.Parsers.pageImports' injects an implicit @import "core"@ for compilation, and
-  -- formatting that would write a duplicate @import "core"@ back into any file that already imports
-  -- it.
+  -- Format the parsed program alone (the source as written) rather than reading it through a
+  -- service: formatting needs no other page, and so builds none.
   imp <- lift $ canonicalImport buildCtssConfig (rootImportCtx noImporters) $ mkRawImportStr prgmName
   ParsedImport{piPrgm=rawPrgm} <- lift $ parseImportAlone imp
   let prgm' = formatRootPrgm rawPrgm
