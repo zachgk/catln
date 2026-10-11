@@ -2,21 +2,13 @@
 module Main where
 
 import           CRes
-import           CtConstants             (printAnnot, printAnnotText,
-                                          resultAnnotText)
 import           Options.Applicative
 import           Semantics               (buildCtssConfig)
-import           Semantics.Prgm          (CodeRangeDat, FileImport, MetaDat,
-                                          exprPath, getExprMeta, getMetaPos,
-                                          impDisp, impRaw)
-import           Semantics.Types         (mkName, nameStr, partialKey)
-import           Syntax.Ct.Builder       (applyRawArgs, rawStr, rawVal)
+import           Semantics.Prgm          (FileImport, impDisp, impRaw)
 import           Syntax.Ct.Formatter     (formatRootPrgm)
-import           Syntax.Ct.Prgm          (ParsedImport (..), RawPrgm (..),
-                                          RawStatement (..),
-                                          RawStatementTree (..), isCorePage,
-                                          noImporters, rawExprAppliedArgsMap,
-                                          rootImportCtx)
+import           Syntax.Ct.Prgm          (ParsedImport (..), isCorePage,
+                                          noImporters, rootImportCtx)
+import           Syntax.Ct.Results       (setPrintResults)
 import           Syntax.Parsers          (canonicalImport,
                                           mkDesCanonicalImportStr,
                                           mkRawImportStr, parseFile,
@@ -229,24 +221,6 @@ xTestWriteGoldens ctss = do
     (prgm, _, _) <- parseFile buildCtssConfig $ mkRawImportStr file
     lift $ writeFile file $ formatRootPrgm $ setPrintResults fileGoldens prgm
   lift $ putStrLn $ printf "Updated %d golden(s) across %d file(s)" (length goldens) (length files)
-
--- | Inject each evaluated golden into the @#result@ arg of its matching @#print@ statement,
--- located by the source range of the print's @p@ argument.
-setPrintResults :: (MetaDat m, Show m) => [(CodeRangeDat, String)] -> RawPrgm m -> RawPrgm m
-setPrintResults goldens (RawPrgm imports stmts) = RawPrgm imports (map fixTree stmts)
-  where
-    fixTree (RawStatementTree st subs) = RawStatementTree (fixStmt st) (map fixTree subs)
-    fixStmt (RawAnnot annot)
-      | nameStr (exprPath annot) == printAnnot
-      , Just pExpr <- pArg annot
-      , Just crange <- getMetaPos (getExprMeta pExpr)
-      , Just golden <- lookup crange goldens
-      = RawAnnot $ rawVal printAnnot `applyRawArgs`
-          [(Just $ partialKey (mkName printAnnotText), pExpr), (Just $ partialKey (mkName resultAnnotText), rawStr golden)]
-    fixStmt st = st
-    pArg annot = case H.lookup (partialKey (mkName printAnnotText)) (rawExprAppliedArgsMap annot) of
-      Just (Just (_, Just e)) -> Just e
-      _                       -> Nothing
 
 xDepTree :: String -> Bool -> CResT IO ()
 xDepTree prgmName showCore = do
