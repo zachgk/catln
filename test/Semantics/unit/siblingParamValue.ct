@@ -1,0 +1,17 @@
+annot(#noCore)
+
+# A parameter whose value names a sibling: [$F -> Fun[$T -> $_A]] spells [F]'s value with a parent
+# reference to [A]. The [Bx] arm's object holds [lst] as that value spelled out, and a respelling
+# through the pointer [lst= $F] is the same set, whatever [A] is bound to.
+#noCore
+module(Sp)
+  data(X)
+
+  class(Fun[$T])
+  class(Opt[$T], [Bx[$T -> $_T](value -> $T), Nx])
+
+  every(/Sp/Opt[$T -> $_T], isa= [/Sp/Fun])
+
+  fm[$F -> /Sp/Fun[$T -> $_A], $A](lst -> $F) -> $F
+  fm(lst= /Sp/Bx(value))= /Sp/Bx(value= value)
+  fm(lst= /Sp/Nx)= /Sp/Nx

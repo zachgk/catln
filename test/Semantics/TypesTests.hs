@@ -1524,6 +1524,35 @@ propLinkedSlotUnion = property $ do
   annotate $ printf "union = %s" (show declU)
   forM_ declTs $ \d -> assertTimed "each declaration is within the union" $ isSubtypeOf typeEnv d declU
 
+-- | A parameter value's parent reference names a sibling ('comparedPartialsEnv'): with the
+-- sibling bound, an argument spelled through the parameter's pointer (@lst=$/F@) is the same set
+-- as the argument spelling the value out (@lst=Bx[/T=$^/A](..)@), both ways.
+propSiblingParamValue :: Property
+propSiblingParamValue = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingParamValue.ct"
+  let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  armLeaf <- case [ p | (n, omi) <- H.toList om, "/fm" `isSuffixOf` nameStr n, d <- omiDefs omi
+                      , Just p <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr d)))]
+                      , "Bx[" `isInfixOf` show p ] of
+    [p] -> return p
+    _   -> fail "no single Bx arm"
+  let keyOf m n = case [ k | k <- H.keys m, ("/" ++ n) `isSuffixOf` nameStr (pkName k) ] of
+        [k] -> return k
+        _   -> fail $ printf "no %s" n
+  lstK <- keyOf (ptArgs armLeaf) "lst"
+  fK <- keyOf (ptVars armLeaf) "F"
+  aK <- keyOf (ptVars armLeaf) "A"
+  x <- case [nm | nm <- S.toList teNames, "/X" `isSuffixOf` nameStr nm] of
+    (nm:_) -> return $ singletonType $ partialVal nm
+    []     -> fail "X not found"
+  let spelled = armLeaf{ptVars = H.insert aK x (ptVars armLeaf)}
+  let pointed = spelled{ptArgs = H.insert lstK (TypeVar (TVVar fK) TVInt PTopType) (ptArgs spelled)}
+  annotate $ printf "spelled = %s" (show spelled)
+  annotate $ printf "pointed = %s" (show pointed)
+  assertTimed "pointed within spelled" $ isSubtypeOf typeEnv (singletonType pointed) (singletonType spelled)
+  assertTimed "spelled within pointed" $ isSubtypeOf typeEnv (singletonType spelled) (singletonType pointed)
+
 propHoSlotParentMeet :: Property
 propHoSlotParentMeet = property $ do
   prgm <- lift $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
@@ -1792,6 +1821,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propSiblingBoundOverloads" (withTests 1 propSiblingBoundOverloads)
       , HG.testProperty "propAppliedDataFields" (withTests 1 propAppliedDataFields)
       , HG.testProperty "propLinkedSlotUnion" (withTests 1 propLinkedSlotUnion)
+      , HG.testProperty "propSiblingParamValue" (withTests 1 propSiblingParamValue)
       , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)

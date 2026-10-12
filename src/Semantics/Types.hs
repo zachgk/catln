@@ -4691,8 +4691,26 @@ comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialT
 comparedPartialsEnv typeEnv vaenv a b = H.union (ambientEnv $ (H.filterWithKey installable merged)) (shadowBoundParams typeEnv [a, b] vaenv)
   where
     merged = H.union
-      (fmap installVar $ H.unionWith (intersectTypesEnv typeEnv vaenv) (fst (splitVarArgs a)) (fst (splitVarArgs b)))
+      (H.mapWithKey (\k -> installVar . readSiblings k) mergedVars)
       (H.unionWith (intersectTypesEnv typeEnv argEnv) (readArgs a) (readArgs b))
+    mergedVars = H.unionWith (intersectTypesEnv typeEnv vaenv) (fst (splitVarArgs a)) (fst (splitVarArgs b))
+    -- A parent reference in a parameter's value that names ANOTHER parameter of the compared
+    -- partials names that sibling (@$F -> Fun[$T -> $_A]@ spells @/F=∀Fun[/T=$^/A]@), as the
+    -- meet reads a bound ('intersectPartialsBaseN'.'withSiblings'). Read as the enclosing scope,
+    -- as 'installVar' reads the rest, it is ⊤ whenever that scope does not bind the name, while the
+    -- same spelling in an argument slot reads the sibling's value ('readArgs'): @lst=$/F@ against
+    -- @lst=Bx[/T=$^/A]@ then compared @Bx[/T=⊤]@ with @Bx[/T=/A's value]@. A reference to the
+    -- parameter's OWN name cannot be a sibling and is left to 'installVar'. The sibling's value is
+    -- read with its own references detached, so two parameters naming each other cannot loop.
+    readSiblings (TVVar n) = goSib
+      where
+        goSib (TypeVar (TVVar n') TVParent i)
+          | n' /= n, Just sib <- H.lookup (TVVar n') mergedVars = meetInner typeEnv vaenv (installVar sib) (goSib i)
+        goSib (TypeVar v loc i) = TypeVar v loc (goSib i)
+        goSib (UnionType mtop pos consts) = UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+        onTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+        onLeaf q@PartialType{ptVars=qVars} = q{ptVars = fmap goSib qVars}
+    readSiblings _ = id
     splitVarArgs p = (joinVarArgEnv (ptVars p) H.empty, joinVarArgEnv H.empty (ptArgs p))
     -- An ARGUMENT value sits one level inside its partial, so its references name that partial's
     -- parameters: a pointer (@head=$/T@) or a parent reference in a class atom (the declared
