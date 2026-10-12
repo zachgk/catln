@@ -113,26 +113,16 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer|
-                                                    ( PredExpr /operator==
-                                                        ( /r=/Data/Primitive/True
-                                                        , /l=~nonNeg( /this=~/$this )
-                                                        ) && PredExpr /operator==
-                                                        ( /r=~True
-                                                        , /l=~nonNeg( /this=~/$this )
-                                                        )
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                                    ( /r=/Data/Primitive/True
+                                                    , /l=~nonNeg( /this=~/$this )
                                                     ) =
                                                     ( /narrowDecl
                                                         ( EAppArg
                                                             { eaaArg = Value /n -> /Data/Primitive/Integer = 0 }
-                                                        ) ↦ /Data/Primitive/Integer|
-                                                        ( PredExpr /operator==
-                                                            ( /r=/Data/Primitive/True
-                                                            , /l=~nonNeg( /this=~/$this )
-                                                            ) && PredExpr /operator==
-                                                            ( /r=~True
-                                                            , /l=~nonNeg( /this=~/$this )
-                                                            )
+                                                        ) ↦ /Data/Primitive/Integer| PredExpr /operator==
+                                                        ( /r=/Data/Primitive/True
+                                                        , /l=~nonNeg( /this=~/$this )
                                                         )
                                                     )
                                                 }
@@ -272,10 +262,7 @@ Prgm
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer && PredExpr /operator==
-                                ( /r=~True
-                                , /l=~nonNeg( /this=~/$this )
-                                )
+                                ) && PredRel Integer
                             ) =
                             ( Value /n |
                                 ( /operator==
@@ -293,10 +280,7 @@ Prgm
                                 ( TopType | PredExpr /operator==
                                     ( /r=/Data/Primitive/True
                                     , /l=~nonNeg( /this=~/$this )
-                                    ) && PredRel Integer && PredExpr /operator==
-                                    ( /r=~True
-                                    , /l=~nonNeg( /this=~/$this )
-                                    )
+                                    ) && PredRel Integer
                                 )
                             )
                         ]

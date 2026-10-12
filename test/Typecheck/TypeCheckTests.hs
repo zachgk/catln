@@ -304,7 +304,9 @@ testRefineOut = testCase "$out and $this in a type's condition name the refined 
 -- @k@'s @a | a.isZ == True@ types as @a@ within @$this.isZ == True@, the predicate @Nat_isZ@
 -- desugars to, so @kDecl@ is guaranteed within its declared @Nat_isZ@ by the predicate and
 -- @kZ@'s @k(a= Z)@ settles to @Z@. A condition on another argument is a predicate over that
--- argument's variable, not a value predicate; a bare argument as the condition states none. The
+-- argument's variable, not a value predicate; a bare argument as the condition states none. A
+-- declared refinement beside the same condition on the body is ONE predicate on the result
+-- ('Semantics.Types.mergeSameFormPredExprs'), not two spellings of it. The
 -- twin error pages pass an @S@, on which the predicate is decided false. Fixtures:
 -- unit/whereRefine.ct, unit/whereRefineFails.err.ct, unit/whereRefineFnFails.err.ct.
 testWhereRefine :: TestTree
@@ -336,6 +338,16 @@ testWhereRefine = testCase "a body's condition refines its value by the conditio
     assertBool ("kArg's bare condition states no predicate: " ++ show b) (not (typeHasPredExpr b))
   one "result of kZ" (resultOf "/kZ") $ \r ->
     assertBool ("kZ settles to Z: " ++ show r) (isSubtypeOf typeEnv (settled r) (typeVal "/Z"))
+  -- The declared @Nat_isZ@ spells its @True@ absolute (the parser's implicit value) and the
+  -- condition spells it as written; met on the result, the two are one form and one atom.
+  one "result of kDecl" (resultOf "/kDecl") $ \r ->
+    assertEqual ("kDecl's declared refinement and its condition's form are one predicate: " ++ show r) 1 (length (predsExprAtoms (topPredsOf r)))
+  where
+    topPredsOf (TopType _ ps)                   = ps
+    topPredsOf (UnionType (Just (ps, _, _)) _ _) = ps
+    topPredsOf (UnionType Nothing leafs [])
+      | [l] <- splitUnionType leafs             = ptPreds l
+    topPredsOf _                                = PredsNone
 
 -- | A definition's declared result refines what its body gives at every call
 -- ('Semantics.arrowDestType'): @hGen(a -> Nat) -> Nat_isZ= a@ is guaranteed by shape (undecided on

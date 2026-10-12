@@ -1449,6 +1449,36 @@ predsConjuncts :: TypePredicates -> [TypePredicates]
 predsConjuncts (PredsAnd qs) = concatMap predsConjuncts qs
 predsConjuncts q             = [q]
 
+-- | A conjunction with two value-predicate atoms that are ONE form — the same application spelled
+-- two ways, a name written relative beside the same name resolved (@/r=~True@ beside
+-- @/r=/Data/Primitive/True@: the parser spells a type property's implicit @True@ absolute and a
+-- written condition's @True@ relative, 'relTypeVal') — carries the form once, as the meet of the
+-- two spellings. Two atoms are one form when each partial is within the other, which a name's
+-- resolution decides ('isSubPartialOfWithEnv'), not the graph's arrows: the merged spelling is
+-- within each of the two under every environment (an absolute name is within the relation its
+-- relative spelling names), so the respelling is a narrowing wherever it is verified
+-- ('TypeCheck.Common.verifyScheme'). Atoms that merely overlap (@x == 1@ beside @x == 2@ are two
+-- conditions, their conjunction a third) are left as they are. Guarded by a cheap scan for two
+-- atoms applying one name, so the common conjunctions never pay the oracle.
+mergeSameFormPredExprs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> TypePredicates
+mergeSameFormPredExprs typeEnv vaenv preds
+  | not candidate   = preds
+  | kept == conj    = preds
+  | otherwise       = mkAnd kept
+  where
+    conj = predsConjuncts preds
+    heads = [ptName e | PredsOne (PredExpr e) <- conj]
+    candidate = length heads /= length (L.nub heads)
+    kept = foldl step [] conj
+    step acc a@(PredsOne (PredExpr e)) = case break (sameForm e) acc of
+      (pre, PredsOne (PredExpr e') : post)
+        | (_, [m]) <- intersectPartials typeEnv vaenv e' e -> pre ++ PredsOne (PredExpr m) : post
+      _ -> acc ++ [a]
+    step acc a = acc ++ [a]
+    sameForm e (PredsOne (PredExpr e')) = ptName e' == ptName e
+      && isSubPartialOfWithEnv typeEnv vaenv e e' && isSubPartialOfWithEnv typeEnv vaenv e' e
+    sameForm _ _ = False
+
 -- | A value-predicate LITERAL: a 'PredExpr' atom or its negation. A literal names no member of its
 -- own and enumerates nothing: it narrows the set the formula's class and relation atoms describe,
 -- whatever it means. So it is transparent to every question about what those atoms enumerate
@@ -4938,17 +4968,27 @@ predsAtConst c (PredsNot p)                = case predsAtConst c p of
   Just PredsNone -> Nothing
   Just q         -> Just (PredsNot q)
 
--- | Takes constants out of a type: each is dropped from the listed constants, a leaf that holds it
--- keeps every point but it (@l|¬PredConstEq c@), and a predicate top excludes it as a point.
+-- | Takes constants out of a type: each is dropped from the listed constants, a leaf that may hold
+-- it keeps every point but it (@l|¬PredConstEq c@), and a predicate top excludes it as a point.
+--
+-- A leaf MAY hold the constant unless it is proven not to: by its shape (a primitive leaf of
+-- another type, a data leaf) or by its own constant equalities read at the constant
+-- ('predsAtConst'). There is no environment here to decide a class atom or a value predicate, so
+-- a leaf whose formula is undecided at the constant is excluded from like any other: read as
+-- holding the constant only when proven to ('constantCoveredByLeafs'), a leaf within a value
+-- predicate kept the excluded point, and the point leaf @/Char | PredConstEq c ∧ ¬P@ survived
+-- @⊤ − {c}@ whole. An exclusion that removes nothing is dropped again where the environment can
+-- tell ('compactConstEqLeafs').
 excludeConstants :: [Constant] -> Type -> Type
 excludeConstants [] t = t
 excludeConstants cs (UnionType mtop leafs consts) =
   UnionType (fmap onTop mtop) (joinUnionType (map onLeaf (splitUnionType leafs))) (filter (`notElem` cs) consts)
   where
     onTop (preds, negLeafs, negConsts) = (preds, negLeafs, L.nub (negConsts ++ cs))
-    onLeaf l = foldl (\l' c -> if constantCoveredByLeafs c (joinUnionType [l'])
+    onLeaf l = foldl (\l' c -> if mayHold c l'
                                   then l'{ptPreds = predsAnd (ptPreds l') (PredsNot (PredsOne (PredConstEq c)))}
                                   else l') l cs
+    mayHold c l = isJust (predsAtConst c (ptPreds l)) && constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}])
 excludeConstants _ t = t
 
 -- | Whether a formula holds a 'PredConstEq' atom anywhere.
@@ -4966,8 +5006,9 @@ predsHasConstEq (PredsNot p)             = predsHasConstEq p
 --     beside it ('isValuePredLiteral') is decided neither way on the constant, so the leaf stays,
 --     spelled as the constant within those predicates alone (@/Float | PredConstEq c ∧ P@), unless
 --     the union lists @c@ itself, which it is then inside of;
---   * a @¬PredConstEq c@ conjunct excludes nothing from a leaf that cannot hold @c@, and nothing
---     from a union that lists @c@ itself (@(l − {c}) ∪ {c} = l@), so it drops.
+--   * a @¬PredConstEq c@ conjunct excludes nothing from a leaf that cannot hold @c@ (by shape, or
+--     by the rest of its formula read at @c@), and nothing from a union that lists @c@ itself
+--     (@(l − {c}) ∪ {c} = l@), so it drops.
 --
 -- So the same set has one spelling: a constant is a constant, and an exclusion is spelled only
 -- where it removes a point.
@@ -4989,8 +5030,11 @@ compactConstEqLeafs typeEnv vaenv consts leafs
                      | otherwise       -> Just (Left l{ptPreds = rebuild (PredsOne (PredConstEq c) : conjs r)})
           | otherwise -> Nothing
       [] -> Just (Left l{ptPreds = rebuild (filter (not . vacuous l) (conjs (ptPreds l)))})
-    vacuous l (PredsNot (PredsOne (PredConstEq c))) =
+    -- An exclusion is vacuous on a leaf that cannot hold the constant: by shape, or because the
+    -- rest of its formula is false at it ('predsAtConstant' — a @/Char | ~Even@ holds no @'a'@).
+    vacuous l q@(PredsNot (PredsOne (PredConstEq c))) =
       c `elem` consts || not (constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}]))
+        || isNothing (predsAtConstant typeEnv vaenv c (rebuild (filter (/= q) (conjs (ptPreds l)))))
     vacuous _ _ = False
     conjs (PredsAnd xs) = concatMap conjs xs
     conjs x             = [x]
@@ -6112,6 +6156,7 @@ compactPartialLeafs typeEnv vaenv =
   . compactDisconnectedPreds typeEnv vaenv
   . map compactOwnVarRefs
   . compactFalsePredExprLeafs typeEnv vaenv
+  . compactSameFormPredExprLeafs typeEnv vaenv
   . compactBottomType
   . splitUnionType
 
@@ -6330,6 +6375,14 @@ predDecideMemoRef = unsafePerformIO (newIORef [])
 compactFalsePredExprLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
 compactFalsePredExprLeafs typeEnv vaenv = filter (not . partialPredExprDecidedFalse typeEnv vaenv)
 
+-- | A leaf's two spellings of one value-predicate atom are the one atom ('mergeSameFormPredExprs'),
+-- as on a top.
+compactSameFormPredExprLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
+compactSameFormPredExprLeafs typeEnv vaenv = map merge
+  where
+    merge l@PartialType{ptPreds=preds@PredsAnd{}} = l{ptPreds = mergeSameFormPredExprs typeEnv vaenv preds}
+    merge l                                       = l
+
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
 -- TODO: This should merge type partials into class partials
@@ -6415,6 +6468,12 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
     unitProp x _ = x
     conjsOf (PredsAnd xs) = concatMap conjsOf xs
     conjsOf x             = [x]
+-- Two spellings of one value-predicate atom in a top's conjunction are the one atom
+-- ('mergeSameFormPredExprs'): a declared refinement met with the same condition written on the body.
+compactType typeEnv vaenv (UnionType (Just (preds@PredsAnd{}, negPartials, ncs)) posLeafs cs)
+  | preds' <- mergeSameFormPredExprs typeEnv vaenv preds
+  , preds' /= preds =
+      compactType typeEnv vaenv $ UnionType (Just (preds', negPartials, ncs)) posLeafs cs
 -- Pure ¬(single relation) top: re-express as the universe minus the relation's expansion.
 -- Matched on exactly this shape (no catch-all) so other pure-top predicates flow on to the
 -- ¬(unsatisfiable) and PredsAnd-simplification clauses below.

@@ -148,10 +148,7 @@ Prgm
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~isZ( /this=~/$this )
-                                ) && PredRel Nat && PredExpr /operator==
-                                ( /r=~True
-                                , /l=~isZ( /this=~/$this )
-                                )
+                                ) && PredRel Nat
                             ) = Value /a | /operator==
                             ( Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) = /isZ( Value /this -> TVArg /a = Value /a ) )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]

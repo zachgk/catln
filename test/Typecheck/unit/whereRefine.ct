@@ -3,7 +3,8 @@ annot(#noCore)
 # A body's condition refines its value by the condition's form. [k] returns [a | a.isZ == True]:
   the where's type is [a] within the predicate [$this.isZ == True], the form [Nat_isZ] desugars
   to, with the base argument named as the refined value, so [kDecl] is guaranteed within its
-  declared [Nat_isZ] by the predicate itself and [kZ]'s [k(a= Z)] settles to the [Z] it passes.
+  declared [Nat_isZ] by the predicate itself (the declaration and the condition are one predicate
+  on its result, not two spellings of it) and [kZ]'s [k(a= Z)] settles to the [Z] it passes.
   [kFn] applies the predicate as a function; [kOther] conditions on another argument, whose
   predicate is over that argument's variable; [kArg] conditions on a bare argument, which states
   no predicate (its value is still checked where the condition is written). The twin error
