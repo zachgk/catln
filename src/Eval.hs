@@ -597,7 +597,7 @@ llmShowPage = EEvalPrim "llmShowPage" prim
       let pageHash = hash page
       when (S.member pageHash evShowingPages) $
         evalError "llmShowPage was asked to show a page while showing it, which only the page being shown can be answered by"
-      let env' = env{evArgs = H.empty, evShowingPages = S.insert pageHash evShowingPages}
+      let env' = env{evArgs = H.empty, evCallStack = [], evShowingPages = S.insert pageHash evShowingPages}
       let written = S.fromList $ rawPrgmAnnotIds page
       let annotId = getMetaId . getExprMeta
       let annots = [([], a) | a <- globalAnnots, S.member (annotId a) written]

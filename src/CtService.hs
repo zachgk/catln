@@ -33,8 +33,8 @@ import           Data.Hashable           (hash)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.IORef              (modifyIORef', newIORef, readIORef)
-import           Data.List               (elemIndex, intercalate, isPrefixOf, nub,
-                                          partition, sortOn)
+import           Data.List               (elemIndex, intercalate, isPrefixOf,
+                                          nub, partition, sortOn)
 import           Data.Maybe
 import           Data.Time.Calendar      (Day)
 import           Data.Time.Clock         (getCurrentTime, utctDay)
@@ -48,7 +48,8 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EExpr, EPrgm, EvalMetaDat,
-                                          EvalPage (..), EvalPages, MockIO, SSF (..), TExpr,
+                                          EvalPage (..), EvalPages, MockIO,
+                                          SSF (..), TExpr,
                                           TestKind (TestRefinementProof),
                                           TestResult, Val, esAsks, joinedStage,
                                           newEvalService, oaTestId,

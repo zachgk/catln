@@ -3,13 +3,31 @@ import "llm"
 
 
 # What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
-  annotations shown, and then the question.
+  annotations shown, what is wrong with it noted where it is wrong, and then the question.
 double(x -> Integer) -> Integer
   # [double] is twice [x].
 double(x)= x + x
 
 > double(x= 2)
   >>> 4
+# A print whose golden is no longer what it prints is shown with the golden it was written with,
+  and noted as failing.
+> double(x= 3)
+  >>> 5
+  !!! error: Print golden mismatch:
+  !!!   expected: 5
+  !!!   actual:   6
+# A definition the compiler cannot build is noted with what the compiler said.
+anyOver[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
+anyOver(lst, fn(v))= /Data/List/any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))
+  !!! warning: The definition "/anyOver" could not be built, so it is left out of the built program:
+  !!!
+  !!! 		Error:
+  !!! 		Failed to build arrow tree from /fn(/v=TopType) to ∀/Data/Primitive/Boolean
+  !!! 	(bound: TopType)
+  !!! 	(objSrcs: [/fn(/v=TopType),/lst,/anyOver[/A=TopType](/fn(/v=TopType)=/fn[/A=$_/A](/v=$/A), /lst=∀/Data/List/ConsList[/T=$_/A]),/anyOver[/A=TopType](/fn(/v=TopType)=/fn[/A=$_/A](/v=$/A), /lst=∀/Data/List/ConsList[/T=$_/A])])
+  !!! Failed to Build Tree: The type /fn(/v=TopType) does not reach the destination ∀/Data/Primitive/BooleanFailed to Build Tree: Arrow has indeterminate return type
+
 annot(#hint(text -> String))
   # A [#hint] is written for a model as what it says.
 

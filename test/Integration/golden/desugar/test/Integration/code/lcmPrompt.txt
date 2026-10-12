@@ -58,10 +58,30 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/anyOver"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ anyOver[ /A : TopType ]
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
+                            ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ anyOver( Value lst )
+                            ( fn( Value v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/any
+                            ( Value lst= /Data/Functor/fmap( Value lst= Value lst )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -70,13 +90,31 @@ Prgm
         [ /Catln/#md
             ( Value /text= CStr
                 { csValue = "What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
-                annotations shown, and then the question." }
+                annotations shown, what is wrong with it noted where it is wrong, and then the question." }
             )
         , /Catln/#print
             ( Value /p= double
                 ( Value x= CInt
                     { ciValue = 2 }
                 )
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A print whose golden is no longer what it prints is shown with the golden it was written with,
+                and noted as failing." }
+            )
+        , /Catln/#print
+            ( Value /p= double
+                ( Value x= CInt
+                    { ciValue = 3 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "5" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A definition the compiler cannot build is noted with what the compiler said." }
             )
         , #hint
             ( Value text= CStr

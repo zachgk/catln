@@ -128,10 +128,35 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/anyOver"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /anyOver
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=$_/A ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> ∀/Data/Primitive/Boolean
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -141,7 +166,7 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
-                  annotations shown, and then the question."
+                  annotations shown, what is wrong with it noted where it is wrong, and then the question."
                 }
             )
         , /Catln/#print
@@ -152,6 +177,34 @@ Prgm
                             { eaaArg = Value /x -> /Data/Primitive/Integer = 2 }
                         ) ↦ /Data/Primitive/Integer
                     )
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A print whose golden is no longer what it prints is shown with the golden it was written with,
+                  and noted as failing."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /double
+                        ( EAppArg
+                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A definition the compiler cannot build is noted with what the compiler said."
                 }
             )
         , /#hint

@@ -138,7 +138,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
         let argStr k = case H.lookup (partialKey (mkName k)) $ rawExprAppliedArgsMap annot of
               (Just (Just (_, Just (RawCExpr _ (CStr s))))) -> s
               e -> error $ printf "Can't format unexpected note annot %s" (show e)
-        in intercalate ("\n" ++ formatIndent indent) $ map ("!!! " ++) $ lines $ printf "%s: %s" (argStr noteAnnotKind) (argStr noteAnnotText)
+        in intercalate ("\n" ++ formatIndent indent) $ map (\l -> if null l then "!!!" else "!!! " ++ l) $ lines $ printf "%s: %s" (argStr noteAnnotKind) (argStr noteAnnotText)
       RawAnnot annot -> formatExpr annot
 
 -- |
