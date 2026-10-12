@@ -97,13 +97,13 @@ describe('useApi', () => {
     global.fetch = vi.fn(() =>
       Promise.resolve({
         status: 200,
-        json: () => Promise.resolve({ tag: 'Success', contents: [{ foo: 'bar' }, [{ tp: 'CNoteWarning', msg: 'warn' }]] }),
+        json: () => Promise.resolve({ tag: 'Success', contents: [{ foo: 'bar' }, [{ tp: 'CNoteWarn', msg: 'warn' }]] }),
       })
     )
     const { result } = renderHook(() => useApi('/api/test'), { wrapper: Providers })
     await waitFor(() => expect(result.current.isLoaded).toBe(true))
     expect(result.current.data).toEqual({ foo: 'bar' })
-    expect(result.current.notes).toEqual([{ tp: 'CNoteWarning', msg: 'warn' }])
+    expect(result.current.notes).toEqual([{ tp: 'CNoteWarn', msg: 'warn' }])
     expect(result.current.error).toBeUndefined()
   })
 
@@ -503,7 +503,7 @@ describe('Notes', () => {
   it('renders warning notes', () => {
     const { container } = render(
       <Providers>
-        <Notes notes={[{ tp: 'CNoteWarning', msg: 'a warning' }]} />
+        <Notes notes={[{ tp: 'CNoteWarn', msg: 'a warning' }]} />
       </Providers>
     )
     expect(container.querySelector('pre')).toHaveTextContent('a warning')
@@ -513,7 +513,7 @@ describe('Notes', () => {
     const notes = [
       { tp: 'CNoteError', msg: 'real error', pos: null },
       { tp: 'CNoteError', msg: 'placed by pos alone', pos: { line: 1, col: 1 } },
-      { tp: 'CNoteWarning', msg: 'shown inline', pos: { line: 1, col: 1 }, id: 'abc' },
+      { tp: 'CNoteWarn', msg: 'shown inline', pos: { line: 1, col: 1 }, id: 'abc' },
     ]
     const { container } = render(
       <Providers>

@@ -355,10 +355,12 @@ function Notes(props) {
 function Note(props) {
   let note = props.note;
 
+  // The tags are the constructors of the compiler's CNoteType (src/CRes.hs), which its JSON writes
+  // under their own names.
   switch(note.tp) {
   case "CNoteError":
     return <ErrorPre>{note.msg}</ErrorPre>;
-  case "CNoteWarning":
+  case "CNoteWarn":
     return <WarningPre>{note.msg}</WarningPre>;
   default:
     console.error("Unknown note type", note);
