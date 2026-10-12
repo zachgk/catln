@@ -221,6 +221,8 @@ propIntersectionDistributesUnion gPrgm = property $ do
   annotate $ printf "a∩b = %s" (show ab)
   annotate $ printf "a∩c = %s" (show ac)
   annotate $ printf "d = %s" (show d)
+  annotate $ printf "f ⊆ d = %s" (show (isSubtypeOfWithEnvComplete typeEnv vaenv f d))
+  annotate $ printf "d ⊆ f = %s" (show (isSubtypeOfWithEnvComplete typeEnv vaenv d f))
   assertTimed "a∩(b∪c) = (a∩b)∪(a∩c)" $ isEqTypeWithEnvComplete typeEnv vaenv f d
 
 propUnionDistributesIntersection :: IO GenPrgm  -> Property
@@ -241,6 +243,8 @@ propUnionDistributesIntersection gPrgm = property $ do
   annotate $ printf "a∪c = %s" (show ac)
   d <- timed "(a∪b)∩(a∪c)" $ intersectR typeEnv vaenv ab ac
   annotate $ printf "d = %s" (show d)
+  annotate $ printf "f ⊆ d = %s" (show (isSubtypeOfWithEnvComplete typeEnv vaenv f d))
+  annotate $ printf "d ⊆ f = %s" (show (isSubtypeOfWithEnvComplete typeEnv vaenv d f))
   assertTimed "a∪(b∩c) = (a∪b)∩(a∪c)" $ isEqTypeWithEnvComplete typeEnv vaenv f d
 
 propDifferenceShrinks :: IO GenPrgm -> Property

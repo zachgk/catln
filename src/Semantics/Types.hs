@@ -28,7 +28,7 @@ module Semantics.Types where
 
 import           Control.Applicative ((<|>))
 import           Control.Exception   (evaluate)
-import           Control.Monad       (foldM, when)
+import           Control.Monad       (foldM, guard, when)
 import           CtConstants
 import           Data.Aeson
 import           Data.Aeson.Types    (contramapToJSONKeyFunction)
@@ -1449,35 +1449,63 @@ predsConjuncts :: TypePredicates -> [TypePredicates]
 predsConjuncts (PredsAnd qs) = concatMap predsConjuncts qs
 predsConjuncts q             = [q]
 
--- | A conjunction with two value-predicate atoms that are ONE form — the same application spelled
--- two ways, a name written relative beside the same name resolved (@/r=~True@ beside
--- @/r=/Data/Primitive/True@: the parser spells a type property's implicit @True@ absolute and a
--- written condition's @True@ relative, 'relTypeVal') — carries the form once, as the meet of the
--- two spellings. Two atoms are one form when each partial is within the other, which a name's
--- resolution decides ('isSubPartialOfWithEnv'), not the graph's arrows: the merged spelling is
--- within each of the two under every environment (an absolute name is within the relation its
--- relative spelling names), so the respelling is a narrowing wherever it is verified
--- ('TypeCheck.Common.verifyScheme'). Atoms that merely overlap (@x == 1@ beside @x == 2@ are two
--- conditions, their conjunction a third) are left as they are. Guarded by a cheap scan for two
--- atoms applying one name, so the common conjunctions never pay the oracle.
-mergeSameFormPredExprs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> TypePredicates
-mergeSameFormPredExprs typeEnv vaenv preds
-  | not candidate   = preds
-  | kept == conj    = preds
-  | otherwise       = mkAnd kept
+-- | Two value predicates ('PredExpr') that are ONE FORM, and that form spelled once. A value
+-- predicate is a form, not a set: its @$this@ stands for the value it is decided on, and its
+-- operands are what the form applies — @x == 1@ beside @x == {1, 2}@ are two conditions, neither a
+-- narrower set than the other. So two atoms relate only when they are the same application, name
+-- for name, where a name written relative matches the resolved name it is a suffix of
+-- ('relativeNameMatches'): the parser spells a type property's implicit @True@ as the resolved value
+-- with its type set, a written @True@ is the relation of its name ('relTypeVal'). The merged form
+-- keeps the resolved spelling at each name, so it is within either spelling under every
+-- environment. Compared as sets ('isSubPartialOfWithEnv'), two different predicates were each
+-- within the other: the @$this@ operand names no type, so both forms read empty.
+predExprSameForm :: PartialType -> PartialType -> Maybe PartialType
+predExprSameForm = partial
+  where
+    partial p q = do
+      n <- name (ptName p) (ptName q)
+      guard (ptArgMode p == ptArgMode q && ptPreds p == ptPreds q)
+      vars <- slots (ptVars p) (ptVars q)
+      args <- slots (ptArgs p) (ptArgs q)
+      return p{ptName = n, ptVars = vars, ptArgs = args}
+    slots a b = do
+      guard (H.keysSet a == H.keysSet b)
+      H.traverseWithKey (\k t -> typ t (b H.! k)) a
+    name n m
+      | n == m                  = Just n
+      | relativeNameMatches n m = Just m
+      | relativeNameMatches m n = Just n
+      | otherwise               = Nothing
+    typ t u
+      | t == u = Just t
+    typ (UnionType Nothing ls []) (UnionType Nothing ms [])
+      | [l] <- splitUnionType ls, [m] <- splitUnionType ms = singletonType <$> partial l m
+    typ (TopType negs (PredsOne (PredRel l))) (TopType negs' (PredsOne (PredRel m)))
+      | negs == negs' = (\r -> TopType negs (PredsOne (PredRel r))) <$> partial l m
+    -- A name's value beside the relation of its name ('relTypeVal'): the value, resolved.
+    typ (UnionType Nothing ls []) (TopType negs (PredsOne (PredRel m)))
+      | H.null negs, [l] <- splitUnionType ls = singletonType <$> partial l m
+    typ t@TopType{} u@(UnionType Nothing _ []) = typ u t
+    typ _ _ = Nothing
+
+-- | A conjunction with two value-predicate atoms that are one form ('predExprSameForm') carries the
+-- form once, as the merged spelling. Guarded by a cheap scan for two value atoms, so the common
+-- conjunctions never pay the comparison.
+mergeSameFormPredExprs :: TypePredicates -> TypePredicates
+mergeSameFormPredExprs preds
+  | length [() | PredsOne (PredExpr _) <- conj] < 2 = preds
+  | kept == conj                                     = preds
+  | otherwise                                        = mkAnd kept
   where
     conj = predsConjuncts preds
-    heads = [ptName e | PredsOne (PredExpr e) <- conj]
-    candidate = length heads /= length (L.nub heads)
     kept = foldl step [] conj
-    step acc a@(PredsOne (PredExpr e)) = case break (sameForm e) acc of
-      (pre, PredsOne (PredExpr e') : post)
-        | (_, [m]) <- intersectPartials typeEnv vaenv e' e -> pre ++ PredsOne (PredExpr m) : post
-      _ -> acc ++ [a]
+    step acc a@(PredsOne (PredExpr e)) = go [] acc
+      where
+        go pre []                                = pre ++ [a]
+        go pre (PredsOne (PredExpr e') : post)
+          | Just m <- predExprSameForm e' e      = pre ++ PredsOne (PredExpr m) : post
+        go pre (x : post)                        = go (pre ++ [x]) post
     step acc a = acc ++ [a]
-    sameForm e (PredsOne (PredExpr e')) = ptName e' == ptName e
-      && isSubPartialOfWithEnv typeEnv vaenv e e' && isSubPartialOfWithEnv typeEnv vaenv e' e
-    sameForm _ _ = False
 
 -- | A value-predicate LITERAL: a 'PredExpr' atom or its negation. A literal names no member of its
 -- own and enumerates nothing: it narrows the set the formula's class and relation atoms describe,
@@ -2329,8 +2357,11 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
         checkVar k = isSubtypeOfWithEnv typeEnv vaenv'
                        (H.lookupDefault PTopType k (ptVars r1))
                        (ptVars r2 H.! k)
--- PredExpr: use structural partial comparison (equality-based simplifying assumption)
-predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEnv typeEnv vaenv e1 e2
+-- A value predicate implies another only as the SAME FORM ('predExprSameForm'): a form is not a
+-- set, and read as one through 'isSubPartialOfWithEnv' two different predicates were each within
+-- the other (their @$this@ operand names no type, so both read empty), which made @¬P ⟹ ¬Q@ by
+-- contraposition and dropped a region from every union of their negations.
+predImpliesAtom _ _ (PredExpr e1) (PredExpr e2) = isJust (predExprSameForm e1 e2)
 -- PredClass c implies PredRel r when r's name is a suffix of c's name (then
 -- expandRelPartial r includes classPartial c, so U_PredClass c ⊆ U_PredRel r), or - like
 -- the PredClass\/PredClass case - when c is sealed and each of its members is in U_PredRel r
@@ -5302,7 +5333,25 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Un
   || topPartCovers
   || leafwise
   || disjointFromExcluded
+  || disjunctSplit
   where
+    -- A leaf refined by a DISJUNCTION — @¬(q₁ ∧ … ∧ qₙ)@, the De Morgan spelling a union of
+    -- predicate tops produces (@/Char | ¬(¬P₁ ∧ ¬P₂) ∧ PredConstEq c@, the point within
+    -- @P₁ ∨ P₂@) — is the union of the leaf refined by each disjunct: @X | ¬(q₁ ∧ q₂) ∧ R =
+    -- X | ¬q₁ ∧ R ∪ X | ¬q₂ ∧ R@, an exact identity. Decided piecewise, a piece covered by the
+    -- super's predicate top and another by its leafs are both seen, where the whole formula was
+    -- proved by none of the routes above (the meet distributes a leaf over a disjunctive universe
+    -- the same way, 'intersectTypesWithVarEnv'; the positive-union clause below has its own
+    -- 'coveredByDisjuncts'). Last, so a leaf the routes above prove whole never pays the split;
+    -- each piece carries a smaller formula, so the split bottoms out.
+    disjunctSplit = any (isJust . leafDisjunction) subLs
+      && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType (concatMap splitLeaf subLs)) []) t2
+    subLs = splitUnionType subPartials
+    splitLeaf l = case leafDisjunction l of
+      Just (qs, rest) -> [ l{ptPreds = mkAnd (predsNot q : rest)} | q <- qs ]
+      Nothing         -> [l]
+    leafDisjunction l = listToMaybe [ (qs, pre ++ post) | (PredsNot (PredsAnd qs@(_:_:_)), pre, post) <- picks (predsConjuncts (ptPreds l)) ]
+    picks xs = [ (x, take i xs, drop (i + 1) xs) | (i, x) <- L.zip [0 :: Int ..] xs ]
     -- ...and the rhs's predicate part alone likewise: it is a subset of the rhs, and a pure top
     -- is decided by the clauses built for it (a negated formula by its meet) where the mixed
     -- expansion above is not. So a sub inside @⊤|¬(~A ∧ ~B)@ stays inside when a positive leaf
@@ -6156,7 +6205,7 @@ compactPartialLeafs typeEnv vaenv =
   . compactDisconnectedPreds typeEnv vaenv
   . map compactOwnVarRefs
   . compactFalsePredExprLeafs typeEnv vaenv
-  . compactSameFormPredExprLeafs typeEnv vaenv
+  . compactSameFormPredExprLeafs
   . compactBottomType
   . splitUnionType
 
@@ -6377,10 +6426,10 @@ compactFalsePredExprLeafs typeEnv vaenv = filter (not . partialPredExprDecidedFa
 
 -- | A leaf's two spellings of one value-predicate atom are the one atom ('mergeSameFormPredExprs'),
 -- as on a top.
-compactSameFormPredExprLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
-compactSameFormPredExprLeafs typeEnv vaenv = map merge
+compactSameFormPredExprLeafs :: [PartialType] -> [PartialType]
+compactSameFormPredExprLeafs = map merge
   where
-    merge l@PartialType{ptPreds=preds@PredsAnd{}} = l{ptPreds = mergeSameFormPredExprs typeEnv vaenv preds}
+    merge l@PartialType{ptPreds=preds@PredsAnd{}} = l{ptPreds = mergeSameFormPredExprs preds}
     merge l                                       = l
 
 -- |
@@ -6471,7 +6520,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
 -- Two spellings of one value-predicate atom in a top's conjunction are the one atom
 -- ('mergeSameFormPredExprs'): a declared refinement met with the same condition written on the body.
 compactType typeEnv vaenv (UnionType (Just (preds@PredsAnd{}, negPartials, ncs)) posLeafs cs)
-  | preds' <- mergeSameFormPredExprs typeEnv vaenv preds
+  | preds' <- mergeSameFormPredExprs preds
   , preds' /= preds =
       compactType typeEnv vaenv $ UnionType (Just (preds', negPartials, ncs)) posLeafs cs
 -- Pure ¬(single relation) top: re-express as the universe minus the relation's expansion.
