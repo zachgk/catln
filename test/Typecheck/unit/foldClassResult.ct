@@ -7,10 +7,11 @@ annot(#noCore)
 #noCore
 data(True)
 data(False)
-class(Boolean, [True, False])
 
+class(Boolean, [True, False])
 class(List[$T])
 class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
 every(ConsList[$T -> $_T], isa= [/List[$T -> $_T]])
 
 neg(b -> Boolean) -> Boolean

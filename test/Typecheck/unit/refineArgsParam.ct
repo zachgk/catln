@@ -7,10 +7,13 @@ annot(#noCore)
 #noCore
 module(Fx)
   data(Ch)
+
   class(Semi)
+
   (_ :: $T ++ _ :: $T)[$T -> /Fx/Semi] -> $T
 
   class(Str, [/Fx/Str/Txt(chars -> /Fx/Ch)])
+
   every(/Fx/Str, isa= [/Fx/Semi])
 
   (_ :: /Fx/Str ++ _ :: /Fx/Str) -> /Fx/Str

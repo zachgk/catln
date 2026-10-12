@@ -1,5 +1,6 @@
 import "core"
 
+
 # A recursive call passed as an argument is within its declared result. The argument of [++] here
 # reaches the arm's own `"-" ++ textNeg(..)`, whose argument is the same call: inferred from its
 # arms alone it is only a [Semigroup], and the [String] [textNeg] is declared to return is what

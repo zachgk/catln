@@ -5,7 +5,9 @@ annot(#noCore)
 #noCore
 class(Eq)
 class(Box[$T])
+
 data(A)
+
 every(A, isa= [/Eq, /Box])
 
 f[$F -> Box && Eq](x -> $F) -> Eq

@@ -7,9 +7,9 @@ annot(#noCore)
 #noCore
 module(Data/Primitive)
   data(Integer)
-
 module(Data/List)
   class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
   count(lst -> ConsList) -> /Data/Primitive/Integer
 
 step(count -> /Data/Primitive/Integer) -> /Data/Primitive/Integer

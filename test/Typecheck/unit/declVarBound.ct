@@ -7,12 +7,18 @@ annot(#noCore)
 #noCore
 data(Integer)
 data(String)
+
 class(ToString)
+
 every(Integer, isa= [/ToString])
+
 :$T.toString[$T -> /ToString] -> String
+
 class(List[$T])
 class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
 every(ConsList[$T -> $_T], isa= [/List[$T -> $_T]])
+
 data(Step(acc -> String, output -> String))
 
 walk[$B -> /ToString](stack -> ConsList[$T -> /ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, rows -> /List[$T -> Step..]) -> /List[$T -> Step..]

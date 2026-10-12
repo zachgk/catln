@@ -7,6 +7,8 @@ annot(#noCore)
 #noCore
 data(Kx)
 data(Ky)
+
 class(Map[$K, $V])
 class(BinTree[$K, $V], [Node[$K -> $_K, $V -> $_V](left -> BinTree[$K -> $_K, $V -> $_V], key -> $K, value -> $V, right -> BinTree[$K -> $_K, $V -> $_V]), Leaf])
+
 every(BinTree[$K -> $_K, $V -> $_V], isa= [/Map[$K -> $_K, $V -> $_V]])

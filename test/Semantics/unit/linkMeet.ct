@@ -6,8 +6,10 @@ annot(#noCore)
 # against the declaration while the definition's scope binds [$T] to its bound.
 #noCore
 data(Integer)
+
 class(Semi)
 class(Grp)
+
 every(Grp, isa= [/Semi])
 every(Integer, isa= [/Grp])
 

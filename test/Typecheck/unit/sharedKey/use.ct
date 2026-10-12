@@ -1,4 +1,6 @@
 import "decl.ct"
+
+
 annot(#noCore)
 
 # An instance written under the declaration's absolute name, as core/list.ct's [mmap] arms, and a
@@ -6,6 +8,7 @@ annot(#noCore)
 # result is guaranteed only through the declaration on [decl.ct], which shares the arms' key.
 #noCore
 class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
 every(ConsList[$T -> $_T], isa= [/Monad])
 
 append(a -> ConsList[$T -> $_T], b -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]

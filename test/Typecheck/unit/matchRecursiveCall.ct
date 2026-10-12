@@ -7,10 +7,14 @@ annot(#noCore)
 #noCore
 class(Ord)
 class(Comparison, [LessThan, Equal, GreaterThan])
+
 :$T.compareTo[$T -> /Ord](other -> $T) -> /Comparison
+
 class(Map[$K, $V])
 class(BinTree[$K, $V], [Node[$K -> $_K, $V -> $_V](left -> BinTree[$K -> $_K, $V -> $_V], key -> $K, value -> $V, right -> BinTree[$K -> $_K, $V -> $_V]), Leaf])
+
 every(BinTree[$K -> $_K, $V -> $_V], isa= [/Map[$K -> $_K, $V -> $_V]])
+
 class(Maybe[$T], [Some[$T -> $_T](value -> $T), None])
 
 lookup[$MK -> /Ord, $MV](m -> /Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Maybe[$T -> $_MV]
