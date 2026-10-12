@@ -4969,7 +4969,7 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
       BoundVar _  -> False
       Bound _     -> False
     flexibleVar _ = False
-    result = hasAll subArgs superArgs && predsOk && hasAllVars subVars superVars
+    result = hasAll subArgs superArgs && predsOk && hasAllVars subVars superVars && pinnedSlotsOk typeEnv vaenv sub super
     msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
 
     predsOk = hasAllPreds superPreds subPreds || leafCtxPredsCover
@@ -5022,6 +5022,86 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     -- predicate-implication oracle, which handles negation soundly (conservative 'False' when
     -- unproven).
     hasAllPreds need give = predImplies typeEnv vaenv' give need
+
+-- | What a parent reference held in a parameter slot reads, where the meet can tell: the
+-- enclosing partial's binding, which that partial's meet passes down under its own key
+-- ('intersectPartialsBaseN'.'deepVaenv'), or else the inner it was read into before the meet
+-- ('intersectPartialsBaseN'.'readInputObjParents'). Never an ambient binding of the same name,
+-- which is a different variable.
+parentRefReading :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Maybe Type
+parentRefReading typeEnv vaenv (TypeVar (TVVar m) TVParent i) = case H.lookup (VarKey TVInt (TVVar m)) vaenv of
+  Just r | not (isTypeVar r), r /= PTopType -> Just (meetInner typeEnv vaenv r i)
+  _ | i /= PTopType, not (isTypeVar i)     -> Just i
+  _                                         -> Nothing
+parentRefReading _ _ _ = Nothing
+
+-- | The continuation-input half of 'isSubPartialOfWithEnvNRaw'. A higher-order argument's input
+-- object (@fn(v -> $_A)@) is what the partial promises to PASS its continuation, so a parameter
+-- it names reads as the DATA arguments pin it — @A@ is @m@'s element — and an occurrence there
+-- never widens it. Read as its value instead, an unbound @A@ is ⊤ and every input fits: the ap
+-- form @fn(v -> $_F)@ would read as within the fmap form @fn(v -> $_A)@ though, at @m= Opt[X]@,
+-- one passes the @Opt@ and the other its @X@, and the meet (which pins @A= X@) then finds the
+-- two disjoint, so the union absorbing one into the other erases an arm.
+--
+-- The inclusion must hold at every instance, so it is decided at a generic one: each of the
+-- sub's data-pinned parameters still unbound is given a fresh opaque type (a skolem, a name no
+-- program defines). The super is met with that instance, its continuation inputs left open,
+-- which pins the super's parameters from the data exactly as a call does; those values are set
+-- on the super, which otherwise keeps its own spelling (the meet respells an input's pointer as
+-- its bound, which a pointer is not compared to), and the instance must lie within it.
+pinnedSlotsOk :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
+pinnedSlotsOk typeEnv vaenv sub super
+  | not (any (pinnedInputSlot super) (H.toList (ptArgs super))) = True
+  | null freePinned && null classPinned = True
+  | otherwise = case intersectTypesEnv typeEnv vaenv (singletonType super) (singletonType subOpen) of
+      UnionType Nothing leafs [] | pieces@(_:_) <- splitUnionType leafs ->
+        let pinnedVal n = unionAllTypes typeEnv [ H.lookupDefault PTopType n (ptVars p) | p <- pieces ]
+            superPinned = super{ptVars = H.mapWithKey (\n v -> if S.member n (dataPinnedVars super) then pinnedVal n else v) (ptVars super)}
+        in isSubtypeOfWithEnv typeEnv vaenv (singletonType subInst) (singletonType superPinned)
+      _ -> False
+  where
+    isHo k = not (S.null (pkArgs k))
+    pinnedNames = dataPinnedNames sub
+    freePinned = [ n | n <- S.toList pinnedNames, maybe True (== PTopType) (H.lookup n (ptVars sub)) ]
+    -- A pinned parameter bounded by a class whose own parameter is left ⊤ (@/F=∀Fun[/T=⊤]@, where
+    -- the arm does not name the element) ranges over every element too: that parameter is given a
+    -- skolem of its own.
+    classPinned = [ n | n <- S.toList pinnedNames, Just v <- [H.lookup n (ptVars sub)], v /= PTopType, freeClassParams v ]
+    freeClassParams (UnionType (Just (PredsOne (PredClass q), _, _)) _ _) = PTopType `elem` H.elems (ptVars q)
+    freeClassParams _ = False
+    skolemizeClass n (UnionType (Just (PredsOne (PredClass q), negs, ncs)) pos consts) =
+      UnionType (Just (PredsOne (PredClass q{ptVars = H.mapWithKey (\k v -> if v == PTopType then skolemAt (pkName n) k else v) (ptVars q)}), negs, ncs)) pos consts
+    skolemizeClass _ v = v
+    skolemAt base k = singletonType $ partialVal $ mkName ("/$skolem" ++ nameStr base ++ nameStr (pkName k))
+    skolem n = singletonType $ partialVal $ mkName ("/$skolem" ++ nameStr (pkName n))
+    subInst = sub{ptVars = flip (foldr (\n -> H.adjust (skolemizeClass n) n)) classPinned $ foldr (\n -> H.insert n (skolem n)) (ptVars sub) freePinned}
+    subOpen = subInst{ptArgs = H.mapWithKey (\k v -> if isHo k then PTopType else v) (ptArgs subInst)}
+
+-- | The names of a partial's parameters a value in one of its slots refers to: its outer
+-- references, and a direct pointer (@m=$/F@). A pointer nested in a partial inside the value names
+-- that partial's own parameter (@Bx(value=$/T)@), not this one's.
+slotParamRefs :: Type -> S.HashSet TypeVarName
+slotParamRefs t@(TypeVar (TVVar n) TVInt _) = S.insert n (typeOuterVarRefs t)
+slotParamRefs t                             = typeOuterVarRefs t
+
+-- | The parameter names a partial's DATA arguments pin: those the data arguments (the ones that
+-- are not a higher-order input) name, closed over the parameters their values name in turn
+-- (@m -> $F@ with @$F -> Fun[$T -> $_A]@ pins @F@ and @A@). A name may be one the partial does
+-- not spell, which is the ⊤ an unspelled parameter denotes.
+dataPinnedNames :: PartialType -> S.HashSet TypeVarName
+dataPinnedNames p = closeOver (S.unions [ slotParamRefs v | (k, v) <- H.toList (ptArgs p), S.null (pkArgs k) ])
+  where closeOver s = let s' = S.union s (S.unions [ slotParamRefs v | (n, v) <- H.toList (ptVars p), S.member n s ])
+                      in if s' == s then s else closeOver s'
+
+-- | 'dataPinnedNames' among the parameters the partial spells.
+dataPinnedVars :: PartialType -> S.HashSet TypeVarName
+dataPinnedVars p = S.intersection (H.keysSet (ptVars p)) (dataPinnedNames p)
+
+-- | Whether an argument of the partial is a higher-order input that names a parameter the
+-- partial's data arguments pin ('pinnedSlotsOk'): its reading depends on the data, so it cannot
+-- be decided, or unioned, on its own.
+pinnedInputSlot :: PartialType -> (ArgName, Type) -> Bool
+pinnedInputSlot p (k, v) = not (S.null (pkArgs k)) && not (S.null (S.intersection (typeOuterVarRefs v) (dataPinnedVars p)))
 
 -- | Whether a constant's parent partial type is covered by the given positive leafs.
 constantCoveredByLeafs :: Constant -> PartialLeafs -> Bool
@@ -6021,8 +6101,13 @@ compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ 
     -- they are compared. Joined under the outer env alone, they would be out of scope there and
     -- read as ⊤, so two slots that differ only in which parameter they name would collapse into one.
     -- A parameter slot sits at the partial's own level and is joined under the outer env.
+    -- A higher-order input naming one of its partial's parameters (@fn[/A=$^/A](v=$/A)@) reads
+    -- through that parameter — at every instance of the data, where the data pins it
+    -- ('pinnedInputSlot') — which the slot alone does not carry, so its union on its own is not
+    -- exact either: the two leafs are kept apart.
     tryJoin p1@(PartialType name1 vars1 args1 PredsNone mode1) p2@(PartialType _ vars2 args2 PredsNone _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
          && all exactSlotJoin (differingPairs args1 args2 ++ differingPairs vars1 vars2)
+         && not (or [ inputNamesParams p (k, v) | (k, (v1, v2)) <- H.toList (H.intersectionWith (,) args1 args2), v1 /= v2, (p, v) <- [(p1, v1), (p2, v2)] ])
       then Just $ PartialType name1 (joinMap vaenv vars1 vars2) (joinMap (comparedPartialsEnv typeEnv vaenv p1 p2) args1 args2) PredsNone mode1
       else Nothing
     -- Excluded middle: two leafs identical but for one conjunct held positively on one and
@@ -6044,6 +6129,7 @@ compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ 
       ([q1], [q2]) | q2 == predsNot q1 || q1 == predsNot q2 -> Just (L.intersect cs1 cs2)
       _ -> Nothing
 
+    inputNamesParams p (k, v) = not (S.null (pkArgs k)) && not (S.null (S.intersection (typeOuterVarRefs v) (H.keysSet (ptVars p))))
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
     differingPairs m1 m2 = filter (uncurry (/=)) $ H.elems $ H.intersectionWith (,) m1 m2
     exactSlotJoin (v1, v2) = not (isTypeVar v1) && not (isTypeVar v2)
@@ -7589,7 +7675,10 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   --
   -- A slot that is STILL a var after resolution is a flexible per-value pointer
   -- ('subUnionVar') and adds no bound.
+  -- A slot that is a parent reference (@fn[/F=$^/F]@, a continuation input naming the enclosing
+  -- partial's parameter) is bounded by that parameter's binding ('parentRefReading').
   let varBoundFor n = case fmap (substituteTVExt typeEnv vaenv) (H.lookup n vars') of
+        Just t@(TypeVar _ TVParent _) | Just b <- parentRefReading typeEnv vaenv t -> b
         Just b | not (isTypeVar b) -> b
         _                          -> PTopType
   -- The nested arg meets run under the ambient env EXTENDED with this partial's own met var
@@ -7630,7 +7719,7 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
         where
           -- A hop parameter carries the enclosing partial's binding in to the object's arguments,
           -- so the arguments that point at it read that binding (@fn[/A=$^A](v=$/A)@ under
-          -- @/A=Integer@ reads @v=Integer@), and the parameter itself is read as that binding
+          -- @/A=Integer@ reads @v=$/A∩{Integer}@), and the parameter itself is read as that binding
           -- while staying the parent reference: it is the object's link to the enclosing partial,
           -- and an input object that does not spell it has the same link ('unspelledSubParam').
           -- Replaced by the bare binding it was an input object a call's own @fn(v=Integer)@ is
@@ -7641,7 +7730,10 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
                           , ptArgs = fmap readHop (ptArgs p) }
             where
               resolved = H.fromList [ (n, meetInner typeEnv vaenv b i) | (n, TypeVar v TVParent i) <- H.toList (ptVars p), Just b <- [H.lookup v ownResolved] ]
-              readHop (TypeVar (TVVar n) TVInt i) | Just b <- H.lookup n resolved = meetInner typeEnv vaenv b i
+              -- The argument stays the pointer, carrying the binding as its inner: it reads the
+              -- binding, and a meet it lies within keeps it ('subUnion''s pointer clause) rather
+              -- than answering the binding's spelling, which is wider than the pointer.
+              readHop (TypeVar v@(TVVar n) TVInt i) | Just b <- H.lookup n resolved = TypeVar v TVInt (meetInner typeEnv vaenv b i)
               readHop x = x
   let argsMap = H.unionWith (subUnionArg varBoundFor) (fmap (deepVaenv,) (H.mapWithKey readInputObjParents aArgs)) (fmap (deepVaenv,) (H.mapWithKey readInputObjParents bArgs))
   let args' = fmap snd argsMap
@@ -8042,7 +8134,34 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
       | Just r <- outerReading b
       = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
         in if isSubtypeOfWithEnv typeEnv vaenv r a then (env, b) else (env, intersectTypesEnv typeEnv vaenv a b)
+    -- A parent reference reads the ENCLOSING partial's binding, which that partial's meet passes
+    -- down under its own key ('deepVaenv'), never an ambient one: the same keep-the-link rule then
+    -- applies (a continuation input's @/F=$^/F@ met with the spelled-out @/F=∀Fun[..]@ it lies
+    -- within stays the link).
+    subUnionVar (aVaenv, a) (bVaenv, b)
+      | inputObject
+      , Just r <- parentReading a
+      , isSubtypeOfWithEnv typeEnv vaenv r b
+      = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
+    subUnionVar (aVaenv, a) (bVaenv, b)
+      | inputObject
+      , Just r <- parentReading b
+      , isSubtypeOfWithEnv typeEnv vaenv r a
+      = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
     subUnionVar a b = subUnion (const PTopType) a b
+    parentReading = parentRefReading typeEnv vaenv
+    -- The pointer- and link-keeping clauses are a higher-order argument's INPUT OBJECT's
+    -- (@fn[/F=$^/F](v=$/F)@ — a name no data type, class or arrow declares): there the link is what a
+    -- call binds, and spelling it out loses which value the continuation is given. A data
+    -- partial's or a call's pointers keep the established reading: a call's arguments and a
+    -- pattern's fields take the values the meet finds (@Cons[/T=∀String](head=∀String)@), which
+    -- is what their bindings and the trees built from them read.
+    inputObject = null (typeGraphData typeEnv name') && null (typeGraphArrowTemplates typeEnv name') && not namesClass
+    namesClass = case teClassGraph typeEnv of
+      ClassGraph cg -> case graphLookup (PClassName name') cg of
+        Just CGClass{} -> True
+        _              -> False
+    keepsPointer env reading other = inputObject && reading /= PTopType && isSubtypeOfWithEnv typeEnv env reading other
     -- The BINDING an external occurrence resolves to, or Nothing when the variable is unbound,
     -- bound to ⊤ (indistinguishable from unbound) or bound to another variable — in each of
     -- those the occurrence adds no reading and the flexible per-value behaviour of 'subUnion' is
@@ -8075,14 +8194,22 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
     -- via 'discoveryAt').
     subUnion _ (aVaenv, a@(TypeVar (TVVar _) TVInt _)) (bVaenv, b)
       | a == b = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
-    subUnion varBound (aVaenv, TypeVar (TVVar n) TVInt i) (bVaenv, b)
+    -- A pointer whose reading (its variable's bound met with its inner) already lies within the
+    -- other side is that side's meet with it unchanged, so it stays a pointer, as the 'subUnionVar'
+    -- clauses keep a link: replaced by its evidence, a continuation input's @v=$/F@ met with the
+    -- spelled-out @v=∀Fun[..]@ would become the wider spelling, though it lies within it. A kept
+    -- pointer is no new evidence, so it records no binding (one recorded would be resolved back
+    -- into the slot by the enclosing meet, spelling the pointer out after all).
+    subUnion varBound (aVaenv, a@(TypeVar (TVVar n) TVInt i)) (bVaenv, b)
       | not (isTypeVar b), b /= PTopType = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
-                                               ev = intersectTypesEnv typeEnv env b (intersectTypesEnv typeEnv env (varBound n) i)
-                                           in (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
-    subUnion varBound (aVaenv, a) (bVaenv, TypeVar (TVVar n) TVInt i)
+                                               reading = intersectTypesEnv typeEnv env (varBound n) i
+                                               ev = intersectTypesEnv typeEnv env b reading
+                                           in if keepsPointer env reading b then (env, a) else (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
+    subUnion varBound (aVaenv, a) (bVaenv, b@(TypeVar (TVVar n) TVInt i))
       | not (isTypeVar a), a /= PTopType = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
-                                               ev = intersectTypesEnv typeEnv env a (intersectTypesEnv typeEnv env (varBound n) i)
-                                           in (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
+                                               reading = intersectTypesEnv typeEnv env (varBound n) i
+                                               ev = intersectTypesEnv typeEnv env a reading
+                                           in if keepsPointer env reading a then (env, b) else (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
     -- The slot VALUES are read in the ambient scope the partial sits in: an external reference
     -- inside one (@x=⊤ − P[/v=$_a]@) denotes its ambient binding, as the 'subUnionVar' clauses
     -- above read it; met under the empty seed alone it would read as unbound, so @P[/v=⊤]@ would
@@ -10317,18 +10444,24 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       -- evidence @Map[/K=Integer]@ brought to a slot @Map[/K=$^/MK]@ would otherwise vanish and
       -- the call's @/MK@ never narrow. Resolving the discoveries is the same resolve-meets-back
       -- rule 'intersectTypesWithVarEnv' applies.
-      let resolvedMeet orig m =
-            let (env', t) = intersectTypesWithVarEnv typeEnv vaenv orig m
-                fresh = discoveredBindings env' vaenv
+      let resolvedMeetIn env orig m =
+            let (env', t) = intersectTypesWithVarEnv typeEnv env orig m
+                fresh = discoveredBindings env' env
             in if H.null fresh then t else substituteKeep typeEnv fresh t
+      let resolvedMeet = resolvedMeetIn vaenv
+      -- The slot's own original is re-met INSIDE @sup@: its parent references name @sup@'s
+      -- parameters, whose values are passed under their own keys as a partial meet passes them
+      -- down ('intersectPartialsBaseN'.'deepVaenv'), so a link the concrete meet lies within is
+      -- kept ('parentRefReading') rather than spelled out.
+      let slotScope PartialType{ptVars=sv} = H.union (H.fromList [ (VarKey TVInt (TVVar k), b) | (k, b) <- H.toList sv, b /= PTopType, not (isTypeVar b) ]) vaenv
       -- A higher-order argument's slot holds its INPUT OBJECT, whose parameters are annotated by
       -- the enclosing declaration's variables (@fn(/acc=$_B, /k=$_MK, /v=$_MV)@). Those are bound
       -- per call, by the call meeting the declaration, so the object is stored with its in-scope
       -- references lifted to hops ('hopInputObject') rather than read concretely (an unbound
       -- @$_MV@ as ⊤, @$_MK@ as its bound @∀Ord@), which left nothing for a call to bind.
-      let slotValue supProp evSup met = case propName of
+      let slotValue sup supProp evSup met = case propName of
             TVArg k | supProp == PTopType, isJust (hoSlotInputObject k subType) -> hopInputObject vaenv subType
-            _ -> resolvedMeet evSup met
+            _ -> resolvedMeetIn (slotScope sup) evSup met
       let intersectedPartials sup@PartialType{ptVars=supVars} sub0 = case (slotOwnVar sup, slotRead sup) of
             (Just v, _) -> do
               -- A pointer slot names a MEMBERSHIP position (@this -> $T@): a single
@@ -10362,7 +10495,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- the drop's in-scope set extends with @sup@'s own var names — a slot value
                 -- @∀ConsList[/T=$_/T]@ under @insertStep[/T=∀Ord]@ keeps its link. The value is
                 -- detached from @sup@ here, so the enclosing scope must be supplied explicitly.
-                else Just ( typeSetAux propName (dropOutOfScopeTVExt typeEnv (H.union (ambientEnv $ joinVarArgEnv supVars H.empty) vaenv) (slotValue supProp (withEvidence supProp) met)) sup
+                else Just ( typeSetAux propName (dropOutOfScopeTVExt typeEnv (H.union (ambientEnv $ joinVarArgEnv supVars H.empty) vaenv) (slotValue sup supProp (withEvidence supProp) met)) sup
                           , closeFrame sup (resolvedMeet (withEvidence sub0) met) )
             (_, Nothing) -> Nothing
       let tightenedSuper = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType (map tightenSup supPartialList)) []

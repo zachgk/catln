@@ -55,14 +55,19 @@ Prgm
                     , omiDefs =
                         [ /Data/bindap
                             ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
                                 { eavName = /M
-                                , eavMeta = ∀/Data/Monad[ /T=TopType ]
+                                , eavMeta = ∀/Data/Monad[ /T=$_/A ]
                                 }
                             )
                             ( EAppArg { eaaArg = Value /m -> $/M } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } )
                                 }
                             ) -> $_/M =
                             ( /Data/Monad/mmap
@@ -82,14 +87,19 @@ Prgm
                             )
                         , /Data/bindap
                             ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
                                 { eavName = /F
-                                , eavMeta = ∀/Data/Functor[ /T=TopType ]
+                                , eavMeta = ∀/Data/Functor[ /T=$_/A ]
                                 }
                             )
                             ( EAppArg { eaaArg = Value /m -> $/F } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } )
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } )
                                 }
                             ) -> $_/F[ /T=TopType ] =
                             ( /Data/Functor/fmap

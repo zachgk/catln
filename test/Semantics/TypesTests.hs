@@ -1553,6 +1553,38 @@ propSiblingParamValue = property $ do
   assertTimed "pointed within spelled" $ isSubtypeOf typeEnv (singletonType pointed) (singletonType spelled)
   assertTimed "spelled within pointed" $ isSubtypeOf typeEnv (singletonType spelled) (singletonType pointed)
 
+-- | A continuation input naming a parameter its data pins is read as the data pins it
+-- ('pinnedSlotsOk'): the element-passing and the whole-passing overloads are incomparable. And a
+-- meet keeps the input's link where the other side spells the same set out
+-- ('intersectPartialsBaseN'.'subUnion'): @a ⊆ b ⇒ a ∩ b = a@.
+propPinnedInputSlot :: Property
+propPinnedInputSlot = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/pinnedInputSlot.ct"
+  let typeEnv = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  (d1, d2) <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/bap" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    [a, b] -> return (a, b)
+    _      -> fail "bap is not declared twice"
+  let decls = [d1, d2]
+  annotate $ printf "decls = %s" (show decls)
+  assertTimed "neither declaration within the other" $ not (isSubtypeOf typeEnv d1 d2) && not (isSubtypeOf typeEnv d2 d1)
+  forM_ decls $ \d -> do
+    leaf <- maybe (fail "decl is not one leaf") return (maybeGetSingleton d)
+    (fnKey, fnObj) <- case [ (k, o) | (k, v) <- H.toList (ptArgs leaf), not (S.null (pkArgs k)), Just o <- [maybeGetSingleton v] ] of
+      [kv] -> return kv
+      _    -> fail "no single higher-order arg"
+    -- The slot with its references read out to the values they name: a parent reference to the
+    -- declaration's parameter, and the input's own pointer through its parameter to the same.
+    let outer (TypeVar (TVVar n) TVParent _) = H.lookupDefault PTopType n (ptVars leaf)
+        outer t                              = t
+        spell (TypeVar (TVVar n) TVInt _) = outer (H.lookupDefault PTopType n (ptVars fnObj))
+        spell t                           = outer t
+    let spelledFn = singletonType fnObj{ptVars = fmap spell (ptVars fnObj), ptArgs = fmap spell (ptArgs fnObj)}
+    let spelled = singletonType leaf{ptArgs = H.insert fnKey spelledFn (ptArgs leaf)}
+    annotate $ printf "spelled = %s" (show spelled)
+    when (isSubtypeOf typeEnv d spelled) $
+      assertTimed "a meet keeps the operand within the other" $ isEqType typeEnv (intersectTypes typeEnv d spelled) d
+
 propHoSlotParentMeet :: Property
 propHoSlotParentMeet = property $ do
   prgm <- lift $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
@@ -1822,6 +1854,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propAppliedDataFields" (withTests 1 propAppliedDataFields)
       , HG.testProperty "propLinkedSlotUnion" (withTests 1 propLinkedSlotUnion)
       , HG.testProperty "propSiblingParamValue" (withTests 1 propSiblingParamValue)
+      , HG.testProperty "propPinnedInputSlot" (withTests 1 propPinnedInputSlot)
       , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)

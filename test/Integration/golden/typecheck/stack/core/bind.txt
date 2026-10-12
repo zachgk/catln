@@ -15,13 +15,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/bindap
-                            [ /M : ∀/Data/Monad[ /T=TopType ] ]( Value /m -> $/M )
-                            ( /fn( Value /v ) ) -> $_/M = /Data/Monad/mmap( Value /m -> TVArg /m = Value /m )
+                        [ /Data/bindap[ /A : TopType ]
+                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /m -> $/M )
+                            ( /fn( Value /v -> $_/A ) ) -> $_/M = /Data/Monad/mmap( Value /m -> TVArg /m = Value /m )
                             ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
-                        , /Data/bindap
-                            [ /F : ∀/Data/Functor[ /T=TopType ] ]( Value /m -> $/F )
-                            ( /fn( Value /v ) ) -> $_/F[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /m = Value /m )
+                        , /Data/bindap[ /A : TopType ]
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /m -> $/F )
+                            ( /fn( Value /v -> $_/A ) ) -> $_/F[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
                         ]
                     }

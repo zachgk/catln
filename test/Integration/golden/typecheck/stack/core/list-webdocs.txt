@@ -454,7 +454,9 @@ Prgm
                                 , /B=TopType
                                 , /A=∀/Data/ToString
                                 ]
-                                ( /fn( /v=TopType )=/fn[ /A=∀/Data/ToString ]( /v=∀/Data/ToString )
+                                ( /fn( /v=TopType )=/fn
+                                    [ /A=$_/A∩{ ∀/Data/ToString } ]
+                                    ( /v=$/A∩{ ∀/Data/ToString } )
                                 , /lst=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=$_/A ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/Functor/fmap
@@ -508,7 +510,9 @@ Prgm
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=∀/Data/ToString ] )
                                 , /A=∀/Data/ToString
                                 ]
-                                ( /fn( /v=TopType )=/fn[ /A=∀/Data/ToString ]( /v=∀/Data/ToString )
+                                ( /fn( /v=TopType )=/fn
+                                    [ /A=$_/A∩{ ∀/Data/ToString } ]
+                                    ( /v=$/A∩{ ∀/Data/ToString } )
                                 , /m=
                                     ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=$_/A ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/Monad/mmap
@@ -531,11 +535,11 @@ Prgm
                                     ( /acc=TopType
                                     , /v=TopType
                                     )=/fn
-                                    [ /B=∀/Data/ToString
-                                    , /A=∀/Data/ToString
+                                    [ /B=$_/B∩{ ∀/Data/ToString }
+                                    , /A=$_/A∩{ ∀/Data/ToString }
                                     ]
-                                    ( /acc=∀/Data/ToString
-                                    , /v=∀/Data/ToString
+                                    ( /acc=$/B∩{ ∀/Data/ToString }
+                                    , /v=$/A∩{ ∀/Data/ToString }
                                     )
                                 , /init=∀/Data/ToString
                                 , /lst=
@@ -560,11 +564,11 @@ Prgm
                                     ( /acc=TopType
                                     , /v=TopType
                                     )=/fn
-                                    [ /B=∀/Data/ToString
-                                    , /A=∀/Data/ToString
+                                    [ /B=$_/B∩{ ∀/Data/ToString }
+                                    , /A=$_/A∩{ ∀/Data/ToString }
                                     ]
-                                    ( /acc=∀/Data/ToString
-                                    , /v=∀/Data/ToString
+                                    ( /acc=$/B∩{ ∀/Data/ToString }
+                                    , /v=$/A∩{ ∀/Data/ToString }
                                     )
                                 , /init=∀/Data/ToString
                                 , /lst=

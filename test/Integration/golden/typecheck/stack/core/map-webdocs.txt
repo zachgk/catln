@@ -427,7 +427,9 @@ Prgm
                                 , /MW=TopType
                                 , /MK=∀/Data/ToString
                                 ]
-                                ( /fn( /v=TopType )=/fn[ /MV=∀/Data/ToString ]( /v=∀/Data/ToString )
+                                ( /fn( /v=TopType )=/fn
+                                    [ /MV=$_/MV∩{ ∀/Data/ToString } ]
+                                    ( /v=$/MV∩{ ∀/Data/ToString } )
                                 , /m=∀/Data/Map/BinTree
                                     [ /K=∀/Data/ToString
                                     , /V=∀/Data/ToString
@@ -510,13 +512,13 @@ Prgm
                                     , /v=TopType
                                     , /k=TopType
                                     )=/fn
-                                    [ /MV=∀/Data/ToString
-                                    , /MK=∀/Data/ToString
-                                    , /B=∀/Data/ToString
+                                    [ /MV=$_/MV∩{ ∀/Data/ToString }
+                                    , /MK=$_/MK∩{ ∀/Data/ToString }
+                                    , /B=$_/B∩{ ∀/Data/ToString }
                                     ]
-                                    ( /acc=∀/Data/ToString
-                                    , /v=∀/Data/ToString
-                                    , /k=∀/Data/ToString
+                                    ( /acc=$/B∩{ ∀/Data/ToString }
+                                    , /v=$/MV∩{ ∀/Data/ToString }
+                                    , /k=$/MK∩{ ∀/Data/ToString }
                                     )
                                 , /m=
                                     ( TopType | PredClass /Data/Map/BinTree

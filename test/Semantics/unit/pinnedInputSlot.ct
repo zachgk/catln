@@ -1,0 +1,11 @@
+annot(#noCore)
+
+# Two overloads whose continuation is given different things: [fm] passes the element of [m]
+# ([v -> $_A], [A] pinned by [m]'s [Fun[$T -> $_A]]) and [ap] passes [m] itself ([v -> $_F]).
+# Neither is within the other at every instance of [m], so neither contains the other.
+#noCore
+module(Pi)
+  class(Fun[$T])
+
+  bap[$F -> /Pi/Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+  bap[$F -> /Pi/Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_F) -> $_B) -> $B
