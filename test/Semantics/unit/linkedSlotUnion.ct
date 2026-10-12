@@ -1,0 +1,11 @@
+annot(#noCore)
+
+# Two overloads that differ only in which of their parameters the continuation's input names
+# ([$_A] against [$_F]). Their union must contain each of them: the slots are joined in the scope
+# the declaration's parameters bind, where [$_A] is ⊤ and [$_F] is a [Fun], not read as two ⊤s.
+#noCore
+module(Lu)
+  class(Fun[$T])
+
+  bap[$F -> /Lu/Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+  bap[$F -> /Lu/Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_F) -> $_B) -> $B

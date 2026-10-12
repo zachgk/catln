@@ -5998,9 +5998,14 @@ compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ 
     -- concrete @/m=Cons(..)@), 'unionTypes' resolves the var through the (empty) env to ⊤,
     -- so the joined leaf would be strictly WIDER than the two originals. Keep such leaves
     -- separate instead — an unmerged union is always exact.
-    tryJoin (PartialType name1 vars1 args1 PredsNone mode1) (PartialType _ vars2 args2 PredsNone _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
+    -- An argument slot sits one level inside its partial, so its references to the partial's
+    -- parameters (@fn(v)=/fn[/A=$_/A](..)@) are joined in that scope ('comparedPartialsEnv'), as
+    -- they are compared. Joined under the outer env alone, they would be out of scope there and
+    -- read as ⊤, so two slots that differ only in which parameter they name would collapse into one.
+    -- A parameter slot sits at the partial's own level and is joined under the outer env.
+    tryJoin p1@(PartialType name1 vars1 args1 PredsNone mode1) p2@(PartialType _ vars2 args2 PredsNone _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
          && all exactSlotJoin (differingPairs args1 args2 ++ differingPairs vars1 vars2)
-      then Just $ PartialType name1 (joinMap vars1 vars2) (joinMap args1 args2) PredsNone mode1
+      then Just $ PartialType name1 (joinMap vaenv vars1 vars2) (joinMap (comparedPartialsEnv typeEnv vaenv p1 p2) args1 args2) PredsNone mode1
       else Nothing
     -- Excluded middle: two leafs identical but for one conjunct held positively on one and
     -- negated on the other are together the leaf without it (@X|P∧q ∪ X|P∧¬q = X|P@). Left
@@ -6024,7 +6029,7 @@ compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ 
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
     differingPairs m1 m2 = filter (uncurry (/=)) $ H.elems $ H.intersectionWith (,) m1 m2
     exactSlotJoin (v1, v2) = not (isTypeVar v1) && not (isTypeVar v2)
-    joinMap = H.unionWith (unionTypesWithEnv typeEnv vaenv)
+    joinMap env = H.unionWith (unionTypesWithEnv typeEnv env)
 
 -- | Processes partials that have a 'PredClass' predicate. Takes an already-split list of
 -- partials (the fused 'compactPartialLeafs' pipeline splits once up front) and produces the

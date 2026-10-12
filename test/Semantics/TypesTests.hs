@@ -1509,6 +1509,21 @@ propAppliedDataFields = property $ do
   assertTimed "the rebound value is a Bx at Y" $ isSubtypeOf typeEnv applied (bxAt y)
   assertTimed "the rebound value holds no X" $ isBottomType (intersectTypes typeEnv applied (bxAt x))
 
+-- | Two overloads whose continuation slots differ only in which declaration parameter they name
+-- ('compactJoinPartials' joins them into one leaf): the union contains each of them.
+propLinkedSlotUnion :: Property
+propLinkedSlotUnion = property $ do
+  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/linkedSlotUnion.ct"
+  let typeEnv = mkTypeEnv prgm
+  let Prgm{prgmObjMap=ObjectMap om} = prgm
+  declTs <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/bap" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
+    ts@[_, _] -> return ts
+    _         -> fail "bap is not declared twice"
+  let declU = unionAllTypes typeEnv declTs
+  annotate $ printf "decls = %s" (show declTs)
+  annotate $ printf "union = %s" (show declU)
+  forM_ declTs $ \d -> assertTimed "each declaration is within the union" $ isSubtypeOf typeEnv d declU
+
 propHoSlotParentMeet :: Property
 propHoSlotParentMeet = property $ do
   prgm <- lift $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
@@ -1776,6 +1791,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propSiblingBoundClassTop" (withTests 1 propSiblingBoundClassTop)
       , HG.testProperty "propSiblingBoundOverloads" (withTests 1 propSiblingBoundOverloads)
       , HG.testProperty "propAppliedDataFields" (withTests 1 propAppliedDataFields)
+      , HG.testProperty "propLinkedSlotUnion" (withTests 1 propLinkedSlotUnion)
       , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
       , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
       , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
