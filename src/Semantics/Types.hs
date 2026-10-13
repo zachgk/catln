@@ -2503,7 +2503,17 @@ expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negP
           leafs' = case substituteKeep typeEnv newBindings (UnionType Nothing leafs []) of
             UnionType Nothing l [] -> l
             _                      -> leafs
-      in (leafs', all snd mapped)
+      -- Approximate when ANY conjunct is: a member a conjunct's expansion is missing — an open
+      -- class's member a later file declares ('openOutside'), a cyclic class's cut — may be in
+      -- the intersection, whatever the other conjuncts enumerate in full. Combined with 'all',
+      -- a conjunct complete within the names made the whole conjunction read exact, and
+      -- @~fluffy ∧ ~Vertebrate@ within @{fluffy}@ expanded to NOTHING, exactly: the empty exact
+      -- expansion proved @⊤ | ~fluffy ∧ ~Vertebrate ∧ ¬P@ inside any type (the engine refusing
+      -- over the opaque @¬P@), and a meet with it read empty, where the open @Vertebrate@ may yet
+      -- gain a member named @fluffy@ — the closed-world decision 'openOutside' exists to prevent.
+      -- A sealed conjunct's members outside the names cost no proof: the exactness-gated routes
+      -- ('predsPositiveSealed') decide such a conjunction by its full expansion.
+      in (leafs', any snd mapped)
     -- De Morgan: ¬(p1 ∧ ... ∧ pn) = ¬p1 ∨ ... ∨ ¬pn.
     -- Compute union of complements directly instead of topFiltered - intersect(expand(pi)),
     -- which avoids approximation errors from PtArgAny/PtArgExact subtraction.
