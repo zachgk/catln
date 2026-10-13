@@ -114,6 +114,17 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "An annotation that fails is noted with what it failed with. This one asks for the page to be
+                shown while it is being shown." }
+            )
+        , /Catln/#print
+            ( Value /p= /Llm/lcmPrompt
+                ( Value input= CStr
+                    { csValue = "And again?" }
+                )
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "A definition the compiler cannot build is noted with what the compiler said." }
             )
         , #hint

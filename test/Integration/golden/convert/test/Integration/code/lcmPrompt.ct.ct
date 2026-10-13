@@ -13,6 +13,9 @@ double(x)= x + x
   and noted as failing.
 > double(x= 3)
   >>> 5
+# An annotation that fails is noted with what it failed with. This one asks for the page to be
+  shown while it is being shown.
+> /Llm/lcmPrompt(input= "And again?")
 # A definition the compiler cannot build is noted with what the compiler said.
 anyOver[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
 anyOver(lst, fn(v))= /Data/List/any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))

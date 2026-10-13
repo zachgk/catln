@@ -143,6 +143,19 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "An annotation that fails is noted with what it failed with. This one asks for the page to be
+                shown while it is being shown." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /Llm/lcmPrompt
+                ( Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "And again?" }
+                )
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A definition the compiler cannot build is noted with what the compiler said." }
             )
         , /#hint
