@@ -10,6 +10,9 @@ Prgm
                             ( fn( Value v -> $_/A ) -> $/M ) -> $/M
                         , /Data/bindap[ /B : TopType ][ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value m -> $/F )
+                            ( fn( Value v -> $_/F ) -> $_/B ) -> $/B
+                        , /Data/bindap[ /B : TopType ][ /A : TopType ]
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value m -> $/F )
                             ( fn( Value v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
                         ]
                     , omiRuntimeDecls = []
@@ -19,6 +22,9 @@ Prgm
                             [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value m -> $/M )
                             ( fn( Value v -> $_/A ) )= /Data/Monad/mmap( Value m= Value m )
                             ( fn( Value v )= fn( Value v= Value v ) )
+                        , /Data/bindap
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value m -> $/F )
+                            ( fn( Value v -> $_/F ) )= fn( Value v= Value m )
                         , /Data/bindap[ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value m -> $/F )
                             ( fn( Value v -> $_/A ) )= /Data/Functor/fmap( Value lst= Value m )
@@ -35,14 +41,16 @@ Prgm
                 { csValue = "# Bind
                 The bind operator [<-] is syntactic sugar that runs the rest of a function in a sub-context.
                 A statement [x <- m] followed by the remaining body [rest] desugars to
-                [bindap(m= m, fn(v)= rest)], where the continuation [fn] binds [x] (the desugar inlines [rest] as
-                a higher-order lambda, so a bind-using function needs a declared return type to pin the result).
-                [bindap] has overloaded arms selected by the value's type and the continuation: [mmap] for a
-                [Monad] and [fmap] for a [Functor]. A value that is both (e.g. [Maybe]) may take either arm —
-                the arms are alternatives ([#exist]), and the result type the call must reach chooses: a
-                continuation returning a [Maybe] into a declared [Maybe[$T -> Integer]] can only be the
-                [mmap] arm, since [fmap] would nest the result. The [ap] arm (a plain value) is kept below,
-                commented out, until its dispatch is implemented." }
+                [bindap(m= m, fn(v)= cont(arg= v))], where [cont(arg@x)= rest] is a sub function holding the
+                rest of the body (a bind-using function needs a declared return type to pin the result).
+                [bindap] has three arms, which are alternatives ([#exist]):
+                - [mmap] passes each element of a [Monad] and flattens the monads the continuation returns.
+                - [fmap] passes each element of a [Functor] and collects what the continuation returns.
+                - [ap] passes the [Functor] itself, whole.
+                An arm is ruled out where the continuation cannot take what it passes ([x + 1] takes no
+                [Maybe], so not [ap]) or where its result cannot be what the call must reach (a continuation
+                returning a [Maybe] into a declared [Maybe[$T -> Integer]] cannot be [fmap], which would nest
+                it). Where more than one arm remains, any of them may be chosen." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -54,19 +62,11 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "[ap] arm: a plain value. The continuation consumes the whole value (the [ap] behaviour, inlined —" }
+                { csValue = "[ap] arm: a [Functor] passed whole. The continuation consumes the container itself rather than" }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "routing through a second higher-order [ap] call would not propagate the return type)." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "bindap[$X, $B](m -> $X, fn(v -> $X) -> $B) -> $B" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "bindap(m, fn(v))= fn(v= m)" }
+                { csValue = "its elements." }
             )
         , /Catln/#md
             ( Value /text= CStr

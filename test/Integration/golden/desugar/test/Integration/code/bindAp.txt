@@ -1,7 +1,24 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
+                ( "/orZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ orZero
+                            ( Value o -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ orZero
+                            ( Value o= /Data/Maybe/Some( Value value ) ) -> /Data/Primitive/Integer = Value value
+                        , orZero( Value o= Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -12,37 +29,48 @@ Prgm
                     }
                 )
             ,
-                ( "/inc"
+                ( "/apBind.$9471e8"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ inc( Value a -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /Data/bindap( Value m= Value a )
-                            ( fn( Value v@Value y )= /operator+( Value /l= Value y )
-                                ( Value /r= CInt 1 )
+                        [ apBind.$9471e8
+                            ( Value $9471e8-arg@Value x )= orZero( Value o= Value x )
+                        ]
+                    }
+                )
+            ,
+                ( "/apBind"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ apBind
+                            ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /Data/bindap( Value m= Value m )
+                            ( fn( Value v )= apBind.$9471e8
+                                ( Value /$9471e8-arg= Value v )
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Exercises the bind operator ([<-]) routing through [bindap]'s [ap] arm: the bound value is a" )
+            ( Value /text= CStr
+                { csValue = "Exercises the bind operator ([<-]) routing through [bindap]'s [ap] arm. The continuation consumes" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "plain (non-container) value, so the continuation consumes the whole value. A bind-using function" )
-        , /Catln/#md
-            ( Value /text= CStr "needs a declared return type — the bind desugars to a [bindap] call whose result type is a bare" )
-        , /Catln/#md
-            ( Value /text= CStr "variable that the return type pins." )
-        , /Catln/#md
-            ( Value /text= CStr "A single plain-value bind: [y <- a] binds the whole [Integer], and the continuation returns" )
-        , /Catln/#md
-            ( Value /text= CStr "[y + 1]." )
+            ( Value /text= CStr
+                { csValue = "the whole [Maybe] rather than its element, so neither the [fmap] nor the [mmap] arm can accept it." }
+            )
         ]
     }

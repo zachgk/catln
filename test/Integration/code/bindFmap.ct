@@ -1,0 +1,15 @@
+import "core"
+
+
+# Exercises the bind operator ([<-]) routing through [bindap]'s [fmap] arm. The continuation returns a
+# plain [Integer], so it cannot be the [mmap] arm (which needs the continuation to return the monad)
+# and the declared [Maybe] return rules out the [ap] arm (which would return the [Integer] itself).
+fmapBind(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
+  x<- m
+
+  x + 1
+
+main{io -> IO} =
+  #assert(test= fmapBind(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 6))
+  #assert(test= fmapBind(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  io

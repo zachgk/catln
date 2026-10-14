@@ -1,0 +1,116 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/fmapBind"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /fmapBind
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            ) ->
+                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
+                                ( !
+                                    ( PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Functor[ /T=TopType ] ) && !( PredClass /Data/Algebra/Add )
+                                )
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Algebra/Add =
+                                        ( /fmapBind.$9471e8
+                                            ( EAppArg
+                                                { eaaArg = Value /$9471e8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ ∀/Data/Algebra/Add
+                                        )
+                                    }
+                                ) ↦
+                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
+                                    ( !
+                                        ( PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Functor[ /T=TopType ] ) && !( PredClass /Data/Algebra/Add )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/fmapBind.$9471e8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /fmapBind.$9471e8
+                            ( EAppArg
+                                { eaaArg = Value /$9471e8-arg@Value /x -> ∀/Data/Algebra/Add }
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Add
+                                , fromList []
+                                , []
+                                )
+                            , /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=∀/Data/Algebra/Add
+                                )
+                            , []
+                            ) =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                ) ↦ ∀/Data/Algebra/Add
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Exercises the bind operator ([<-]) routing through [bindap]'s [fmap] arm. The continuation returns a"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "plain [Integer], so it cannot be the [mmap] arm (which needs the continuation to return the monad)"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "and the declared [Maybe] return rules out the [ap] arm (which would return the [Integer] itself)."
+                }
+            )
+        ]
+    }
