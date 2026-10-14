@@ -128,18 +128,36 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
             annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
         _ -> undefined
       RawAnnot annot | nameStr (exprPath annot) == printAnnot ->
-        let resultStr = case H.lookup (partialKey (mkName resultAnnotText)) $ rawExprAppliedArgsMap annot of
-              (Just (Just (_, Just (RawCExpr _ (CStr s))))) -> concatMap (\l -> "\n" ++ formatIndent (indent + 1) ++ (if null l then ">>>" else ">>> " ++ l)) (lines s)
-              _ -> ""
-        in case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
-             (Just (Just (_, Just e))) -> printf "> %s%s" (formatExpr e) resultStr
+        case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
+             (Just (Just (_, Just e))) -> printf "> %s%s" (formatExpr e) (resultLines annot)
              e -> error $ printf "Can't format unexpected print annot %s" (show e)
+      RawAnnot annot | Just q <- queryText annot -> printf "q> %s%s" q (resultLines annot)
       RawAnnot annot | nameStr (exprPath annot) == noteAnnot ->
         let argStr k = case H.lookup (partialKey (mkName k)) $ rawExprAppliedArgsMap annot of
               (Just (Just (_, Just (RawCExpr _ (CStr s))))) -> s
               e -> error $ printf "Can't format unexpected note annot %s" (show e)
         in intercalate ("\n" ++ formatIndent indent) $ map (\l -> if null l then "!!!" else "!!! " ++ l) $ lines $ printf "%s: %s" (argStr noteAnnotKind) (argStr noteAnnotText)
+      RawAnnot annot | Just _ <- resultText annot -> formatExpr (withoutResult annot) ++ resultLines annot
       RawAnnot annot -> formatExpr annot
+
+    -- The result of an annotation, which is written as the @>>>@ lines under it.
+    resultText annot = case rawExprArgNamed resultAnnotText annot of
+      Just (RawCExpr _ (CStr s)) -> Just s
+      _                          -> Nothing
+    resultLines annot = maybe "" (concatMap (\l -> "\n" ++ formatIndent (indent + 1) ++ (if null l then ">>>" else ">>> " ++ l)) . lines) (resultText annot)
+    withoutResult = rawExprWithoutArg resultAnnotText
+
+    -- What a query written @q> text@ asks: a @#q@ asking one line of text, and holding nothing
+    -- else but its result.
+    queryText annot
+      | nameStr (exprPath annot) `elem` [queryAnnot, queryAnnotShort]
+      , all (\(spread, oa) -> not spread && any (`rawArgNamed` oa) [queryAnnotText, resultAnnotText]) (rawTupleArgs annot)
+      , Just (RawCExpr _ (CStr q)) <- rawExprArgNamed queryAnnotText annot
+      , '\n' `notElem` q
+      , not (null q)
+      , q == dropWhileEnd (== ' ') q
+      = Just q
+      | otherwise = Nothing
 
 -- |
 -- A root statement has an additional ending newline

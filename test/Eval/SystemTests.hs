@@ -31,6 +31,7 @@ import           Eval.Common               (HttpPost, MockIO, getMockIOOutput,
 import           Eval.Runtime.System       (realHttpPost)
 import           Network.HTTP.Types        (status500)
 import           Semantics                 (testCtssConfig)
+import           Syntax.Ct.Formatter       (formatRootPrgm)
 import           Syntax.Parsers            (mkDesCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -44,12 +45,14 @@ systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup 
   , testMockRefusesTheNetwork getCtss
   , testLlmAsksTheConfiguredModel getCtss
   , testLlmWithoutAModelAsksNothing getCtss
+  , testProcessAnswersQueries getCtss
+  , testProcessWithoutAModelAnswersNothing getCtss
   , testRealHttpPost
   ]
   where
     -- One service for every fixture, so the library they import is built once rather than once
     -- per test.
-    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct", fixture "llm.ct"] :: IO CTSS
+    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct", fixture "llm.ct", fixture "query.ct"] :: IO CTSS
 
 fixture :: String -> FilePath
 fixture name = "test/Integration/code/artifacts/system/" ++ name
@@ -132,6 +135,50 @@ testLlmWithoutAModelAsksNothing getCtss = testCase "IO.llm without OPENAI_MODEL 
   case res of
     CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
     CRes _ _   -> assertEqual "no reply" "no reply\n" out
+
+-- | Processes a fixture's annotations against the mock given ('getProcessedMock'): the page as it is
+-- written back, and how many annotations were processed and came back unchanged.
+processWith :: IO CTSS -> FilePath -> MockIO -> IO (CRes (String, Int, Int))
+processWith getCtss page mockIO = do
+  ctss <- getCtss
+  name <- mkDesCanonicalImportStr testCtssConfig page
+  ctssBuildFrom ctss name
+  res <- runCResT $ getProcessedMock ctss mockIO name
+  return $ fmap (\(prgm, processed, unchanged) -> (formatRootPrgm prgm, processed, unchanged)) res
+
+-- | @catln process@ end to end: each unanswered @q>@ is asked of the model with the page it is
+-- written on, and written back with the reply as its @>>>@ lines. One already answered is not asked.
+testProcessAnswersQueries :: IO CTSS -> TestTree
+testProcessAnswersQueries getCtss = testCase "processing a page asks each unanswered q> and writes the reply under it" $ do
+  sent <- newIORef []
+  let answer :: HttpPost
+      answer _ _ reqBody = do
+        modifyIORef sent (reqBody:)
+        return $ Right "{\"choices\": [{\"message\": {\"content\": \"Twice x.\\nAlways.\"}}]}"
+  let env = H.fromList [("OPENAI_BASE_URL", "http://model.test/v1"), ("OPENAI_MODEL", "m-1")]
+  mockIO <- newMockIOWith env answer
+  res <- processWith getCtss (fixture "query.ct") mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (page, processed, unchanged) -> do
+      assertEqual "only the unanswered query is asked" 1 (length requests)
+      assertBool "it is asked with the page it is written on" (all ("double(x)= x + x" `isInfixOf`) requests)
+      assertBool "and with the question" (all ("What does double do?" `isInfixOf`) requests)
+      assertEqual "one annotation is processed, and it changed" (1, 0) (processed, unchanged)
+      assertBool ("the reply is written under the question:\n" ++ page) ("q> What does double do?\n  >>> Twice x.\n  >>> Always.\n" `isInfixOf` page)
+      assertBool ("the answered query is left as it was:\n" ++ page) ("q> Is double fast?\n  >>> Yes.\n" `isInfixOf` page)
+
+-- | Without a model to ask, nothing is sent, and the query is written back as it was.
+testProcessWithoutAModelAnswersNothing :: IO CTSS -> TestTree
+testProcessWithoutAModelAnswersNothing getCtss = testCase "processing a page without OPENAI_MODEL leaves its queries unanswered" $ do
+  mockIO <- newMockIOWith H.empty (\_ _ _ -> return $ Left "no request should be sent")
+  res <- processWith getCtss (fixture "query.ct") mockIO
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (page, processed, unchanged) -> do
+      assertEqual "the query is processed, and comes back unchanged" (1, 1) (processed, unchanged)
+      assertBool ("it is written back unanswered:\n" ++ page) ("q> What does double do?\nq> Is double fast?" `isInfixOf` page)
 
 -- | The transport, against a server answering on a port of this machine: the header and the UTF-8
 -- body arrive as sent, and a status that is not a success is reported with the body it came with.

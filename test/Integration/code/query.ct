@@ -1,0 +1,18 @@
+import "core"
+import "llm"
+
+
+# Questions about a page, written on the page. Each is a [/Llm/#q], asked by `catln process` and
+  answered under it. They are not asked when the page is compiled, run, or tested.
+double(x -> Integer) -> Integer
+  # [double] is twice [x].
+  q> Is double ever negative?
+double(x)= x + x
+
+q> What does double do?
+q> Is double fast?
+  >>> Yes.
+  >>> It is one addition.
+q> A question written as #q, with a reply too long for one line
+  >>> It is written back as q>.
+#q(input= "A question of\ntwo lines")

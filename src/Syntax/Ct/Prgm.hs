@@ -916,6 +916,41 @@ rawExprAppliedArgsMap = H.fromList . mapMaybe mapArg . rawExprAppliedArgs
     mapArg RawObjArr{roaObj=Just oe, roaArr=Nothing} = Just (rawInExprSingleton oe, Nothing)
     mapArg _ = Nothing
 
+-- | Whether an applied argument is written @name= value@ for the given @name@.
+--
+-- Read from what is written rather than from the argument's key ('rawInExprSingleton'), which an
+-- argument written by position has none of: in @#name("server")@ the string stands where a name
+-- would.
+rawArgNamed :: String -> RawObjArr RawExpr m -> Bool
+rawArgNamed name RawObjArr{roaObj=Just (RawValue _ n), roaArr=Just (Just _, _)} = partialKey (makeAbsoluteName n) == partialKey (mkName name)
+rawArgNamed _ _                                                                  = False
+
+-- | Each argument applied to an expression, with whether it is spread, for any form of expression.
+-- Unlike 'rawExprAppliedArgs' it raises on none: it is read of whatever an annotation was written as.
+rawTupleArgs :: RawExpr m -> [(Bool, RawObjArr RawExpr m)]
+rawTupleArgs (RawTupleApply _ (_, be) args) = rawTupleArgs be ++ args
+rawTupleArgs (RawVarsApply _ e _)           = rawTupleArgs e
+rawTupleArgs (RawParen e)                   = rawTupleArgs e
+rawTupleArgs _                              = []
+
+-- | The value of the applied argument written @name= value@, where there is one.
+rawExprArgNamed :: String -> RawExpr m -> Maybe (RawExpr m)
+rawExprArgNamed name e = listToMaybe [v | (False, oa@RawObjArr{roaArr=Just (Just v, _)}) <- rawTupleArgs e, rawArgNamed name oa]
+
+-- | The expression without its applied argument written @name= value@ ('rawArgNamed'). An
+-- application left with no arguments is its base.
+rawExprWithoutArg :: String -> RawExpr m -> RawExpr m
+rawExprWithoutArg name (RawTupleApply m (bm, be) args) = case filter keep args of
+  []    -> be'
+  args' -> RawTupleApply m (bm, be') args'
+  where
+    be' = rawExprWithoutArg name be
+    keep (False, oa) = not (rawArgNamed name oa)
+    keep _           = True
+rawExprWithoutArg name (RawVarsApply m e vars) = RawVarsApply m (rawExprWithoutArg name e) vars
+rawExprWithoutArg name (RawParen e) = RawParen (rawExprWithoutArg name e)
+rawExprWithoutArg _ e = e
+
 rawInExprSingleton :: (MetaDat m, Show m) => RawExpr m -> ArgName
 rawInExprSingleton e = maybe
   (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ rawExprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))

@@ -93,6 +93,27 @@ module(Llm)
       written as it was.
     #runtime("llmShowPage")
 
+  # ## Asking about a page from the page
+    A question about a page can be written on the page itself, as `q> ` and then the question. It
+    is a [#q], and is asked by `catln process`, which writes the reply under the question as the
+    `>>>` lines of its [result], the way `catln test --update` writes what a `> expr` prints. A
+    question with a reply is not asked again; its `>>>` lines are removed to ask it again.
+  annot(#q(input -> String))
+    # [#q] is a question for a model about the page it is written on, asked by [lcm].
+  annot(#q(input -> String, result -> String))
+    # The [#q] can also hold the [result] the model replied with.
+
+  /Catln/process(io -> /Catln/IO, annot -> #q(input -> String)) -> #q..
+    # A [#q] is processed by asking it with the page it is written on, and is updated to hold the
+      reply as its [result]. Where there is no reply it is left as it was.
+    #runtime("callerPage")
+  /Catln/process(io -> /Catln/IO, annot= #q(input -> String), page -> /Catln/RawPrgm..)= qAnswered(input= input, reply= io.lcm(input= input, page= page))
+
+  qAnswered(input -> String, reply -> /Data/Maybe[$T -> String]) -> #q..
+    # [qAnswered] is the [#q] asking [input], holding the [reply] where there is one.
+  qAnswered(input, reply= /Data/Maybe/Nothing)= #q(input= input)
+  qAnswered(input, reply= /Data/Maybe/Some(value))= #q(input= input, result= value)
+
   # ## The request
   llmRequest(model -> String, input -> String) -> String
     # [llmRequest] is the body asking [model] about [input]: one message, from the user.

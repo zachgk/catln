@@ -13,11 +13,14 @@
 -- same way, as the @!!!@ lines of a note under the statement it is about.
 --------------------------------------------------------------------
 
+{-# LANGUAGE PatternSynonyms #-}
+
 module Syntax.Ct.Results where
 
+import           Control.Monad              (forM)
 import           Control.Monad.Trans.Writer (execWriter, tell)
 import qualified Data.HashMap.Strict        as H
-import           Data.List                  (mapAccumL, maximumBy)
+import           Data.List                  (mapAccumL, maximumBy, sortOn)
 import           Data.Maybe                 (fromMaybe, isNothing, mapMaybe)
 import           Data.Ord                   (comparing)
 import           Data.UUID                  (UUID)
@@ -27,6 +30,7 @@ import           CRes
 import           CtConstants
 import           Semantics.Prgm
 import           Semantics.Types
+import           Semantics.Val              (Val (..), pattern StrVal)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.MapRawMeta       (mapMetaRawStatementM)
 import           Syntax.Ct.Prgm
@@ -64,6 +68,28 @@ setPrintResults goldens = mapRawAnnots fixAnnot
       , Just golden <- lookup crange goldens
       = RawAnnot $ printWithResult (getExprMeta annot) pExpr golden
     fixAnnot annot = RawAnnot annot
+
+-- | Each annotation rewritten as the one given for its meta ID, which keeps that meta and so is still
+-- the same annotation to anything that finds annotations by their meta.
+setAnnotsById :: (MetaDat m, Show m) => H.HashMap UUID (RawExpr m) -> RawPrgm m -> RawPrgm m
+setAnnotsById updated = mapRawAnnots $ \annot -> RawAnnot $ case H.lookup (getMetaId $ getExprMeta annot) updated of
+  Just annot' -> annot' `setExprMeta` getExprMeta annot
+  Nothing     -> annot
+
+-- | A value written as the expression constructing it: a literal, or a tuple of its name applied to
+-- each of its arguments written the same way. A value only the runtime can hold has no such
+-- expression.
+valToRawExpr :: (MetaDat m, Show m) => Val r -> Either String (RawExpr m)
+valToRawExpr (StrVal s) = Right $ rawStr s
+valToRawExpr (IntVal i) = Right $ rawInt i
+valToRawExpr (FloatVal d) = Right $ RawCExpr emptyMetaN (CFloat d)
+valToRawExpr (CharVal c) = Right $ RawCExpr emptyMetaN (CChar c)
+valToRawExpr (TupleVal name args) = do
+  args' <- forM (sortOn fst $ H.toList args) $ \(argName, argVal) ->
+    (Just $ partialKey $ mkName $ dropWhile (== '/') argName,) <$> valToRawExpr argVal
+  return $ rawVal name `applyRawArgs` args'
+valToRawExpr RuntimeVal{} = Left "a value only the runtime holds the inside of has no expression to write it as"
+valToRawExpr NoVal = Left "no value has no expression to write it as"
 
 -- | What became of an annotation that was asked to be shown: the text it was shown as, or what
 -- went wrong in showing it.

@@ -21,8 +21,9 @@ import           Text.Megaparsec.Char
 
 import           CtConstants
 
+import           Control.Monad              (when)
 import           Data.Either                (lefts, rights)
-import           Data.List                  (intercalate)
+import           Data.List                  (dropWhileEnd, intercalate)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types            (Constant (CStr), mkName,
@@ -58,30 +59,66 @@ pCommentStatement = do
   c <- pComment
   return $ RawStatementTree (RawAnnot c) []
 
+-- | One @>>>@ line under an annotation: a line of what it resulted in.
+pResultLine :: Parser String
+pResultLine = do
+  _ <- string ">>>"
+  _ <- optional (char ' ')
+  takeLine
+
+-- | An annotation given the @>>>@ lines written under it, joined, as its 'resultAnnotText'.
+withResultLines :: PCompAnnot -> [String] -> PCompAnnot
+withResultLines annot [] = annot
+withResultLines annot rls = annot `applyRawArgs` [(Just $ partialKey (mkName resultAnnotText), rawStr (intercalate "\n" rls))]
+
 pPrintStatement :: Parser PStatementTree
-pPrintStatement = do
-  (e, resultLines) <- L.indentBlock scn p
-  let baseArg = (Just $ partialKey (mkName printAnnotText), e)
-      resultArg = [(Just $ partialKey (mkName resultAnnotText), rawStr (intercalate "\n" resultLines)) | not (null resultLines)]
-      annot = rawVal printAnnot `applyRawArgs` (baseArg : resultArg)
-  return $ RawStatementTree (RawAnnot annot) []
+pPrintStatement = L.indentBlock scn p
   where
-    pResultLine = do
-      _ <- string ">>>"
-      _ <- optional (char ' ')
-      takeLine
     p = do
       _ <- string "> "
       e <- pExpr
-      return (L.IndentMany Nothing (\rls -> return (e, rls)) pResultLine)
+      let annot = rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), e)]
+      return (L.IndentMany Nothing (\rls -> return $ RawStatementTree (RawAnnot $ withResultLines annot rls) []) pResultLine)
+
+-- | A question written @q> text@: the rest of the line, as written, is what a @#q@ asks.
+--
+-- Unlike a print, the annotation is positioned at its line. Nothing else in it is, and both
+-- answering it (the page it is asked about is the one its position names) and writing the answer
+-- back (by that position) need to know where it is written.
+pQueryStatement :: Parser PStatementTree
+pQueryStatement = L.indentBlock scn p
+  where
+    p = do
+      start <- getSourcePos
+      _ <- try $ string "q> "
+      text <- takeLine
+      end <- getSourcePos
+      let m = emptyMeta start end
+          annot = RawValue m (mkName queryAnnot) `applyRawArgs` [(Just $ partialKey (mkName queryAnnotText), RawCExpr m (CStr $ dropWhileEnd (== ' ') text))]
+      return (L.IndentMany Nothing (\rls -> return $ RawStatementTree (RawAnnot $ withResultLines annot rls) []) pResultLine)
+
+-- | An annotation statement. The @>>>@ lines under it are its 'resultAnnotText', as under a print,
+-- and the statements under it are its children.
+pAnnotStatement :: Parser PStatementTree
+pAnnotStatement = L.indentBlock scn p
+  where
+    p = do
+      annot <- pCompAnnot
+      return (L.IndentMany Nothing (pack annot) (Left <$> pResultLine <|> Right <$> pStatementTree))
+    pack annot subs = do
+      let rls = lefts subs
+      when (not (null rls) && isJust (rawExprArgNamed resultAnnotText annot)) $
+        fail "An annotation with a result argument can not also be given >>> result lines"
+      return $ RawStatementTree (RawAnnot $ withResultLines annot rls) (rights subs)
 
 
 pStatementTree :: Parser PStatementTree
 pStatementTree = do
   notFollowedBy newline
   pCommentStatement
+    <|> pQueryStatement
     <|> pPrintStatement
-    <|> liftPStatement (RawAnnot <$> pCompAnnot)
+    <|> pAnnotStatement
     <|> liftPStatement pDeclStatement
 
 pNothingNewline :: Parser (Maybe a)

@@ -11,8 +11,9 @@
 -- It supports partial and incremental compilation and rebuilding, for both the Main build and pieces like webdocs or IDE integration.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module CtService where
 import           Control.Concurrent      (MVar, forkIO, modifyMVar, modifyMVar_,
@@ -44,7 +45,8 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           evalBuildAllOf, evalCallTo,
                                           evalDShowCall, evalDebugExprPrgm,
                                           evalDebugPrgm, evalPageAsk,
-                                          evalPageValues, evalRun, evalRunMock,
+                                          evalPageValues, evalProcessPage,
+                                          evalRun, evalRunMock,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EExpr, EPrgm, EvalMetaDat,
@@ -52,8 +54,10 @@ import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           SSF (..), TExpr,
                                           TestKind (TestRefinementProof),
                                           TestResult, Val, esAsks, joinedStage,
-                                          newEvalService, oaTestId,
+                                          mockIOHandle, newEvalService,
+                                          oaTestId, pattern IOVal,
                                           withRunSources)
+import           Eval.Runtime.System     (realIOHandle)
 import           Eval.SyntaxTree         (withRunSyntax)
 import           Eval.Testing            (TestCheck (StaticCheck),
                                           TestDesc (..), evalPrints, evalTest,
@@ -73,11 +77,13 @@ import           Syntax.Ct.Builder       (applyRawArgs, rawVal)
 import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
                                           validPrgm)
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
+import           Syntax.Ct.Formatter     (formatExpr)
 import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs,
                                           rawStatementExprIds)
 import           Syntax.Ct.Parser.Expr   (pExpr)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+import           Syntax.Ct.Results       (setAnnotsById, valToRawExpr)
 import           Syntax.InferImport      (findImportPath)
 import           Syntax.Native.Parser    (isNativeImport)
 import           Syntax.Parsers
@@ -1339,6 +1345,40 @@ getEvaluatedMock ctss mockIO prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
   pages <- lift $ ctssPagesOf ctss (Just prgmName)
   fst <$> evalRunMock pages mockIO fun prgmName base
+
+-- | The page of a file with each of its annotations that can be processed updated to what
+-- processing it gives ('Eval.evalProcessPage'), performing what processing does through @ioVal@.
+--
+-- Each updated annotation is written back as the expression of its value
+-- ('Syntax.Ct.Results.valToRawExpr'), so the page is the one the file was compiled from, and can be
+-- formatted back into it. What is returned with it is how many annotations were processed, and how
+-- many of those came back as they were.
+getProcessedWith :: Val -> CTSS -> FileImport -> CResT IO (RawPrgm (), Int, Int)
+getProcessedWith ioVal ctss prgmName = do
+  file <- case importPath prgmName of
+    Just f  -> return f
+    Nothing -> fail $ printf "%s is not a file to process" (show prgmName)
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
+  pages <- lift $ ctssPagesOf ctss (Just prgmName)
+  prgm <- asCResT $ prgmFromGraphData prgmName base
+  (page, processed) <- evalProcessPage pages ioVal file prgm
+  updated <- forM processed $ \val -> case valToRawExpr val of
+    Right e  -> return e
+    Left err -> fail $ printf "An annotation was processed to %s, which can not be written: %s" (show val) err
+  let page' = setAnnotsById updated page
+  let unchanged = length [() | (i, e) <- H.toList updated, Just e0 <- [H.lookup i (pageAnnotsById page)], formatExpr e == formatExpr e0]
+  return (page', H.size updated, unchanged)
+  where
+    pageAnnotsById (RawPrgm _ trees) = H.fromList $ concatMap treeAnnots trees
+    treeAnnots (RawStatementTree st subs) = [(getMetaId $ getExprMeta a, a) | RawAnnot a <- [st]] ++ concatMap treeAnnots subs
+
+-- | 'getProcessedWith' performing its effects for real.
+getProcessed :: CTSS -> FileImport -> CResT IO (RawPrgm (), Int, Int)
+getProcessed = getProcessedWith (IOVal 0 realIOHandle)
+
+-- | 'getProcessedWith' performing its effects on a 'MockIO'.
+getProcessedMock :: CTSS -> MockIO -> FileImport -> CResT IO (RawPrgm (), Int, Int)
+getProcessedMock ctss mockIO = getProcessedWith (IOVal 0 (mockIOHandle mockIO)) ctss
 
 getEvalBuild :: CTSS -> FileImport -> String -> CResT IO Val
 getEvalBuild ctss prgmName fun = do

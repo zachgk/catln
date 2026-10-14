@@ -37,6 +37,7 @@ import           Eval.ExprBuilder
 import           Eval.Runtime
 import           Eval.Runtime.System     (realIOHandle)
 import           Semantics
+import           Semantics.Annots        (isAnnot)
 import           Semantics.CtType        (fromCt)
 import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
                                           reachesHasCutSubtypeOf,
@@ -593,20 +594,13 @@ llmShowPage = EEvalPrim "llmShowPage" prim
 
     showPage :: RawPrgm () -> EvalM Val
     showPage page = do
-      env@Env{evTbEnv=TBEnv{tbPrgm=Prgm objMap _ globalAnnots}, evShowingPages, evPages} <- get
+      env@Env{evTbEnv=TBEnv{tbPrgm}, evShowingPages, evPages} <- get
       let pageHash = hash page
       when (S.member pageHash evShowingPages) $
         evalError "llmShowPage was asked to show a page while showing it, which only the page being shown can be answered by"
       let env' = env{evArgs = H.empty, evCallStack = [], evShowingPages = S.insert pageHash evShowingPages}
-      let written = S.fromList $ rawPrgmAnnotIds page
       let annotId = getMetaId . getExprMeta
-      let annots = [([], a) | a <- globalAnnots, S.member (annotId a) written]
-                ++ [ (os, a)
-                   | oa <- flatObjectMap objMap
-                   , let os = [(getExprPartialType $ oaObjExpr oa, oa)]
-                   , a <- oaAnnots oa
-                   , S.member (annotId a) written ]
-      shown <- forM annots $ \(os, a) -> fmap (annotId a,) <$> liftIO (showAnnot env' os a)
+      shown <- forM (pageAnnots page tbPrgm) $ \(os, a) -> fmap (annotId a,) <$> liftIO (showAnnot env' os a)
       let notes = case pageFile page >>= (`H.lookup` evPages) of
             Just EvalPage{epNotes} -> epNotes
             Nothing                -> []
@@ -614,7 +608,7 @@ llmShowPage = EEvalPrim "llmShowPage" prim
 
     showAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> IO (Maybe AnnotShown)
     showAnnot env os a
-      | Just _ <- printResultArg a = do
+      | isAnnot printAnnot a, Just _ <- printResultArg a = do
           res <- runCResT $ evalDShowAnnot env os a
           return $ case res of
             CErr notes -> Just $ ShownFailed notes
@@ -633,10 +627,73 @@ llmShowPage = EEvalPrim "llmShowPage" prim
     pageFile (RawPrgm _ trees) = listToMaybe [sourceName start | tree <- trees, Just start <- [treeStart tree]]
     treeStart (RawStatementTree st subs) = statementStart st <|> asum (map treeStart subs)
 
-    rawPrgmAnnotIds (RawPrgm _ trees) = concatMap treeIds trees
+-- | The meta ID of each annotation a page writes, at whatever depth.
+rawPrgmAnnotIds :: RawPrgm m -> [UUID]
+rawPrgmAnnotIds (RawPrgm _ trees) = concatMap treeIds trees
+  where
     treeIds (RawStatementTree st subs) = stIds st ++ concatMap treeIds subs
     stIds (RawAnnot a) = [getMetaId $ getExprMeta a]
     stIds _            = []
+
+-- | The annotations of a program written on a page, each with the object it is written on ('os'),
+-- found by the meta the page and the program it was compiled into share.
+pageAnnots :: RawPrgm m -> EPrgm -> [([(PartialType, EObjArr)], EExpr)]
+pageAnnots page (Prgm objMap _ globalAnnots) =
+  [([], a) | a <- globalAnnots, S.member (annotId a) written]
+  ++ [ (os, a)
+     | oa <- flatObjectMap objMap
+     , let os = [(getExprPartialType $ oaObjExpr oa, oa)]
+     , a <- oaAnnots oa
+     , S.member (annotId a) written ]
+  where
+    written = S.fromList $ rawPrgmAnnotIds page
+    annotId = getMetaId . getExprMeta
+
+-- | What processing an annotation updates it to: @\/Catln\/process(io, annot)@ ('processFun'),
+-- evaluated with @ioVal@ as its @io@. 'Nothing' where the annotation is not processable, which is
+-- where this program has no arm of 'processFun' taking it to an annotation of the same name.
+--
+-- Asked closed-world, as 'evalShowAnnot' asks whether an annotation can be shown: whether this
+-- program, as written, has an arm for it.
+--
+-- The call is positioned where the annotation is written. It is the call a page makes of its
+-- annotation, and an arm asking for the page it is written in (@callerPage@) is asking for that
+-- one, rather than for the library declaring the arm.
+evalProcessAnnot :: Env -> Val -> [(PartialType, EObjArr)] -> EExpr -> CResT IO (Maybe Val)
+evalProcessAnnot env0@Env{evTbEnv, evTypeEnv} ioVal os annot
+  | reachesTo evTypeEnv{tePrgmEnv=True} H.empty (getExprType call) dest = do
+      tree <- asCResT $ toTExprDest evTbEnv os call (emptyMetaT dest)
+      Just <$> evalStateT (evalExpr tree) env
+  | otherwise = return Nothing
+  where
+    env = evalSetArgs (H.singleton processFunIO ioVal) env0{evAnnotObj = listToMaybe (map snd os)}
+    call = positioned $ (eVal processFun `eApply` (processFunAnnot, annot)) `eApplyM` processFunIO $ ioM
+    positioned e = exprWithMeta (getExprMeta e){getMetaPos = getMetaPos (getExprMeta annot)} e
+    dest = singletonType (partialVal $ exprPath annot){ptArgMode = PtArgAny}
+
+-- | Each annotation written on the page at @file@ which is processable and not yet processed,
+-- updated to what processing it gives ('evalProcessAnnot'), by its meta ID.
+--
+-- An annotation holding a result has been processed, and is left as it is: processing it again
+-- would replace what was written for it with something else, and a result is removed to ask for it
+-- again.
+--
+-- Each annotation is processed in an evaluation of its own, so one that fails is noted and the
+-- rest are still processed.
+evalProcessPage :: EvalPages -> Val -> FilePath -> EPrgm -> CResT IO (RawPrgm (), H.HashMap UUID Val)
+evalProcessPage pages ioVal file prgm = do
+  EvalPage{epRaw=page} <- case H.lookup file pages of
+    Just p  -> return p
+    Nothing -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "There is no page %s to process" file]
+  let env = evalBaseEnvWith pages Nothing prgm
+  let unprocessed = [(os, a) | (os, a) <- pageAnnots page prgm, not $ H.member (partialKey $ mkName resultAnnotText) (exprAppliedArgsMap a)]
+  processed <- forM unprocessed $ \(os, a) -> do
+    res <- lift $ runCResT $ evalProcessAnnot env ioVal os a
+    case res of
+      CRes notes (Just val) -> asCResT (CRes notes ()) >> return (Just (getMetaId $ getExprMeta a, val))
+      CRes notes Nothing    -> asCResT (CRes notes ()) >> return Nothing
+      CErr notes            -> asCResT (CRes notes ()) >> return Nothing
+  return (page, H.fromList $ catMaybes processed)
 
 -- | Flattens the program reachable from a file into one. It is polymorphic in the program because
 -- every pipeline stage holds one, and scoping a stage to a file has to mean the same thing at each:

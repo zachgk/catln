@@ -1,0 +1,12 @@
+import "core"
+import "llm"
+
+
+# Questions about this page, asked of the configured model by `catln process`.
+double(x -> Integer) -> Integer
+  # [double] is twice [x].
+double(x)= x + x
+
+q> What does double do?
+q> Is double fast?
+  >>> Yes.

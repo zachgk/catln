@@ -177,6 +177,24 @@ You can also define annotations similarly to data objects:
 annot #assert(Boolean test)
 ```
 
+### Prints, queries, and results
+
+A line starting with `> ` prints an expression, and is short for `#print(p= expr)`. What it printed can be written under it as `>>>` lines, which become its `result`. `catln test` checks the print against them, and `catln test --update` writes them:
+
+```
+> 1 + 2
+  >>> 3
+```
+
+A line starting with `q> ` is a question for a language model about the page it is written on, and is short for `#q(input= "the rest of the line")`. It is declared in the `llm` library, so a page asking one writes `import "llm"`. `catln process FILE` asks each question without a result, using the page as context, and writes the reply under it as `>>>` lines (see `stack/llm/main.ct` for how the model is configured). A question with a reply is not asked again; delete its `>>>` lines to ask it again:
+
+```
+q> What does double do?
+  >>> It doubles its argument.
+```
+
+`>>>` lines may be written under any annotation that declares a `result -> String` argument, and are that argument. `catln process` runs the processing step of every annotation that has one: an arm of `/Catln/process(io, annot)` that takes the annotation and returns its updated form.
+
 ## Programs
 
 There are two operations that Catln can execute on a program: running and building.

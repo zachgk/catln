@@ -133,6 +133,87 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/process"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/process
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                            ( EAppArg
+                                { eaaArg = Value /annot -> /Llm/#q( /input=∀/Data/String ) }
+                            ) -> /Llm/#q..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/process
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                            ( EAppArg
+                                { eaaArg = Value /annot -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } ) ->
+                            ( /Llm/qAnswered
+                                ( /reply=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    , []
+                                    )
+                                , /input=∀/Data/String
+                                ) + /Llm/#q( /input=∀/Data/String ) + /Llm/#q
+                                ( /input=∀/Data/String
+                                , /result=∀/Data/String
+                                )
+                            ) =
+                            ( /Llm/qAnswered
+                                ( EAppArg
+                                    { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /reply -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                        , []
+                                        ) =
+                                        ( /Llm/lcm
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ UnionType
+                                            ( Just
+                                                ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                            , []
+                                            )
+                                        )
+                                    }
+                                ) ↦
+                                ( /Llm/#q( /input=∀/Data/String ) + /Llm/#q
+                                    ( /input=∀/Data/String
+                                    , /result=∀/Data/String
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/showPage"
                 , ObjectMapItem
                     { omiDecls = []
@@ -153,6 +234,44 @@ Prgm
                     , omiDefs =
                         [ /Llm/llmshow
                             ( EAppArg { eaaArg = Value /s -> ∀/Llm/LlmShow } ) -> TVArg /s = ( Value /s ↦ TVArg /s )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/qAnswered"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/qAnswered
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /reply -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            ) -> /Llm/#q..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/qAnswered
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /reply -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q
+                            ( EAppArg
+                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                            )
+                        , /Llm/qAnswered
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /reply -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                }
+                            ) -> /Llm/#q
+                            ( /input=∀/Data/String
+                            , /result=∀/Data/String
+                            ) = /Llm/#q
+                            ( EAppArg
+                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /result -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
                         ]
                     }
                 )
@@ -316,6 +435,21 @@ Prgm
                                 ) ↦ ∀/Data/Maybe[ /T=∀/Data/String ]
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Llm/#q"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/#q
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                        , /Llm/#q
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /result -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -1425,6 +1559,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Llm/LlmShow
@@ -1560,6 +1697,16 @@ Prgm
                 { eaaArg = Value /result -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
                   What is on this page?"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking about a page from the page
+                  A question about a page can be written on the page itself, as `q> ` and then the question. It
+                  is a [#q], and is asked by `catln process`, which writes the reply under the question as the
+                  `>>>` lines of its [result], the way `catln test --update` writes what a `> expr` prints. A
+                  question with a reply is not asked again; its `>>>` lines are removed to ask it again."
                 }
             )
         , /Catln/#md

@@ -77,6 +77,47 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/process"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/process( Value /io -> /Catln/IO )
+                            ( Value /annot -> /Llm/#q( /input=∀/Data/String ) ) -> /Llm/#q..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/process( Value /io -> /Catln/IO )
+                            ( Value /annot -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q( Value /input -> ∀/Data/String ) )( Value /page -> /Catln/RawPrgm.. ) ->
+                            ( /Llm/qAnswered
+                                ( /reply=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    , []
+                                    )
+                                , /input=∀/Data/String
+                                ) + /Llm/#q( /input=∀/Data/String ) + /Llm/#q
+                                ( /input=∀/Data/String
+                                , /result=∀/Data/String
+                                )
+                            ) = /Llm/qAnswered( Value /input -> TVArg /input = Value /input )
+                            ( Value /reply -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                , []
+                                ) = /Llm/lcm( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page )( Value /this -> TVArg /io = Value /io )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/showPage"
                 , ObjectMapItem
                     { omiDecls = []
@@ -94,6 +135,25 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/llmshow( Value /s -> ∀/Llm/LlmShow ) -> TVArg /s = Value /s ]
+                    }
+                )
+            ,
+                ( "/Llm/qAnswered"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/qAnswered( Value /input -> ∀/Data/String )
+                            ( Value /reply -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Llm/#q..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/qAnswered( Value /input -> ∀/Data/String )( Value /reply -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q( Value /input -> TVArg /input = Value /input )
+                        , /Llm/qAnswered( Value /input -> ∀/Data/String )
+                            ( Value /reply -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) ) -> /Llm/#q
+                            ( /input=∀/Data/String
+                            , /result=∀/Data/String
+                            ) = /Llm/#q( Value /input -> TVArg /input = Value /input )( Value /result -> TVArg /value = Value /value )
+                        ]
                     }
                 )
             ,
@@ -159,6 +219,18 @@ Prgm
                                 )
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Llm/#q"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/#q( Value /input -> ∀/Data/String )
+                        , /Llm/#q( Value /input -> ∀/Data/String )( Value /result -> ∀/Data/String )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -1076,6 +1148,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Llm/LlmShow
@@ -1184,6 +1259,15 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "
                 What is on this page?" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Asking about a page from the page
+                A question about a page can be written on the page itself, as `q> ` and then the question. It
+                is a [#q], and is asked by `catln process`, which writes the reply under the question as the
+                `>>>` lines of its [result], the way `catln test --update` writes what a `> expr` prints. A
+                question with a reply is not asked again; its `>>>` lines are removed to ask it again." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text

@@ -6,8 +6,9 @@ import           Options.Applicative
 import           Semantics               (buildCtssConfig)
 import           Semantics.Prgm          (FileImport, impDisp, impRaw)
 import           Syntax.Ct.Formatter     (formatRootPrgm)
-import           Syntax.Ct.Prgm          (ParsedImport (..), isCorePage,
-                                          noImporters, rootImportCtx)
+import           Syntax.Ct.Prgm          (ParsedImport (..), importPath,
+                                          isCorePage, noImporters,
+                                          rootImportCtx)
 import           Syntax.Ct.Results       (setPrintResults)
 import           Syntax.Parsers          (canonicalImport,
                                           mkDesCanonicalImportStr,
@@ -52,6 +53,20 @@ xRun prgmName function = do
   case returnValue of
     0 -> return ()
     i -> fail $ "error code " ++ show i
+
+-- | Processes the annotations of a file which can be processed, writing each back into the file as
+-- what processing it gives ('getProcessed'), and reformatting the file (like @catln fmt@).
+xProcess :: String -> CResT IO ()
+xProcess prgmName = do
+  prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
+  (page, processed, unchanged) <- getProcessed ctss prgmName'
+  path <- case importPath prgmName' of
+    Just path -> return path
+    Nothing   -> fail $ printf "Could not find a file to write the processed %s back to" prgmName
+  lift $ writeFile path $ formatRootPrgm page
+  lift $ putStrLn $ printf "Processed %d annotation(s) in %s" processed path
+  when (unchanged > 0) $ lift $ putStrLn $ printf "%d of them came back unchanged (a #q is unanswered where OPENAI_BASE_URL or OPENAI_MODEL is unset)" unchanged
 
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
@@ -290,6 +305,7 @@ exec (TestFile fname update)      = xTest fname update
 exec (TypeTrace fname)            = xTypeTrace fname
 exec (TBuildFile fname)           = xTBuild fname
 exec (Epochs fnames)              = xEpochs fnames
+exec (Process fname)              = xProcess fname
 
 data Command
   = BuildFile String String
@@ -304,6 +320,7 @@ data Command
   | TypeTrace String
   | TBuildFile String
   | Epochs [String]
+  | Process String
 
 cRun :: Parser Command
 cRun = RunFile
@@ -366,6 +383,10 @@ cEpochs :: Parser Command
 cEpochs = Epochs
   <$> some (argument str (metavar "FILES" <> help "The files to compile and count type inference epochs for"))
 
+cProcess :: Parser Command
+cProcess = Process
+  <$> argument str (metavar "FILE" <> help "The file whose annotations to process")
+
 main :: IO ()
 main = do
   cmd <- execParser opts
@@ -392,6 +413,7 @@ main = do
       <> subCommand "typetrace" "Writes the type inference trace to the build directory" cTypeTrace
       <> subCommand "tbuild" "Builds the arrow trees for a program and its imports" cTBuild
       <> subCommand "epochs" "Reports how many type inference epochs compiling a program costs" cEpochs
+      <> subCommand "process" "Processes the annotations of a file, such as asking each q> query, and writes them back" cProcess
                              )
 
 -- | One command of the compiler, with the @--help@ describing it.

@@ -1,0 +1,56 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /double( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /double( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Questions about a page, written on the page. Each is a [/Llm/#q], asked by `catln process` and
+                answered under it. They are not asked when the page is compiled, run, or tested." }
+            )
+        , /Llm/#q
+            ( Value /input -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "What does double do?" }
+            )
+        , /Llm/#q
+            ( Value /input -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Is double fast?" }
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Yes.
+                It is one addition." }
+            )
+        , /Llm/#q
+            ( Value /input -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A question written as #q, with a reply too long for one line" }
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "It is written back as q>." }
+            )
+        , /Llm/#q
+            ( Value /input -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A question of
+                two lines" }
+            )
+        ]
+    }

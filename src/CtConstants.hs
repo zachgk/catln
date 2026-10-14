@@ -248,6 +248,22 @@ printAnnot = "/Catln/#print"
 printAnnotText = "p"
 resultAnnotText = "result"
 
+-- | A question asked of a model about the page it is written on, declared in @stack/llm/main.ct@
+-- and written @q> text@. @catln process@ answers it into its 'resultAnnotText', the @>>>@ lines
+-- under it.
+queryAnnot, queryAnnotText, queryAnnotShort :: String
+queryAnnot = "/Llm/#q"
+queryAnnotText = "input"
+queryAnnotShort = "#q"
+
+-- | What @catln process@ asks of each annotation on a page: @\/Catln\/process(io, annot)@, its
+-- updated form. An annotation is processable where the program has an arm of it that takes the
+-- annotation; a library declares one beside each annotation it can process.
+processFun, processFunIO, processFunAnnot :: String
+processFun = "/Catln/process"
+processFunIO = "/io"
+processFunAnnot = "/annot"
+
 -- | What the compiler or an evaluation said about a statement, written under it for a reader of the
 -- page as @!!! kind: text@ lines ('Syntax.Ct.Results.notePage'). Only ever written: nothing parses
 -- @!!!@, so a page shown with its notes is shown them rather than given them.

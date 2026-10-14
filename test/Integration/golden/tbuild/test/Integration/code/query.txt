@@ -1,0 +1,75 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /double
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /double
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Questions about a page, written on the page. Each is a [/Llm/#q], asked by `catln process` and
+                  answered under it. They are not asked when the page is compiled, run, or tested."
+                }
+            )
+        , /Llm/#q
+            ( EAppArg
+                { eaaArg = Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What does double do?"
+                }
+            )
+        , /Llm/#q
+            ( EAppArg
+                { eaaArg = Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Is double fast?"
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Yes.
+                  It is one addition."
+                }
+            )
+        , /Llm/#q
+            ( EAppArg
+                { eaaArg = Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A question written as #q, with a reply too long for one line"
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "It is written back as q>."
+                }
+            )
+        , /Llm/#q
+            ( EAppArg
+                { eaaArg = Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A question of
+                  two lines"
+                }
+            )
+        ]
+    }
