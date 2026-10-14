@@ -704,7 +704,9 @@ Prgm
                                 { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
+                                { eaaArg = Value /items ->
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
+                                }
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
@@ -1205,7 +1207,9 @@ Prgm
                                 { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
+                                { eaaArg = Value /items ->
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
+                                }
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]

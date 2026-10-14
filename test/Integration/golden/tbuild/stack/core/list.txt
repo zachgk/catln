@@ -321,7 +321,9 @@ Prgm
                             )
                         , /Data/List/append
                             ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                { eaaArg = Value /a ->
+                                    ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                }
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/List/ConsList[ /T=TopType ] }
@@ -696,12 +698,15 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> /Data/List/Cons
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ( /head=∀/Data/Algebra/Eq
+                                    , /tail=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List/ConsList[ /T=TopType ] )
                                     ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head@Value /bh } )
+                                    ( EAppArg { eaaArg = Value /head@Value /bh -> ∀/Data/Algebra/Eq } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                        { eaaArg = Value /tail@Value /bt ->
+                                            ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                        }
                                     )
                                 }
                             )
@@ -772,7 +777,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/reversed
-                            ( EAppArg { eaaArg = Value /lst -> ∀/Data/List } ) ->
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List[ /T=TopType ] }
+                            ) ->
                             ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=$_/T ]
@@ -1270,7 +1277,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean =
                                         ( /operator==
                                             ( EAppArg
                                                 { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
@@ -1343,12 +1350,15 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> /Data/List/Cons
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /tail=
+                                        ( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/List/ConsList[ /T=TopType ] )
                                     ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head@Value /bh } )
+                                    ( EAppArg { eaaArg = Value /head@Value /bh -> ∀/Data/Algebra/Ord } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                        { eaaArg = Value /tail@Value /bt ->
+                                            ( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                        }
                                     )
                                 }
                             )

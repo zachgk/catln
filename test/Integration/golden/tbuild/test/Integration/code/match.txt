@@ -22,7 +22,7 @@ Prgm
                         , /abs.$490dbb
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$490dbb-arg@Value /x2 }
+                                { eaaArg = Value /$490dbb-arg@Value /x2 -> ∀/Data/Algebra/Ring }
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Ring
@@ -31,7 +31,7 @@ Prgm
                                 )
                             , /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=TopType
+                                , /l=∀/Data/Algebra/Ring
                                 )
                             , []
                             ) =

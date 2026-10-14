@@ -18,15 +18,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /bindWithLocal.$9471e8.doubled( Value /x ) -> UnionType
+                        [ /bindWithLocal.$9471e8.doubled( Value /x -> ∀/Data/Algebra/Add ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Add
                                 , fromList []
                                 , []
                                 )
                             , /operator+
-                                ( /r=TopType
-                                , /l=TopType
+                                ( /r=∀/Data/Algebra/Add
+                                , /l=∀/Data/Algebra/Add
                                 )
                             , []
                             ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x )
@@ -41,7 +41,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bindWithLocal.$9471e8
-                            ( Value /$9471e8-arg@Value /x ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
+                            ( Value /$9471e8-arg@Value /x -> ∀/Data/Algebra/Add ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
                             ( Value /value -> ∀/Data/Algebra/Add = /operator+
                                 ( Value /l -> ∀/Data/Algebra/Add = /bindWithLocal.$9471e8.doubled( Value /x -> TVArg /x = Value /x ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt

@@ -894,9 +894,19 @@ Prgm
                                 [ /B=/Catln/SourcePos..
                                 , /A=/Catln/SourcePos..
                                 ]
-                                ( /first=/Catln/SourcePos..
+                                ( /first=/Catln/SourcePos
+                                    ( /file=TopType
+                                    , /line=/Data/Primitive/Integer..
+                                    , /column=/Data/Primitive/Integer..
+                                    )
                                 , /second=/Catln/SourcePos..
-                                ) = /Catln/Pair( Value /first -> /Catln/SourcePos.. )( Value /second -> /Catln/SourcePos.. )
+                                ) = /Catln/Pair
+                                ( Value /first -> /Catln/SourcePos
+                                    ( /file=TopType
+                                    , /line=/Data/Primitive/Integer..
+                                    , /column=/Data/Primitive/Integer..
+                                    )
+                                )( Value /second -> /Catln/SourcePos.. )
                             ) -> ∀/Data/String = /Test/posFile( Value /p -> TVArg /first = Value /first )
                         ]
                     }
@@ -957,8 +967,19 @@ Prgm
                                     ) = /Data/Maybe/Some
                                     ( Value /value -> /Catln/Pair
                                         [ /B=/Catln/SourcePos..
-                                        , /A=/Catln/SourcePos..
-                                        ]..
+                                        , /A=/Catln/SourcePos
+                                            ( /file=∀/Data/String
+                                            , /line=/Data/Primitive/Integer..
+                                            , /column=/Data/Primitive/Integer..
+                                            )
+                                        ]
+                                        ( /first=/Catln/SourcePos
+                                            ( /file=∀/Data/String
+                                            , /line=/Data/Primitive/Integer..
+                                            , /column=/Data/Primitive/Integer..
+                                            )
+                                        , /second=/Catln/SourcePos..
+                                        )
                                     )
                                 )( Value /id -> ∀/Data/String )( Value /dat -> /Catln/Unit.. )
                             ) -> ∀/Data/String = /Test/startFile( Value /r -> TVArg /value = Value /value )

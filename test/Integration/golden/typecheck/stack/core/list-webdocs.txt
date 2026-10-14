@@ -336,7 +336,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/foldrSteps
-                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                            ( Value /lst ->
+                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                    ( !( PredClass /Data/List ) && !( PredClass /Data/String ) )
+                                )
+                            )
                             ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) )( Value /init -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldrWalk
                             ( Value /stack -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] = /Data/List/onto( Value /lst -> TVArg /lst = Value /lst )( Value /stack -> /Data/List/Nil = Value /Data/List/Nil ) )
                             ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /acc -> TVArg /init = Value /init )

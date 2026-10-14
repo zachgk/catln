@@ -9,7 +9,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bump.$9471e8
-                            ( Value /$9471e8-arg@Value /x ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
+                            ( Value /$9471e8-arg@Value /x -> ∀/Data/Algebra/Add ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
                             ( Value /value -> ∀/Data/Algebra/Add = /operator+
                                 ( Value /l -> ∀/Data/Algebra/Add = /bump.$9471e8.doubled( Value /x -> TVArg /x = Value /x ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
@@ -114,15 +114,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /bump.$9471e8.doubled( Value /x ) -> UnionType
+                        [ /bump.$9471e8.doubled( Value /x -> ∀/Data/Algebra/Add ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Add
                                 , fromList []
                                 , []
                                 )
                             , /operator+
-                                ( /r=TopType
-                                , /l=TopType
+                                ( /r=∀/Data/Algebra/Add
+                                , /l=∀/Data/Algebra/Add
                                 )
                             , []
                             ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x )
@@ -169,7 +169,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /totals.shifted
-                            ( Value /xs -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Value /xs ->
+                                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
                                 , fromList []
@@ -197,7 +199,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /totals
-                            ( Value /xs -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Value /xs ->
+                                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
                                 , fromList []
@@ -208,7 +212,9 @@ Prgm
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     ) + /totals.shifted
-                                    ( /xs=∀/Data/List[ /T=/Data/Primitive/Integer ] )
+                                    ( /xs=
+                                        ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                    )
                                 )
                             , []
                             ) = /totals.shifted( Value /xs -> TVArg /xs = Value /xs )

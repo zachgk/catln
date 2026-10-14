@@ -236,6 +236,62 @@ seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap o
       | getMetaType m == PTopType, Just t <- declReturn name = oa{oaArr=Just (e, mWithType t m)}
     seedDef _ oa = oa
 
+-- | Types a sub function's captured parent arguments as the enclosing argument is typed.
+--
+-- A sub function closes over the parent arguments it reads, and each is curried into its signature
+-- as a parameter carrying the parent's written meta ('Nested.curryApplyParentArgsSignature'). Where
+-- the parent definition leaves the argument unannotated — its declaration states it, as for
+-- @:Integer.toStringBase(base -> Integer)@ beside @:Integer.toStringBase(base) else = ..@ — that
+-- meta is ⊤, so a sub declaration such as @digitsOnto@ stated it accepts any @base@. What a
+-- definition accepts follows from its body too, and an arm needing @n < base@ then fails to fulfil
+-- a declaration accepting a ⊤ @base@. The captured argument is the enclosing argument passed
+-- through, so it takes the enclosing argument's type: the one the parent's declarations give it
+-- (variable-free, as 'seedDefResultTypes' takes a result). A captured parameter is recognised by
+-- carrying the parent argument's own meta, so its position; the parent definition itself is left
+-- as written.
+seedCapturedArgTypes :: DesPrgm -> DesPrgm -> DesPrgm
+seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
+    Prgm (ObjectMap objMap') classGraph annots
+  where
+    typeEnv = mkTypeEnv fullPrgm
+    declArg name k = case [ t
+                          | ObjectMapItem{omiDecls} <- maybeToList (H.lookup name fullObjMap)
+                          , oa <- omiDecls
+                          , Just obj <- [oaObj oa]
+                          , Just ms <- [H.lookup k (exprArgs obj)]
+                          , (_, am) <- ms
+                          , let t = freeTVExtToTopDeep H.empty (getMetaType am)
+                          , t /= PTopType
+                          , not (typeContainsTypeVar t) ] of
+      [] -> Nothing
+      ts -> Just $ unionAllTypes typeEnv ts
+    seeds = H.fromList
+      [ (pos, (name, t))
+      | (name, ObjectMapItem{omiDefs}) <- H.toList objMap
+      , d <- omiDefs
+      , Just obj <- [oaObj d]
+      , (k, ms) <- H.toList (exprArgs obj)
+      , (_, am) <- ms
+      , Just pos <- [getMetaPos am]
+      , getMetaType am == PTopType
+      , Just t <- [declArg name k] ]
+    objMap'
+      | H.null seeds = objMap
+      | otherwise = H.mapWithKey seedItem objMap
+    seedItem name (ObjectMapItem ds rs rfs defs) = ObjectMapItem (map (seedOa name) ds) rs rfs (map (seedOa name) defs)
+    seedOa name oa@ObjArr{oaObj=Just obj} = oa{oaObj=Just (seedExpr name obj)}
+    seedOa _ oa                           = oa
+    seedExpr name (TupleApply m (bm, b) arg) = TupleApply m (bm, seedExpr name b) $ case arg of
+      EAppArg a@ObjArr{oaBasis=ArgObj, oaArr=Just (Nothing, am)}
+        | getMetaType am == PTopType
+        , Just pos <- getMetaPos am
+        , Just (owner, t) <- H.lookup pos seeds
+        , owner /= name -> EAppArg a{oaArr=Just (Nothing, mWithType t am)}
+      a -> a
+    seedExpr name (AliasExpr b a) = AliasExpr (seedExpr name b) a
+    seedExpr name (EWhere m b c) = EWhere m (seedExpr name b) c
+    seedExpr _ e = e
+
 -- |
 -- Redirects a receiver-method definition written in a module other than the one that declares the
 -- method, onto the declaration it implements.

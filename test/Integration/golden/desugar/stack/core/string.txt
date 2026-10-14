@@ -766,15 +766,15 @@ Prgm
                 ( "/toStringBase./Data/digitsOnto"
                 , ObjectMapItem
                     { omiDecls =
-                        [ toStringBase./Data/digitsOnto( Value /base )( Value n -> /Data/Primitive/Integer )
+                        [ toStringBase./Data/digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer )
                             ( Value acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ toStringBase./Data/digitsOnto( Value /base )( Value n )( Value acc ) | /operator<( Value /l= Value n )( Value /r= Value base ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
+                        [ toStringBase./Data/digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n )( Value acc ) | /operator<( Value /l= Value n )( Value /r= Value base ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
                             ( Value head= digitChar( Value digit= Value n ) )( Value tail= Value acc )
-                        , toStringBase./Data/digitsOnto( Value /base )( Value n )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = digitsOnto( Value /base= Value /base )
+                        , toStringBase./Data/digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = digitsOnto( Value /base= Value /base )
                             ( Value n= /operator//( Value /l= Value n )( Value /r= Value base ) )
                             ( Value acc= /Data/List/Cons
                                 ( Value head= digitChar
@@ -1356,13 +1356,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ digitsValue./Data/String/$6d5c93( Value /base )( Value /acc )( Value /tail )( Value /sign )
+                        [ digitsValue./Data/String/$6d5c93( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
                             ( Value /$6d5c93-arg= /Data/Maybe/Some( Value value@Value d ) ) | /operator<( Value /l= Value d )( Value /r= Value base )= digitsValue( Value cs= Value tail )( Value base= Value base )( Value sign= Value sign )
                             ( Value acc= /operator+
                                 ( Value /l= /operator*( Value /l= Value acc )( Value /r= Value base ) )
                                 ( Value /r= /operator*( Value /l= Value sign )( Value /r= Value d ) )
                             )
-                        , digitsValue./Data/String/$6d5c93( Value /base )( Value /acc )( Value /tail )( Value /sign )
+                        , digitsValue./Data/String/$6d5c93( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
                             ( Value /$6d5c93-arg@Value m )= Value /Data/Maybe/Nothing
                         ]
                     }

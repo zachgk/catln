@@ -102,8 +102,8 @@ equalizeSTypes FEnv{feTypeEnv} vaenv (stype1@SType{stypeAct=act1, stypeReq=req1,
 -- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types.
 -- After the meets, the slot settle ('settlePropSlot') drops settle-forced unsettled forms from
 -- the super's actual slot and tightens its requirement slot to the declared-bound meet.
-updateSchemeProp :: FEnv -> S.HashSet TypeVarAux -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (STypeVarArgEnv, SType, SType)
-updateSchemeProp env@FEnv{feTypeEnv} lambdaArgs vaenv super@SType{stypeAct=superAct, stypeReq=superReq, stypeReqDecl=superReqDecl} propName sub@SType{stypeAct=subAct, stypeReq=subReq, stypeReqDecl=subReqDecl} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq'', stypeReqDecl=superReqDecl''}, sub{stypeAct=subAct', stypeReq=subReq', stypeReqDecl=subReqDecl'})
+updateSchemeProp :: FEnv -> (S.HashSet TypeVarAux, S.HashSet TypeVarAux) -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (STypeVarArgEnv, SType, SType)
+updateSchemeProp env@FEnv{feTypeEnv} (lambdaArgs, defArgs) vaenv super@SType{stypeAct=superAct, stypeReq=superReq, stypeReqDecl=superReqDecl} propName sub@SType{stypeAct=subAct, stypeReq=subReq, stypeReqDecl=subReqDecl} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq'', stypeReqDecl=superReqDecl''}, sub{stypeAct=subAct', stypeReq=subReq', stypeReqDecl=subReqDecl'})
   where
     (actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (ambientEnv $ fmap stypeAct vaenv) superAct propName subAct
     -- A requirement-side projection never commits a respell that LOSES a type-var spelling
@@ -137,25 +137,42 @@ updateSchemeProp env@FEnv{feTypeEnv} lambdaArgs vaenv super@SType{stypeAct=super
     -- lambda's @v@ learns from @+@'s declaration that the result it must return makes it an
     -- @Integer@, and so that the list it folds is a list of them.
     --
-    -- Only a lambda's: it has no declaration of its own, so what it accepts is only what its call
-    -- and its uses say. A definition's argument is what its declaration says it accepts (@a -> $T@
-    -- for every @$T@), which a use needing more does not narrow — that is an arm exceeding its
-    -- declaration, reported as one ('verifyGuaranteedResults'). And only a closed requirement, as
-    -- for every requirement read from a destination ('closedType'): @<@'s @$T -> Ord@ asks nothing
-    -- of @v@ that a list of any element could not be refused for.
+    -- A lambda's and a definition's alike: what a definition accepts follows both from what its
+    -- signature spells and from what its body needs, so a use's requirement narrows its argument
+    -- whether or not a declaration covers it (the bind continuation @cont(arg@x)= x + 1@ accepts
+    -- only what @+@ does). A DECLARATION states what it accepts and is not narrowed by any body;
+    -- a definition narrowed below its declaration leaves the declaration unfulfilled. For a
+    -- definition an open class is a requirement like any other (@x + 1@ needs @x ∈ ∀Add@): the
+    -- meet with it is exact, and a type in scope that is not a member never becomes one. A
+    -- lambda's argument takes only a closed requirement, as for every requirement read from a
+    -- destination ('closedType'): the declaration it is given to passes it a value, and an open
+    -- class read there as that value (@filter(lst= [], fn(v)= v > 2)@ giving @/A=∀Ord@) is no
+    -- value a result can be built from. A lambda still narrows to a closed type through what it
+    -- calls: @cont(arg= v)@ with @v ∈ Maybe ∪ Integer@ and @arg ∈ ∀Add@ requires @Integer@.
     argRefReq e = case subAct of
-      TypeVar tv@TVArg{} _ _ | subReq' /= PTopType, closedType feTypeEnv subReq', S.member tv lambdaArgs, Just s <- H.lookup tv e ->
-        H.insert tv s{stypeReq = intersectTypes feTypeEnv (stypeReq s) subReq'} e
+      TypeVar tv@TVArg{} _ _ | subReq' /= PTopType, S.member tv defArgs || (S.member tv lambdaArgs && closedType feTypeEnv subReq')
+                             , Just s <- H.lookup tv e
+                             ->
+        H.insert tv s{stypeReq = narrowReq (stypeReq s)} e
       _ -> e
+    -- An argument required as its declared variable (@a -> $T@) keeps that spelling and carries
+    -- the use's requirement as its inner, which lies within it; met as a value, the variable would
+    -- read as ⊤ and be dropped.
+    narrowReq (TypeVar v loc i) = TypeVar v loc (intersectTypes feTypeEnv i subReq')
+    narrowReq r                 = intersectTypes feTypeEnv r subReq'
 
--- | The arguments of the lambdas a constraint is inside: each enclosing object that is a lambda a
--- call is given (an argument arrow whose object takes parameters, @fn(acc, v)= ..@) binds its own.
-lambdaArgsOf :: Constraint p -> S.HashSet TypeVarAux
-lambdaArgsOf Constraint{conOs} = S.fromList
-  [ k
-  | oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} <- conOs
-  , oaBasis oa == ArgObj, not (null (exprAppliedArgs obj))
-  , k <- H.keys (exprVarArgs obj) ]
+-- | The arguments of the bodies a constraint is inside, as (the lambdas', the definitions'): each
+-- enclosing object with a body that takes parameters binds its own — a lambda a call is given
+-- (@fn(acc, v)= ..@, an argument object), or a definition, including the continuation a bind
+-- desugars to (an object with an arrow, whatever its basis).
+bodyArgsOf :: Constraint p -> (S.HashSet TypeVarAux, S.HashSet TypeVarAux)
+bodyArgsOf Constraint{conOs} = (argsWhere (== ArgObj), argsWhere (/= ArgObj))
+  where
+    argsWhere basisOk = S.fromList
+      [ k
+      | oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} <- conOs
+      , basisOk (oaBasis oa), not (null (exprAppliedArgs obj))
+      , k <- H.keys (exprVarArgs obj) ]
 
 -- | The argument an application inferred: the one key its actual holds that its base's does not,
 -- once each is a single partial. 'Nothing' while inference still offers more than one, which is
@@ -365,7 +382,7 @@ computeConstraint env con@(Constraint _ _ _ (ArrowTo i src dest)) = case arrowCo
     TypeCheckResE _ -> (True, con)
 computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv'' vaenv, conDat=PropEq i (super', name) sub'})
   where
-    (vaenv', super', sub0) = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name (if binder then mapSTypeTypes toSlot sub else sub)
+    (vaenv', super', sub0) = updateSchemeProp env (bodyArgsOf con) (fmap snd vaenv) super name (if binder then mapSTypeTypes toSlot sub else sub)
     -- An input object's own variable ('PropEq' 51, 'TypeCheck.Encode'): the object binds this
     -- scope's variables, so the variable's value is spelled with them AMBIENT on its point and with
     -- them as the object's own parameters in the slot. Its references to its siblings cross that
@@ -378,7 +395,7 @@ computeConstraint env con@(Constraint _ _ vaenv (PropEq i (super, name) sub)) = 
     sub' = if binder then mapSTypeTypes toPoint sub0 else sub0
     vaenv'' = if binder then fmap (mapSTypeTypes toPoint) vaenv' else vaenv'
 computeConstraint env con@(Constraint _ _ vaenv (PropEqInferred i (super, app, base) sub)) = case inferredArgName base app of
-    Just name -> let (vaenv', super', sub') = updateSchemeProp env (lambdaArgsOf con) (fmap snd vaenv) super name sub
+    Just name -> let (vaenv', super', sub') = updateSchemeProp env (bodyArgsOf con) (fmap snd vaenv) super name sub
                  in (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEqInferred i (super', app, base) sub'})
     Nothing -> (False, con)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ _ (HoResultReq i (call, argName) result)) = case declaredResult of

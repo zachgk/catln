@@ -85,11 +85,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /f.n
-                            ( EAppArg { eaaArg = Value /x } ) ->
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
                             ( /operator+[ /T=/Data/Primitive/Integer ]
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Lib/foo( /this=TopType ) + /Data/Primitive/Integer
+                                ) + /Lib/foo( /this=/Data/Primitive/Integer ) + /Data/Primitive/Integer
                             ) =
                             ( /foo
                                 ( EAppArg

@@ -12,9 +12,9 @@ Prgm
                             ( Value /$78f633-arg@Value /c -> /Data/Algebra/Equal ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
                         , /caseRank.$78f633-1
-                            ( Value /$78f633-arg ) ->
+                            ( Value /$78f633-arg -> /Data/Algebra/GreaterThan ) ->
                             ( /caseRank.$78f633-2
-                                ( /$78f633-arg=TopType ) + /Data/Primitive/Integer
+                                ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /Data/Primitive/Integer
                             ) = /caseRank.$78f633-2
                             ( Value /$78f633-arg -> TVArg /$78f633-arg = Value /$78f633-arg )
                         ]
@@ -95,7 +95,7 @@ Prgm
                     , omiDefs =
                         [ /caseRank( Value /c -> ∀/Data/Algebra/Comparison ) ->
                             ( /caseRank.$78f633-1
-                                ( /$78f633-arg=∀/Data/Algebra/Comparison ) + /caseRank.$78f633-2
+                                ( /$78f633-arg=( /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /caseRank.$78f633-2
                                 ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /caseRank.$78f633-0
                                 ( /$78f633-arg=∀/Data/Algebra/Comparison ) + /Data/Primitive/Integer
                             ) = /caseRank.$78f633-0
@@ -127,9 +127,9 @@ Prgm
                             ( Value /$78f633-arg@Value /c -> /Data/Algebra/LessThan ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
                         , /caseRank.$78f633-0
-                            ( Value /$78f633-arg ) ->
+                            ( Value /$78f633-arg -> ( /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) ->
                             ( /caseRank.$78f633-1
-                                ( /$78f633-arg=TopType ) + /caseRank.$78f633-2
+                                ( /$78f633-arg=( /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /caseRank.$78f633-2
                                 ( /$78f633-arg=/Data/Algebra/GreaterThan ) + /Data/Primitive/Integer
                             ) = /caseRank.$78f633-1
                             ( Value /$78f633-arg -> TVArg /$78f633-arg = Value /$78f633-arg )

@@ -544,7 +544,11 @@ Prgm
                     , omiDefs =
                         [ /Data/List/foldrSteps
                             ( EAppArg
-                                { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
+                                { eaaArg = Value /lst ->
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && !
+                                        ( !( PredClass /Data/List ) && !( PredClass /Data/String ) )
+                                    )
+                                }
                             )
                             ( EAppArg
                                 { eaaArg = /fn

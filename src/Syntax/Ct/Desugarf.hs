@@ -314,7 +314,10 @@ desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = addPrgmMetaIDs (desugarMeta
 
     -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
     -- so a def under a separate decl solves like an inline-annotated one.
-    prgm5 = seedDefResultTypes fullPrgm3 prgm4
+    prgm5a = seedDefResultTypes fullPrgm3 prgm4
+
+    -- Type each sub function's captured parent arguments as the enclosing argument is typed.
+    prgm5 = seedCapturedArgTypes fullPrgm3 prgm5a
 
     -- Name each reference to one of an object's OWN declared variables as the parent reference it
     -- is, while the binder that gives it meaning is still lexically in view. Last, so it sees the

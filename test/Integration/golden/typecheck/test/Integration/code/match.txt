@@ -14,7 +14,7 @@ Prgm
                                 { ciValue = 0 }
                             ) -> TVArg /x2 = Value /x2
                         , /abs.$490dbb( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$490dbb-arg@Value /x2 ) -> UnionType
+                            ( Value /$490dbb-arg@Value /x2 -> ∀/Data/Algebra/Ring ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Ring
                                 , fromList []
@@ -22,7 +22,7 @@ Prgm
                                 )
                             , /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=TopType
+                                , /l=∀/Data/Algebra/Ring
                                 )
                             , []
                             ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )

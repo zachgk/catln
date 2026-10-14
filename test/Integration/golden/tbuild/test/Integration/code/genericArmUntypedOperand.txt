@@ -87,8 +87,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sumOf
-                            ( EAppArg { eaaArg = Value /a } )
-                            ( EAppArg { eaaArg = Value /d } ) ->
+                            ( EAppArg { eaaArg = Value /a -> ∀/Data/Algebra/Add } )
+                            ( EAppArg { eaaArg = Value /d -> ∀/Data/Algebra/Add } ) ->
                             ( /Data/Primitive/Integer + /total( /acc=/Data/Primitive/Integer ) ) =
                             ( /total
                                 ( EAppArg

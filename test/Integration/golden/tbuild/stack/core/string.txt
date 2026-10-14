@@ -9,8 +9,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /compareChars./Data/$ba75a7
-                            ( EAppArg { eaaArg = Value /at } )
-                            ( EAppArg { eaaArg = Value /bt } )
+                            ( EAppArg
+                                { eaaArg = Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /bt ->
+                                    ( /Data/List/Nil + /Data/List/Cons
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    )
+                                }
+                            )
                             ( EAppArg { eaaArg = Value /$ba75a7-arg@Value /c -> /Data/Algebra/Equal } ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
@@ -23,8 +33,19 @@ Prgm
                                     , /at=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     , /bt=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) + /Data/compareChars
-                                    ( /a=TopType
-                                    , /b=TopType
+                                    ( /a=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    , /b=UnionType
+                                        ( Just
+                                            ( PredClass /Data/List/ConsList[ /T=/Data/Char ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        , []
+                                        )
                                     )
                                 )
                             , []
@@ -2310,7 +2331,7 @@ Prgm
                                     ( /head=/Data/Char
                                     , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char.. } )
                                     ( EAppArg
                                         { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
                                     )
@@ -2371,7 +2392,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /toStringBase./Data/digitsOnto
-                            ( EAppArg { eaaArg = Value /base } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
@@ -2381,7 +2402,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /toStringBase./Data/digitsOnto
-                            ( EAppArg { eaaArg = Value /base } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
@@ -2408,7 +2429,7 @@ Prgm
                                 { eaaArg = Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                             )
                         , /toStringBase./Data/digitsOnto
-                            ( EAppArg { eaaArg = Value /base } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
@@ -3326,7 +3347,7 @@ Prgm
                                     ( /head=/Data/Char
                                     , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char.. } )
                                     ( EAppArg
                                         { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
                                     )
@@ -4131,7 +4152,7 @@ Prgm
                                     ( /head=/Data/Char
                                     , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char.. } )
                                     ( EAppArg
                                         { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
                                     )
@@ -4262,13 +4283,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /digitsValue./Data/String/$6d5c93
-                            ( EAppArg { eaaArg = Value /base } )
-                            ( EAppArg { eaaArg = Value /acc } )
-                            ( EAppArg { eaaArg = Value /tail } )
-                            ( EAppArg { eaaArg = Value /sign } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$6d5c93-arg -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /d } )
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /$6d5c93-arg -> /Data/Maybe/Some
+                                    ( /value=( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /d -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) }
+                                    )
                                 }
                             ) | /operator<
                             ( EAppArg
@@ -4284,10 +4310,10 @@ Prgm
                                 )
                             ,
                                 ( /Data/String/digitsValue
-                                    ( /base=TopType
+                                    ( /base=/Data/Primitive/Integer
                                     , /acc=/Data/Primitive/Integer
-                                    , /cs=TopType
-                                    , /sign=TopType
+                                    , /cs=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    , /sign=/Data/Primitive/Integer
                                     ) + /digitsValue./Data/String/$6d5c93
                                     ( /$6d5c93-arg=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                     , /base=/Data/Primitive/Integer
@@ -4311,26 +4337,26 @@ Prgm
                                 { eaaArg = Value /acc -> /Data/Primitive/Integer =
                                     ( /operator+
                                         ( EAppArg
-                                            { eaaArg = Value /l -> ∀/Data/Algebra/Ring =
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
                                                 ( /operator*
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                                    ) ↦ ∀/Data/Algebra/Ring
+                                                    ) ↦ /Data/Primitive/Integer
                                                 )
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /r -> ∀/Data/Algebra/Ring =
+                                            { eaaArg = Value /r -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) =
                                                 ( /operator*
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
                                                     )
                                                     ( EAppArg
                                                         { eaaArg = Value /r -> TVArg /d = ( Value /d ↦ TVArg /d ) }
-                                                    ) ↦ ∀/Data/Algebra/Ring
+                                                    ) ↦ ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord )
                                                 )
                                             }
                                         ) ↦ /Data/Primitive/Integer
@@ -4338,10 +4364,10 @@ Prgm
                                 }
                             )
                         , /digitsValue./Data/String/$6d5c93
-                            ( EAppArg { eaaArg = Value /base } )
-                            ( EAppArg { eaaArg = Value /acc } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /tail } )
-                            ( EAppArg { eaaArg = Value /sign } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
                             ( EAppArg
                                 { eaaArg = Value /$6d5c93-arg@Value /m }
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing

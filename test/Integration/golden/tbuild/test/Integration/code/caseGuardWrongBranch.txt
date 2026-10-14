@@ -9,7 +9,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$bfef16-1
-                            ( EAppArg { eaaArg = Value /$bfef16-arg@Value /x2 } ) -> UnionType
+                            ( EAppArg { eaaArg = Value /$bfef16-arg@Value /x2 -> ∀/Data/Algebra/Ring } ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Ring
                                 , fromList []
@@ -17,7 +17,7 @@ Prgm
                                 )
                             , /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=TopType
+                                , /l=∀/Data/Algebra/Ring
                                 )
                             , []
                             ) =
@@ -99,7 +99,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$bfef16-0
-                            ( EAppArg { eaaArg = Value /$bfef16-arg@Value /x2 } ) | /operator>=
+                            ( EAppArg { eaaArg = Value /$bfef16-arg@Value /x2 -> ∀/Data/Algebra/Ord } ) | /operator>=
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 ) }
                             )
@@ -107,14 +107,14 @@ Prgm
                                 { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
                             ) -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 )
                         , /abs.$bfef16-0
-                            ( EAppArg { eaaArg = Value /$bfef16-arg } ) -> UnionType
+                            ( EAppArg { eaaArg = Value /$bfef16-arg -> ∀/Data/Algebra/Ring } ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Ring
                                 , fromList []
                                 , []
                                 )
                             ,
-                                ( /abs.$bfef16-1( /$bfef16-arg=TopType ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ( /abs.$bfef16-1( /$bfef16-arg=∀/Data/Algebra/Ring ) + /operator*[ /T=∀/Data/Algebra/Ring ]
                                     ( /r=/Data/Primitive/Integer
                                     , /l=∀/Data/Algebra/Ring
                                     )

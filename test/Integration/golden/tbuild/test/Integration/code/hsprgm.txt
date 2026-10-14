@@ -1350,10 +1350,21 @@ Prgm
                                     [ /B=/Catln/SourcePos..
                                     , /A=/Catln/SourcePos..
                                     ]
-                                    ( /first=/Catln/SourcePos..
+                                    ( /first=/Catln/SourcePos
+                                        ( /file=TopType
+                                        , /line=/Data/Primitive/Integer..
+                                        , /column=/Data/Primitive/Integer..
+                                        )
                                     , /second=/Catln/SourcePos..
                                     ) = /Catln/Pair
-                                    ( EAppArg { eaaArg = Value /first -> /Catln/SourcePos.. } )
+                                    ( EAppArg
+                                        { eaaArg = Value /first -> /Catln/SourcePos
+                                            ( /file=TopType
+                                            , /line=/Data/Primitive/Integer..
+                                            , /column=/Data/Primitive/Integer..
+                                            )
+                                        }
+                                    )
                                     ( EAppArg { eaaArg = Value /second -> /Catln/SourcePos.. } )
                                 }
                             ) -> ∀/Data/String =
@@ -1432,8 +1443,19 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Catln/Pair
                                                     [ /B=/Catln/SourcePos..
-                                                    , /A=/Catln/SourcePos..
-                                                    ]..
+                                                    , /A=/Catln/SourcePos
+                                                        ( /file=∀/Data/String
+                                                        , /line=/Data/Primitive/Integer..
+                                                        , /column=/Data/Primitive/Integer..
+                                                        )
+                                                    ]
+                                                    ( /first=/Catln/SourcePos
+                                                        ( /file=∀/Data/String
+                                                        , /line=/Data/Primitive/Integer..
+                                                        , /column=/Data/Primitive/Integer..
+                                                        )
+                                                    , /second=/Catln/SourcePos..
+                                                    )
                                                 }
                                             )
                                         }

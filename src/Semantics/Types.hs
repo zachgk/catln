@@ -8150,13 +8150,23 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
       = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
     subUnionVar a b = subUnion (const PTopType) a b
     parentReading = parentRefReading typeEnv vaenv
+    -- Within an input object a pointer met with what it does not lie within stays the pointer,
+    -- carrying the meet as its inner, and records no binding: the input object's parameters are
+    -- what the declaration passes, not occurrences of the variable it names (the data pins that),
+    -- so a lambda's @fn(v= ∀Ord)@ does not bind @filter@'s @/A@ to @∀Ord@.
     -- The pointer- and link-keeping clauses are a higher-order argument's INPUT OBJECT's
     -- (@fn[/F=$^/F](v=$/F)@ — a name no data type, class or arrow declares): there the link is what a
     -- call binds, and spelling it out loses which value the continuation is given. A data
     -- partial's or a call's pointers keep the established reading: a call's arguments and a
     -- pattern's fields take the values the meet finds (@Cons[/T=∀String](head=∀String)@), which
     -- is what their bindings and the trees built from them read.
-    inputObject = null (typeGraphData typeEnv name') && null (typeGraphArrowTemplates typeEnv name') && not namesClass
+    -- An input object's parameters are its hops: parent references to the enclosing partial's
+    -- (@fn[/A=$^/A]@). That is checked as well as the name, since not every env a meet runs in
+    -- carries the arrow templates that would rule out a call's own name.
+    inputObject = any isHop (H.elems aVars ++ H.elems bVars)
+      && null (typeGraphData typeEnv name') && null (typeGraphArrowTemplates typeEnv name') && not namesClass
+    isHop (TypeVar _ TVParent _) = True
+    isHop _                      = False
     namesClass = case teClassGraph typeEnv of
       ClassGraph cg -> case graphLookup (PClassName name') cg of
         Just CGClass{} -> True
@@ -8204,12 +8214,16 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
       | not (isTypeVar b), b /= PTopType = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
                                                reading = intersectTypesEnv typeEnv env (varBound n) i
                                                ev = intersectTypesEnv typeEnv env b reading
-                                           in if keepsPointer env reading b then (env, a) else (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
+                                           in if keepsPointer env reading b then (env, a)
+                                              else if inputObject then (env, TypeVar (TVVar n) TVInt ev)
+                                              else (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
     subUnion varBound (aVaenv, a) (bVaenv, b@(TypeVar (TVVar n) TVInt i))
       | not (isTypeVar a), a /= PTopType = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
                                                reading = intersectTypesEnv typeEnv env (varBound n) i
                                                ev = intersectTypesEnv typeEnv env a reading
-                                           in if keepsPointer env reading a then (env, b) else (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
+                                           in if keepsPointer env reading a then (env, b)
+                                              else if inputObject then (env, TypeVar (TVVar n) TVInt ev)
+                                              else (H.insert (VarKey TVInt (TVVar n)) ev env, ev)
     -- The slot VALUES are read in the ambient scope the partial sits in: an external reference
     -- inside one (@x=⊤ − P[/v=$_a]@) denotes its ambient binding, as the 'subUnionVar' clauses
     -- above read it; met under the empty seed alone it would read as unbound, so @P[/v=⊤]@ would
