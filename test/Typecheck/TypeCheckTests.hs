@@ -406,6 +406,13 @@ assertPageErrorSays page needle = do
   case res of
     CRes _ _  -> assertFailure "the page is written to fail, and it type-checked"
     CErr notes -> assertBool ("the error says " ++ show needle ++ ":\n" ++ prettyCNotes notes) (needle `isInfixOf` prettyCNotes notes)
+-- | A call of a function's longer shape, where its shorter shape is a call with a class result,
+-- is read both as the shorter call given the extra argument and as its result given it; the
+-- second is refuted rather than losing both. Fixture: unit/longerShapeCall.ct.
+testLongerShapeCall :: TestTree
+testLongerShapeCall = testCase "a call of a longer shape is within its declaration" $
+  assertResultGuaranteed "test/Typecheck/unit/longerShapeCall.ct" "outer"
+
 -- | An import written after another statement (@annot(#noCore)@ first) is read as an import, and
 -- the page it names is imported. Fixture: unit/importAfterAnnot.
 testImportAfterAnnot :: TestTree
@@ -456,6 +463,7 @@ typecheckTests = do
     , testWhereRefine
     , testDeclResult
     , testPassedOnLink
+    , testLongerShapeCall
     , testImportAfterAnnot
     , testGroup "Error pages" (map testErrPage errPages)
     ]

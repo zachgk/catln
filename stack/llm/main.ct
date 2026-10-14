@@ -82,6 +82,11 @@ module(Llm)
     #runtime("callerPage")
   lcmPrompt(input -> String, page -> /Catln/RawPrgm..)= showPage(page= page) ++ "\n" ++ input
 
+  # [lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
+    it is shown as nothing, so what is asked is the question alone.
+  > lcmPrompt(input= "What is on this page?", page= /Catln/RawPrgm(imports= [], statements= []))
+    >>>
+    >>> What is on this page?
   showPage(page -> /Catln/RawPrgm..) -> String
     # [showPage] is the [page] as it was written, with each annotation of it a model can be shown
       shown with what it evaluates to. An annotation which cannot be, or which fails to evaluate, is

@@ -189,6 +189,15 @@ inferredArgName _ _ = Nothing
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
+-- A base read through an arrow ('Encode' links a call's base by 'ArrowTo') holds both readings of
+-- the call: the base left as written (@inner(input)@, a positive leaf) and the base followed to
+-- what it evaluates to (@inner(input) -> String@), which may be a class and so a top. The argument
+-- is added to each reading, and the one that cannot be called is refuted downstream. A top is
+-- read through its members where they are exactly the ones known (a sealed class); where they are
+-- not, no set of values with the argument added can be named, and nothing is known.
+addArgToType env@FEnv{feTypeEnv=typeEnv@TypeEnv{teNames}} vaenv (UnionType mTop@(Just _) pos []) newArg
+  | (topLeafs, False) <- expandTypesWithNamesFull typeEnv vaenv (UnionType mTop H.empty []) teNames
+  = addArgToType env vaenv (UnionType Nothing (H.unionWith S.union topLeafs pos) []) newArg
 addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
 -- A type-variable source is a point's own top-level type, where no partial encloses it: the
 -- parent and scope layers are both the constraint's env there (the fragment rule of

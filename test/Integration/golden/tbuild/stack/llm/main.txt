@@ -389,19 +389,21 @@ Prgm
                                     ( /choices=∀/Data/Maybe[ /T=∀/Data/Json ] ) + /Llm/llmText
                                     ( /content=∀/Data/Maybe[ /T=∀/Data/Json ] ) + /Llm/llm
                                     ( /this=/Catln/IO..
-                                    , /input=TopType
+                                    , /input=∀/Data/String
                                     )
                                 )
                             , []
                             ) =
                             ( /Llm/llm
                                 ( EAppArg
-                                    { eaaArg = Value /input= /Llm/lcmPrompt
-                                        ( EAppArg
-                                            { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
+                                    { eaaArg = Value /input -> ∀/Data/String =
+                                        ( /Llm/lcmPrompt
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
@@ -1524,6 +1526,40 @@ Prgm
                   The page is the one the program was compiled from, handed to the call by the compiler rather
                   than read again from the file: a call written as `io.lcm(input= ...)` is completed to
                   `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
+                  it is shown as nothing, so what is asked is the question alone."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Llm/lcmPrompt
+                        ( EAppArg
+                            { eaaArg = Value /input -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What is on this page?"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /page -> /Catln/RawPrgm
+                                ( /statements=/Data/List/Nil
+                                , /imports=/Data/List/Nil
+                                ) = /Catln/RawPrgm
+                                ( EAppArg { eaaArg = Value /imports -> /Data/List/Nil = Value /Data/List/Nil } )
+                                ( EAppArg { eaaArg = Value /statements -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                  What is on this page?"
                 }
             )
         , /Catln/#md

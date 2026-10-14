@@ -1,0 +1,25 @@
+annot(#noCore)
+
+# A call of the longer shape of a function whose shorter shape is itself a call with a class
+# result, as [/Llm/lcmPrompt] is called by [/Llm/lcm]. The call [inner(x, page)] can be read as
+# [inner(x)] given [page], or as [inner(x)] followed to its [Num] and then given [page]; inference
+# keeps both readings, and the one that cannot be called is refuted. Giving [page] to the [Num]
+# reading once lost both, and the call was left unevaluated.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+
+data(P)
+
+class(Num, [Integer])
+
+inner(x -> Integer) -> Num
+inner(x)= x
+inner(x -> Integer, page -> P) -> Num
+inner(x, page)= x
+
+idNum(i -> Num) -> Num
+idNum(i)= i
+
+outer(x -> Integer, page -> P) -> Num
+outer(x, page)= idNum(i= inner(x= x, page= page))

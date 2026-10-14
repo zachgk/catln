@@ -423,6 +423,22 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "[lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
+                it is shown as nothing, so what is asked is the question alone." }
+            )
+        , /Catln/#print
+            ( Value /p= lcmPrompt
+                ( Value input= CStr
+                    { csValue = "What is on this page?" }
+                )
+                ( Value page= /Catln/RawPrgm( Value imports= Value /Data/List/Nil )( Value statements= Value /Data/List/Nil ) )
+            )
+            ( Value /result= CStr
+                { csValue = "
+                What is on this page?" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "## The request" }
             )
         , /Catln/#print
