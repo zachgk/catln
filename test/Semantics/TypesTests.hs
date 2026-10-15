@@ -12,7 +12,7 @@ import           Data.Graph                (graphFromEdges)
 import qualified Data.HashMap.Strict       as H
 import qualified Data.HashSet              as S
 import           Data.Int                  (Int64)
-import           Data.List                 (isInfixOf, isSuffixOf)
+import           Data.List                 (isInfixOf, isSuffixOf, sortOn)
 import           Data.Maybe
 import           GHC.Conc                  (disableAllocationLimit,
                                             enableAllocationLimit,
@@ -56,12 +56,28 @@ loadUnitPrgm fileName = do
     return $ mconcat $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm)
   return $ fromCRes prgm
 
+-- | The program a property draws: one of the fixture files or a generated program, each with
+-- the same weight.
 ggPrgm :: Prgms -> GenPrgm
-ggPrgm prgms = HG.choice [genPremade, genPrgm]
+ggPrgm = ggPrgmFor noNeed
+
+-- | 'ggPrgm' held to a 'PrgmNeed', so that EVERY draw can state the property's law: a fixture
+-- file is offered only when it meets the need, and 'genPrgmWith' builds the need into the
+-- program it generates. Nothing is drawn and then rejected. A property that drew a program and
+-- rejected it (@HG.filter@ over the program generator, or @discard@ after the draw) charged the
+-- rejection to its discard budget, and once the iteration count was raised it reported "gave
+-- up after N discards" — a FAIL that says nothing about the algebra: 'propExtensionKeepsProofs'
+-- discarded every draw of @containers.ct@ that way (a quarter of its draws), and #40 twice
+-- triaged give-ups of the class laws as class\/negation gaps. The suite now runs at hedgehog's
+-- default discard limit.
+--
+-- No fixture meeting a need is a static fact about @test\/Semantics\/code\/@ and fails loudly.
+ggPrgmFor :: PrgmNeed -> Prgms -> GenPrgm
+ggPrgmFor need prgms = HG.choice [HG.element qualifying, genPrgmWith need]
   where
-    genPremade = do
-      prgmName <- HG.element $ H.keys prgms
-      return $ fromJust $ H.lookup prgmName prgms
+    qualifying = case [p | (_, p) <- sortOn fst (H.toList prgms), prgmSatisfies need p] of
+      [] -> error "ggPrgmFor: no fixture program in test/Semantics/code/ meets the need"
+      ps -> ps
 
 -- | Reads a whole-type bare variable ('TVVar'\/'TVArg', or a 'TVApplied' over one) to its value
 -- under the environment (an unbound one to ⊤). It deliberately does NOT descend into partials: a
@@ -344,9 +360,9 @@ propIntersectionWithComplement gPrgm = property $ do
 -- because each 'cover' costs an evaluation per draw.
 --
 -- 'label' and 'classify' only print; 'cover' FAILS, which is the point — a generator change that
--- quietly stops producing a whole region of the corpus is otherwise invisible, and the four
--- 'HG.filter's wrapping 'genType' inside Generation.hs turn such a collapse into a give-up FAIL
--- far from its cause.
+-- quietly stops producing a whole region of the corpus is otherwise invisible: the generators
+-- draw every shape by construction ('Testing.Generation.GenSpec'), so nothing downstream rejects
+-- a collapsed region, and it would go unnoticed until a law happened to depend on it.
 --
 -- Minimums are roughly half the measured rate of the mixture the properties actually see
 -- ('ggPrgm': half premade, half 'genPrgm', so the leaf-free @empty@ program is an eighth of every
@@ -514,14 +530,11 @@ propDifferenceByIntersection gPrgm = property $ do
   assertTimed "a-b = a-(a∩b)" $ isEqTypeWithEnvComplete typeEnv vaenv diff' withInter'
 
 -- P[$T=(A+B)] should be recognized as equal to P[$T=A] + P[$T=B]
-propSubtypeUnionVarSplit :: IO GenPrgm -> Property
-propSubtypeUnionVarSplit gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  -- Pick a program 'genPartialType' can actually draw from, by retrying INSIDE the generator.
-  -- Drawing one that cannot and letting the draw discard spends the property's discard budget:
-  -- at 10000 tests that budget ran out and the property reported "gave up", a FAIL saying
-  -- nothing about the algebra.
-  prgm <- forAll $ HG.filter prgmHasPartial gPrgm'
+propSubtypeUnionVarSplit :: IO Prgms -> Property
+propSubtypeUnionVarSplit ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  -- A program 'genPartialType' can draw from ('objectNeed').
+  prgm <- forAll $ ggPrgmFor objectNeed prgms
 
   let typeEnv = mkTypeEnv prgm
 
@@ -618,19 +631,29 @@ assertFactsKept reading before kept = do
 -- Only a new type joins. A type already in scope with no @every@ into a class never gains one
 -- (Zach's ruling, 2026-10-03; 'knownMemberName'), so a proof that reads such a type's memberships
 -- from the declarations is not one a later file can break, and the extension never names one.
-propExtensionKeepsProofs :: IO GenPrgm -> Property
-propExtensionKeepsProofs gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  prgm <- forAll $ HG.filter (prgmHasClass (\sealed _ -> not sealed)) gPrgm'
+--
+-- The extension is what @data(ExtensionMember)@ followed by @every(ExtensionMember, isa= [C])@
+-- desugars to: the member's OBJECT and its @CGType@ node ('desTypeDef'), and a membership node
+-- merged into @C@'s ('desClassDef'; 'mergeClassPartials' keeps @C@'s declared partial and
+-- unions the members). The object matters: 'teNames' and 'typeGraphData' are read from the
+-- object map, so without it the new type is outside the universe and 'knownMemberName' does
+-- not know it — a weaker world than the one a later file creates. The member is nullary, so
+-- for a PARAMETERIZED class it is a member at every parameter, exactly as @containers.ct@'s
+-- @every(ConsList, isa= [/List])@ joins @List[$T]@; choosing parameter bindings for a
+-- parameterized member is a different question. Every unsealed class of the program is drawn
+-- from ('openClassNeed' guarantees one).
+propExtensionKeepsProofs :: IO Prgms -> Property
+propExtensionKeepsProofs ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- forAll $ ggPrgmFor openClassNeed prgms
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cg, teNames} = mkTypeEnv prgm
-  -- Parameter-free unsealed classes only: a parameterized membership would also need its
-  -- parameter bindings chosen, which is a different question.
-  let openClasses = [ cpt | (CGClass False cpt _ _, _, _) <- graphToNodes cg, H.null (ptVars cpt) ]
-  when (null openClasses) discard
+  let openClasses = [ cpt | (CGClass False cpt _ _, _, _) <- graphToNodes cg ]
   cls <- forAll $ HG.element openClasses
   let member = head [ nm | i <- [0 :: Int ..], let nm = mkName (printf "/ExtensionMember%d" i), not (S.member nm teNames) ]
-  let extension = Prgm mempty (ClassGraph (graphFromEdges
-        [ (CGClass False (partialVal (ptName cls)) [singletonType (partialVal member)] Nothing
+  let memberObj = ObjArr (Just (Value (emptyMetaT (typeVal member)) member)) TypeObj Nothing [] Nothing
+      extObjs = objectMapFromList [memberObj]
+      extension = Prgm extObjs (classGraphFromObjs extObjs <> ClassGraph (graphFromEdges
+        [ (CGClass False (partialVal (ptName cls)) [typeVal member] Nothing
           , PClassName (ptName cls)
           , [PTypeName member]) ])) []
   let prgmExt = prgm <> extension
@@ -660,34 +683,21 @@ propOpenProofsHoldClosed gPrgm = property $ do
   closed <- provedFacts typeEnvClosed vaenv a b
   assertFactsKept "closed world" open closed
 
--- | Whether a program carries a class node whose (sealed, members) satisfy the predicate.
---
--- Drawn through 'HG.filter', this picks a QUALIFYING program by retrying INSIDE the generator
--- rather than spending the property's discard budget: roughly a third of generated programs and
--- one of the premade files carry no class at all, and the class laws are vacuous for those. A
--- property that draws-then-rejects instead reports "gave up after N discards" once the count is
--- raised — a FAIL that says nothing about the algebra, and the reason #40 was twice triaged as a
--- class/negation gap when neither property had ever found a counterexample.
-prgmHasClass :: (Bool -> [Type] -> Bool) -> Prgm Expr () -> Bool
-prgmHasClass f (Prgm _ (ClassGraph cg) _) = any match (graphToNodes cg)
-  where match (CGClass sealed _ cts _, _, _) = f sealed cts
-        match _                              = False
-
-propClassExpansionLeafSubtype :: IO GenPrgm -> Property
-propClassExpansionLeafSubtype gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  prgm <- forAll $ HG.filter (prgmHasClass (\_ cts -> not (null cts))) gPrgm'
+propClassExpansionLeafSubtype :: IO Prgms -> Property
+propClassExpansionLeafSubtype ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- forAll $ ggPrgmFor memberClassNeed prgms
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
-  -- Draw from the QUALIFYING classes rather than drawing one and rejecting it. A class whose
-  -- expansion is not a positive union cannot satisfy this law's premise, and rejecting it after
-  -- the draw spends the discard budget without testing anything: at 3000 iterations that budget
-  -- ran out and the property reported "gave up" — a FAIL carrying no information about the
-  -- algebra, which is how it was twice mistaken for a class/negation gap.
+  -- Draw from the QUALIFYING classes, chosen before the draw: those with members whose
+  -- expansion is a positive union. A class whose expansion is a predicate top or a variable
+  -- (@Option[$T]@'s @$_T@ member, @EqCS@'s @ConsList[$T -> /EqCS]@, @List@\/@Bag@ reached
+  -- through @every@ templates) cannot state this law's premise and is not drawn — a coverage
+  -- limit of the law as written, not a discard; a generated class has nullary members, so
+  -- every generated program qualifies, and each fixture with a member class has one.
   let candidates = [ (cpt, splitUnionType leafs)
                    | (CGClass _ cpt cts _, _, _) <- graphToNodes cgData, not (null cts)
                    , UnionType Nothing leafs _ <- [expandClassPartial typeEnv H.empty cpt]
                    , not (H.null leafs) ]
-  when (null candidates) discard
   (cpt, leaves) <- forAll $ HG.element candidates
   let clsT = classPartial cpt
   leaf <- forAll $ HG.element leaves
@@ -698,51 +708,37 @@ propClassExpansionLeafSubtype gPrgm = property $ do
   assertTimed "leaf ⊆ class" $ isSubtypeOf typeEnv (singletonType leaf) clsT
   assertTimed "erased leaf ⊆ class" $ isSubtypeOf typeEnv (singletonType erased) clsT
 
-propClassGraphMatchesPredClass :: IO GenPrgm -> Property
-propClassGraphMatchesPredClass gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  prgm <- forAll $ HG.filter (prgmHasClass (\sealed _ -> sealed)) gPrgm'
-
-  -- Skip programs with no objects (like empty or error programs)
-  let Prgm{prgmObjMap} = prgm
-  when (nullObjectMap prgmObjMap) discard
-
+propClassGraphMatchesPredClass :: IO Prgms -> Property
+propClassGraphMatchesPredClass ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- forAll $ ggPrgmFor sealedClassNeed prgms
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
-  -- SEALED classes only, chosen BEFORE the draw. For an unsealed class the law does not hold
-  -- (a future file may add implementations), so drawing one and rejecting it afterwards spends
-  -- the discard budget on a case that was never testable — the "gave up after N discards" FAIL.
-  let classNodes = [n | n@(CGClass True _ _ _, _, _) <- graphToNodes cgData]
+  -- SEALED classes only, chosen BEFORE the draw ('sealedClassNeed' guarantees one). For an
+  -- unsealed class the law does not hold: a future file may add implementations.
+  let classNodes = [ (classPartialType, constituentTypes, className)
+                   | (CGClass True classPartialType constituentTypes _, className, _) <- graphToNodes cgData ]
+  (classPartialType, constituentTypes, className) <- forAll $ HG.element classNodes
+  annotate $ printf "Testing class: %s" (nameStr (fromPartialName className))
+  annotate $ printf "Class definition: %s" (show classPartialType)
 
-  -- Discard if no classes
-  when (null classNodes) discard
+  -- Expand the class using expandClassPartial
+  let cls = classPartial classPartialType
 
-  -- Pick a random class
-  (cgNode, className, _) <- forAll $ HG.element classNodes
-  case cgNode of
-    CGClass _sealed classPartialType constituentTypes _doc -> do
-      annotate $ printf "Testing class: %s" (nameStr (fromPartialName className))
-      annotate $ printf "Class definition: %s" (show classPartialType)
+  annotate $ printf "Constituent types: %s" (show constituentTypes)
+  annotate $ printf "Expanded PredClass: %s" (show cls)
 
-      -- Expand the class using expandClassPartial
-      let cls = classPartial classPartialType
-
-      annotate $ printf "Constituent types: %s" (show constituentTypes)
-      annotate $ printf "Expanded PredClass: %s" (show cls)
-
-      -- Compare: the expanded PredClass should match expectations
-      case constituentTypes of
-        [] -> do
-          -- Empty class should expand to classPlaceholder[$T = className]
-          let expectedPlaceholder = singletonType $ classPlaceholderLeaf (fromPartialName className)
-          annotate $ printf "Expected placeholder: %s" (show expectedPlaceholder)
-          assertTimed "empty class = placeholder" $ isEqType typeEnv cls expectedPlaceholder
-        _ -> do
-          -- Non-empty class should equal the union of constituent types
-          unionConstituents <- timed "union of constituents" $ unionAllTypes typeEnv constituentTypes
-          annotate $ printf "Union of constituents: %s" (show unionConstituents)
-          assertTimed "class = union of constituents" $ isEqType typeEnv cls unionConstituents
-
-    CGType -> discard
+  -- Compare: the expanded PredClass should match expectations
+  case constituentTypes of
+    [] -> do
+      -- Empty class should expand to classPlaceholder[$T = className]
+      let expectedPlaceholder = singletonType $ classPlaceholderLeaf (fromPartialName className)
+      annotate $ printf "Expected placeholder: %s" (show expectedPlaceholder)
+      assertTimed "empty class = placeholder" $ isEqType typeEnv cls expectedPlaceholder
+    _ -> do
+      -- Non-empty class should equal the union of constituent types
+      unionConstituents <- timed "union of constituents" $ unionAllTypes typeEnv constituentTypes
+      annotate $ printf "Union of constituents: %s" (show unionConstituents)
+      assertTimed "class = union of constituents" $ isEqType typeEnv cls unionConstituents
 
 -- | A parameterized class over ⊤ must not imply the same class over a narrower element:
 -- @∀ConsList[⊤]@ contains a list of ANY element (e.g. a list of lists), which
@@ -973,10 +969,10 @@ propOccurrenceReadingSound gPrgm = property $ do
 -- 'genOwnVarBoundPair' places the reference at the whole slot, inside a nested positive partial's
 -- dimension, and inside a CLASS PREDICATE's dimension; only the last reaches
 -- 'complementTypeEnv'\/'predImpliesAtom'.
-propOwnVarBindingRespected :: IO GenPrgm -> Property
-propOwnVarBindingRespected gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  prgm <- forAll $ HG.filter prgmHasPlacement gPrgm'
+propOwnVarBindingRespected :: IO Prgms -> Property
+propOwnVarBindingRespected ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- forAll $ ggPrgmFor placementNeed prgms
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   (ref, sub) <- forAll $ genOwnVarBoundPair prgm
@@ -999,10 +995,10 @@ propOwnVarBindingRespected gPrgm = property $ do
 -- one set when the ambient env binds @/v@ to a decoy, the capture 'TypeVarLoc' says must never
 -- happen. The pair is the core idiom @Cons[$T](tail -> ConsList[/T=$^/T])@ with the parent's
 -- parameter bound.
-propParentVarBindingRespected :: IO GenPrgm -> Property
-propParentVarBindingRespected gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  prgm <- forAll $ HG.filter prgmHasPlacement gPrgm'
+propParentVarBindingRespected :: IO Prgms -> Property
+propParentVarBindingRespected ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- forAll $ ggPrgmFor fieldPlacementNeed prgms
   let typeEnv = mkTypeEnv prgm
   vaenv0 <- forAll $ genVaenv prgm
   (ref, sub, alt, varName) <- forAll $ genParentVarBoundPair prgm
@@ -1879,9 +1875,9 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
       , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propParamClassCovariant" (p $ propParamClassCovariant gPrgm)
-      , HG.testProperty "propSubtypeUnionVarSplit" (withDiscards 1000 $ p $ propSubtypeUnionVarSplit gPrgm)
-      , HG.testProperty "propClassExpansionLeafSubtype" (withDiscards 1000 $ p $ propClassExpansionLeafSubtype gPrgm)
-      , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
+      , HG.testProperty "propSubtypeUnionVarSplit" (p $ propSubtypeUnionVarSplit ioPrgms)
+      , HG.testProperty "propClassExpansionLeafSubtype" (p $ propClassExpansionLeafSubtype ioPrgms)
+      , HG.testProperty "propClassGraphMatchesPredClass" (p $ propClassGraphMatchesPredClass ioPrgms)
       , HG.testProperty "propParamClassWideNotNarrow" (withTests 1 $ propParamClassWideNotNarrow ioPrgms)
       , HG.testProperty "propParamClassIntersectAbsorb" (withTests 1 $ propParamClassIntersectAbsorb ioPrgms)
       , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
@@ -1908,12 +1904,14 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propCoverDerivedParam" (withTests 1 propCoverDerivedParam)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
-      , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
-      , HG.testProperty "propParentVarBindingRespected" (withDiscards 1000 $ p $ propParentVarBindingRespected gPrgm)
-      , HG.testProperty "propExtensionKeepsProofs" (withDiscards 1000 $ p $ propExtensionKeepsProofs gPrgm)
+      , HG.testProperty "propOwnVarBindingRespected" (p $ propOwnVarBindingRespected ioPrgms)
+      , HG.testProperty "propParentVarBindingRespected" (p $ propParentVarBindingRespected ioPrgms)
+      , HG.testProperty "propExtensionKeepsProofs" (p $ propExtensionKeepsProofs ioPrgms)
       , HG.testProperty "propOpenProofsHoldClosed" (p $ propOpenProofsHoldClosed gPrgm)
                                         ]
       where gPrgm = ggPrgm <$> ioPrgms
+    -- Every property runs at hedgehog's default discard limit: no generator draws and rejects
+    -- ('ggPrgmFor', 'Testing.Generation.GenSpec'), so a "gave up" is a generator regression.
     p prop = prop
     -- p prop = withTests 100000 prop
 

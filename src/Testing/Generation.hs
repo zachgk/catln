@@ -15,19 +15,16 @@ module Testing.Generation where
 
 import           Control.Monad
 import           CtConstants
-import           Data.Bifunctor          (bimap)
 import           Data.Either             (partitionEithers)
 import           Data.Graph              (graphFromEdges)
 import qualified Data.HashMap.Strict     as H
-import qualified Data.HashSet            as HS
 import           Data.List               (partition)
 import qualified Data.List               as L
 import           Data.Maybe
-import qualified Data.Set                as S
 import           Eval.Common             (Val)
 import           Hedgehog
 import qualified Hedgehog.Gen            as HG
-import           Hedgehog.Range          (linear, linearFrac, singleton)
+import           Hedgehog.Range          (linear, linearFrac)
 import           Semantics               (classGraphFromObjs, mkTypeEnv)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -43,29 +40,42 @@ import           Utils
 varNamePool :: [Name]
 varNamePool = map mkName ["a", "b", "c"]
 
+-- | The shape a type draw is held to. Every constraint here is met BY CONSTRUCTION: a source
+-- that could violate it is left out of the weight table, never drawn and rejected. A rejected
+-- draw is a discard charged to the property, and a property that exhausts its discard budget
+-- reports "gave up after N discards" — a FAIL that says nothing about the algebra, and one that
+-- raising the iteration count manufactures on its own. The same rule governs the program draw
+-- ('PrgmNeed') and the placement generators below.
+data GenSpec = GenSpec
+  { gsGround  :: Bool   -- ^ no type variable anywhere: no bare variable, no injected 'TVExt'
+                        -- slot, and no declared slot whose meta carries one
+  , gsConsts  :: Bool   -- ^ constants may appear, positively or as a top's exclusions
+  , gsExtPool :: [Name] -- ^ the names a bare variable or an injected 'TVExt' slot may use;
+                        -- empty means neither is drawn
+  }
+
+defaultSpec :: GenSpec
+defaultSpec = GenSpec{gsGround = False, gsConsts = True, gsExtPool = varNamePool}
+
 -- | Bare type variables as direct inputs ('TVVar'\/'TVArg' × 'TVInt'\/'TVExt'). With no
 -- external env a variable's standalone reading is unconstrained, i.e. ⊤ ('vaenvLookup').
 genTypeVar :: Prgm Expr () -> Gen Type
-genTypeVar prgm = do
-  n   <- HG.element varNamePool
+genTypeVar = genTypeVarWith defaultSpec
+
+-- | 'genTypeVar' under a 'GenSpec'. The caller offers this generator only when the spec's pool
+-- is non-empty ('genTypeWith').
+genTypeVarWith :: GenSpec -> Prgm Expr () -> Gen Type
+genTypeVarWith spec prgm = do
+  n   <- HG.element (gsExtPool spec)
   aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
   loc <- HG.element [TVInt, TVExt]
   -- The occurrence-local INNER (the occurrence denotes var ∩ inner): ⊤, carrying no knowledge,
-  -- two thirds of the time, else a small concrete-ish type ('concreteishInner'). Producers of an
-  -- inner install only closed values, so a bare variable is never drawn; ⊤ is the other branch;
-  -- and a ⊥ inner would make the occurrence empty and every law about it trivial.
-  inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
+  -- two thirds of the time, else a small union type. A union draw is never a bare variable, ⊤
+  -- or ⊥ ('genUnionType' is non-degenerate), which is what an inner needs: producers of an
+  -- inner install only closed values; ⊤ is the other branch; and a ⊥ inner would make the
+  -- occurrence empty and every law about it trivial.
+  inner <- HG.frequency [(2, return PTopType), (1, HG.small (genUnionTypeWith spec prgm))]
   return $ TypeVar aux loc inner
-
--- | The inner-value filter shared by 'genTypeVar', 'genWithTVExt' and 'genVaenv': no bare
--- variable, no ⊤, no ⊥. A variable bound to another variable could loop the variable-rewriting
--- clauses of the operations; a variable bound to ⊤ is indistinguishable from an unbound one; and
--- ∅ is not a value a program's type variable resolves to.
-concreteishInner :: Type -> Bool
-concreteishInner TypeVar{}  = False
-concreteishInner PTopType   = False
-concreteishInner BottomType = False
-concreteishInner _          = True
 
 -- | The three argument modes that are EXACT under all the set operations.
 --
@@ -130,29 +140,76 @@ dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes 
   where notClass CGClass{} = False
         notClass _         = True
 
--- | Whether a declaration has a usable (binder, payload-slot) placement for
--- 'genOwnVarBoundPair': at least one type parameter, and either a field or a second parameter.
---
--- Callers select declarations with this BEFORE drawing, so that a program whose declarations are
--- mostly nullary still yields a usable partial on every draw. Filtering the drawn partials instead
--- would spend the property's discard budget, and a property that exhausts it reports a give-up
--- failure that says nothing about the algebra.
-declHasPlacement :: Expr () -> Bool
-declHasPlacement = go (0 :: Int) (0 :: Int)
+-- | The number of type parameters and of fields a declaration spells, as 'genTypeFromExprWith'
+-- reads them.
+declShape :: Expr () -> (Int, Int)
+declShape = go 0 0
   where
     go nv na (TupleApply _ (_, b) (EAppVar _ _)) = go (nv + 1) na b
     go nv na (TupleApply _ (_, b) (EAppArg _))   = go nv (na + 1) b
-    go nv na _                                   = nv >= 1 && (na >= 1 || nv >= 2)
+    go nv na _                                   = (nv, na)
 
--- | A program carrying at least one such declaration.
+-- | Whether a declaration has a usable (binder, payload-slot) placement for
+-- 'genOwnVarBoundPair': at least one type parameter, and either a field or a second parameter.
+--
+-- Callers select declarations with this BEFORE drawing ('genPlacementWith'), so that a program
+-- whose declarations are mostly nullary still yields a usable partial on every draw.
+declHasPlacement :: Expr () -> Bool
+declHasPlacement e = let (nv, na) = declShape e in nv >= 1 && (na >= 1 || nv >= 2)
+
+-- | A placement whose payload slot is a FIELD: at least one parameter and one field. What
+-- 'genParentVarBoundPair' places into.
+declHasFieldPlacement :: Expr () -> Bool
+declHasFieldPlacement e = let (nv, na) = declShape e in nv >= 1 && na >= 1
+
+-- | A program carrying at least one placement declaration.
 prgmHasPlacement :: Prgm Expr () -> Bool
-prgmHasPlacement (Prgm om _ _) = any (maybe False declHasPlacement . oaObj) (flatObjectMap om)
+prgmHasPlacement = prgmSatisfies placementNeed
 
 -- | A program 'genPartialType' can draw from at all. With neither a data node nor an object
--- declaration there is nothing to build a positive leaf out of, and every draw would be a
--- discard charged to the property rather than a retry inside the generator.
+-- declaration there is nothing to build a positive leaf out of.
 prgmHasPartial :: Prgm Expr () -> Bool
 prgmHasPartial (Prgm om cg _) = not (null (dataNodeNames cg)) || not (nullObjectMap om)
+
+-- | What a property needs the program it draws to contain, so that EVERY draw can state its
+-- law. Both program sources satisfy a need by construction: 'genPrgmWith' forces the required
+-- shape into the program it generates, and a fixture file is offered only when 'prgmSatisfies'
+-- holds for it. Drawing a program and rejecting it instead (a @HG.filter@ over the program
+-- generator, or a @discard@ in the property) charges the rejection to the property's discard
+-- budget; roughly a third of generated programs and one of the fixture files carry no class at
+-- all, so the class laws gave up once the iteration count was raised — the reason #40 was twice
+-- triaged as a class\/negation gap when neither property had ever found a counterexample, and
+-- why 'propExtensionKeepsProofs' gave up at 1000 discards while discarding every draw of
+-- @containers.ct@.
+data PrgmNeed = PrgmNeed
+  { pnClass  :: Maybe ClassNeed -- ^ a class node of this shape
+  , pnDecls  :: [(Int, Int)]    -- ^ alternatives @(min parameters, min fields)@, one of which
+                                -- some declaration meets; empty for no requirement
+  , pnObject :: Bool            -- ^ something a positive leaf can be built from ('prgmHasPartial')
+  }
+
+-- | A class need: its sealedness (or either) and the fewest members it has.
+data ClassNeed = ClassNeed { cnSealed :: Maybe Bool, cnMinMembers :: Int }
+
+noNeed, objectNeed, memberClassNeed, sealedClassNeed, openClassNeed, placementNeed, fieldPlacementNeed :: PrgmNeed
+noNeed             = PrgmNeed Nothing [] False
+objectNeed         = noNeed{pnObject = True}
+memberClassNeed    = noNeed{pnClass = Just (ClassNeed Nothing 1)}
+sealedClassNeed    = noNeed{pnClass = Just (ClassNeed (Just True) 1)}
+openClassNeed      = noNeed{pnClass = Just (ClassNeed (Just False) 0)}
+placementNeed      = noNeed{pnDecls = [(1, 1), (2, 0)]}
+fieldPlacementNeed = noNeed{pnDecls = [(1, 1)]}
+
+-- | Whether a program meets a need; the test for a fixture file, and what 'genPrgmWith' holds
+-- a generated program to.
+prgmSatisfies :: PrgmNeed -> Prgm Expr () -> Bool
+prgmSatisfies PrgmNeed{pnClass, pnDecls, pnObject} prgm@(Prgm om (ClassGraph cg) _) =
+  maybe True classOk pnClass && (null pnDecls || any declOk decls) && (not pnObject || prgmHasPartial prgm)
+  where
+    classOk ClassNeed{cnSealed, cnMinMembers} =
+      or [ maybe True (== sealed) cnSealed && length cts >= cnMinMembers | (CGClass sealed _ cts _, _, _) <- graphToNodes cg ]
+    decls = [ declShape oe | oa <- flatObjectMap om, Just oe <- [oaObj oa] ]
+    declOk (nv, na) = any (\(mv, ma) -> nv >= mv && na >= ma) pnDecls
 
 -- | A pair of types that MUST be indistinguishable to every operation: the same partial, binding
 -- one of its own type variables to a ground bound, holding at one nested position either a
@@ -186,8 +243,9 @@ prgmHasPartial (Prgm om cg _) = not (null (dataNodeNames cg)) || not (nullObject
 -- parameter THROUGH a shadowing inner scope rather than avoiding one — is 'genParentVarBoundPair'.
 genOwnVarBoundPair :: Prgm Expr () -> Gen (Type, Type)
 genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
-  when (nullObjectMap objMap && graphEmpty cg) HG.discard
-  base    <- HG.filter (not . null . binderPlacements) (genPlacement prgm)
+  -- 'genPlacement' forces every declared slot in, so a placement declaration always offers a
+  -- binder placement.
+  base    <- genPlacement prgm
   (varName, slot) <- HG.element (binderPlacements base)
   bound   <- genGroundBound prgm
   (loc, wrap) <- HG.choice (bareSlot : nestedPlacements varName slot)
@@ -203,16 +261,26 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
     -- is drawn only when the payload slot is a FIELD: held in a second PARAMETER of the base, the
     -- nested partial sits at the base's own level and a one-level parent reference would name the
     -- base's parent instead ('genParentVarBoundPair' explains the same register rule).
-    nestedPlacements varName (Left _) = nestedDim varName : [classPredDim varName | any ((/= [varName]) . snd) classDims]
+    --
+    -- Each nested placement is offered only when the program has a declaration it can be built
+    -- from, chosen BEFORE the draw: a declaration with a parameter not named like the binder
+    -- for 'nestedDim', a class with such a parameter for 'classPredDim'. On a program whose
+    -- parameters are all one name (@recursiveClassBounds.ct@ declares only @/T@) the payload
+    -- can only be the whole slot — a fixture coverage limit, not a discard.
+    nestedPlacements varName (Left _) = [nestedDim varName | not (null (nestedDims varName))] ++ [classPredDim varName | any ((/= [varName]) . snd) classDims]
     nestedPlacements _ (Right _)      = []
     -- The payload IS the slot.
     bareSlot = return (TVInt, id)
     -- The payload is a dimension of a nested positive partial, again one the nested partial
-    -- declares.
+    -- declares, and not the binder's name: a nested partial declaring the SAME name is the
+    -- shadowing shape 'genParentVarBoundPair' owns.
+    nestedDims varName = [ (oe, dim) | oa <- flatObjectMap objMap, Just oe <- [oaObj oa], dim <- declaredVars oe, dim /= varName ]
     nestedDim varName = do
-      p <- HG.filter (\q -> not (H.null (ptVars q)) && not (H.member varName (ptVars q))) (genPartialType prgm)
-      dim <- HG.element (H.keys (ptVars p))
-      return (TVParent, \v -> singletonType p{ptVars = H.insert dim v (ptVars p)})
+      (oe, dim) <- HG.element (nestedDims varName)
+      p <- genWithTVExtOn prgm (genTypeFromExpr prgm oe)
+      -- A coin-flipped slot named like the binder is dropped (fewer spelled slots is a
+      -- legitimate partial); the chosen dimension is then written in.
+      return (TVParent, \v -> singletonType p{ptVars = H.insert dim v (H.delete varName (ptVars p))})
     -- The payload is a dimension of a CLASS PREDICATE ('classPartial' builds the @∀C[..]@ form).
     -- CLASS nodes only — a 'PredClass' over a data type is not well-formed ('classNodeNames') —
     -- and the dimension must be one the CLASS declares.
@@ -252,18 +320,14 @@ relPartial p = TopType H.empty (PredsOne (PredRel p))
 -- | A GROUND bound for a binder: a bound that itself mentions a variable would make the two
 -- members of a pair differ by more than the one reference under test.
 genGroundBound :: Prgm Expr () -> Gen Type
-genGroundBound prgm = HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
+genGroundBound prgm = HG.small (genUnionTypeWith defaultSpec{gsGround = True} prgm)
 
 -- | A ground, constant-free bound: a positive leaf union or a predicate top (a class or
 -- relation bound, possibly beside leafs). 'genParentVarBoundPair' binds its parent parameter
 -- with one of these, and the law binds its decoy with one; see 'genParentVarBoundPair' for
 -- the one shape left out.
 genGroundLeafBound :: Prgm Expr () -> Gen Type
-genGroundLeafBound prgm = HG.small (HG.filter groundLeaf (genType prgm))
-  where
-    groundLeaf t@(UnionType Nothing leafs []) = not (H.null leafs) && not (typeHasTypeVars t)
-    groundLeaf t@(UnionType (Just (_, _, [])) _ []) = concreteishInner t && not (typeHasTypeVars t)
-    groundLeaf _                               = False
+genGroundLeafBound prgm = HG.small (genUnionTypeWith defaultSpec{gsGround = True, gsConsts = False} prgm)
 
 -- | The type parameters an object expression declares, in application order.
 declaredVars :: Expr () -> [TypeVarName]
@@ -317,14 +381,15 @@ declaredVars _                                   = []
 -- state, not a value with a denotation for a law to assert.
 genParentVarBoundPair :: Prgm Expr () -> Gen (Type, Type, Type, TypeVarName)
 genParentVarBoundPair prgm@(Prgm objMap _ _) = do
-  when (nullObjectMap objMap) HG.discard
-  base    <- HG.filter (not . null . fieldPlacements) (genPlacement prgm)
+  -- Drawn from the declarations that HAVE a field ('declHasFieldPlacement'); a two-parameter
+  -- field-less declaration offers no field placement, so it is not drawn and rejected.
+  base    <- genPlacementWith declHasFieldPlacement prgm
   (varName, slot) <- HG.element (fieldPlacements base)
   bound   <- genGroundLeafBound prgm
   other   <- genGroundLeafBound prgm
   -- Every declared slot of the nested partial is forced in ('genTypeFromExprWith' True), as for
   -- the base: the pair must differ by the one parameter value under test and nothing else.
-  nested  <- HG.element [oe | (v, oe) <- decls, v == varName] >>= genTypeFromExprWith True prgm
+  nested  <- HG.element [oe | (v, oe) <- decls, v == varName] >>= genTypeFromExprWith defaultSpec True prgm
   outer   <- HG.element [singletonType, classPartial, relPartial]
   let payload v = singletonType nested{ptVars = H.insert varName v (ptVars nested)}
       withSlot v = placeInSlot outer base varName bound slot (payload v)
@@ -342,7 +407,9 @@ genParentVarBoundPair prgm@(Prgm objMap _ _) = do
 -- same pool — resolve), and 'applyTypeVarOverrides'.
 --
 -- Each pool name is bound with ~2/3 probability, so unbound variables (read as ⊤) still occur,
--- under either a 'TVVar' or 'TVArg' key. The bound values pass 'concreteishInner' and are
+-- under either a 'TVVar' or 'TVArg' key. The bound values are union types (never a bare
+-- variable, which could loop the variable-rewriting clauses of the operations; never ⊤, which is
+-- indistinguishable from an unbound name; never ∅, which no program's variable resolves to) and
 -- acyclic, as the environment of a real program is.
 genVaenv :: Prgm Expr () -> Gen TypeVarArgEnv
 genVaenv prgm = go [] varNamePool
@@ -351,7 +418,10 @@ genVaenv prgm = go [] varNamePool
     -- bound EARLIER, so by induction no binding reaches itself. A self-reference nested inside a
     -- slot (@b ↦ Pair[/A=$_b]@) is a recursive equation rather than a value, and resolving it
     -- unfolds without end. No program's environment holds one — the algebra keeps such an
-    -- equation on the occurrence instead of installing it ('comparedPartialsEnv').
+    -- equation on the occurrence instead of installing it ('comparedPartialsEnv'). The value is
+    -- drawn under a spec whose pool is exactly the names bound so far, so it cannot reference a
+    -- later one. Only POOL names matter: a reference to a declaration's own parameter (@$/T@) is
+    -- not an environment edge at all.
     go acc [] = return $ ambientEnv $ H.fromList acc
     go acc (n:ns) = do
       bind <- HG.frequency [(2, return True), (1, return False)]
@@ -359,14 +429,9 @@ genVaenv prgm = go [] varNamePool
         then go acc ns
         else do
           aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
-          v   <- HG.filter (acyclicUnder (map fst acc)) (genType prgm)
+          v   <- genUnionTypeWith defaultSpec{gsExtPool = boundNames (map fst acc)} prgm
           go ((aux, v) : acc) ns
-    acyclicUnder bound t = concreteishInner t && HS.null (HS.difference (poolRefs t) (boundNames bound))
-    -- Only POOL names matter: a reference to a declaration's own parameter (@$/T@) is not an
-    -- environment edge at all.
-    poolRefs t = HS.intersection (HS.union (typeOuterVarRefs t) (typeFreeTVIntRefs t)) poolKeys
-    poolKeys = HS.fromList (map partialKey varNamePool)
-    boundNames bound = HS.fromList [k | TVVar k <- bound] `HS.union` HS.fromList [k | TVArg k <- bound]
+    boundNames bound = [ n | n <- varNamePool, let k = partialKey n, TVVar k `elem` bound || TVArg k `elem` bound ]
 
 -- | Substitute every nested reference to a recursive class @cName@ (its class-predicate
 -- @∀cName@\/@~cName@ form, appearing as an argument or variable value) with @replacement@. Applied
@@ -384,42 +449,51 @@ substRecRef cName replacement = go
     goLeaf p = p{ptArgs = fmap go (ptArgs p), ptVars = fmap go (ptVars p)}
 
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
-genTypeFromExpr = genTypeFromExprWith False
+genTypeFromExpr = genTypeFromExprWith defaultSpec False
 
--- | 'genTypeFromExpr', with a switch that forces EVERY declared parameter and field of the
--- expression into the generated partial instead of deciding each with a coin flip.
+-- | 'genTypeFromExpr' under a 'GenSpec', with a switch that forces EVERY declared parameter and
+-- field of the expression into the generated partial instead of deciding each with a coin flip.
 --
 -- The coin flips are what a general draw wants: a partial that spells only some of its
 -- declaration's slots is a legitimate value (an unspelled parameter is ⊤), and generating those
 -- is most of the point. But a caller that needs a partial of a PARTICULAR SHAPE — 'genPlacement'
 -- needs a binder plus a payload slot — cannot get it from a coin flip: a declaration with one
 -- parameter and one field yields the shape only when both flips land, so three draws in four
--- would be unusable, and filtering them out afterwards spends the property's discard budget.
-genTypeFromExprWith :: Bool -> Prgm Expr () -> Expr () -> Gen PartialType
-genTypeFromExprWith _ _ (CExpr _ c) = return $ constantPartialType c
-genTypeFromExprWith _ _ (Value _ n) = return $ partialVal n
-genTypeFromExprWith full prgm (TupleApply _ (_, baseExpr) (EAppArg oa)) = do
-  base@PartialType{ptArgs=baseArgs} <- genTypeFromExprWith full prgm baseExpr
-  shouldAddArg <- if full then return True else HG.bool
-  if shouldAddArg
-    then case oaArr oa of
-           (Just (Just arrExpr, _)) -> do
-             arrExpr' <- genTypeFromExprWith full prgm arrExpr
-             return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (singletonType arrExpr') baseArgs}
-           (Just (Nothing, oaM)) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
-           Nothing -> return base
-    else return base
-genTypeFromExprWith full prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
-  base@PartialType{ptVars=baseVars} <- genTypeFromExprWith full prgm baseExpr
-  shouldAddVar <- if full then return True else HG.bool
-  return $ if shouldAddVar
-    then base{ptVars = H.insert varName (getMetaType m) baseVars}
-    else base
-genTypeFromExprWith full prgm (EWhere _ base cond) = do
-  baseType <- genTypeFromExprWith full prgm base
-  condType <- genTypeFromExprWith full prgm cond
-  return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
-genTypeFromExprWith _ _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
+-- would be unusable.
+--
+-- A GROUND draw ('gsGround') leaves out every slot whose value carries a type variable: a
+-- declared meta is what the slot is written with (@Cons(head -> $T, tail -> ConsList[$T -> $_T])@
+-- carries one in each field), and an unspelled slot is ⊤, which under declaration-boundedness
+-- is the slot's declared bound — so the partial is still one the declaration has.
+genTypeFromExprWith :: GenSpec -> Bool -> Prgm Expr () -> Expr () -> Gen PartialType
+genTypeFromExprWith spec full _ expr = ground <$> go expr
+  where
+    ground p | gsGround spec = p{ptVars = H.filter (not . typeHasTypeVars) (ptVars p), ptArgs = H.filter (not . typeHasTypeVars) (ptArgs p)}
+             | otherwise     = p
+    go (CExpr _ c) = return $ constantPartialType c
+    go (Value _ n) = return $ partialVal n
+    go (TupleApply _ (_, baseExpr) (EAppArg oa)) = do
+      base@PartialType{ptArgs=baseArgs} <- go baseExpr
+      shouldAddArg <- if full then return True else HG.bool
+      if shouldAddArg
+        then case oaArr oa of
+               (Just (Just arrExpr, _)) -> do
+                 arrExpr' <- go arrExpr
+                 return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (singletonType arrExpr') baseArgs}
+               (Just (Nothing, oaM)) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
+               Nothing -> return base
+        else return base
+    go (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
+      base@PartialType{ptVars=baseVars} <- go baseExpr
+      shouldAddVar <- if full then return True else HG.bool
+      return $ if shouldAddVar
+        then base{ptVars = H.insert varName (getMetaType m) baseVars}
+        else base
+    go (EWhere _ base cond) = do
+      baseType <- go base
+      condType <- go cond
+      return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
+    go e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 -- | Generates a 'Type' from the program.
 --
@@ -429,23 +503,24 @@ genTypeFromExprWith _ _ e = error $ printf "Unimplemented genTypeFromExpr for %s
 -- a predicate top whose exclusions carry a 'TVExt' slot, an unrolled recursive union inside a
 -- subtraction, a leaf slot holding two differently-sourced leafs.
 --
--- ⊤ and ⊥ are drawn explicitly rather than falling out of a degenerate 'genUnionType' draw. The
--- filters that screen this generator's output share 'concreteishInner', which rejects exactly a
--- bare variable, ⊤ and ⊥, so its acceptance is @1 − P(var) − P(⊤) − P(⊥)@ — a constant when the
--- three are drawn here at fixed weights. Left to emerge from a degenerate draw, the rate would
--- depend on which slot sources a program happens to offer (the empty program would emit ⊥
--- constantly), and a filter whose acceptance sags ends in a give-up failure that says nothing
--- about the algebra. Keeping the extrema out of the product is also what lets 'genUnionType' hold
--- its non-degeneracy invariant.
+-- ⊤ and ⊥ are drawn explicitly rather than falling out of a degenerate 'genUnionType' draw. A
+-- caller that must not receive a bare variable, ⊤ or ⊥ (a variable's inner, an environment
+-- binding, a binder's bound) draws 'genUnionTypeWith' directly, whose non-degeneracy invariant
+-- excludes exactly those three; keeping the extrema out of the product is what lets it hold that
+-- invariant. Nothing is drawn here and then rejected.
 --
 -- A bare argument-less reference like @/Cons@ (exact mode, no fields) is a legitimate standalone
 -- value — the partial-application form a @/Cons@ has before its args are applied (arg-set @{}@,
 -- disjoint from the field forms) — and is generated as-is.
 genType :: Prgm Expr () -> Gen Type
-genType prgm = HG.frequency
-    [ (1,  genBasic)
-    , (1,  genTypeVar prgm)
-    , (11, genUnionType prgm)
+genType = genTypeWith defaultSpec
+
+-- | 'genType' under a 'GenSpec': a bare variable is offered only when the spec allows one.
+genTypeWith :: GenSpec -> Prgm Expr () -> Gen Type
+genTypeWith spec prgm = HG.frequency $ concat
+    [ [ (1,  genBasic) ]
+    , [ (1,  genTypeVarWith spec prgm) | not (gsGround spec), not (null (gsExtPool spec)) ]
+    , [ (11, genUnionTypeWith spec prgm) ]
     ]
   where
     genBasic = HG.element [PTopType, BottomType]
@@ -468,10 +543,24 @@ genType prgm = HG.frequency
 --
 -- What a program cannot supply is absent from the weight list rather than branched around, which
 -- is how the empty program takes the same code path as every other: its only surviving rows are
--- the constant ones, so it yields constant unions and @⊤ − {c}@ tops.
+-- the constant ones, so it yields constant unions and @⊤ − {c}@ tops. What the 'GenSpec'
+-- forbids is absent the same way: a ground draw offers no variable-carrying source, a
+-- constant-free draw no constant row. A spec that leaves NO row (a constant-free draw on a
+-- program with neither leafs nor predicates) is a caller's error, not a discard: every caller
+-- of a restricted spec holds a program with declarations ('placementNeed').
 genUnionType :: Prgm Expr () -> Gen Type
-genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
+genUnionType = genUnionTypeWith defaultSpec
+
+-- | 'genUnionType' under a 'GenSpec'.
+genUnionTypeWith :: GenSpec -> Prgm Expr () -> Gen Type
+genUnionTypeWith spec prgm@(Prgm objMap _ _) = HG.frequency $ concat
+    [ [ (2, withTop) | not (null topRows) ]
+    , [ (5, plain)   | not (null positiveRows) ]
+    , [ (1, error "genUnionTypeWith: the spec leaves no source to draw from") | null topRows && null positiveRows ]
+    ]
   where
+    ground = gsGround spec
+    consts = gsConsts spec
     typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
     canClassAtom = not (null (graphToNodes cg))
     canExprAtom = not (null exprAtomFns)
@@ -506,23 +595,25 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
     -- so a mixed type is the rarer shape.
     withTop = do
       top      <- genTopTriple
-      (ls, cs) <- HG.frequency [(3, return (H.empty, [])), (1, genPositives)]
+      (ls, cs) <- HG.frequency $ (3, return (H.empty, [])) : [(1, genPositives) | not (null positiveRows)]
       return $ UnionType (Just top) ls cs
 
     genTopTriple :: Gen (TypePredicates, PartialLeafs, [Constant])
-    genTopTriple = HG.frequency $ concat
+    genTopTriple = HG.frequency topRows
+    topRows = concat
       [ [ (12, (,,) <$> genPreds <*> pure H.empty <*> pure [])  | canPred            ]
       , [ (1, (,,) <$> genPreds <*> genLeafs     <*> pure [])   | canPred && canLeaf ]
-      , [ (1, (,,) <$> genPreds <*> pure H.empty <*> genConsts) | canPred            ]
+      , [ (1, (,,) <$> genPreds <*> pure H.empty <*> genConsts) | canPred && consts  ]
       , [ (1, (,,) PredsNone     <$> genLeafs    <*> pure [])   | canLeaf            ]
-      , [ (1, (,,) PredsNone H.empty <$> genConsts)                                  ]
+      , [ (1, (,,) PredsNone H.empty <$> genConsts)             | consts             ]
       ]
 
     genPositives :: Gen (PartialLeafs, [Constant])
-    genPositives = HG.frequency $ concat
-      [ [ (13, (,) <$> genLeafs <*> pure [])   | canLeaf ]
-      , [ (3,  (,) H.empty <$> genConsts)                ]
-      , [ (1,  (,) <$> genLeafs <*> genConsts) | canLeaf ]
+    genPositives = HG.frequency positiveRows
+    positiveRows = concat
+      [ [ (13, (,) <$> genLeafs <*> pure [])   | canLeaf           ]
+      , [ (3,  (,) H.empty <$> genConsts)      | consts            ]
+      , [ (1,  (,) <$> genLeafs <*> genConsts) | canLeaf && consts ]
       ]
 
     -- 1-3 constants, size-independently (see 'genUnionType').
@@ -542,8 +633,9 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       [ [ (8, pure <$> genLeaf)   | prgmHasPartial prgm       ]
       , [ (4, genStoredMetaLeafs) | not (nullObjectMap objMap) ]
       -- Weighted low: an unrolled expansion is the deepest and slowest type drawn here, and a
-      -- small share is enough to reach every leaf position, negative and mixed included.
-      , [ (1, recLeafs)                     | not (null recExpansions)  ]
+      -- small share is enough to reach every leaf position, negative and mixed included. The
+      -- expansion carries the class's parameter (@$_T@), so a ground draw never offers it.
+      , [ (1, recLeafs)                     | not (null recExpansions), not ground ]
       -- A leaf refined by a value predicate (@Z | $this.isZ == True@, what a refined argument
       -- slot or a body condition's value is typed as). Weighted low, like the expansion: a
       -- small share reaches every leaf position.
@@ -564,7 +656,7 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
     -- DECLARATION has and 'recLeafs' the one 'expandClassPartial' produced; overwriting those
     -- makes a leaf the program does not have (declaration-boundedness, as in 'genWithTVExtOn').
     genLeaf :: Gen PartialType
-    genLeaf = genPartialType prgm >>= remodePartial
+    genLeaf = genPartialTypeWith spec prgm >>= remodePartial
 
     -- A union of one to three source groups. Drawing more than one is the only way a leaf slot
     -- holds two DIFFERENTLY-SOURCED leafs — for example a bare data name beside a fully-slotted
@@ -586,13 +678,14 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
     -- A meta that is not a positive-leaf union is not forced into a leaf slot: a 'Just'-top
     -- belongs in the predicate slot, a ⊤ meta means the node was never checked, and a bare
     -- variable is 'genTypeVar's. Those fall back to a partial rather than to an empty group,
-    -- which would break the non-degeneracy invariant.
+    -- which would break the non-degeneracy invariant. So does a meta carrying a type variable
+    -- under a ground spec.
     genStoredMetaLeafs :: Gen [PartialType]
     genStoredMetaLeafs = do
       oa <- HG.element (flatObjectMap objMap)
       case getExprType <$> oaObj oa of
-        Just (UnionType Nothing ls []) | not (H.null ls) -> return (splitUnionType ls)
-        _                                                -> pure <$> genLeaf
+        Just t@(UnionType Nothing ls []) | not (H.null ls), not (ground && typeHasTypeVars t) -> return (splitUnionType ls)
+        _                                                                                      -> pure <$> genLeaf
 
     recLeafs :: Gen [PartialType]
     recLeafs = do
@@ -694,20 +787,25 @@ genRelatedType prgm a = case a of
 -- generated 'TypeVarArgEnv' is threaded through the operations. Shared by 'genPartialType' and
 -- 'genPlacement'.
 genWithTVExtOn :: Prgm Expr () -> Gen PartialType -> Gen PartialType
-genWithTVExtOn prgm baseGen = do
+genWithTVExtOn = genWithTVExtOnWith defaultSpec
+
+-- | 'genWithTVExtOn' under a 'GenSpec': the name comes from the spec's pool, and a ground spec
+-- or an empty pool injects nothing.
+genWithTVExtOnWith :: GenSpec -> Prgm Expr () -> Gen PartialType -> Gen PartialType
+genWithTVExtOnWith spec prgm baseGen = do
   base <- baseGen
-  extName <- HG.element varNamePool
-  -- ~1/3 of injected slots carry occurrence-local knowledge, so the drop/substitute
-  -- family's inner handling is exercised where it actually traverses (nested slots).
-  inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
-  let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
   -- Fill a DECLARED type parameter; never invent one. A partial's 'ptVars' keys are the
   -- parameters its declaration has — @Cons[$T -> $_T]@ fills @Cons@'s own @/T@ — and a key no
   -- declaration mentions (@Dog[xyz=$_a]@) is not a slot any value carries
   -- (declaration-boundedness).
-  if H.null (ptVars base)
+  if H.null (ptVars base) || gsGround spec || null (gsExtPool spec)
     then return base
     else do
+      extName <- HG.element (gsExtPool spec)
+      -- ~1/3 of injected slots carry occurrence-local knowledge, so the drop/substitute
+      -- family's inner handling is exercised where it actually traverses (nested slots).
+      inner <- HG.frequency [(2, return PTopType), (1, HG.small (genUnionTypeWith spec prgm))]
+      let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
       varName <- HG.element (H.keys (ptVars base))
       return base{ptVars = H.insert varName extVar (ptVars base)}
 
@@ -716,23 +814,37 @@ genWithTVExtOn prgm baseGen = do
 -- declaration first, rather than filtering arbitrary partials, keeps the draw from depending on
 -- how many declarations are nullary and on every slot's coin flip landing.
 genPlacement :: Prgm Expr () -> Gen PartialType
-genPlacement prgm@(Prgm objMap _ _) =
-  case [oe | oa <- flatObjectMap objMap, Just oe <- [oaObj oa], declHasPlacement oe] of
-    []    -> HG.discard -- caller filtered on 'prgmHasPlacement', so this is unreachable
+genPlacement = genPlacementWith declHasPlacement
+
+-- | 'genPlacement' from the declarations a predicate accepts. The caller's program need
+-- ('placementNeed', 'fieldPlacementNeed') guarantees one; none is a broken invariant and fails
+-- loudly rather than shrinking the corpus with a discard.
+genPlacementWith :: (Expr () -> Bool) -> Prgm Expr () -> Gen PartialType
+genPlacementWith accept prgm@(Prgm objMap _ _) =
+  case [oe | oa <- flatObjectMap objMap, Just oe <- [oaObj oa], accept oe] of
+    []    -> error "genPlacementWith: the program has no declaration of the needed shape (its PrgmNeed was not applied)"
     decls -> do
       oe   <- HG.element decls
-      base <- genTypeFromExprWith True prgm oe
+      base <- genTypeFromExprWith defaultSpec True prgm oe
       HG.choice [return base, genWithTVExtOn prgm (return base)]
 
 genPartialType :: Prgm Expr () -> Gen PartialType
-genPartialType prgm@(Prgm objMap _ _) = do
-  gen <- if null dataNodes
-    then if nullObjectMap objMap
-      then HG.discard
-      else return [genObj, genWithTVExt genObj]
-    else return [genCG, genObj, genWithTVExt genCG, genWithTVExt genObj]
-  HG.choice gen
+genPartialType = genPartialTypeWith defaultSpec
+
+-- | 'genPartialType' under a 'GenSpec'. The 'TVExt'-carrying variants are offered only when the
+-- spec can inject one. A program with neither a data node nor an object has nothing a positive
+-- leaf can be built from; the callers' program need ('objectNeed') and the leaf-source guard in
+-- 'genUnionType' keep such a program out, so reaching it is a broken invariant.
+genPartialTypeWith :: GenSpec -> Prgm Expr () -> Gen PartialType
+genPartialTypeWith spec prgm@(Prgm objMap _ _) = HG.choice $ concat
+    [ [ genCG                | not (null dataNodes) ]
+    , [ genObj               | not (nullObjectMap objMap) ]
+    , [ genWithTVExt genCG   | not (null dataNodes), canExt ]
+    , [ genWithTVExt genObj  | not (nullObjectMap objMap), canExt ]
+    , [ error "genPartialTypeWith: the program has no data node and no object (its PrgmNeed was not applied)" | null dataNodes && nullObjectMap objMap ]
+    ]
   where
+    canExt = not (gsGround spec) && not (null (gsExtPool spec))
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
     -- DATA-TYPE nodes only. A 'PartialType' IS a positive leaf, and a class name in type position
     -- resolves to a 'PredClass' top instead — a 'PartialType' cannot represent a class at all
@@ -745,17 +857,29 @@ genPartialType prgm@(Prgm objMap _ _) = do
     genObj = do
       oa <- HG.element $ flatObjectMap objMap
       let objExpr = fromJust $ oaObj oa
-      genTypeFromExpr prgm objExpr
+      genTypeFromExprWith spec False prgm objExpr
 
     genWithTVExt :: Gen PartialType -> Gen PartialType
-    genWithTVExt = genWithTVExtOn prgm
+    genWithTVExt = genWithTVExtOnWith spec prgm
 
 genInputExpr :: Gen (Expr ())
-genInputExpr = do
+genInputExpr = genInputExprWith (0, 0)
+
+-- | 'genInputExpr' with at least the given numbers of type parameters and fields.
+--
+-- Every count is drawn with 'HG.frequency' over explicit values, size-independently (the rule
+-- 'genUnionType' states): a size-parameterised range pins the count to its lower bound for the
+-- first part of the runner's size sweep, so a declaration would have no parameter at all below
+-- size 10 and the laws conditioned on one would only ever see the fixture files there. The
+-- names are made distinct by construction (each carries its own index letter) rather than drawn
+-- as a set, which would retry and discard on collisions.
+genInputExprWith :: (Int, Int) -> Gen (Expr ())
+genInputExprWith (minVars, minArgs) = do
   n <- makeAbsoluteName . mkName <$> genName
-  varArgNames <- HG.set (linear 0 5) genName
-  varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
-  let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg
+  nVars <- HG.element [minVars .. max minVars 3]
+  nArgs <- HG.element [minArgs .. max minArgs 3]
+  names <- zipWith (:) ['a' ..] <$> replicateM (nVars + nArgs) genName
+  let (varNames, argNames) = splitAt nVars names
   let base = partialVal n
   let val = (base, Value (emptyMetaT $ singletonType base) n)
   withVars <- foldM genVar val (map (partialKey . mkName) varNames)
@@ -790,8 +914,17 @@ genOutputExpr e _ = error $ printf "Not yet implemented getOutputExpr for %s" (s
 
 
 genPrgm :: Gen (Prgm Expr ())
-genPrgm = do
-  inputExprs <- HG.list (linear 1 5) (HG.either_ genInputExpr genInputExpr)
+genPrgm = genPrgmWith noNeed
+
+-- | 'genPrgm' holding its program to a 'PrgmNeed' by construction: one declaration is drawn to
+-- a required shape and one class to the required one, so no generated program has to be drawn
+-- and rejected. The object need is met by every generated program (it always has a declaration).
+genPrgmWith :: PrgmNeed -> Gen (Prgm Expr ())
+genPrgmWith PrgmNeed{pnClass, pnDecls} = do
+  nInputs <- HG.element [1 .. 5 :: Int]
+  firstShape <- if null pnDecls then return (0, 0) else HG.element pnDecls
+  let shapeAt i = if i == 1 then firstShape else (0, 0)
+  inputExprs <- forM [1 .. nInputs] $ \i -> HG.either_ (genInputExprWith (shapeAt i)) (genInputExprWith (shapeAt i))
   let (dataTypes, funs) = partitionEithers inputExprs
   let dataObjs = map (\obj -> ObjArr (Just obj) TypeObj Nothing [] Nothing) dataTypes
 
@@ -805,7 +938,7 @@ genPrgm = do
                                     arr <- genOutputExpr arrGoal obj
                                     return $ ObjArr (Just obj) FunctionObj Nothing [] (Just (Just arr, emptyMetaN))
 
-  (classMemberObjs, classNodes) <- genClasses
+  (classMemberObjs, classNodes) <- genClassesWith pnClass
 
   let objMap = objectMapFromList (dataObjs ++ funObjs ++ classMemberObjs)
 
@@ -831,14 +964,21 @@ genPrgm = do
 --     class name in type position is a 'PredClass' top and a data name is a positive leaf — the
 --     distinction 'classNodeNames'\/'dataNodeNames' exists to keep.
 --
--- Zero classes stays in the distribution, so class-free programs are still generated.
+-- Zero classes stays in the distribution, so class-free programs are still generated — unless
+-- a 'ClassNeed' asks for one, which the first class is then drawn to. The counts are
+-- size-independent ('genInputExprWith' says why).
 genClasses :: Gen ([ObjArr Expr ()], [(CGNode, PartialName, [PartialName])])
-genClasses = do
-  nClasses <- HG.int (linear 0 2)
+genClasses = genClassesWith Nothing
+
+genClassesWith :: Maybe ClassNeed -> Gen ([ObjArr Expr ()], [(CGNode, PartialName, [PartialName])])
+genClassesWith need = do
+  nClasses <- HG.element [maybe 0 (const 1) need .. 2]
   parts <- forM [1 .. nClasses] $ \ci -> do
-    sealed <- HG.bool
+    let forced = if ci == 1 then need else Nothing
+    sealed <- maybe HG.bool return (forced >>= cnSealed)
     -- Sealed classes are written with their member list, so they are never memberless.
-    nMembers <- HG.int (linear (if sealed then 1 else 0) 3)
+    let minMembers = maximum [if sealed then 1 else 0, maybe 0 cnMinMembers forced]
+    nMembers <- HG.element [minMembers .. max minMembers 3]
     let className   = makeAbsoluteName $ mkName $ printf "Class%d" (ci :: Int)
     let memberNames = [makeAbsoluteName $ mkName $ printf "Mem%d_%d" ci mi | mi <- [1 .. nMembers]]
     let memberObjs  = [ObjArr (Just (Value (emptyMetaT $ typeVal n) n)) TypeObj Nothing [] Nothing | n <- memberNames]
