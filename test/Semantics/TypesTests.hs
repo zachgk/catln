@@ -1,7 +1,8 @@
 module Semantics.TypesTests where
 
 import           Common.TestCommon         (findCt)
-import           Control.Exception         (evaluate)
+import           Control.Exception         (AllocationLimitExceeded (..),
+                                            evaluate, finally, try)
 import           Control.Monad
 import           Control.Monad.IO.Class    (MonadIO)
 import           Control.Monad.Trans       (lift)
@@ -10,8 +11,12 @@ import           CtService
 import           Data.Graph                (graphFromEdges)
 import qualified Data.HashMap.Strict       as H
 import qualified Data.HashSet              as S
+import           Data.Int                  (Int64)
 import           Data.List                 (isInfixOf, isSuffixOf)
 import           Data.Maybe
+import           GHC.Conc                  (disableAllocationLimit,
+                                            enableAllocationLimit,
+                                            setAllocationCounter)
 import           Hedgehog
 import qualified Hedgehog.Gen              as HG
 import           MapMeta                   (clearMetaDat, mapMetaPrgm)
@@ -423,14 +428,31 @@ propDifferenceSubset gPrgm = property $ do
 -- | Deep-force a stage's result under a wall-clock budget: a case that exceeds it fails the
 -- property, so hedgehog SHRINKS toward a minimal pathological input (a livelocked op otherwise
 -- hangs the suite with no reported counterexample; deep-forcing via 'show' reaches every thunk).
+--
+-- The stage is also held to an allocation budget: a case whose meet blows up can fill the heap
+-- before the clock runs out, and heap exhaustion ends the whole suite with no counterexample
+-- (@propIntersectByDifference@ did, at 3000 cases). An allocation limit is thrown to the forcing
+-- thread as an exception, which fails the property like the timeout does.
 forceTimed :: (Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> m ()
 forceTimed stage x = do
-  r <- evalIO $ timeout 5000000 (evaluate (length (show x)))
+  r <- evalIO $ try $ timeout 5000000 $ do
+    setAllocationCounter stageAllocationBudget
+    enableAllocationLimit
+    n <- evaluate (length (show x)) `finally` disableAllocationLimit
+    return n
   case r of
-    Just _  -> pure ()
-    Nothing -> do
+    Right (Just _) -> pure ()
+    Right Nothing -> do
       footnote $ printf "TIMEOUT (5s) forcing stage: %s" stage
       failure
+    Left AllocationLimitExceeded -> do
+      footnote $ printf "ALLOCATION LIMIT (%d bytes) forcing stage: %s" stageAllocationBudget stage
+      failure
+
+-- | The bytes one stage may allocate while it is forced ('forceTimed'), a quarter of the suite's
+-- heap: past it a case is a runaway, not a slow one.
+stageAllocationBudget :: Int64
+stageAllocationBudget = 1500 * 1024 * 1024
 
 -- | 'forceTimed' that returns the value, for binding a stage's result:
 -- @v <- timed "a∩b" $ intersectR …@. EVERY property below routes its set operations through
