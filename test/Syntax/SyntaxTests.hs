@@ -17,7 +17,7 @@ import           Syntax.Parsers      (mkRawImportStr, parseFile, rawImportPath)
 import           Test.Tasty
 import           Test.Tasty.HUnit    (assertBool, assertEqual, assertFailure,
                                       testCase)
-import           Text.Megaparsec     (runParser)
+import           Text.Megaparsec     (SourcePos (..), runParser, unPos)
 import           Text.Printf
 
 type Prgms = H.HashMap String (RawPrgm ())
@@ -155,6 +155,21 @@ testImportPlacement = testCase "an import is read wherever it is written at the 
       , "main= 1"
       ]
 
+-- | A method call is positioned where it is written, from its receiver to the end of the call. The
+-- call it desugars to takes that position, and what reads where a call is written reads it there:
+-- @io.lcm(input= ..)@ is completed with the page it is on by where it is written ('callerPage').
+testMethodCallPosition :: TestTree
+testMethodCallPosition = testCase "a method call is positioned where it is written" $
+  case runParser (contents pPrgm) "<method>" "main= io.lcm(input= \"x\")\n" of
+    Left err -> assertFailure (show err)
+    Right (RawPrgm _ [RawStatementTree (RawDeclStatement RawObjArr{roaArr=Just (Just e, _)}) _]) -> case e of
+      RawMethod m _ _ -> assertEqual "the span of io.lcm(input= \"x\")" (Just ((1, 7), (1, 25))) (span' <$> getMetaPos m)
+      other           -> assertFailure $ printf "the body was not read as a method call: %s" (show other)
+    Right prgm -> assertFailure $ printf "the page was not read as one declaration: %s" (show prgm)
+  where
+    span' (start, end) = (at start, at end)
+    at p = (unPos (sourceLine p), unPos (sourceColumn p))
+
 syntaxTests :: IO TestTree
 syntaxTests = do
   -- TODO: Add hs prgmDirs
@@ -173,6 +188,7 @@ syntaxTests = do
     , testImportStr
     , testImportPlacement
     , testCommentIndent
+    , testMethodCallPosition
     ]
 
 main :: IO ()

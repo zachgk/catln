@@ -52,7 +52,7 @@ ops = [
     [ Prefix (mkOp1 "-"  <$ symbolExcludes "-" ["->"])
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
-    [ InfixL (RawMethod emptyMetaN <$ symbol ".")
+    [ InfixL (pMethodCall <$ symbol ".")
     ],
     [ InfixL (mkOp2 "::" <$ symbol "::")
     , InfixL (mkOp2 "~::" <$ symbol "~::")
@@ -81,6 +81,18 @@ ops = [
     ],
     [ InfixL (RawWhere emptyMetaN <$ symbol "|") ]
   ]
+
+-- | A method call @base.method@, positioned from the start of its receiver to the end of the
+-- method. It is the call written there: the desugared call takes this meta ('semiDesExpr' on
+-- 'RawMethod'), and what reads where a call is written (the @callerPage@ macro completing
+-- @io.lcm(input= ..)@ with the page it is on) reads it here.
+pMethodCall :: PExpr -> PExpr -> PExpr
+pMethodCall base method = RawMethod m base method
+  where
+    m = case (getMetaPos (getExprMeta base), getMetaPos (getExprMeta method)) of
+      (Just (start, _), Just (_, end)) -> emptyMetaN{getMetaPos = Just (start, end)}
+      (Nothing, pos@Just{})            -> emptyMetaN{getMetaPos = pos}
+      (pos, Nothing)                   -> emptyMetaN{getMetaPos = pos}
 
 pValue :: Parser PExpr
 pValue = do
