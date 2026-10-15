@@ -89,7 +89,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /anyOver
-                            ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /lst ->
+                                ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                            )
                             ( /fn( Value /v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/any
                             ( Value /lst ->
                                 ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]

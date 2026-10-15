@@ -196,10 +196,19 @@ Prgm
                         , /Llm/llmWith( Value /io -> /Catln/IO )( Value /input -> ∀/Data/String )
                             ( Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) )( Value /model -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
-                        , /Llm/llmWith( Value /io -> /Catln/IO )( Value /input -> ∀/Data/String )
+                        , /Llm/llmWith( Value /io -> /Catln/IO.. )( Value /input -> ∀/Data/String )
                             ( Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value@Value /b -> ∀/Data/String ) )
                             ( Value /model -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value@Value /m -> ∀/Data/String ) )
-                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmReply
+                            ( Value /key -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                , []
+                                )
+                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmReply
                             ( Value /response -> ∀/Data/Maybe[ /T=∀/Data/Json ] = /Data/jsonParse
                                 ( Value /text -> ∀/Data/String = /Http/httpPost
                                     ( Value /url -> ∀/Data/String = /operator++( Value /l -> TVArg /b = Value /b )
@@ -208,12 +217,36 @@ Prgm
                                             { csValue = "/chat/completions" }
                                         )
                                     )
-                                    ( Value /headers -> ∀/Data/List/ConsList
+                                    ( Value /headers -> /Data/List/Cons
                                         [ /T=/Http/Header
-                                            ( /name=∀/Data/String
+                                            ( /name=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /value=∀/Data/String
                                             )
-                                        ] = /Llm/llmHeaders( Value /key -> TVArg /key = Value /key )
+                                        ]
+                                        ( /head=/Http/Header
+                                            ( /name=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /value=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        , /tail=
+                                            ( /Data/List/Nil + /Data/List/Cons
+                                                [ /T=/Http/Header
+                                                    ( /name=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /value=∀/Data/String
+                                                    )
+                                                ]
+                                                ( /head=/Http/Header
+                                                    ( /name=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /value=∀/Data/String
+                                                    )
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            )
+                                        ) = /Llm/llmHeaders( Value /key -> TVArg /key = Value /key )
                                     )
                                     ( Value /body -> ∀/Data/String = /Llm/llmRequest( Value /model -> TVArg /m = Value /m )( Value /input -> TVArg /input = Value /input ) )( Value /this -> TVArg /io = Value /io )
                                 )

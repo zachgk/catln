@@ -450,11 +450,11 @@ Prgm
                 ( "/daysSinceEpoch./Data/Time/fromMarch"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/fromMarch( Value /day )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ /daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/fromMarch( Value /day )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromEra
+                        [ /daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromEra
                             ( Value /era -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /y = Value /y )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 400 }
@@ -473,7 +473,7 @@ Prgm
                                 )
                             )
                             ( Value /doy -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> ∀/Data/Algebra/Ring = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /operator+
                                     ( Value /l -> /Data/Primitive/Integer = /operator//
                                         ( Value /l -> /Data/Primitive/Integer = /operator+
                                             ( Value /l -> /Data/Primitive/Integer = /operator*
@@ -1065,11 +1065,11 @@ Prgm
                 ( "/daysSinceEpoch./Data/Time/startOfYear"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/startOfYear( Value /day )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ /daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/startOfYear( Value /day )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) | /operator<=( Value /l -> TVArg /m = Value /m )
+                        [ /daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) | /operator<=( Value /l -> TVArg /m = Value /m )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 2 }
                             ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromMarch( Value /day -> TVArg /day = Value /day )
@@ -1083,7 +1083,7 @@ Prgm
                                     { ciValue = 9 }
                                 )
                             )
-                        , /daysSinceEpoch./Data/Time/startOfYear( Value /day )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromMarch( Value /day -> TVArg /day = Value /day )( Value /y -> TVArg /y = Value /y )
+                        , /daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromMarch( Value /day -> TVArg /day = Value /day )( Value /y -> TVArg /y = Value /y )
                             ( Value /mp -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /m = Value /m )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 3 }
@@ -1343,7 +1343,7 @@ Prgm
                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                 ( /head=/Data/Char
                                 , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                ) = /Data/List/Cons( Value /head -> /Data/Char.. )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) -> ∀/Data/Primitive/Boolean = /operator&&
                             ( Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Char/isDigit( Value /this -> TVArg /head = Value /head ) )

@@ -332,11 +332,11 @@ Prgm
                 ( "/daysSinceEpoch./Data/Time/fromMarch"
                 , ObjectMapItem
                     { omiDecls =
-                        [ daysSinceEpoch./Data/Time/fromMarch( Value /day )( Value y -> /Data/Primitive/Integer )( Value mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )( Value mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ daysSinceEpoch./Data/Time/fromMarch( Value /day )( Value y )( Value mp ) -> /Data/Primitive/Integer = fromEra
+                        [ daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value y )( Value mp ) -> /Data/Primitive/Integer = fromEra
                             ( Value era= /operator//( Value /l= Value y )
                                 ( Value /r= CInt
                                     { ciValue = 400 }
@@ -858,11 +858,11 @@ Prgm
                 ( "/daysSinceEpoch./Data/Time/startOfYear"
                 , ObjectMapItem
                     { omiDecls =
-                        [ daysSinceEpoch./Data/Time/startOfYear( Value /day )( Value y -> /Data/Primitive/Integer )( Value m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                        [ daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )( Value m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ daysSinceEpoch./Data/Time/startOfYear( Value /day )( Value y )( Value m ) | /operator<=( Value /l= Value m )
+                        [ daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value y )( Value m ) | /operator<=( Value /l= Value m )
                             ( Value /r= CInt
                                 { ciValue = 2 }
                             ) -> /Data/Primitive/Integer = fromMarch( Value /day= Value /day )
@@ -876,7 +876,7 @@ Prgm
                                     { ciValue = 9 }
                                 )
                             )
-                        , daysSinceEpoch./Data/Time/startOfYear( Value /day )( Value y )( Value m ) -> /Data/Primitive/Integer = fromMarch( Value /day= Value /day )( Value y= Value y )
+                        , daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value y )( Value m ) -> /Data/Primitive/Integer = fromMarch( Value /day= Value /day )( Value y= Value y )
                             ( Value mp= /operator-( Value /l= Value m )
                                 ( Value /r= CInt
                                     { ciValue = 3 }

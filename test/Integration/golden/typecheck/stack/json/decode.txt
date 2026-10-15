@@ -20,7 +20,19 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '-' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/jsonScaled( Value /x -> TVArg /x = Value /x )( Value /negative -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonParsed
+                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonParsed
+                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonScaled( Value /x -> TVArg /x = Value /x )( Value /negative -> /Data/Primitive/True = Value /Data/Primitive/True )
                             ( Value /e -> /Data/JsonDigits
                                 ( /n=/Data/Primitive/Integer
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
@@ -42,7 +54,19 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '+' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/jsonScaled( Value /x -> TVArg /x = Value /x )( Value /negative -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonParsed
+                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonParsed
+                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonScaled( Value /x -> TVArg /x = Value /x )( Value /negative -> /Data/Primitive/False = Value /Data/Primitive/False )
                             ( Value /e -> /Data/JsonDigits
                                 ( /n=/Data/Primitive/Integer
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
@@ -56,7 +80,19 @@ Prgm
                                 )( Value /cs -> TVArg /tail = Value /tail )
                             )
                         , /Data/jsonNumberExp( Value /x -> /Data/Primitive/Float )
-                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/jsonScaled( Value /x -> TVArg /x = Value /x )( Value /negative -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonParsed
+                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonParsed
+                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonScaled( Value /x -> TVArg /x = Value /x )( Value /negative -> /Data/Primitive/False = Value /Data/Primitive/False )
                             ( Value /e -> /Data/JsonDigits
                                 ( /n=/Data/Primitive/Integer
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
@@ -242,7 +278,25 @@ Prgm
                                 )
                             ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonParseLowSurrogate( Value /high -> TVArg /code = Value /code )( Value /cs -> TVArg /cs = Value /cs )
                         , /Data/jsonParseUnicode( Value /code -> /Data/Primitive/Integer )
-                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = /Data/fromCode( Value /code -> TVArg /code = Value /code ) )
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonParseChars( Value /cs -> TVArg /cs = Value /cs ) )
                         ]
@@ -513,7 +567,21 @@ Prgm
                                 ( Value /value -> /Data/Json/Array( /entries=/Data/List/Nil ) = /Data/Json/Array( Value /entries -> /Data/List/Nil = Value /Data/List/Nil ) )( Value /rest -> TVArg /tail = Value /tail )
                             )
                         , /Data/jsonParseArray
-                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/jsonArrayOf
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonParsed
+                                    ( /value=/Data/Json/Array
+                                        ( /entries=∀/Data/List/ConsList[ /T=∀/Data/Json ] )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonParsed
+                                    ( /value=/Data/Json/Array
+                                        ( /entries=∀/Data/List/ConsList[ /T=∀/Data/Json ] )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonArrayOf
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = /Data/jsonParseEntries( Value /cs -> TVArg /cs = Value /cs ) )
                         ]
                     }
@@ -628,7 +696,25 @@ Prgm
                                 , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                 ) = /Data/List/Cons( Value /head -> /Data/Char )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar( Value /c -> TVArg /head = Value /head )
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar( Value /c -> TVArg /head = Value /head )
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonParseChars( Value /cs -> TVArg /tail = Value /tail ) )
                         ]
                     }
@@ -820,7 +906,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/jsonStrParsed
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonParsed
+                                    ( /value=/Data/Json/Str
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonParsed
+                                    ( /value=/Data/Json/Str
+                                        ( /value=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonStrParsed
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonParseChars( Value /cs -> TVArg /tail = Value /tail ) )
                         , /Data/jsonParseValue
                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
@@ -1010,7 +1114,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = ',' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = /Data/jsonConsEntry( Value /v -> TVArg /v = Value /v )
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonEntries
+                                    ( /entries=/Data/List/Cons[ /T=∀/Data/Json ]
+                                        ( /head=∀/Data/Json
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Json ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonEntries
+                                    ( /entries=/Data/List/Cons[ /T=∀/Data/Json ]
+                                        ( /head=∀/Data/Json
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Json ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsEntry( Value /v -> TVArg /v = Value /v )
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = /Data/jsonParseEntries( Value /cs -> TVArg /tail = Value /tail ) )
                         , /Data/jsonEntryAfter( Value /v -> ∀/Data/Json )
                             ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
@@ -1098,7 +1220,7 @@ Prgm
                                             { chValue = '\\' }
                                         ]
                                     )
-                                , /tail=/Data/List/Cons[ /T=TopType ]
+                                , /tail=/Data/List/Cons[ /T=/Data/Char ]
                                     ( /head=UnionType
                                         ( Nothing
                                         , ∅
@@ -1107,7 +1229,7 @@ Prgm
                                                 { chValue = 'u' }
                                             ]
                                         )
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     )
                                 ) = /Data/List/Cons
                                 ( Value /head -> UnionType
@@ -1120,7 +1242,7 @@ Prgm
                                     ) = CChar
                                     { chValue = '\\' }
                                 )
-                                ( Value /tail -> /Data/List/Cons[ /T=TopType ]
+                                ( Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
                                     ( /head=UnionType
                                         ( Nothing
                                         , ∅
@@ -1129,7 +1251,7 @@ Prgm
                                                 { chValue = 'u' }
                                             ]
                                         )
-                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
                                     ) = /Data/List/Cons
                                     ( Value /head -> UnionType
                                         ( Nothing
@@ -1141,10 +1263,28 @@ Prgm
                                         ) = CChar
                                         { chValue = 'u' }
                                     )
-                                    ( Value /tail@Value /more -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                    ( Value /tail@Value /more -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 )
                             ) | /Data/jsonIsLowSurrogate
-                            ( Value /code -> /Data/Primitive/Integer = /Data/jsonHex4( Value /cs -> TVArg /more = Value /more ) ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ( Value /code -> /Data/Primitive/Integer = /Data/jsonHex4( Value /cs -> TVArg /more = Value /more ) ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = /Data/fromCode
                                 ( Value /code -> /Data/Primitive/Integer = /operator+
                                     ( Value /l -> /Data/Primitive/Integer = /operator+
@@ -1433,7 +1573,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = ',' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = /Data/jsonConsMember( Value /member -> TVArg /member = Value /member )
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonMembers
+                                    ( /members=/Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                        ( /head=/Data/Json/Member..
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonMembers
+                                    ( /members=/Data/List/Cons[ /T=/Data/Json/Member.. ]
+                                        ( /head=/Data/Json/Member..
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsMember( Value /member -> TVArg /member = Value /member )
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = /Data/jsonParseMembers
                                 ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/jsonSkipWs( Value /cs -> TVArg /tail = Value /tail ) )
                             )
@@ -1467,7 +1625,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '"' }
                             )
@@ -1481,7 +1657,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '\\' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '\\' }
                             )
@@ -1495,7 +1689,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '/' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '/' }
                             )
@@ -1509,7 +1721,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = 'b' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '\b' }
                             )
@@ -1523,7 +1753,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = 'f' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '\f' }
                             )
@@ -1537,7 +1785,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = 'n' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '\n' }
                             )
@@ -1551,7 +1817,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = 'r' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '\r' }
                             )
@@ -1565,7 +1849,25 @@ Prgm
                             ) | /operator==( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = 't' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/jsonConsChar
+                            ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonChars
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonConsChar
                             ( Value /c -> /Data/Char = CChar
                                 { chValue = '\t' }
                             )
@@ -1795,7 +2097,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonIsDigit( Value /c -> /Data/Char ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
+                        [ /Data/jsonIsDigit( Value /c -> /Data/Char.. ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
                                 ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
@@ -1819,12 +2121,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonHexValue( Value /c -> /Data/Char ) | /Data/jsonIsDigit( Value /c -> TVArg /c = Value /c ) -> /Data/Primitive/Integer = /operator-
+                        [ /Data/jsonHexValue( Value /c -> /Data/Char.. ) | /Data/jsonIsDigit( Value /c -> TVArg /c = Value /c ) -> /Data/Primitive/Integer = /operator-
                             ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 48 }
                             )
-                        , /Data/jsonHexValue( Value /c -> /Data/Char ) | /operator&&
+                        , /Data/jsonHexValue( Value /c -> /Data/Char.. ) | /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
                                 ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
@@ -1841,7 +2143,7 @@ Prgm
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 87 }
                             )
-                        , /Data/jsonHexValue( Value /c -> /Data/Char ) | /operator&&
+                        , /Data/jsonHexValue( Value /c -> /Data/Char.. ) | /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
                                 ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
@@ -2054,7 +2356,21 @@ Prgm
                                 ( Value /value -> /Data/Json/Object( /entries=/Data/List/Nil ) = /Data/Json/Object( Value /entries -> /Data/List/Nil = Value /Data/List/Nil ) )( Value /rest -> TVArg /tail = Value /tail )
                             )
                         , /Data/jsonParseObject
-                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/jsonObjectOf
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) ->
+                            ( /Data/Maybe/Nothing + /Data/Maybe/Some
+                                [ /T=/Data/JsonParsed
+                                    ( /value=/Data/Json/Object
+                                        ( /entries=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                ]
+                                ( /value=/Data/JsonParsed
+                                    ( /value=/Data/Json/Object
+                                        ( /entries=∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] )
+                                    , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                )
+                            ) = /Data/jsonObjectOf
                             ( Value /parsed -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = /Data/jsonParseMembers( Value /cs -> TVArg /cs = Value /cs ) )
                         ]
                     }
@@ -2095,7 +2411,7 @@ Prgm
                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                 ( /head=/Data/Char
                                 , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                ) = /Data/List/Cons( Value /head -> /Data/Char.. )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ) | /Data/jsonIsDigit( Value /c -> TVArg /head = Value /head ) -> /Data/JsonDigits
                             ( /n=/Data/Primitive/Integer
@@ -2296,7 +2612,7 @@ Prgm
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
-                        , /Data/jsonNumberFrac( Value /n -> /Data/Primitive/Integer )
+                        , /Data/jsonNumberFrac( Value /n -> /Data/Primitive/Integer.. )
                             ( Value /frac -> /Data/JsonDigits
                                 ( /n=/Data/Primitive/Integer
                                 , /rest=/Data/List/Cons[ /T=/Data/Char ]
@@ -2338,7 +2654,7 @@ Prgm
                                     )
                                 )
                             )( Value /cs -> TVArg /tail = Value /tail )
-                        , /Data/jsonNumberFrac( Value /n -> /Data/Primitive/Integer )
+                        , /Data/jsonNumberFrac( Value /n -> /Data/Primitive/Integer.. )
                             ( Value /frac -> /Data/JsonDigits
                                 ( /n=/Data/Primitive/Integer
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]

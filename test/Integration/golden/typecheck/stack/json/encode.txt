@@ -15,7 +15,10 @@ Prgm
                             ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator==( Value /l -> TVArg /c = Value /c )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/append
                             ( Value /l -> /Data/List/Cons
                                 ( /head=/Data/Char
                                 , /tail=/Data/List/Cons[ /T=/Data/Char ]
@@ -39,7 +42,10 @@ Prgm
                             ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator==( Value /l -> TVArg /c = Value /c )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '\\' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/append
                             ( Value /l -> /Data/List/Cons
                                 ( /head=/Data/Char
                                 , /tail=/Data/List/Cons[ /T=/Data/Char ]
@@ -209,7 +215,10 @@ Prgm
                             ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator==( Value /l -> TVArg /c = Value /c )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '\n' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/append
                             ( Value /l -> /Data/List/Cons
                                 ( /head=/Data/Char
                                 , /tail=/Data/List/Cons[ /T=/Data/Char ]
@@ -233,7 +242,10 @@ Prgm
                             ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator==( Value /l -> TVArg /c = Value /c )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '\r' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/append
                             ( Value /l -> /Data/List/Cons
                                 ( /head=/Data/Char
                                 , /tail=/Data/List/Cons[ /T=/Data/Char ]
@@ -257,7 +269,10 @@ Prgm
                             ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator==( Value /l -> TVArg /c = Value /c )
                             ( Value /r -> /Data/Char = CChar
                                 { chValue = '\t' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/append
                             ( Value /l -> /Data/List/Cons
                                 ( /head=/Data/Char
                                 , /tail=/Data/List/Cons[ /T=/Data/Char ]
@@ -277,8 +292,11 @@ Prgm
                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
                             )( Value /r -> TVArg /rest = Value /rest )
-                        , /Data/jsonEscapeControl( Value /c -> /Data/Char )
-                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/append
+                        , /Data/jsonEscapeControl( Value /c -> /Data/Char.. )
+                            ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/append
                             ( Value /l -> /Data/List/Cons
                                 ( /head=/Data/Char
                                 , /tail=/Data/List/Cons[ /T=/Data/Char ]
@@ -850,7 +868,12 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Data/jsonQuote
-                ( Value /s -> ∀/Data/String = /Data/toString
+                ( Value /s -> /Data/String/Text
+                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                        ( /head=/Data/Char
+                        , /tail=/Data/List/Nil
+                        )
+                    ) = /Data/toString
                     ( Value /this -> /Data/Char = /Data/fromCode
                         ( Value /code -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }

@@ -24,7 +24,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Char = '"' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/List/append
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/List/Cons
@@ -52,7 +55,10 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         , /Data/jsonEscapeChar
                             ( EAppArg { eaaArg = Value /c -> /Data/Char } )
@@ -64,7 +70,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Char = '\\' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/List/append
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/List/Cons
@@ -92,7 +101,10 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         , /Data/jsonEscapeChar
                             ( EAppArg { eaaArg = Value /c -> /Data/Char } )
@@ -396,7 +408,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Char = '\n' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/List/append
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/List/Cons
@@ -424,7 +439,10 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         , /Data/jsonEscapeControl
                             ( EAppArg { eaaArg = Value /c -> /Data/Char } )
@@ -436,7 +454,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Char = '\r' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/List/append
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/List/Cons
@@ -464,7 +485,10 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         , /Data/jsonEscapeControl
                             ( EAppArg { eaaArg = Value /c -> /Data/Char } )
@@ -476,7 +500,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Char = '\t' }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/List/append
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/List/Cons
@@ -504,13 +531,19 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         , /Data/jsonEscapeControl
-                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char.. } )
                             ( EAppArg
                                 { eaaArg = Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) =
                             ( /Data/List/append
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/List/Cons
@@ -662,7 +695,10 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) ↦ /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
                             )
                         ]
                     }
@@ -1350,7 +1386,12 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/String =
                     ( /Data/jsonQuote
                         ( EAppArg
-                            { eaaArg = Value /s -> ∀/Data/String =
+                            { eaaArg = Value /s -> /Data/String/Text
+                                ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) =
                                 ( /Data/toString
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Char =
@@ -1360,7 +1401,12 @@ Prgm
                                                 ) ↦ /Data/Char
                                             )
                                         }
-                                    ) ↦ ∀/Data/String
+                                    ) ↦ /Data/String/Text
+                                    ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    )
                                 )
                             }
                         ) ↦ ∀/Data/String

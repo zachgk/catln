@@ -225,10 +225,15 @@ Prgm
                                 , /V=TopType
                                 ]
                             )
-                            ( Value /left -> ∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
+                            ( Value /left ->
+                                ( TopType | PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )
                             )( Value /$b74ebc-arg@Value /c -> /Data/Algebra/LessThan ) -> /Data/Map/Node
                             ( /value=TopType
                             , /key=TopType
@@ -277,10 +282,15 @@ Prgm
                                 ) = /Data/Map/remove( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )
                             )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )
                         , /remove./Data/Map/$b74ebc( Value /nk )( Value /key -> ∀/Data/Algebra/Ord )( Value /nv )
-                            ( Value /right -> ∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
+                            ( Value /right ->
+                                ( TopType | PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )
                             )
                             ( Value /left -> ∀/Data/Map/BinTree
                                 [ /K=TopType
@@ -334,10 +344,15 @@ Prgm
                                 ) = /Data/Map/remove( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )
                             )
                         , /remove./Data/Map/$b74ebc( Value /nk )( Value /key )( Value /nv )
-                            ( Value /right -> ∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
+                            ( Value /right ->
+                                ( TopType | PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )
                             )
                             ( Value /left -> ∀/Data/Map/BinTree
                                 [ /K=∀/Data/Algebra/Ord
@@ -363,24 +378,24 @@ Prgm
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=$_/V
                                         ]
-                                    , /left=
-                                        ( TopType | PredClass /Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=$_/V
-                                            ] && PredClass /Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=TopType
-                                            ]
-                                        )
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
                                     ) + /Data/Map/graft
                                     ( /from=∀/Data/Map/BinTree
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=TopType
                                         ]
-                                    , /into=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=TopType
-                                        ]
+                                    , /into=
+                                        ( TopType | PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        )
                                     )
                                 )
                             , []
@@ -395,74 +410,98 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /get./Data/Map/$bc95bf( Value /value )( Value /key )( Value /right )( Value /left )( Value /$bc95bf-arg@Value /c -> /Data/Algebra/Equal ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
-                        , /get./Data/Map/$bc95bf( Value /value )( Value /key -> ∀/Data/Algebra/Ord )( Value /right )
-                            ( Value /left -> ∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
+                        [ /get./Data/Map/$bc95bf( Value /value )( Value /key )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=TopType
                                 , /V=TopType
                                 ]
-                            )( Value /$bc95bf-arg@Value /c -> /Data/Algebra/LessThan ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Maybe[ /T=$_/MV ]
-                                , fromList []
-                                , []
+                            )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=TopType
+                                , /V=TopType
+                                ]
+                            )( Value /$bc95bf-arg@Value /c -> /Data/Algebra/Equal ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
+                        , /get./Data/Map/$bc95bf( Value /value )( Value /key -> ∀/Data/Algebra/Ord )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=TopType
+                                , /V=TopType
+                                ]
+                            )
+                            ( Value /left ->
+                                ( TopType | PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
                                 )
-                            ,
-                                ( /get./Data/Map/$bc95bf
-                                    ( /$bc95bf-arg=∀/Data/Algebra/Comparison
-                                    , /value=TopType
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=∀/Data/Map/BinTree
+                            )( Value /$bc95bf-arg@Value /c -> /Data/Algebra/LessThan ) ->
+                            ( /Data/Maybe/Nothing + /get./Data/Map/$bc95bf
+                                ( /$bc95bf-arg=∀/Data/Algebra/Comparison
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
+                                ( /m=
+                                    ( TopType | PredClass /Data/Map
                                         [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
-                                    ( /m=∀/Data/Map
+                                        , /V=TopType
+                                        ] && PredClass /Data/Map/BinTree
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=TopType
                                         ]
-                                    , /key=∀/Data/Algebra/Ord
                                     )
+                                , /key=∀/Data/Algebra/Ord
                                 )
-                            , []
                             ) = /Data/Map/get( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )
                         , /get./Data/Map/$bc95bf( Value /value )( Value /key -> ∀/Data/Algebra/Ord )
-                            ( Value /right -> ∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
+                            ( Value /right ->
+                                ( TopType | PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )
+                            )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=TopType
                                 , /V=TopType
                                 ]
-                            )( Value /left )( Value /$bc95bf-arg@Value /c -> /Data/Algebra/GreaterThan ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Maybe[ /T=$_/MV ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /get./Data/Map/$bc95bf
-                                    ( /$bc95bf-arg=∀/Data/Algebra/Comparison
-                                    , /value=TopType
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=∀/Data/Map/BinTree
+                            )( Value /$bc95bf-arg@Value /c -> /Data/Algebra/GreaterThan ) ->
+                            ( /Data/Maybe/Nothing + /get./Data/Map/$bc95bf
+                                ( /$bc95bf-arg=∀/Data/Algebra/Comparison
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
+                                ( /m=
+                                    ( TopType | PredClass /Data/Map
                                         [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    ) + /Data/Maybe/Some[ /T=$_/MV ]( /value=$/T ) + /Data/Map/get
-                                    ( /m=∀/Data/Map
+                                        , /V=TopType
+                                        ] && PredClass /Data/Map/BinTree
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=TopType
                                         ]
-                                    , /key=∀/Data/Algebra/Ord
                                     )
+                                , /key=∀/Data/Algebra/Ord
                                 )
-                            , []
                             ) = /Data/Map/get( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )
                         ]
                     }
@@ -656,15 +695,10 @@ Prgm
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=$_/V
                                     ]
-                                , /left=
-                                    ( TopType | PredClass /Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ] && PredClass /Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=TopType
-                                        ]
-                                    )
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
                                 )
                             , []
                             ) = /Data/Map/foldEntries( Value /m -> TVArg /from = Value /from )
@@ -687,15 +721,10 @@ Prgm
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=TopType
                                         ]
-                                    , /left=
-                                        ( TopType | PredClass /Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=TopType
-                                            ] && PredClass /Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=TopType
-                                            ]
-                                        )
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
                                     )
                                 , []
                                 ) = /insert( Value /m -> TVArg /acc = Value /acc )( Value /key -> TVArg /k = Value /k )( Value /value -> TVArg /v = Value /v )
@@ -1021,19 +1050,7 @@ Prgm
                                 , /V=TopType
                                 ]
                             )
-                            ( Value /left -> ∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
-                            ( Value /$5a3188-arg@Value /c -> /Data/Algebra/LessThan ) -> /Data/Map/Node
-                            ( /value=TopType
-                            , /key=TopType
-                            , /right=∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
-                                ]
-                            , /left=
+                            ( Value /left ->
                                 ( TopType | PredClass /Data/Map
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=TopType
@@ -1042,42 +1059,56 @@ Prgm
                                     , /V=TopType
                                     ]
                                 )
-                            ) = /Data/Map/Node
-                            ( Value /left -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/MV
-                                        ] && PredClass /Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Map/Node
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                    ( /value=$/V
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    )
-                                , []
-                                ) = /insert( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
-                            )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )
-                        , /insert./Data/Map/$5a3188( Value /nk )( Value /value )( Value /key -> ∀/Data/Algebra/Ord )( Value /nv )
-                            ( Value /right -> ∀/Data/Map
+                            )
+                            ( Value /$5a3188-arg@Value /c -> /Data/Algebra/LessThan ) -> /Data/Map/Node
+                            ( /value=TopType
+                            , /key=TopType
+                            , /right=∀/Data/Map/BinTree
+                                [ /K=TopType
+                                , /V=TopType
+                                ]
+                            , /left=/Data/Map/Node
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=TopType
                                 ]
+                                ( /value=$/V
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                )
+                            ) = /Data/Map/Node
+                            ( Value /left -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                ) = /insert( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
+                            )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )
+                        , /insert./Data/Map/$5a3188( Value /nk )( Value /value )( Value /key -> ∀/Data/Algebra/Ord )( Value /nv )
+                            ( Value /right ->
+                                ( TopType | PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )
                             )
                             ( Value /left -> ∀/Data/Map/BinTree
                                 [ /K=TopType
@@ -1087,13 +1118,19 @@ Prgm
                             ( Value /$5a3188-arg@Value /c -> /Data/Algebra/GreaterThan ) -> /Data/Map/Node
                             ( /value=TopType
                             , /key=TopType
-                            , /right=
-                                ( TopType | PredClass /Data/Map
+                            , /right=/Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Map/BinTree
+                                    , /V=$_/V
+                                    ]
+                                , /left=∀/Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
+                                    , /V=$_/V
                                     ]
                                 )
                             , /left=∀/Data/Map/BinTree
@@ -1101,34 +1138,20 @@ Prgm
                                 , /V=TopType
                                 ]
                             ) = /Data/Map/Node( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )
-                            ( Value /right -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/MV
-                                        ] && PredClass /Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Map/Node
+                            ( Value /right -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
+                                    , /V=$_/V
                                     ]
-                                    ( /value=$/V
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    )
-                                , []
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
                                 ) = /insert( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                             )
                         ]
@@ -1356,21 +1379,16 @@ Prgm
                     [ /K=∀/Data/Algebra/Ord
                     , /V=TopType
                     ]
-                    ( /value=TopType
+                    ( /value=$/V
                     , /key=∀/Data/Algebra/Ord
                     , /right=∀/Data/Map/BinTree
                         [ /K=∀/Data/Algebra/Ord
-                        , /V=TopType
+                        , /V=$_/V
                         ]
-                    , /left=
-                        ( TopType | PredClass /Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Map/BinTree
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ]
-                        )
+                    , /left=∀/Data/Map/BinTree
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$_/V
+                        ]
                     ) = /insert
                     ( Value /m -> /Data/Map/Node
                         [ /K=/Data/Primitive/Integer
@@ -1395,7 +1413,7 @@ Prgm
                         { ciValue = 20 }
                     )
                 )
-                ( /fn( Value /acc )( Value /k )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
+                ( /fn( Value /acc )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1427,15 +1445,10 @@ Prgm
                         [ /K=∀/Data/Algebra/Ord
                         , /V=$_/V
                         ]
-                    , /left=
-                        ( TopType | PredClass /Data/Map/BinTree
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$_/V
-                            ] && PredClass /Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ]
-                        )
+                    , /left=∀/Data/Map/BinTree
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$_/V
+                        ]
                     ) = /insert
                     ( Value /m -> /Data/Map/Node
                         [ /K=/Data/Primitive/Integer
@@ -1490,15 +1503,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=/Data/Primitive/Integer
@@ -1597,15 +1605,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=∀/Data/Algebra/Ord
@@ -1617,15 +1620,10 @@ Prgm
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=$_/V
                                 ]
-                            , /left=
-                                ( TopType | PredClass /Data/Map/BinTree
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=$_/V
-                                    ] && PredClass /Data/Map
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                )
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$_/V
+                                ]
                             ) = /insert
                             ( Value /m -> /Data/Map/Node
                                 [ /K=/Data/Primitive/Integer
@@ -1685,15 +1683,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=∀/Data/Algebra/Ord
@@ -1705,15 +1698,10 @@ Prgm
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=$_/V
                                 ]
-                            , /left=
-                                ( TopType | PredClass /Data/Map/BinTree
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=$_/V
-                                    ] && PredClass /Data/Map
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                )
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$_/V
+                                ]
                             ) = /insert
                             ( Value /m -> /Data/Map/Node
                                 [ /K=/Data/Primitive/Integer
@@ -1773,15 +1761,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=∀/Data/Algebra/Ord
@@ -1793,15 +1776,10 @@ Prgm
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=$_/V
                                 ]
-                            , /left=
-                                ( TopType | PredClass /Data/Map/BinTree
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=$_/V
-                                    ] && PredClass /Data/Map
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                )
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$_/V
+                                ]
                             ) = /insert
                             ( Value /m -> /Data/Map/Node
                                 [ /K=/Data/Primitive/Integer
@@ -1923,15 +1901,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=/Data/Primitive/Integer
@@ -2023,15 +1996,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=/Data/Primitive/Integer
@@ -2111,15 +2079,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=/Data/Primitive/Integer
@@ -2262,15 +2225,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=∀/Data/Algebra/Ord
@@ -2282,15 +2240,10 @@ Prgm
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=$_/V
                                 ]
-                            , /left=
-                                ( TopType | PredClass /Data/Map/BinTree
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=$_/V
-                                    ] && PredClass /Data/Map
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                )
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$_/V
+                                ]
                             ) = /insert
                             ( Value /m -> /Data/Map/Node
                                 [ /K=/Data/Primitive/Integer
@@ -2389,15 +2342,10 @@ Prgm
                                 [ /K=∀/Data/Algebra/Ord
                                 , /V=$_/V
                                 ]
-                            , /left=
-                                ( TopType | PredClass /Data/Map/BinTree
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=$_/V
-                                    ] && PredClass /Data/Map
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                )
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$_/V
+                                ]
                             ) = /insert
                             ( Value /m -> /Data/Map/Node
                                 [ /K=∀/Data/Algebra/Ord
@@ -2409,15 +2357,10 @@ Prgm
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=$_/V
                                     ]
-                                , /left=
-                                    ( TopType | PredClass /Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ] && PredClass /Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=TopType
-                                        ]
-                                    )
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
                                 ) = /insert
                                 ( Value /m -> /Data/Map/Node
                                     [ /K=/Data/Primitive/Integer
@@ -2511,15 +2454,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=/Data/Primitive/Integer
@@ -2593,15 +2531,10 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=$_/V
                             ]
-                        , /left=
-                            ( TopType | PredClass /Data/Map/BinTree
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$_/V
-                                ] && PredClass /Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ]
-                            )
+                        , /left=∀/Data/Map/BinTree
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$_/V
+                            ]
                         ) = /insert
                         ( Value /m -> /Data/Map/Node
                             [ /K=/Data/Primitive/Integer
@@ -2686,15 +2619,10 @@ Prgm
                         [ /K=∀/Data/Algebra/Ord
                         , /V=$_/V
                         ]
-                    , /left=
-                        ( TopType | PredClass /Data/Map/BinTree
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$_/V
-                            ] && PredClass /Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ]
-                        )
+                    , /left=∀/Data/Map/BinTree
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$_/V
+                        ]
                     ) = /insert
                     ( Value /m -> /Data/Map/Node
                         [ /K=/Data/Primitive/Integer
@@ -2729,15 +2657,10 @@ Prgm
                         [ /K=∀/Data/Algebra/Ord
                         , /V=$_/V
                         ]
-                    , /left=
-                        ( TopType | PredClass /Data/Map/BinTree
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$_/V
-                            ] && PredClass /Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ]
-                        )
+                    , /left=∀/Data/Map/BinTree
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$_/V
+                        ]
                     ) = /insert
                     ( Value /m -> /Data/Map/Node
                         [ /K=/Data/Primitive/Integer
@@ -2931,21 +2854,16 @@ Prgm
                             [ /K=∀/Data/Algebra/Ord
                             , /V=TopType
                             ]
-                            ( /value=TopType
+                            ( /value=$/V
                             , /key=∀/Data/Algebra/Ord
                             , /right=∀/Data/Map/BinTree
                                 [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
+                                , /V=$_/V
                                 ]
-                            , /left=
-                                ( TopType | PredClass /Data/Map
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Map/BinTree
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                )
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$_/V
+                                ]
                             ) = /insert
                             ( Value /m -> /Data/Map/Node
                                 [ /K=/Data/Primitive/Integer

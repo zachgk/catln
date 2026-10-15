@@ -753,7 +753,19 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
+                ( Value /l -> /Data/Maybe/Some
+                    [ /T=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ]
+                    ( /value=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ) = /calendarDay
                     ( Value /this -> /Data/Note/Task/Simple
                         ( /time=/Data/Maybe/Some
                             [ /T=/Data/Time/TimeRange
@@ -928,7 +940,19 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
+                ( Value /l -> /Data/Maybe/Some
+                    [ /T=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ]
+                    ( /value=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ) = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /time=/Data/Maybe/Nothing
@@ -1093,7 +1117,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /calendarDay
+                ( Value /l -> /Data/Maybe/Nothing = /calendarDay
                     ( Value /this -> /Data/Note/Task/Simple
                         ( /time=/Data/Maybe/Nothing
                         , /plannedDay=/Data/Maybe/Nothing
@@ -1820,7 +1844,19 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /eventDay
+                ( Value /l -> /Data/Maybe/Some
+                    [ /T=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ]
+                    ( /value=/Data/Time/Date
+                        ( /year=/Data/Primitive/Integer
+                        , /month=/Data/Primitive/Integer
+                        , /day=/Data/Primitive/Integer
+                        )
+                    ) = /eventDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
                         , /time=/Data/Maybe/Some

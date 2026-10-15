@@ -1088,7 +1088,19 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Some
+                                [ /T=/Data/Time/Date
+                                    ( /year=/Data/Primitive/Integer
+                                    , /month=/Data/Primitive/Integer
+                                    , /day=/Data/Primitive/Integer
+                                    )
+                                ]
+                                ( /value=/Data/Time/Date
+                                    ( /year=/Data/Primitive/Integer
+                                    , /month=/Data/Primitive/Integer
+                                    , /day=/Data/Primitive/Integer
+                                    )
+                                ) =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Simple
@@ -1237,7 +1249,19 @@ Prgm
                                                 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Some
+                                    [ /T=/Data/Time/Date
+                                        ( /year=/Data/Primitive/Integer
+                                        , /month=/Data/Primitive/Integer
+                                        , /day=/Data/Primitive/Integer
+                                        )
+                                    ]
+                                    ( /value=/Data/Time/Date
+                                        ( /year=/Data/Primitive/Integer
+                                        , /month=/Data/Primitive/Integer
+                                        , /day=/Data/Primitive/Integer
+                                        )
+                                    )
                                 )
                             }
                         )
@@ -1293,7 +1317,19 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Some
+                                [ /T=/Data/Time/Date
+                                    ( /year=/Data/Primitive/Integer
+                                    , /month=/Data/Primitive/Integer
+                                    , /day=/Data/Primitive/Integer
+                                    )
+                                ]
+                                ( /value=/Data/Time/Date
+                                    ( /year=/Data/Primitive/Integer
+                                    , /month=/Data/Primitive/Integer
+                                    , /day=/Data/Primitive/Integer
+                                    )
+                                ) =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Obsidian
@@ -1431,7 +1467,19 @@ Prgm
                                                 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Some
+                                    [ /T=/Data/Time/Date
+                                        ( /year=/Data/Primitive/Integer
+                                        , /month=/Data/Primitive/Integer
+                                        , /day=/Data/Primitive/Integer
+                                        )
+                                    ]
+                                    ( /value=/Data/Time/Date
+                                        ( /year=/Data/Primitive/Integer
+                                        , /month=/Data/Primitive/Integer
+                                        , /day=/Data/Primitive/Integer
+                                        )
+                                    )
                                 )
                             }
                         )
@@ -1493,7 +1541,7 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Nothing =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Simple
@@ -1512,7 +1560,7 @@ Prgm
                                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Nothing
                                 )
                             }
                         )
@@ -2418,7 +2466,19 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Some
+                                [ /T=/Data/Time/Date
+                                    ( /year=/Data/Primitive/Integer
+                                    , /month=/Data/Primitive/Integer
+                                    , /day=/Data/Primitive/Integer
+                                    )
+                                ]
+                                ( /value=/Data/Time/Date
+                                    ( /year=/Data/Primitive/Integer
+                                    , /month=/Data/Primitive/Integer
+                                    , /day=/Data/Primitive/Integer
+                                    )
+                                ) =
                                 ( /eventDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Obsidian
@@ -2642,7 +2702,19 @@ Prgm
                                                 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Some
+                                    [ /T=/Data/Time/Date
+                                        ( /year=/Data/Primitive/Integer
+                                        , /month=/Data/Primitive/Integer
+                                        , /day=/Data/Primitive/Integer
+                                        )
+                                    ]
+                                    ( /value=/Data/Time/Date
+                                        ( /year=/Data/Primitive/Integer
+                                        , /month=/Data/Primitive/Integer
+                                        , /day=/Data/Primitive/Integer
+                                        )
+                                    )
                                 )
                             }
                         )

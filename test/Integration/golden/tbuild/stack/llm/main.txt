@@ -357,7 +357,7 @@ Prgm
                                 { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Llm/llmWith
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO.. } )
                             ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
@@ -370,7 +370,16 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                { eaaArg = Value /key -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    , []
+                                    )
+                                }
                             ) -> ∀/Data/Maybe[ /T=∀/Data/String ] =
                             ( /Llm/llmReply
                                 ( EAppArg
@@ -394,21 +403,69 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /headers -> ∀/Data/List/ConsList
+                                                            { eaaArg = Value /headers -> /Data/List/Cons
                                                                 [ /T=/Http/Header
-                                                                    ( /name=∀/Data/String
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                                     , /value=∀/Data/String
                                                                     )
-                                                                ] =
+                                                                ]
+                                                                ( /head=/Http/Header
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /value=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    )
+                                                                , /tail=
+                                                                    ( /Data/List/Nil + /Data/List/Cons
+                                                                        [ /T=/Http/Header
+                                                                            ( /name=/Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                            , /value=∀/Data/String
+                                                                            )
+                                                                        ]
+                                                                        ( /head=/Http/Header
+                                                                            ( /name=/Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                            , /value=∀/Data/String
+                                                                            )
+                                                                        , /tail=/Data/List/Nil
+                                                                        )
+                                                                    )
+                                                                ) =
                                                                 ( /Llm/llmHeaders
                                                                     ( EAppArg
                                                                         { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                                                    ) ↦ ∀/Data/List/ConsList
+                                                                    ) ↦ /Data/List/Cons
                                                                     [ /T=/Http/Header
-                                                                        ( /name=∀/Data/String
+                                                                        ( /name=/Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                                         , /value=∀/Data/String
                                                                         )
                                                                     ]
+                                                                    ( /head=/Http/Header
+                                                                        ( /name=/Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                        , /value=/Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                        )
+                                                                    , /tail=
+                                                                        ( /Data/List/Nil + /Data/List/Cons
+                                                                            [ /T=/Http/Header
+                                                                                ( /name=/Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                                , /value=∀/Data/String
+                                                                                )
+                                                                            ]
+                                                                            ( /head=/Http/Header
+                                                                                ( /name=/Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                                , /value=∀/Data/String
+                                                                                )
+                                                                            , /tail=/Data/List/Nil
+                                                                            )
+                                                                        )
+                                                                    )
                                                                 )
                                                             }
                                                         )
