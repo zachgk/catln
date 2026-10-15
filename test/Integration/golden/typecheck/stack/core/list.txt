@@ -44,25 +44,49 @@ Prgm
                     }
                 )
             ,
-                ( "/range./Data/List/rangeFrom"
+                ( "/Data/List/sorted.insert"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /range./Data/List/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
+                        [ /Data/List/sorted.insert[ /T : ∀/Data/Algebra/Ord ]( Value /x -> $/T )
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /range./Data/List/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) | /operator<( Value /l -> TVArg /i = Value /i )( Value /r -> TVArg /stop = Value /stop ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                            ) = /Data/List/Cons( Value /head -> TVArg /i = Value /i )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /range./Data/List/rangeFrom
-                                ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 1 }
-                                    )
-                                )( Value /stop -> TVArg /stop = Value /stop )
+                        [ /Data/List/sorted.insert( Value /x -> ∀/Data/Algebra/Ord )( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons( Value /head -> TVArg /x = Value /x )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        , /Data/List/sorted.insert( Value /x -> ∀/Data/Algebra/Ord )
+                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                            ) | /Data/Algebra/isLessEq
+                            ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /head = Value /head )( Value /this -> TVArg /x = Value /x ) ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=/Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                )
+                            ) = /Data/List/Cons( Value /head -> TVArg /x = Value /x )
+                            ( Value /tail -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
                             )
-                        , /range./Data/List/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
+                        , /Data/List/sorted.insert( Value /x -> ∀/Data/Algebra/Ord )
+                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                            ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/List/sorted.insert( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -126,7 +150,7 @@ Prgm
                                     )
                                     ( Value /r -> ∀/Data/String = /toString( Value /this -> TVArg /h = Value /h ) )
                                 )
-                                ( Value /r -> ∀/Data/String = /toString./Data/List/restToString( Value /lst -> TVArg /t = Value /t ) )
+                                ( Value /r -> ∀/Data/String = /Data/List/toString.restToString( Value /lst -> TVArg /t = Value /t ) )
                             )
                             ( Value /r -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -159,6 +183,37 @@ Prgm
                                 ) = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/toString.restToString"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/toString.restToString
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/toString.restToString( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "" }
+                        , /Data/List/toString.restToString
+                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
+                                ( /head=∀/Data/ToString
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                ) = /Data/List/Cons[ /T : ∀/Data/ToString ]( Value /head -> ∀/Data/ToString )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = ", " }
+                                )
+                                ( Value /r -> ∀/Data/String = /toString( Value /this -> TVArg /head = Value /head ) )
+                            )
+                            ( Value /r -> ∀/Data/String = /Data/List/toString.restToString( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -236,7 +291,7 @@ Prgm
                                     ( /head=TopType
                                     , /tail=/Data/List/Nil
                                     )
-                                ) = /filter./Data/List/keepIf( Value /v -> TVArg /v = Value /v )
+                                ) = /Data/List/filter.keepIf( Value /v -> TVArg /v = Value /v )
                                 ( Value /keep -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
@@ -249,6 +304,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/filter.keepIf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/filter.keepIf( Value /v -> $_/A )( Value /keep -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/filter.keepIf( Value /v )( Value /keep -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/List/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        , /Data/List/filter.keepIf( Value /v )( Value /keep -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/List/Nil = Value /Data/List/Nil
+                        ]
                     }
                 )
             ,
@@ -275,53 +346,6 @@ Prgm
                             ( Value /acc= /Data/List/foldr( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /acc )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )( Value /init -> TVArg /init = Value /init )
                             )( Value /v -> TVArg /head = Value /head )
-                        ]
-                    }
-                )
-            ,
-                ( "/sorted./Data/List/insert"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /sorted./Data/List/insert[ /T : ∀/Data/Algebra/Ord ]( Value /x -> $/T )
-                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /sorted./Data/List/insert( Value /x -> ∀/Data/Algebra/Ord )( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons( Value /head -> TVArg /x = Value /x )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                        , /sorted./Data/List/insert( Value /x -> ∀/Data/Algebra/Ord )
-                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ) | /Data/Algebra/isLessEq
-                            ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /head = Value /head )( Value /this -> TVArg /x = Value /x ) ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=/Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                )
-                            ) = /Data/List/Cons( Value /head -> TVArg /x = Value /x )
-                            ( Value /tail -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
-                            )
-                        , /sorted./Data/List/insert( Value /x -> ∀/Data/Algebra/Ord )
-                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                            ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /sorted./Data/List/insert( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -497,7 +521,7 @@ Prgm
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             , []
-                            ) = /sorted./Data/List/insert( Value /x -> TVArg /h = Value /h )
+                            ) = /Data/List/sorted.insert( Value /x -> TVArg /h = Value /h )
                             ( Value /lst -> UnionType
                                 ( Just
                                     ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
@@ -546,22 +570,6 @@ Prgm
                             ( Value /b -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v ) -> $_/M = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/filter./Data/List/keepIf"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /filter./Data/List/keepIf( Value /v -> $_/A )( Value /keep -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /filter./Data/List/keepIf( Value /v )( Value /keep -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/List/Cons[ /T=TopType ]
-                            ( /head=$/T
-                            , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                        , /filter./Data/List/keepIf( Value /v )( Value /keep -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/List/Nil = Value /Data/List/Nil
                         ]
                     }
                 )
@@ -702,7 +710,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/range( Value /stop -> /Data/Primitive/Integer ) ->
-                            ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /range./Data/List/rangeFrom
+                            ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/List/range.rangeFrom
                             ( Value /i -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )( Value /stop -> TVArg /stop = Value /stop )
@@ -710,33 +718,25 @@ Prgm
                     }
                 )
             ,
-                ( "/toString./Data/List/restToString"
+                ( "/Data/List/range.rangeFrom"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /toString./Data/List/restToString
-                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> ∀/Data/String
-                        ]
+                        [ /Data/List/range.rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /toString./Data/List/restToString( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                            { csValue = "" }
-                        , /toString./Data/List/restToString
-                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
-                                ( /head=∀/Data/ToString
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/ToString ]( Value /head -> ∀/Data/ToString )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ) -> ∀/Data/String = /operator++
-                            ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                    { csValue = ", " }
-                                )
-                                ( Value /r -> ∀/Data/String = /toString( Value /this -> TVArg /head = Value /head ) )
+                        [ /Data/List/range.rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) | /operator<( Value /l -> TVArg /i = Value /i )( Value /r -> TVArg /stop = Value /stop ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                            ) = /Data/List/Cons( Value /head -> TVArg /i = Value /i )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/range.rangeFrom
+                                ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
+                                )( Value /stop -> TVArg /stop = Value /stop )
                             )
-                            ( Value /r -> ∀/Data/String = /toString./Data/List/restToString( Value /lst -> TVArg /tail = Value /tail ) )
+                        , /Data/List/range.rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
                         ]
                     }
                 )

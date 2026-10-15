@@ -15,6 +15,7 @@ module Syntax.Ct.Desugarf.Nested where
 import           Data.Bifunctor          (bimap, first)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
+import qualified Data.List               as L
 import           Text.Printf
 
 import           CtConstants
@@ -27,57 +28,83 @@ import           Syntax.Ct.Prgm
 
 type ParentArgs = H.HashMap ArgName [ParseMeta]
 
-scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
-scopeSubDeclFunNamesInS prefix replaceNames name = name'
+-- | The name a sub function is given within its parent: the parent's name and the sub function's
+-- own, joined by a dot, in the module both are written in (@sorted@'s @insert@ in @Data/List@ is
+-- @/Data/List/sorted.insert@, and a sub function of that @/Data/List/sorted.insert.step@).
+--
+-- Nothing after the module path is a path segment of its own, so no name written outside the
+-- parent resolves to it: a relative name matches at a path boundary ('relativeNameMatches'), and
+-- the only boundary left is the module's. Spelled @/sorted./Data/List/insert@, as the sub function's
+-- module-qualified name was once appended to the parent's, a call of @insert@ written anywhere
+-- matched it. A sub function's callers are then exactly the ones in its parent, which the parent
+-- relies on ('TypeCheck.Partition.itemSccGroups').
+nestedSubName :: String -> TypeName -> TypeName -> TypeName
+nestedSubName inheritPath parent sub = mkName $ show $ relPathAddPrefix inheritPath $ getPath (nameStr parent ++ "." ++ subBase)
   where
-    addPrefix n = mkName (nameStr prefix ++ "." ++ nameStr n)
-    name' = if S.member name replaceNames then addPrefix name else name
+    -- The sub function was desugared in the same module as its parent, so its name carries that
+    -- module path; its own part is what follows.
+    modPrefix = inheritPath ++ "/"
+    subName = nameStr sub
+    subBase
+      | not (null inheritPath), modPrefix `L.isPrefixOf` subName = drop (length modPrefix) subName
+      | otherwise = dropWhile (== '/') subName
 
-scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
-scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value (scopeSubDeclFunNamesInMeta prefix replaceNames m) $ scopeSubDeclFunNamesInS prefix replaceNames name
-scopeSubDeclFunNamesInExpr _ _ e@HoleExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (AliasExpr b a) = AliasExpr (scopeSubDeclFunNamesInExpr prefix replaceNames b) (scopeSubDeclFunNamesInExpr prefix replaceNames a)
-scopeSubDeclFunNamesInExpr prefix replaceNames (EWhere m b a) = EWhere (scopeSubDeclFunNamesInMeta prefix replaceNames m) (scopeSubDeclFunNamesInExpr prefix replaceNames b) (scopeSubDeclFunNamesInExpr prefix replaceNames a)
-scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
+-- | A reference within the parent to one of its sub functions is renamed to the sub function's
+-- nested name ('nestedSubName'). The reference is written as the sub function was (@helper@), and
+-- the sub function's own name was resolved into its module by then (@/My/Mod/helper@), so it is
+-- matched as any relative name is. A reference already spelled in full (a sub function's call of
+-- its own sub function, renamed when that was scoped) matches exactly.
+scopeSubDeclFunNamesInS :: String -> TypeName -> S.HashSet TypeName -> TypeName -> TypeName
+scopeSubDeclFunNamesInS inheritPath prefix replaceNames name
+  | S.member name replaceNames = nestedSubName inheritPath prefix name
+  | [sub] <- filter (relativeNameMatches name) (S.toList replaceNames) = nestedSubName inheritPath prefix sub
+  | otherwise = name
+
+scopeSubDeclFunNamesInExpr :: String -> TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
+scopeSubDeclFunNamesInExpr _ _ _ e@CExpr{} = e
+scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames (Value m name) = Value (scopeSubDeclFunNamesInMeta inheritPath prefix replaceNames m) $ scopeSubDeclFunNamesInS inheritPath prefix replaceNames name
+scopeSubDeclFunNamesInExpr _ _ _ e@HoleExpr{} = e
+scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames (AliasExpr b a) = AliasExpr (scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames b) (scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames a)
+scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames (EWhere m b a) = EWhere (scopeSubDeclFunNamesInMeta inheritPath prefix replaceNames m) (scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames b) (scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames a)
+scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
   where
-    bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
+    bExpr' = scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames bExpr
     arg' = case arg of
-      EAppArg a -> EAppArg $ mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) a
+      EAppArg a -> EAppArg $ mapTupleArgValue (scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames) a
       a@EAppVar{} -> a
       EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
 
-scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType Nothing partials []) pos mid md) = Meta (UnionType Nothing partials' []) pos mid md
+scopeSubDeclFunNamesInMeta :: String -> TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
+scopeSubDeclFunNamesInMeta inheritPath prefix replaceNames (Meta (UnionType Nothing partials []) pos mid md) = Meta (UnionType Nothing partials' []) pos mid md
   where
-    scopeS = scopeSubDeclFunNamesInS prefix replaceNames
+    scopeS = scopeSubDeclFunNamesInS inheritPath prefix replaceNames
     partials' = H.mapKeys scopeS partials
-scopeSubDeclFunNamesInMeta _ _ m@Meta{getMetaType=PTopType} = m
-scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType ps preds) pos mid md) = Meta (TopType ps preds') pos mid md
+scopeSubDeclFunNamesInMeta _ _ _ m@Meta{getMetaType=PTopType} = m
+scopeSubDeclFunNamesInMeta inheritPath prefix replaceNames (Meta (TopType ps preds) pos mid md) = Meta (TopType ps preds') pos mid md
   where
     preds' = mapTypePreds scopePred preds
-    scopePred (PredRel p@PartialType{ptName}) = PredRel p{ptName=scopeSubDeclFunNamesInS prefix replaceNames ptName}
+    scopePred (PredRel p@PartialType{ptName}) = PredRel p{ptName=scopeSubDeclFunNamesInS inheritPath prefix replaceNames ptName}
     scopePred p = p
-scopeSubDeclFunNamesInMeta _ _ m@Meta{getMetaType=TypeVar{}} = m
-scopeSubDeclFunNamesInMeta _ _ m = m
+scopeSubDeclFunNamesInMeta _ _ _ m@Meta{getMetaType=TypeVar{}} = m
+scopeSubDeclFunNamesInMeta _ _ _ m = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
-scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, objectMapFromList decls')
+scopeSubDeclFunNames :: String -> PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
+scopeSubDeclFunNames inheritPath oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, objectMapFromList decls')
   where
     prefix = exprPath objExpression
     declNames = S.fromList $ map oaObjPath $ flatObjectMap decls
-    addPrefix n = mkName (nameStr prefix ++ "." ++ nameStr n)
-    scopeM = scopeSubDeclFunNamesInMeta prefix declNames
+    addPrefix = nestedSubName inheritPath prefix
+    scopeM = scopeSubDeclFunNamesInMeta inheritPath prefix declNames
     scopeDecl doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)} = doa{
-      oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
-      oaArr = Just (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
+      oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta inheritPath prefix (S.singleton pN) pM) (addPrefix pN)) obj),
+      oaArr = Just (fmap (scopeSubDeclFunNamesInExpr inheritPath prefix declNames) doaArr, scopeM m)
     }
     scopeDecl _ = error "Unexpected scopeDecl"
     decls' = map scopeDecl $ flatObjectMap decls
-    oaArr' = fmap (bimap (fmap (scopeSubDeclFunNamesInExpr prefix declNames)) scopeM) oaArr
-    annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) oaAnnots
-scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
+    oaArr' = fmap (bimap (fmap (scopeSubDeclFunNamesInExpr inheritPath prefix declNames)) scopeM) oaArr
+    annots' = map (scopeSubDeclFunNamesInExpr inheritPath prefix declNames) oaAnnots
+scopeSubDeclFunNames _ oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
 
 -- | Apply args to a signature or input expression. Each parent argument is curried into the sub
 -- function's signature carrying the parent's declared type meta. Discarding it (leaving the parameter

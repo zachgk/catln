@@ -27,31 +27,31 @@ Prgm
                             ( Value s= #overlay( Value url ) )= Show/Overlay( Value url= Value url )
                         , /Catln/Doc/dshow
                             ( Value s= #listProgram( Value mode ) )= Show/ListProgram
-                            ( Value prgm= listProgram( Value /mode= Value /mode )( Value annot= Value s ) )( Value mode= Value mode )
+                            ( Value prgm= /Catln/Doc/dshow.listProgram( Value /mode= Value /mode )( Value annot= Value s ) )( Value mode= Value mode )
                         , /Catln/Doc/dshow
                             ( Value s= #type( Value name ) )= Show/TypePage
-                            ( Value prgm= filterProgram( Value /name= Value /name )( Value annot= Value s ) )( Value name= Value name )
+                            ( Value prgm= /Catln/Doc/dshow.filterProgram( Value /name= Value /name )( Value annot= Value s ) )( Value name= Value name )
                         , /Catln/Doc/dshow( Value s= Value #typeInfer )= Show/TypeInfer
-                            ( Value constrain= typeInfer( Value annot= Value s ) )
+                            ( Value constrain= /Catln/Doc/dshow.typeInfer( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #typeInferPnt( Value pnt ) )= Show/TypeInferPnt
-                            ( Value trace= typeInferPnt( Value /pnt= Value /pnt )( Value annot= Value s ) )( Value pnt= Value pnt )
+                            ( Value trace= /Catln/Doc/dshow.typeInferPnt( Value /pnt= Value /pnt )( Value annot= Value s ) )( Value pnt= Value pnt )
                         , /Catln/Doc/dshow( Value s= Value #prgmGraph )= Show/PrgmGraph
-                            ( Value graph= prgmGraph( Value annot= Value s ) )
+                            ( Value graph= /Catln/Doc/dshow.prgmGraph( Value annot= Value s ) )
                         , /Catln/Doc/dshow( Value s= Value #sidebar )= Show/Sidebar
-                            ( Value pages= sidebar( Value annot= Value s ) )
+                            ( Value pages= /Catln/Doc/dshow.sidebar( Value annot= Value s ) )
                         , /Catln/Doc/dshow( Value s= Value #search )= searchWebdocs
                             ( Value query= CStr
                                 { csValue = "" }
                             )
                         , /Catln/Doc/dshow( Value s= Value #test )= Show/Test
-                            ( Value run= testRun( Value annot= Value s ) )
+                            ( Value run= /Catln/Doc/dshow.testRun( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #debugger( Value fun ) )= Show/Debugger
-                            ( Value run= debugger( Value /fun= Value /fun )( Value annot= Value s ) )( Value fun= Value fun )
+                            ( Value run= /Catln/Doc/dshow.debugger( Value /fun= Value /fun )( Value annot= Value s ) )( Value fun= Value fun )
                         , /Catln/Doc/dshow
                             ( Value s= #debugExpr( Value expr ) )= Show/Debugger
-                            ( Value run= debugExpr( Value /expr= Value /expr )( Value annot= Value s ) )( Value fun= Value expr )
+                            ( Value run= /Catln/Doc/dshow.debugExpr( Value /expr= Value /expr )( Value annot= Value s ) )( Value fun= Value expr )
                         ]
                     }
                 )
@@ -60,16 +60,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/TreeBuild ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/dshow./Catln/Doc/sidebar"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/sidebar( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -84,21 +74,31 @@ Prgm
                     }
                 )
             ,
-                ( "/dshow./Catln/Doc/typeInfer"
+                ( "/Catln/Doc/dshow.listProgram"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/typeInfer( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.listProgram( Value /mode )( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
             ,
-                ( "/dshow./Catln/Doc/debugExpr"
+                ( "/Catln/Doc/dshow.filterProgram"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/debugExpr( Value /expr )( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.filterProgram( Value /name )( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow.typeInferPnt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.typeInferPnt( Value /pnt )( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -133,6 +133,26 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/dshow.debugger"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.debugger( Value /fun )( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow.testRun"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.testRun( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/Test"
                 , ObjectMapItem
                     { omiDecls =
@@ -153,21 +173,11 @@ Prgm
                     }
                 )
             ,
-                ( "/dshow./Catln/Doc/typeInferPnt"
+                ( "/Catln/Doc/docPages.docPagesFor"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/typeInferPnt( Value /pnt )( Value annot ) -> ∀/Data/String ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/dshow./Catln/Doc/debugger"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/debugger( Value /fun )( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/docPages.docPagesFor( Value query -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -189,7 +199,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/docPages( Value query -> ∀/Data/String )= Show/DocPages
-                            ( Value pages= docPagesFor( Value query= Value query ) )
+                            ( Value pages= /Catln/Doc/docPages.docPagesFor( Value query= Value query ) )
                         ]
                     }
                 )
@@ -213,21 +223,21 @@ Prgm
                     }
                 )
             ,
-                ( "/dshow./Catln/Doc/prgmGraph"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/prgmGraph( Value annot ) -> ∀/Data/String ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/Doc/#debugger"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/#debugger( Value /fun -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow.prgmGraph"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.prgmGraph( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -278,16 +288,6 @@ Prgm
                     { omiDecls =
                         [ /Catln/Doc/#listProgram( Value /mode -> ∀/Catln/Doc/ListProgramMode ) ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/dshow./Catln/Doc/testRun"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/testRun( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -352,21 +352,11 @@ Prgm
                     }
                 )
             ,
-                ( "/dshow./Catln/Doc/filterProgram"
+                ( "/Catln/Doc/dshow.debugExpr"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/filterProgram( Value /name )( Value annot ) -> ∀/Data/String ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/dshow./Catln/Doc/listProgram"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/listProgram( Value /mode )( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.debugExpr( Value /expr )( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -379,8 +369,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/searchWebdocs( Value query -> ∀/Data/String )= Show/Search
-                            ( Value pages= searchPagesFor( Value query= Value query ) )
+                            ( Value pages= /Catln/Doc/searchWebdocs.searchPagesFor( Value query= Value query ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow.typeInfer"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.typeInfer( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -388,16 +388,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Typecheck ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/docPages./Catln/Doc/docPagesFor"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ docPages./Catln/Doc/docPagesFor( Value query -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -423,6 +413,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/dshow.sidebar"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.sidebar( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/#type"
                 , ObjectMapItem
                     { omiDecls =
@@ -433,11 +433,11 @@ Prgm
                     }
                 )
             ,
-                ( "/searchWebdocs./Catln/Doc/searchPagesFor"
+                ( "/Catln/Doc/searchWebdocs.searchPagesFor"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ searchWebdocs./Catln/Doc/searchPagesFor( Value query -> ∀/Data/String ) -> ∀/Data/String ]
+                        [ /Catln/Doc/searchWebdocs.searchPagesFor( Value query -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

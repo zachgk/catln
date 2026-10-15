@@ -57,7 +57,7 @@ flattenNestedDeclarations statementEnv (roa@RawObjArr{roaObj=Just objExpression,
   -- that matter, as the continuation a bind desugars to is a 'TypeObj' /with/ an arrow and is a sub
   -- function like any other.
   let (subTypes, subFuns) = partition (\d -> oaBasis d == TypeObj && isNothing (oaArr d)) $ flatObjectMap subDecls
-  let (oa3, subDecls2) = scopeSubDeclFunNames oa2 (objectMapFromList subFuns)
+  let (oa3, subDecls2) = scopeSubDeclFunNames (fst statementEnv) oa2 (objectMapFromList subFuns)
   let (oa4, subDecls3) = currySubFunctions oa3 subDecls2
   return (oa4, subDecls3 <> objectMapFromList subTypes)
 flattenNestedDeclarations _ d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)

@@ -30,10 +30,10 @@ Prgm
                                 )
                             )
                         , /Catln/Doc/dshow( Value s= Value #taskList )= Show/TaskList
-                            ( Value tasks= taskList( Value annot= Value s ) )
+                            ( Value tasks= /Catln/Doc/dshow.taskList( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #tasks( Value query ) )= Show/TaskQuery
-                            ( Value result= tasksQuery( Value query= Value query ) )
+                            ( Value result= /Catln/Doc/dshow.tasksQuery( Value query= Value query ) )
                         , /Catln/Doc/dshow
                             ( Value s= #properties( Value text ) )= Show/Properties( Value text= Value text )
                         ]
@@ -71,12 +71,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian( Value /contents -> ∀/Data/String )( Value /symbol -> ∀/Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> ∀/Data/String )( Value /priority -> ∀/Data/Note/Priority )
-                            ( Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                            ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ( Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                             ( Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /rest -> ∀/Data/String )
-                            ( Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] )
-                            ( Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -113,34 +111,11 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Note/soonerDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/soonerDay
-                            ( Value a -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                            ( Value b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Note/soonerDay( Value a= Value /Data/Maybe/Nothing )( Value b ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value b
-                        , /Data/Note/soonerDay
-                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Note/soonerDay
-                            ( Value a= /Data/Maybe/Some( Value value@Value av ) )
-                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) ) | /operator<=( Value /l= Value av )( Value /r= Value bv ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value av )
-                        , /Data/Note/soonerDay
-                            ( Value a= /Data/Maybe/Some( Value value@Value av ) )
-                            ( Value b= /Data/Maybe/Some( Value value@Value bv ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value bv )
-                        ]
-                    }
-                )
-            ,
-                ( "/Catln/Doc/dshow./Data/Note/taskList"
+                ( "/Catln/Doc/dshow.taskList"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/taskList( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.taskList( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -162,14 +137,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Calendar/calendarDay
-                            ( Value /this= Task/Simple( Value contents )( Value state )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value plannedDay
+                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
-                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = plannedOr( Value planned= Value plannedDay )
-                            ( Value otherwise= soonerDay( Value a= Value start )
-                                ( Value b= soonerDay( Value a= Value scheduled )( Value b= Value due ) )
-                            )
-                        , /Data/Calendar/calendarDay
-                            ( Value /this= /Data/Note/Event( Value contents )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value plannedDay
+                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = firstDay( Value a= Value start )( Value b= Value scheduled )( Value c= Value due )
                         ]
                     }
                 )
@@ -203,40 +173,33 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Note/plannedOr"
+                ( "/Data/Note/firstDay"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/plannedOr
-                            ( Value planned -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                            ( Value otherwise -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                        [ /Data/Note/firstDay
+                            ( Value a -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Note/plannedOr
-                            ( Value planned= /Data/Maybe/Some( Value value ) )( Value otherwise ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Note/plannedOr( Value planned= Value /Data/Maybe/Nothing )( Value otherwise ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value otherwise
+                        [ /Data/Note/firstDay
+                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )
+                            ( Value b= /Data/Maybe/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value c
                         ]
                     }
                 )
             ,
-                ( "/Data/Calendar/eventSpan"
+                ( "/Catln/Doc/dshow.tasksQuery"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.tasksQuery( Value query -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Calendar/eventSpan
-                            ( Value /this= /Data/Note/Event( Value contents )( Value time )( Value plannedDay ) ) -> /Data/Time/TimeRange.. = Value time
-                        , /Data/Calendar/eventSpan
-                            ( Value /this= Task/Simple( Value contents )( Value state )
-                                ( Value time= /Data/Maybe/Some( Value value ) )( Value plannedDay )
-                            ) -> /Data/Time/TimeRange.. = Value value
-                        , /Data/Calendar/eventSpan
-                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest )
-                                ( Value time= /Data/Maybe/Some( Value value ) )( Value plannedDay )
-                            ) -> /Data/Time/TimeRange.. = Value value
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -252,10 +215,7 @@ Prgm
                 ( "/Data/Note/Task/Simple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Task/Simple( Value /contents -> ∀/Data/String )( Value /state -> ∀/Data/Primitive/Boolean )
-                            ( Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] )
-                            ( Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                        ]
+                        [ /Data/Note/Task/Simple( Value /contents -> ∀/Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -281,16 +241,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/dshow./Data/Note/tasksQuery"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/tasksQuery( Value query -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/Note/#taskList"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/#taskList ]
@@ -309,37 +259,9 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Calendar/calendarTime"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Calendar/calendarTime
-                            ( Value /this= Task/Simple( Value contents )( Value state )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] = Value time
-                        , /Data/Calendar/calendarTime
-                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] = Value time
-                        , /Data/Calendar/calendarTime
-                            ( Value /this= /Data/Note/Event( Value contents )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] = /Data/Maybe/Some( Value value= Value time )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Note/Priority/Low"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/Priority/Low ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Note/Event"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/Event( Value /contents -> ∀/Data/String )( Value /time -> /Data/Time/TimeRange.. )
-                            ( Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -373,35 +295,10 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/Data/Calendar/eventDay"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Calendar/eventDay
-                            ( Value /this= /Data/Note/Event( Value contents )( Value time )( Value plannedDay ) ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value plannedDay
-                        , /Data/Calendar/eventDay
-                            ( Value /this= Task/Simple( Value contents )( Value state )
-                                ( Value time= /Data/Maybe/Some( Value value ) )( Value plannedDay )
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value plannedDay
-                        , /Data/Calendar/eventDay
-                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest )
-                                ( Value time= /Data/Maybe/Some( Value value ) )( Value plannedDay )
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] = Value plannedDay
-                        ]
-                    }
-                )
             ]
         }
     , prgmCg =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -434,7 +331,6 @@ Prgm
             , cgcExtends =
                 [ /Data/Note/Task/Simple..
                 , /Data/Note/Task/Obsidian..
-                , /Data/Note/Event..
                 , /Data/Note/Show/TaskList..
                 , /Data/Note/Show/TaskQuery..
                 , /Data/Note/Show/Properties..
@@ -442,18 +338,12 @@ Prgm
             , cgcDoc = Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
-              change back to the note the task was read from.
-
-              An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
-              write the change back to the note it was read from."
+              change back to the note the task was read from."
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Note/Task
-            , cgcExtends =
-                [ ∀/Data/Note/Task
-                , /Data/Note/Event..
-                ]
+            , cgcExtends = [ ∀/Data/Note/Task ]
             , cgcDoc = Just "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
               of each of its two readings, because it is true of a checkbox however the vault it was written
               in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
@@ -462,24 +352,6 @@ Prgm
               whatever says it belongs on one rather than of a list kept somewhere else. The class path is
               written out in full: an [isa] list is keyed by the name as it is written, so a relative one
               would name a second class of that name rather than the one meant."
-            }
-        , CGClass
-            { cgcSealed = False
-            , cgcPartial = /Data/Note/Event
-            , cgcExtends =
-                [ /Data/Note/Event..
-                , /Data/Note/Task/Simple
-                    ( /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ].. )..
-                , /Data/Note/Task/Obsidian
-                    ( /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ].. )..
-                ]
-            , cgcDoc = Just "A task is an event where it has a block of the day, and only there. Said of the tasks whose
-              [time] is a [/Data/Maybe/Some] rather than of [Task], because a task with no time has no span
-              to be drawn over: it is still an entry of a calendar, and a day planner draws it apart from
-              its blocks.
-              The spread is written before the argument rather than after it. @Task/Simple..(time -> T)@ is
-              a task whose [time] is a T and whose other fields are as [Task/Simple] declares them, where
-              @Task/Simple(time -> T)@ would be a value with a [time] and nothing else, which no task is."
             }
         , CGClass
             { cgcSealed = True
@@ -530,16 +402,7 @@ Prgm
               Which of its readings a checkbox gets is decided by the vault it was written in rather than by
               the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
               into the line beside the box, and reading such a line as though it were only a line would read
-              the plugin's writing as writing of the note.
-              Both readings carry what the Obsidian Day Planner plugin reads a checkbox as, as [time] and
-              [plannedDay]. That plugin reads a time written at the start of a line as a block of the day —
-              @09:00 - 10:30 Write@ — and plans the line for a day: the day of the daily note it is written
-              in, or the day it is scheduled for when it is written anywhere else. A vault may run it with
-              or without the Tasks plugin, so it is a reading beside the other two rather than a third.
-              [time] is the block the line writes, with the end the vault gives a block written without one,
-              and [plannedDay] the day the plugin plans it for. Both are [/Data/Maybe/Nothing] in a vault
-              not running the plugin, which plans nothing; and a line written with a time in a note that is
-              no daily note and scheduling no day has a time on no day, which the plugin shows nowhere."
+              the plugin's writing as writing of the note."
             }
         ]
     , prgmAnnots =
@@ -564,16 +427,7 @@ Prgm
                 Which of its readings a checkbox gets is decided by the vault it was written in rather than by
                 the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
                 into the line beside the box, and reading such a line as though it were only a line would read
-                the plugin's writing as writing of the note.
-                Both readings carry what the Obsidian Day Planner plugin reads a checkbox as, as [time] and
-                [plannedDay]. That plugin reads a time written at the start of a line as a block of the day —
-                @09:00 - 10:30 Write@ — and plans the line for a day: the day of the daily note it is written
-                in, or the day it is scheduled for when it is written anywhere else. A vault may run it with
-                or without the Tasks plugin, so it is a reading beside the other two rather than a third.
-                [time] is the block the line writes, with the end the vault gives a block written without one,
-                and [plannedDay] the day the plugin plans it for. Both are [/Data/Maybe/Nothing] in a vault
-                not running the plugin, which plans nothing; and a line written with a time in a note that is
-                no daily note and scheduling no day has a time on no day, which the plugin shows nowhere." }
+                the plugin's writing as writing of the note." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -609,139 +463,7 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A checkbox read as a checkbox, which a Day Planner plans for a day, sits on that day." }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= calendarDay
-                    ( Value /this= Task/Simple
-                        ( Value contents= CStr
-                            { csValue = "11:00 Stand up" }
-                        )( Value state= Value False )
-                        ( Value time= /Data/Maybe/Some
-                            ( Value value= /Data/Time/TimeRange
-                                ( Value start= /Data/Time/TimeOfDay
-                                    ( Value hour= CInt
-                                        { ciValue = 11 }
-                                    )
-                                    ( Value minute= CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                                ( Value end= /Data/Time/TimeOfDay
-                                    ( Value hour= CInt
-                                        { ciValue = 11 }
-                                    )
-                                    ( Value minute= CInt
-                                        { ciValue = 30 }
-                                    )
-                                )
-                            )
-                        )
-                        ( Value plannedDay= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 3 }
-                                )
-                            )
-                        )
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= /Data/Time/Date
-                        ( Value year= CInt
-                            { ciValue = 2026 }
-                        )
-                        ( Value month= CInt
-                            { ciValue = 1 }
-                        )
-                        ( Value day= CInt
-                            { ciValue = 3 }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A task planned for a day sits on that day rather than on the day it is due." }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= calendarDay
-                    ( Value /this= Task/Obsidian
-                        ( Value contents= CStr
-                            { csValue = "Ship it" }
-                        )
-                        ( Value symbol= CStr
-                            { csValue = " " }
-                        )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr
-                            { csValue = "Ship it" }
-                        )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
-                        ( Value due= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                        )( Value recurrence= Value /Data/Maybe/Nothing )
-                        ( Value rest= CStr
-                            { csValue = "{}" }
-                        )( Value time= Value /Data/Maybe/Nothing )
-                        ( Value plannedDay= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 3 }
-                                )
-                            )
-                        )
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= /Data/Time/Date
-                        ( Value year= CInt
-                            { ciValue = 2026 }
-                        )
-                        ( Value month= CInt
-                            { ciValue = 1 }
-                        )
-                        ( Value day= CInt
-                            { ciValue = 3 }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A checkbox read as a checkbox which nothing plans sits on no day, whichever way its box is" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "  written." }
+                { csValue = "A checkbox read as a checkbox sits on no day, whichever way its box is written." }
             )
         , /Catln/#print
             ( Value /p= /operator==
@@ -749,7 +471,7 @@ Prgm
                     ( Value /this= Task/Simple
                         ( Value contents= CStr
                             { csValue = "read it" }
-                        )( Value state= Value False )( Value time= Value /Data/Maybe/Nothing )( Value plannedDay= Value /Data/Maybe/Nothing )
+                        )( Value state= Value False )
                     )
                 )( Value /r= Value /Data/Maybe/Nothing )
             )
@@ -758,11 +480,11 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the" }
+                { csValue = "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "  day it may be begun." }
+                { csValue = "  the day it may be begun." }
             )
         , /Catln/#print
             ( Value /p= /operator==
@@ -778,116 +500,23 @@ Prgm
                             { csValue = "Water the plants" }
                         )( Value priority= Value Priority/None )
                         ( Value start= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 2 }
-                                )
+                            ( Value value= CStr
+                                { csValue = "2026-01-02" }
                             )
                         )( Value scheduled= Value /Data/Maybe/Nothing )
                         ( Value due= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 4 }
-                                )
+                            ( Value value= CStr
+                                { csValue = "2026-01-04" }
                             )
                         )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr
                             { csValue = "{}" }
-                        )( Value time= Value /Data/Maybe/Nothing )( Value plannedDay= Value /Data/Maybe/Nothing )
+                        )
                     )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= /Data/Time/Date
-                        ( Value year= CInt
-                            { ciValue = 2026 }
-                        )
-                        ( Value month= CInt
-                            { ciValue = 1 }
-                        )
-                        ( Value day= CInt
-                            { ciValue = 2 }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A task written with a day it may be begun after the day it is due sits on the due day, which is" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "  the sooner." }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= calendarDay
-                    ( Value /this= Task/Obsidian
-                        ( Value contents= CStr
-                            { csValue = "Late start" }
-                        )
-                        ( Value symbol= CStr
-                            { csValue = " " }
-                        )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr
-                            { csValue = "Late start" }
-                        )( Value priority= Value Priority/None )
-                        ( Value start= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                        )( Value scheduled= Value /Data/Maybe/Nothing )
-                        ( Value due= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 4 }
-                                )
-                            )
-                        )( Value recurrence= Value /Data/Maybe/Nothing )
-                        ( Value rest= CStr
-                            { csValue = "{}" }
-                        )( Value time= Value /Data/Maybe/Nothing )( Value plannedDay= Value /Data/Maybe/Nothing )
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= /Data/Time/Date
-                        ( Value year= CInt
-                            { ciValue = 2026 }
-                        )
-                        ( Value month= CInt
-                            { ciValue = 1 }
-                        )
-                        ( Value day= CInt
-                            { ciValue = 4 }
-                        )
+                    ( Value value= CStr
+                        { csValue = "2026-01-02" }
                     )
                 )
             )
@@ -912,34 +541,18 @@ Prgm
                             { csValue = "Ship it" }
                         )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
                         ( Value due= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 4 }
-                                )
+                            ( Value value= CStr
+                                { csValue = "2026-01-04" }
                             )
                         )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr
                             { csValue = "{}" }
-                        )( Value time= Value /Data/Maybe/Nothing )( Value plannedDay= Value /Data/Maybe/Nothing )
+                        )
                     )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= /Data/Time/Date
-                        ( Value year= CInt
-                            { ciValue = 2026 }
-                        )
-                        ( Value month= CInt
-                            { ciValue = 1 }
-                        )
-                        ( Value day= CInt
-                            { ciValue = 4 }
-                        )
+                    ( Value value= CStr
+                        { csValue = "2026-01-04" }
                     )
                 )
             )
@@ -965,177 +578,9 @@ Prgm
                         )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )( Value due= Value /Data/Maybe/Nothing )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr
                             { csValue = "{}" }
-                        )( Value time= Value /Data/Maybe/Nothing )( Value plannedDay= Value /Data/Maybe/Nothing )
+                        )
                     )
                 )( Value /r= Value /Data/Maybe/Nothing )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
-                write the change back to the note it was read from." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A task is an event where it has a block of the day, and only there. Said of the tasks whose
-                [time] is a [/Data/Maybe/Some] rather than of [Task], because a task with no time has no span
-                to be drawn over: it is still an entry of a calendar, and a day planner draws it apart from
-                its blocks.
-                The spread is written before the argument rather than after it. @Task/Simple..(time -> T)@ is
-                a task whose [time] is a T and whose other fields are as [Task/Simple] declares them, where
-                @Task/Simple(time -> T)@ would be a value with a [time] and nothing else, which no task is." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A bullet the Day Planner reads is an event taking up the block it writes." }
-            )
-        , /Catln/#print
-            ( Value /p= eventSpan
-                ( Value /this= /Data/Note/Event
-                    ( Value contents= CStr
-                        { csValue = "12:00 - 13:00 Lunch" }
-                    )
-                    ( Value time= /Data/Time/TimeRange
-                        ( Value start= /Data/Time/TimeOfDay
-                            ( Value hour= CInt
-                                { ciValue = 12 }
-                            )
-                            ( Value minute= CInt
-                                { ciValue = 0 }
-                            )
-                        )
-                        ( Value end= /Data/Time/TimeOfDay
-                            ( Value hour= CInt
-                                { ciValue = 13 }
-                            )
-                            ( Value minute= CInt
-                                { ciValue = 0 }
-                            )
-                        )
-                    )( Value plannedDay= Value /Data/Maybe/Nothing )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "12:00 - 13:00" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A checkbox given a time is an event too, taking up the block its time says." }
-            )
-        , /Catln/#print
-            ( Value /p= eventSpan
-                ( Value /this= Task/Simple
-                    ( Value contents= CStr
-                        { csValue = "09:00 - 10:30 Write" }
-                    )( Value state= Value False )
-                    ( Value time= /Data/Maybe/Some
-                        ( Value value= /Data/Time/TimeRange
-                            ( Value start= /Data/Time/TimeOfDay
-                                ( Value hour= CInt
-                                    { ciValue = 9 }
-                                )
-                                ( Value minute= CInt
-                                    { ciValue = 0 }
-                                )
-                            )
-                            ( Value end= /Data/Time/TimeOfDay
-                                ( Value hour= CInt
-                                    { ciValue = 10 }
-                                )
-                                ( Value minute= CInt
-                                    { ciValue = 30 }
-                                )
-                            )
-                        )
-                    )( Value plannedDay= Value /Data/Maybe/Nothing )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "09:00 - 10:30" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "And so is a task the Tasks plugin manages, on the day it is planned for." }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= eventDay
-                    ( Value /this= Task/Obsidian
-                        ( Value contents= CStr
-                            { csValue = "16:00 Call" }
-                        )
-                        ( Value symbol= CStr
-                            { csValue = " " }
-                        )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr
-                            { csValue = "16:00 Call" }
-                        )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
-                        ( Value due= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                        )( Value recurrence= Value /Data/Maybe/Nothing )
-                        ( Value rest= CStr
-                            { csValue = "{}" }
-                        )
-                        ( Value time= /Data/Maybe/Some
-                            ( Value value= /Data/Time/TimeRange
-                                ( Value start= /Data/Time/TimeOfDay
-                                    ( Value hour= CInt
-                                        { ciValue = 16 }
-                                    )
-                                    ( Value minute= CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                                ( Value end= /Data/Time/TimeOfDay
-                                    ( Value hour= CInt
-                                        { ciValue = 16 }
-                                    )
-                                    ( Value minute= CInt
-                                        { ciValue = 30 }
-                                    )
-                                )
-                            )
-                        )
-                        ( Value plannedDay= /Data/Maybe/Some
-                            ( Value value= /Data/Time/Date
-                                ( Value year= CInt
-                                    { ciValue = 2026 }
-                                )
-                                ( Value month= CInt
-                                    { ciValue = 1 }
-                                )
-                                ( Value day= CInt
-                                    { ciValue = 3 }
-                                )
-                            )
-                        )
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= /Data/Time/Date
-                        ( Value year= CInt
-                            { ciValue = 2026 }
-                        )
-                        ( Value month= CInt
-                            { ciValue = 1 }
-                        )
-                        ( Value day= CInt
-                            { ciValue = 3 }
-                        )
-                    )
-                )
             )
             ( Value /result= CStr
                 { csValue = "True" }

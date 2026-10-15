@@ -52,7 +52,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList } ) -> /Data/Note/Show/TaskList( /tasks=∀/Data/String ) = /Data/Note/Show/TaskList
                             ( EAppArg
                                 { eaaArg = Value /tasks -> ∀/Data/String =
-                                    ( /Catln/Doc/dshow./Data/Note/taskList
+                                    ( /Catln/Doc/dshow.taskList
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ ∀/Data/String
                                     )
                                 }
@@ -65,7 +65,7 @@ Prgm
                             ) -> /Data/Note/Show/TaskQuery( /result=∀/Data/String ) = /Data/Note/Show/TaskQuery
                             ( EAppArg
                                 { eaaArg = Value /result -> ∀/Data/String =
-                                    ( /Catln/Doc/dshow./Data/Note/tasksQuery
+                                    ( /Catln/Doc/dshow.tasksQuery
                                         ( EAppArg
                                             { eaaArg = Value /query -> TVArg /query = ( Value /query ↦ TVArg /query ) }
                                         ) ↦ ∀/Data/String
@@ -122,24 +122,18 @@ Prgm
                             ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /priority -> ∀/Data/Note/Priority } )
                             ( EAppArg
-                                { eaaArg = Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                { eaaArg = Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                { eaaArg = Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                             ( EAppArg
                                 { eaaArg = Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                             ( EAppArg { eaaArg = Value /rest -> ∀/Data/String } )
-                            ( EAppArg
-                                { eaaArg = Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -180,79 +174,11 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Note/soonerDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/soonerDay
-                            ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Note/soonerDay
-                            ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /b ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                        , /Data/Note/soonerDay
-                            ( EAppArg
-                                { eaaArg = Value /a -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> /Data/Time/Date.. } )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                            ( EAppArg
-                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                            )
-                        , /Data/Note/soonerDay
-                            ( EAppArg
-                                { eaaArg = Value /a -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /av -> /Data/Time/Date.. } )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /bv -> /Data/Time/Date.. } )
-                                }
-                            ) | /operator<=
-                            ( EAppArg
-                                { eaaArg = Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
-                            ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                            ( EAppArg
-                                { eaaArg = Value /value -> TVArg /av = ( Value /av ↦ TVArg /av ) }
-                            )
-                        , /Data/Note/soonerDay
-                            ( EAppArg
-                                { eaaArg = Value /a -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /av -> /Data/Time/Date.. } )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /bv -> /Data/Time/Date.. } )
-                                }
-                            ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                            ( EAppArg
-                                { eaaArg = Value /value -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Catln/Doc/dshow./Data/Note/taskList"
+                ( "/Catln/Doc/dshow.taskList"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/taskList
+                        [ /Catln/Doc/dshow.taskList
                             ( EAppArg { eaaArg = Value /annot } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
@@ -278,33 +204,22 @@ Prgm
                         [ /Data/Calendar/calendarDay
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                    ( /time=∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ]
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
+                                    ( /contents=∀/Data/String
                                     , /state=∀/Data/Primitive/Boolean
                                     ) = /Task/Simple
                                     ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
                                     ( EAppArg { eaaArg = Value /state -> ∀/Data/Primitive/Boolean } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
                                 }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /plannedDay ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                            ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/Note/Task/Obsidian
                                     ( /recurrence=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /time=∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ]
-                                    , /due=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /start=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    , /due=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /start=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /priority=∀/Data/Note/Priority
-                                    , /scheduled=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    , /scheduled=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /statusType=∀/Data/Note/StatusType
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
                                     , /description=∀/Data/String
                                     , /contents=∀/Data/String
                                     , /symbol=∀/Data/String
@@ -316,67 +231,31 @@ Prgm
                                     ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
                                     ( EAppArg { eaaArg = Value /priority -> ∀/Data/Note/Priority } )
                                     ( EAppArg
-                                        { eaaArg = Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                        { eaaArg = Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                        { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                        { eaaArg = Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                                     )
                                     ( EAppArg { eaaArg = Value /rest -> ∀/Data/String } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
                                 }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( /Data/Note/plannedOr
+                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ] =
+                            ( /Data/Note/firstDay
                                 ( EAppArg
-                                    { eaaArg = Value /planned -> TVArg /plannedDay = ( Value /plannedDay ↦ TVArg /plannedDay ) }
+                                    { eaaArg = Value /a -> TVArg /start = ( Value /start ↦ TVArg /start ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /otherwise -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                                        ( /Data/Note/soonerDay
-                                            ( EAppArg
-                                                { eaaArg = Value /a -> TVArg /start = ( Value /start ↦ TVArg /start ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                                                    ( /Data/Note/soonerDay
-                                                        ( EAppArg
-                                                            { eaaArg = Value /a -> TVArg /scheduled = ( Value /scheduled ↦ TVArg /scheduled ) }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /b -> TVArg /due = ( Value /due ↦ TVArg /due ) }
-                                                        ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                                    )
-                                                }
-                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                        )
-                                    }
-                                ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    { eaaArg = Value /b -> TVArg /scheduled = ( Value /scheduled ↦ TVArg /scheduled ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /c -> TVArg /due = ( Value /due ↦ TVArg /due ) }
+                                ) ↦ ∀/Data/Maybe[ /T=∀/Data/String ]
                             )
-                        , /Data/Calendar/calendarDay
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Event
-                                    ( /time=/Data/Time/TimeRange..
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    ) = /Data/Note/Event
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /time -> /Data/Time/TimeRange.. } )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /plannedDay ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
                         ]
                     }
                 )
@@ -414,127 +293,71 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Note/plannedOr"
+                ( "/Data/Note/firstDay"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/plannedOr
+                        [ /Data/Note/firstDay
                             ( EAppArg
-                                { eaaArg = Value /planned -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
+                                { eaaArg = Value /a -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /otherwise -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                { eaaArg = Value /b -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Note/plannedOr
+                        [ /Data/Note/firstDay
                             ( EAppArg
-                                { eaaArg = Value /planned -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> /Data/Time/Date.. } )
+                                { eaaArg = Value /a -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /otherwise -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            ) -> /Data/Maybe/Some[ /T=/Data/Time/Date.. ]( /value=/Data/Time/Date.. ) = /Data/Maybe/Some
+                                { eaaArg = Value /b -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some
                             ( EAppArg
                                 { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
                             )
-                        , /Data/Note/plannedOr
-                            ( EAppArg { eaaArg = Value /planned -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                        , /Data/Note/firstDay
+                            ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /otherwise -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /otherwise ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
+                                { eaaArg = Value /b -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                        , /Data/Note/firstDay
+                            ( EAppArg { eaaArg = Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /c -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ] =
+                            ( Value /c ↦ ∀/Data/Maybe[ /T=∀/Data/String ] )
                         ]
                     }
                 )
             ,
-                ( "/Data/Calendar/eventSpan"
+                ( "/Catln/Doc/dshow.tasksQuery"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Calendar/eventSpan
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Event
-                                    ( /time=/Data/Time/TimeRange..
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    ) = /Data/Note/Event
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /time -> /Data/Time/TimeRange.. } )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> /Data/Time/TimeRange.. = ( Value /time ↦ /Data/Time/TimeRange.. )
-                        , /Data/Calendar/eventSpan
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                    ( /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. )
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    , /state=∀/Data/Primitive/Boolean
-                                    ) = /Task/Simple
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /state -> ∀/Data/Primitive/Boolean } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> /Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. ) = /Data/Maybe/Some
-                                            ( EAppArg { eaaArg = Value /value -> /Data/Time/TimeRange.. } )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> /Data/Time/TimeRange.. = ( Value /value ↦ /Data/Time/TimeRange.. )
-                        , /Data/Calendar/eventSpan
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Task/Obsidian
-                                    ( /recurrence=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. )
-                                    , /due=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /start=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /priority=∀/Data/Note/Priority
-                                    , /scheduled=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /statusType=∀/Data/Note/StatusType
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /description=∀/Data/String
-                                    , /contents=∀/Data/String
-                                    , /symbol=∀/Data/String
-                                    , /rest=∀/Data/String
-                                    ) = /Task/Obsidian
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /symbol -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /statusType -> ∀/Data/Note/StatusType } )
-                                    ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /priority -> ∀/Data/Note/Priority } )
-                                    ( EAppArg
-                                        { eaaArg = Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                                    )
-                                    ( EAppArg { eaaArg = Value /rest -> ∀/Data/String } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> /Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. ) = /Data/Maybe/Some
-                                            ( EAppArg { eaaArg = Value /value -> /Data/Time/TimeRange.. } )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> /Data/Time/TimeRange.. = ( Value /value ↦ /Data/Time/TimeRange.. )
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow.tasksQuery
+                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> ∀/Data/String
                         ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -553,12 +376,6 @@ Prgm
                         [ /Data/Note/Task/Simple
                             ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /state -> ∀/Data/Primitive/Boolean } )
-                            ( EAppArg
-                                { eaaArg = Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -587,18 +404,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/dshow./Data/Note/tasksQuery"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/tasksQuery
-                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> ∀/Data/String
-                        ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/Note/#taskList"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/#taskList ]
@@ -617,114 +422,9 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Calendar/calendarTime"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Calendar/calendarTime
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                    ( /time=∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ]
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    , /state=∀/Data/Primitive/Boolean
-                                    ) = /Task/Simple
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /state -> ∀/Data/Primitive/Boolean } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] =
-                            ( Value /time ↦ ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] )
-                        , /Data/Calendar/calendarTime
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Task/Obsidian
-                                    ( /recurrence=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /time=∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ]
-                                    , /due=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /start=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /priority=∀/Data/Note/Priority
-                                    , /scheduled=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /statusType=∀/Data/Note/StatusType
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /description=∀/Data/String
-                                    , /contents=∀/Data/String
-                                    , /symbol=∀/Data/String
-                                    , /rest=∀/Data/String
-                                    ) = /Task/Obsidian
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /symbol -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /statusType -> ∀/Data/Note/StatusType } )
-                                    ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /priority -> ∀/Data/Note/Priority } )
-                                    ( EAppArg
-                                        { eaaArg = Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                                    )
-                                    ( EAppArg { eaaArg = Value /rest -> ∀/Data/String } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] =
-                            ( Value /time ↦ ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] )
-                        , /Data/Calendar/calendarTime
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Event
-                                    ( /time=/Data/Time/TimeRange..
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    ) = /Data/Note/Event
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /time -> /Data/Time/TimeRange.. } )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> /Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. ) = /Data/Maybe/Some
-                            ( EAppArg
-                                { eaaArg = Value /value -> TVArg /time = ( Value /time ↦ TVArg /time ) }
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Note/Priority/Low"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/Priority/Low ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Note/Event"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/Event
-                            ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /time -> /Data/Time/TimeRange.. } )
-                            ( EAppArg
-                                { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                            )
-                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -760,106 +460,10 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/Data/Calendar/eventDay"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Calendar/eventDay
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Event
-                                    ( /time=/Data/Time/TimeRange..
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    ) = /Data/Note/Event
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /time -> /Data/Time/TimeRange.. } )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /plannedDay ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                        , /Data/Calendar/eventDay
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                    ( /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. )
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /contents=∀/Data/String
-                                    , /state=∀/Data/Primitive/Boolean
-                                    ) = /Task/Simple
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /state -> ∀/Data/Primitive/Boolean } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> /Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. ) = /Data/Maybe/Some
-                                            ( EAppArg { eaaArg = Value /value -> /Data/Time/TimeRange.. } )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /plannedDay ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                        , /Data/Calendar/eventDay
-                            ( EAppArg
-                                { eaaArg = Value /this -> /Data/Note/Task/Obsidian
-                                    ( /recurrence=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. )
-                                    , /due=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /start=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /priority=∀/Data/Note/Priority
-                                    , /scheduled=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /statusType=∀/Data/Note/StatusType
-                                    , /plannedDay=∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                    , /description=∀/Data/String
-                                    , /contents=∀/Data/String
-                                    , /symbol=∀/Data/String
-                                    , /rest=∀/Data/String
-                                    ) = /Task/Obsidian
-                                    ( EAppArg { eaaArg = Value /contents -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /symbol -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /statusType -> ∀/Data/Note/StatusType } )
-                                    ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
-                                    ( EAppArg { eaaArg = Value /priority -> ∀/Data/Note/Priority } )
-                                    ( EAppArg
-                                        { eaaArg = Value /start -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /scheduled -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                                    )
-                                    ( EAppArg { eaaArg = Value /rest -> ∀/Data/String } )
-                                    ( EAppArg
-                                        { eaaArg = Value /time -> /Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ]( /value=/Data/Time/TimeRange.. ) = /Data/Maybe/Some
-                                            ( EAppArg { eaaArg = Value /value -> /Data/Time/TimeRange.. } )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /plannedDay -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] }
-                                    )
-                                }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                            ( Value /plannedDay ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ] )
-                        ]
-                    }
-                )
             ]
         }
     , prgmCg =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -892,7 +496,6 @@ Prgm
             , cgcExtends =
                 [ /Data/Note/Task/Simple..
                 , /Data/Note/Task/Obsidian..
-                , /Data/Note/Event..
                 , /Data/Note/Show/TaskList..
                 , /Data/Note/Show/TaskQuery..
                 , /Data/Note/Show/Properties..
@@ -900,18 +503,12 @@ Prgm
             , cgcDoc = Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
-              change back to the note the task was read from.
-
-              An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
-              write the change back to the note it was read from."
+              change back to the note the task was read from."
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Note/Task
-            , cgcExtends =
-                [ ∀/Data/Note/Task
-                , /Data/Note/Event..
-                ]
+            , cgcExtends = [ ∀/Data/Note/Task ]
             , cgcDoc = Just "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
               of each of its two readings, because it is true of a checkbox however the vault it was written
               in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
@@ -920,24 +517,6 @@ Prgm
               whatever says it belongs on one rather than of a list kept somewhere else. The class path is
               written out in full: an [isa] list is keyed by the name as it is written, so a relative one
               would name a second class of that name rather than the one meant."
-            }
-        , CGClass
-            { cgcSealed = False
-            , cgcPartial = /Data/Note/Event
-            , cgcExtends =
-                [ /Data/Note/Event..
-                , /Data/Note/Task/Simple
-                    ( /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ].. )..
-                , /Data/Note/Task/Obsidian
-                    ( /time=/Data/Maybe/Some[ /T=/Data/Time/TimeRange.. ].. )..
-                ]
-            , cgcDoc = Just "A task is an event where it has a block of the day, and only there. Said of the tasks whose
-              [time] is a [/Data/Maybe/Some] rather than of [Task], because a task with no time has no span
-              to be drawn over: it is still an entry of a calendar, and a day planner draws it apart from
-              its blocks.
-              The spread is written before the argument rather than after it. @Task/Simple..(time -> T)@ is
-              a task whose [time] is a T and whose other fields are as [Task/Simple] declares them, where
-              @Task/Simple(time -> T)@ would be a value with a [time] and nothing else, which no task is."
             }
         , CGClass
             { cgcSealed = True
@@ -988,16 +567,7 @@ Prgm
               Which of its readings a checkbox gets is decided by the vault it was written in rather than by
               the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
               into the line beside the box, and reading such a line as though it were only a line would read
-              the plugin's writing as writing of the note.
-              Both readings carry what the Obsidian Day Planner plugin reads a checkbox as, as [time] and
-              [plannedDay]. That plugin reads a time written at the start of a line as a block of the day —
-              @09:00 - 10:30 Write@ — and plans the line for a day: the day of the daily note it is written
-              in, or the day it is scheduled for when it is written anywhere else. A vault may run it with
-              or without the Tasks plugin, so it is a reading beside the other two rather than a third.
-              [time] is the block the line writes, with the end the vault gives a block written without one,
-              and [plannedDay] the day the plugin plans it for. Both are [/Data/Maybe/Nothing] in a vault
-              not running the plugin, which plans nothing; and a line written with a time in a note that is
-              no daily note and scheduling no day has a time on no day, which the plugin shows nowhere."
+              the plugin's writing as writing of the note."
             }
         ]
     , prgmAnnots =
@@ -1025,16 +595,7 @@ Prgm
                   Which of its readings a checkbox gets is decided by the vault it was written in rather than by
                   the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
                   into the line beside the box, and reading such a line as though it were only a line would read
-                  the plugin's writing as writing of the note.
-                  Both readings carry what the Obsidian Day Planner plugin reads a checkbox as, as [time] and
-                  [plannedDay]. That plugin reads a time written at the start of a line as a block of the day —
-                  @09:00 - 10:30 Write@ — and plans the line for a day: the day of the daily note it is written
-                  in, or the day it is scheduled for when it is written anywhere else. A vault may run it with
-                  or without the Tasks plugin, so it is a reading beside the other two rather than a third.
-                  [time] is the block the line writes, with the end the vault gives a block written without one,
-                  and [plannedDay] the day the plugin plans it for. Both are [/Data/Maybe/Nothing] in a vault
-                  not running the plugin, which plans nothing; and a line written with a time in a note that is
-                  no daily note and scheduling no day has a time on no day, which the plugin shows nowhere."
+                  the plugin's writing as writing of the note."
                 }
             )
         , /Catln/#md
@@ -1080,460 +641,7 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox read as a checkbox, which a Day Planner plans for a day, sits on that day."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /operator==
-                        ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) =
-                                ( /calendarDay
-                                    ( EAppArg
-                                        { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                            ( /time=/Data/Maybe/Some
-                                                [ /T=/Data/Time/TimeRange
-                                                    ( /start=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    , /end=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/TimeRange
-                                                    ( /start=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    , /end=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    )
-                                                )
-                                            , /plannedDay=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /state=/Data/Primitive/False
-                                            ) = /Data/Note/Task/Simple
-                                            ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "11:00 Stand up"
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
-                                            ( EAppArg
-                                                { eaaArg = Value /time -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/TimeRange
-                                                        ( /start=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        , /end=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/TimeRange
-                                                        ( /start=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        , /end=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/TimeRange
-                                                            ( /start=/Data/Time/TimeOfDay
-                                                                ( /minute=/Data/Primitive/Integer
-                                                                , /hour=/Data/Primitive/Integer
-                                                                )
-                                                            , /end=/Data/Time/TimeOfDay
-                                                                ( /minute=/Data/Primitive/Integer
-                                                                , /hour=/Data/Primitive/Integer
-                                                                )
-                                                            ) = /Data/Time/TimeRange
-                                                            ( EAppArg
-                                                                { eaaArg = Value /start -> /Data/Time/TimeOfDay
-                                                                    ( /minute=/Data/Primitive/Integer
-                                                                    , /hour=/Data/Primitive/Integer
-                                                                    ) = /Data/Time/TimeOfDay
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /hour -> /Data/Primitive/Integer = 11 }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /minute -> /Data/Primitive/Integer = 0 }
-                                                                    )
-                                                                }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /end -> /Data/Time/TimeOfDay
-                                                                    ( /minute=/Data/Primitive/Integer
-                                                                    , /hour=/Data/Primitive/Integer
-                                                                    ) = /Data/Time/TimeOfDay
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /hour -> /Data/Primitive/Integer = 11 }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /minute -> /Data/Primitive/Integer = 30 }
-                                                                    )
-                                                                }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 3 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ) ↦ /Data/Maybe/Some
-                                    [ /T=/Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        )
-                                    ]
-                                    ( /value=/Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        )
-                                    )
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg
-                                    { eaaArg = Value /value -> /Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        ) = /Data/Time/Date
-                                        ( EAppArg
-                                            { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /day -> /Data/Primitive/Integer = 3 }
-                                        )
-                                    }
-                                )
-                            }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task planned for a day sits on that day rather than on the day it is due."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /operator==
-                        ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) =
-                                ( /calendarDay
-                                    ( EAppArg
-                                        { eaaArg = Value /this -> /Data/Note/Task/Obsidian
-                                            ( /recurrence=/Data/Maybe/Nothing
-                                            , /time=/Data/Maybe/Nothing
-                                            , /due=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /start=/Data/Maybe/Nothing
-                                            , /priority=/Data/Note/Priority/None
-                                            , /scheduled=/Data/Maybe/Nothing
-                                            , /statusType=/Data/Note/StatusType/Todo
-                                            , /plannedDay=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            ) = /Data/Note/Task/Obsidian
-                                            ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
-                                            ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it"
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
-                                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /due -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 9 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 3 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ) ↦ /Data/Maybe/Some
-                                    [ /T=/Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        )
-                                    ]
-                                    ( /value=/Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        )
-                                    )
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg
-                                    { eaaArg = Value /value -> /Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        ) = /Data/Time/Date
-                                        ( EAppArg
-                                            { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /day -> /Data/Primitive/Integer = 3 }
-                                        )
-                                    }
-                                )
-                            }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox read as a checkbox which nothing plans sits on no day, whichever way its box is"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  written."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox read as a checkbox sits on no day, whichever way its box is written."
                 }
             )
         , /Catln/#print
@@ -1545,9 +653,7 @@ Prgm
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                            ( /time=/Data/Maybe/Nothing
-                                            , /plannedDay=/Data/Maybe/Nothing
-                                            , /contents=/Data/String/Text
+                                            ( /contents=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /state=/Data/Primitive/False
                                             ) = /Data/Note/Task/Simple
@@ -1557,8 +663,6 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
-                                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                         }
                                     ) ↦ /Data/Maybe/Nothing
                                 )
@@ -1576,13 +680,13 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task naming a day it may be begun and a day it is due sits on the first of the three, which is"
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  day it may be begun."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the day it may be begun."
                 }
             )
         , /Catln/#print
@@ -1590,42 +694,34 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Some
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Obsidian
                                             ( /recurrence=/Data/Maybe/Nothing
-                                            , /time=/Data/Maybe/Nothing
                                             , /due=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
+                                                [ /T=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 )
                                             , /start=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
+                                                [ /T=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 )
                                             , /priority=/Data/Note/Priority/None
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
-                                            , /plannedDay=/Data/Maybe/Nothing
                                             , /description=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /contents=/Data/String/Text
@@ -1654,33 +750,15 @@ Prgm
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
                                             ( EAppArg
                                                 { eaaArg = Value /start -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
+                                                    [ /T=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     ) = /Data/Maybe/Some
                                                     ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 2 }
-                                                            )
+                                                        { eaaArg = Value /value -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-02"
                                                         }
                                                     )
                                                 }
@@ -1688,33 +766,15 @@ Prgm
                                             ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
                                                 { eaaArg = Value /due -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
+                                                    [ /T=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     ) = /Data/Maybe/Some
                                                     ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 4 }
-                                                            )
+                                                        { eaaArg = Value /value -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-04"
                                                         }
                                                     )
                                                 }
@@ -1725,242 +785,28 @@ Prgm
                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
                                                 }
                                             )
-                                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Some
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
                                 )
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /r -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg
-                                    { eaaArg = Value /value -> /Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        ) = /Data/Time/Date
-                                        ( EAppArg
-                                            { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /day -> /Data/Primitive/Integer = 2 }
-                                        )
-                                    }
-                                )
-                            }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task written with a day it may be begun after the day it is due sits on the due day, which is"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the sooner."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /operator==
-                        ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
-                                ( /calendarDay
-                                    ( EAppArg
-                                        { eaaArg = Value /this -> /Data/Note/Task/Obsidian
-                                            ( /recurrence=/Data/Maybe/Nothing
-                                            , /time=/Data/Maybe/Nothing
-                                            , /due=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /start=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /priority=/Data/Note/Priority/None
-                                            , /scheduled=/Data/Maybe/Nothing
-                                            , /statusType=/Data/Note/StatusType/Todo
-                                            , /plannedDay=/Data/Maybe/Nothing
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            ) = /Data/Note/Task/Obsidian
-                                            ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Late start"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
-                                            ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Late start"
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
-                                            ( EAppArg
-                                                { eaaArg = Value /start -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 9 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /due -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 4 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                        }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg
-                                    { eaaArg = Value /value -> /Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        ) = /Data/Time/Date
-                                        ( EAppArg
-                                            { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /day -> /Data/Primitive/Integer = 4 }
-                                        )
+                                    { eaaArg = Value /value -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-02"
                                     }
                                 )
                             }
@@ -1984,30 +830,28 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Some
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Obsidian
                                             ( /recurrence=/Data/Maybe/Nothing
-                                            , /time=/Data/Maybe/Nothing
                                             , /due=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
+                                                [ /T=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
+                                                ( /value=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                 )
                                             , /start=/Data/Maybe/Nothing
                                             , /priority=/Data/Note/Priority/None
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
-                                            , /plannedDay=/Data/Maybe/Nothing
                                             , /description=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /contents=/Data/String/Text
@@ -2038,33 +882,15 @@ Prgm
                                             ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
                                                 { eaaArg = Value /due -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
+                                                    [ /T=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
+                                                    ( /value=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                                     ) = /Data/Maybe/Some
                                                     ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 4 }
-                                                            )
+                                                        { eaaArg = Value /value -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-04"
                                                         }
                                                     )
                                                 }
@@ -2075,42 +901,28 @@ Prgm
                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
                                                 }
                                             )
-                                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Some
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
                                 )
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /r -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg
-                                    { eaaArg = Value /value -> /Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        ) = /Data/Time/Date
-                                        ( EAppArg
-                                            { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /day -> /Data/Primitive/Integer = 4 }
-                                        )
+                                    { eaaArg = Value /value -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-04"
                                     }
                                 )
                             }
@@ -2134,18 +946,16 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] =
+                            { eaaArg = Value /l -> /Data/Maybe/Nothing =
                                 ( /calendarDay
                                     ( EAppArg
                                         { eaaArg = Value /this -> /Data/Note/Task/Obsidian
                                             ( /recurrence=/Data/Maybe/Nothing
-                                            , /time=/Data/Maybe/Nothing
                                             , /due=/Data/Maybe/Nothing
                                             , /start=/Data/Maybe/Nothing
                                             , /priority=/Data/Note/Priority/None
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
-                                            , /plannedDay=/Data/Maybe/Nothing
                                             , /description=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             , /contents=/Data/String/Text
@@ -2181,576 +991,12 @@ Prgm
                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
                                                 }
                                             )
-                                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                         }
-                                    ) ↦ ∀/Data/Maybe[ /T=/Data/Time/Date.. ]
+                                    ) ↦ /Data/Maybe/Nothing
                                 )
                             }
                         )
                         ( EAppArg { eaaArg = Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
-                  write the change back to the note it was read from."
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task is an event where it has a block of the day, and only there. Said of the tasks whose
-                  [time] is a [/Data/Maybe/Some] rather than of [Task], because a task with no time has no span
-                  to be drawn over: it is still an entry of a calendar, and a day planner draws it apart from
-                  its blocks.
-                  The spread is written before the argument rather than after it. @Task/Simple..(time -> T)@ is
-                  a task whose [time] is a T and whose other fields are as [Task/Simple] declares them, where
-                  @Task/Simple(time -> T)@ would be a value with a [time] and nothing else, which no task is."
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A bullet the Day Planner reads is an event taking up the block it writes."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Time/TimeRange
-                    ( /start=/Data/Time/TimeOfDay
-                        ( /minute=/Data/Primitive/Integer
-                        , /hour=/Data/Primitive/Integer
-                        )
-                    , /end=/Data/Time/TimeOfDay
-                        ( /minute=/Data/Primitive/Integer
-                        , /hour=/Data/Primitive/Integer
-                        )
-                    ) =
-                    ( /eventSpan
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Data/Note/Event
-                                ( /time=/Data/Time/TimeRange
-                                    ( /start=/Data/Time/TimeOfDay
-                                        ( /minute=/Data/Primitive/Integer
-                                        , /hour=/Data/Primitive/Integer
-                                        )
-                                    , /end=/Data/Time/TimeOfDay
-                                        ( /minute=/Data/Primitive/Integer
-                                        , /hour=/Data/Primitive/Integer
-                                        )
-                                    )
-                                , /plannedDay=/Data/Maybe/Nothing
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Note/Event
-                                ( EAppArg
-                                    { eaaArg = Value /contents -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:00 - 13:00 Lunch"
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /time -> /Data/Time/TimeRange
-                                        ( /start=/Data/Time/TimeOfDay
-                                            ( /minute=/Data/Primitive/Integer
-                                            , /hour=/Data/Primitive/Integer
-                                            )
-                                        , /end=/Data/Time/TimeOfDay
-                                            ( /minute=/Data/Primitive/Integer
-                                            , /hour=/Data/Primitive/Integer
-                                            )
-                                        ) = /Data/Time/TimeRange
-                                        ( EAppArg
-                                            { eaaArg = Value /start -> /Data/Time/TimeOfDay
-                                                ( /minute=/Data/Primitive/Integer
-                                                , /hour=/Data/Primitive/Integer
-                                                ) = /Data/Time/TimeOfDay
-                                                ( EAppArg
-                                                    { eaaArg = Value /hour -> /Data/Primitive/Integer = 12 }
-                                                )
-                                                ( EAppArg
-                                                    { eaaArg = Value /minute -> /Data/Primitive/Integer = 0 }
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /end -> /Data/Time/TimeOfDay
-                                                ( /minute=/Data/Primitive/Integer
-                                                , /hour=/Data/Primitive/Integer
-                                                ) = /Data/Time/TimeOfDay
-                                                ( EAppArg
-                                                    { eaaArg = Value /hour -> /Data/Primitive/Integer = 13 }
-                                                )
-                                                ( EAppArg
-                                                    { eaaArg = Value /minute -> /Data/Primitive/Integer = 0 }
-                                                )
-                                            }
-                                        )
-                                    }
-                                )
-                                ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            }
-                        ) ↦ /Data/Time/TimeRange
-                        ( /start=/Data/Time/TimeOfDay
-                            ( /minute=/Data/Primitive/Integer
-                            , /hour=/Data/Primitive/Integer
-                            )
-                        , /end=/Data/Time/TimeOfDay
-                            ( /minute=/Data/Primitive/Integer
-                            , /hour=/Data/Primitive/Integer
-                            )
-                        )
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:00 - 13:00"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox given a time is an event too, taking up the block its time says."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Time/TimeRange
-                    ( /start=/Data/Time/TimeOfDay
-                        ( /minute=/Data/Primitive/Integer
-                        , /hour=/Data/Primitive/Integer
-                        )
-                    , /end=/Data/Time/TimeOfDay
-                        ( /minute=/Data/Primitive/Integer
-                        , /hour=/Data/Primitive/Integer
-                        )
-                    ) =
-                    ( /eventSpan
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Data/Note/Task/Simple
-                                ( /time=/Data/Maybe/Some
-                                    [ /T=/Data/Time/TimeRange
-                                        ( /start=/Data/Time/TimeOfDay
-                                            ( /minute=/Data/Primitive/Integer
-                                            , /hour=/Data/Primitive/Integer
-                                            )
-                                        , /end=/Data/Time/TimeOfDay
-                                            ( /minute=/Data/Primitive/Integer
-                                            , /hour=/Data/Primitive/Integer
-                                            )
-                                        )
-                                    ]
-                                    ( /value=/Data/Time/TimeRange
-                                        ( /start=/Data/Time/TimeOfDay
-                                            ( /minute=/Data/Primitive/Integer
-                                            , /hour=/Data/Primitive/Integer
-                                            )
-                                        , /end=/Data/Time/TimeOfDay
-                                            ( /minute=/Data/Primitive/Integer
-                                            , /hour=/Data/Primitive/Integer
-                                            )
-                                        )
-                                    )
-                                , /plannedDay=/Data/Maybe/Nothing
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /state=/Data/Primitive/False
-                                ) = /Data/Note/Task/Simple
-                                ( EAppArg
-                                    { eaaArg = Value /contents -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30 Write"
-                                    }
-                                )
-                                ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
-                                ( EAppArg
-                                    { eaaArg = Value /time -> /Data/Maybe/Some
-                                        [ /T=/Data/Time/TimeRange
-                                            ( /start=/Data/Time/TimeOfDay
-                                                ( /minute=/Data/Primitive/Integer
-                                                , /hour=/Data/Primitive/Integer
-                                                )
-                                            , /end=/Data/Time/TimeOfDay
-                                                ( /minute=/Data/Primitive/Integer
-                                                , /hour=/Data/Primitive/Integer
-                                                )
-                                            )
-                                        ]
-                                        ( /value=/Data/Time/TimeRange
-                                            ( /start=/Data/Time/TimeOfDay
-                                                ( /minute=/Data/Primitive/Integer
-                                                , /hour=/Data/Primitive/Integer
-                                                )
-                                            , /end=/Data/Time/TimeOfDay
-                                                ( /minute=/Data/Primitive/Integer
-                                                , /hour=/Data/Primitive/Integer
-                                                )
-                                            )
-                                        ) = /Data/Maybe/Some
-                                        ( EAppArg
-                                            { eaaArg = Value /value -> /Data/Time/TimeRange
-                                                ( /start=/Data/Time/TimeOfDay
-                                                    ( /minute=/Data/Primitive/Integer
-                                                    , /hour=/Data/Primitive/Integer
-                                                    )
-                                                , /end=/Data/Time/TimeOfDay
-                                                    ( /minute=/Data/Primitive/Integer
-                                                    , /hour=/Data/Primitive/Integer
-                                                    )
-                                                ) = /Data/Time/TimeRange
-                                                ( EAppArg
-                                                    { eaaArg = Value /start -> /Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        ) = /Data/Time/TimeOfDay
-                                                        ( EAppArg
-                                                            { eaaArg = Value /hour -> /Data/Primitive/Integer = 9 }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /minute -> /Data/Primitive/Integer = 0 }
-                                                        )
-                                                    }
-                                                )
-                                                ( EAppArg
-                                                    { eaaArg = Value /end -> /Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        ) = /Data/Time/TimeOfDay
-                                                        ( EAppArg
-                                                            { eaaArg = Value /hour -> /Data/Primitive/Integer = 10 }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /minute -> /Data/Primitive/Integer = 30 }
-                                                        )
-                                                    }
-                                                )
-                                            }
-                                        )
-                                    }
-                                )
-                                ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            }
-                        ) ↦ /Data/Time/TimeRange
-                        ( /start=/Data/Time/TimeOfDay
-                            ( /minute=/Data/Primitive/Integer
-                            , /hour=/Data/Primitive/Integer
-                            )
-                        , /end=/Data/Time/TimeOfDay
-                            ( /minute=/Data/Primitive/Integer
-                            , /hour=/Data/Primitive/Integer
-                            )
-                        )
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "And so is a task the Tasks plugin manages, on the day it is planned for."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /operator==
-                        ( EAppArg
-                            { eaaArg = Value /l -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) =
-                                ( /eventDay
-                                    ( EAppArg
-                                        { eaaArg = Value /this -> /Data/Note/Task/Obsidian
-                                            ( /recurrence=/Data/Maybe/Nothing
-                                            , /time=/Data/Maybe/Some
-                                                [ /T=/Data/Time/TimeRange
-                                                    ( /start=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    , /end=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/TimeRange
-                                                    ( /start=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    , /end=/Data/Time/TimeOfDay
-                                                        ( /minute=/Data/Primitive/Integer
-                                                        , /hour=/Data/Primitive/Integer
-                                                        )
-                                                    )
-                                                )
-                                            , /due=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /start=/Data/Maybe/Nothing
-                                            , /priority=/Data/Note/Priority/None
-                                            , /scheduled=/Data/Maybe/Nothing
-                                            , /statusType=/Data/Note/StatusType/Todo
-                                            , /plannedDay=/Data/Maybe/Some
-                                                [ /T=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                ]
-                                                ( /value=/Data/Time/Date
-                                                    ( /year=/Data/Primitive/Integer
-                                                    , /month=/Data/Primitive/Integer
-                                                    , /day=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            ) = /Data/Note/Task/Obsidian
-                                            ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16:00 Call"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
-                                            ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16:00 Call"
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
-                                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /due -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 9 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                            ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /time -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/TimeRange
-                                                        ( /start=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        , /end=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/TimeRange
-                                                        ( /start=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        , /end=/Data/Time/TimeOfDay
-                                                            ( /minute=/Data/Primitive/Integer
-                                                            , /hour=/Data/Primitive/Integer
-                                                            )
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/TimeRange
-                                                            ( /start=/Data/Time/TimeOfDay
-                                                                ( /minute=/Data/Primitive/Integer
-                                                                , /hour=/Data/Primitive/Integer
-                                                                )
-                                                            , /end=/Data/Time/TimeOfDay
-                                                                ( /minute=/Data/Primitive/Integer
-                                                                , /hour=/Data/Primitive/Integer
-                                                                )
-                                                            ) = /Data/Time/TimeRange
-                                                            ( EAppArg
-                                                                { eaaArg = Value /start -> /Data/Time/TimeOfDay
-                                                                    ( /minute=/Data/Primitive/Integer
-                                                                    , /hour=/Data/Primitive/Integer
-                                                                    ) = /Data/Time/TimeOfDay
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /hour -> /Data/Primitive/Integer = 16 }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /minute -> /Data/Primitive/Integer = 0 }
-                                                                    )
-                                                                }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /end -> /Data/Time/TimeOfDay
-                                                                    ( /minute=/Data/Primitive/Integer
-                                                                    , /hour=/Data/Primitive/Integer
-                                                                    ) = /Data/Time/TimeOfDay
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /hour -> /Data/Primitive/Integer = 16 }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /minute -> /Data/Primitive/Integer = 30 }
-                                                                    )
-                                                                }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /plannedDay -> /Data/Maybe/Some
-                                                    [ /T=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ]
-                                                    ( /value=/Data/Time/Date
-                                                        ( /year=/Data/Primitive/Integer
-                                                        , /month=/Data/Primitive/Integer
-                                                        , /day=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /Data/Maybe/Some
-                                                    ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/Time/Date
-                                                            ( /year=/Data/Primitive/Integer
-                                                            , /month=/Data/Primitive/Integer
-                                                            , /day=/Data/Primitive/Integer
-                                                            ) = /Data/Time/Date
-                                                            ( EAppArg
-                                                                { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                                            )
-                                                            ( EAppArg
-                                                                { eaaArg = Value /day -> /Data/Primitive/Integer = 3 }
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ) ↦ /Data/Maybe/Some
-                                    [ /T=/Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        )
-                                    ]
-                                    ( /value=/Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        )
-                                    )
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /r -> /Data/Maybe/Some
-                                [ /T=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/Data/Time/Date
-                                    ( /year=/Data/Primitive/Integer
-                                    , /month=/Data/Primitive/Integer
-                                    , /day=/Data/Primitive/Integer
-                                    )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg
-                                    { eaaArg = Value /value -> /Data/Time/Date
-                                        ( /year=/Data/Primitive/Integer
-                                        , /month=/Data/Primitive/Integer
-                                        , /day=/Data/Primitive/Integer
-                                        ) = /Data/Time/Date
-                                        ( EAppArg
-                                            { eaaArg = Value /year -> /Data/Primitive/Integer = 2026 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /month -> /Data/Primitive/Integer = 1 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /day -> /Data/Primitive/Integer = 3 }
-                                        )
-                                    }
-                                )
-                            }
-                        ) ↦ ∀/Data/Primitive/Boolean
                     )
                 }
             )

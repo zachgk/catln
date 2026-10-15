@@ -17,14 +17,39 @@ Prgm
                                             ( Value /l= CStr
                                                 { csValue = "<p>" }
                                             )
-                                            ( Value /r= titleOf( Value title= Value title )( Value link= Value link ) )
+                                            ( Value /r= /Catln/Doc/dshow.titleOf( Value title= Value title )( Value link= Value link ) )
                                         )
-                                        ( Value /r= publishedOf( Value published= Value published ) )
+                                        ( Value /r= /Catln/Doc/dshow.publishedOf( Value published= Value published ) )
                                     )
                                     ( Value /r= CStr
                                         { csValue = "</p>" }
                                     )
                                 )( Value /r= Value description )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow.publishedOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/dshow.publishedOf( Value published -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow.publishedOf( Value published ) | /operator==( Value /l= Value published )
+                            ( Value /r= CStr
+                                { csValue = "" }
+                            ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Catln/Doc/dshow.publishedOf( Value published ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = " <small>" }
+                                )( Value /r= Value published )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "</small>" }
                             )
                         ]
                     }
@@ -40,14 +65,14 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/dshow./Data/RSS/titleOf"
+                ( "/Catln/Doc/dshow.titleOf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value title -> ∀/Data/String )( Value link -> ∀/Data/String ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.titleOf( Value title -> ∀/Data/String )( Value link -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value title )( Value link ) | /operator==( Value /l= Value link )
+                        [ /Catln/Doc/dshow.titleOf( Value title )( Value link ) | /operator==( Value /l= Value link )
                             ( Value /r= CStr
                                 { csValue = "" }
                             ) -> ∀/Data/String = /operator++
@@ -59,7 +84,7 @@ Prgm
                             ( Value /r= CStr
                                 { csValue = "</strong>" }
                             )
-                        , /Catln/Doc/dshow./Data/RSS/titleOf( Value title )( Value link ) -> ∀/Data/String = /operator++
+                        , /Catln/Doc/dshow.titleOf( Value title )( Value link ) -> ∀/Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
@@ -74,31 +99,6 @@ Prgm
                             )
                             ( Value /r= CStr
                                 { csValue = "</a></strong>" }
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Catln/Doc/dshow./Data/RSS/publishedOf"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value published -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value published ) | /operator==( Value /l= Value published )
-                            ( Value /r= CStr
-                                { csValue = "" }
-                            ) -> ∀/Data/String = CStr
-                            { csValue = "" }
-                        , /Catln/Doc/dshow./Data/RSS/publishedOf( Value published ) -> ∀/Data/String = /operator++
-                            ( Value /l= /operator++
-                                ( Value /l= CStr
-                                    { csValue = " <small>" }
-                                )( Value /r= Value published )
-                            )
-                            ( Value /r= CStr
-                                { csValue = "</small>" }
                             )
                         ]
                     }

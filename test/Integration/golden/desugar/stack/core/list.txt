@@ -33,22 +33,23 @@ Prgm
                     }
                 )
             ,
-                ( "/range./Data/List/rangeFrom"
+                ( "/Data/List/sorted.insert"
                 , ObjectMapItem
                     { omiDecls =
-                        [ range./Data/List/rangeFrom( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
+                        [ /Data/List/sorted.insert[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ range./Data/List/rangeFrom( Value i )( Value stop ) | /operator<( Value /l= Value i )( Value /r= Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
-                            ( Value tail= rangeFrom
-                                ( Value i= /operator+( Value /l= Value i )
-                                    ( Value /r= CInt
-                                        { ciValue = 1 }
-                                    )
-                                )( Value stop= Value stop )
-                            )
-                        , range./Data/List/rangeFrom( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value Nil
+                        [ /Data/List/sorted.insert( Value x )( Value lst= Value Nil ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value x )( Value tail= Value Nil )
+                        , /Data/List/sorted.insert( Value x )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) | isLessEq
+                            ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value x )
+                            ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
+                        , /Data/List/sorted.insert( Value x )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value head )
+                            ( Value tail= /Data/List/sorted.insert( Value x= Value x )( Value lst= Value tail ) )
                         ]
                     }
                 )
@@ -96,7 +97,7 @@ Prgm
                                     )
                                     ( Value /r= toString( Value /this= Value h ) )
                                 )
-                                ( Value /r= restToString( Value lst= Value t ) )
+                                ( Value /r= /Data/List/toString.restToString( Value lst= Value t ) )
                             )
                             ( Value /r= CStr
                                 { csValue = "]" }
@@ -120,6 +121,30 @@ Prgm
                             ( Value lst= /Data/Functor/fmap( Value lst= Value lst )
                                 ( fn( Value v )= fn( Value v= Value v ) )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/toString.restToString"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/toString.restToString
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/toString.restToString( Value lst= Value Nil ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Data/List/toString.restToString
+                            ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = ", " }
+                                )
+                                ( Value /r= toString( Value /this= Value head ) )
+                            )
+                            ( Value /r= /Data/List/toString.restToString( Value lst= Value tail ) )
                         ]
                     }
                 )
@@ -159,7 +184,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/filter( Value lst )
                             ( fn( Value v ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value m= Value lst )
-                            ( fn( Value v )= keepIf( Value v= Value v )
+                            ( fn( Value v )= /Data/List/filter.keepIf( Value v= Value v )
                                 ( Value keep= fn( Value v= Value v ) )
                             )
                         ]
@@ -172,6 +197,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/filter.keepIf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/filter.keepIf( Value v -> $_/A )( Value keep -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/filter.keepIf( Value v )( Value keep= Value /Data/Primitive/True ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil )
+                        , /Data/List/filter.keepIf( Value v )( Value keep= Value /Data/Primitive/False ) -> ∀/Data/List/ConsList[ /T=TopType ] = Value /Data/List/Nil
+                        ]
                     }
                 )
             ,
@@ -193,27 +231,6 @@ Prgm
                             ( Value acc= foldr( Value lst= Value tail )
                                 ( fn( Value acc )( Value v )= fn( Value acc= Value acc )( Value v= Value v ) )( Value init= Value init )
                             )( Value v= Value head )
-                        ]
-                    }
-                )
-            ,
-                ( "/sorted./Data/List/insert"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ sorted./Data/List/insert[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ sorted./Data/List/insert( Value x )( Value lst= Value Nil ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value x )( Value tail= Value Nil )
-                        , sorted./Data/List/insert( Value x )
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) | isLessEq
-                            ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value x )
-                            ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
-                        , sorted./Data/List/insert( Value x )
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value head )
-                            ( Value tail= insert( Value x= Value x )( Value lst= Value tail ) )
                         ]
                     }
                 )
@@ -328,7 +345,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/sorted( Value lst= Value Nil ) -> ∀/Data/List[ /T=TopType ] = Value Nil
                         , /Data/List/sorted
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/List[ /T=TopType ] = insert( Value x= Value h )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/List[ /T=TopType ] = /Data/List/sorted.insert( Value x= Value h )
                             ( Value lst= sorted( Value lst= Value t ) )
                         ]
                     }
@@ -349,19 +366,6 @@ Prgm
                             ( Value b= /Data/Monad/mmap( Value m= Value tail )
                                 ( fn( Value v )= fn( Value v= Value v ) )
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/filter./Data/List/keepIf"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ filter./Data/List/keepIf( Value v -> $_/A )( Value keep -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/True ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil )
-                        , filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/False ) -> ∀/Data/List/ConsList[ /T=TopType ] = Value /Data/List/Nil
                         ]
                     }
                 )
@@ -463,7 +467,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/range( Value stop ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = rangeFrom
+                        [ /Data/List/range( Value stop ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /Data/List/range.rangeFrom
                             ( Value i= CInt
                                 { ciValue = 0 }
                             )( Value stop= Value stop )
@@ -471,26 +475,22 @@ Prgm
                     }
                 )
             ,
-                ( "/toString./Data/List/restToString"
+                ( "/Data/List/range.rangeFrom"
                 , ObjectMapItem
                     { omiDecls =
-                        [ toString./Data/List/restToString
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] ) -> ∀/Data/String
-                        ]
+                        [ /Data/List/range.rangeFrom( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ toString./Data/List/restToString( Value lst= Value Nil ) -> ∀/Data/String = CStr
-                            { csValue = "" }
-                        , toString./Data/List/restToString
-                            ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> ∀/Data/String = /operator++
-                            ( Value /l= /operator++
-                                ( Value /l= CStr
-                                    { csValue = ", " }
-                                )
-                                ( Value /r= toString( Value /this= Value head ) )
+                        [ /Data/List/range.rangeFrom( Value i )( Value stop ) | /operator<( Value /l= Value i )( Value /r= Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
+                            ( Value tail= /Data/List/range.rangeFrom
+                                ( Value i= /operator+( Value /l= Value i )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )( Value stop= Value stop )
                             )
-                            ( Value /r= restToString( Value lst= Value tail ) )
+                        , /Data/List/range.rangeFrom( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value Nil
                         ]
                     }
                 )
