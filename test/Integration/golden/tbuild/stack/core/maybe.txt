@@ -858,6 +858,96 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both arms, compared with [operator==] on the result: a [Some] is mapped and a [Nothing] is"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  left as it is."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ /Data/Primitive/Integer
+                                            )
+                                        }
+                                    ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Maybe/Nothing =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg { eaaArg = Value /lst -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ ∀/Data/Algebra/Add
+                                            )
+                                        }
+                                    ) ↦ /Data/Maybe/Nothing
+                                )
+                            }
+                        )
+                        ( EAppArg { eaaArg = Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe Monad instance
                   Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
                   [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),

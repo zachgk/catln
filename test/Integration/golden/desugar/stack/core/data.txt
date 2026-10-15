@@ -128,6 +128,20 @@ Prgm
                 { csValue = "hello" }
             )
         , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= toString
+                    ( Value /this= CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /r= CStr
+                    { csValue = "1" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
             ( Value /p= CInt
                 { ciValue = 42 }
             )

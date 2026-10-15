@@ -3869,6 +3869,212 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The identity leaves a list as it was, and two increments composed are an increment of two."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  Each is compared with [operator==] on the result, as a program importing this page would."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                ) =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> TVArg /v = ( Value /v ↦ TVArg /v )
+                                        }
+                                    ) ↦ /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                ) =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ /Data/Primitive/Integer
+                                            )
+                                        }
+                                    ) ↦ /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                    )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
+                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                ) =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> /Data/List/Cons
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            ) =
+                                            ( /Data/Functor/fmap
+                                                ( EAppArg
+                                                    { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                        ( /head=/Data/Primitive/Integer
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = /fn
+                                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                                        ( /operator+
+                                                            ( EAppArg
+                                                                { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                            )
+                                                            ( EAppArg
+                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                            ) ↦ /Data/Primitive/Integer
+                                                        )
+                                                    }
+                                                ) ↦ /Data/List/Cons
+                                                ( /head=/Data/Primitive/Integer
+                                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                                )
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ ∀/Data/Algebra/Add
+                                            )
+                                        }
+                                    ) ↦ /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                    ( /head=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# ConsList Eq membership
                   Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
                   dispatches through the [equal] method. Two lists are equal when they match constructor for

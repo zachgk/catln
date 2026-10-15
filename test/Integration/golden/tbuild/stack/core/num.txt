@@ -377,6 +377,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/testAddIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/testAddIdentity
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = 0
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Primitive/mempty"
                 , ObjectMapItem
                     { omiDecls = []
@@ -708,6 +720,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Primitive/Integer
@@ -817,6 +830,18 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Adding zero leaves a number alone, whatever number it is. Written as a [#test] with an"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  argument, so the test engine generates the inputs rather than checking one value."
                 }
             )
         , /Catln/#md
@@ -1027,6 +1052,84 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Floats"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The arithmetic operators on [Float], shown on concrete inputs."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Float =
+                    ( /operator+
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Primitive/Float = 1.0 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
+                        ) ↦ /Data/Primitive/Float
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3.0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Float =
+                    ( /operator-
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Primitive/Float = 5.0 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                        ) ↦ /Data/Primitive/Float
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2.0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Float =
+                    ( /operator*
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Primitive/Float = 2.0 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Primitive/Float = 3.0 }
+                        ) ↦ /Data/Primitive/Float
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6.0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Float =
+                    ( /operator//
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Primitive/Float = 6.0 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Primitive/Float = 2.0 }
+                        ) ↦ /Data/Primitive/Float
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3.0"
                 }
             )
         , /Catln/#print

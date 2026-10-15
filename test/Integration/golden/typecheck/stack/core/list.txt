@@ -2338,6 +2338,121 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "The identity leaves a list as it was, and two increments composed are an increment of two." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  Each is compared with [operator==] on the result, as a program importing this page would." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                    ( /head=$/T
+                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                    ) = /Data/Functor/fmap
+                    ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Nil
+                        ) = /Data/List/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    )
+                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> TVArg /v = Value /v )
+                )
+                ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                    ) = /Data/Functor/fmap
+                    ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Nil
+                        ) = /Data/List/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    )
+                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                        ( Value /r -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+                ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 2 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                    ( /head=( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
+                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                    ) = /Data/Functor/fmap
+                    ( Value /lst -> /Data/List/Cons
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                        ) = /Data/Functor/fmap
+                        ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        )
+                        ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
+                        )
+                    )
+                    ( /fn( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /v = Value /v )
+                        ( Value /r -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+                ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 3 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# ConsList Eq membership
                 Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
                 dispatches through the [equal] method. Two lists are equal when they match constructor for

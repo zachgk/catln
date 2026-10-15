@@ -133,6 +133,22 @@ Prgm
                 { csValue = "hello" }
             )
         , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> ∀/Data/String = /toString
+                    ( Value /this -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /r -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "1" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = CInt
                 { ciValue = 42 }
             )

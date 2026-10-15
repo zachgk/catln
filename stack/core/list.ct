@@ -262,6 +262,14 @@ module(Data/List)
 
   > /Data/Functor/fmap(lst= [1, 2, 3], fn(v)= v + 1)
     >>> [2, 3, 4]
+  # The identity leaves a list as it was, and two increments composed are an increment of two.
+  #   Each is compared with [operator==] on the result, as a program importing this page would.
+  > (/Data/Functor/fmap(lst= /Data/List/Cons(head= 1, tail= /Data/List/Nil), fn(v)= v) == /Data/List/Cons(head= 1, tail= /Data/List/Nil))
+    >>> True
+  > (/Data/Functor/fmap(lst= /Data/List/Cons(head= 1, tail= /Data/List/Nil), fn(v)= v + 1) == /Data/List/Cons(head= 2, tail= /Data/List/Nil))
+    >>> True
+  > (/Data/Functor/fmap(lst= /Data/Functor/fmap(lst= /Data/List/Cons(head= 1, tail= /Data/List/Nil), fn(v)= v + 1), fn(v)= v + 1) == /Data/List/Cons(head= 3, tail= /Data/List/Nil))
+    >>> True
 
 # # ConsList Eq membership
   Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]

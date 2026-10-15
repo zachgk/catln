@@ -214,6 +214,32 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> ∀/Data/String =
+                                ( /toString
+                                    ( EAppArg
+                                        { eaaArg = Value /this -> /Data/Primitive/Integer = 1 }
+                                    ) ↦ ∀/Data/String
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer = 42 }
             )
             ( EAppArg

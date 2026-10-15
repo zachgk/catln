@@ -1452,6 +1452,86 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "The identity leaves a list as it was, and two increments composed are an increment of two." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  Each is compared with [operator==] on the result, as a program importing this page would." }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/Functor/fmap
+                    ( Value lst= /Data/List/Cons
+                        ( Value head= CInt
+                            { ciValue = 1 }
+                        )( Value tail= Value /Data/List/Nil )
+                    )
+                    ( fn( Value v )= Value v )
+                )
+                ( Value /r= /Data/List/Cons
+                    ( Value head= CInt
+                        { ciValue = 1 }
+                    )( Value tail= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/Functor/fmap
+                    ( Value lst= /Data/List/Cons
+                        ( Value head= CInt
+                            { ciValue = 1 }
+                        )( Value tail= Value /Data/List/Nil )
+                    )
+                    ( fn( Value v )= /operator+( Value /l= Value v )
+                        ( Value /r= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+                ( Value /r= /Data/List/Cons
+                    ( Value head= CInt
+                        { ciValue = 2 }
+                    )( Value tail= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/Functor/fmap
+                    ( Value lst= /Data/Functor/fmap
+                        ( Value lst= /Data/List/Cons
+                            ( Value head= CInt
+                                { ciValue = 1 }
+                            )( Value tail= Value /Data/List/Nil )
+                        )
+                        ( fn( Value v )= /operator+( Value /l= Value v )
+                            ( Value /r= CInt
+                                { ciValue = 1 }
+                            )
+                        )
+                    )
+                    ( fn( Value v )= /operator+( Value /l= Value v )
+                        ( Value /r= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+                ( Value /r= /Data/List/Cons
+                    ( Value head= CInt
+                        { ciValue = 3 }
+                    )( Value tail= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "# ConsList Eq membership
                 Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
                 dispatches through the [equal] method. Two lists are equal when they match constructor for

@@ -32,6 +32,13 @@ module(Data/Primitive)
   (_ :: Integer + _ :: Integer) -> Integer
     #runtime("int+")
 
+  # Adding zero leaves a number alone, whatever number it is. Written as a [#test] with an
+  #   argument, so the test engine generates the inputs rather than checking one value.
+  testAddIdentity(x -> Integer) =
+    #test
+    #assert(test= x + 0 == x)
+    0
+
   (_ :: Integer * _ :: Integer) -> Integer
     #runtime("int*")
 
@@ -124,6 +131,15 @@ module(Data/Primitive)
   (_ :: Float // _ :: Float) -> Float
     #runtime("float//")
 
+  # The arithmetic operators on [Float], shown on concrete inputs.
+  > (1.0 + 2.0)
+    >>> 3.0
+  > (5.0 - 3.0)
+    >>> 2.0
+  > (2.0 * 3.0)
+    >>> 6.0
+  > (6.0 // 2.0)
+    >>> 3.0
   :Integer.toFloat -> Float
     # [toFloat] is the [Float] with the same value as the [Integer].
     #runtime("intToFloat")

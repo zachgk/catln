@@ -100,6 +100,13 @@ module(Data/Maybe)
   /Data/Functor/fmap(lst= Nothing, fn(v))= Nothing
   /Data/Functor/fmap(lst= /Data/Maybe/Some(value), fn(v))= /Data/Maybe/Some(value= fn(v= value))
 
+  # Both arms, compared with [operator==] on the result: a [Some] is mapped and a [Nothing] is
+  #   left as it is.
+  > (/Data/Functor/fmap(lst= /Data/Maybe/Some(value= 1), fn(v)= v + 1) == /Data/Maybe/Some(value= 2))
+    >>> True
+  > (/Data/Functor/fmap(lst= /Data/Maybe/Nothing, fn(v)= v + 1) == /Data/Maybe/Nothing)
+    >>> True
+
 # # Maybe Monad instance
   Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
   [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
