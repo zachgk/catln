@@ -1,10 +1,13 @@
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Semantics.TypesTests where
 
 import           Common.TestCommon         (findCt)
 import           Control.Exception         (AllocationLimitExceeded (..),
                                             evaluate, finally, try)
 import           Control.Monad
-import           Control.Monad.IO.Class    (MonadIO)
+import           Control.Monad.IO.Class    (MonadIO, liftIO)
+import           Control.Monad.Reader      (ReaderT (..), ask)
 import           Control.Monad.Trans       (lift)
 import           CRes
 import           CtService
@@ -12,11 +15,14 @@ import           Data.Graph                (graphFromEdges)
 import qualified Data.HashMap.Strict       as H
 import qualified Data.HashSet              as S
 import           Data.Int                  (Int64)
-import           Data.List                 (isInfixOf, isSuffixOf, sortOn)
+import           Data.IORef
+import           Data.List                 (intercalate, isInfixOf, isSuffixOf,
+                                            sortOn)
 import           Data.Maybe
 import           GHC.Conc                  (disableAllocationLimit,
                                             enableAllocationLimit,
                                             setAllocationCounter)
+import           GHC.Stack                 (HasCallStack, withFrozenCallStack)
 import           Hedgehog
 import qualified Hedgehog.Gen              as HG
 import           MapMeta                   (clearMetaDat, mapMetaPrgm)
@@ -26,6 +32,7 @@ import           Semantics.Types
 import           System.Timeout            (timeout)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog       as HG
+import           Test.Tasty.HUnit          (assertFailure, testCase)
 import qualified Test.Tasty.Patterns.Types as TT
 import qualified Test.Tasty.Runners        as TP
 import           Testing.Generation
@@ -46,8 +53,8 @@ findPrgms = do
       return (fileName, mconcat $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
   return (H.insert "empty" mempty $ H.fromList $ fromCRes prgms)
 
--- | A fixture program read on its own, outside the generator pool of 'findPrgms': a unit
--- property states its one case against it without every generated law drawing from it too.
+-- | A fixture program read on its own, outside the generator pool of 'findPrgms': a unit case
+-- ('Unit') states its one claim against it without every generated law drawing from it too.
 loadUnitPrgm :: String -> IO (Prgm Expr ())
 loadUnitPrgm fileName = do
   prgm <- runCResT $ do
@@ -441,29 +448,69 @@ propDifferenceSubset gPrgm = property $ do
     else assertTimed "a+b-a = b" $ isEqTypeWithEnvComplete typeEnv vaenv sub b
 
 
+-- | What a check needs of the monad it runs in, so one set of budgeted checks ('forceTimed',
+-- 'timed', 'assertTimed', 'eqTimed') serves both a generated law (hedgehog's 'PropertyT', whose
+-- failure reports the shrunk counterexample) and a unit case ('Unit', a tasty-hunit test whose
+-- failure reports the case's notes).
+class MonadIO m => MonadCheck m where
+  -- | Record context to show beside a failure.
+  note :: HasCallStack => String -> m ()
+  -- | Fail the check with a message.
+  failWith :: HasCallStack => String -> m a
+  -- | Run an action whose exception fails the check instead of escaping it.
+  checkIO :: HasCallStack => IO a -> m a
+  -- | Fail unless the two sides are equal, showing both.
+  checkEq :: (HasCallStack, Eq a, Show a) => String -> a -> a -> m ()
+
+instance MonadCheck (PropertyT IO) where
+  note = withFrozenCallStack annotate
+  failWith msg = withFrozenCallStack $ footnote msg >> failure
+  checkIO = withFrozenCallStack evalIO
+  checkEq stage x y = withFrozenCallStack $ do
+    unless (x == y) $ footnote stage
+    x === y
+
+-- | A unit case: 'IO' carrying the notes recorded so far, so a failing check reports them the way
+-- a failing property reports its annotations. 'unitCase' runs it as a tasty-hunit test; an
+-- exception escaping it is the test's error, as under HUnit.
+newtype Unit a = Unit (ReaderT (IORef [String]) IO a)
+  deriving (Functor, Applicative, Monad, MonadIO)
+
+instance MonadFail Unit where
+  fail = failWith
+
+instance MonadCheck Unit where
+  note n = Unit $ ask >>= \notes -> liftIO (modifyIORef notes (n :))
+  failWith msg = Unit $ do
+    notes <- ask >>= liftIO . readIORef
+    liftIO $ assertFailure $ intercalate "\n" (reverse notes ++ [msg])
+  checkIO = liftIO
+  checkEq stage x y = unless (x == y) $ failWith $ printf "%s: the sides differ\n  lhs: %s\n  rhs: %s" stage (show x) (show y)
+
+-- | A unit case as a tasty-hunit test.
+unitCase :: TestName -> Unit () -> TestTree
+unitCase name (Unit m) = testCase name $ newIORef [] >>= runReaderT m
+
 -- | Deep-force a stage's result under a wall-clock budget: a case that exceeds it fails the
--- property, so hedgehog SHRINKS toward a minimal pathological input (a livelocked op otherwise
--- hangs the suite with no reported counterexample; deep-forcing via 'show' reaches every thunk).
+-- check, so under hedgehog the property SHRINKS toward a minimal pathological input (a livelocked
+-- op otherwise hangs the suite with no reported counterexample; deep-forcing via 'show' reaches
+-- every thunk).
 --
 -- The stage is also held to an allocation budget: a case whose meet blows up can fill the heap
 -- before the clock runs out, and heap exhaustion ends the whole suite with no counterexample
 -- (@propIntersectByDifference@ did, at 3000 cases). An allocation limit is thrown to the forcing
--- thread as an exception, which fails the property like the timeout does.
-forceTimed :: (Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> m ()
+-- thread as an exception, which fails the check like the timeout does.
+forceTimed :: (HasCallStack, Show a, MonadCheck m) => String -> a -> m ()
 forceTimed stage x = do
-  r <- evalIO $ try $ timeout 5000000 $ do
+  r <- checkIO $ try $ timeout 5000000 $ do
     setAllocationCounter stageAllocationBudget
     enableAllocationLimit
     n <- evaluate (length (show x)) `finally` disableAllocationLimit
     return n
   case r of
     Right (Just _) -> pure ()
-    Right Nothing -> do
-      footnote $ printf "TIMEOUT (5s) forcing stage: %s" stage
-      failure
-    Left AllocationLimitExceeded -> do
-      footnote $ printf "ALLOCATION LIMIT (%d bytes) forcing stage: %s" stageAllocationBudget stage
-      failure
+    Right Nothing -> failWith $ printf "TIMEOUT (5s) forcing stage: %s" stage
+    Left AllocationLimitExceeded -> failWith $ printf "ALLOCATION LIMIT (%d bytes) forcing stage: %s" stageAllocationBudget stage
 
 -- | The bytes one stage may allocate while it is forced ('forceTimed'), a quarter of the suite's
 -- heap: past it a case is a runaway, not a slow one.
@@ -471,27 +518,26 @@ stageAllocationBudget :: Int64
 stageAllocationBudget = 1500 * 1024 * 1024
 
 -- | 'forceTimed' that returns the value, for binding a stage's result:
--- @v <- timed "a∩b" $ intersectR …@. EVERY property below routes its set operations through
--- 'timed'\/'assertTimed'\/'eqTimed' rather than a bare @let@\/@assert@\/@===@, so a livelocked
--- operation FAILS (and hedgehog shrinks it to a minimal reproducing input) instead of spinning
--- forever with no counterexample. A silent livelock here once burned hours of wall clock: the
--- suite pinned a core at multi-GB residency with nothing to debug, and even survived its own
+-- @v <- timed "a∩b" $ intersectR …@. EVERY property and unit case below routes its set operations
+-- through 'timed'\/'assertTimed'\/'eqTimed' rather than a bare @let@\/@assert@\/@===@, so a
+-- livelocked operation FAILS (and hedgehog shrinks it to a minimal reproducing input) instead of
+-- spinning forever with no counterexample. A silent livelock here once burned hours of wall clock:
+-- the suite pinned a core at multi-GB residency with nothing to debug, and even survived its own
 -- @timeout@ (SIGTERM is ignored while the RTS spins in a non-allocating loop — use
 -- @timeout -s KILL@ around the suite as a backstop).
-timed :: (Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> m a
+timed :: (HasCallStack, Show a, MonadCheck m) => String -> a -> m a
 timed stage x = forceTimed stage x >> return x
 
--- | 'assert' under the force budget (see 'timed').
-assertTimed :: (Monad m, MonadTest m, MonadIO m) => String -> Bool -> m ()
-assertTimed stage b = forceTimed stage b >> assert b
+-- | Assert under the force budget (see 'timed'); a failure names the stage.
+assertTimed :: (HasCallStack, MonadCheck m) => String -> Bool -> m ()
+assertTimed stage b = forceTimed stage b >> unless b (failWith $ printf "FAILED: %s" stage)
 
--- | '===' under the force budget on both sides (see 'timed').
-eqTimed :: (Eq a, Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> a -> m ()
+-- | Equality under the force budget on both sides (see 'timed').
+eqTimed :: (HasCallStack, Eq a, Show a, MonadCheck m) => String -> a -> a -> m ()
 eqTimed stage x y = do
   forceTimed (stage ++ " lhs") x
   forceTimed (stage ++ " rhs") y
-  x === y
-
+  checkEq stage x y
 -- A∩B=A-(A-B)
 propIntersectByDifference :: IO GenPrgm -> Property
 propIntersectByDifference gPrgm = property $ do
@@ -597,7 +643,7 @@ propParamClassCovariant gPrgm = property $ do
 data ProvedFacts = ProvedFacts { pfSubtype :: Bool, pfMeetEmpty :: Bool, pfDiffEmpty :: Bool }
   deriving (Eq, Show)
 
-provedFacts :: (Monad m, MonadTest m, MonadIO m) => TypeEnv (ObjArrTypeGraph Expr ()) -> TypeVarArgEnv -> Type -> Type -> m ProvedFacts
+provedFacts :: TypeEnv (ObjArrTypeGraph Expr ()) -> TypeVarArgEnv -> Type -> Type -> PropertyT IO ProvedFacts
 provedFacts typeEnv vaenv a b = do
   sub <- timed "a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv a b
   ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
@@ -612,7 +658,7 @@ provedFacts typeEnv vaenv a b = do
 
 -- | Every fact proved in the first reading also holds in the second: the second may prove MORE, never
 -- less. A refusal that turns into a proof is fine; a proof that turns into a refusal is not.
-assertFactsKept :: (Monad m, MonadTest m, MonadIO m) => String -> ProvedFacts -> ProvedFacts -> m ()
+assertFactsKept :: String -> ProvedFacts -> ProvedFacts -> PropertyT IO ()
 assertFactsKept reading before kept = do
   classify "a ⊆ b proved" (pfSubtype before)
   classify "a ∩ b = ∅ proved" (pfMeetEmpty before)
@@ -747,9 +793,9 @@ propClassGraphMatchesPredClass ioPrgms = property $ do
 -- check ('partialCoversSat') bound the flexible slot on demand toward being covered, so no
 -- member ever escaped the narrower class. Also pins the sound directions: covariance upward,
 -- and the class's member expansion staying within the class (flexible-vs-flexible cover).
-propParamClassWideNotNarrow :: IO Prgms -> Property
-propParamClassWideNotNarrow ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitParamClassWideNotNarrow :: IO Prgms -> Unit ()
+unitParamClassWideNotNarrow ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
@@ -768,10 +814,10 @@ propParamClassWideNotNarrow ioPrgms = property $ do
   let narrow = clsOver intT
   let bare = classPartial clsPt
   let expanded = expandClassPartial typeEnv H.empty clsPt
-  annotate $ printf "wide = %s" (show wide)
-  annotate $ printf "narrow = %s" (show narrow)
-  annotate $ printf "bare = %s" (show bare)
-  annotate $ printf "expanded = %s" (show expanded)
+  note $ printf "wide = %s" (show wide)
+  note $ printf "narrow = %s" (show narrow)
+  note $ printf "bare = %s" (show bare)
+  note $ printf "expanded = %s" (show expanded)
   -- Covariance holds upward: a narrower element bound is within the wider.
   assertTimed "narrow ⊆ wide" $ isSubtypeOf typeEnv narrow wide
   -- Soundness downward: the wide form contains values the narrow form excludes.
@@ -785,9 +831,9 @@ propParamClassWideNotNarrow ioPrgms = property $ do
 -- variable reading as ⊤, so the conjunction absorbs to @C[Ord]@). The unsound flexible
 -- cover made the implication hold the OTHER way as well, absorbing to the flexible form —
 -- an intersection that WIDENED, which let a constraint re-widen a narrowed point invisibly.
-propParamClassIntersectAbsorb :: IO Prgms -> Property
-propParamClassIntersectAbsorb ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitParamClassIntersectAbsorb :: IO Prgms -> Unit ()
+unitParamClassIntersectAbsorb ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
@@ -816,9 +862,9 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
             newBindings = H.filter (/= PTopType) venv
         in if H.null newBindings then t else substituteKeep typeEnv newBindings t
   met <- timed "flexed ∩ narrow" $ resolvedIntersect flexed narrow
-  annotate $ printf "flexed = %s" (show flexed)
-  annotate $ printf "narrow = %s" (show narrow)
-  annotate $ printf "flexed ∩ narrow = %s" (show met)
+  note $ printf "flexed = %s" (show flexed)
+  note $ printf "narrow = %s" (show narrow)
+  note $ printf "flexed ∩ narrow = %s" (show met)
   -- The meet must not widen: it stays within the concrete-bounded form.
   assertTimed "met ⊆ narrow" $ isSubtypeOf typeEnv met narrow
   -- And the concrete-bounded form stays within the meet (the meet is exactly the narrow form).
@@ -836,9 +882,9 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   let flexConj = conj flexVar intT
   let narrowConj = conj intT intT
   metConj <- timed "flexConj ∩ narrowConj" $ resolvedIntersect flexConj narrowConj
-  annotate $ printf "flexConj = %s" (show flexConj)
-  annotate $ printf "narrowConj = %s" (show narrowConj)
-  annotate $ printf "flexConj ∩ narrowConj = %s" (show metConj)
+  note $ printf "flexConj = %s" (show flexConj)
+  note $ printf "narrowConj = %s" (show narrowConj)
+  note $ printf "flexConj ∩ narrowConj = %s" (show metConj)
   assertTimed "metConj ⊆ narrowConj" $ isSubtypeOf typeEnv metConj narrowConj
   assertTimed "narrowConj ⊆ metConj" $ isSubtypeOf typeEnv narrowConj metConj
 
@@ -853,9 +899,9 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
 -- @∀ConsList[Integer]@) that no value satisfying BOTH atoms has. Surfaced as a
 -- 'verifySchemeActLowers' Grows-by on typeApply.ct's element-changing map
 -- (@Functor[$_A] ∧ Maybe[Integer] ⊄ ∀Maybe[Integer]@).
-propConjMemberClassSubtype :: IO Prgms -> Property
-propConjMemberClassSubtype ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitConjMemberClassSubtype :: IO Prgms -> Unit ()
+unitConjMemberClassSubtype ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
@@ -885,9 +931,9 @@ propConjMemberClassSubtype ioPrgms = property $ do
   -- parameterless isa-entry produces).
   let conjBare = conjOver bagPt{ptVars=H.empty}
   narrowExpanded <- timed "expand ConsList[Int]" $ expandClassPartial typeEnv H.empty consListInt
-  annotate $ printf "conj = %s" (show conj)
-  annotate $ printf "conjBare = %s" (show conjBare)
-  annotate $ printf "narrowExpanded = %s" (show narrowExpanded)
+  note $ printf "conj = %s" (show conj)
+  note $ printf "conjBare = %s" (show conjBare)
+  note $ printf "narrowExpanded = %s" (show narrowExpanded)
   assertTimed "conj ⊆ ConsList[Int]" $ isSubtypeOf typeEnv conj narrowExpanded
   assertTimed "conjBare ⊆ ConsList[Int]" $ isSubtypeOf typeEnv conjBare narrowExpanded
 
@@ -898,9 +944,9 @@ propConjMemberClassSubtype ioPrgms = property $ do
 -- negation symbolically ('partialAddPreds'), drop the uninhabited @Nil{¬EqCO}@ (@Nil@ IS
 -- an @EqCO@ member through @every(ConsList[$T -> EqCO], isa= [EqCO])@), and the result
 -- must sit inside the positive operand, be disjoint from @∀EqCO@, and re-meet to itself.
-propNegRecursiveClassMeet :: IO Prgms -> Property
-propNegRecursiveClassMeet ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitNegRecursiveClassMeet :: IO Prgms -> Unit ()
+unitNegRecursiveClassMeet ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "recursiveClassBounds.ct program not found"
@@ -915,8 +961,8 @@ propNegRecursiveClassMeet ioPrgms = property $ do
   let eqCOTop = UnionType (Just (PredsOne (PredClass eqCOPt), H.empty, [])) H.empty []
   let lists = expandClassPartial typeEnv H.empty consListPt
   met <- timed "(⊤|¬EqCO) ∩ lists" $ intersectTypes typeEnv notEqCO lists
-  annotate $ printf "lists = %s" (show lists)
-  annotate $ printf "met = %s" (show met)
+  note $ printf "lists = %s" (show lists)
+  note $ printf "met = %s" (show met)
   assertTimed "met ⊆ lists" $ isSubtypeOf typeEnv met lists
   assertTimed "met ∩ ∀EqCO = ∅" $ isBottomType (intersectTypes typeEnv met eqCOTop)
   met2 <- timed "re-meet" $ intersectTypes typeEnv notEqCO met
@@ -1042,9 +1088,9 @@ propParentVarBindingRespected ioPrgms = property $ do
 -- judged @Node(left=⊤) ≡ Node(left=∀Map[/K=Ord] ∪ …)@, refused a genuine requirement narrowing as a
 -- no-op, and unrolled core/map.ct's recursive @insert@ result one level per epoch. The subtype walk
 -- and the difference oracle must agree ('verifyScheme' backs one with the other).
-propParamIsaEdgeCovariant :: IO Prgms -> Property
-propParamIsaEdgeCovariant ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitParamIsaEdgeCovariant :: IO Prgms -> Unit ()
+unitParamIsaEdgeCovariant ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
@@ -1066,8 +1112,8 @@ propParamIsaEdgeCovariant ioPrgms = property $ do
   let bare cpt = UnionType (Just (PredsOne (PredClass cpt{ptVars=H.empty}), H.empty, [])) H.empty []
   let sub a b = isSubtypeOf typeEnv a b
   let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
-  annotate $ printf "ConsList[Integer] = %s" (show (clsOver consPt intT))
-  annotate $ printf "Bag[Integer] = %s" (show (clsOver bagPt intT))
+  note $ printf "ConsList[Integer] = %s" (show (clsOver consPt intT))
+  note $ printf "Bag[Integer] = %s" (show (clsOver bagPt intT))
   assertTimed "ConsList[Integer] ⊆ Bag[Integer]" $ sub (clsOver consPt intT) (clsOver bagPt intT)
   assertTimed "ConsList[Integer] ⊆ Bag" $ sub (clsOver consPt intT) (bare bagPt)
   assertTimed "ConsList[Point] ⊄ Bag[Integer]" $ not $ sub (clsOver consPt pointT) (clsOver bagPt intT)
@@ -1082,9 +1128,9 @@ propParamIsaEdgeCovariant ioPrgms = property $ do
 -- holds a head outside its declared @$T@), so it is a @ConsList[/T=Integer]@ — the two provers
 -- must agree, or a value proven inside the class's own member template is refused by the
 -- class. A genuinely wider element parameter is still refused.
-propDeclClampClassMembership :: IO Prgms -> Property
-propDeclClampClassMembership ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitDeclClampClassMembership :: IO Prgms -> Unit ()
+unitDeclClampClassMembership ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
@@ -1115,7 +1161,7 @@ propDeclClampClassMembership ioPrgms = property $ do
   let clamped = cons intT wide (consList wide)
   let clean = cons intT intT (consList intT)
   let wider = cons wide pointT (consList wide)
-  annotate $ printf "clamped = %s" (show clamped)
+  note $ printf "clamped = %s" (show clamped)
   assertTimed "clean ⊆ ConsList[Integer]" $ sub clean (consList intT)
   assertTimed "clamped ⊆ ConsList[Integer]" $ sub clamped (consList intT)
   assertTimed "clamped ⊆ clean" $ sub clamped clean
@@ -1135,9 +1181,9 @@ propDeclClampClassMembership ioPrgms = property $ do
 -- (@⊤ | P ∧ PredRel Integer@) gives it where @Integer@ is declared. It was ∅, the constant read as
 -- outside @P@, so a refined argument given a literal (@f(a= 3)@ for @a -> Integer_nonNeg@) was
 -- refused at tree build.
-propConstantWithinValuePredicate :: IO Prgms -> Property
-propConstantWithinValuePredicate ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitConstantWithinValuePredicate :: IO Prgms -> Unit ()
+unitConstantWithinValuePredicate ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "recursiveClassBounds.ct program not found"
@@ -1146,15 +1192,15 @@ propConstantWithinValuePredicate ioPrgms = property $ do
   let refinedLeaf = singletonType intLeaf{ptPreds = PredsOne (PredExpr e)}
   let c = constantType (CInt 3)
   let viaLeaf = intersectTypes typeEnv c refinedLeaf
-  annotate $ printf "viaLeaf = %s" (show viaLeaf)
-  assert $ not (isBottomType viaLeaf)
-  assert $ isEqType typeEnv viaLeaf (intersectTypes typeEnv refinedLeaf c)
-  assert $ isSubtypeOf typeEnv viaLeaf c
-  assert $ isSubtypeOf typeEnv viaLeaf refinedLeaf
+  note $ printf "viaLeaf = %s" (show viaLeaf)
+  assertTimed "{3} ∩ leaf ≠ ∅" $ not (isBottomType viaLeaf)
+  assertTimed "{3} ∩ leaf = leaf ∩ {3}" $ isEqType typeEnv viaLeaf (intersectTypes typeEnv refinedLeaf c)
+  assertTimed "{3} ∩ leaf ⊆ {3}" $ isSubtypeOf typeEnv viaLeaf c
+  assertTimed "{3} ∩ leaf ⊆ leaf" $ isSubtypeOf typeEnv viaLeaf refinedLeaf
 
-propExcludedConstantIrrelevantToData :: IO Prgms -> Property
-propExcludedConstantIrrelevantToData ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitExcludedConstantIrrelevantToData :: IO Prgms -> Unit ()
+unitExcludedConstantIrrelevantToData ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "recursiveClassBounds.ct program not found"
@@ -1185,7 +1231,7 @@ propExcludedConstantIrrelevantToData ioPrgms = property $ do
   let consNot = intersectTypes typeEnv cons notEqco
   let sub a b = isSubtypeOf typeEnv a b
   let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
-  annotate $ printf "Cons|¬EqCO = %s" (show consNot)
+  note $ printf "Cons|¬EqCO = %s" (show consNot)
   assertTimed "Cons ⊆ EqCO ∪ Cons|¬EqCO" $ sub cons (unionTypes typeEnv eqcoTop consNot)
   assertTimed "Cons ⊆ (EqCO − {-100}) ∪ Cons|¬EqCO" $ sub cons (unionTypes typeEnv eqcoTopMinus consNot)
   assertTimed "Cons − ((EqCO − {-100}) ∪ Cons|¬EqCO) = ∅" $ diffEmpty cons (unionTypes typeEnv eqcoTopMinus consNot)
@@ -1206,9 +1252,9 @@ propExcludedConstantIrrelevantToData ioPrgms = property $ do
 -- on its overloaded arms in ways this fix does not touch (e.g. @propDifferenceSubset@ keeps a
 -- @/bap[..](fn=/bap[/B=⊤]|¬Mon, ..)@ leaf of @a+b−a@ outside @b@, and meeting the two arms
 -- spells @/m=$/M∩{Fun ∧ Mon}@), pending their own fixes.
-propOwnParamPointerCover :: Property
-propOwnParamPointerCover = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/overloadedHO.ct"
+unitOwnParamPointerCover :: Unit ()
+unitOwnParamPointerCover = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/overloadedHO.ct"
   let typeEnv = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   arms <- case [omiDecls omi | (n, omi) <- H.toList om, "bap" `isInfixOf` nameStr n] of
@@ -1232,8 +1278,8 @@ propOwnParamPointerCover = property $ do
   let armsT = unionAllTypes typeEnv arms
   let sub a b = isSubtypeOf typeEnv a b
   let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
-  annotate $ printf "def = %s" (show defT)
-  annotate $ printf "Mon arm = %s" (show monArmT)
+  note $ printf "def = %s" (show defT)
+  note $ printf "Mon arm = %s" (show monArmT)
   forM_ [(False, "open world", typeEnv), (True, "closed world", typeEnv{tePrgmEnv=True})] $ \(_, world, te) -> do
     let subW a b = isSubtypeOf te a b
     let diffEmptyW a b = isBottomType $ snd $ differenceTypeWithEnv te H.empty a b
@@ -1252,9 +1298,9 @@ propOwnParamPointerCover = property $ do
 -- answered False for @l ⊆ l ∩ EqCO@ while @l − (l ∩ EqCO)@ was ∅. core/maybe.ct's @equal@ and
 -- @compareTo@ arms were the first to meet it, once their declarations checked them. Fixture:
 -- recursiveClassBounds.ct.
-propPredicatedLeafWithinOwnMeet :: IO Prgms -> Property
-propPredicatedLeafWithinOwnMeet ioPrgms = property $ do
-  prgms <- lift ioPrgms
+unitPredicatedLeafWithinOwnMeet :: IO Prgms -> Unit ()
+unitPredicatedLeafWithinOwnMeet ioPrgms = do
+  prgms <- liftIO ioPrgms
   prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
     (prgm:_) -> return prgm
     []       -> fail "recursiveClassBounds.ct program not found"
@@ -1275,7 +1321,7 @@ propPredicatedLeafWithinOwnMeet ioPrgms = property $ do
   let leaf = singletonType (partialVal consN){ptArgs=H.fromList [(headKey, PTopType), (tailKey, PTopType)], ptPreds=eqco}
   forM_ [("open", typeEnv0), ("closed", typeEnv0{tePrgmEnv=True})] $ \(world, typeEnv) -> do
     let met = intersectTypes typeEnv leaf eqcoTop
-    annotate $ printf "%s world: l ∩ EqCO = %s" (world :: String) (show met)
+    note $ printf "%s world: l ∩ EqCO = %s" (world :: String) (show met)
     assertTimed (world ++ ": l ⊆ EqCO") $ isSubtypeOf typeEnv leaf eqcoTop
     assertTimed (world ++ ": l ⊆ l ∩ EqCO") $ isSubtypeOf typeEnv leaf met
     assertTimed (world ++ ": l ∩ EqCO ⊆ l") $ isSubtypeOf typeEnv met leaf
@@ -1287,9 +1333,9 @@ propPredicatedLeafWithinOwnMeet ioPrgms = property $ do
 -- variable, and the meet descending into @operator++@'s arguments read it as @operator++@'s own
 -- @/T@ — whose binding it was itself feeding (@/T = inverse(t=$_T)@), so the reading never ended
 -- (a build of core ran out of memory). Renaming the outer variable must not change the meet.
-propOuterVarNotCaptured :: Property
-propOuterVarNotCaptured = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/linkMeet.ct"
+unitOuterVarNotCaptured :: Unit ()
+unitOuterVarNotCaptured = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/linkMeet.ct"
   let typeEnv = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "++" `isInfixOf` nameStr n, d <- omiDecls omi ] of
@@ -1306,12 +1352,12 @@ propOuterVarNotCaptured = property $ do
         [ (partialKey "l", outer n)
         , (partialKey "r", singletonType (partialVal invName){ptArgs = H.singleton (partialKey "t") (outer n)}) ]}
   let envFor n = ambientEnv $ H.singleton (TVVar (partialKey n)) (classPartial (partialVal "/Grp"))
-  annotate $ printf "decl = %s" (show declT)
+  note $ printf "decl = %s" (show declT)
   forM_ [(H.empty, H.empty), (envFor "T", envFor "X")] $ \(envT, envX) -> do
     mT <- timed "meet over $_T" $ intersectTypesEnv typeEnv envT (callOver "T") declT
     mX <- timed "meet over $_X" $ intersectTypesEnv typeEnv envX (callOver "X") declT
-    annotate $ printf "over T: %s" (show mT)
-    annotate $ printf "over X: %s" (show mX)
+    note $ printf "over T: %s" (show mT)
+    note $ printf "over X: %s" (show mX)
     -- The same meet up to the outer variable's name.
     let renamed = renameOuter mX
         renameOuter (UnionType m ls cs) = UnionType m (joinUnionType (map renameLeaf (splitUnionType ls))) cs
@@ -1330,9 +1376,9 @@ propOuterVarNotCaptured = property $ do
 -- its missing @/T@ as ⊤ and was in no instantiation at all, not even the bare class — so every
 -- instance arm of core's @eq@ and @ord@ (@= /Data/MaybeEqv@) fell outside its declared result.
 -- Fixture: unit/dataIsaParamClass.ct.
-propDataIsaBindsClassParam :: Property
-propDataIsaBindsClassParam = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/dataIsaParamClass.ct"
+unitDataIsaBindsClassParam :: Unit ()
+unitDataIsaBindsClassParam = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/dataIsaParamClass.ct"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
   relPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "Rel" `isInfixOf` nameStr (ptName cpt)] of
     (cpt:_) -> return cpt
@@ -1358,8 +1404,8 @@ propDataIsaBindsClassParam = property $ do
                  , ("PtRel − Rel = ∅", diffEmpty ptRel bare)
                  , ("PtRel ⊄ Rel[Qt]", not $ sub ptRel (relOver qtT))
                  , ("PtRel − Rel[Qt] ≠ ∅", not $ diffEmpty ptRel (relOver qtT)) ]
-    forM_ checks $ \(n, ok) -> annotate $ printf "%s world: %s -> %s" (world :: String) (n :: String) (show ok)
-    assert $ all snd checks
+    forM_ checks $ \(n, ok) -> note $ printf "%s world: %s -> %s" (world :: String) (n :: String) (show ok)
+    assertTimed (world ++ " world: every check") $ all snd checks
 
 -- | A meet never leaves its first operand. A call to @fold[$B](fn(acc -> $_B) -> $_B, ..)@ holds
 -- its @fn@ slot as the input object @fn[/B=$^B](acc=$/B)@, whose @acc@ is whatever the call binds
@@ -1372,9 +1418,9 @@ propDataIsaBindsClassParam = property $ do
 -- @$_A@ in @/M@'s bound names @f@'s own @/A@, so the element the call's @/M@ carries is @/A@'s
 -- value. Left at ⊤, the lambda @f@ is given (@fn(v -> $_A)@) reads its @v@ as ⊤ (core's @mmap@
 -- over a list typed @fn(v)= [v, v]@ as a list of anything).
-propSiblingBoundLinks :: Property
-propSiblingBoundLinks = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingBound.ct"
+unitSiblingBoundLinks :: Unit ()
+unitSiblingBoundLinks = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/siblingBound.ct"
   let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/f" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
@@ -1403,17 +1449,17 @@ propSiblingBoundLinks = property $ do
     []    -> fail "Bx declares no parameter"
   let bx = singletonType (partialVal bxN){ptVars = H.singleton tKey x, ptArgs = H.singleton valueKey x}
   let call = singletonType (partialVal (ptName declLeaf)){ptVars = H.singleton mKey bx, ptArgs = H.insert argM bx (ptArgs declLeaf)}
-  annotate $ printf "decl = %s" (show declT)
-  annotate $ printf "call = %s" (show call)
+  note $ printf "decl = %s" (show declT)
+  note $ printf "call = %s" (show call)
   let met = intersectTypesEnv typeEnv H.empty call declT
-  annotate $ printf "call ∩ decl = %s" (show met)
+  note $ printf "call ∩ decl = %s" (show met)
   aVal <- case maybeGetSingleton met of
     Just p  -> return (H.lookupDefault PTopType aKey (ptVars p))
     Nothing -> fail "meet is not one partial"
-  annotate $ printf "/A = %s" (show aVal)
+  note $ printf "/A = %s" (show aVal)
   assertTimed "/A ⊆ X" $ isSubtypeOf typeEnv aVal x
 
--- | 'propSiblingBoundLinks' with the call's @/M@ a class top of a SUBCLASS (@∀Opt[/T=X]@, every
+-- | 'unitSiblingBoundLinks' with the call's @/M@ a class top of a SUBCLASS (@∀Opt[/T=X]@, every
 -- @Opt@ a @Mon@), as core's @bindap@ over a @Maybe[$T -> Integer]@: the meet keeps @/M@ within
 -- @∀Opt[/T=X]@ and binds @/A=X@, also when the call spells @/M@ only through @m@ and its lambda
 -- slot as a call does (@fn(v=X)@). That call is within its own meet: the portion of it the
@@ -1421,9 +1467,9 @@ propSiblingBoundLinks = property $ do
 -- (@fn[/A=$^A](v=X)@), and the call's unspelled one reads as the same link
 -- ('unspelledSubParam'); read as ⊤ it fell outside the bound @/A=X@, so a requirement could not
 -- choose the declaration's arrow and @bindap@'s result widened to @Monad[/T=⊤] && Maybe[/T=⊤]@.
-propSiblingBoundClassTop :: Property
-propSiblingBoundClassTop = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingBoundClass.ct"
+unitSiblingBoundClassTop :: Unit ()
+unitSiblingBoundClassTop = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/siblingBoundClass.ct"
   let typeEnv@TypeEnv{teNames, teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/f" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
@@ -1447,14 +1493,14 @@ propSiblingBoundClassTop = property $ do
     _   -> fail "no m arg"
   let optX = UnionType (Just (PredsOne (PredClass optPt{ptVars = fmap (const x) (ptVars optPt)}), H.empty, [])) H.empty []
   let call = singletonType (partialVal (ptName declLeaf)){ptVars = H.singleton mKey optX, ptArgs = H.insert argM optX (ptArgs declLeaf)}
-  annotate $ printf "decl = %s" (show declT)
-  annotate $ printf "call = %s" (show call)
+  note $ printf "decl = %s" (show declT)
+  note $ printf "call = %s" (show call)
   let met = intersectTypesEnv typeEnv H.empty call declT
-  annotate $ printf "call ∩ decl = %s" (show met)
+  note $ printf "call ∩ decl = %s" (show met)
   (mVal, aVal) <- case maybeGetSingleton met of
     Just p  -> return (H.lookupDefault PTopType mKey (ptVars p), H.lookupDefault PTopType aKey (ptVars p))
     Nothing -> fail "meet is not one partial"
-  annotate $ printf "/M = %s, /A = %s" (show mVal) (show aVal)
+  note $ printf "/M = %s, /A = %s" (show mVal) (show aVal)
   assertTimed "/M ⊆ ∀Opt[/T=X]" $ isSubtypeOf typeEnv mVal optX
   assertTimed "/A ⊆ X" $ isSubtypeOf typeEnv aVal x
   -- The same call spelled as its act is: @/M@ not among its parameters, bound only through the
@@ -1468,11 +1514,11 @@ propSiblingBoundClassTop = property $ do
   let callFn = singletonType fnObj{ptVars = H.empty, ptArgs = fmap (const x) (ptArgs fnObj)}
   let callArg = singletonType (partialVal (ptName declLeaf)){ptVars = H.singleton aKey x, ptArgs = H.insert fnKey callFn (H.insert argM optX (ptArgs declLeaf))}
   let metArg = intersectTypesEnv typeEnv H.empty callArg declT
-  annotate $ printf "argument-only call ∩ decl = %s" (show metArg)
+  note $ printf "argument-only call ∩ decl = %s" (show metArg)
   (mVal', aVal') <- case maybeGetSingleton metArg of
     Just p  -> return (H.lookupDefault PTopType mKey (ptVars p), H.lookupDefault PTopType aKey (ptVars p))
     Nothing -> fail "argument-only meet is not one partial"
-  annotate $ printf "argument-only /M = %s, /A = %s" (show mVal') (show aVal')
+  note $ printf "argument-only /M = %s, /A = %s" (show mVal') (show aVal')
   assertTimed "argument-only: /M ⊆ ∀Opt[/T=X]" $ isSubtypeOf typeEnv (slotAtPoint typeEnv H.empty (fromJust (maybeGetSingleton metArg)) mVal') optX
   -- The meet is the portion of the call the declaration accepts, and it accepts all of it: the
   -- call is within its own meet (the coverage a requirement's choice of arrow is guarded by).
@@ -1482,9 +1528,9 @@ propSiblingBoundClassTop = property $ do
 -- linking a sibling (core's @bindap@ arms over @Monad@ and @Functor@): the call binds the sibling
 -- from its @m@ (@/A=X@), which is what its lambda's parameter reads. The call spells no variable
 -- of its own, so both declarations accept the same calls and their portions are one set.
-propSiblingBoundOverloads :: Property
-propSiblingBoundOverloads = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingBoundOverload.ct"
+unitSiblingBoundOverloads :: Unit ()
+unitSiblingBoundOverloads = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/siblingBoundOverload.ct"
   let typeEnv@TypeEnv{teNames, teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declTs <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/f" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
@@ -1510,25 +1556,25 @@ propSiblingBoundOverloads = property $ do
     _    -> fail "no higher-order arg"
   let callFn = singletonType fnObj{ptVars = H.empty, ptArgs = fmap (const PTopType) (ptArgs fnObj)}
   let call = singletonType (partialVal (ptName declLeaf)){ptArgs = H.fromList [(argM, optX), (fnKey, callFn)]}
-  annotate $ printf "decls = %s" (show declU)
-  annotate $ printf "call = %s" (show call)
+  note $ printf "decls = %s" (show declU)
+  note $ printf "call = %s" (show call)
   let met = intersectTypesEnv typeEnv H.empty call declU
-  annotate $ printf "call ∩ decls = %s" (show met)
+  note $ printf "call ∩ decls = %s" (show met)
   pieces <- case met of
     UnionType Nothing leafs [] -> return (splitUnionType leafs)
     _                          -> fail "meet is not a union of partials"
-  annotate $ printf "pieces = %s" (show pieces)
+  note $ printf "pieces = %s" (show pieces)
   forM_ pieces $ \p -> do
     let aVal = head ([ v | (k, v) <- H.toList (ptVars p), "/A" `isSuffixOf` nameStr (pkName k) ] ++ [PTopType])
-    annotate $ printf "piece %s: /A = %s" (show p) (show aVal)
+    note $ printf "piece %s: /A = %s" (show p) (show aVal)
     assertTimed "each piece binds /A=X" $ isSubtypeOf typeEnv aVal x
 
 -- | Rebinding a data value's parameter ('applyTypeVarOverrides', the @$F[$T -> $_B]@ reading)
 -- re-derives the fields that parameter governs: @Bx[/T=X](/value=X)@ with @T@ rebound to @Y@
 -- holds a @Y@, and is not the @Bx[/T=Y](/value=X)@ no declaration admits.
-propAppliedDataFields :: Property
-propAppliedDataFields = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/appliedDataFields.ct"
+unitAppliedDataFields :: Unit ()
+unitAppliedDataFields = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/appliedDataFields.ct"
   let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
   let findName n = case [nm | nm <- S.toList teNames, ("/" ++ n) `isSuffixOf` nameStr nm] of
         (nm:_) -> return nm
@@ -1544,33 +1590,33 @@ propAppliedDataFields = property $ do
     _   -> fail "Bx has no T"
   let bxAt t = singletonType bxDecl{ptVars = H.singleton tVar t, ptArgs = fmap (const t) (ptArgs bxDecl)}
   let applied = applyTypeVarOverrides typeEnv (H.singleton tVar y) (bxAt x)
-  annotate $ printf "Bx at X = %s" (show (bxAt x))
-  annotate $ printf "rebound to Y = %s" (show applied)
+  note $ printf "Bx at X = %s" (show (bxAt x))
+  note $ printf "rebound to Y = %s" (show applied)
   assertTimed "the rebound value is inhabited" $ not (isBottomType (intersectTypes typeEnv applied (bxAt y)))
   assertTimed "the rebound value is a Bx at Y" $ isSubtypeOf typeEnv applied (bxAt y)
   assertTimed "the rebound value holds no X" $ isBottomType (intersectTypes typeEnv applied (bxAt x))
 
 -- | Two overloads whose continuation slots differ only in which declaration parameter they name
 -- ('compactJoinPartials' joins them into one leaf): the union contains each of them.
-propLinkedSlotUnion :: Property
-propLinkedSlotUnion = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/linkedSlotUnion.ct"
+unitLinkedSlotUnion :: Unit ()
+unitLinkedSlotUnion = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/linkedSlotUnion.ct"
   let typeEnv = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declTs <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/bap" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
     ts@[_, _] -> return ts
     _         -> fail "bap is not declared twice"
   let declU = unionAllTypes typeEnv declTs
-  annotate $ printf "decls = %s" (show declTs)
-  annotate $ printf "union = %s" (show declU)
+  note $ printf "decls = %s" (show declTs)
+  note $ printf "union = %s" (show declU)
   forM_ declTs $ \d -> assertTimed "each declaration is within the union" $ isSubtypeOf typeEnv d declU
 
 -- | A parameter value's parent reference names a sibling ('comparedPartialsEnv'): with the
 -- sibling bound, an argument spelled through the parameter's pointer (@lst=$/F@) is the same set
 -- as the argument spelling the value out (@lst=Bx[/T=$^/A](..)@), both ways.
-propSiblingParamValue :: Property
-propSiblingParamValue = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/siblingParamValue.ct"
+unitSiblingParamValue :: Unit ()
+unitSiblingParamValue = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/siblingParamValue.ct"
   let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   armLeaf <- case [ p | (n, omi) <- H.toList om, "/fm" `isSuffixOf` nameStr n, d <- omiDefs omi
@@ -1589,8 +1635,8 @@ propSiblingParamValue = property $ do
     []     -> fail "X not found"
   let spelled = armLeaf{ptVars = H.insert aK x (ptVars armLeaf)}
   let pointed = spelled{ptArgs = H.insert lstK (TypeVar (TVVar fK) TVInt PTopType) (ptArgs spelled)}
-  annotate $ printf "spelled = %s" (show spelled)
-  annotate $ printf "pointed = %s" (show pointed)
+  note $ printf "spelled = %s" (show spelled)
+  note $ printf "pointed = %s" (show pointed)
   assertTimed "pointed within spelled" $ isSubtypeOf typeEnv (singletonType pointed) (singletonType spelled)
   assertTimed "spelled within pointed" $ isSubtypeOf typeEnv (singletonType spelled) (singletonType pointed)
 
@@ -1598,16 +1644,16 @@ propSiblingParamValue = property $ do
 -- ('pinnedSlotsOk'): the element-passing and the whole-passing overloads are incomparable. And a
 -- meet keeps the input's link where the other side spells the same set out
 -- ('intersectPartialsBaseN'.'subUnion'): @a ⊆ b ⇒ a ∩ b = a@.
-propPinnedInputSlot :: Property
-propPinnedInputSlot = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/pinnedInputSlot.ct"
+unitPinnedInputSlot :: Unit ()
+unitPinnedInputSlot = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/pinnedInputSlot.ct"
   let typeEnv = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   (d1, d2) <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/bap" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
     [a, b] -> return (a, b)
     _      -> fail "bap is not declared twice"
   let decls = [d1, d2]
-  annotate $ printf "decls = %s" (show decls)
+  note $ printf "decls = %s" (show decls)
   assertTimed "neither declaration within the other" $ not (isSubtypeOf typeEnv d1 d2) && not (isSubtypeOf typeEnv d2 d1)
   forM_ decls $ \d -> do
     leaf <- maybe (fail "decl is not one leaf") return (maybeGetSingleton d)
@@ -1622,13 +1668,13 @@ propPinnedInputSlot = property $ do
         spell t                           = outer t
     let spelledFn = singletonType fnObj{ptVars = fmap spell (ptVars fnObj), ptArgs = fmap spell (ptArgs fnObj)}
     let spelled = singletonType leaf{ptArgs = H.insert fnKey spelledFn (ptArgs leaf)}
-    annotate $ printf "spelled = %s" (show spelled)
+    note $ printf "spelled = %s" (show spelled)
     when (isSubtypeOf typeEnv d spelled) $
       assertTimed "a meet keeps the operand within the other" $ isEqType typeEnv (intersectTypes typeEnv d spelled) d
 
-propHoSlotParentMeet :: Property
-propHoSlotParentMeet = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
+unitHoSlotParentMeet :: Unit ()
+unitHoSlotParentMeet = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/hoSlotParentMeet.ct"
   let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/fold" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
@@ -1655,16 +1701,16 @@ propHoSlotParentMeet = property $ do
   fnObj <- case maybeGetSingleton fnSlot of
     Just o  -> return o
     Nothing -> fail "fn slot is not one input object"
-  annotate $ printf "declared fn slot = %s" (show fnSlot)
+  note $ printf "declared fn slot = %s" (show fnSlot)
   let call fn = singletonType declLeaf{ptVars = H.singleton bName x, ptArgs = H.fromList [(fnKey, fn), (initKey, x)]}
   let concreteFn = singletonType fnObj{ptVars = fmap (const xy) (ptVars fnObj), ptArgs = fmap (const xy) (ptArgs fnObj)}
   let a = call fnSlot
   let b = call concreteFn
-  annotate $ printf "a = %s" (show a)
-  annotate $ printf "b = %s" (show b)
+  note $ printf "a = %s" (show a)
+  note $ printf "b = %s" (show b)
   forM_ [("open", typeEnv), ("closed", typeEnv{tePrgmEnv=True})] $ \(world, te) -> do
     let met = intersectTypesEnv te H.empty a b
-    annotate $ printf "%s world: a ∩ b = %s" (world :: String) (show met)
+    note $ printf "%s world: a ∩ b = %s" (world :: String) (show met)
     assertTimed (world ++ ": a ⊆ b") $ isSubtypeOfWithEnv te H.empty a b
     assertTimed (world ++ ": a ∩ b ⊆ a") $ isSubtypeOfWithEnv te H.empty met a || isBottomType (snd (differenceTypeWithEnv te H.empty met a))
 
@@ -1675,9 +1721,9 @@ propHoSlotParentMeet = property $ do
 -- and @left@ within @∀BinTree[/K=Kx]@. @Map@ is open, but @Node@ is already in scope, so no later
 -- file makes it a @Map@ any other way ('knownMemberName'). Inference reads the open world; the
 -- closed world relaxes a member's fields to ⊤ as match targets, so its field reads are not asked.
-propMemberParentParams :: Property
-propMemberParentParams = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/memberParentParams.ct"
+unitMemberParentParams :: Unit ()
+unitMemberParentParams = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/memberParentParams.ct"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
   let classPt n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, ("/" ++ n) `isSuffixOf` nameStr (ptName cpt)] of
         (cpt:_) -> return cpt
@@ -1708,7 +1754,7 @@ propMemberParentParams = property $ do
   leftK <- argKey "left"
   let node = singletonType (partialVal nodeN){ptArgs=H.fromList [ (k, PTopType) | k <- nodeArgs ]}
   let met = intersectTypes typeEnv node mapKx
-  annotate $ printf "Node ∩ Map[K=Kx] = %s" (show met)
+  note $ printf "Node ∩ Map[K=Kx] = %s" (show met)
   assertTimed "Node ∩ Map[K=Kx] ⊆ Node" $ isSubtypeOf typeEnv met node
   assertTimed "Node ∩ Map[K=Kx] ⊆ Map[K=Kx]" $ isSubtypeOf typeEnv met mapKx
   leafs <- case met of
@@ -1717,7 +1763,7 @@ propMemberParentParams = property $ do
   forM_ leafs $ \l -> do
     -- A field's parent references name the leaf, so it is read in the leaf's own scope.
     let readField k = substituteTVExtScoped typeEnv (ambientEnv $ joinVarArgEnv (ptVars l) H.empty) H.empty (fromMaybe PTopType (typeGetArg k l))
-    annotate $ printf "key = %s, left = %s" (show (readField keyK)) (show (readField leftK))
+    note $ printf "key = %s, left = %s" (show (readField keyK)) (show (readField leftK))
     assertTimed "key ⊆ Kx" $ isSubtypeOf typeEnv (readField keyK) kx
     assertTimed "left ⊆ BinTree[K=Kx]" $ isSubtypeOf typeEnv (readField leftK) treeKx
     -- Read as the parameter, not as a free spelling that any binding would also admit.
@@ -1729,9 +1775,9 @@ propMemberParentParams = property $ do
 -- @eq[$T](this -> $T)@. Declaration coverage read them differently: with every arm spelled
 -- without its @/T@, @eq[/T=∀Eq](this=$/T)@ was not within their union, though it is within the
 -- union spelled with it. Fixture: unit/coverDerivedParam.ct.
-propCoverDerivedParam :: Property
-propCoverDerivedParam = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/coverDerivedParam.ct"
+unitCoverDerivedParam :: Unit ()
+unitCoverDerivedParam = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/coverDerivedParam.ct"
   let typeEnv = (mkTypeEnv prgm){tePrgmEnv=True}
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   omi <- case [ o | (n, o) <- H.toList om, "/eq" `isSuffixOf` nameStr n ] of
@@ -1743,8 +1789,8 @@ propCoverDerivedParam = property $ do
   let defTs = [ getMetaType (getExprMeta (oaObjExpr d)) | d <- omiDefs omi ]
   let unspelled (UnionType m ls cs) = UnionType m (joinUnionType [ l{ptVars=H.empty} | l <- splitUnionType ls ]) cs
       unspelled t = t
-  annotate $ printf "decl = %s" (show declT)
-  annotate $ printf "defs = %s" (show defTs)
+  note $ printf "decl = %s" (show declT)
+  note $ printf "defs = %s" (show defTs)
   forM_ defTs $ \d -> eqTimed' ("respelled " ++ show d) typeEnv d (unspelled d)
   assertTimed "decl ⊆ ∪ defs" $ isSubtypeOf typeEnv declT (unionAllTypes typeEnv defTs)
   assertTimed "decl ⊆ ∪ defs without their /T" $ isSubtypeOf typeEnv declT (unionAllTypes typeEnv (map unspelled defTs))
@@ -1767,9 +1813,9 @@ propCoverDerivedParam = property $ do
 -- unknown binding the member's @∀Map[/K=Z]@ escapes, so @MkSet[/K=Z](..) ⊆ ∀MapSet[/K=⊤]@ failed
 -- while @MkSet[/K=Z](..) ⊆ ∀MapSet[/K=Z] ⊆ ∀MapSet[/K=⊤]@ held — core's @Set@ requirements then
 -- failed their narrowing check once a meet spelled a set as its member.
-propMemberWithinClassAtTop :: Property
-propMemberWithinClassAtTop = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/memberWithinClassAtTop.ct"
+unitMemberWithinClassAtTop :: Unit ()
+unitMemberWithinClassAtTop = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/memberWithinClassAtTop.ct"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
   let classPt n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, ("/" ++ n) `isSuffixOf` nameStr (ptName cpt)] of
         (cpt:_) -> return cpt
@@ -1795,13 +1841,13 @@ propMemberWithinClassAtTop = property $ do
     [k] -> return k
     _   -> fail "MkSet has no K"
   let memberZ = singletonType memberTop{ptVars=H.insert kVar z (ptVars memberTop)}
-  annotate $ printf "member at Z = %s" (show memberZ)
+  note $ printf "member at Z = %s" (show memberZ)
   let checks = [ ("member ⊆ MapSet[K=Z]", memberZ, atParam "K" z msPt)
                , ("member ⊆ MapSet[K=⊤]", memberZ, atParam "K" PTopType msPt)
                , ("member ⊆ Set[T=Z]", memberZ, atParam "T" z setPt)
                , ("member ⊆ Set[T=⊤]", memberZ, atParam "T" PTopType setPt) ]
   forM_ checks $ \(n, a, b) -> do
-    annotate $ printf "%s: symbolic %s" (n :: String) (show (typeCoveredSymbolic typeEnv H.empty ProveEmpty a b))
+    note $ printf "%s: symbolic %s" (n :: String) (show (typeCoveredSymbolic typeEnv H.empty ProveEmpty a b))
     assertTimed n $ isSubtypeOf typeEnv a b
 
 -- | A function declaration whose arguments are its own parameter (@(_ :: $T ++ _ :: $T)[$T ->
@@ -1812,9 +1858,9 @@ propMemberWithinClassAtTop = property $ do
 -- application fell outside its own declaration: core's String arm of @++@ outside the generic
 -- @++@, as soon as the String declaration became a refinement and no longer covered it itself.
 -- Fixture: unit/pointerArgsMember.ct.
-propFunctionParamFromArgs :: Property
-propFunctionParamFromArgs = property $ do
-  prgm <- lift $ loadUnitPrgm "test/Semantics/unit/pointerArgsMember.ct"
+unitFunctionParamFromArgs :: Unit ()
+unitFunctionParamFromArgs = do
+  prgm <- liftIO $ loadUnitPrgm "test/Semantics/unit/pointerArgsMember.ct"
   let typeEnv@TypeEnv{teNames} = mkTypeEnv prgm
   let Prgm{prgmObjMap=ObjectMap om} = prgm
   declT <- case [ getMetaType (getExprMeta (oaObjExpr d)) | (n, omi) <- H.toList om, "/op" `isSuffixOf` nameStr n, d <- omiDecls omi ] of
@@ -1837,7 +1883,7 @@ propFunctionParamFromArgs = property $ do
   lk <- keyNamed "/l"
   rk <- keyNamed "/r"
   let app a b = singletonType (partialVal opName){ptArgs = H.fromList [(lk, a), (rk, b)]}
-  annotate $ printf "decl = %s" (show declT)
+  note $ printf "decl = %s" (show declT)
   forM_ [("open", typeEnv), ("closed", typeEnv{tePrgmEnv=True})] $ \(world, te) -> do
     let sub a b = isSubtypeOf te a b
     let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv te H.empty a b
@@ -1847,8 +1893,8 @@ propFunctionParamFromArgs = property $ do
                  , ("op(Sb, Sb) − decl ≠ ∅", not $ diffEmpty (app sb sb) declT) ]
     forM_ checks $ \(n, ok) -> do
       forceTimed (world ++ ": " ++ n) ok
-      annotate $ printf "%s world: %s -> %s" (world :: String) n (show ok)
-    assert $ all snd checks
+      note $ printf "%s world: %s -> %s" (world :: String) n (show ok)
+    assertTimed (world ++ " world: every check") $ all snd checks
 
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
@@ -1878,30 +1924,30 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propSubtypeUnionVarSplit" (p $ propSubtypeUnionVarSplit ioPrgms)
       , HG.testProperty "propClassExpansionLeafSubtype" (p $ propClassExpansionLeafSubtype ioPrgms)
       , HG.testProperty "propClassGraphMatchesPredClass" (p $ propClassGraphMatchesPredClass ioPrgms)
-      , HG.testProperty "propParamClassWideNotNarrow" (withTests 1 $ propParamClassWideNotNarrow ioPrgms)
-      , HG.testProperty "propParamClassIntersectAbsorb" (withTests 1 $ propParamClassIntersectAbsorb ioPrgms)
-      , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
-      , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
-      , HG.testProperty "propParamIsaEdgeCovariant" (withTests 1 $ propParamIsaEdgeCovariant ioPrgms)
-      , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
-      , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
-      , HG.testProperty "propConstantWithinValuePredicate" (withTests 1 $ propConstantWithinValuePredicate ioPrgms)
-      , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
-      , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
-      , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)
-      , HG.testProperty "propHoSlotParentMeet" (withTests 1 propHoSlotParentMeet)
-      , HG.testProperty "propSiblingBoundLinks" (withTests 1 propSiblingBoundLinks)
-      , HG.testProperty "propSiblingBoundClassTop" (withTests 1 propSiblingBoundClassTop)
-      , HG.testProperty "propSiblingBoundOverloads" (withTests 1 propSiblingBoundOverloads)
-      , HG.testProperty "propAppliedDataFields" (withTests 1 propAppliedDataFields)
-      , HG.testProperty "propLinkedSlotUnion" (withTests 1 propLinkedSlotUnion)
-      , HG.testProperty "propSiblingParamValue" (withTests 1 propSiblingParamValue)
-      , HG.testProperty "propPinnedInputSlot" (withTests 1 propPinnedInputSlot)
-      , HG.testProperty "propMemberParentParams" (withTests 1 propMemberParentParams)
-      , HG.testProperty "propMemberWithinClassAtTop" (withTests 1 propMemberWithinClassAtTop)
-      , HG.testProperty "propPredicatedLeafWithinOwnMeet" (withTests 1 $ propPredicatedLeafWithinOwnMeet ioPrgms)
-      , HG.testProperty "propOuterVarNotCaptured" (withTests 1 propOuterVarNotCaptured)
-      , HG.testProperty "propCoverDerivedParam" (withTests 1 propCoverDerivedParam)
+      , unitCase "unitParamClassWideNotNarrow" (unitParamClassWideNotNarrow ioPrgms)
+      , unitCase "unitParamClassIntersectAbsorb" (unitParamClassIntersectAbsorb ioPrgms)
+      , unitCase "unitConjMemberClassSubtype" (unitConjMemberClassSubtype ioPrgms)
+      , unitCase "unitNegRecursiveClassMeet" (unitNegRecursiveClassMeet ioPrgms)
+      , unitCase "unitParamIsaEdgeCovariant" (unitParamIsaEdgeCovariant ioPrgms)
+      , unitCase "unitDeclClampClassMembership" (unitDeclClampClassMembership ioPrgms)
+      , unitCase "unitExcludedConstantIrrelevantToData" (unitExcludedConstantIrrelevantToData ioPrgms)
+      , unitCase "unitConstantWithinValuePredicate" (unitConstantWithinValuePredicate ioPrgms)
+      , unitCase "unitOwnParamPointerCover" unitOwnParamPointerCover
+      , unitCase "unitDataIsaBindsClassParam" unitDataIsaBindsClassParam
+      , unitCase "unitFunctionParamFromArgs" unitFunctionParamFromArgs
+      , unitCase "unitHoSlotParentMeet" unitHoSlotParentMeet
+      , unitCase "unitSiblingBoundLinks" unitSiblingBoundLinks
+      , unitCase "unitSiblingBoundClassTop" unitSiblingBoundClassTop
+      , unitCase "unitSiblingBoundOverloads" unitSiblingBoundOverloads
+      , unitCase "unitAppliedDataFields" unitAppliedDataFields
+      , unitCase "unitLinkedSlotUnion" unitLinkedSlotUnion
+      , unitCase "unitSiblingParamValue" unitSiblingParamValue
+      , unitCase "unitPinnedInputSlot" unitPinnedInputSlot
+      , unitCase "unitMemberParentParams" unitMemberParentParams
+      , unitCase "unitMemberWithinClassAtTop" unitMemberWithinClassAtTop
+      , unitCase "unitPredicatedLeafWithinOwnMeet" (unitPredicatedLeafWithinOwnMeet ioPrgms)
+      , unitCase "unitOuterVarNotCaptured" unitOuterVarNotCaptured
+      , unitCase "unitCoverDerivedParam" unitCoverDerivedParam
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (p $ propOwnVarBindingRespected ioPrgms)

@@ -4009,7 +4009,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- @fn@ result is a @Mon@, never one whose result is ⊤. Left symbolic it read as a free
     -- variable — flexible, covering every value — while 'isSubPartialOfWithEnv' reads it
     -- through the same bound ('readOwnScope'), so the two provers split: @def ⊆ arm@ was
-    -- refused while @def − arm@ compacted to ∅ (propOwnParamPointerCover). An unbound or
+    -- refused while @def − arm@ compacted to ∅ (unitOwnParamPointerCover). An unbound or
     -- ⊤-bound parameter stays the flexible variable it is.
     supSlot t@(TypeVar (TVVar n) TVInt i) = case H.lookup n (ptVars sup) of
       Just b | b /= PTopType, b /= t -> meetInner typeEnv vaenv b i
@@ -8300,7 +8300,7 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
     -- parameter's own variable: a higher-order argument's input object hops the declaration's
     -- @$A@ in as its @/A=$^A@, and its @v -> $_A@ names the same @$A@ (@steps[$A](fn(v -> $_A))@).
     -- Read as content it would bind the parameter to itself. A link that merely shares a
-    -- parameter's NAME is another scope's variable like any other ('propOuterVarNotCaptured').
+    -- parameter's NAME is another scope's variable like any other ('unitOuterVarNotCaptured').
     subUnionArg varBound (aVaenv, TypeVar (TVVar n) TVInt i) (bVaenv, TypeVar w TVExt j)
       | foreignLink w = pointerMeetsLink varBound n i aVaenv bVaenv w j
     subUnionArg varBound (aVaenv, TypeVar w TVExt j) (bVaenv, TypeVar (TVVar n) TVInt i)
