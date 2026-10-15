@@ -853,9 +853,18 @@ ctssBuildPagesExact ctss pages = do
 ctssBuildSCC :: CTSS -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport -> IO ()
 -- Nothing is reported before the lock is taken. A thread waiting for it is not the thread doing the
 -- work, and a report from here would overwrite the reporting of the one that is.
-ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
+ctssBuildSCC ctss@(CTSS ssmv _) sccNodes allPages = do
   let sccFileNames = map snd3 sccNodes
   let sccNamesSet = S.fromList sccFileNames
+  -- What the component imports, and nothing else of what the build was handed. A page means what
+  -- the pages it imports make it mean ('Syntax.Ct.Desugarf.desFiles' resolves each page's names
+  -- against its SCC peers and its transitive imports), and the graph handed in is whatever the
+  -- caller is building -- for 'ctssBuildAll', every page the service holds. Read off that graph,
+  -- the external dependencies below would be every page already built, so a name an unrelated
+  -- page declares at the root (a fixture's @data(Item)@) could make a module's own name (@Item@
+  -- in @Data/RSS@) ambiguous, and a page would build differently depending on which other pages
+  -- happened to be loaded and built first.
+  let pages = graphFilterReachesAny sccFileNames allPages
   -- Get dep lists from the pages graph structure (stable across MVar updates)
   let pageDeps = H.fromList [(name, deps) | (_, name, deps) <- graphToNodes pages]
   modifyMVar_ ssmv $ \ctssdat@CTSSDat{ctssPages, ctssData, ctssInstrument, ctssEpochs} -> do

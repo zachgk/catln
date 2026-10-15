@@ -17,7 +17,7 @@ import           Data.Graph
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.Maybe          (fromJust)
+import           Data.Maybe          (fromJust, mapMaybe)
 import           Data.String.Builder (Builder, literal)
 
 type GraphNodes node key = (node, key, [key])
@@ -80,6 +80,13 @@ graphFilterReaches k gd@(g, _, vertexFromKey) = case vertexFromKey k of
   Just kv -> let keep = S.fromList $ reachable g kv
               in graphFromEdges $ filter ((`S.member` keep) . fromJust . vertexFromKey . snd3) $ graphToNodes gd
   Nothing -> graphFromEdges []
+
+-- | The part of a graph reachable from any of several keys: the keys themselves and everything they
+-- reach. The reach of a strongly connected component is this over its members.
+graphFilterReachesAny :: (Ord key) => [key] -> GraphData node key -> GraphData node key
+graphFilterReachesAny ks gd@(g, _, vertexFromKey) =
+  graphFromEdges $ filter ((`S.member` keep) . fromJust . vertexFromKey . snd3) $ graphToNodes gd
+  where keep = S.fromList $ concatMap (reachable g) $ mapMaybe vertexFromKey ks
 
 mapGraphWithDeps :: (Monad m, Hashable k, Ord k) => ([(n1, [n1], [n2])] -> m [n2]) -> GraphData n1 k -> m (GraphData n2 k)
 mapGraphWithDeps f g@(graph, fromNode, fromName) = do
