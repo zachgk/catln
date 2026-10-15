@@ -1,0 +1,102 @@
+import "core/primitives.ct"
+import "core/data.ct"
+
+
+module(Data/Algebra)
+  # # Equivalence and Equality
+    This file defines equivalence relations ([Eqv]), the [Eq] class of types that have a canonical
+    equality, and the [operator==] / [operator!=] built on top of them. It is the foundation that
+    ordering ([Ord], in [Data/Algebra/ord]) builds upon.
+  # ## Equivalence Relations
+    An [Eqv] is the class of equivalence relations. Each object in the class is a single
+    equivalence relation over some type, and supplies the [rel] that decides whether two values of
+    that type are to be considered equivalent.
+    TODO The type an [Eqv] relates is not data, so it cannot be a type parameter of the class the
+    way the element type of a [List] is. Once refinement types can state it, write it as what each
+    relation covers and drop the [#invalid] below:
+    ```
+    :Eqv.over -> TypeSet
+    :Eqv.rel[$T](a -> $T, b -> $T) | this.over.superset($T) -> Boolean
+    :$T.eq[$T -> /Data/Algebra/Eq] -> /Data/Algebra/Eqv | $out.over.superset($T)
+    ```
+  class(Eqv)
+
+  :Eqv.rel[$T](a -> $T, b -> $T) -> Boolean
+    # [rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the
+      class defines it for the type it relates, and it holds only for [a] and [b] of that type —
+      the type the object's own definitions of [rel] are written over. See the per-type instances
+      (such as [BoolEqv]) and [eq], which names the one for an [Eq] type.
+    #invalid
+
+  # ## The Eq class
+    The [Eq] class is used to define values which can be compared for equality. While naive tuple
+    equality often works, some types have equality that behaves differently and must be defined.
+    For example, a TreeSet can insert items in different order and produce different trees, but with
+    equal sets. An [Eq] type names its canonical equivalence with [eq], from which [equal],
+    [operator==] and [operator!=] follow.
+  class(Eq)
+
+  # [eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method
+  #   through which [operator==] dispatches.
+  :$T.eq[$T -> /Data/Algebra/Eq] -> /Data/Algebra/Eqv
+
+  :$T.equal[$T -> /Data/Algebra/Eq](other -> $T) -> Boolean
+
+  # [operator==] is the equality operator; [operator!=] is its negation. Creating an instance of
+  #   [Eq] only requires defining [eq]; [equal], [operator==] and [operator!=] then follow.
+  (_ :: $T == _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
+
+  (_ :: $T != _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
+
+  # ## Example and law objects
+    The example and law tests reference named [Eqv] objects, since the class is defined by its
+    members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
+    [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
+    distinct values).
+  data(IntEqExample, isa= [/Data/Algebra/Eqv])
+
+  :IntEqExample.rel(a -> Integer, b -> Integer)= /Data/Primitive/intEq(l= a, r= b)
+
+  data(AllEqv, isa= [/Data/Algebra/Eqv])
+
+  :AllEqv.rel(a, b)= True
+
+  # ## Example
+    The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
+    [AllEqv] relates every pair.
+  > IntEqExample.rel(a= 2, b= 2)
+    >>> True
+  > IntEqExample.rel(a= 2, b= 3)
+    >>> False
+  > AllEqv.rel(a= 2, b= 3)
+    >>> True
+  # ## Laws of equivalence
+    Reflexivity, symmetry and transitivity are properties of the [Eqv] class itself: every
+    equivalence relation must satisfy them, so each is a property test checked against every [Eqv]
+    instance (here [$E]) at arbitrary members of the type that instance relates (here [$T]).
+    Symmetry is written as a biconditional to make it non-vacuous, and transitivity as a material
+    implication, so ordinary equalities satisfy it vacuously and a relation like [AllEqv] exercises
+    the premise.
+    TODO The laws are set aside while [rel] is [#invalid]: they read the type an instance relates
+    from a parameter of [Eqv], which it no longer has, so they cannot generate values the instance
+    is defined over. Restore them once [Eqv.over] can be stated:
+    ```
+    testEqvReflexive[$E -> Eqv[$T]](e -> $E, t -> $T) =
+      #test
+      #assert(test= e.rel(a= t, b= t))
+      0
+    testEqvSymmetric[$E -> Eqv[$T]](e -> $E, x -> $T, y -> $T) =
+      #test
+      #assert(test= e.rel(a= x, b= y) == e.rel(a= y, b= x))
+      0
+    testEqvTransitive[$E -> Eqv[$T]](e -> $E, x -> $T, y -> $T, z -> $T) =
+      #test
+      #assert(test= ~(e.rel(a= x, b= y) && e.rel(a= y, b= z)) || e.rel(a= x, b= z))
+      0
+    ```
+  # The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /
+  #   [equal] live alongside their types in [Data/bool], [Data/num], [Data/char] and [Data/string]; this file
+  #   defines only the abstract [Eqv]/[Eq] classes and the [operator==] / [operator!=] built on them.
+  (l :: $T == r :: $T)[$T -> /Data/Algebra/Eq]= l.equal(other= r)
+
+  (l :: $T != r :: $T)[$T -> /Data/Algebra/Eq]= ~(l == r)

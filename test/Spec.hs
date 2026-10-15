@@ -1,6 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
 module Main where
 import           Eval.CommonTests            (evalCommonTests)
+import           Eval.PrintGoldenTests       (printGoldenTests)
 import           Eval.QuantificationTests    (quantificationTests)
 import           Eval.RefinementProofTests   (refinementProofTests)
 import           Eval.RefinementRuntimeTests (refinementRuntimeTests)
@@ -22,7 +23,6 @@ import           Syntax.ObsidianPlannerTests (obsidianPlannerTests)
 import           Syntax.ObsidianQueryTests   (obsidianQueryTests)
 import           Syntax.ObsidianTaskTests    (obsidianTaskTests)
 import           Syntax.ObsidianTests        (obsidianTests)
-import           Syntax.PrgmGraphTests       (prgmGraphTests)
 import           Syntax.RereadTests          (rereadTests)
 import           Syntax.RssCacheTests        (rssCacheTests)
 import           Syntax.SyntaxTests          (syntaxTests)
@@ -36,5 +36,5 @@ main = do
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
   typecheckTests' <- typecheckTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, inFlightTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianPlannerTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests, hsBuiltinsTests, evalCommonTests, refinementProofTests, refinementRuntimeTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, inFlightTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianPlannerTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, hsBuiltinsTests, evalCommonTests, printGoldenTests, refinementProofTests, refinementRuntimeTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
   defaultMain catlnTests

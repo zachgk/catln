@@ -1,0 +1,11 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "An argument named the same as a function of the module it is declared in.
+        [power] takes an argument called [exp], and [exp] is also a method declared beside it. A call's
+        arguments are keyed by the names they are given, so `2.power(exp= 3)` fills the argument [exp]
+        whatever else is called that — the method is not what the key refers to. [power] is a runtime
+        primitive, which reads its argument by the key @/exp@, so a key named after the method instead is
+        an argument the primitive never finds." )
+    )
+]

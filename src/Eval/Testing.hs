@@ -20,6 +20,7 @@ module Eval.Testing where
 
 import           CRes
 import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
 import           Semantics.Prgm
 import           Semantics.Types
 
@@ -256,10 +257,14 @@ runCallIn env dest input = do
 -- isolation (bypassing dispatch, which would only ever run one of them) and the results compared
 -- through their 'Eq'. Inputs are generated in the overlap, with positions that a non-linear
 -- pattern ties together generated equal so the diagonal is actually exercised.
-deriveOverlapTests :: EPrgm -> [TestDesc]
-deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
+--
+-- Derived for the functions @own@ holds an item of, over every arm of them @prgm@ holds; @own@ is
+-- @prgm@ itself when the whole program's tests are asked for.
+deriveOverlapTests :: EPrgm -> EPrgm -> [TestDesc]
+deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
   [ mkOverlapTest omi oaA oaB dom
-  | omi <- H.elems om
+  | (name, _) <- H.toList ownOm
+  , Just omi <- [H.lookup name om]
   -- Ordered by where the arms were written, so which of a pair is @oaA@ — and so which page the
   -- test belongs to — is the same on every run. The object map's own order is a hash order, which
   -- would move a cross-file agreement test between the two files it pairs.
@@ -395,12 +400,15 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
 -- arms must each satisfy it, so there is one test per overlapping definition. An existential
 -- function's arms are alternatives, so there is one test per refinement, and an input passes when
 -- SOME arm accepting it gives a result matching the claim (see 'mkExistRefinementTest').
-deriveRefinementTests :: EPrgm -> [TestDesc]
-deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
+--
+-- Derived for the functions @own@ holds an item of, as 'deriveOverlapTests' is.
+deriveRefinementTests :: EPrgm -> EPrgm -> [TestDesc]
+deriveRefinementTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) = concat
   [ case omiQuant omi of
       QuantUnique -> [mkRefinementTest omi defOa dom refRet | (defOa, dom) <- arms]
       QuantExist  -> [mkExistRefinementTest name omi refOa (map snd arms) refRet | not (null arms)]
-  | (name, omi) <- H.toList om
+  | (name, _) <- H.toList ownOm
+  , Just omi <- [H.lookup name om]
   -- An @#invalid@ refinement claims more than its definitions keep, so testing the claim would
   -- only find that out again.
   , refOa <- filter (not . isInvalidDecl) (omiRefineDecls omi)
@@ -502,14 +510,39 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) = concat
             then Hedgehog.success
             else Hedgehog.footnote (printf "Refinement violated: no arm of %s on %s produced a result matching the claimed return %s. The arms produced:\n  %s" testName (show input) (show refRet) (intercalate "\n  " (map showArm results))) >> Hedgehog.failure
 
+-- | Every test of a program, derived from the whole of it, evaluated with the pages it was read from.
 evalTest :: EvalPages -> EPrgmGraphData -> CResT IO [TestDesc]
-evalTest pages prgmGraphData = do
-  let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
-  let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
+evalTest pages prgmGraphData = evalTestWith pages prgm prgm
+  where prgm = mconcat $ map fst3 $ graphToNodes prgmGraphData
+
+-- | The tests one page of a program wrote: derived from what that page declares, and decided in the
+-- whole program the graph holds. The same tests 'evalTest' would attribute to the page, at the cost
+-- of that page alone — deriving over the whole program evaluates every print of every page it
+-- reaches, which for a page importing the standard library is the library's own tests again.
+--
+-- The whole program is still the environment, so a law the page states over a class is checked
+-- against the instances other pages define, and an agreement test pairs the page's arm with an arm
+-- of the same function written elsewhere; such a test belongs to the page whose arm was written
+-- first, as 'deriveOverlapTests' places it.
+evalTestOf :: EvalPages -> FileImport -> EPrgmGraphData -> CResT IO [TestDesc]
+evalTestOf pages name prgmGraphData = case graphLookup name prgmGraphData of
+  Nothing  -> CResT $ return $ CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to derive the tests of" (show $ impRaw name)]
+  Just own -> evalTestWith pages own (mconcat $ map fst3 $ graphToNodes prgmGraphData)
+
+-- | The tests derived from the definitions and prints of @own@, evaluated in @prgm@, which holds
+-- @own@ and everything it is decided against, with @pages@ the pages the program was read from.
+evalTestWith :: EvalPages -> EPrgm -> EPrgm -> CResT IO [TestDesc]
+evalTestWith pages own@(Prgm ownMap _ ownAnnots) prgm = do
+  let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap ownMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  printTests <- lift $ derivePrintTests pages prgm
-  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm ++ printTests
+  printTests <- lift $ derivePrintTests pages own prgm
+  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ filter owned (deriveOverlapTests own prgm ++ deriveRefinementTests own prgm) ++ printTests
   where
+    -- A derived test is the page's when the definition it is placed with is. Arms of the page's
+    -- functions written in other pages are paired too, and the tests placed with those arms are
+    -- those pages' to run.
+    ownIds = S.fromList $ map oaTestId (flatObjectMap ownMap) ++ map (getMetaId . getExprMeta) ownAnnots
+    owned d = S.member (tdOwnerId d) ownIds
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
     partitionTest oa (simple, props)
       | isNoArgTest oa = (oa : simple, props)
@@ -663,8 +696,10 @@ evalPrints pages prgm = do
 --
 -- Each print is evaluated here, as the tests are derived, rather than when its test is run: whether
 -- a print has a test at all is decided by what it evaluates to.
-derivePrintTests :: EvalPages -> EPrgm -> IO [TestDesc]
-derivePrintTests pages prgm = catMaybes <$> mapM mkTest (collectPrintAnnots prgm)
+--
+-- The prints are those of @own@, evaluated in @prgm@ with the @pages@ it was read from.
+derivePrintTests :: EvalPages -> EPrgm -> EPrgm -> IO [TestDesc]
+derivePrintTests pages own prgm = catMaybes <$> mapM mkTest (collectPrintAnnots own)
   where
     env = evalBaseEnvWith pages Nothing prgm
     mkTest (os, annot) = do

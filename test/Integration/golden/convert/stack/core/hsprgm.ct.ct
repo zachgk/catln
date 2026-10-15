@@ -1,0 +1,100 @@
+import "core/compile.ct"
+import "core/maybe.ct"
+import "core/string.ct"
+import "core/num.ct"
+import "core/bool.ct"
+import "core/list.ct"
+
+
+# # The Catln Program
+# These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it.
+# They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them.
+# Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart.
+class(/Catln/ObjectBasis, [/Catln/ObjectBasis/FunctionObj, /Catln/ObjectBasis/TypeObj, /Catln/ObjectBasis/PatternObj, /Catln/ObjectBasis/MatchObj, /Catln/ObjectBasis/ArgObj])
+  # What an object is: which of the ways of writing one it was written as.
+  # A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.
+  # It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing.
+class(/Catln/Hole, [/Catln/Hole/HoleActive(name -> /Data/Maybe..[$T -> /Data/String..]), /Catln/Hole/HoleUndefined, /Catln/Hole/HoleTodefine])
+  # A gap where an expression should be.
+  # A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.
+  # The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain.
+class(/Catln/Constant, [/Catln/Constant/CInt(value -> /Data/Primitive/Integer..), /Catln/Constant/CFloat(value -> /Data/Primitive/Float..), /Catln/Constant/CStr(value -> /Data/String..), /Catln/Constant/CChar(value -> /Data/Char..)])
+  # A value written directly in a program: a whole number, a fractional number, a string, or a character.
+  # A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one.
+class(/Catln/PartialName, [/Catln/PartialName/PTypeName(name -> /Data/String..), /Catln/PartialName/PClassName(name -> /Data/String..), /Catln/PartialName/PRelativeName(name -> /Data/String..)])
+  # What a partial type is named by: a type, a class, or a suffix that could be either.
+  # A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it.
+data(/Catln/PtArgMode(argLb -> /Data/Primitive/Boolean.., argUb -> /Data/Primitive/Boolean..))
+  # How the arguments a type lists bound the arguments of what it matches.
+  # [argLb] says every listed argument is required, and [argUb] says no unlisted one is allowed. Both together is exactly the listed arguments; neither is no bound at all. They are two independent answers rather than four named cases, because that is what they are: an interval in the lattice of argument sets.
+class(/Catln/TypeVarLoc, [/Catln/TypeVarLoc/TVInt, /Catln/TypeVarLoc/TVParent, /Catln/TypeVarLoc/TVExt])
+  # Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.
+  # The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it.
+data(/Catln/PartialKey(name -> /Data/String.., vars -> /Data/List..[$T -> /Catln/PartialKey..], args -> /Data/List..[$T -> /Catln/PartialKey..]))
+  # The name of an argument or a type variable, with whatever it is itself applied to.
+  # A key is a [name] and two sets: the [vars] it is written with and the [args] it is written over. Both hold keys again, so a key is a small tree rather than a string — which is what lets `f(x)` and `f(x, y)` be told apart as names before anything is known about what they are.
+  # The sets are handed over as lists, in order, so that two keys holding the same members are handed over the same way.
+class(/Catln/Type, [/Catln/Type/UnionType(top -> /Data/Maybe..[$T -> /Catln/Triple..[$A -> /Catln/TypePredicates.., $B -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Data/List..[$T -> /Catln/PartialArgsOption..]]], $C -> /Data/List..[$T -> /Catln/Constant..]]], leafs -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Data/List..[$T -> /Catln/PartialArgsOption..]]], consts -> /Data/List..[$T -> /Catln/Constant..]), /Catln/Type/TypeVar(aux -> /Catln/TypeVarAux.., loc -> /Catln/TypeVarLoc.., inner -> /Catln/Type..)])
+  # A set of types: what a value may be.
+  # A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.
+  # A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner.
+data(/Catln/Triple[$A, $B, $C](first -> $A, second -> $B, third -> $C))
+  # Three values together, the [first], the [second] and the [third].
+  # Declared beside [/Catln/Pair] and for its reason. It is not a pair holding a pair: that would be read as [second.first] where what it stands for is read as one thing, and the shape handed over would say something about there being no triple rather than about the value.
+class(/Catln/TypePredicates, [/Catln/TypePredicates/PredsOne(pred -> /Catln/TypePredicate..), /Catln/TypePredicates/PredsAnd(preds -> /Data/List..[$T -> /Catln/TypePredicates..]), /Catln/TypePredicates/PredsNot(pred -> /Catln/TypePredicates..)])
+  # The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.
+  # No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes.
+class(/Catln/TypePredicate, [/Catln/TypePredicate/PredExpr(type -> /Catln/PartialType..), /Catln/TypePredicate/PredClass(type -> /Catln/PartialType..), /Catln/TypePredicate/PredRel(type -> /Catln/PartialType..), /Catln/TypePredicate/PredConstEq(const -> /Catln/Constant..)])
+  # One condition a type is filtered by, each written over the [type] it is about.
+  # A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`.
+  # A [PredConstEq] says the value is that constant. It is how a type says "these values except that one" — a leaf with the constant excluded — and stands in for a refinement written with [PredExpr] until those can be decided.
+data(/Catln/PartialType(name -> /Data/String.., vars -> /Data/List..[$T -> /Catln/Pair..[$A -> /Catln/PartialKey.., $B -> /Catln/Type..]], args -> /Data/List..[$T -> /Catln/Pair..[$A -> /Catln/PartialKey.., $B -> /Catln/Type..]], preds -> /Catln/TypePredicates.., argMode -> /Catln/PtArgMode..))
+  # A simple set of types: what one object or one data declaration could match.
+  # Its [name] is what it is called, its [vars] are the type parameters it is written with, its [args] are the fields it is written over, its [preds] are what it is filtered by, and its [argMode] says how those args bound what it matches.
+  # [vars] and [args] are tracked apart and matched apart. A field is not related to a type parameter by the declaration, so a value's field says nothing about a parameter of the type unless something else says it does.
+data(/Catln/Pair[$A, $B](first -> $A, second -> $B))
+  # Two values together, the [first] and the [second].
+  # It is declared by the compiler because it is what the compiler has to hand over. A map is a list of these, and the program the compiler is compiling holds pairs in a dozen places that have no names of their own in Haskell. Naming them here is what lets those places be read without being rewritten.
+data(/Catln/PartialArgsOption(vars -> /Data/List..[$T -> /Catln/Pair..[$A -> /Catln/PartialKey.., $B -> /Catln/Type..]], args -> /Data/List..[$T -> /Catln/Pair..[$A -> /Catln/PartialKey.., $B -> /Catln/Type..]], preds -> /Catln/TypePredicates.., argMode -> /Catln/PtArgMode..))
+  # Everything a partial type is apart from its name: the [vars] it is written with, the [args] it is written over, the [preds] it is filtered by, and how its arguments [argMode] bound what it matches.
+  # It is what a set of partials sharing one name holds, so that the name is written once and each of the ways it can be filled in is written beside it.
+class(/Catln/TypeVarAux, [/Catln/TypeVarAux/TVVar(name -> /Catln/PartialKey..), /Catln/TypeVarAux/TVArg(name -> /Catln/PartialKey..), /Catln/TypeVarAux/TVApplied(base -> /Catln/TypeVarAux.., vars -> /Data/List..[$T -> /Catln/Pair..[$A -> /Catln/PartialKey.., $B -> /Catln/Type..]])])
+  # Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).
+  # A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again.
+data(/Catln/Meta(type -> /Catln/Type.., pos -> /Data/Maybe..[$T -> /Catln/Pair..[$A -> /Catln/SourcePos.., $B -> /Catln/SourcePos..]], id -> /Data/String.., dat -> /Catln/Unit..))
+  # What the compiler knows about one piece of a program: the [type] it was inferred to have, where it was written ([pos]), and the [id] that tells it apart from every other piece.
+  # [pos] is absent for a piece of the program nothing wrote — one the compiler made while desugaring, which has a type and an identity but no place in a file.
+  # [dat] is what the stage the program came from added of its own. It is handed over empty: a program is narrowed to the metadata every stage shares before it is read, so what would be there is a different thing depending on which stage was asked, and this way what is read is the same thing whichever was.
+data(/Catln/SourcePos(file -> /Data/String.., line -> /Data/Primitive/Integer.., column -> /Data/Primitive/Integer..))
+  # A place in a file: which [file], and the [line] and [column] within it.
+  # Lines and columns count from one, as an editor shows them. A number below one is not a place and is refused when one is read back.
+data(/Catln/Unit)
+  # A value carrying nothing.
+  # What a field whose contents the compiler does not keep is handed over as. A program is given the field, so that what it reads has the shape the compiler holds, and there is nothing in it.
+data(/Catln/Prgm(objMap -> /Catln/ObjectMap.., cg -> /Data/List..[$T -> /Catln/Triple..[$A -> /Catln/CGNode.., $B -> /Catln/PartialName.., $C -> /Data/List..[$T -> /Catln/PartialName..]]], annots -> /Data/List..[$T -> /Catln/Expr..]))
+  # A whole program: everything it declares and defines ([objMap]), how its classes and types relate ([cg]), and the annotations written on the program itself ([annots]).
+  # This is what a program reading a program is given. It is the program at whichever stage it was asked for, narrowed to the metadata every stage shares, so what is read is the same shape whichever stage it came from.
+data(/Catln/ObjectMap(items -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Catln/ObjectMapItem..]]))
+  # Everything a program declares and defines, by the name each is written under.
+  # Handed over as a list of pairs, in order of name, so that two programs holding the same definitions are handed over the same way however they were built.
+data(/Catln/ObjectMapItem(decls -> /Data/List..[$T -> /Catln/ObjArr..], runtimeDecls -> /Data/List..[$T -> /Catln/ObjArr..], refineDecls -> /Data/List..[$T -> /Catln/ObjArr..], defs -> /Data/List..[$T -> /Catln/ObjArr..]))
+  # Everything written under one name: its [decls], the [runtimeDecls] the compiler supplies rather than the program, the [refineDecls] narrowing what a definition returns, and the [defs] themselves.
+  # A declaration says what may be called and a definition says what happens when it is. A name may have several of each, which is how one operation is written once and implemented per type.
+data(/Catln/ObjArr(obj -> /Data/Maybe..[$T -> /Catln/Expr..], basis -> /Catln/ObjectBasis.., doc -> /Data/Maybe..[$T -> /Data/String..], annots -> /Data/List..[$T -> /Catln/Expr..], arr -> /Data/Maybe..[$T -> /Catln/Pair..[$A -> /Data/Maybe..[$T -> /Catln/Expr..], $B -> /Catln/Meta..]]))
+  # One thing written in a program: an [obj] it matches, and the [arr] it becomes.
+  # [basis] says which way it was written — a definition, a type, a pattern, an arm of a match, or an argument standing inside another. [doc] is what was written about it and [annots] are the annotations on it.
+  # [arr] is absent for something that only matches and produces nothing. When present it is a [Pair] of what it becomes — absent for a declaration, which says the shape without giving the value — and the [Meta] of that.
+class(/Catln/Expr, [/Catln/Expr/CExpr(meta -> /Catln/Meta.., const -> /Catln/Constant..), /Catln/Expr/Value(meta -> /Catln/Meta.., name -> /Data/String..), /Catln/Expr/HoleExpr(meta -> /Catln/Meta.., hole -> /Catln/Hole..), /Catln/Expr/AliasExpr(base -> /Catln/Expr.., alias -> /Catln/Expr..), /Catln/Expr/EWhere(meta -> /Catln/Meta.., base -> /Catln/Expr.., cond -> /Catln/Expr..), /Catln/Expr/TupleApply(meta -> /Catln/Meta.., base -> /Catln/Pair..[$A -> /Catln/Meta.., $B -> /Catln/Expr..], app -> /Catln/EApp..)])
+  # An expression, after the compiler has reduced what was written to what it means.
+  # A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.
+  # So reading an expression is reading those six, however the program was written.
+class(/Catln/EApp, [/Catln/EApp/EAppArg(arg -> /Catln/ObjArr..), /Catln/EApp/EAppVar(name -> /Catln/PartialKey.., meta -> /Catln/Meta..), /Catln/EApp/EAppSpread(expr -> /Catln/Expr..)])
+  # What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).
+  # An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is.
+class(/Catln/CGNode, [/Catln/CGNode/CGClass(sealed -> /Data/Primitive/Boolean.., partial -> /Catln/PartialType.., extends -> /Data/List..[$T -> /Catln/Type..], doc -> /Data/Maybe..[$T -> /Data/String..]), /Catln/CGNode/CGType])
+  # What a class graph holds at a name: a class, or a type.
+  # A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say.
+/Catln/prgmFor(/name -> /Data/String) -> /Catln/Prgm..
+  # Answers with the program being compiled, narrowed to the things written under [name].
+  # The program is the one the page asking was compiled as part of — that page and everything it reaches — so what is answered is what the asking program can see rather than everything there is.
+  # It is narrowed by [name] rather than handed over whole because what a value costs to work with is what it holds, and the standard library is a large thing to be handed in order to read one definition of it.

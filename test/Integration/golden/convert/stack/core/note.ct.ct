@@ -1,0 +1,264 @@
+import "core/bool.ct"
+import "core/calendar.ct"
+import "core/maybe.ct"
+import "core/string.ct"
+import "core/webdoc.ct"
+
+
+module(Data/Note)
+  # # Notes
+    A note is a piece of writing that names itself and links to other notes. Each note is a page of
+    its own and each link between two notes is an import between their pages, so the graph a set of
+    notes forms is the import graph of the program they are read as.
+    A link is also a link in the writing. Where a note names another note of the same collection,
+    the writing holds the link to the page that note is read as, so reading a note is a way of
+    reaching the notes it names.
+  data(Page(title -> String))
+    # A [Page] is one note. It holds the [title] the note is known and linked by; the writing itself
+      is the comment inside the page rather than a field of it, so reading the page is reading the
+      note. Importing an Obsidian vault reads it as one [Page] per note of it, and a note which
+      opens with a block of properties holds it as a [#properties] of the page rather than as
+      writing of it.
+
+  /Catln/Doc/dshow(s= Page(title))= /Catln/Doc/Show/Html(contents= "<h1>" ++ title ++ "</h1>")
+    # A note is shown in the webdocs as the note it is: headed by the title it is known and linked
+      by, rather than by the declaration that title was read into.
+      Written here rather than in the doc server. A [Page] is this library's type, so what one looks
+      like is this library's to say: the arm builds the heading and [/Catln/Doc/Show/Html] lays it
+      into the page, so a doc server shows a note while holding nothing that knows what a note is.
+      An arm and not membership of [/Catln/Doc/DShow]. A member is shown by the identity arm of
+      [/Catln/Doc/dshow], which hands the value back for the webdocs to make of what they will, which
+      is what a task is. Both at once is two arms matching one value with nothing to say which wins.
+      The title is the whole of the display because it is the whole of what the page holds. The
+      writing, the tasks and the properties are statements inside the page rather than fields of it,
+      so each is shown where the note wrote it and none of them is shown twice.
+      The title is not escaped. A note is titled by the file it is written in, so a note named with a
+      @<@ or an @&@ has that name read as markup. The webdocs no longer sanitize what an arm builds —
+      a library's display is that library's own code and is run as such — so what a filename says is
+      now read as the markup it looks like, and this arm is what stands between a vault and the page
+      showing it. Escaping it properly waits on [String] having a way to escape; until then a vault
+      whose filenames are not the reader's own is a vault to be careful with.
+      Shown and never written. A note is titled by the file it is written in, so retitling one is
+      renaming that file, which replacing an expression of the page cannot do.
+
+  class(Task)
+    # A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
+      the writing of the note holding it: the comment ends where the checkbox was written, the task
+      is declared in its place, and the writing goes on after it as another comment. So the tasks of
+      a note are declared in the order and the place they were written, and whatever is written
+      indented under a checkbox is written inside its task — the comment of it, and the checkboxes
+      indented under it, which are tasks of that task by the same reading.
+      Which of its readings a checkbox gets is decided by the vault it was written in rather than by
+      the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
+      into the line beside the box, and reading such a line as though it were only a line would read
+      the plugin's writing as writing of the note.
+
+  data(Task/Simple(contents -> String, state -> Boolean))
+    # A [Task/Simple] is a checkbox read as a checkbox: its [contents] are what the box says and its
+      [state] is whether the box is checked. It is what a note holds in a vault which does not run
+      the Obsidian Tasks plugin, and what a checkbox of such a vault holds when the plugin is set to
+      pass it over.
+
+  every(Task/Simple.., isa= [/Data/Note/Task])
+  every(Task/Simple.., isa= [/Catln/Doc/DShow])
+    # A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+      into: a box to check and the writing beside it. It is the value itself that is shown, with no
+      display type standing in for it, which is what lets checking the box in a doc server write the
+      change back to the note the task was read from.
+
+  class(StatusType, [StatusType/Todo, StatusType/Done, StatusType/InProgress, StatusType/OnHold, StatusType/Cancelled, StatusType/NonTask, StatusType/Empty])
+    # Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+      of them. Which character is which kind is the vault's to say and not markdown's: a vault may
+      write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
+      so. So a box is read as the character it was written with and the kind that character is, and
+      the kind is the reading.
+  class(Priority, [Priority/Highest, Priority/High, Priority/Medium, Priority/None, Priority/Low, Priority/Lowest])
+    # How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+      medium and low rather than at either end, because that is where a task nobody gave a priority
+      to sorts among ones somebody did.
+
+  data(Task/Obsidian(contents -> String, symbol -> String, statusType -> StatusType, description -> String, priority -> Priority, start -> /Data/Maybe[$T -> String], scheduled -> /Data/Maybe[$T -> String], due -> /Data/Maybe[$T -> String], recurrence -> /Data/Maybe[$T -> String], rest -> String))
+    # A [Task/Obsidian] is a checkbox in a vault running the Obsidian Tasks plugin, which writes a
+      task's dates, priority, recurrence and links into the line beside the box.
+      It carries that line as [contents], exactly as it was written, and everything else beside it
+      as a reading of it — the same shape [Show/Properties] takes, and for the same reason: the one
+      place that has to give the line back exactly as it was found is the one writing the note back,
+      so reading it apart here must not be the only reading there is. Writing the note back writes
+      [symbol] and [contents] and nothing else, so a line carrying something this does not yet read
+      is written back carrying it.
+      [symbol] is the character in the box as it was written and [statusType] is which of the seven
+      kinds that character is. There is no [state] beside them: whether the box is done is
+      [statusType] being [StatusType/Done], and carrying it twice would be two readings of one box
+      which could disagree. The character is carried as well as the kind because writing the note
+      back writes the character, and a vault may name several characters of the one kind — so the
+      kind cannot say which of them this box wore.
+      [description] is what the line says once the plugin's own writing is off it, which no reader
+      can work out without knowing what the vault is set to — so it is carried rather than left to
+      be derived. The tags stay in it, as the plugin leaves them there.
+      The dates are carried as the @YYYY-MM-DD@ strings they were written as. Catln has no date to
+      read them into, and inventing one here would be inventing it for the whole language rather
+      than for a note.
+      The three days a task may be done on — [start], [scheduled] and [due] — are fields together,
+      where the first of them used to travel in [rest]. They are the three [/Data/Calendar/calendarDay]
+      reads to say which day a task sits on, and a day read out of JSON is a day only Haskell can
+      read: the arm answering that is written in Catln, so what it asks about has to be a field.
+      TODO Only a few of the fields a task carries are named here. The rest — the created date, the
+      done and cancelled dates, the tags apart from the description, the action on
+      completion, the id, the ids it waits on, and the block link — are read exactly as these are
+      and are carried together in [rest] as JSON, which is what [Show/TaskList] does with a whole
+      list of tasks and what [Show/Properties] does with a block of properties. That is not because
+      they are worth less, and no longer because the width cannot be compiled: seventeen fields here
+      leave @catln epochs@ and @catln tbuild@ on a page which declares nothing within a second of
+      where they are without them, and the ten-task fixture builds in 62s against a 58s floor.
+      What they wait on is the integration suite, which does not survive the change. Made fields,
+      the suite runs over an hour against the twenty-two minutes it takes now, holds 6.5GB, and
+      writes no goldens at all before it is killed — reproduced at both @-O0@ and @-O1@, so it is
+      not a build-flag artifact. Every per-page measurement says the width is free and the suite
+      says it is not, and the two are not yet reconciled: what differs is that the suite compiles
+      every test page against one universe rather than a page at a time. Until that is understood
+      this type stays as it is, because a change that cannot be tested cannot be trusted.
+      The done and the cancelled date are one thing among those, not two: a task is done or it is
+      cancelled and never both, and [statusType] already says which of the two a task with such a
+      date is.
+
+  every(Task/Obsidian.., isa= [/Data/Note/Task])
+  every(Task/Obsidian.., isa= [/Catln/Doc/DShow])
+  every(Task, isa= [/Data/Calendar/CalendarEntry])
+    # A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+      of each of its two readings, because it is true of a checkbox however the vault it was written
+      in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
+      [/Data/Algebra/Eq] as a class and answers per arm.
+      Said here rather than where a calendar is declared, so that a calendar is a calendar of
+      whatever says it belongs on one rather than of a list kept somewhere else. The class path is
+      written out in full: an [isa] list is keyed by the name as it is written, so a relative one
+      would name a second class of that name rather than the one meant.
+
+  :Task/Simple(contents, state).calendarDay= /Data/Maybe/Nothing
+    # A checkbox read as a checkbox sits on no day. Such a line carries no dates at all — that is
+      the whole of what reading a box without the plugin's reading of it leaves — so this is what it
+      has to say rather than what it has not got round to saying.
+  :Task/Obsidian(contents, symbol, statusType, description, priority, start, scheduled, due, recurrence, rest).calendarDay= firstDay(a= start, b= scheduled, c= due)
+    # A task the plugin manages sits on the first of the three days it may name: the day it may be
+      begun, the day it is scheduled for, then the day it is due.
+      Every field is named although three are read. A receiver naming only some of them is a
+      receiver for a task which has only those, which no task is, so the arm is never reached; and
+      writing the rest as a [.._] parses and typechecks and then fails to evaluate, which is a hole
+      in the evaluator rather than something to write around. So they are written out.
+      The first and not the soonest. Those three mean "may begin", "planned for" and "due by", so a
+      task whose days run in the order they describe has its first-named day be its soonest, and the
+      two readings are the one day. They part only for a task written with a start after its due,
+      where this shows the start and a query asking what happens would answer the due. Answering
+      soonest here would mean comparing two days, and a day is a [String], which has an equality and
+      no order — so the reading that needs no comparison is the one that can be written at all.
+
+  firstDay(a -> /Data/Maybe[$T -> String], b -> /Data/Maybe[$T -> String], c -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]
+    # The first of three days which is there, and nothing where none of them is.
+      Three arms rather than a condition, because a guard on an arm of a [case] does not choose
+      between the arms and there is nothing to compare here anyway: which day is first is which of
+      the three is a [/Data/Maybe/Some], which the arms match on directly.
+      Kept here beside the one arm that asks it rather than put among the [/Data/Maybe] operations.
+      It is named for what it does for a task, and a second caller is what would make it worth
+      naming for what it does to a [/Data/Maybe].
+  firstDay(a= /Data/Maybe/Some(value), b, c)= /Data/Maybe/Some(value= value)
+  firstDay(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value), c)= /Data/Maybe/Some(value= value)
+  firstDay(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing, c)= c
+
+  # A checkbox read as a checkbox sits on no day, whichever way its box is written.
+  > (Task/Simple(contents= "read it", state= False).calendarDay == /Data/Maybe/Nothing)
+    >>> True
+  # A task naming a day it may be begun and a day it is due sits on the first of the three, which is
+  #   the day it may be begun.
+  > (Task/Obsidian(contents= "Water the plants", symbol= " ", statusType= StatusType/Todo, description= "Water the plants", priority= Priority/None, start= /Data/Maybe/Some(value= "2026-01-02"), scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= "2026-01-04"), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= "2026-01-02"))
+    >>> True
+  # A task naming only the day it is due sits on that day, the two before it being absent.
+  > (Task/Obsidian(contents= "Ship it", symbol= " ", statusType= StatusType/Todo, description= "Ship it", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= "2026-01-04"), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= "2026-01-04"))
+    >>> True
+  # A task naming none of the three sits on no day, which is an answer and not a task left out.
+  > (Task/Obsidian(contents= "Book", symbol= " ", statusType= StatusType/Todo, description= "Book", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Nothing, recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Nothing)
+    >>> True
+  annot(#taskList)
+
+  data(Show/TaskList(tasks -> String))
+    # [Show/TaskList] shows the tasks of every note it covers as one list. It carries them in
+      [tasks], so the webdocs render the list from the compiled value rather than asking the compiler
+      for it over a separate route. Each entry is the [Task] value itself, beside the page it was
+      written in and the expression it was declared by. Those last two are what a list across notes
+      needs and a note's own page does not: a task shown on its page is edited by naming the
+      expression that page holds, where a task shown in a list has no such page, so it carries its
+      own. That is what lets checking a box in the list write the note the task was read from rather
+      than whatever is displaying it.
+      Like [/Catln/Doc/Show/Sidebar] it is about which pages there are rather than about the program
+      it is evaluated against, so the list of every task there is, is evaluated unscoped; written in
+      a page it lists the tasks of what that page reaches.
+
+  every(Show/TaskList.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #taskList) =
+    taskList(annot) -> String
+      # [taskList] renders the tasks of the pages the evaluation covers as JSON, each beside the page
+        it was written in and the expression it was declared by. They are read exactly as a note's own
+        page reads them, so a task in this list and the same task shown on its page are one value,
+        shown one way, and edited by replacing one expression.
+      #runtime("taskList")
+
+    Show/TaskList(tasks= taskList(annot= s))
+
+  annot(#tasks(query -> String))
+    # A query a note writes over the tasks of its vault, which is what the Obsidian Tasks plugin
+      reads out of a block of code a note fences as @tasks@. It is written where the note wrote the
+      block, so a note asking about its tasks is a note holding that ask, and it carries [query] as
+      the lines the reader typed rather than as a reading of them — the block is written back from
+      it, and what a reader typed is what a reader has to be shown again.
+      The query asks about the vault the note was written in, which is what the plugin's own query
+      asks about. A note's page reaches only the notes it links to, so a query answered over what
+      the page reaches would answer about almost nothing; and one answered over every page there is
+      would answer a query of one vault with the tasks of another.
+      The language is read by @Syntax.Obsidian.Query@, which is where the whole of it is written
+      down. What is read is what a task must be, what order to give what is found, and how much of
+      it to show. What is not read: [group by] and the counts that go with it, the words that hide
+      and show parts of what is shown, @explain@, searching by a regular expression, the
+      instructions written as functions, presets and the query a vault sets for all of them, the
+      placeholders naming the file the query is written in, urgency as something to ask about or
+      order by, the filters over what a task waits on, and the filters over a note's headings and
+      properties. A line holding one of those is a line the reader is told about rather than one
+      quietly passed over.
+
+  data(Show/TaskQuery(result -> String))
+    # [Show/TaskQuery] shows what a note's query found: the tasks of its vault which are what the
+      query asked for, in the order it asked for, cut to the count it asked for. Each entry is the
+      [Task] value itself beside the page it was written in and the expression it was declared by,
+      as [Show/TaskList] carries them and for the same reason — a task shown in a list has no page
+      of its own to be written back to, so it carries one.
+      One field carrying both what was found and why nothing was, rather than two fields or two
+      arms. A query is something a reader typed, so a query nobody can read is an ordinary answer
+      and not a failure of the page: the block says which line was not understood, where the reader
+      wrote it, and the note around it is shown as it was. Both travel in the one [result] because
+      answering them apart would be running the query twice to ask whether it ran.
+
+  every(Show/TaskQuery.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #tasks(query)) =
+    tasksQuery(query -> String) -> String
+      # [tasksQuery] answers a note's query as JSON: the tasks of the note's vault it found, each
+        beside the page it was written in and the expression it was declared by, or the lines of the
+        query which were not understood.
+      #runtime("tasksQuery")
+
+    Show/TaskQuery(result= tasksQuery(query= query))
+
+  annot(#properties(text -> String))
+
+  data(Show/Properties(text -> String))
+    # [Show/Properties] shows the properties a note opens with: the block of @key: value@ lines
+      written above the writing, as the table it reads as. It carries that block as the [text] it
+      was written as rather than as the properties read out of it, because writing the note back
+      writes the block again — reading it apart into fields here would be reading it apart in the
+      one place that has to give it back exactly as it was found.
+      A block naming a page on the web is read as a [/Catln/Doc/#overlay] of it as well, which is
+      the page the note is written over. That is a second reading of the same block, made where
+      the note is read rather than here: this shows what the note says, and the overlay is what
+      the note says it is about.
+
+  every(Show/Properties.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #properties(text))= Show/Properties(text= text)

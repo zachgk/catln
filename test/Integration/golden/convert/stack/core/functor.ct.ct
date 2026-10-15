@@ -1,0 +1,51 @@
+import "core/primitives.ct"
+import "core/eq.ct"
+
+
+module(Data)
+  # # Functors
+    A [Functor] is a basic property of a collection: a container that can have a function
+    applied to each of the elements it holds.
+  # ## Collections
+    Collections are containers that hold elements of a type inside them.
+  class(Functor[$T])
+    # A [Functor] is a basic property of a collection.
+      It has a single operation [fmap] that applies a function to each element in the collection.
+    # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
+
+# # The fmap operation and laws
+  [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
+  opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data].
+module(Data/Functor)
+  # [fmap] applies a function to every element of a [Functor], producing a new one of the
+  # same kind. This is the generic interface declared over the [Functor] class; each
+  # instance supplies its own definition in a separate module (so the open [Functor] class
+  # is not required to be totally covered here). See the [ConsList] instance in [Data/List].
+  # The result is the input container's shape with the element rebound to the mapped
+  # function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type
+  # is preserved.
+  fmap[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+
+  # ## Functor laws
+    Identity law: mapping the identity function over a functor returns it unchanged. Expressed
+    as a property test, it is checked against every [Functor] instance (here [$F]) that is
+    itself [Eq] — so the mapped result can be compared with the original — at arbitrary
+    members of that instance. Holding [Eq] elements is not enough: a [Functor] is compared by
+    its own equality, which only an [Eq] instance has, so the bound is the intersection of
+    the two classes. It instantiates per file over the import graph, so each file defining an
+    instance checks the law for it.
+  testFunctorIdentity[$F -> /Data/Functor[$T -> /Data/Algebra/Eq] && /Data/Algebra/Eq](x -> $F) =
+    #test
+    #assert(test= fmap(lst= x, fn(v)= v) == x)
+    0
+
+  # Composition law: mapping two functions in sequence equals mapping their composition.
+    Stated with concrete increment functions and the composition written out in the lambda
+    body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
+    cannot yet relate. Checked against every [Functor] instance whose elements are
+    [Integer] - so the increments apply - at arbitrary members of that instance,
+    instantiating per file like the identity law above.
+  testFunctorComposition[$F -> /Data/Functor[$T -> /Data/Primitive/Integer]](x -> $F) =
+    #test
+    #assert(test= fmap(lst= fmap(lst= x, fn(v)= v + 1), fn(v)= v + 1) == fmap(lst= x, fn(v)= (v + 1) + 1))
+    0

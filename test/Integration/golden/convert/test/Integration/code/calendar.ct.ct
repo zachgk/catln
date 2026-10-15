@@ -11,8 +11,8 @@ import obsidian("artifacts/catln-tasks/Tasks.md")
   its own vault is /Data/Note/#tasks, which is a reading of the plugin and is tested apart.
   The vault is named note by note as obsidianTasks.ct names it, and for its reason: a vault does not
   import the notes it holds, so a golden test walking out from here would reach the vault and stop.
-  What the calendar finds is not written down here. The annotations of a page are evaluated for the
-  file a test names, and what they evaluate to is not what a golden of the program records — so the
-  annotation is what is written down here and what answers it is CalendarTests.
+  What the calendar finds is the golden of this page's annotations: everything the vault holds
+  which sits on a day, each on the day it sits on, beside the day the calendar was answered on,
+  which the compiler pins for every test.
 #calendar
 main{io -> IO}= io.exit(val= 0)

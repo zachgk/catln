@@ -1,0 +1,17 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A refinement the type checker cannot decide is evaluated at runtime on the value held to it.
+        [Integer_nonNeg] is [Integer | $this.nonNeg == True], and [nonNeg] bottoms out at the [#runtime]
+        [>=], which the type graph cannot follow: on every [Integer] the predicate is undecided. So
+        [onInt] passes its argument to the refined [f] on the strength of its shape, and the predicate is
+        evaluated on the value when [f] is dispatched; [keep] returns its argument where a
+        [Integer_nonNeg] is declared, and the predicate is evaluated on the result; [keepOut] declares
+        the same refinement in full, its condition written over [$out], the result the arrow produces;
+        [narrow] is a value narrowed by a condition, evaluated where it is written; [narrowDecl]'s
+        condition is the declared refinement's own predicate, so the declaration is established by the
+        condition's form and the value is checked once, where the condition is written. Each holds
+        here, so the run exits 0. The runs where they do not hold are asserted in
+        Eval.RefinementRuntimeTests." )
+    )
+]

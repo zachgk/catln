@@ -1,0 +1,48 @@
+import "core/compile.ct"
+import "core/maybe.ct"
+import "core/string.ct"
+import "core/num.ct"
+import "core/bool.ct"
+import "core/list.ct"
+import hsprgm
+
+
+# # The Catln Program As Written
+# These are the compiler's types for a program as the parser produced it, before desugaring reduces what was written to what it means. They are reached by writing `import hsrawprgm()`.
+# Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the sixteen it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run.
+# So that page is what a program READING a program reads, and this is what a program PRODUCING one writes. An importer is the case: it is handed a file and answers with a `/Catln/ImportResult` holding a page of this.
+# The standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page declaring an importer writes it and pays for it.
+class(/Catln/ReadPath, [/Catln/ReadPath/ReadFile(path -> /Data/String..), /Catln/ReadPath/ReadExists(path -> /Data/String..), /Catln/ReadPath/ReadDir(path -> /Data/String..), /Catln/ReadPath/ReadTree(path -> /Data/String..)])
+  # Something a reading of a page looked at, and how it looked at it.
+  # A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.
+  # A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be.
+data(/Catln/ImportResult(prgm -> /Catln/RawPrgm.., source -> /Data/Maybe..[$T -> /Data/String..], reads -> /Data/Maybe..[$T -> /Data/List..[$T -> /Catln/ReadPath..]]))
+  # What reading a file produced: the [prgm] it holds, the [source] text it was read from, and what the reading [reads].
+  # [source] is absent for a page which is not one file, and so has no single text to show. [reads] is absent for a reading which cannot say what it looked at, which is a page read again every time — an importer should say, and answer with the file it opened.
+  # This is what an `#importer` declaration answers with. The compiler takes the program from here and desugars, typechecks and builds it exactly as it would a page it had parsed itself.
+data(/Catln/RawPrgm(imports -> /Data/List..[$T -> /Catln/AFileImport..], statements -> /Data/List..[$T -> /Catln/RawStatementTree..]))
+  # A page as it was written: the files it [imports] and the [statements] it holds.
+  # This is what reading a file produces, and so what an importer written in Catln answers with. The compiler takes it from there — desugaring it, typechecking it and building it exactly as it would a page it had parsed itself.
+data(/Catln/AFileImport(raw -> /Catln/RawExpr.., abs -> /Catln/RawExpr.., disp -> /Data/Maybe..[$T -> /Data/String..], calledDir -> /Data/Maybe..[$T -> /Data/String..], dir -> /Data/Maybe..[$T -> /Data/String..]))
+  # One `import` line: the expression it was written as ([raw]), the expression it resolved to ([abs]), and where that landed.
+  # [abs] is the identity of the page imported — two imports naming the same page are the same import, however each was written — and [raw] is what the file says, which is what the formatter writes back.
+  # [disp] is the path the page is displayed at, [calledDir] the directory the import was written in, and [dir] the directory the page itself sits in, which is what a relative import inside it resolves against.
+class(/Catln/RawExpr, [/Catln/RawExpr/RawCExpr(meta -> /Catln/Meta.., const -> /Catln/Constant..), /Catln/RawExpr/RawValue(meta -> /Catln/Meta.., name -> /Data/String..), /Catln/RawExpr/RawHoleExpr(meta -> /Catln/Meta.., hole -> /Catln/Hole..), /Catln/RawExpr/RawMacroValue(meta -> /Catln/Meta.., name -> /Data/String..), /Catln/RawExpr/RawApplyExpr(meta -> /Catln/Meta.., apply -> /Catln/RawApply..), /Catln/RawExpr/RawFmtStrExpr(meta -> /Catln/Meta.., name -> /Data/String.., str -> /Data/String..), /Catln/RawExpr/RawTheExpr(expr -> /Catln/RawExpr..), /Catln/RawExpr/RawAliasExpr(base -> /Catln/RawExpr.., alias -> /Catln/RawExpr..), /Catln/RawExpr/RawTupleApply(meta -> /Catln/Meta.., base -> /Catln/Pair..[$A -> /Catln/Meta.., $B -> /Catln/RawExpr..], args -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/Primitive/Boolean.., $B -> /Catln/RawObjArr..]]), /Catln/RawExpr/RawVarsApply(meta -> /Catln/Meta.., base -> /Catln/RawExpr.., vars -> /Data/List..[$T -> /Catln/RawObjArr..]), /Catln/RawExpr/RawContextApply(meta -> /Catln/Meta.., base -> /Catln/Pair..[$A -> /Catln/Meta.., $B -> /Catln/RawExpr..], args -> /Data/List..[$T -> /Catln/RawObjArr..]), /Catln/RawExpr/RawWhere(meta -> /Catln/Meta.., base -> /Catln/RawExpr.., cond -> /Catln/RawExpr..), /Catln/RawExpr/RawParen(expr -> /Catln/RawExpr..), /Catln/RawExpr/RawMethod(meta -> /Catln/Meta.., base -> /Catln/RawExpr.., value -> /Catln/RawExpr..), /Catln/RawExpr/RawList(meta -> /Catln/Meta.., values -> /Data/List..[$T -> /Catln/RawExpr..]), /Catln/RawExpr/RawTypeProp(meta -> /Catln/Meta.., base -> /Catln/RawExpr.., prop -> /Catln/TypeProperty..)])
+  # An expression as it was written, before the compiler reduces what was written to what it means.
+  # Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.
+  # So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this.
+data(/Catln/RawApply(terms -> /Data/List..[$T -> /Catln/RawApplyTerm..]))
+  # The terms of an `apply` statement, which is how a program written in Catln rewrites itself.
+class(/Catln/RawApplyTerm, [/Catln/RawApplyTerm/RATermDeep(expr -> /Catln/RawExpr..), /Catln/RawApplyTerm/RATermChild(expr -> /Catln/RawExpr..)])
+data(/Catln/RawObjArr(obj -> /Data/Maybe..[$T -> /Catln/RawExpr..], basis -> /Catln/ObjectBasis.., doc -> /Data/Maybe..[$T -> /Data/String..], annots -> /Data/List..[$T -> /Catln/RawExpr..], arr -> /Data/Maybe..[$T -> /Catln/Pair..[$A -> /Data/Maybe..[$T -> /Catln/RawExpr..], $B -> /Data/Maybe..[$T -> /Catln/RawExpr..]]], def -> /Data/Maybe..[$T -> /Catln/RawExpr..]))
+  # One thing written in a program, before desugaring: the [obj] written on the left and the [arr] it becomes.
+  # The written counterpart of [/Catln/ObjArr]. [arr] is a [Pair] of what it becomes and the type it was annotated with, either of which may be absent — a declaration writes the type and no value, a definition writes the value and no type, and a pattern writes neither.
+  # [def] is a default written for an argument, which nothing after desugaring carries.
+class(/Catln/TypeProperty, [/Catln/TypeProperty/TypePropProj(name -> /Data/String.., expr -> /Catln/RawExpr..), /Catln/TypeProperty/TypePropRel(name -> /Data/String.., expr -> /Catln/RawExpr..)])
+  # A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over.
+data(/Catln/RawStatementTree(statement -> /Catln/RawStatement.., children -> /Data/List..[$T -> /Catln/RawStatementTree..]))
+  # A statement and the statements written underneath it.
+  # Catln is written by indentation, so a page is a forest rather than a list: what is indented under a declaration belongs to it, and what is indented under an annotation is annotated by it.
+class(/Catln/RawStatement, [/Catln/RawStatement/RawDeclStatement(objArr -> /Catln/RawObjArr..), /Catln/RawStatement/RawBindStatement(objArr -> /Catln/RawObjArr..), /Catln/RawStatement/RawAnnot(annot -> /Catln/RawExpr..)])
+  # One statement of a page: a declaration, a bind written with `<-`, or an annotation.
+  # A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation.

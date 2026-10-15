@@ -1,0 +1,127 @@
+import "core/list.ct"
+import "core/webdoc.ct"
+
+
+module(Catln/Doc)
+  # # A display a library renders for itself
+    A [Show/Rendered] is a value together with the files that draw it. It is the third way a library
+    says what one of its types looks like, and the first that can say what one *does*.
+    The two before it each give up something. Membership of [DShow] hands the value itself to the
+    webdocs, which then need a component named after the type — so the display lives in the doc
+    server rather than in the library, which is what [Show/Html] is written against. An arm of
+    [/Catln/Doc/dshow] building a [Show/Html] keeps the display in the library, but what it builds is
+    markup and nothing more: a tree that folds when it is clicked needs a script, and markup laid
+    into a page brings none. A browser does not run a script written into markup handed to it, and an
+    arm joining strings together has nowhere to put one in any case.
+    So this carries both halves. The [value] is handed over whole, as membership would, and the
+    [assets] name the JavaScript and the CSS that turn it into a display. Both live in the library's
+    own directory beside the pages declaring the type, and the doc server fetches them without
+    knowing what they are for.
+  data(Show/Rendered[$V](value -> $V, assets -> /Data/List[$T -> String]))
+    # [value] is the value being shown, of whatever type the library is showing — a type parameter
+      and not [DShow], because a type with an arm of [/Catln/Doc/dshow] is by that fact not a member
+      of [DShow], and a field asking for one could not hold it.
+      [assets] are paths under the standard library, as an import writes them: `json/json.js` sits
+      beside `json/json.ct`. A `.js` is loaded as a module and asked for its `render(root, value)`;
+      a `.css` is laid on the page once. The doc server serves them and reads neither.
+      Nothing here says which asset renders which value. A library naming two scripts is a library
+      whose scripts sort that out between them, which is the same freedom it has over its own pages.
+
+  every(Show/Rendered.., isa= [/Catln/Doc/DShow])
+
+  # # A call shown as what it did, step by step
+    A [Show/Steps] is a call displayed as a row per step of it: what the step was handed, and what the
+    call made of that. It is the first display in this file that is of a call rather than of a value,
+    which is what a library reaches for when the interesting thing about one of its functions is not
+    what the function returns but how it got there.
+    The three displays above it each answer "what does this value look like". A mapping over a list
+    answers that with the list it produced, which is the one thing about it a reader could already see
+    without asking. What they cannot see is which element became which, and that is a shape — an
+    ordered correspondence — rather than a value, so it takes a display of its own.
+    A library writes one of these by writing an arm of [/Catln/Doc/dshowCall] whose argument is a call
+    of the function, as it writes an arm of [/Catln/Doc/dshow] whose argument is a value of a type.
+    Nothing else is needed and nothing marks the function: the arm is the whole declaration, and a
+    function with no such arm has no display of its own and is shown the way everything else is. See
+    [/Data/List] in @core/list-webdocs.ct@, which is where the list library's are written.
+    A show of a call PERFORMS the call. It is handed the call's own arguments and nothing else — not a
+    result computed elsewhere and passed in — so a step's output is what the arm works out for that
+    step. That is what makes it a display of the function rather than of something the function left
+    behind, and it is why an arm needs no cooperation from whatever is showing it.
+  data(Show/Step(index -> Integer, input -> String, output -> String))
+    # One row: which step it is, what that step was handed, and what came back. [index] counts from
+      zero, as a reader of a list counts.
+      The two ends are [String] and not the values themselves. Every display in this file carries what
+      it shows already rendered, and a row here holds a number beside two values of two types the row
+      knows nothing about — so a field holding both of them would be a list over [DShow], and
+      expanding that open class over a row's worth of unrelated types is the interaction
+      @core/data.ct@ already records going badly for [/Data/Option]. The arm building the row renders
+      each end through [/Data/toString], which is the same rendering a [#print] of either would get.
+      The cost is stated where it is paid: an arm can only show steps whose ends are [/Data/ToString],
+      and is written to match only those.
+  data(Show/Steps(steps -> /Data/List[$T -> Show/Step..]))
+    # The rows, in the order the call took them.
+      No columns and no headings: what the two ends of a step mean is the same question in every call
+      that has steps at all — this is what went in, this is what came out — so naming them per call
+      would be every arm writing the same two words. What draws the rows says it once.
+      Nor is there an arrow field, for the same reason. A row points from one end to the other by
+      being a row, and the glyph that says so belongs to whatever draws it.
+
+  every(Show/Steps.., isa= [/Catln/Doc/DShow])
+
+  data(Show/FoldStep(index -> Integer, acc -> String, input -> String, output -> String))
+    # One row of a fold: which step it is, the accumulator it was handed, the element it combined
+      into it, and the accumulator it handed on. The ends are rendered text for the reason
+      [Show/Step]'s are.
+  data(Show/FoldSteps(init -> String, steps -> /Data/List[$T -> Show/FoldStep..], result -> String, fromRight -> Boolean))
+    # A fold shown as what it did: its rows, in element order, between the accumulator it started
+      from and the one it ended with.
+      A second display rather than [Show/Steps] with a column more. A step of a fold has three ends
+      rather than two, and what makes it a fold is where each step's output goes: into the next
+      step's accumulator, and from the last step into the result. That is a line between rows, not
+      anything in one, so it takes a display that draws one.
+      [fromRight] says which way that line runs, since a fold from the right starts at the last
+      element and hands each output to the step before it. It is not a glyph: which arrow says so
+      belongs to whatever draws the rows, as it does for [Show/Steps]. The rows stay in element order
+      either way, which is also the order a debugger finds the calls that made them in.
+
+  every(Show/FoldSteps.., isa= [/Catln/Doc/DShow])
+
+  # # A call over the entries of a map
+    A step of a call over a map is a step over one of its entries, and an entry is a key as well as
+    the value the step was handed. The key is not the step's input, since the step was never handed
+    it — a mapping over a map's values applies its function to the value alone — but a row without it
+    does not say which entry it is, and the key is what a reader of a map looks an entry up by. So it
+    is a column of its own rather than folded into the input's text, where it would read as part of
+    what the step was handed.
+    These are [Show/Step] and [Show/FoldStep] with that column, and a second pair of displays rather
+    than a key field on the first pair: a key a list's rows would have to leave blank is a column
+    every list's table would draw empty. See [/Data/Map] in @core/map-webdocs.ct@, which writes them.
+  data(Show/EntryStep(index -> Integer, key -> String, input -> String, output -> String))
+    # One row over an entry: which step it is, the entry's key, what the step was handed, and what
+      came back. Rendered text on every end, for the reason [Show/Step]'s are.
+  data(Show/EntrySteps(steps -> /Data/List[$T -> Show/EntryStep..]))
+    # The rows, in the order the call took them, as [Show/Steps]'s are.
+
+  every(Show/EntrySteps.., isa= [/Catln/Doc/DShow])
+
+  data(Show/EntryFoldStep(index -> Integer, key -> String, acc -> String, input -> String, output -> String))
+    # One row of a fold over an entry: which step it is, the entry's key, the accumulator it was
+      handed, the value it combined into it, and the accumulator it handed on.
+  data(Show/EntryFoldSteps(init -> String, steps -> /Data/List[$T -> Show/EntryFoldStep..], result -> String, fromRight -> Boolean))
+    # A fold over a map's entries shown as [Show/FoldSteps] shows one over a list's elements: its rows
+      between the accumulator it started from and the one it ended with, and [fromRight] saying which
+      way the accumulator runs between them.
+
+  every(Show/EntryFoldSteps.., isa= [/Catln/Doc/DShow])
+
+# # Why this is not written in core/webdoc.ct
+  [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
+  @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
+  the cycle @core/result.ct@ measures at seven hundred seconds. This page sits where @core/result.ct@
+  sits for the same reason and by the same arrangement: it reaches @core/list.ct@ freely, and only
+  @core/main.ct@ reaches it.
+# # What a doc server does not do with these files
+  A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
+  read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited
+  while a doc server is running changes nothing until the reader loads the page again — the server
+  has not noticed, and the browser is holding the module it already fetched.

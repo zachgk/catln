@@ -1,0 +1,9 @@
+import "core"
+import "/repo/dir/test/Integration/code/artifacts/catln-tasks/Tasks.md"
+
+
+/Data/Note/Page(/title= "Query")
+  # A note may ask about the tasks of its vault, in a block of code fenced as tasks.
+  /Data/Note/#tasks(/query= "not done\nsort by priority\nlimit 3")
+  # The tasks it finds are the ones written in [Tasks](Tasks.md), which is a note of this vault. A query written
+    here finds nothing written in the vault beside this one.

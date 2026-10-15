@@ -1,0 +1,29 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A field of a data type may hold a list of a concrete element.
+        The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
+        they were written as. Nothing in the checked standard library gives a list-typed field to anything
+        but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+        Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
+        bracket literal builds, so that a failure says which of the two it is rather than only that a list
+        in a field did not work. And written as values declared and never defined, for the reason
+        [/Dated] is in @maybeField.ct@.
+        What is checked here is a field with nothing in it and a field with one thing in it. A field
+        holding TWO OR MORE is @listFieldMultiple.ct@, and one whose elements carry a field of their own,
+        two lists further down, is @listFieldNested.ct@ — both of which this file's cases are the floor
+        of, since a rule that reads a spine's element type from its head alone passes here and fails
+        there." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Shown as the values they are, with no display type standing in for them, as a task is." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Read back so that the values are evaluated and not only built: a field holding a list is
+        destructured and the list's length is what the run checks." )
+    )
+]

@@ -1,0 +1,22 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Two functions that recurse by calling each other. [even] and [odd] each answer from their own
+        base case at zero and otherwise hand the decremented argument to the other, so every answer but
+        the one at zero is produced by a bounce through the other function.
+        A test of mutual recursion has to run an argument of each parity. [odd(x= 4)] and [even(x= 4)]
+        bounce an even number of times and land back where they started, so they answer the same whether
+        the bounce happens or not; only [odd(x= 3)] and [even(x= 3)] tell a real recursion from a
+        function that silently answered from its own base case. That is the lesson
+        @test/Integration/code/caseGuardWrongBranch.ct@ records for a guarded [case] arm, in the shape a
+        guard on a declared function's own arms takes.
+        TODO: neither declaration should be necessary — the arms already say what they answer. Removing
+        them is what to pursue here; the file does not pass without them today." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
+        argument and on [even(x= 0)]'s 0 for an odd one." )
+    )
+]

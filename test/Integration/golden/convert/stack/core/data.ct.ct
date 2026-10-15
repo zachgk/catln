@@ -1,0 +1,71 @@
+import "core/primitives.ct"
+import "core/eq.ct"
+import "core/string.ct"
+
+
+module(Data)
+  # # Catln Core Data Types
+    These define the basic data types used in the language. [String] and what it does live in
+    [Data/string]; the conversions and collection types below build on it.
+  # ## Rendering as text
+  class(ToString)
+    # [ToString] is the class of types that can render themselves as a [String]. Defining
+      [toString] for a type makes its values printable and, more importantly, lets generic
+      containers such as [List] render their contents by rendering each element.
+
+  :$T.toString[$T -> /Data/ToString] -> String
+    # [toString] renders a value as a [String]. Each [ToString] type supplies its own arm; the
+      per-type definitions ([Integer], [Boolean], [ConsList], …) live alongside their types.
+
+  every(String, isa= [/Data/ToString])
+
+  :String.toString= this
+    # A [String] renders as itself.
+
+  > "hello"
+    >>> hello
+  every(Integer, isa= [/Data/ToString])
+
+  :Integer.toString= this.toStringBase(base= 10)
+    # An [Integer] renders in decimal.
+
+  > (1.toString == "1")
+    >>> True
+  > 42
+    >>> 42
+  > (0 - 7)
+    >>> -7
+  every(Float, isa= [/Data/ToString])
+
+  :Float.toString= floatText(parts= this.parts)
+    # A [Float] renders with the fewest decimal places that read back as it ([floatText]).
+
+  > 1.5
+    >>> 1.5
+  # ## Context
+  data(/Context[$V](value -> $V, .._))
+    # The context is used to represent state.
+  data(/ContextIn[$V](value -> $V, .._))
+    # The [ContextIn] is used to represent an input state in a function.
+  data(/ContextOut[$V](value -> $V, .._))
+    # The [ContextOut] is used to represent an output state in a function.
+
+  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $_V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T
+    #runtime("context")
+
+  # ## Collections
+  class(Option[$T], [$_T, None])
+    # [Option] defines a type that might have a value or [None].
+      It can be used to handle operations that are uncertain if they can produce a response.
+
+  # [Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare
+  # type-variable member interacts poorly with expanding the open [Functor] class during
+  # inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]
+  # collection and its [ConsList] implementation live in [Data/list.ct].
+  # The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and
+  #   [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided.
+  # class(Enum)
+  #   # [Enum] represents a type which can be enumerated.
+  #     It defines a single function [enum] which lists all of the values in the type.
+  #   enum[$T -> Enum] -> Set[$T]
+  #     # [enum] lists all of the values in a type.

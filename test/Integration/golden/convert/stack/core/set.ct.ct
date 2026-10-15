@@ -1,0 +1,183 @@
+import "core/map.ct"
+
+
+module(Data)
+  # # Sets
+    A [Set] is a collection of zero or more unique items. It is not ordered. [Set] is an interface:
+    it names the operations every set supports — membership, insertion, the set-algebra combinators —
+    without fixing how the items are stored. Concrete set types implement it; the [MapSet] below is
+    the one this file provides, and a future hash-backed set would be another. Because the operations
+    are declared on [Set] rather than on one concrete type, every set type reuses those declarations
+    just by being a [Set]. The [Set] interface lives here directly under [Data]; the [MapSet]
+    implementation and the operations live in the [Data/Set] namespace it opens.
+  class(Set[$T])
+
+# # The MapSet and the Set operations
+  Everything else set-related lives in [module(Data/Set)] — the namespace the [Set] class opens — so
+  the [MapSet] type, its constructor, and every operation sit under [/Data/Set].
+module(Data/Set)
+  # ## A Map-backed set
+    A [MapSet] is the simplest [Set]: it wraps a [Map] whose keys are the set's items and whose
+    values are the unit type [()] (a set only needs to record which items are present, not any value
+    against them). Every operation delegates to the underlying [Map] — membership is a key lookup,
+    insertion stores the item with a [()] value, and the item list is the map's keys. The items must
+    be [Ord] because the backing [Map] orders its keys.
+  class(MapSet[$K, $V], [MkSet[$K -> $_K, $V -> $_V](map -> /Data/Map[$K -> $_K, $V -> $_V])])
+
+  every(MapSet[$K -> $_K, $V -> $_V], isa= [/Data/Set[$T -> $_K]])
+    # Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
+      empty set is [empty].
+
+  # ## The empty set
+  empty -> MapSet
+    # [empty] is the set with no items — a [MapSet] wrapping the empty map ([Leaf]).
+  empty= MkSet(map= /Data/Map/Leaf)
+
+  # ## Membership
+  contains[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], item -> $E) -> Boolean
+    # [contains] reports whether [item] is in the set, by looking the item up as a key in the backing
+      map ([containsKey]).
+  contains(s= MkSet(map), item)= /Data/Map/containsKey(m= map, key= item)
+
+  # ## Insertion
+  add[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], item -> $E) -> /Data/Set[$T -> $_E]
+    # [add] inserts [item], returning the updated set (unchanged if the item is already present, since
+      a set holds each item at most once). It stores the item as a key with a [()] value.
+  add(s= MkSet(map), item)= MkSet(map= /Data/Map/insert(m= map, key= item, value= ()))
+
+  > contains(s= add(s= add(s= empty, item= 1), item= 2), item= 2)
+    >>> True
+  > contains(s= add(s= empty, item= 1), item= 9)
+    >>> False
+  # ## Size
+  size(s -> /Data/Set[$T -> $_E]) -> Integer
+    # [size] is the number of items in the set — the size of the backing map.
+  size(s= MkSet(map))= /Data/Map/size(m= map)
+
+  isEmpty(s -> /Data/Set[$T -> $_E]) -> Boolean
+    # [isEmpty] is [True] when the set has no items.
+  isEmpty(s)= size(s= s) == 0
+
+  # Adding the same item twice leaves the size at one — a set holds each item at most once.
+  > size(s= add(s= add(s= empty, item= 1), item= 1))
+    >>> 1
+  > isEmpty(s= empty)
+    >>> True
+  > isEmpty(s= add(s= empty, item= 1))
+    >>> False
+  # ## Items
+  elements(s -> /Data/Set[$T -> $_E]) -> /Data/List[$T -> $_E]
+    # [elements] lists the set's items. Since the backing map keeps its keys ordered, they come out in
+      ascending order.
+  elements(s= MkSet(map))= /Data/Map/keys(m= map)
+
+  > (elements(s= add(s= add(s= empty, item= 2), item= 1)) == [1, 2])
+    >>> True
+  # NOTE: rendering a set directly (a [ToString] instance so [> aSet] prints [{1, 2}]) is blocked by
+  #   the polymorphic-element rendering frontier: the generic [add] returns a set whose item type is
+  #   the abstract [Ord] bound rather than the concrete item type, and [Ord] is not [ToString]. The
+  #   same frontier stops [sorted]/[reversed] in [Data/list] from printing directly. Verify a set's
+  #   contents with [elements] and [operator==] (as above) instead.
+  # ## Removal
+  remove[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], item -> $E) -> /Data/Set[$T -> $_E]
+    # [remove] deletes [item] from the set (unchanged if it is absent), delegating to the backing
+      map's [remove].
+  remove(s= MkSet(map), item)= MkSet(map= /Data/Map/remove(m= map, key= item))
+
+  > contains(s= remove(s= add(s= add(s= empty, item= 1), item= 2), item= 1), item= 1)
+    >>> False
+  > contains(s= remove(s= add(s= add(s= empty, item= 1), item= 2), item= 1), item= 2)
+    >>> True
+  # ## Union
+  addAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
+    # [addAll] adds every item of a list into a set: a [foldl] over the items whose step [add]s one,
+      starting from [s]. The accumulator is the set being built, so it carries forward rather than
+      back, which is what makes this a left fold.
+  addAll(s, items)= /Data/List/foldl(lst= items, fn(acc, v)= add(s= acc, item= v), init= s)
+
+  union[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
+    # [union] is the set of items in either [a] or [b], built by adding every item of [b] into [a].
+  union(a, b)= addAll(s= a, items= elements(s= b))
+
+  > size(s= union(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)))
+    >>> 3
+  > contains(s= union(a= add(s= empty, item= 1), b= add(s= empty, item= 2)), item= 1)
+    >>> True
+  # ## Difference
+  removeAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
+    # [removeAll] removes every item of a list from a set — [addAll]'s mirror, with [remove] as the
+      step.
+  removeAll(s, items)= /Data/List/foldl(lst= items, fn(acc, v)= remove(s= acc, item= v), init= s)
+
+  difference[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
+    # [difference] is the set of items in [a] but not [b], built by removing every item of [b] from
+      [a].
+  difference(a, b)= removeAll(s= a, items= elements(s= b))
+
+  > size(s= difference(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= empty, item= 2)))
+    >>> 1
+  > contains(s= difference(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= empty, item= 2)), item= 1)
+    >>> True
+  > contains(s= difference(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= empty, item= 2)), item= 2)
+    >>> False
+  # ## Intersection
+  intersection[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
+    # [intersection] is the set of items in both [a] and [b] — [a]'s items kept when they are also in
+      [b]. That reading is the definition: [filter] keeps the elements of [a] that [b] contains, and
+      [addAll] collects them into a fresh set.
+  intersection(a, b)= addAll(s= empty, items= /Data/List/filter(lst= elements(s= a), fn(v)= contains(s= b, item= v)))
+
+  > size(s= intersection(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)))
+    >>> 1
+  > contains(s= intersection(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)), item= 2)
+    >>> True
+  > contains(s= intersection(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)), item= 1)
+    >>> False
+  # ## Subset
+  isSubsetOf[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> Boolean
+    # [isSubsetOf] is [True] when every item of [a] is in [b]. It asks [allBy] to run [contains]
+      over [a]'s items rather than walking them here: the question "is every item of this list in
+      that set" is [allBy] with [contains] as the predicate, so no set-specific list recursion is
+      needed. (This replaced a hand-written [allIn] that was the same walk inlined.)
+  isSubsetOf(a, b)= /Data/List/allBy(lst= elements(s= a), fn(v)= contains(s= b, item= v))
+
+  > isSubsetOf(a= add(s= empty, item= 1), b= add(s= add(s= empty, item= 1), item= 2))
+    >>> True
+  > isSubsetOf(a= add(s= add(s= empty, item= 1), item= 3), b= add(s= add(s= empty, item= 1), item= 2))
+    >>> False
+
+# # MapSet Eq membership (order-independent)
+  Makes a [MapSet] of [Ord] items a proper member of [Eq], so the generic [operator==] dispatches
+  through [equal]. Equality is ORDER-INDEPENDENT: two sets are equal when they hold the same items,
+  regardless of the insertion order that shaped their backing trees. [setEqual] decides it — equal
+  [size] and every item of one [isSubsetOf] the other (equal size plus one-directional containment
+  gives equality). Mirrors the [BinTree] [Eq] membership in [Data/map], and inherits its
+  order-independence from the map underneath.
+module(Data)
+  every(/Data/Set/MapSet[$K -> /Data/Algebra/Ord, $V -> $_V], isa= [/Data/Algebra/Eq])
+module(Data/Set)
+  setEqual[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> Boolean
+    # [setEqual] decides order-independent set equality: equal [size] and every item of [a] present
+      in [b] ([isSubsetOf]). Since the sizes are equal, one-directional containment is enough — [b]
+      can hold no extra item [a] lacks.
+  setEqual(a, b)= (size(s= a) == size(s= b)) && isSubsetOf(a= a, b= b)
+
+  data(SetEqv, isa= [/Data/Algebra/Eqv])
+    # [SetEqv] is the equivalence [eq] names for a [MapSet]: [setEqual], order-independent.
+module(Data/Algebra)
+  :/Data/Set/SetEqv.rel(a= /Data/Set/MkSet[$K -> /Data/Algebra/Ord](map@am), b= /Data/Set/MkSet(map@bm))= /Data/Set/setEqual(a= /Data/Set/MkSet(map= am), b= /Data/Set/MkSet(map= bm))
+
+  :/Data/Set/MkSet[$K -> /Data/Algebra/Ord](map).eq= /Data/Set/SetEqv
+
+  :/Data/Set/MkSet[$K -> /Data/Algebra/Ord](map@m).equal(other -> /Data/Set[$T -> /Data/Algebra/Ord])= /Data/Set/setEqual(a= /Data/Set/MkSet(map= m), b= other)
+module(Data/Set)
+  # Two sets with the same items are equal even when built in different orders; sets differing in an
+  #   item or in size are not.
+  > (add(s= add(s= empty, item= 1), item= 2) == add(s= add(s= empty, item= 2), item= 1))
+    >>> True
+  > (add(s= add(s= empty, item= 1), item= 2) == add(s= empty, item= 1))
+    >>> False
+  > (add(s= empty, item= 1) == add(s= empty, item= 2))
+    >>> False
+  > add(s= empty, item= 1).eq.rel(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 1))
+    >>> True

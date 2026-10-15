@@ -1,0 +1,193 @@
+import "core/primitives.ct"
+import "core/eq.ct"
+
+
+module(Data/Algebra)
+  # # Ordering
+    Ordering describes types whose values can be compared and sorted — numbers from smallest to
+    largest, strings alphabetically, and so on. It builds on equality from [Data/Algebra/eq]: just
+    as an [Eq] type names a canonical equivalence and derives [operator==], an [Ord] type names a
+    canonical ordering and derives [compareTo], and because comparing also decides equality every
+    [Ord] is an [Eq].
+    Ordering mirrors equivalence exactly. [Ordering] is the class of orderings (the analog of
+    [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
+    type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
+    follows, and the comparison operators [operator<] / [operator<=] / [operator>] / [operator>=]
+    follow from [compareTo] in turn.
+  # ## The comparison result
+    Comparing two values yields a [Comparison]: the left is [LessThan], [Equal] to, or
+    [GreaterThan] the right.
+  class(Comparison, [LessThan, Equal, GreaterThan])
+
+  # These predicates read a [Comparison] as a [Boolean].
+  :Comparison.isEq -> Boolean
+  :LessThan.isEq= False
+  :Equal.isEq= True
+  :GreaterThan.isEq= False
+
+  :Comparison.isLess -> Boolean
+  :LessThan.isLess= True
+  :Equal.isLess= False
+  :GreaterThan.isLess= False
+
+  :Comparison.isGreater -> Boolean
+  :LessThan.isGreater= False
+  :Equal.isGreater= False
+  :GreaterThan.isGreater= True
+
+  :Comparison.isLessEq -> Boolean
+  :LessThan.isLessEq= True
+  :Equal.isLessEq= True
+  :GreaterThan.isLessEq= False
+
+  :Comparison.isGreaterEq -> Boolean
+  :LessThan.isGreaterEq= False
+  :Equal.isGreaterEq= True
+  :GreaterThan.isGreaterEq= True
+
+  # [mkComparison] builds a [Comparison] from the two primitive answers "is less than" and "is
+  #   equal to". The per-type [compare] arms build their result with it.
+  mkComparison(lt -> Boolean, eq -> Boolean) -> Comparison
+  mkComparison(lt= True, eq= _)= LessThan
+  mkComparison(lt= False, eq= True)= Equal
+  mkComparison(lt= False, eq= False)= GreaterThan
+
+  # ## The Ordering class
+    An [Ordering] is the class of orderings, the analog of [Eqv]. Each object in the class is a
+    single ordering over some type and supplies [compare], which ranks two values of that type as
+    [LessThan], [Equal], or [GreaterThan].
+    TODO As for [Eqv], the type an [Ordering] ranks is not data and so is not a type parameter.
+    Once refinement types can state it, write it as what each ordering covers and drop the
+    [#invalid] below:
+    ```
+    :Ordering.over -> TypeSet
+    :Ordering.compare[$T](a -> $T, b -> $T) | this.over.superset($T) -> Comparison
+    :$T.ord[$T -> /Data/Algebra/Ord] -> /Data/Algebra/Ordering | $out.over.superset($T)
+    ```
+  class(Ordering)
+
+  :Ordering.compare[$T](a -> $T, b -> $T) -> Comparison
+    # [compare] is the ranking of an [Ordering]. It is a class declaration: every object in the
+      class defines it for the type it ranks, and it holds only for [a] and [b] of that type — the
+      type the object's own definitions of [compare] are written over. See the per-type instances
+      such as [IntOrdering] below, and [ord], which names the one for an [Ord] type.
+    #invalid
+
+  # ## Ordering is an equivalence
+    Comparing also decides equality, so every [Ordering] is an [Eqv]: two values are equivalent
+    exactly when they compare [Equal]. This behavioral edge supplies the abstract [rel] of [Eqv]
+    for every [Ordering] from its own [compare], so an [Ordering] instance needs only define
+    [compare] to also be a usable [Eqv].
+  every(Ordering, isa= [/Data/Algebra/Eqv])
+
+  :Ordering.rel(a, b)= this.compare(a= a, b= b).isEq
+
+  # ## The Ord class
+    An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
+    An [Ord] type names its canonical ordering with [ord], from which [compareTo] follows — the
+    direct parallel to an [Eq] type naming [eq] and deriving [equal].
+  class(Ord)
+
+  every(Ord, isa= [/Data/Algebra/Eq])
+  every(Number, isa= [/Data/Algebra/Ord])
+
+  # [ord] is the standard ordering for an [Ord] type; [compareTo] is the single method through which
+  #   values are compared.
+  :$T.ord[$T -> /Data/Algebra/Ord] -> /Data/Algebra/Ordering
+
+  :$T.compareTo[$T -> /Data/Algebra/Ord](other -> $T) -> Comparison
+
+  # The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each
+  #   numeric type derives from its ordering live alongside their types in [Data/Primitive]; the
+  #   class here defines only the abstract concept.
+  # ## Comparison operators
+    Every [Ord] type can be compared with [operator<], [operator<=], [operator>] and [operator>=],
+    each read from [compareTo]. They are declared once, on the class, so that every type's arms
+    belong to the one declaration. A type may also give arms of its own (the numeric types use
+    runtime primitives in [Data/Primitive]); those overlap the definitions here, and the derived
+    overlap tests check that the two agree.
+  (_ :: $T < _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T < r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isLess
+
+  (_ :: $T <= _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T <= r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isLessEq
+
+  (_ :: $T > _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T > r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isGreater
+
+  (_ :: $T >= _ :: $T)[$T -> /Data/Algebra/Ord] -> /Data/Primitive/Boolean
+  (l :: $T >= r :: $T)[$T -> /Data/Algebra/Ord]= l.compareTo(other= r).isGreaterEq
+
+  # ## Partial ordering
+    Some types can be compared but need not be totally ordered: two values may have no order
+    between them. [pcompare] yields a [PComparison], which is either an ordinary [Comparison] or
+    [NoOrdering]. (A [Comparison] is itself a [PComparison], so a total ordering is automatically a
+    partial one.)
+  class(PComparison, [Comparison, NoOrdering])
+  class(POrd)
+
+  # [isNoOrdering] / [isComparable] read a [PComparison] across all of its members, including
+  #   [NoOrdering], where the [Comparison]-only predicates above do not apply.
+  :PComparison.isNoOrdering -> Boolean
+  :LessThan.isNoOrdering= False
+  :Equal.isNoOrdering= False
+  :GreaterThan.isNoOrdering= False
+  :NoOrdering.isNoOrdering= True
+
+  :PComparison.isComparable -> Boolean
+  :LessThan.isComparable= True
+  :Equal.isComparable= True
+  :GreaterThan.isComparable= True
+  :NoOrdering.isComparable= False
+
+  # ## Partial ordering example: divisibility
+    The integers are partially ordered by divisibility: [a] precedes [b] when [a] divides [b].
+    Some pairs — like 2 and 3 — divide neither way and are incomparable, which an ordinary total
+    [Comparison] could not express. [mkDivComparison] turns the two divisibility tests into the
+    partial result, and [pcompare] is the partial comparison.
+  mkDivComparison(aDivB -> Boolean, bDivA -> Boolean) -> PComparison
+  mkDivComparison(aDivB= True, bDivA= True)= Equal
+  mkDivComparison(aDivB= True, bDivA= False)= LessThan
+  mkDivComparison(aDivB= False, bDivA= True)= GreaterThan
+  mkDivComparison(aDivB= False, bDivA= False)= NoOrdering
+
+  pcompare(a -> Integer, b -> Integer) -> PComparison
+  pcompare(a, b)= mkDivComparison(aDivB= /Data/Primitive/intEq(l= b % a, r= 0), bDivA= /Data/Primitive/intEq(l= a % b, r= 0))
+
+  # ## Examples
+    [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
+    compare [Equal] exactly when they are equal.
+  > 2.compareTo(other= 3).isLess
+    >>> True
+  > 3.compareTo(other= 3).isEq
+    >>> True
+  > 4.compareTo(other= 3).isGreater
+    >>> True
+  > 2.compareTo(other= 3).isLessEq
+    >>> True
+  # The divisibility ordering distinguishes ordered pairs from incomparable ones.
+  > pcompare(a= 2, b= 6).isComparable
+    >>> True
+  > pcompare(a= 2, b= 3).isNoOrdering
+    >>> True
+  # ## Laws of ordering
+    Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
+    arbitrary members of the type that instance ranks ([$T]): reflexivity (every value compares
+    [Equal] to itself), antisymmetry (a < b exactly when b > a) and transitivity (a < b and b < c
+    imply a < c, as a material implication).
+    TODO The laws are set aside while [compare] is [#invalid], for the reason the [Eqv] laws in
+    [Data/Algebra/eq] are. Restore them once [Ordering.over] can be stated:
+    ```
+    testOrdReflexive[$O -> Ordering[$T]](o -> $O, t -> $T) =
+      #test
+      #assert(test= o.compare(a= t, b= t).isEq)
+      0
+    testOrdAntisymmetric[$O -> Ordering[$T]](o -> $O, x -> $T, y -> $T) =
+      #test
+      #assert(test= o.compare(a= x, b= y).isLess == o.compare(a= y, b= x).isGreater)
+      0
+    testOrdTransitive[$O -> Ordering[$T]](o -> $O, x -> $T, y -> $T, z -> $T) =
+      #test
+      #assert(test= ~(o.compare(a= x, b= y).isLess && o.compare(a= y, b= z).isLess) || o.compare(a= x, b= z).isLess)
+      0
+    ```

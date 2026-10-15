@@ -1,0 +1,9 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Repro: the EXPLICIT-parameter twin of boxUnwrap — a declared [$U] referenced inside a
+        nested application (Box[$T -> $U]) must bind from the argument's content the same way the
+        implicit $_T spelling does. unwrap(b= Box(v= 5)) should reduce to 5 at eval, not leak the
+        raw call tuple into equal's dispatch." )
+    )
+]

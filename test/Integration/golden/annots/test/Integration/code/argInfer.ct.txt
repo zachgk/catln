@@ -1,0 +1,14 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Infers an undeclared argument's type from how it is used. `a` is never annotated,
+        yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
+        so the compiler infers `isOne(a -> Integer)` and augments the written definition
+        with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.
+        TODO: the intended form is `a == 1`, inferring the Integer requirement directly
+        through Eq. That does not yet reach Integer: generic Eq equality joins the operand
+        types up to `∀Eq` rather than unifying the shared type variable `$T` (from
+        `operator==(l -> $T)(r -> $T)[$T -> Eq]`) down to Integer. `1 + a` is a stepping
+        stone until shared-type-variable unification lands for Eq." )
+    )
+]

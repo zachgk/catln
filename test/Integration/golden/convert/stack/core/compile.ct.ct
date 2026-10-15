@@ -1,0 +1,146 @@
+import "core/primitives.ct"
+import "core/data.ct"
+import "core/webdoc.ct"
+
+
+module(Catln)
+  # # Catln Core Compiling Types and Annotations
+  # ## IO
+  data(IO)
+    # [IO] is the type used to encapsulate interactions with the outside world.
+      This can include reading/writing from files and interacting over sockets.
+      The [IO] type is also special because it is the only truly impure type in the language.
+      Files and external values can change unexpectedly.
+      But, all of the impurity is managed in this single type.
+
+  :IO.exit(val -> Integer) -> IO
+    # [exit] will immediately terminate the process and return [val] as the status value.
+    #runtime("ioExit")
+
+  :IO.println(msg -> String) -> IO
+    # [println] will print the [msg] to the standard output along with a newline character.
+    #runtime("println")
+
+  # ## Core Annotations
+    The core annotations are all of the annotations used by the compiler and the web docs program.
+  annot(#md(text -> String))
+    # [#md] is used to provide markdown text.
+      It is the standard format used for comments.
+      Typically, it is written with the syntax sugar of "# commentText".
+  annot(#name(name -> String))
+    # A [#name] is used to differentiate multiple definitions of the same function.
+  annot(#else)
+    # [#else] is used to create an else arrow (which could also be called an otherwise arrow).
+      An else arrow takes effect only if no other arrows match.
+      It's domain can be considered altered to have no overlap with other domains.
+      It can be used to create "default" behaviors that are overridden and fallthrough logic.
+  annot(#noCore)
+    # [#noCore] is used not include the core library as an automatic dependency of a file
+  annot(#runtime(k -> String))
+    # [#runtime] is used to mark a runtime declaration. The key [k] is used to match the declaration to the equivalent function in the evaluator runtime.
+  annot(#importer(name -> String, extensions -> String))
+    # [#importer] marks a declaration as a way of reading files written in another syntax.
+      The declaration it is written on takes the [path] of a file and answers with a
+      [/Catln/ImportResult], which is the program that file holds and what reading it read. An
+      `import` written with [name] at its head is read with it, and so is a file whose extension is
+      one of the [extensions].
+      This is what makes the import system extensible without editing the compiler: a syntax the
+      compiler has never heard of is a declaration somebody wrote, on a page that a file imports
+      before it uses it.
+      [extensions] is written as the extensions separated by spaces, without their dots. A list
+      would be the natural shape and is refused for the reason the whole of this file is written the
+      way it is: every program reaches this page through the annotations above, so a list-typed
+      argument here would give it a path to @core/list.ct@. See @core/result.ct@, which measures what
+      one such edge costs.
+  annot(#argStart)
+    # [#argStart] is used internally to annotate the first argument in a parenthesis.
+  annot(#argEnd)
+    # [#argEnd] is used internally to annotate the last argument in a parenthesis.
+  annot(#assert(test -> Boolean))
+    # [#assert] will check if the [test]ed value is true.
+      The test is used only when testing a function, and is not included as part of the actual build.
+      It can be used to illustrate properties which are known about a particular value in a function or ways to verify the correctness of a value.
+      It is used during property testing, manual testing, and arrow testing.
+      If you call a function during testing that features an assertion, that assertion will still be checked.
+  annot(#assert(test -> Boolean, msg -> String))
+    # The [#assert] can also include a [msg] to be displayed for debugging purposes.
+  annot(#print(p -> DShow))
+    # The print annotation is used to display computed values inside webdocs.
+      It can be used to avoid manually writing computed values into code, display temporary values, and visualizations.
+  annot(#print(p -> DShow, result -> String))
+    # The [#print] can also include a [result] holding the expected serialized value of [p].
+      It is written and checked as a golden test by [catln test]; use [catln test --update] to populate it.
+  annot(#debug(d -> DShow))
+    # [#debug] records [d] every time the definition it is written on is evaluated.
+      It is the same idea as a [#print] aimed at a different reader. A [#print] is a value shown to
+      whoever opens the page, computed once for the page and displayed there; a [#debug] is a value
+      shown to whoever is watching a run, computed as often as the run reaches it. So it is written
+      on a definition and fires per call, the way an [#assert] does, and displays nothing on the page
+      it is written in.
+      The records of a run are collected into one list, in the order they were recorded, however many
+      definitions and however many calls they came from. That order is what makes them readable as a
+      trace of the run rather than as a set of unrelated values, and it is why they are one list
+      rather than one list per definition.
+      What reads that list is up to whoever asked for the run. The debugger shows it beside the tree
+      of what the run evaluated, each record pointing at the call it was recorded in.
+  annot(#test)
+    # [#test] is used to mark that a function or value is a test.
+      All tests are treated as private and are not expected to be called.
+      The compiler executes all of the test during it's test phase to verify the [#assert]s inside of them.
+      The tests can contain no arguments and it will be executed.
+      If the test has arguments, the test engine will attempt to auto-generate inputs to the function and will automatically run the test for all of the generated inputs.
+  annot(#example)
+    # [#example] is used to mark a function as an example.
+      The goal of an example is to provide a reference that shows how a function or type is commonly used.
+      The examples are treated as private and are not expected to be called.
+      They are also specially highlighted in the webdocs.
+      Examples are still typechecked during compilation and should contain valid code.
+      For code which is not worth including, it can be replaced with a hole.
+      Holes found within examples are safe to leave in and are not treated as a warning.
+  annot(#eximport(name -> String))
+    # [#eximport] is used to mark exported items from Haskell modules.
+      When a Haskell module has an explicit export list, this annotation indicates which items are re-exported.
+  annot(#invalid)
+    # [#invalid] marks a declaration whose promise does not hold over its whole domain. Something
+      the declaration is written over cannot yet be stated precisely, so it promises more than its
+      definitions keep: the promise holds only on part of the domain, and the declaration's
+      documentation comment should say which part. Whoever relies on the arrow does so at their own
+      risk.
+      An [#invalid] declaration is not checked for being fulfilled by its definitions, and the
+      tests [catln test] derives from a declaration's promise are not derived from it, since an
+      invalid promise would fail them. It still bounds its definitions as any declaration does.
+  annot(#refine)
+    # [#refine] marks a declaration as a refinement: a narrower return-type claim for a function
+      that overlaps an existing definition, checked by the derived refinement-agreement tests.
+  annot(#proof)
+    # [#proof] marks a [#refine] declaration as one to prove rather than test.
+      Instead of generating inputs, [catln test] checks every definition the refinement overlaps
+      with the type checker. The definition is typechecked again with its input narrowed to the
+      overlap, and its result must be convertible to the claimed return type. Calls back into the
+      function being proven read the claim itself, as an induction hypothesis.
+      Value predicates such as [Integer_nonNeg] can not be proven yet.
+      For an [#exist] function the definitions need not each prove the claim: it is proven when the
+      definitions which do prove it together cover the refinement's input.
+  annot(#exist)
+    # [#exist] marks a declaration's arrows as existentially quantified.
+      An arrow is unique by default: wherever two definitions overlap they must give the same
+      result, which the derived overlap-agreement tests check. The definitions of an [#exist]
+      arrow are instead alternatives, any one of which is a valid result, so they are not tested
+      for agreement, and a [#refine] of it holds when some definition establishes it.
+
+  # ## Build-in Type Macros
+  (_ ?-> _) -> Boolean
+    #runtime("arrExists")
+
+  # ## Result Classes
+    What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
+    so declaring it here would make this file reach @core/list.ct@ — and this file is one every
+    program reaches, through the annotations above. See @core/result.ct@ for what that costs.
+  data(/Catln/classPlaceholder[$T])
+    # [classPlaceholder] is used internally to represent a class with no elements.
+      It ensures that expanding an empty class does not produce the empty set.
+
+  class(ThenElse, [Then, Else])
+    fromBool(v -> Boolean) -> ThenElse
+    fromBool(v= /Data/Primitive/True)= Then
+    fromBool(v= /Data/Primitive/False)= Else

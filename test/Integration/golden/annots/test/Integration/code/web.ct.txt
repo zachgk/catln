@@ -1,0 +1,19 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Tests using a custom build type [www].
+        It also prints the result of the build in an iframe." )
+    )
+,
+    ( "/Catln/#print"
+    , TupleVal /Catln/CatlnResult
+        ( /files = TupleVal /Data/List/Cons
+            ( /head = TupleVal /Catln/BuildFile
+                ( /path = "index.html"
+                , /contents = "<html><body>web test</body></html>"
+                )
+            , /tail = TupleVal /Data/List/Nil
+            )
+        )
+    )
+]

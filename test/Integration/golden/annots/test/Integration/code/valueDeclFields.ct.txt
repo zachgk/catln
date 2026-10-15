@@ -1,0 +1,28 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "The shape a note's page is, with the fields a task carries.
+        [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
+        nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
+        beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
+        at once, on the one type.
+        Not nested under a page here, though a note nests its checkboxes under one: a declaration written
+        under another inherits its path, so at the root of a program the two names run together, where a
+        note's do not because they are written in a module. That a note's tasks nest correctly is already
+        held by the goldens @obsidian.ct@ reads.
+        One tag rather than several, because what this is for is the three field shapes on one type rather
+        than the length of any of them. A field holding two or more is
+        @test/Integration/code/listFieldMultiple.ct@." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Shown as the value it is, with no display type standing in for it, as a task is." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Read back so that the values are evaluated and not only built: both fields are destructured,
+        the list counted and the [/Data/Maybe] compared." )
+    )
+]

@@ -1,0 +1,41 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "The JSON in /repo/dir/test/Integration/code/config.json. Write `/JsonFile/repo/dir/test/Integration/code/configq2Ejson` to reach it." )
+    )
+,
+    ( "/Catln/#print"
+    , TupleVal /Catln/Doc/Show/Rendered
+        ( /value = TupleVal /Data/Json/Object
+            ( /entries = TupleVal /Data/List/Cons
+                ( /head = TupleVal /Data/Json/Member
+                    ( /value = TupleVal /Data/Json/Str
+                        ( /value = "catln" )
+                    , /key = "name"
+                    )
+                , /tail = TupleVal /Data/List/Cons
+                    ( /head = TupleVal /Data/Json/Member
+                        ( /value = TupleVal /Data/Json/Bool( /value = TupleVal /Data/Primitive/False )
+                        , /key = "stable"
+                        )
+                    , /tail = TupleVal /Data/List/Cons
+                        ( /head = TupleVal /Data/Json/Member
+                            ( /value = TupleVal /Data/Json/Number
+                                ( /value = 1.5 )
+                            , /key = "version"
+                            )
+                        , /tail = TupleVal /Data/List/Nil
+                        )
+                    )
+                )
+            )
+        , /assets = TupleVal /Data/List/Cons
+            ( /head = "json/json.js"
+            , /tail = TupleVal /Data/List/Cons
+                ( /head = "json/json.css"
+                , /tail = TupleVal /Data/List/Nil
+                )
+            )
+        )
+    )
+]

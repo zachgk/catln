@@ -11,14 +11,18 @@ import           CRes
 import           CtConstants             (escapedPathName)
 import           CtService
 import           Data.Graph              (graphFromEdges)
-import           Data.List               (isSuffixOf)
+import           Data.List               (intercalate, isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy          as T
 import           Eval
-import           Eval.Common             (SSF (..), getMockIOOutput, newMockIO)
+import           Eval.Common             (EvalMetaDat, SSF (..),
+                                          TestResult (..), Val, getMockIOOutput,
+                                          newMockIO)
 import           Eval.SyntaxTreeTests    (syntaxTreeTests)
+import           Eval.Testing            (runTestDesc)
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.Types         (nameStr)
 import           Syntax.Ct.Formatter     (formatRootPrgm)
 import           Syntax.Ct.Parser.Syntax (PPrgmGraphData)
 import           Syntax.Parsers          (mkDesCanonicalImportStr)
@@ -45,6 +49,9 @@ goldenTreebuildDir = "test/Integration/golden/tbuild"
 
 goldenConvertDir :: String
 goldenConvertDir = "test/Integration/golden/convert"
+
+goldenAnnotsDir :: String
+goldenAnnotsDir = "test/Integration/golden/annots"
 
 goldenWriteEnv :: String
 goldenWriteEnv = "GOLDEN_TEST_WRITE"
@@ -94,18 +101,38 @@ runGoldenTest goldenType goldenDir _fileNameStr =
       let p = goldenDir ++ T.unpack (T.replace (T.pack ".ct") ".txt" (T.pack relPath))
       in if ".txt" `isSuffixOf` p then p else p ++ ".txt")
 
--- | Golden test for non-Catln files: formats the converted RawPrgm as Catln
--- source and compares/writes it to test/Integration/golden/convert.
-runConvertGoldenTest :: FileImport -> PPrgmGraphData -> (String -> IO ()) -> IO ()
-runConvertGoldenTest fileName rawPrgms step =
-  case graphLookup fileName rawPrgms of
-    Nothing -> assertFailure $ printf "File not in raw prgm graph: %s" (show $ impRaw fileName)
-    Just prgm ->
-      runGoldenTestGen "convert"
-        (\cwd p -> T.unpack $ withoutCwd cwd $ T.pack $ formatRootPrgm p)
-        (\relPath -> goldenConvertDir ++ relPath ++ ".ct")
-        (graphFromEdges [(prgm, fileName, [])])
-        step
+-- | Golden test of every page reached, as the Catln it was read as: each raw program formatted as
+-- Catln source and compared with test/Integration/golden/convert.
+--
+-- Every page and not the entry page alone, because what a reader wrote is only visible here. A
+-- note of a vault is reached by the fixture importing the vault, and its desugared golden shows
+-- the declarations it makes but not the imports its links became or the writing its comments
+-- carry; the Catln it was read as shows all three.
+runConvertGoldenTest :: PPrgmGraphData -> (String -> IO ()) -> IO ()
+runConvertGoldenTest =
+  runGoldenTestGen "convert"
+    (\cwd p -> T.unpack $ withoutCwd cwd $ T.pack $ formatRootPrgm p)
+    (\relPath -> goldenConvertDir ++ relPath ++ ".ct")
+
+-- | Golden test of what the entry page's annotations evaluate to, compared with
+-- test/Integration/golden/annots: each annotation by its name beside the value it displays as.
+--
+-- This is where a display is pinned. A @#calendar@, a note's @#tasks@ query or a @#prgmGraph@
+-- evaluates to a value carrying what it found, which no golden of the program records and no
+-- @main@ can reach; written down here, a change to what a display finds is a golden that moves.
+-- A page with no annotations writes no golden, but a golden already written is always compared,
+-- so a page whose annotations stop evaluating is noticed rather than read as having none.
+runAnnotsGoldenTest :: FileImport -> [(Expr EvalMetaDat, Val)] -> (String -> IO ()) -> IO ()
+runAnnotsGoldenTest fileName annots step = do
+  cwd <- getCurrentDirectory
+  let relPath = drop (length cwd) (fromJust (impDisp fileName))
+  goldenExists <- doesFileExist (goldenAnnotsDir ++ relPath ++ ".txt")
+  when (goldenExists || not (null annots)) $
+    runGoldenTestGen "annots"
+      (\cwd' _ -> T.unpack $ withoutCwd cwd' $ pShowNoColor [(nameStr (exprPath a), v) | (a, v) <- annots])
+      (\rel -> goldenAnnotsDir ++ rel ++ ".txt")
+      (graphFromEdges [((), fileName, [])])
+      step
 
 runTest :: Bool -> IO CTSS -> String -> TestTree
 runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
@@ -121,7 +148,7 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
     -- what is shown is the raw program formatted back out — so a page whose text parses to something
     -- other than what it says is a golden that moves.
     when runGolden $ do
-      lift $ runConvertGoldenTest fileName rawPrgm step
+      lift $ runConvertGoldenTest rawPrgm step
 
     prgm <- ctssGetFrom ssfDes fileName ctss
 
@@ -165,8 +192,19 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
       return ()
 
     lift $ step "Eval Annots..."
-    _ <- getEvalAnnots ctss fileName
-    return ()
+    annots <- getEvalAnnots ctss fileName
+    when runGolden $ do
+      lift $ runAnnotsGoldenTest fileName annots step
+
+    -- The tests the page itself wrote -- a @#test@, a derived agreement test of its own arms -- run
+    -- as `catln test` would run them. Derived from the page alone ('getTestResultsOf'): the
+    -- library's own tests are the Stack suite's to run, once, rather than every fixture's.
+    lift $ step "Derived tests..."
+    tests <- getTestResultsOf fileName ctss
+    results <- lift $ mapM runTestDesc tests
+    let failures = [r | r <- results, not (trPassed r)]
+    unless (null failures) $
+      lift $ assertFailure $ intercalate "\n" [printf "Derived test %s failed:\n%s" (trName r) (fromMaybe "" (trNotes r)) | r <- failures]
   case failOnErrorNotes res of
     CRes notes _ -> do
       unless (null notes) $ putStrLn $ prettyCNotes notes
@@ -192,17 +230,29 @@ runPyTest = runTest
 standardTests :: IO [String]
 standardTests = findCt testDir
 
+-- | Pages named to the suite as imports rather than as files: the notes of the fixture vaults
+-- whose own annotations are worth evaluating. A fixture importing a vault reaches its notes, but
+-- only the entry page's annotations are evaluated, so a note's @#tasks@ query is answered only
+-- when the note is the entry. An import is a name the compiler accepts as it accepts a file name
+-- ('Syntax.Parsers.mkRawImportStr'), so a note can be named directly.
+pageTests :: [String]
+pageTests = map (\note -> "obsidian(\"test/Integration/code/artifacts/" ++ note ++ "\")")
+  [ "catln-tasks/Query.md"
+  , "catln-test/Tasks.md"
+  ]
+
 integrationTests :: IO TestTree
 integrationTests = do
   ctFiles <- standardTests
   pyFiles <- findPy testDir
   jsonFiles <- findJson testDir
-  let allFiles = ctFiles ++ pyFiles ++ jsonFiles
+  let allFiles = ctFiles ++ pyFiles ++ jsonFiles ++ pageTests
   return $ withResource (ctssBaseFiles testCtssConfig allFiles) (const $ return ()) $ \getCtss ->
     testGroup "Integration" [
       testGroup "Tests" $ map (runTest True getCtss) ctFiles,
       testGroup "Python" $ map (runPyTest True getCtss) pyFiles,
       testGroup "Json" $ map (runTest True getCtss) jsonFiles,
+      testGroup "Pages" $ map (runTest True getCtss) pageTests,
       testGroup "Debugger" [syntaxTreeTests getCtss]
     ]
 

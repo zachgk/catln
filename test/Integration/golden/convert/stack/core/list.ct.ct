@@ -1,0 +1,387 @@
+import "core/cons.ct"
+import "core/string.ct"
+import "core/ord.ct"
+import "core/functor.ct"
+import "core/monad.ct"
+
+
+# # The ConsList and the List operations
+  Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
+  so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
+  rather than loose at the top of [/Data].
+module(Data/List)
+  # ## Bracket syntax
+    The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
+    Nil)))], and [[]] is [Nil]. The examples throughout this file use it.
+  # ## Length
+  :/Data/List.length -> Integer
+    # The number of items in a list, found by walking to the end. It is declared on [List] (any
+      list has a length) and implemented here for the [ConsList] constructors.
+  :Nil.length= 0
+  Cons(head, tail).length= 1 + tail.length
+  :/Data/List.length -> Integer_nonNeg
+    # A length is never negative — a refinement the derived agreement tests check against the
+      definition above.
+    #refine
+
+  > [10, 20, 30].length
+    >>> 3
+  # ## Joining
+  append[$T](l -> ConsList[$T -> $_T], r -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]
+    # [append] is the items of [l] followed by the items of [r].
+  append(l= Nil, r)= r
+  append(l= Cons(head, tail), r)= Cons(head= head, tail= append(l= tail, r= r))
+
+  > /Data/List/append(l= [1, 2], r= [3])
+    >>> [1, 2, 3]
+  # ## Folds
+    [foldr] collapses a list from the right: every [Cons] becomes a step function and the [Nil]
+    becomes an initial value, so [foldr(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= b), v=
+    a)]. The accumulator carries its own type variable, so the answer need not be the element type —
+    the examples fold [Integer]s into an [Integer] and into a [String]. The step is passed onward as
+    [fn(acc, v)= fn(acc= acc, v= v)] rather than bare, the re-wrap every higher-order argument needs
+    (see [Data/bind]).
+  foldr[$A, $B](lst -> /Data/List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+  foldr(lst= Nil, fn(acc, v), init)= init
+  foldr(lst= Cons(head, tail), fn(acc, v), init)= fn(acc= foldr(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
+
+  > /Data/List/foldr(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)
+    >>> 6
+  > /Data/List/foldr(lst= [], fn(acc, v)= acc + v, init= 0)
+    >>> 0
+  > /Data/List/foldr(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
+    >>> sxx
+  # [foldl] collapses from the left instead, carrying the accumulator forward as it walks, so
+    [foldl(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= a), v= b)]. The two agree when the
+    step is associative and differ when it is not, which the [String] examples show.
+  foldl[$A, $B](lst -> /Data/List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+  foldl(lst= Nil, fn(acc, v), init)= init
+  foldl(lst= Cons(head, tail), fn(acc, v), init)= foldl(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= fn(acc= init, v= head))
+
+  > /Data/List/foldl(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)
+    >>> 6
+  > /Data/List/foldl(lst= [], fn(acc, v)= acc + v, init= 0)
+    >>> 0
+  > /Data/List/foldl(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
+    >>> sxx
+  # ## Summing
+  sum(lst -> /Data/List[$T -> Integer]) -> Integer
+    # [sum] adds a list of [Integer]s: [foldr] with addition, starting from zero.
+  sum(lst)= foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
+
+  > /Data/List/sum(lst= [1, 2, 3])
+    >>> 6
+  > /Data/List/sum(lst= [])
+    >>> 0
+  # ## Universal and existential quantifiers
+  all(lst -> /Data/List[$T -> Boolean]) -> Boolean
+    # [all] is [True] when every element of a list of [Boolean]s is [True]. The empty list is
+      vacuously [True], and each element is [and]ed with the result for the rest.
+  all(lst)= foldr(lst= lst, fn(acc, v)= acc && v, init= /Data/Primitive/True)
+
+  > /Data/List/all(lst= [True, True])
+    >>> True
+  > /Data/List/all(lst= [False])
+    >>> False
+  any(lst -> /Data/List[$T -> Boolean]) -> Boolean
+    # [any] is [True] when at least one element is [True] — the mirror of [all], with [or] and a
+      [False] base case for the empty list.
+  any(lst)= foldr(lst= lst, fn(acc, v)= acc || v, init= /Data/Primitive/False)
+
+  > /Data/List/any(lst= [True])
+    >>> True
+  > /Data/List/any(lst= [False, False])
+    >>> False
+  # ## Quantifying over a predicate
+    [all] and [any] read a list that already holds [Boolean]s. [allBy] and [anyBy] are the
+    higher-order forms: they take the list and a predicate, and ask the question of every element.
+    Both are written by [fmap]ping the predicate across the list and handing the resulting
+    [Boolean] list to [all]/[any] — the elements never have to be [Boolean] themselves, so these
+    work on a list of anything. The predicate is passed onward as [fn(v)= fn(v= v)] rather than
+    bare; a bare [fn] does not typecheck (see [Data/bind] for the same re-wrap).
+  allBy[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
+    # [allBy] is [True] when every element satisfies the predicate, and vacuously [True] for the
+      empty list.
+  allBy(lst, fn(v))= all(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))
+
+  anyBy[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
+    # [anyBy] is [True] when at least one element satisfies the predicate, and [False] for the
+      empty list.
+  anyBy(lst, fn(v))= any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))
+
+  > /Data/List/allBy(lst= [1, 2, 3], fn(v)= v > 0)
+    >>> True
+  > /Data/List/allBy(lst= [1, 2, 3], fn(v)= v > 2)
+    >>> False
+  > /Data/List/allBy(lst= [], fn(v)= v > 2)
+    >>> True
+  > /Data/List/anyBy(lst= [1, 2, 3], fn(v)= v > 2)
+    >>> True
+  > /Data/List/anyBy(lst= [1, 2, 3], fn(v)= v > 9)
+    >>> False
+  > /Data/List/anyBy(lst= [], fn(v)= v > 0)
+    >>> False
+  # ## Membership
+  elem[$A -> /Data/Algebra/Eq](lst -> /Data/List/ConsList[$T -> $_A], item -> $A) -> Boolean
+    # [elem] is [True] when the list holds an element equal to [item]. It is [anyBy] with equality
+      as the predicate, so it works for any [Eq] element type rather than one concrete one.
+  elem(lst, item)= anyBy(lst= lst, fn(v)= v == item)
+
+  > /Data/List/elem(lst= [1, 2, 3], item= 2)
+    >>> True
+  > /Data/List/elem(lst= [1, 2, 3], item= 9)
+    >>> False
+  > /Data/List/elem(lst= [], item= 1)
+    >>> False
+  # ## Filtering
+    [filter] keeps the elements a predicate accepts, in their original order. It is written over
+    [mmap]: each element becomes a one-element list where the predicate holds and the empty list
+    where it does not, and [mmap] concatenates those — so a rejected element contributes nothing.
+    [keepIf] is local to the definition because it is an artifact of that encoding rather than an
+    operation a caller would want.
+  filter[$A](lst -> ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> ConsList[$T -> $_A]
+  filter(lst, fn(v)) =
+    keepIf(v -> $_A, keep -> Boolean) -> ConsList[$T -> $_A]
+    keepIf(v, keep= /Data/Primitive/True)= [v]
+    keepIf(v, keep= /Data/Primitive/False)= []
+
+    /Data/Monad/mmap(m= lst, fn(v)= keepIf(v= v, keep= fn(v= v)))
+
+  > /Data/List/filter(lst= [1, 2, 3, 4], fn(v)= v > 2)
+    >>> [3, 4]
+  > /Data/List/filter(lst= ["ab", "c", "de"], fn(v)= v == "c")
+    >>> [c]
+  > /Data/List/filter(lst= [], fn(v)= v > 2)
+    >>> []
+  # ## Counting matches
+  count[$A](lst -> ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Integer
+    # [count] is how many elements satisfy the predicate: [filter] followed by [length].
+  count(lst, fn(v))= filter(lst= lst, fn(v)= fn(v= v)).length
+
+  > /Data/List/count(lst= [1, 2, 3, 4], fn(v)= v > 2)
+    >>> 2
+  > /Data/List/count(lst= [], fn(v)= v > 2)
+    >>> 0
+  # ## Missing combinators
+    TODO: [concat] — [mmap(m= lst, fn(v)= v)] — still does not compile, and it now fails
+    DIFFERENTLY from how it used to. It exhausts memory during TYPE INFERENCE: [catln epochs] on a
+    file declaring it passes 8GB of RSS in 70s and never reports, where the same file calling
+    [mmap] ordinarily finishes in 36s at 1.0GB over 804 epochs. It previously failed at EVALUATION
+    with [catln: <<loop>>]. Since type inference runs before tree building, any diagnosis resting
+    on a tree-build-time structure cannot explain the current failure and needs re-deriving.
+    The shape to isolate is that [concat] makes the element dimension the same shape as the
+    container — [fn(v)= v] forces both the monad variable and the element variable to [ConsList].
+  # ## Reversing
+  reversed(lst -> /Data/List) -> /Data/List
+    # [reversed] returns a list with its items in the opposite order. It is a [foldl] with [Cons]
+      as the step: walking from the left, each item is prepended to an accumulator that starts
+      empty, so the first item ends up last.
+  reversed(lst)= foldl(lst= lst, fn(acc, v)= Cons(head= v, tail= acc), init= Nil)
+
+  > /Data/List/reversed(lst= [1, 2, 3])
+    >>> [3, 2, 1]
+  > /Data/List/reversed(lst= [])
+    >>> []
+  # ## Sorting
+  sorted[$T -> /Data/Algebra/Ord](lst -> /Data/List[$T -> $_T]) -> /Data/List[$T -> $_T]
+    # [sorted] returns the items of an [Ord] list in ascending order using insertion sort: it sorts
+      the [tail], then [insert]s the [head] into the sorted result. [insert] walks the already
+      sorted list and places [x] before the first item it is not greater than — the [x <= head]
+      decision is a guard on [insert]'s own arms, so no separate step function holds it.
+  sorted(lst= Nil)= Nil
+  sorted(lst= Cons[$T -> /Data/Algebra/Ord](head@h, tail@t)) =
+    insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
+    insert(x, lst= Nil)= Cons(head= x, tail= Nil)
+    insert(x, lst= Cons[$T -> /Data/Algebra/Ord](head, tail)) | x.compareTo(other= head).isLessEq= Cons(head= x, tail= Cons(head= head, tail= tail))
+    insert(x, lst= Cons[$T -> /Data/Algebra/Ord](head, tail)) else = Cons(head= head, tail= insert(x= x, lst= tail))
+    insert(x= h, lst= sorted(lst= t))
+
+  > /Data/List/sorted(lst= [3, 1, 2])
+    >>> [1, 2, 3]
+  > /Data/List/sorted(lst= [5, 4, 4, 1])
+    >>> [1, 4, 4, 5]
+  # ## Counting ranges
+  range(stop -> Integer) -> /Data/List[$T -> Integer]
+    # [range] builds the counting list [[0, 1, ..., stop - 1]]. It counts up from zero with
+      [rangeFrom], whose guard carries the [i < stop] decision: while the counter is below [stop] it
+      prepends the counter and recurses, and otherwise it stops with [Nil]. A [stop] of zero or less
+      yields the empty list.
+  range(stop) =
+    rangeFrom(i -> Integer, stop -> Integer) -> ConsList[$T -> Integer]
+    rangeFrom(i, stop) | i < stop= Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
+    rangeFrom(i, stop) else = Nil
+    rangeFrom(i= 0, stop= stop)
+
+  > /Data/List/range(stop= 3)
+    >>> [0, 1, 2]
+  > /Data/List/range(stop= 0)
+    >>> []
+  # ## Rendering as text
+  every(/Data/List[$T -> /Data/ToString], isa= [/Data/ToString])
+    # A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+      rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+      [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+      implement it.
+
+  :Nil.toString= "[]"
+  :Cons[$T -> /Data/ToString](head@h, tail@t).toString =
+    # [restToString] renders the items after the first, each with a leading ", " separator, so the
+      opening item carries no comma and the commas fall between items. It destructures its own
+      [head]/[tail], so the enclosing arm renames its fields to [h]/[t] to avoid the collision.
+    restToString(lst -> ConsList[$T -> /Data/ToString]) -> String
+    restToString(lst= Nil)= ""
+    restToString(lst= Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
+
+    "[" ++ h.toString ++ restToString(lst= t) ++ "]"
+
+  > [1, 2, 3]
+    >>> [1, 2, 3]
+  # ## Structural comparison helper
+  consThen(first -> /Data/Algebra/Comparison, second -> /Data/Algebra/Comparison) -> /Data/Algebra/Comparison
+    # [consThen] sequences the two comparisons a lexicographic ordering needs: the heads decide the
+      order unless they are [Equal], in which case the tails' comparison ([second]) decides. The
+      [compareTo] instance at the end of this file uses it.
+  consThen(first= /Data/Algebra/Equal, second)= second
+  consThen(first= /Data/Algebra/LessThan, second)= /Data/Algebra/LessThan
+  consThen(first= /Data/Algebra/GreaterThan, second)= /Data/Algebra/GreaterThan
+
+# # ConsList Functor instance
+  A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
+  list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
+  Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
+  [fmap] generalises.
+module(Data)
+  every(/Data/List/ConsList[$T -> $_T], isa= [/Data/Functor])
+module(Data/List)
+  # [fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]
+  # instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is
+  # written under the declaration's absolute name so the open [Functor] interface need not be
+  # totally covered while still resolving for [fmap] calls on a [ConsList].
+  /Data/Functor/fmap(lst= Nil, fn(v))= Nil
+  /Data/Functor/fmap(lst= Cons(head, tail), fn(v))= Cons(head= fn(v= head), tail= /Data/Functor/fmap(lst= tail, fn(v)= fn(v= v)))
+
+  > /Data/Functor/fmap(lst= [1, 2, 3], fn(v)= v + 1)
+    >>> [2, 3, 4]
+  # The identity leaves a list as it was, and two increments composed are an increment of two.
+  #   Each is compared with [operator==] on the result, as a program importing this page would.
+  > (/Data/Functor/fmap(lst= /Data/List/Cons(head= 1, tail= /Data/List/Nil), fn(v)= v) == /Data/List/Cons(head= 1, tail= /Data/List/Nil))
+    >>> True
+  > (/Data/Functor/fmap(lst= /Data/List/Cons(head= 1, tail= /Data/List/Nil), fn(v)= v + 1) == /Data/List/Cons(head= 2, tail= /Data/List/Nil))
+    >>> True
+  > (/Data/Functor/fmap(lst= /Data/Functor/fmap(lst= /Data/List/Cons(head= 1, tail= /Data/List/Nil), fn(v)= v + 1), fn(v)= v + 1) == /Data/List/Cons(head= 3, tail= /Data/List/Nil))
+    >>> True
+
+# # ConsList Eq membership
+  Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+  dispatches through the [equal] method. Two lists are equal when they match constructor for
+  constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
+  idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
+  [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
+  the head comparison on the elements typechecks.
+  As for every [Eq] type, the comparison is also an equivalence relation that [eq] names
+  ([ConsEqv]), and [equal] repeats it for the reason [/Data/Maybe]'s does.
+module(Data)
+  every(/Data/List/ConsList[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+module(Data/List)
+  data(ConsEqv, isa= [/Data/Algebra/Eqv])
+    # [ConsEqv] compares two [ConsList]s of [Eq] elements constructor for constructor.
+module(Data/Algebra)
+  :/Data/List/ConsEqv.rel(a= /Data/List/Nil, b= /Data/List/Nil)= True
+  :/Data/List/ConsEqv.rel(a= /Data/List/Nil, b= /Data/List/Cons(head, tail))= False
+  :/Data/List/ConsEqv.rel(a= /Data/List/Cons(head, tail), b= /Data/List/Nil)= False
+  :/Data/List/ConsEqv.rel(a= /Data/List/Cons[$T -> /Data/Algebra/Eq](head@ah, tail@at), b= /Data/List/Cons(head@bh, tail@bt))= (ah == bh) && at.equal(other= bt)
+
+  :/Data/List/Nil.eq= /Data/List/ConsEqv
+  :/Data/List/Cons[$T -> /Data/Algebra/Eq](head, tail).eq= /Data/List/ConsEqv
+
+  :/Data/List/Nil.equal(other= /Data/List/Nil)= True
+  :/Data/List/Nil.equal(other= /Data/List/Cons(head, tail))= False
+  :/Data/List/Cons(head, tail).equal(other= /Data/List/Nil)= False
+  :/Data/List/Cons[$T -> /Data/Algebra/Eq](head@ah, tail@at).equal(other= /Data/List/Cons(head@bh, tail@bt))= (ah == bh) && at.equal(other= bt)
+module(Data/List)
+  # Equal lists compare equal element-wise, and lists that differ in an element or in length do
+  #   not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work.
+  > ([1, 2] == [1, 2])
+    >>> True
+  > ([1, 2] == [1, 3])
+    >>> False
+  > ([1, 2] == [1])
+    >>> False
+  > [1, 2].eq.rel(a= [1, 2], b= [1, 2])
+    >>> True
+
+# # ConsList Ord membership
+  Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+  constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
+  the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
+  every [Ord] is an [Eq], which the [Eq] membership already supplies).
+  As for every [Ord] type, the ordering is also an [Ordering] that [ord] names ([ConsOrdering]),
+  and [compareTo] repeats it for the reason [equal] does.
+module(Data)
+  every(/Data/List/ConsList[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
+module(Data/List)
+  data(ConsOrdering, isa= [/Data/Algebra/Ordering])
+    # [ConsOrdering] orders two [ConsList]s of [Ord] elements lexicographically.
+module(Data/Algebra)
+  :/Data/List/ConsOrdering.compare(a= /Data/List/Nil, b= /Data/List/Nil)= /Data/Algebra/Equal
+  :/Data/List/ConsOrdering.compare(a= /Data/List/Nil, b= /Data/List/Cons(head, tail))= /Data/Algebra/LessThan
+  :/Data/List/ConsOrdering.compare(a= /Data/List/Cons(head, tail), b= /Data/List/Nil)= /Data/Algebra/GreaterThan
+  :/Data/List/ConsOrdering.compare(a= /Data/List/Cons[$T -> /Data/Algebra/Ord](head@ah, tail@at), b= /Data/List/Cons(head@bh, tail@bt))= /Data/List/consThen(first= ah.compareTo(other= bh), second= at.compareTo(other= bt))
+
+  :/Data/List/Nil.ord= /Data/List/ConsOrdering
+  :/Data/List/Cons[$T -> /Data/Algebra/Ord](head, tail).ord= /Data/List/ConsOrdering
+
+  :/Data/List/Nil.compareTo(other= /Data/List/Nil)= /Data/Algebra/Equal
+  :/Data/List/Nil.compareTo(other= /Data/List/Cons(head, tail))= /Data/Algebra/LessThan
+  :/Data/List/Cons(head, tail).compareTo(other= /Data/List/Nil)= /Data/Algebra/GreaterThan
+  :/Data/List/Cons[$T -> /Data/Algebra/Ord](head@ah, tail@at).compareTo(other= /Data/List/Cons(head@bh, tail@bt))= /Data/List/consThen(first= ah.compareTo(other= bh), second= at.compareTo(other= bt))
+module(Data/List)
+  # Lists order lexicographically: the first differing element decides, and a prefix is ordered
+  #   before its extension ([Nil] before any [Cons]).
+  > [1].compareTo(other= [2]).isLess
+    >>> True
+  > [1].compareTo(other= [1, 2]).isLess
+    >>> True
+  > [1, 2].compareTo(other= [1, 2]).isEq
+    >>> True
+  > [1].ord.compare(a= [1], b= [1, 2]).isLess
+    >>> True
+
+# # ConsList Monad instance
+  [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
+  the results are appended in order.
+module(Data/List)
+  # [append] joins two lists in order. It is a [foldr] with [Cons] as the step, starting from [b]
+  # rather than [Nil], so the items of [a] are prepended onto [b] from the right.
+  append(a -> ConsList[$T -> $_T], b -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]
+  append(a, b)= foldr(lst= a, fn(acc, v)= Cons(head= v, tail= acc), init= b)
+module(Data)
+  every(/Data/List/ConsList[$T -> $_T], isa= [/Data/Monad])
+module(Data/List)
+  # The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the
+  # [fmap] instance above, it is written under the declaration's absolute name so the open [Monad]
+  # class is not required to be totally covered here.
+  /Data/Monad/mmap(m= Nil, fn(v))= Nil
+  /Data/Monad/mmap(m= Cons(head, tail), fn(v))= append(a= fn(v= head), b= /Data/Monad/mmap(m= tail, fn(v)= fn(v= v)))
+
+  # [append] joins two lists end to end.
+  > /Data/List/append(a= [1], b= [2])
+    >>> [1, 2]
+  # [mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the
+  #   results are appended in order, so a function ignoring its element repeats a constant list and
+  #   one reading it can grow the list. Binding the empty list yields the empty list.
+  > /Data/Monad/mmap(m= [1, 2], fn(v)= [0])
+    >>> [0, 0]
+  > /Data/Monad/mmap(m= [1, 2], fn(v)= [v, v])
+    >>> [1, 1, 2, 2]
+  > /Data/Monad/mmap(m= [], fn(v)= [v])
+    >>> []
+  # [pure] for [ConsList] builds a singleton list; the call site's expected list type selects
+  # this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
+  /Data/Monad/pure[$M -> /Data/List/ConsList[$T -> $_T]](v)= Cons(head= v, tail= Nil)
+
+  pureConsInt(v -> Integer) -> /Data/List/Cons..[$T -> Integer]
+  pureConsInt(v)= /Data/Monad/pure(v= v)
+
+  > pureConsInt(v= 1)
+    >>> [1]

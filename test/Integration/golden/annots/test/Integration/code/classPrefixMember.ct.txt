@@ -1,0 +1,32 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A class's name may be a prefix of its members' names.
+        A note's checkbox is read as one of two things, and the two are named under the name of the class
+        they are both members of, so that what a checkbox is read as is one name with two readings under
+        it rather than two unrelated names. That makes the class name a strict prefix of every member
+        name, which nothing else in the checked standard library does — and a relative name is matched by
+        its suffix, so a member named under its own class is exactly the case where the two could be taken
+        for each other.
+        Written in both of the forms a class is written in: [/Item], joined to member by member as a note
+        joins its readings to [/Catln/Doc/DShow], and [/Thing], which lists its members and so can carry a
+        method every member answers.
+        [/Thing] lists its members with their fields written out, which is the only way a class carrying a
+        method may list them — a class listing members declared apart from it does not seal over their
+        fields, and the method is then never covered. See
+        @test/Integration/disabled/classMemberByName.ct@." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "The values a page of such members declares, written out and never defined — the shape a note's
+        page holds a checkbox as." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "What a [/Thing] comes to, which each member answers for itself. Declared on the class, so the
+        two definitions below are two arms of one method rather than two methods sharing a name — and
+        the class listing its members is what makes the two of them cover it." )
+    )
+]

@@ -1,0 +1,11 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A recursion down a long string.
+        [lenChars] makes one call per character, and each call chooses between its two arms by the
+        value it is given. That choice looks at the value only as deep as the arms' patterns do, so a
+        call costs the same whatever is left of the string. Were it to read the whole of what is left,
+        as it once did, the walk over these four hundred characters would take the better part of an
+        hour rather than a moment, which is what this is here to notice." )
+    )
+]

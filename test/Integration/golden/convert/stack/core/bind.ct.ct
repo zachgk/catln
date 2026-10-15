@@ -1,0 +1,35 @@
+import "core/functor.ct"
+import "core/monad.ct"
+
+
+module(Data)
+  # # Bind
+    The bind operator [<-] is syntactic sugar that runs the rest of a function in a sub-context.
+    A statement [x <- m] followed by the remaining body [rest] desugars to
+    [bindap(m= m, fn(v)= cont(arg= v))], where [cont(arg@x)= rest] is a sub function holding the
+    rest of the body (a bind-using function needs a declared return type to pin the result).
+    [bindap] has three arms, which are alternatives ([#exist]):
+    - [mmap] passes each element of a [Monad] and flattens the monads the continuation returns.
+    - [fmap] passes each element of a [Functor] and collects what the continuation returns.
+    - [ap] passes the [Functor] itself, whole.
+    An arm is ruled out where the continuation cannot take what it passes ([x + 1] takes no
+    [Maybe], so not [ap]) or where its result cannot be what the call must reach (a continuation
+    returning a [Maybe] into a declared [Maybe[$T -> Integer]] cannot be [fmap], which would nest
+    it). Where more than one arm remains, any of them may be chosen.
+  # [mmap] arm: a [Monad]. The continuation maps an element to a monad of the same kind; the result
+  # is flattened back into one monad (the monadic bind).
+  bindap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+    #exist
+  bindap[$M -> /Data/Monad[$T -> $_A], $A](m -> $M, fn(v -> $_A))= /Data/Monad/mmap(m= m, fn(v)= fn(v= v))
+
+  # [ap] arm: a [Functor] passed whole. The continuation consumes the container itself rather than
+  # its elements.
+  bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_F) -> $_B) -> $B
+    #exist
+  bindap[$F -> /Data/Functor[$T -> $_A]](m -> $F, fn(v -> $_F))= fn(v= m)
+
+  # [fmap] arm: a [Functor]. The continuation maps an element to a plain value; the result is a
+  # container of the mapped elements.
+  bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+    #exist
+  bindap[$F -> /Data/Functor[$T -> $_A], $A](m -> $F, fn(v -> $_A))= /Data/Functor/fmap(lst= m, fn(v)= fn(v= v))

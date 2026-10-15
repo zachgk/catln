@@ -61,7 +61,7 @@ import           Eval.Runtime.System     (realIOHandle)
 import           Eval.SyntaxTree         (withRunSyntax)
 import           Eval.Testing            (TestCheck (StaticCheck),
                                           TestDesc (..), evalPrints, evalTest,
-                                          runTestDesc)
+                                          evalTestOf, runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
                                           awaitSettled, covered, startWatcher,
                                           watchReads, withPending)
@@ -1390,6 +1390,14 @@ getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
   ctssDeriveTests ctss base
 
+-- | The tests one page wrote, derived from that page alone and decided in the program it reaches
+-- ('Eval.Testing.evalTestOf'). What a test of a single page asks for, where 'getTestResults' is
+-- what a run of every test of the program asks for.
+getTestResultsOf :: FileImport -> CTSS -> CResT IO [TestDesc]
+getTestResultsOf prgmName ctss = do
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
+  ctssDeriveTestsOf (Just prgmName) ctss base
+
 -- | Every test of a program: those the evaluator runs ('evalTest') and the proofs of its @#proof@
 -- refinements, which the type checker decides.
 --
@@ -1397,9 +1405,20 @@ getTestResults ctss = do
 -- page's 'ssfDes' — rather than from what the first solve inferred of it. The two are matched by
 -- the meta of the definition's object, which typechecking keeps.
 ctssDeriveTests :: CTSS -> GraphData TPrgm FileImport -> CResT IO [TestDesc]
-ctssDeriveTests ctss@(CTSS ssmv _) tprgms = do
+ctssDeriveTests = ctssDeriveTestsOf Nothing
+
+-- | 'ctssDeriveTests', or with a page named the tests that page wrote: derived from it alone and
+-- decided in the whole program given, as 'Eval.Testing.evalTestOf' derives them. A proof is the
+-- page's when the definition it is placed with is. The evaluation is handed every page the service
+-- holds either way, since which tests exist is decided over the whole program.
+ctssDeriveTestsOf :: Maybe FileImport -> CTSS -> GraphData TPrgm FileImport -> CResT IO [TestDesc]
+ctssDeriveTestsOf scope ctss@(CTSS ssmv _) tprgms = do
   pages <- lift $ ctssPagesOf ctss Nothing
-  evaluated <- evalTest pages tprgms
+  evaluated <- maybe (evalTest pages) (evalTestOf pages) scope tprgms
+  let ownIds = case scope of
+        Nothing   -> Nothing
+        Just name -> S.fromList . map oaTestId . flatObjectMap . prgmObjMap <$> graphLookup name tprgms
+  let owned d = maybe True (S.member (tdOwnerId d)) ownIds
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   dess <- asCResT $ mapM (\(_, name, _) -> requireComputed (ssfDes =<< graphLookup name ctssData)) (graphToNodes tprgms)
   let preDefs = H.fromList [(getMetaId $ getExprMeta $ oaObjExpr oa, oa) | des <- dess, oa <- flatObjectMap (prgmObjMap des)]
@@ -1417,7 +1436,7 @@ ctssDeriveTests ctss@(CTSS ssmv _) tprgms = do
   -- existential one's is a single test of the definitions together, placed with the refinement.
   let obligationTest (ProveEach proof@RefinementProof{rpName, rpDef}) = proofTest rpName rpDef (preDefOf proof >>= \preDef -> proveRefinement prgm preDef proof)
       obligationTest (ProveAny name refine required proofs) = proofTest name refine (proveAnyRefinement prgm name refine required [(preDefOf proof, proof) | proof <- proofs])
-  return $ evaluated ++ map obligationTest (refinementProofs prgm)
+  return $ evaluated ++ filter owned (map obligationTest (refinementProofs prgm))
 
 -- | The tests a page wrote, run and kept.
 --

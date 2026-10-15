@@ -1,0 +1,31 @@
+import "core/functor.ct"
+
+
+module(Data)
+  # # Monads
+    A [Monad] is a [Functor] with a way to sequence computations: [mmap] (the monadic bind,
+    written [>>=] in some languages) applies a function that itself produces a new monadic value
+    to the value(s) held inside one, and flattens the result back into a single monad.
+  class(Monad[$T])
+    # A [Monad] extends the container idea of a [Functor] with sequencing.
+      Its single operation [mmap] chains a value-to-monad function across the elements it holds.
+
+# # The mmap and pure operations
+  [mmap] and [pure] live in [module(Data/Monad)] — the namespace the [Monad] class opens — so they
+  sit under [/Data/Monad] rather than loose at the top of [/Data].
+module(Data/Monad)
+  # [mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies
+  # its own definition in a separate module (so the open [Monad] class is not required to be
+  # totally covered here). It mirrors [fmap]'s shape, but where [fmap]'s function returns a bare
+  # element ([$_B]), [mmap]'s function returns a whole monad of the same kind ([$M]) which [mmap]
+  # then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe].
+  mmap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+
+  # ## Pure
+    [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
+    a bare value — so nothing about the arguments selects an instance: the call site's expected
+    result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
+    resolved concrete expected type (such as a declared return type) where it calls [pure]. Each
+    instance supplies its own definition in a separate module (see the [Maybe] instance in
+    [Data/Maybe]).
+  pure[$M -> /Data/Monad[$T -> $_A], $A](v -> $_A) -> $M

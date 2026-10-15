@@ -1,0 +1,191 @@
+import "core/list.ct"
+import "core/render.ct"
+
+
+# # The list library's displays of its own calls
+  A display of a call says what a function did, where a display of a value says what the function left
+  behind. @core/list.ct@'s combinators are the case for it: each of them returns a list, and a list is
+  the one thing about the call a reader could already see. What they cannot see is the correspondence —
+  which element became which, which was kept, what each step added to the accumulator — and that is the
+  whole of what the combinator does.
+  Each is declared by an arm of [/Catln/Doc/dshowCall] whose argument is a call of the function. There is
+  no annotation marking the function and no name derived from it: the arm is the declaration, as an arm
+  of [/Catln/Doc/dshow] is for a type. The arms here are bounded to [/Data/List/ConsList] so they are the
+  list's displays and not every container's — a [/Data/Maybe] mapped over looks nothing like a table of
+  rows and would say so in a page of its own.
+# # Why this is a page of its own
+  The arms name [/Catln/Doc/dshowCall], so this page reaches @core/webdoc.ct@, and @core/list.ct@ is
+  reached by nearly every page there is. Writing them there would put the doc server's vocabulary
+  underneath the list library. So this sits where @core/render.ct@ and @core/result.ct@ sit and by the
+  same arrangement: it reaches @core/list.ct@ freely, and nothing in the library reaches it.
+module(Data/List)
+  # [fmap] over a [ConsList] shown as the table of what each element became: a row per element, the
+    element on the left and the result of applying [fn] to it on the right.
+    This is the display of the call and not of the list it returns. The recursion that @core/list.ct@'s
+    instance is written as is the generic display — a call per element, each holding a shorter list than
+    the one above it — and it is a display of how the definition is written rather than of what it does.
+    The table is the second, and is what a reader opening a mapping wants.
+    Bounded to elements that are [/Data/ToString], and to an [fn] whose results are, since a row holds
+    both as text (see [/Catln/Doc/Show/Step]). A mapping over elements or to results that render no
+    text does not match this arm and is shown the way it was before there was one.
+  # A mapping over a [ConsList] of things that render text, to things that render text, is a call with
+    a display, which is what joining [/Catln/Doc/DShowCall] says. The bounds on the elements and on
+    [fn] are the whole of which mappings this is claimed for: any other mapping is not a member and
+    keeps the display every other call gets.
+  every(/Data/Functor/fmap(lst -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= /Data/Functor/fmap(lst -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString))= /Catln/Doc/Show/Steps(steps= fmapSteps(lst= lst, fn(v)= fn(v= v), index= 0))
+
+  # The rows of that table, walking the list and applying [fn] to each element as it goes.
+    It applies [fn] rather than being handed what [fn] already returned. An arm of
+    [/Catln/Doc/dshowCall] is given the call's arguments and nothing else, so working the outputs out is
+    the show's own job — which is also what lets the arm above say what a mapping does without the
+    debugger arranging anything for it.
+    [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
+    sits, and the rows are wanted numbered from the front.
+  fmapSteps(lst -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> /Data/ToString, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
+  fmapSteps(lst= Nil, fn(v), index)= Nil
+  fmapSteps(lst= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= fmapSteps(lst= tail, fn(v)= fn(v= v), index= index + 1))
+
+  # [/Data/Monad/mmap] over a [ConsList] shown as the same table as a mapping: a row per element, the
+    element on the left and the list [fn] made of it on the right.
+    The result of the call is those lists joined end to end, and joined they no longer say which
+    element contributed what — or, where an element contributed the empty list, that it was there at
+    all. The table keeps each element beside its own contribution.
+    This is also how a [filter] is shown. [filter] is a single call of [mmap] whose function makes a
+    one-element list of what it keeps and the empty list of what it drops, so the call of [mmap]
+    inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
+    beside the empty list. The filter is not given a display of its own, since it would be this one
+    again with nothing added.
+    Bounded as the mapping is, to elements and to lists [fn] makes that are [/Data/ToString], and to
+    [ConsList] so a [/Data/Maybe] bound over keeps the display of any other call.
+  # A binding over a [ConsList] of things that render text is a call with a display.
+  every(/Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= /Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v) -> /Data/ToString))= /Catln/Doc/Show/Steps(steps= mmapSteps(m= m, fn(v)= fn(v= v), index= 0))
+
+  # The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does.
+  mmapSteps[$A -> /Data/ToString](m -> ConsList[$T -> $_A], fn(v -> $_A) -> /Data/ToString, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
+  mmapSteps(m= Nil, fn(v), index)= Nil
+  mmapSteps(m= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= mmapSteps(m= tail, fn(v)= fn(v= v), index= index + 1))
+
+  # [foldl] over a [ConsList] shown as the steps it took: a row per element, each with the
+    accumulator it was handed, the element it combined in, and the accumulator it handed on to the
+    next row. The table starts at [init] and ends at the fold's result.
+    The fold returns only the last of those accumulators, and every one before it is the whole of
+    what the fold did. Bounded as the mapping is to elements that are [/Data/ToString], and to an
+    [init] and an [fn] whose results are as well, which is what an accumulator's cell can hold.
+  # A left fold over a [ConsList] of things that render text is a call with a display.
+  every(/Data/List/foldl(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= /Data/List/foldl(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString))= foldlShow(steps= foldlSteps(lst= lst, fn(acc, v)= fn(acc= acc, v= v), acc= init, index= 0), init= init.toString)
+
+  # The display around a left fold's rows. Its result is the last row's output, read off the rows
+    rather than worked out by folding again: the rows already hold every accumulator the fold made.
+    A fold over nothing hands [init] straight on.
+  foldlShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> /Catln/Doc/Show/FoldSteps..
+  foldlShow(steps, init)= /Catln/Doc/Show/FoldSteps(init= init, steps= steps, result= lastOutput(steps= steps, prev= init), fromRight= /Data/Primitive/False)
+
+  # The output of the last row, or [prev] where there are none.
+  lastOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], prev -> String) -> String
+  lastOutput(steps= Nil, prev)= prev
+  lastOutput(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail), prev)= lastOutput(steps= tail, prev= output)
+
+  # The rows of a left fold, carrying the accumulator forward as [foldl] does.
+  foldlSteps[$B -> /Data/ToString](lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
+  foldlSteps(lst= Nil, fn(acc, v), acc, index)= Nil
+  foldlSteps(lst= Cons(head, tail), fn(acc, v), acc, index)= Cons(head= /Catln/Doc/Show/FoldStep(index= index, acc= acc.toString, input= head.toString, output= fn(acc= acc, v= head).toString), tail= foldlSteps(lst= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), index= index + 1))
+
+  # [foldr] over a [ConsList] shown the same way, with the accumulator running the other way: the
+    last element is combined into [init] first, and each row hands its output to the row above it.
+    The rows are still one per element in element order, which is the order the fold's calls are
+    nested in and so the order a debugger finds them in.
+  # A right fold over a [ConsList] of things that render text is a call with a display.
+  every(/Data/List/foldr(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= /Data/List/foldr(lst -> ConsList[$T -> /Data/ToString], fn(acc, v) -> /Data/ToString, init -> /Data/ToString))= foldrShow(steps= foldrSteps(lst= lst, fn(acc, v)= fn(acc= acc, v= v), init= init, index= 0), init= init.toString)
+
+  # The display around a right fold's rows, whose result is the FIRST row's output: the head is the
+    element combined last.
+    Read off the rows for the reason [foldlShow] gives.
+  foldrShow(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> /Catln/Doc/Show/FoldSteps..
+  foldrShow(steps, init)= /Catln/Doc/Show/FoldSteps(init= init, steps= steps, result= firstOutput(steps= steps, init= init), fromRight= /Data/Primitive/True)
+
+  # The output of the first row, or [init] where there are none.
+  firstOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..], init -> String) -> String
+  firstOutput(steps= Nil, init)= init
+  firstOutput(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail), init)= output
+
+  # The rows of a right fold, worked out the way the fold runs: from the last element back to the
+    first, carrying the accumulator as [foldlSteps] does. The list is first turned around onto
+    [stack], and each row is then consed on in front of the rows already made, so they come out in
+    element order with the fold's order still in the accumulators. [index] counts down from the
+    last element's.
+  foldrSteps[$B -> /Data/ToString](lst -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
+  foldrSteps(lst, fn(acc, v), init, index)= foldrWalk(stack= onto(lst= lst, stack= Nil), fn(acc, v)= fn(acc= acc, v= v), acc= init, index= index + lst.length - 1, rows= Nil)
+
+  # [lst] turned around onto [stack], so the last element is on top.
+  onto(lst -> ConsList[$T -> /Data/ToString], stack -> ConsList[$T -> /Data/ToString]) -> ConsList[$T -> /Data/ToString]
+  onto(lst= Nil, stack)= stack
+  onto(lst= Cons(head, tail), stack)= onto(lst= tail, stack= Cons(head= head, tail= stack))
+
+  # The walk over that stack: each element combined into the accumulator the elements after it made.
+  foldrWalk[$B -> /Data/ToString](stack -> ConsList[$T -> /Data/ToString], fn(acc -> $_B, v -> $_A) -> $_B, acc -> $_B, index -> Integer, rows -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]) -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]
+  foldrWalk(stack= Nil, fn(acc, v), acc, index, rows)= rows
+  foldrWalk(stack= Cons(head, tail), fn(acc, v), acc, index, rows)= foldrWalk(stack= tail, fn(acc, v)= fn(acc= acc, v= v), acc= fn(acc= acc, v= head), index= index - 1, rows= Cons(head= /Catln/Doc/Show/FoldStep(index= index, acc= acc.toString, input= head.toString, output= fn(acc= acc, v= head).toString), tail= rows))
+
+  # The rows written out as text, which is how this page checks the ones it builds.
+    It is not an arm of [/Data/toString] and [/Catln/Doc/Show/Steps] is not a [/Data/ToString]: a value
+    that renders text is shown as that text, so making these rows one would replace the display they
+    exist to be. So this is a rendering the page keeps to itself.
+    A test and not a golden, because the arm above is reached only from a debugger and so cannot be
+    written into a [#print] here. What a [#print] could reach is [fmapSteps], and what it builds is
+    everything the arm does beyond handing it over — so that is what is asserted.
+  showSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/Step..]) -> String
+  showSteps(steps= Nil)= ""
+  showSteps(steps= Cons(head= /Catln/Doc/Show/Step(index, input, output), tail))= index.toString ++ ":" ++ input ++ "->" ++ output ++ ";" ++ showSteps(steps= tail)
+
+  exampleFmapSteps =
+    #example
+    #assert(test= showSteps(steps= fmapSteps(lst= [1, 2, 3], fn(v)= v + 1, index= 0)) == "0:1->2;1:2->3;2:3->4;")
+    #assert(test= showSteps(steps= fmapSteps(lst= [], fn(v)= v + 1, index= 0)) == "")
+    0
+
+  exampleMmapSteps =
+    #example
+    #assert(test= showSteps(steps= mmapSteps(m= [1, 2], fn(v)= [v, v], index= 0)) == "0:1->[1, 1];1:2->[2, 2];")
+    #assert(test= showSteps(steps= mmapSteps(m= [1, 2, 3], fn(v)= [], index= 0)) == "0:1->[];1:2->[];2:3->[];")
+    #assert(test= showSteps(steps= mmapSteps(m= [], fn(v)= [v], index= 0)) == "")
+    0
+
+  # The rows of a fold written out as text, as [showSteps] writes a mapping's.
+  showFoldSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/FoldStep..]) -> String
+  showFoldSteps(steps= Nil)= ""
+  showFoldSteps(steps= Cons(head= /Catln/Doc/Show/FoldStep(index, acc, input, output), tail))= index.toString ++ ":" ++ acc ++ "+" ++ input ++ "=" ++ output ++ ";" ++ showFoldSteps(steps= tail)
+
+  # A sum reads the same from either end, but the rows do not: a left fold's first row is handed
+    [init], and a right fold's last row is.
+  exampleFoldSums =
+    #example
+    #assert(test= showFoldSteps(steps= foldlSteps(lst= [1, 2, 3], fn(acc, v)= acc + v, acc= 0, index= 0)) == "0:0+1=1;1:1+2=3;2:3+3=6;")
+    #assert(test= showFoldSteps(steps= foldrSteps(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0, index= 0)) == "0:5+1=6;1:3+2=5;2:0+3=3;")
+    #assert(test= showFoldSteps(steps= foldlSteps(lst= [], fn(acc, v)= acc + v, acc= 0, index= 0)) == "")
+    #assert(test= showFoldSteps(steps= foldrSteps(lst= [], fn(acc, v)= acc + v, init= 0, index= 0)) == "")
+    0
+
+  # The result a display gives is read off its rows: the last row's for a left fold, the first row's
+    for a right one, and [init] for a fold over nothing.
+  exampleFoldResults =
+    #example
+    #assert(test= lastOutput(steps= foldlSteps(lst= ["a", "b", "c"], fn(acc, v)= acc ++ v, acc= "", index= 0), prev= "") == "abc")
+    #assert(test= firstOutput(steps= foldrSteps(lst= ["a", "b", "c"], fn(acc, v)= acc ++ v, init= "", index= 0), init= "") == "cba")
+    #assert(test= lastOutput(steps= foldlSteps(lst= [], fn(acc, v)= acc ++ v, acc= "", index= 0), prev= "s") == "s")
+    #assert(test= firstOutput(steps= foldrSteps(lst= [], fn(acc, v)= acc ++ v, init= "", index= 0), init= "s") == "s")
+    0
+
+  # Joining text is where the two ends differ in what they make, not only in how.
+  exampleFoldJoins =
+    #example
+    #assert(test= showFoldSteps(steps= foldlSteps(lst= ["a", "b", "c"], fn(acc, v)= acc ++ v, acc= "", index= 0)) == "0:+a=a;1:a+b=ab;2:ab+c=abc;")
+    #assert(test= showFoldSteps(steps= foldrSteps(lst= ["a", "b", "c"], fn(acc, v)= acc ++ v, init= "", index= 0)) == "0:cb+a=cba;1:c+b=cb;2:+c=c;")
+    0

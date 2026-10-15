@@ -1,0 +1,25 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A field of a data type may be a [/Data/Maybe] of a concrete element.
+        A task read out of an Obsidian note has a due date or it has none, and having none is the
+        [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+        hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
+        there only as what a function takes and answers with.
+        Written as values declared and never defined, since that is the whole of what a note does with
+        such a field: a checkbox is read into a declaration, and what reads the fields back out is the
+        webdocs reading the evaluated value rather than anything written in Catln. Reading such a field
+        back in Catln is @bareDataDeclaration.ct@." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Shown as the value it is, with no display type standing in for it, as a task is." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Read back so that the values are evaluated and not only built: the [/Data/Maybe] field is
+        destructured and compared, which is a reading of the field the display would otherwise make." )
+    )
+]

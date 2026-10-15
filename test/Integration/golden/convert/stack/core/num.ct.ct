@@ -1,0 +1,202 @@
+import "core/algebra.ct"
+import "core/bool.ct"
+import "core/eq.ct"
+import "core/ord.ct"
+
+
+module(Data/Primitive)
+  # # Numbers
+    The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
+    comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
+    defined here alongside the types — build on those primitives.
+  class(Number, [Integer, Float])
+
+  every(Number, isa= [/Data/Algebra/Eq])
+
+  # Both numeric types implement the [/Data/Algebra/Ring] operators with the runtime primitives
+  #   below.
+  every(Number, isa= [/Data/Algebra/Ring])
+
+  # ## Integers
+  (-(_ :: Integer)) -> Integer
+    #runtime("intNeg")
+  (_ :: Integer - _ :: Integer) -> Integer
+    #runtime("int-")
+
+  # The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same
+  #   [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It
+  #   overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they
+  #   agree on the diagonal — i.e. it derives and verifies [x - x == 0].
+  (_@x :: Integer - _@x :: Integer)= 0
+
+  (_ :: Integer + _ :: Integer) -> Integer
+    #runtime("int+")
+
+  # Adding zero leaves a number alone, whatever number it is. Written as a [#test] with an
+  #   argument, so the test engine generates the inputs rather than checking one value.
+  testAddIdentity(x -> Integer) =
+    #test
+    #assert(test= x + 0 == x)
+    0
+
+  (_ :: Integer * _ :: Integer) -> Integer
+    #runtime("int*")
+
+  (_ :: Integer % _ :: Integer) -> Integer
+    #runtime("int%")
+
+  # The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer
+  #   division (rounding toward zero) and [operator%] is the remainder.
+  > (2 + 3)
+    >>> 5
+  > (5 - 2)
+    >>> 3
+  > (4 * 3)
+    >>> 12
+  > (10 // 3)
+    >>> 3
+  > (7 % 3)
+    >>> 1
+  (_ :: Integer <= _ :: Integer) -> Boolean
+    #runtime("int<=")
+
+  (_ :: Integer >= _ :: Integer) -> Boolean
+    #runtime("int>=")
+
+  (_ :: Integer < _ :: Integer) -> Boolean
+    #runtime("int<")
+
+  > (2 < 3)
+    >>> True
+  (_ :: Integer > _ :: Integer) -> Boolean
+    #runtime("int>")
+
+  # The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s
+  #   [Ordering] instances can build a [Comparison] from it.
+  intLt(l -> Integer, r -> Integer) -> Boolean
+    #runtime("int<")
+
+  intEq(l -> Integer, r -> Integer) -> Boolean
+    #runtime("int==")
+
+  # The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be
+  #   used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True]).
+  :Integer.nonNeg -> Boolean= this >= 0
+
+  # [Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its
+  #   [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the
+  #   same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence).
+  data(IntOrdering, isa= [/Data/Algebra/Ordering])
+
+  :IntOrdering.compare(a -> Integer, b -> Integer)= /Data/Algebra/mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
+
+  :Integer.ord= IntOrdering
+
+  :Integer.compareTo(other)= this.ord.compare(a= this, b= other)
+
+  :Integer.eq= IntOrdering
+
+  :Integer.equal(other)= this.eq.rel(a= this, b= other)
+
+  > (2 == 2)
+    >>> True
+  > (2 == 3)
+    >>> False
+  # ### Commutative Group
+  every(Integer, isa= [/Data/Algebra/CommutativeMonoid])
+  every(Integer, isa= [/Data/Algebra/Group])
+
+  mempty -> Integer= 0
+
+  (_ :: Integer ++ _ :: Integer) -> Integer
+    #runtime("int+")
+
+  inverse(t -> Integer) -> Integer= -t
+
+  (_ :: Integer // _ :: Integer) -> Integer
+    #runtime("int//")
+
+  # ## Floats
+  (-(_ :: Float)) -> Float
+    #runtime("floatNeg")
+  (_ :: Float - _ :: Float) -> Float
+    #runtime("float-")
+
+  (_ :: Float + _ :: Float) -> Float
+    #runtime("float+")
+
+  (_ :: Float * _ :: Float) -> Float
+    #runtime("float*")
+
+  (_ :: Float // _ :: Float) -> Float
+    #runtime("float//")
+
+  # The arithmetic operators on [Float], shown on concrete inputs.
+  > (1.0 + 2.0)
+    >>> 3.0
+  > (5.0 - 3.0)
+    >>> 2.0
+  > (2.0 * 3.0)
+    >>> 6.0
+  > (6.0 // 2.0)
+    >>> 3.0
+  :Integer.toFloat -> Float
+    # [toFloat] is the [Float] with the same value as the [Integer].
+    #runtime("intToFloat")
+
+  > 3.toFloat
+    >>> 3.0
+  (_ :: Float <= _ :: Float) -> Boolean
+    #runtime("float<=")
+
+  (_ :: Float >= _ :: Float) -> Boolean
+    #runtime("float>=")
+
+  (_ :: Float < _ :: Float) -> Boolean
+    #runtime("float<")
+
+  # A comparison of two [Float]s produces a [Boolean]. ([Float]'s text is written on @core/string.ct@, which
+  #   this page is below.)
+  > (1.5 < 2.5)
+    >>> True
+  (_ :: Float > _ :: Float) -> Boolean
+    #runtime("float>")
+
+  # Named-function form of the primitive float "less than", used by [Data/Algebra/ord].
+  floatLt(l -> Float, r -> Float) -> Boolean
+    #runtime("float<")
+
+  floatEq(l -> Float, r -> Float) -> Boolean
+    #runtime("float==")
+
+  # [Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above.
+  data(FloatOrdering, isa= [/Data/Algebra/Ordering])
+
+  :FloatOrdering.compare(a -> Float, b -> Float)= /Data/Algebra/mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
+
+  :Float.ord= FloatOrdering
+
+  :Float.compareTo(other)= this.ord.compare(a= this, b= other)
+
+  :Float.eq= FloatOrdering
+
+  :Float.equal(other)= this.eq.rel(a= this, b= other)
+
+  :Float.round -> Integer
+    #runtime("floatRound")
+
+  :Float.floor -> Integer
+    #runtime("floatFloor")
+
+  :Float.ceil -> Integer
+    #runtime("floatCeil")
+
+  class(FloatParts, [FloatParts/Finite(negative -> Boolean, mantissa -> Integer, exponent -> Integer), FloatParts/NaN, FloatParts/Infinite(negative -> Boolean)])
+    # [FloatParts] is a [Float] taken apart into what its text is written from: a finite number's
+      sign, and the whole-number [mantissa] and binary [exponent] its magnitude is
+      [mantissa] × 2^[exponent]; or that it is not a number, or an infinity and which one.
+
+  :Float.parts -> FloatParts
+    # [parts] takes the number apart ([FloatParts]). The sign is kept apart from the mantissa, so
+      that negative zero keeps it.
+    #runtime("floatParts")

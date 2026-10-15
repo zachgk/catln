@@ -1,0 +1,85 @@
+import "core"
+
+
+module(Data)
+  # # JSON
+    A [Json] is what a JSON file holds, read as a value: the six things JSON says, and nothing else.
+    It is declared here so that a program handed a `.json` file has a type to read it as, in the way
+    [/Data/FileOrDir] is the type a directory is read as.
+    It is not part of the standard library and must not become part of it. This page reaches
+    @core/list.ct@, and a page every program compiles reaching that is the import cycle
+    @core/result.ct@ measures at seven hundred seconds. A program which reads no JSON has no use for
+    the type, and the page a JSON file is read as writes the import itself.
+    The six arms are JSON's own six, so a document read into this and written back out again says
+    what it said. What JSON does not distinguish, this does not either: there is one [Json/Number]
+    rather than an integer and a float, because the format has one.
+  class(Json, [Json/Null, Json/Bool(value -> /Data/Primitive/Boolean), Json/Number(value -> /Data/Primitive/Number), Json/Str(value -> String), Json/Array(entries -> /Data/List/ConsList[$T -> Json]), Json/Object(entries -> /Data/List/ConsList[$T -> Json/Member..])])
+    # [Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+      close together is a reader guessing which of them an arm meant.
+      [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+      and what makes it recursive. The lists are [ConsList]s, the ones a document is read into and
+      the ones every reader of these walks [Nil] and [Cons] by: the open [/Data/List] class would
+      admit a list none of them can take apart. An object's entries are [Json/Member]s rather than a [/Data/Map]
+      because a document's keys are written in an order and shown in it — a map would sort them, and
+      a JSON file shown with its keys rearranged is not the file that was read.
+
+  data(Json/Member(key -> String, value -> Json))
+    # One entry of a [Json/Object]: the name it was written under, and what was written there.
+
+  /Catln/Doc/dshow(s -> Json)= /Catln/Doc/Show/Rendered(value= s, assets= ["json/json.js", "json/json.css"])
+    # A [Json] is shown in the webdocs as the folding tree of what it holds, drawn by @json/json.js@
+      and styled by @json/json.css@ — both sitting in this directory, beside this page.
+      Written here rather than in the doc server, for the reason [/Data/Note/Page]'s display is
+      written beside [/Data/Note/Page]: a [Json] is this library's type, so what one looks like is
+      this library's to say. A document that folds is the case which makes that more than a
+      preference. A display of it has to answer a click, and the two ways a library could say how its
+      type looks before this one could not: membership of [/Catln/Doc/DShow] hands the value over and
+      leaves the drawing to a component of the doc server named after this type, and an arm building a
+      [/Catln/Doc/Show/Html] can say what a tree looks like but nothing about what it does.
+      [/Catln/Doc/Show/Rendered] carries both halves, so the value arrives whole and the script that
+      folds it arrives with it.
+      Said of the class rather than of each arm, as [/Data/Note/Task] says its display of a task
+      however the vault it came from has it read: a document is displayed because it is a document,
+      and which of the six arms it happens to be is what the display reads rather than what decides
+      whether there is one. [s] is taken whole rather than destructured for the same reason — the
+      script walks the union itself.
+      An arm and not membership of [/Catln/Doc/DShow], which is what this was. A member is shown by
+      the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
+      nothing to say which wins.
+  /Catln/Doc/dshow(s -> Json/Member..)= /Catln/Doc/Show/Rendered(value= s, assets= ["json/json.js", "json/json.css"])
+    # A member is displayable on its own as well as within the object holding it, so that a program
+      which reaches one can show it. The same script draws it, as the row it would be inside the
+      object holding it.
+
+  # ## Which arm a value is
+  typeName(value -> Json) -> String
+    # [typeName] is what JSON calls the kind of thing [value] is: the word the format's own
+      specification uses, one per arm. It is the smallest thing that has to match on all six, so it
+      is what says the type can be walked at all.
+  typeName(value= Json/Null)= "null"
+  typeName(value= Json/Bool(value@b))= "boolean"
+  typeName(value= Json/Number(value@n))= "number"
+  typeName(value= Json/Str(value@s))= "string"
+  typeName(value= Json/Array(entries))= "array"
+  typeName(value= Json/Object(entries))= "object"
+
+  > /Data/typeName(value= /Data/Json/Null)
+    >>> null
+  > /Data/typeName(value= /Data/Json/Str(value= "catln"))
+    >>> string
+  > /Data/typeName(value= /Data/Json/Array(entries= [/Data/Json/Null]))
+    >>> array
+  > /Data/typeName(value= /Data/Json/Object(entries= [/Data/Json/Member(key= "a", value= /Data/Json/Null)]))
+    >>> object
+  # ## Containers of several entries
+    An array of one entry and an array of several are not the same thing to check, and neither are an
+    object and an object inside one, so each is written out rather than left to the single-entry
+    cases above to stand for.
+  > /Data/typeName(value= /Data/Json/Array(entries= [/Data/Json/Null, /Data/Json/Bool(value= True), /Data/Json/Str(value= "x")]))
+    >>> array
+  > /Data/typeName(value= /Data/Json/Array(entries= [/Data/Json/Str(value= "x"), /Data/Json/Str(value= "y")]))
+    >>> array
+  > /Data/typeName(value= /Data/Json/Object(entries= [/Data/Json/Member(key= "a", value= /Data/Json/Null), /Data/Json/Member(key= "b", value= /Data/Json/Str(value= "x"))]))
+    >>> object
+  > /Data/typeName(value= /Data/Json/Object(entries= [/Data/Json/Member(key= "outer", value= /Data/Json/Array(entries= [/Data/Json/Number(value= 1.5), /Data/Json/Number(value= 2.5)]))]))
+    >>> object

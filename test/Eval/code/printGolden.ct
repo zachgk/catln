@@ -1,0 +1,16 @@
+import "core"
+
+
+# The three things a print golden can be, for the test engine's own tests ([catln test] derives
+  one test per print that renders to text). The first carries the text its value renders to and
+  passes. The second carries other text and fails, naming both. The third carries no golden at
+  all and fails, saying to run `catln test --update`.
+  Written as a page of its own rather than in the integration fixtures: a fixture is checked by
+  what its [main] does, and what is checked here is the engine's verdict on each print, which only
+  a test of the engine can read.
+> "matches its golden"
+  >>> matches its golden
+> "differs from its golden"
+  >>> some other text
+> "has no golden"
+main{io -> IO}= io.exit(val= 0)

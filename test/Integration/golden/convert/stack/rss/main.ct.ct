@@ -1,0 +1,73 @@
+import "core"
+
+
+module(Data/RSS)
+  # # RSS
+    An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
+    is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
+    page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
+    entry, newest first.
+    A feed is a window rather than a document: it says what it says now, and an entry falls off the
+    end of it as newer ones arrive. So the page is built out of what every read of that feed has
+    ever seen and not out of the last read alone, and the entries the feed no longer carries are
+    written below the ones it does.
+    This is not part of the standard library. A program which imports no feed has no use for the
+    type, and the page a feed is read as writes the import itself.
+  data(Item(title -> String, link -> String, guid -> String, published -> String, description -> String))
+    # An [Item] is one entry of a feed.
+      [guid] is the name the feed gave the entry, or its address, or its title — whichever of the
+      three the feed has. It is what says that an entry read today and the same entry read a week
+      ago are one entry, so an entry keeps its place on the page rather than arriving again each
+      time the feed is asked.
+      [published] is the date as the feed wrote it, and is a string for the reason
+      [/Data/Note/Task/Obsidian]'s dates are: Catln has no date to read one into, and inventing one
+      here would be inventing it for the whole language rather than for a feed.
+      [description] is the entry's writing exactly as the feed wrote it, which is markup rather than
+      prose — a comic strip's entry is an @img@ tag and nothing else. It is carried as it was
+      written and read apart by whatever shows it, so that nothing the feed said is lost between
+      here and there.
+
+  /Catln/Doc/dshow(s= Item(title, link, published, description)) =
+    # An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
+      read into: the title as a link to the entry, the date beside it, and the entry's own writing
+      below.
+      Written here rather than in the doc server, for the reason [/Data/Note/Page]'s display is
+      written beside [/Data/Note/Page]: an [Item] is this library's type, so what one looks like is
+      this library's to say. A feed is the case that makes the point rather than an example of it —
+      this is not part of the standard library at all, so a doc server holding a display of an entry
+      would be holding a display of something it is not given.
+      An arm and not membership of [/Catln/Doc/DShow], which is what this was. A member is shown by
+      the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
+      nothing to say which wins.
+      [guid] is not shown. It is the name that says an entry read today and the same entry read a
+      week ago are one entry, which is what builds the page rather than anything a reader of the
+      page has a use for.
+      The entry's writing is laid into the page rather than framed in one, which is a change from
+      what the doc server did with it and is written down at [/Catln/Doc/Show/Html]. It is joined in
+      as the markup it is and is not escaped, as nothing joined into a [/Catln/Doc/Show/Html] is.
+      [description] is the one thing on this page that came from somewhere else, and it is now joined
+      in with nothing between it and the reader. It was framed and sandboxed while the doc server
+      held a display of its own for an entry; writing the display here dropped the frame and left the
+      sanitizing, and the sanitizing has since gone too — a library's display is that library's own
+      code, and this arm's markup is trusted because arms are. What the arm joins in is not the arm.
+      So a feed served by somebody else runs that somebody's script in a doc server showing it, and
+      an escape or a frame for [description] alone is what this arm still owes. See
+      [/Catln/Doc/Show/Html], which says the same thing from the other side.
+      The two pieces that make a choice are nested here rather than declared beside this, since
+      neither is anything but a part of this display. A branch in Catln is a declaration and not an
+      expression — guards select between arms of a function — so a choice cannot be joined into a
+      string in the middle of one, and each is a helper for that reason alone.
+    titleOf(title -> String, link -> String) -> String
+      # The title of an entry, as the way to it where there is one. An entry may be published with
+        no address of its own, and then there is nothing to link to and the title is still the
+        title.
+    titleOf(title, link) | link == ""= "<strong>" ++ title ++ "</strong>"
+    titleOf(title, link) else = "<strong><a href=\"" ++ link ++ "\">" ++ title ++ "</a></strong>"
+
+    publishedOf(published -> String) -> String
+      # The date a feed wrote beside an entry, where it wrote one. A feed which dates nothing shows
+        no date rather than an empty label where a date would be.
+    publishedOf(published) | published == ""= ""
+    publishedOf(published) else = " <small>" ++ published ++ "</small>"
+
+    /Catln/Doc/Show/Html(contents= "<p>" ++ titleOf(title= title, link= link) ++ publishedOf(published= published) ++ "</p>" ++ description)

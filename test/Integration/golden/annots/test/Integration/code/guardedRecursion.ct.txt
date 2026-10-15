@@ -1,0 +1,14 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A guarded arm whose body is a call of its own function, in a function answering with a record.
+        [digs] reads the digits a list starts with. Its middle arm applies only to a digit, by its guard,
+        and continues the reading by calling [digs] on the rest. That arm must be the one chosen for a
+        digit, so reading @[1, 2, 30]@ reads the first two.
+        Its result is declared with its fields written out. A bare @Digits@ as a result is the record
+        with no fields, and @Digits..@ is any application of it, including a partial one — which a caller
+        needing a whole [Digits] cannot take. Declared that way, the middle arm's result could not be
+        what [showD] needs, and building the call reports that rather than leaving the arm out and
+        answering a digit with the last arm." )
+    )
+]

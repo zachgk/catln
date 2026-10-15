@@ -1,0 +1,143 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "# Reading a program as it was written
+        The page @hsrawprgm()@ reads declares the compiler's types for a program as the parser produced
+        it, before desugaring reduces what was written to what it means. This file is what typechecks
+        those declarations: a page nothing imports is a page nothing checks.
+        Where @test/Integration/code/hsprgm.ct@ reads the six kinds of expression a program has been
+        reduced TO, this reads the twenty it was written AS. That is the side an importer needs, because
+        an importer does not read a program — it builds one." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## What a reading looked at" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## The metadata every piece carries" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## An expression as it was written" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A method call is sugar that survives to this stage and not to the next one, which is the whole" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "  difference between this page and @core/hsprgm.ct@." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## What a page holds" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## A whole page, and the result of reading one" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## What the suite checks
+        The integration suite typechecks and builds this file, then runs [main] and compares what it
+        printed against @hsrawprgm.stdout.txt@. No page under @stack/@ may import [hsrawprgm] without
+        closing the import cycle @core/result.ct@ measures, so the values cannot be print goldens of a
+        library page." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A declaration of [name] with nothing said about it: the smallest thing a page can hold, and
+        what an importer builds one of per definition it found in the file it read." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[declCount] counts the statements a page holds, walking the [statements] it was written with." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[readsCount] counts what the reading looked at. A reading which says nothing is a page read
+        again on every read, so an importer answering with [Nothing] here is answering that it cannot
+        be cached." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[objArrName] reads back the name a declaration is written under, through the [Maybe] that says
+        a declaration need not have written an object at all." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[resultDeclCount] reads the program back out of an [ImportResult], which is the type an
+        `#importer` declaration answers with. Reading one here is what says the shape an importer
+        must produce is a shape a Catln program can actually build." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A page holding one declaration, built the way an importer builds one." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[noMeta] is the metadata of a piece of program nothing wrote. Written once here because
+        building a [RawExpr] means building one of these, and what is being read is the expression
+        rather than the metadata." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[exprKind] says which of the sixteen an expression was written as. Naming all of them is
+        naming everything a Catln program can be written with, which is where a program that produces
+        a program starts from — and it is what makes an arm the declaration is missing a compile
+        error here rather than a surprise later." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A page holding nothing: no imports and no statements. What an importer answers with for a file
+        that declared nothing." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "What an importer that read one file and found one declaration answers with." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[readKind] says how a reading looked at something, which is what decides when the page it
+        belongs to is read again. A file whose text was read goes stale when it is written to; one a
+        reading only found does not." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[rawValueName] reads the name out of an expression that is one, which is the field a program
+        building a program writes most often." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[pathOf] reads the path out of a [ReadPath], naming every arm so that an arm the declaration
+        is missing is an arm this does not compile against." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[statementKind] says which of the three a statement is. An annotation is one of them because
+        a page's comments reach the program that way." )
+    )
+]

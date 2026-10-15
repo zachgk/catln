@@ -1,0 +1,126 @@
+import "core/map.ct"
+import "core/render.ct"
+
+
+# # The map library's displays of its own calls
+  @core/map.ct@'s combinators, shown as what they did, as @core/list-webdocs.ct@ shows the list's. A
+  mapping over a map returns a map, and a fold over one returns its last accumulator; neither says
+  which entry became what, or what each entry added to the accumulator, and that is the whole of
+  what the call did.
+  Each row is an entry, with its key in a column of its own (see [/Catln/Doc/Show/EntryStep]). The
+  rows are laid out in the order the call visited the entries, since that is the order its recursion
+  is nested in and so the order a debugger finds each entry's step in.
+  The arms are bounded to [BinTree] so they are this map's displays and not every map's, and to keys
+  and values that are [/Data/ToString], which is what a row can hold.
+# # Why this is a page of its own
+  For the reason @core/list-webdocs.ct@ is: the arms name [/Catln/Doc/dshowCall], so this page reaches
+  @core/webdoc.ct@, and @core/map.ct@ must not. This reaches @core/map.ct@ freely, and nothing in the
+  library reaches it.
+# # Sets
+  @core/set.ct@ has no page like this, since a set has no combinator of its own that takes a function
+  to show. Its operations that walk items do so through the list's ([/Data/List/foldl],
+  [/Data/List/filter], [/Data/List/allBy]), and those calls have the list's displays wherever what
+  they are handed renders as text.
+module(Data/Map)
+  # [mapValues] over a [BinTree] shown as the table of what each value became: a row per entry, in
+    ascending key order, the value on the left and the result of applying [fn] to it on the right.
+    The recursion is over the tree's shape — each call rebuilds a node from the calls on its two
+    subtrees — and so it is a display of how the tree happened to be built, which the map it
+    represents does not depend on. The rows are the entries, which it does.
+  # A mapping over a [BinTree] whose keys and values render text, to results that do, is a call with a
+    display.
+  every(mapValues(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], fn(v) -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= mapValues(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], fn(v) -> /Data/ToString))= /Catln/Doc/Show/EntrySteps(steps= mapValuesSteps(entries= ascending(m= m, rest= /Data/List/Nil), fn(v)= fn(v= v), index= 0))
+
+  # The rows of that table, walking the map's entries in ascending key order and applying [fn] to
+    each value as it goes.
+  mapValuesSteps(entries -> /Data/List/ConsList[$T -> Entry..], fn(v -> $_A) -> /Data/ToString, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/EntryStep..]
+  mapValuesSteps(entries= /Data/List/Nil, fn(v), index)= /Data/List/Nil
+  mapValuesSteps(entries= /Data/List/Cons(head= Entry(key, value), tail), fn(v), index)= /Data/List/Cons(head= /Catln/Doc/Show/EntryStep(index= index, key= key.toString, input= value.toString, output= fn(v= value).toString), tail= mapValuesSteps(entries= tail, fn(v)= fn(v= v), index= index + 1))
+
+  # [foldEntries] over a [BinTree] shown as the steps it took: a row per entry, each with the
+    accumulator it was handed, the value it combined in, and the accumulator it handed on to the next
+    row, from [init] down to the fold's result.
+    The rows run in DESCENDING key order, which is the order [foldEntries] visits the entries in. A
+    right fold over the entries in ascending order makes the same accumulators, and would draw them
+    running upward; but the calls the rows open onto are in the order the fold made them, and a table
+    whose rows are in one order and whose calls are in another is a table each of whose rows opens
+    onto some other entry's step.
+  # A fold over a [BinTree] whose keys, values, accumulator and step results render text is a call with
+    a display.
+  every(foldEntries(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], fn(acc, k, v) -> /Data/ToString, init -> /Data/ToString), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= foldEntries(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], fn(acc, k, v) -> /Data/ToString, init -> /Data/ToString))= foldEntriesShow(steps= foldEntriesSteps(entries= descending(m= m, rest= /Data/List/Nil), fn(acc, k, v)= fn(acc= acc, k= k, v= v), acc= init, index= 0), init= init.toString)
+
+  # The display around a fold's rows. Its result is the last row's output, read off the rows for the
+    reason [/Data/List/foldlShow] gives. A fold over no entries hands [init] straight on.
+  foldEntriesShow(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..], init -> String) -> /Catln/Doc/Show/EntryFoldSteps..
+  foldEntriesShow(steps, init)= /Catln/Doc/Show/EntryFoldSteps(init= init, steps= steps, result= lastEntryOutput(steps= steps, prev= init), fromRight= /Data/Primitive/False)
+
+  # The output of the last row, or [prev] where there are none.
+  lastEntryOutput(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..], prev -> String) -> String
+  lastEntryOutput(steps= /Data/List/Nil, prev)= prev
+  lastEntryOutput(steps= /Data/List/Cons(head= /Catln/Doc/Show/EntryFoldStep(index, key, acc, input, output), tail), prev)= lastEntryOutput(steps= tail, prev= output)
+
+  # The rows of a fold, walking the map's entries in the order [foldEntries] visits them and carrying
+    the accumulator forward as it does.
+  foldEntriesSteps[$B -> /Data/ToString](entries -> /Data/List/ConsList[$T -> Entry..], fn(acc -> $_B, k -> $_K, v -> $_V) -> $_B, acc -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..]
+  foldEntriesSteps(entries= /Data/List/Nil, fn(acc, k, v), acc, index)= /Data/List/Nil
+  foldEntriesSteps(entries= /Data/List/Cons(head= Entry(key, value), tail), fn(acc, k, v), acc, index)= /Data/List/Cons(head= /Catln/Doc/Show/EntryFoldStep(index= index, key= key.toString, acc= acc.toString, input= value.toString, output= fn(acc= acc, k= key, v= value).toString), tail= foldEntriesSteps(entries= tail, fn(acc, k, v)= fn(acc= acc, k= k, v= v), acc= fn(acc= acc, k= key, v= value), index= index + 1))
+
+  # # The entries a call visits
+    A row is built from one entry, and the rows are wanted in the order the call visited the
+    entries, so the tree is first read off into a list in that order. A list of entries rather than
+    [keys] beside [values]: two lists walked side by side have a case where one runs out before the
+    other, which a map's two never do but a walk of them has to say what happens in anyway.
+  data(Entry(key -> /Data/ToString, value -> /Data/ToString))
+    # One entry of a map whose keys and values render text.
+
+  # The entries of [m] in ascending key order, in front of [rest]: the left subtree's, then the
+    node's own, then the right subtree's, which is the order [mapValues] makes its calls of [fn] in.
+  ascending(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], rest -> /Data/List/ConsList[$T -> Entry..]) -> /Data/List/ConsList[$T -> Entry..]
+  ascending(m= Leaf, rest)= rest
+  ascending(m= Node(left, key, value, right), rest)= ascending(m= left, rest= /Data/List/Cons(head= Entry(key= key, value= value), tail= ascending(m= right, rest= rest)))
+
+  # The entries of [m] in descending key order, in front of [rest]: [ascending] with the subtrees
+    the other way round, which is the order [foldEntries] visits them in.
+  descending(m -> BinTree[$K -> /Data/ToString, $V -> /Data/ToString], rest -> /Data/List/ConsList[$T -> Entry..]) -> /Data/List/ConsList[$T -> Entry..]
+  descending(m= Leaf, rest)= rest
+  descending(m= Node(left, key, value, right), rest)= descending(m= right, rest= /Data/List/Cons(head= Entry(key= key, value= value), tail= descending(m= left, rest= rest)))
+
+  # The rows written out as text, which is how this page checks the ones it builds, as
+    [/Data/List/showSteps] does for a list's.
+  showEntrySteps(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryStep..]) -> String
+  showEntrySteps(steps= /Data/List/Nil)= ""
+  showEntrySteps(steps= /Data/List/Cons(head= /Catln/Doc/Show/EntryStep(index, key, input, output), tail))= index.toString ++ ":" ++ key ++ "=" ++ input ++ "->" ++ output ++ ";" ++ showEntrySteps(steps= tail)
+
+  # The rows come out in key order whatever order the entries were inserted in, since the tree the
+    insertions shaped is not what they are read off.
+  exampleMapValuesSteps =
+    #example
+    #assert(test= showEntrySteps(steps= mapValuesSteps(entries= ascending(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), rest= []), fn(v)= v + 1, index= 0)) == "0:1=10->11;1:2=20->21;")
+    #assert(test= showEntrySteps(steps= mapValuesSteps(entries= ascending(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), rest= []), fn(v)= v + 1, index= 0)) == "0:1=10->11;1:2=20->21;")
+    #assert(test= showEntrySteps(steps= mapValuesSteps(entries= ascending(m= Leaf, rest= []), fn(v)= v + 1, index= 0)) == "")
+    0
+
+  # The rows of a fold written out as text, as [showEntrySteps] writes a mapping's.
+  showEntryFoldSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/EntryFoldStep..]) -> String
+  showEntryFoldSteps(steps= /Data/List/Nil)= ""
+  showEntryFoldSteps(steps= /Data/List/Cons(head= /Catln/Doc/Show/EntryFoldStep(index, key, acc, input, output), tail))= index.toString ++ ":" ++ key ++ ":" ++ acc ++ "+" ++ input ++ "=" ++ output ++ ";" ++ showEntryFoldSteps(steps= tail)
+
+  # A sum visits the largest key first, and joining text shows it: the text the fold makes has the
+    smallest key's value at its end.
+  exampleFoldEntriesSteps =
+    #example
+    #assert(test= showEntryFoldSteps(steps= foldEntriesSteps(entries= descending(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), rest= []), fn(acc, k, v)= acc + v, acc= 0, index= 0)) == "0:3:0+30=30;1:2:30+20=50;2:1:50+10=60;")
+    #assert(test= showEntryFoldSteps(steps= foldEntriesSteps(entries= descending(m= insert(m= insert(m= Leaf, key= 1, value= "a"), key= 2, value= "b"), rest= []), fn(acc, k, v)= acc ++ v, acc= "", index= 0)) == "0:2:+b=b;1:1:b+a=ba;")
+    #assert(test= showEntryFoldSteps(steps= foldEntriesSteps(entries= descending(m= Leaf, rest= []), fn(acc, k, v)= acc + v, acc= 0, index= 0)) == "")
+    0
+
+  # The result is read off the rows: the last row's output, and [init] for a fold over no entries.
+  exampleFoldEntriesResults =
+    #example
+    #assert(test= lastEntryOutput(steps= foldEntriesSteps(entries= descending(m= insert(m= insert(m= Leaf, key= 1, value= "a"), key= 2, value= "b"), rest= []), fn(acc, k, v)= acc ++ v, acc= "", index= 0), prev= "") == "ba")
+    #assert(test= lastEntryOutput(steps= foldEntriesSteps(entries= descending(m= Leaf, rest= []), fn(acc, k, v)= acc ++ v, acc= "", index= 0), prev= "s") == "s")
+    0

@@ -1,0 +1,222 @@
+import "core/list.ct"
+import "core/maybe.ct"
+
+
+module(Data)
+  # # Maps
+    A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
+    its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
+    [containsKey], [size], [keys], [values] — without fixing how the entries are stored. Concrete map
+    types implement it; this file provides the [BinTree], and a future hash map would be another.
+    Because the operations are declared on [Map] rather than on one concrete type, every map type
+    reuses those declarations just by being a [Map].
+  class(Map[$K, $V])
+module(Data/Map)
+  # ## An unbalanced binary search tree
+    A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
+    pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
+    so each operation can compare the target key against a node's key and descend the correct way.
+    Almost every operation is a two-arm recursion — a base case for [Leaf], and a step that inspects
+    the [Node] and recurses into a subtree. The tree is unbalanced: its shape depends on the order
+    keys were inserted, but the map it represents (the set of key/value entries) does not.
+  class(BinTree[$K, $V], [Node[$K -> $_K, $V -> $_V](left -> BinTree[$K -> $_K, $V -> $_V], key -> $K, value -> $V, right -> BinTree[$K -> $_K, $V -> $_V]), Leaf])
+
+  every(BinTree[$K -> $_K, $V -> $_V], isa= [/Data/Map[$K -> $_K, $V -> $_V]])
+    # Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+      empty map is written [Leaf].
+
+  # ## Size
+  foldEntries[$MK, $MV, $B](m -> /Data/Map[$K -> $_MK, $V -> $_MV], fn(acc -> $_B, k -> $_MK, v -> $_MV) -> $_B, init -> $_B) -> $_B
+    # [foldEntries] collapses a map to a single value by visiting every entry in key order. A node
+      sits between its two subtrees, so the walk folds the [right] subtree into the accumulator
+      first, then the node's own entry, then the [left] subtree — which means the step sees entries
+      in DESCENDING key order and a step that prepends therefore produces ascending order.
+      [size], [keys] and [values] are all this fold with a different step. The walk follows the
+      tree's shape and never compares keys, so it asks nothing of them.
+  foldEntries(m= Leaf, fn(acc, k, v), init)= init
+  foldEntries(m= Node(left, key, value, right), fn(acc, k, v), init)= foldEntries(m= left, fn(acc, k, v)= fn(acc= acc, k= k, v= v), init= fn(acc= foldEntries(m= right, fn(acc, k, v)= fn(acc= acc, k= k, v= v), init= init), k= key, v= value))
+
+  > /Data/Map/foldEntries(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), fn(acc, k, v)= acc + v, init= 0)
+    >>> 30
+  > /Data/Map/foldEntries(m= Leaf, fn(acc, k, v)= acc + v, init= 0)
+    >>> 0
+  size(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> Integer
+    # The number of entries in a map. Declared on [Map] (any map has a size) and implemented here for
+      the [BinTree] constructors: an empty tree has none, and a node counts itself plus both subtrees.
+  size(m)= foldEntries(m= m, fn(acc, k, v)= acc + 1, init= 0)
+
+  > size(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20))
+    >>> 2
+  > size(m= Leaf)
+    >>> 0
+  # ## Lookup
+  get[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Maybe[$T -> $_MV]
+    # [get] finds the [value] stored under [key], or [Nothing] if the key is absent. A [match] on
+      the [key <=> nodeKey] [Comparison] makes the decision: the node's [value] on [Equal], and
+      otherwise the lookup continued in the [left] (smaller) or [right] (larger) subtree.
+  get(m= Leaf, key)= /Data/Maybe/Nothing
+  get(m= Node(left, key@nk, value, right), key)= match(key.compareTo(other= nk))
+    c -> /Data/Algebra/Equal= /Data/Maybe/Some(value= value)
+    c -> /Data/Algebra/LessThan= get(m= left, key= key)
+    c -> /Data/Algebra/GreaterThan= get(m= right, key= key)
+
+  > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 2) == /Data/Maybe/Some(value= 20)
+    >>> True
+  > get(m= insert(m= Leaf, key= 1, value= 10), key= 9) == /Data/Maybe/Nothing
+    >>> True
+  # Each branch of the [match] is taken: the lookups below descend left, find the root, and descend
+  #   right.
+  > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 1) == /Data/Maybe/Some(value= 10)
+    >>> True
+  > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2) == /Data/Maybe/Some(value= 20)
+    >>> True
+  > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 3) == /Data/Maybe/Some(value= 30)
+    >>> True
+  # ## Membership
+  containsKey[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> Boolean
+    # [containsKey] reports whether the map has an entry for [key]. It reuses [get]: a key is present
+      exactly when the lookup finds a value (a [Some] rather than a [Nothing]).
+  containsKey(m, key)= maybeContains(r= get(m= m, key= key))
+
+  maybeContains(r -> /Data/Maybe[$T -> $_V]) -> Boolean
+    # [maybeContains] reads a lookup result as a [Boolean]: [True] for a found value, [False] for
+      [Nothing]. (A local helper since [Maybe] has no [isSome] of its own.)
+  maybeContains(r= /Data/Maybe/Nothing)= False
+  maybeContains(r= /Data/Maybe/Some(value))= True
+
+  > containsKey(m= insert(m= Leaf, key= 1, value= 10), key= 1)
+    >>> True
+  > containsKey(m= insert(m= Leaf, key= 1, value= 10), key= 3)
+    >>> False
+  # ## Insertion
+  insert[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> /Data/Map[$K -> $_MK, $V -> $_MV]
+    # [insert] adds an entry, or replaces the value if the key is already present, returning the
+      updated map. A [match] on the [key <=> nodeKey] [Comparison] makes the decision: on [Equal]
+      the node keeps its key but takes the new [value]; otherwise the entry is inserted into the
+      [left]/[right] subtree and the node is rebuilt around the result.
+  insert(m= Leaf, key, value)= Node(left= Leaf, key= key, value= value, right= Leaf)
+  insert(m= Node(left, key@nk, value@nv, right), key, value)= match(key.compareTo(other= nk))
+    c -> /Data/Algebra/Equal= Node(left= left, key= nk, value= value, right= right)
+    c -> /Data/Algebra/LessThan= Node(left= insert(m= left, key= key, value= value), key= nk, value= nv, right= right)
+    c -> /Data/Algebra/GreaterThan= Node(left= left, key= nk, value= nv, right= insert(m= right, key= key, value= value))
+
+  > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 1, value= 99), key= 1) == /Data/Maybe/Some(value= 99)
+    >>> True
+  # ## Removal
+  remove[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Map[$K -> $_MK, $V -> $_MV]
+    # [remove] deletes the entry for [key], returning the updated map (unchanged if the key is
+      absent). A [match] on the [key <=> nodeKey] [Comparison] makes the decision: a smaller or
+      larger key rebuilds the node with [key] removed from the [left]/[right] subtree, and an equal
+      key drops this node, replacing it with the merge of its two subtrees — [graft]ing all of the
+      [left] subtree's entries into the [right] one. (Because the map is order-independent, any
+      tree holding exactly the surviving entries is a correct result; this merge avoids promoting
+      a synthesized successor key.)
+  remove(m= Leaf, key)= Leaf
+  remove(m= Node(left, key@nk, value@nv, right), key)= match(key.compareTo(other= nk))
+    c -> /Data/Algebra/LessThan= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
+    c -> /Data/Algebra/GreaterThan= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
+    c -> /Data/Algebra/Equal= graft(from= left, into= right)
+
+  graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $_MK, $V -> $_MV], into -> /Data/Map[$K -> $_MK, $V -> $_MV]) -> /Data/Map[$K -> $_MK, $V -> $_MV]
+    # [graft] inserts every entry of the [from] tree into the [into] map: [foldEntries] over [from]
+      with [insert] as the step, starting from [into]. [remove] uses it to merge a deleted node's
+      two subtrees.
+  graft(from, into)= foldEntries(m= from, fn(acc, k, v)= insert(m= acc, key= k, value= v), init= into)
+
+  # Removing a present key drops it (the other entries stay); removing an absent key is a no-op.
+  > containsKey(m= remove(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 1), key= 1)
+    >>> False
+  > containsKey(m= remove(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 1), key= 2)
+    >>> True
+  > size(m= remove(m= insert(m= Leaf, key= 1, value= 10), key= 9))
+    >>> 1
+  # Removing a node with two children merges its subtrees; the remaining keys are intact.
+  > containsKey(m= remove(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2), key= 2)
+    >>> False
+  > (keys(m= remove(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2)) == [1, 3])
+    >>> True
+  # ## Keys and values
+    [keys] and [values] are the same in-order traversal as [size], differing only in what each entry
+    contributes, so all three are [foldEntries] with a different step. Because a node sits BETWEEN
+    its two subtrees, the fold walks the [right] subtree into the accumulator first, then the node,
+    then the [left] one — so consing each key on the way out leaves them in ascending order.
+  keys(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_K]
+    # [keys] lists the map's keys in ascending order.
+  keys(m)= foldEntries(m= m, fn(acc, k, v)= /Data/List/Cons(head= k, tail= acc), init= /Data/List/Nil)
+
+  values(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_V]
+    # [values] lists the map's values in the same in-order key sequence as [keys], so [keys] and
+      [values] line up position for position.
+  values(m)= foldEntries(m= m, fn(acc, k, v)= /Data/List/Cons(head= v, tail= acc), init= /Data/List/Nil)
+
+  > (keys(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10)) == [1, 2])
+    >>> True
+  > (values(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10)) == [10, 20])
+    >>> True
+
+# # BinTree Eq membership (order-independent)
+  Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
+  [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
+  they hold the same key/value entries, regardless of the tree shape their insertion order produced.
+  (Structural node-for-node equality would call two maps with the same entries unequal — exactly the
+  case the [Eq] class docstring's [TreeSet] note warns about.) [equal] is decided by [mapEqual]: the
+  maps have the same [size] and every entry of one is [containedIn] the other (equal size plus
+  one-directional containment gives equality). [containedIn] reuses [get] and compares the looked-up
+  [Some] result through the [Maybe] [Eq] instance.
+module(Data/Map)
+  every(BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+
+  mapEqual[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $_MK, $V -> $_MV], b -> BinTree[$K -> $_MK, $V -> $_MV]) -> Boolean
+    # [mapEqual] decides order-independent map equality: equal [size] and every entry of [a] present
+      in [b] with an equal value ([containedIn]). Since the sizes are equal, one-directional
+      containment is enough — [b] can hold no extra entry [a] lacks.
+  mapEqual(a, b)= (size(m= a) == size(m= b)) && containedIn(a= a, b= b)
+
+  containedIn[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $_MK, $V -> $_MV], b -> BinTree[$K -> $_MK, $V -> $_MV]) -> Boolean
+    # [containedIn] is [True] when every entry of [a] appears in [b] with an equal value: the fifth
+      [foldEntries] traversal, whose step looks each key up in [b] ([get]) and checks the result
+      equals [Some(value)] through the [Maybe] [Eq] instance, [and]ing that into the accumulator.
+  containedIn(a, b)= foldEntries(m= a, fn(acc, k, v)= acc && (get(m= b, key= k) == /Data/Maybe/Some(value= v)), init= /Data/Primitive/True)
+
+  data(MapEqv, isa= [/Data/Algebra/Eqv])
+    # [MapEqv] is the equivalence [eq] names for a [BinTree]: [mapEqual], order-independent.
+module(Data/Algebra)
+  :/Data/Map/MapEqv.rel(a -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq], b -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= a, b= b)
+
+  :/Data/Map/Leaf.eq= /Data/Map/MapEqv
+  :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).eq= /Data/Map/MapEqv
+
+  :/Data/Map/Leaf.equal(other -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= /Data/Map/Leaf, b= other)
+  :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).equal(other -> /Data/Map/BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq])= /Data/Map/mapEqual(a= /Data/Map/Node(left= left, key= key, value= value, right= right), b= other)
+module(Data/Map)
+  # Two maps with the same entries are equal even when built in different orders (different tree
+  #   shapes); maps differing in a value are not.
+  > (insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20) == insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10))
+    >>> True
+  > Leaf.eq.rel(a= Leaf, b= insert(m= Leaf, key= 1, value= 10))
+    >>> False
+  > (insert(m= Leaf, key= 1, value= 10) == insert(m= Leaf, key= 1, value= 99))
+    >>> False
+
+# # Functor: mapping over values
+  A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
+  preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
+  [{k1: f v1, k2: f v2}] — the "map a function over a collection" operation [fmap] generalises, here
+  ranging over the values only. (It is a standalone operation rather than an instance of the
+  [Functor] class: a [BinTree] is parameterized by both its key and value, and the single-parameter
+  [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
+  instance awaits two-parameter [Functor] support. The operation itself works generically.)
+module(Data/Map)
+  mapValues[$MK, $MV, $MW](m -> BinTree[$K -> $_MK, $V -> $_MV], fn(v -> $_MV) -> $_MW) -> BinTree[$K -> $_MK, $V -> $_MW]
+    # [mapValues] rebuilds the tree, applying [fn] to each node's value and recursing into both
+      subtrees; the keys and shape are carried through unchanged, and the value type may change from
+      the function's input type to its output type.
+  mapValues(m= Leaf, fn(v))= Leaf
+  mapValues(m= Node(left, key, value, right), fn(v))= Node(left= mapValues(m= left, fn(v)= fn(v= v)), key= key, value= fn(v= value), right= mapValues(m= right, fn(v)= fn(v= v)))
+
+  # Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by
+  #   looking the mapped value back up with [get]).
+  > (get(m= mapValues(m= insert(m= Leaf, key= 1, value= 10), fn(v)= v + 1), key= 1) == /Data/Maybe/Some(value= 11))
+    >>> True
+  > (get(m= mapValues(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), fn(v)= v + 1), key= 2) == /Data/Maybe/Some(value= 21))
+    >>> True

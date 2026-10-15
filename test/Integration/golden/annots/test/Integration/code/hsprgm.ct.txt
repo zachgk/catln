@@ -1,0 +1,141 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "# Reading the compiler's own types
+        The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
+        a Catln program can be handed one and read it. This file is what typechecks those declarations:
+        a page nothing imports is a page nothing checks." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
+        reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## Being given a real program
+        Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
+        with the program it is actually compiling — this page and everything it reaches — narrowed to
+        the things written under a name. So [ownDeclCount] below is this file reading its own source as
+        data, through the same declarations the rest of the file exercises." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "## What the suite checks
+        The integration suite typechecks and builds this file, then runs [main] and compares what it
+        printed against @hsprgm.stdout.txt@, which is the one mechanism the integration runner has for
+        saying what a program produced. No page under @stack/@ may import [hsprgm] without closing the
+        import cycle @core/result.ct@ measures, so the values cannot be print goldens of a library page." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "One line per answer rather than one joined string. Joining them chained eight [operator++]s and" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "  reached the [runConstraints] limit on [/operator++[$T -> Semigroup]] — the same non-convergence" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "  the suite's two standing failures are, which is being worked on elsewhere. Printing each is" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "  what the answers are for, and it does not stand on the part of the solver that is unwell." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[valueName] reads the name out of an expression that is one, which is the field a rewrite of a
+        program would look at first." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[declCount] counts the names a program declares or defines something under. Reading a whole
+        program is what all of this was for: [objMap] is what it holds, [cg] is how its classes relate,
+        and [annots] is what is written on the program itself." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[noMeta] is the metadata of a piece of program nothing wrote: no type worth naming, no place
+        in a file, and nothing the stage added. Written once here because building an [Expr] means
+        building one of these, and what is being read is the expression rather than the metadata." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[constantKind] says which of the four things a constant written in a program is. It reads the
+        arm rather than the value, which is what a program reading a program mostly wants of one, and
+        it names every arm so that an arm the declaration is missing is one this does not compile
+        against." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[keyDepth] counts the keys a key holds beneath it, walking the [args] it is written over. One
+        for the key itself, and then the same again for each argument." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[exprKind] says which of the six an expression is. Everything a Catln program is written with
+        has become one of these by the time the compiler is done reducing it, so naming all six is
+        naming everything a program can be — which is what a program that rewrites programs starts
+        from." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[intOf] is defined in this file, so the compiler answers with the one name it is written
+        under; a name nothing is written under is a program holding nothing, rather than a failure." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[typeKind] says whether a type is a set of things or a variable standing for one. The two are
+        what a [Type] is, and telling them apart is the first thing anything reading one has to do." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[intOf] reads the value out of a whole-number constant, which is destructuring a field rather
+        than only matching an arm — the thing a program reading a program is actually for." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[constCount] counts the constants a type holds, which reads a list field out of the type the
+        whole compiler is written in terms of." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A range is the pair of places it runs between, so the file it is in is the file its [first] is
+        in." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[writtenIn] says which file a piece of a program was written in, or that nothing wrote it.
+        A [Meta] with no [pos] is a piece the compiler made while desugaring, which has a type and an
+        identity and no place in any file — so reading one has to answer for that case rather than
+        assume every piece came from somewhere." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[isType] answers whether an object was written as a `data` or a `class`, which is the one
+        question about an [ObjectBasis] that can be asked without anything else of the program to ask
+        it about. It is here to name every arm, so that an arm the declaration is missing is an arm
+        this does not compile against." )
+    )
+]

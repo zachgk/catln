@@ -1,0 +1,141 @@
+import "core/ord.ct"
+import "core/functor.ct"
+import "core/monad.ct"
+
+
+module(Data)
+  # # Maybe
+    A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
+    not recursive, so it is the simplest parameterized type on which to define structural equality
+    and ordering. The [Some] and [Nothing] constructors are named into the [Maybe] namespace, so
+    they live at [/Data/Maybe/Some] and [/Data/Maybe/Nothing] rather than loose under [/Data].
+  class(Maybe[$T], [Maybe/Some[$T -> $_T](value -> $T), Maybe/Nothing])
+    # A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing].
+
+# # Maybe equality and ordering examples
+module(Data/Maybe)
+  # A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]
+  #   checks both arms structurally.
+  > (/Data/Maybe/Some(value= 1) == /Data/Maybe/Some(value= 1))
+    >>> True
+  > (/Data/Maybe/Some(value= 1) == /Data/Maybe/Some(value= 2))
+    >>> False
+  # A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]
+  #   orders both arms structurally, with [Nothing] before any [Some].
+  > /Data/Maybe/Some(value= 1).compareTo(other= /Data/Maybe/Some(value= 2)).isLess
+    >>> True
+  > /Data/Maybe/Some(value= 2).compareTo(other= /Data/Maybe/Some(value= 2)).isEq
+    >>> True
+  > /Data/Maybe/Some(value= 1).compareTo(other= /Data/Maybe/Nothing).isGreater
+    >>> True
+
+# # Maybe Eq membership
+  Makes a [Maybe] of any [Eq] element a proper member of [Eq]. Two [Maybe]s are equal when both
+  are [Nothing], or both are [Some] of equal values. As for every [Eq] type, the comparison is an
+  equivalence relation that [eq] names ([MaybeEqv]).
+  TODO [equal] repeats the comparison rather than asking [eq] for it, as [String] does. Written as
+  @:/Data/Maybe/Some(value).equal(other)= this.eq.rel(a= this, b= other)@, the untyped [other] of
+  an arm on this page is not narrowed by the declaration on @core/eq.ct@ and reads as ⊤, which
+  falls outside the declaration; the constructor pairs below give it a type.
+module(Data)
+  every(Maybe[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+
+  data(MaybeEqv, isa= [/Data/Algebra/Eqv])
+    # [MaybeEqv] compares two [Maybe]s of [Eq] elements arm by arm.
+module(Data/Algebra)
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= True
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value))= False
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= False
+  :/Data/MaybeEqv.rel(a= /Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@av), b= /Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@bv))= av == bv
+
+  :/Data/Maybe/Nothing.eq= /Data/MaybeEqv
+  :/Data/Maybe/Some[$T -> /Data/Algebra/Eq](value).eq= /Data/MaybeEqv
+
+  :/Data/Maybe/Nothing.equal(other= /Data/Maybe/Nothing)= True
+  :/Data/Maybe/Nothing.equal(other= /Data/Maybe/Some(value))= False
+  :/Data/Maybe/Some(value).equal(other= /Data/Maybe/Nothing)= False
+  :/Data/Maybe/Some[$T -> /Data/Algebra/Eq](value@av).equal(other= /Data/Maybe/Some(value@bv))= av == bv
+module(Data/Maybe)
+  > /Data/Maybe/Some(value= 1).eq.rel(a= /Data/Maybe/Some(value= 1), b= /Data/Maybe/Some(value= 1))
+    >>> True
+  > /Data/Maybe/Nothing.eq.rel(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 1))
+    >>> False
+
+# # Maybe Ord membership
+  Makes a [Maybe] of any [Ord] element a proper member of [Ord]. A [Maybe] of [Ord] elements is
+  ordered with [Nothing] before any [Some], and two [Some]s ordered by their wrapped values. As for
+  every [Ord] type, the ordering is an [Ordering] that [ord] names ([MaybeOrdering]). [compareTo]
+  repeats it for the reason [equal] does above.
+module(Data)
+  every(Maybe[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
+
+  data(MaybeOrdering, isa= [/Data/Algebra/Ordering])
+    # [MaybeOrdering] orders two [Maybe]s of [Ord] elements arm by arm.
+module(Data/Algebra)
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing)= /Data/Algebra/Equal
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value))= /Data/Algebra/LessThan
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some(value), b= /Data/Maybe/Nothing)= /Data/Algebra/GreaterThan
+  :/Data/MaybeOrdering.compare(a= /Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@av), b= /Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@bv))= av.compareTo(other= bv)
+
+  :/Data/Maybe/Nothing.ord= /Data/MaybeOrdering
+  :/Data/Maybe/Some[$T -> /Data/Algebra/Ord](value).ord= /Data/MaybeOrdering
+
+  :/Data/Maybe/Nothing.compareTo(other= /Data/Maybe/Nothing)= /Data/Algebra/Equal
+  :/Data/Maybe/Nothing.compareTo(other= /Data/Maybe/Some(value))= /Data/Algebra/LessThan
+  :/Data/Maybe/Some(value).compareTo(other= /Data/Maybe/Nothing)= /Data/Algebra/GreaterThan
+  :/Data/Maybe/Some[$T -> /Data/Algebra/Ord](value@av).compareTo(other= /Data/Maybe/Some(value@bv))= av.compareTo(other= bv)
+module(Data/Maybe)
+  > /Data/Maybe/Nothing.ord.compare(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 2)).isLess
+    >>> True
+  > /Data/Maybe/Some(value= 3).ord.compare(a= /Data/Maybe/Some(value= 3), b= /Data/Maybe/Some(value= 2)).isGreater
+    >>> True
+
+# # Maybe Functor instance
+  Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
+  leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
+  (see the [ConsList] instance in [Data/list] for the naming rationale).
+module(Data)
+  every(Maybe[$T -> $_T], isa= [/Data/Functor])
+module(Data/Maybe)
+  /Data/Functor/fmap(lst= Nothing, fn(v))= Nothing
+  /Data/Functor/fmap(lst= /Data/Maybe/Some(value), fn(v))= /Data/Maybe/Some(value= fn(v= value))
+
+  # Both arms, compared with [operator==] on the result: a [Some] is mapped and a [Nothing] is
+  #   left as it is.
+  > (/Data/Functor/fmap(lst= /Data/Maybe/Some(value= 1), fn(v)= v + 1) == /Data/Maybe/Some(value= 2))
+    >>> True
+  > (/Data/Functor/fmap(lst= /Data/Maybe/Nothing, fn(v)= v + 1) == /Data/Maybe/Nothing)
+    >>> True
+
+# # Maybe Monad instance
+  Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
+  [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
+  and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
+  are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
+  the naming rationale).
+module(Data)
+  every(Maybe[$T -> $_T], isa= [/Data/Monad])
+module(Data/Maybe)
+  /Data/Monad/mmap(m= Nothing, fn(v))= Nothing
+  /Data/Monad/mmap(m= /Data/Maybe/Some(value), fn(v))= fn(v= value)
+
+  # [mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and
+  #   short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the
+  #   flattened result compares with [operator==]. (A function whose body computes the wrapped
+  #   value, e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to
+  #   [Monad]; see the note in [Data/monad].)
+  > (/Data/Monad/mmap(m= /Data/Maybe/Some(value= 5), fn(v)= /Data/Maybe/Some(value= 6)) == /Data/Maybe/Some(value= 6))
+    >>> True
+  > (/Data/Monad/mmap(m= /Data/Maybe/Some(value= 5), fn(v)= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+    >>> True
+  > (/Data/Monad/mmap(m= /Data/Maybe/Nothing, fn(v)= /Data/Maybe/Some(value= v)) == /Data/Maybe/Nothing)
+    >>> True
+  # [pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects
+  #   this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
+  /Data/Monad/pure[$M -> /Data/Maybe[$T -> $_T]](v)= /Data/Maybe/Some(value= v)
+
+  pureSomeInt(v -> Integer) -> /Data/Maybe/Some..[$T -> Integer]
+  pureSomeInt(v)= /Data/Monad/pure(v= v)
+
+  > (pureSomeInt(v= 5) == /Data/Maybe/Some(value= 5))
+    >>> True

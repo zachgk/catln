@@ -1,0 +1,74 @@
+import "core"
+import "core"
+import "core"
+import "core/data.ct"
+
+
+module(Python/Builtins)
+  # ## IO built-ins
+  :IO.input -> String
+    #runtime("ioInput")
+
+  # ## Python built-in abs and pow mapped to methods
+  :Integer.abs -> Integer
+    #runtime("intAbs")
+  :Float.abs -> Float
+    #runtime("floatAbs")
+
+  :Integer.pow(exp -> Integer) -> Integer
+    #runtime("intPow")
+  :Float.pow(exp -> Float) -> Float
+    #runtime("floatPow")
+
+  # ## Type conversions
+  :Float.toInt -> Integer
+    #runtime("floatToInt")
+
+  :Integer.toBool -> Boolean
+    #runtime("intToBool")
+  :Float.toBool -> Boolean
+    #runtime("floatToBool")
+
+  # ## String operations
+    Python's string built-ins, written over the core [String] and [Char].
+  chr(n -> Integer) -> String
+    # [chr] is the one-character string of the Unicode code point [n].
+  chr(n)= /Data/fromCode(code= n).toString
+
+  ord(c -> String) -> Integer
+    # [ord] is the code point of the first character of [c]. It is defined only for a string that
+      has one, as Python's is: an empty string has no [ord], and asking for one fails when it runs.
+  ord(c= /Data/String/Text(chars= /Data/List/Cons(head, tail)))= head.code
+  ord(c= /Data/String/Text(chars= /Data/List/Nil))= undefined
+
+  :Integer.hex -> String
+  :Integer.hex= prefixed(n= this, prefix= "0x", base= 16)
+
+  :Integer.oct -> String
+  :Integer.oct= prefixed(n= this, prefix= "0o", base= 8)
+
+  :Integer.bin -> String
+  :Integer.bin= prefixed(n= this, prefix= "0b", base= 2)
+
+  prefixed(n -> Integer, prefix -> String, base -> Integer) -> String
+    # [prefixed] writes [n] in [base] behind the [prefix] Python gives it, with any minus sign ahead
+      of the prefix (`-0x1f`).
+  prefixed(n, prefix, base) | n < 0= "-" ++ prefix ++ (0 - n).toStringBase(base= base)
+  prefixed(n, prefix, base) else = prefix ++ n.toStringBase(base= base)
+
+  # Python's [operator+] on strings concatenates, which makes [String] an [/Data/Algebra/Add].
+  every(/Data/String, isa= [/Data/Algebra/Add])
+
+  (l :: String + r :: String)= l ++ r
+    # Python joins strings with [operator+].
+
+  # ## Numeric min/max
+  max(l -> Integer, r -> Integer) -> Integer
+    #runtime("intMax")
+  max(l -> Float, r -> Float) -> Float
+    #runtime("floatMax")
+
+  min(l -> Integer, r -> Integer) -> Integer
+    #runtime("intMin")
+  min(l -> Float, r -> Float) -> Float
+    #runtime("floatMin")

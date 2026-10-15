@@ -1,0 +1,13 @@
+import "core/compile.ct"
+import "core/string.ct"
+
+
+# # The Catln Builtins
+# These are the definitions the compiler supplies itself, rather than ones written in Catln.
+# They are built in Haskell, in `Syntax.HsBuiltins.Types`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them.
+# Each is derived from the shape of the Haskell type it stands for, which is the same reading the runtime converts a value of that type by. So what a builtin is called here and what it is handed to a program as cannot disagree.
+data(/Catln/BuildFile(path -> /Data/String.., contents -> /Data/String..))
+  # One file a build produces, at the [path] it is produced at.
+  # A path rather than a name and a place in a tree, so that a result is a flat list of files and every entry of that list is the same kind of thing. The nested form — a file or a directory of further entries, which is [/Data/FileOrDir] — is the shape this wants, and is a shape the compiler can build: a directory holding both a file and a subdirectory writes and walks, read by arms matching its two constructors. What a result is has stayed flat for its own reason rather than for want of the tree.
+  # [path] is written with @/@ between its parts, and names a place inside the build and nowhere else. A path leading out of it is refused when the build is written rather than here, since a result may be built long before anything writes it.
+  # It is declared from Haskell rather than in Catln because the compiler reads a build result back out of an evaluation itself, in [valResultFiles]. Declared in a `.ct` file, what it is called there and what it is read as here would be two things to keep in step.

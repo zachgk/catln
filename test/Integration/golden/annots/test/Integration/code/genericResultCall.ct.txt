@@ -1,0 +1,35 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A call whose declared result is a declaration variable, landing where nothing requires a type.
+        A term may be handed on unrewritten — rewriting is a chain and the consumer's followup applies
+        it — so the tree build leaves a term that already reaches its destination alone. A Top
+        destination accepts everything, so it left such a term alone too, and there was no followup to
+        apply it: the applied tuple itself became the consumer's runtime value, and the consumer had
+        nothing to dispatch on.
+        A declared result spelled by a declaration variable is exactly what produces a Top destination.
+        @gidG@ returns @$_B@, which in the generic frame @useG@'s body is built in reads as Top, so
+        @useG@ answered with the raw @/gidG(/x=5)@ tuple where @operator+@ wanted an Integer:
+          Invalid intOp signature
+        @useI@ below is the same program with those three positions spelled Integer instead. It always
+        worked, and it is what says the fault was the variable rather than the shape." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "The same defect is what stopped a fold over a polymorphic accumulator, which is the shape it was
+        found from. The recursive call is what reaches the step function, and it reached it as the
+        unevaluated @/foldrG(..)@ tuple:
+          Failed match in eval callTree:
+            Val: TupleVal /operator+(/r = 1, /l = TupleVal /foldrG(/init = 0, ..))
+            Options: [+(/r=Float, /l=Float), +(/r=Integer, /l=Integer)]
+        Both the element type and the accumulator are variables here, so nothing about this fold is
+        concrete until it is called." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "The accumulator need not be the element type: the last fold folds a list of Integers into a
+        String." )
+    )
+]

@@ -1,0 +1,392 @@
+import "core/compile.ct"
+
+
+module(Catln/Doc)
+  # # Catln WebDocs
+    This provides common components and annotations used in Webdocs.
+    These include the ones
+  class(DShow)
+    # Represents objects which can be shown in the webdocs.
+  class(DocPage)
+    # Marks an annotation as one the webdocs offer as a page of its own, rather than one only written
+      into a program beside the thing it is about. A reader is offered these by name — in the search
+      box, without having to know they exist — so what is marked here is what there is to find, and
+      an annotation added below is found by marking it and nothing else.
+      What is left unmarked is as much of what this says as what is marked, since a reader offered a
+      page they have no use for is a reader reading past it. Three kinds are left out. A display of
+      whatever it is written on ([#md], [#print], [#test]) is not a page but part of one, and has
+      nothing to show asked for on its own. A display of the doc server's own furniture ([#sidebar],
+      [#search]) is already on the reader's screen, so offering it in the box it is drawn in says
+      nothing. And a page about one program rather than about the pages there are ([#typeInfer]) has
+      to be pointed at that program to mean anything, so it belongs where a page is already in hand
+      rather than in a box offering the same thing wherever it is opened from.
+      The last of those is about what the page says rather than about which program it is of, so a
+      page about a program which still says something of every page there is belongs in the box.
+      [#prgmGraph] is the case: pointed at a program it draws that program, and pointed at nothing it
+      draws which pages the doc server holds and how they reach one another, which is worth opening
+      from anywhere.
+      Membership says the annotation is a page, not that it can be written with no argument. What can
+      be offered without a reader typing anything is worked out from the declaration: an annotation
+      taking no arguments is offered once, and one whose arguments are all sealed classes is offered
+      once per combination of their members. An annotation taking a [String] — a type name, a
+      function to run — names something only the reader knows, so marking it offers nothing until
+      there is somewhere to type that in.
+
+  dshow(s -> DShow)= s
+    # [dshow] resolves a value or annotation to its [DShow] display form. The identity arm passes a
+      value that is already [DShow] straight through; the arms below turn compiler annotations (like
+      [#md] or [#type]) into their visualization types.
+
+  class(DShowCall)
+    # Represents calls which have a display of their own, as [DShow] represents values which do.
+      A call is not a value, and that is the whole reason this is a second class rather than more
+      members of the first. What [DShow] answers about is something the program computed and is
+      holding; what this answers about is the computing — which arguments went in, what came back,
+      and, where it matters, what happened in between. A mapping over a list is the case the first
+      of these was written for: the list it returns is a [DShow] already and says nothing a reader
+      could not see, while which element became which is the whole of what the call did.
+      Open, as [DShow] is, and joined the same way — by an arm of [/Catln/Doc/dshowCall] written
+      beside the function, not by an [every]. See [/Data/List] in @core/list-webdocs.ct@.
+
+  dshowCall(s -> DShowCall) -> DShow
+    # [dshowCall] resolves a call to the display of that call. A declaration and no more: there is
+      no arm here matching anything, so a call with no arm of its own has no display and whatever
+      is showing it falls back to however it shows calls in general.
+      Deliberately not an arm of [dshow], and deliberately a function nothing calls from a page.
+      An argument is evaluated before the function it is passed to is entered, so a call written
+      into a page arrives at whatever it was passed to as its RESULT. An arm whose pattern is a
+      call is still selected for it — the type it is selected on is the call, unreduced — and then
+      destructures a value that is not one. Written on [dshow] that is a trap a library can fall
+      into from a page; written here it cannot arise, because the only caller is a debugger, which
+      has the call in hand as a value and hands it over as one.
+      So an arm here is read differently from an arm of [dshow] in one way worth stating: its
+      parameters are the call's arguments, and its body may USE them — apply the function argument,
+      walk the list argument — because what it was given is the call and not the answer. A show of
+      a call works the answer out itself, which is what makes it a show of the function.
+
+  every(String, isa= [/Catln/Doc/DShow])
+  every(/Data/ToString, isa= [/Catln/Doc/DShow])
+    # Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
+      webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
+      print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
+      visualization like [Show/MD]) is still printable, but only [ToString] values are compared
+      against a print/result golden.
+
+  data(Show/MD(text -> String))
+
+  every(Show/MD.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #md(text))= Show/MD(text= text)
+  dshow(s= #print(p))= p
+
+  data(Show/Html(contents -> String))
+    # [Show/Html] shows markup a program wrote, laid into the page it is shown on. It is one of the
+      two things a library reaches for to say how one of its own types is displayed: an arm of
+      [dshow] written beside the declaration builds the markup, and the webdocs render it and know
+      nothing else about it. So a display belongs to the library owning the type rather than to a
+      component of the doc server named after that type.
+      This one when the display is a shape to lay out and nothing more. The other is
+      @core/render.ct@'s `Show/Rendered`, where the library ships the script that draws the value and
+      the value is handed to it whole — which is what a display has to be when it answers a click
+      rather than only being read. Markup cannot say what it does, and that is the whole of the line
+      between them.
+      Laid in and not framed, which is what separates it from the frame a compiled result is shown
+      in. That frames because what is in it is a whole document with its own styling, and laying one
+      into this page would take this page's styling and give it that document's. A program's own
+      display is not a document of its own, so it is meant to take this page's font, its links and
+      its colours, which a frame would give it none of.
+      Markup where [Show/MD] is prose: writing which reads as a document is markdown, and writing
+      which is a shape to lay out is this, because markdown cannot say how a heading or a table sits.
+      Nothing written here is escaped and nothing is sanitized. A library's display is that library's
+      own code, run by a doc server which already compiles and evaluates that library's pages, so
+      there is nothing markup could carry that an arm of the same library could not do first — which
+      is the whole reason the sanitizing that used to sit here is gone, and why a display may now ship
+      a script through `Show/Rendered` at all.
+      What an arm joins INTO its markup is a different matter, and it is that arm's to get right. A
+      string an arm read out of a file is not the library's writing. A note is titled by the file it
+      sits in, and an entry of a feed says whatever the feed's author published — so an arm joining
+      one of those in is joining in markup somebody else wrote, and it is joined in without a frame,
+      without a sandbox, and now without the sanitizing that had been standing in for both. An arm
+      carrying writing from outside owes it an escape or a frame of its own. See [/Data/RSS/Item],
+      which is the arm this is said about.
+
+  every(Show/Html.., isa= [/Catln/Doc/DShow])
+
+  annot(#overlay(url -> String))
+
+  data(Show/Overlay(url -> String))
+    # [Show/Overlay] shows a page written over another one: the writing of the page carrying it
+      above, and the page at [url] below. It carries the address alone, because what is at the
+      other end is not the doc server's to compile, to hold, or to answer for — the browser
+      fetches it itself, from whoever serves it. So this is the one display that says where to
+      look rather than what was found there, and the one the webdocs read as a shape to lay a page
+      out in rather than as a value to show in the flow of it.
+      A site may refuse to be shown inside another page, and refuses in a header the page framing
+      it is not allowed to read. So the address is shown as a link wherever it appears, and the
+      annotation itself displays as that link rather than as a frame of its own: the frame belongs
+      to the page laying itself out around it, so a page carrying an overlay is one frame and one
+      link rather than two frames, and a reader is never left with a blank frame and no way
+      through to what it was for.
+
+  every(Show/Overlay.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #overlay(url))= Show/Overlay(url= url)
+
+  class(ListProgramMode, [Desugar, Typecheck, TreeBuild])
+    # Which compiler stage a [#listProgram] lists: the program before typechecking, after
+      typechecking, or after tree building.
+
+  annot(#listProgram(mode -> ListProgramMode), isa= [/Catln/Doc/DocPage])
+    # Offered as a page per [ListProgramMode], since the mode is the whole of what it takes and the
+      class names every one there is.
+      The class is named absolutely, as every [isa] in this file is. A relative name here is not
+      resolved: the extends list is keyed into the class graph as it is written, so @DocPage@ becomes
+      a second class of that name beside this one rather than a reference to it.
+
+  data(Show/ListProgram(prgm -> String, mode -> ListProgramMode))
+    # [Show/ListProgram] lists every declaration and definition of a program. It carries the
+      program it lists in [prgm], so the webdocs render the page from the compiled value itself
+      rather than asking the compiler for it over a separate route. The [mode] it was listed for
+      travels with it, so the page's stage selector reads the annotation rather than holding its
+      own state.
+
+  every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #listProgram(mode)) =
+    listProgram(annot) -> String
+      # [listProgram] renders the program being evaluated as JSON, at the compiler stage its
+        [mode] names. The program is the one the annotation was evaluated against, so a
+        [#listProgram] in a page lists that page and everything it reaches, at every stage alike.
+      #runtime("listProgram")
+
+    Show/ListProgram(prgm= listProgram(annot= s), mode= mode)
+
+  annot(#type(name -> String))
+
+  data(Show/TypePage(prgm -> String, name -> String))
+    # [Show/TypePage] lists the declarations and definitions of a single type or class. Like
+      [Show/ListProgram] it carries the listing it shows in [prgm], so the webdocs render the page
+      from the compiled value rather than asking the compiler for it over a separate route. The
+      [name] it was filtered by travels with it so the page can title itself.
+
+  every(Show/TypePage.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #type(name)) =
+    filterProgram(annot) -> String
+      # [filterProgram] renders the declarations and definitions of [name] as JSON. It is
+        [listProgram] narrowed to one name, over the same program the annotation was evaluated
+        against.
+      #runtime("filterProgram")
+
+    Show/TypePage(prgm= filterProgram(annot= s), name= name)
+
+  annot(#typeInfer)
+
+  data(Show/TypeInfer(constrain -> String))
+    # [Show/TypeInfer] shows how the program's types were inferred. It carries that program in
+      [constrain], with a type variable on every meta, so the webdocs render the page from the
+      compiled value rather than asking the compiler for it over a separate route.
+
+  every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #typeInfer) =
+    typeInfer(annot) -> String
+      # [typeInfer] renders the type inference of the program being evaluated as JSON, paired with
+        the notes its typecheck produced. Like [listProgram] it reports on whatever program the
+        annotation was evaluated against. The trace of how each point was solved is not included;
+        a point is asked for on its own through [#typeInferPnt].
+      #runtime("typeInfer")
+
+    Show/TypeInfer(constrain= typeInfer(annot= s))
+
+  annot(#typeInferPnt(pnt -> Integer))
+
+  data(Show/TypeInferPnt(trace -> String, pnt -> Integer))
+    # [Show/TypeInferPnt] shows how one point of the type inference was solved: the constraints
+      mentioning it, and what each epoch updated it to. It is the drill-down of a [Show/TypeInfer],
+      which is a program's worth of points, and so is shown embedded within one. The [pnt] it was
+      filtered by travels with it so the page can title itself.
+
+  every(Show/TypeInferPnt.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #typeInferPnt(pnt)) =
+    typeInferPnt(annot) -> String
+      # [typeInferPnt] renders the part of the same trace that touches [pnt] as JSON. Only that
+        part: the whole trace records every update of every point in every epoch, and would dwarf
+        the program it describes.
+      #runtime("typeInferPnt")
+
+    Show/TypeInferPnt(trace= typeInferPnt(annot= s), pnt= pnt)
+
+  annot(#prgmGraph, isa= [/Catln/Doc/DocPage])
+    # The pages of the program it is written in, drawn as the graph of which of them import which.
+      It takes nothing, as [/Data/Calendar/#calendar] takes nothing and for its reason: what to draw
+      is what is there. The program is the page it is written in and everything that page imports,
+      and written where nothing is scoped it is every page the doc server holds.
+      Marked as a page of its own, which [#typeInfer] above is not. The paragraph on [DocPage] leaves
+      a page about one program out of the box because it has to be pointed at a program to mean
+      anything, and that holds of this one written in a page. It does not hold of this one written in
+      none: a graph of every page there is and how they reach one another is about which pages there
+      are, which is the question [#sidebar] and [#search] answer in the shapes they answer it in, and
+      is worth opening from wherever a reader is. So it is offered by name, and a reader who wants
+      the graph of one program opens it from that program.
+
+  data(Show/PrgmGraph(graph -> String))
+    # [Show/PrgmGraph] shows a program as its pages and the imports between them: a node per page,
+      carrying the path it is opened by, the pages it imports, whether it belongs to the standard
+      library, and whether it is the page the graph was drawn for. It carries all of that in [graph],
+      so the webdocs draw the graph from the compiled value rather than asking the compiler for it
+      over a separate route.
+      The standard library is in it, marked, rather than left out. A program's own pages and the
+      library it rests on are two questions asked of one graph, and a graph answering only one of
+      them would have to be drawn again to answer the other. Which of them a reader is asking is
+      decided where the graph is drawn, as [Show/Calendar] decides there which days it draws and for
+      the same reason: that is a reader turning over what they have already been handed.
+
+  every(Show/PrgmGraph.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #prgmGraph) =
+    prgmGraph(annot) -> String
+      # [prgmGraph] renders the pages the evaluation covers as JSON: each the path it is opened by,
+        the paths of the pages it imports, and whether it is the standard library's and whether it is
+        the one the evaluation is of. Every page a page imports is itself one of the pages, since a
+        page is covered because something reached it and what it reaches is reached too.
+      #runtime("prgmGraph")
+
+    Show/PrgmGraph(graph= prgmGraph(annot= s))
+
+  annot(#sidebar)
+
+  data(Show/Sidebar(pages -> String))
+    # [Show/Sidebar] shows the pages a doc server holds, as the tree of directories they sit in. It
+      carries that tree in [pages], so the webdocs render their navigation from the compiled value
+      rather than asking the compiler for it over a separate route. Unlike the pages above it is not
+      about the program it is evaluated against but about which pages there are to evaluate against
+      at all, so, like [Show/Search] below, it is meant to be evaluated unscoped.
+
+  every(Show/Sidebar.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #sidebar) =
+    sidebar(annot) -> String
+      # [sidebar] renders the pages the evaluation covers as a JSON tree: a node per directory and
+        per file, each carrying the path to link it by. Evaluated unscoped that is every page the
+        doc server loaded, which is what a navigation of the whole doc server wants.
+      #runtime("sidebar")
+
+    Show/Sidebar(pages= sidebar(annot= s))
+
+  annot(#search)
+
+  data(Show/Search(pages -> String))
+    # [Show/Search] shows the pages a reader can look for, as the flat list of the paths they are
+      opened by. It carries that list in [pages], so the webdocs search from the compiled value
+      rather than from whichever navigation happens to be on screen. Like [Show/Sidebar] it is about
+      which pages there are rather than about the program it was evaluated against, so a search of
+      the whole doc server is evaluated unscoped; written in a page it searches what that page
+      reaches.
+
+  every(Show/Search.., isa= [/Catln/Doc/DShow])
+
+  searchWebdocs(query -> String) -> DShow =
+    # [searchWebdocs] is the search itself: the pages whose path [query] matches, as the box that
+      opens the one that is picked. It is a function rather than an annotation because the webdocs
+      call it as the reader types, over @/api/call@, passing what they have typed — an annotation is
+      written into a program and so can only carry what was written there.
+      An empty [query] matches every page, which is what a box that has not been typed into shows.
+    searchPagesFor(query -> String) -> String
+      # [searchPagesFor] renders the pages the evaluation covers whose path holds [query] as a JSON
+        list of those paths. They are the pages [sidebar] renders as a tree; a search box wants the
+        flat list it offers rather than a navigation to walk.
+      #runtime("searchPagesFor")
+
+    Show/Search(pages= searchPagesFor(query= query))
+
+  dshow(s= #search)= searchWebdocs(query= "")
+
+  data(Show/DocPages(pages -> String))
+    # [Show/DocPages] shows the annotations that are pages in their own right — the ones marked
+      [DocPage] — as the list a reader picks one from. It carries that list in [pages], each entry
+      the source to run and the label to offer it under.
+      Like [Show/Search] it is about what there is to ask for rather than about the program it was
+      evaluated against. Unlike it, what there is comes from the program rather than from which files
+      were read: an annotation is a page by being marked as one where it is declared, so this answers
+      about whichever program it is evaluated against and is asked of the whole doc server the same
+      way a search is.
+
+  every(Show/DocPages.., isa= [/Catln/Doc/DShow])
+
+  docPages(query -> String) -> DShow =
+    # [docPages] is the pages that are annotations rather than files: those whose source or label
+      [query] matches, as the list that opens the one that is picked. A function rather than an
+      annotation for the reason [searchWebdocs] is one — the webdocs call it as the reader types,
+      passing what they have typed.
+      An empty [query] matches every one, which is what a box that has not been typed into offers.
+      That is a handful of entries rather than every page there is, which is why a box asks this
+      before anything is typed and asks [searchWebdocs] only once something has been.
+    docPagesFor(query -> String) -> String
+      # [docPagesFor] renders the annotations marked [DocPage] whose source or label holds [query] as
+        a JSON list of what to run and what to call it. An annotation taking no arguments is one
+        entry; one taking only arguments whose values a sealed class names is an entry per
+        combination of them, which is how the three stages of a [#listProgram] are three pages; one
+        taking a value only the reader knows is none, since there is no list to offer.
+      #runtime("docPagesFor")
+
+    Show/DocPages(pages= docPagesFor(query= query))
+
+  data(Show/Test(run -> String))
+    # [Show/Test] shows how the tests of one definition ran: what each of them was, whether it
+      passed, and how many generated cases it got through. It carries that run in [run], so the
+      webdocs show a test's result beside the test itself rather than asking the compiler for it
+      over a separate route.
+      Unlike the displays above it has no annotation of its own. It is what [#test] shows: a [#test]
+      already marks a definition as a test, so the definitions it is written on are exactly the ones
+      with a run to show.
+
+  every(Show/Test.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #test) =
+    testRun(annot) -> String
+      # [testRun] renders the tests of the definition the annotation is written on as JSON. Of that
+        definition, not of the page: a [#test] marks one definition as a test, so it reports on that
+        one.
+      #runtime("testRun")
+
+    Show/Test(run= testRun(annot= s))
+
+  annot(#debugger(fun -> String))
+
+  data(Show/Debugger(run -> String, fun -> String))
+    # [Show/Debugger] shows a run of one of the program's functions: what it evaluated, what it
+      printed, and what it exited with. It carries that run in [run], so the webdocs render the page
+      from the compiled value rather than asking the compiler for it over a separate route. The
+      [fun] it ran travels with it so the page can title itself.
+      It shows a run of a single expression ([#debugExpr]) just as well, since what distinguishes
+      the two is what the run ended with rather than how it is read, and [run] carries that. So
+      [fun] is what was run, which for an expression is the expression itself.
+
+  every(Show/Debugger.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #debugger(fun)) =
+    debugger(annot) -> String
+      # [debugger] runs [fun] in the program being evaluated and renders the run as JSON. The
+        program's output is captured rather than printed, so showing a run inside a doc server does
+        not write the run's output to the server's own stdout.
+      #runtime("debugger")
+
+    Show/Debugger(run= debugger(annot= s), fun= fun)
+
+  annot(#debugExpr(expr -> String))
+
+  dshow(s= #debugExpr(expr)) =
+    debugExpr(annot) -> String
+      # [debugExpr] compiles [expr] as though it were written in the page being evaluated, runs it,
+        and renders the run as JSON. An expression rather than a function name, which is what
+        [#debugger] takes: what a reader wants to debug is often something that no definition names
+        — the computation a [#print] displays the result of, or the one generated input a test case
+        ran on. Neither exists in the program as a name to run.
+        Its own annotation rather than a second form of [#debugger] because the two run different
+        things in different ways, and an annotation whose meaning turns on which argument was given
+        reads as one thing that sometimes does another.
+      #runtime("debugExpr")
+
+    Show/Debugger(run= debugExpr(annot= s), fun= expr)
