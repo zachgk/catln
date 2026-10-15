@@ -5732,11 +5732,19 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
         -- each atom is materialized into per-slot escapes, and the cover then needs a joint
         -- partition across several slots that no route finds. Each disjunct is a smaller formula,
         -- so this does not re-fire on its own subgoals indefinitely.
-        coveredByDisjuncts = case ptPreds sub of
-          PredsNot (PredsAnd qs@(_:_:_)) ->
+        --
+        -- The disjunction may be one conjunct among others, which each piece keeps:
+        -- @l|¬(q₁ ∧ q₂) ∧ R = l|¬q₁ ∧ R ∪ l|¬q₂ ∧ R@. The point a constant met with a union of two
+        -- predicate tops gives, @/Integer | ¬(¬P ∧ ¬Q) ∧ PredConstEq c@, is covered by the two
+        -- points @/Integer | P ∧ PredConstEq c@ and @/Integer | Q ∧ PredConstEq c@ that the meet
+        -- distributed over the union gives ('propIntersectionDistributesUnion').
+        coveredByDisjuncts = case subDisjunction of
+          Just (qs, rest) ->
             let supT = UnionType Nothing (joinUnionType sup) []
-            in all (\q -> isSubtypeOfWithEnv typeEnv vaenv (compactType typeEnv vaenv (singletonType sub{ptPreds = predsNot q})) supT) qs
-          _ -> False
+            in all (\q -> isSubtypeOfWithEnv typeEnv vaenv (compactType typeEnv vaenv (singletonType sub{ptPreds = mkAnd (predsNot q : rest)})) supT) qs
+          Nothing -> False
+        subDisjunction = listToMaybe [ (qs, pre ++ post) | (PredsNot (PredsAnd qs@(_:_:_)), pre, post) <- conjPicks (predsConjuncts (ptPreds sub)) ]
+        conjPicks xs = [ (x, take i xs, drop (i + 1) xs) | (i, x) <- L.zip [0 :: Int ..] xs ]
         -- A leaf with a NEGATED predicate is its bare shape minus the predicate's members:
         -- @l|¬q ⊆ S ⟺ l ⊆ S ∪ (l ∩ q)@, exactly. Compared as written, @l|¬q@ matches no single
         -- super when a difference has already cut @l@ into the pieces outside @q@:
