@@ -7665,7 +7665,32 @@ intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Partia
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
 -- Both operands are read with their spread floor ('spreadFloor') first, so a spread's declared
 -- floor meets as listed fields; the modes are left as written (a spread still admits extras).
-intersectPartialsBase typeEnv vaenv a0 b0 = intersectPartialsBaseN typeEnv vaenv (spreadFloor typeEnv a0) (spreadFloor typeEnv b0)
+--
+-- A higher-order argument's input object reads its parent references from the parameters' own
+-- slots as they are before the arguments meet ('intersectPartialsBaseN'.'readInputObjParents').
+-- A parameter the DATA arguments pin through a sibling's bound (@fn(v -> $_A)@ beside
+-- @m -> $F@, @$F -> Functor[$T -> $_A]@) is only learned from that meet, so the input object was
+-- met with it still ⊤: @bindap@'s fmap arm met with a call whose lambda takes @∀Maybe[Integer]@
+-- read @fn[/A=∀Maybe[Integer]]@ and accepted, though at @m= Maybe[Integer]@ the arm passes the
+-- @Integer@ element. The data decides what the input is ('pinnedSlotsOk' reads it the same way),
+-- so the meet is taken again with what the first one pinned, and the input object meets it.
+intersectPartialsBase typeEnv vaenv a0 b0 = do
+  let a = spreadFloor typeEnv a0
+      b = spreadFloor typeEnv b0
+  r@(_, ps) <- intersectPartialsBaseN typeEnv vaenv a b
+  let pinned = H.fromList [ (n, t) | n <- S.toList (inputParentRefs a `S.union` inputParentRefs b)
+                                   , all (unresolvedAt n) [a, b]
+                                   , Just ts <- [mapM (H.lookup n . ptVars) ps]
+                                   , not (null ts), all (\t -> not (isTypeVar t) && t /= PTopType) ts
+                                   , let t = unionAllTypes typeEnv ts ]
+  if H.null pinned
+    then return r
+    else intersectPartialsBaseN typeEnv vaenv a{ptVars = H.unionWith (intersectTypesEnv typeEnv vaenv) pinned (ptVars a)} b
+  where
+    -- The parameters a partial's higher-order input objects name by a parent reference.
+    inputParentRefs p = S.fromList [ n | (k, UnionType Nothing leafs _) <- H.toList (ptArgs p), not (S.null (pkArgs k))
+                                       , l <- splitUnionType leafs, TypeVar (TVVar n) TVParent _ <- H.elems (ptVars l) ]
+    unresolvedAt n p = H.lookupDefault PTopType n (ptVars p) == PTopType
 
 intersectPartialsBaseN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
