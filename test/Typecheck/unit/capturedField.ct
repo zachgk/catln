@@ -1,0 +1,23 @@
+annot(#noCore)
+
+# A sub function capturing a field its parent destructures, as [daysSinceEpoch]'s helpers capture
+# [day] from [Date(year, month, day)]. The captured [v] is curried into [helper]'s declaration, and
+# is the field passed through, so the declaration accepts what [Box]'s [v] holds. The helper's body
+# needs [v] to be a [Num], which narrows its definition; a declaration accepting a ⊤ [v] would be
+# left unfulfilled by it.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+
+class(Num, [Integer])
+
+plus(a -> Num, b -> Num) -> Num
+plus(a, b)= a
+
+data(Box(v -> Integer))
+
+total(b -> Box..) -> Num
+total(b= Box(v)) =
+  helper(y -> Integer) -> Num
+  helper(y)= plus(a= y, b= v)
+  helper(y= v)

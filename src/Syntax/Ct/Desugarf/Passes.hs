@@ -265,6 +265,36 @@ seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap
                           , not (typeContainsTypeVar t) ] of
       [] -> Nothing
       ts -> Just $ unionAllTypes typeEnv ts
+    -- A field bound by destructuring (@day@ in @Date(year, month, day)@, or @d@ in @Date(day@d)@)
+    -- is named by no declaration of the parent: it is the field of the data the pattern is written
+    -- in, so it takes that field's declared type, by the same rule.
+    dataField ctor field = case [ t
+                                | (dataName, ObjectMapItem{omiDecls}) <- H.toList fullObjMap
+                                , relativeNameMatches ctor dataName
+                                , oa <- omiDecls
+                                , isNothing (oaArr oa)
+                                , Just obj <- [oaObj oa]
+                                , (k, ms) <- H.toList (exprArgs obj)
+                                , relativeNameMatches (pkName k) (makeAbsoluteName field) || pkName k == field
+                                , (_, am) <- ms
+                                , let t = freeTVExtToTopDeep H.empty (getMetaType am)
+                                , t /= PTopType
+                                , not (typeContainsTypeVar t) ] of
+      [] -> Nothing
+      ts -> Just $ unionAllTypes typeEnv ts
+    -- Each binding a pattern destructures from a data value, with the data's name and the field.
+    fieldBindings e@(TupleApply _ (_, b) arg) = fieldBindings b ++ case (arg, maybeExprPath e) of
+      (EAppArg ObjArr{oaObj=Just f, oaArr=Just (Nothing, _)}, Just ctor) -> case f of
+        Value _ field                   -> [(field, (ctor, field))]
+        AliasExpr (Value _ field) alias | Just a <- maybeExprPath alias -> [(a, (ctor, field))]
+        _                               -> []
+      (EAppArg ObjArr{oaArr=Just (Just v, _)}, _) -> fieldBindings v
+      _ -> []
+    fieldBindings (AliasExpr b _) = fieldBindings b
+    fieldBindings _ = []
+    capturedArg name obj k = case declArg name k of
+      Just t  -> Just t
+      Nothing -> listToMaybe [ t | (bound, (ctor, field)) <- fieldBindings obj, relativeNameMatches (pkName k) (makeAbsoluteName bound) || pkName k == bound, Just t <- [dataField ctor field] ]
     seeds = H.fromList
       [ (pos, (name, t))
       | (name, ObjectMapItem{omiDefs}) <- H.toList objMap
@@ -274,7 +304,7 @@ seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap
       , (_, am) <- ms
       , Just pos <- [getMetaPos am]
       , getMetaType am == PTopType
-      , Just t <- [declArg name k] ]
+      , Just t <- [capturedArg name obj k] ]
     objMap'
       | H.null seeds = objMap
       | otherwise = H.mapWithKey seedItem objMap

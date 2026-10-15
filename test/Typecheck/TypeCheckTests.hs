@@ -424,6 +424,17 @@ testImportAfterAnnot = testCase "an import written after another statement impor
     CRes _ _ -> return ()
     CErr ns  -> assertFailure (prettyCNotes ns)
 
+-- | A sub function capturing a field its parent destructures declares the field's type for it, so
+-- a body that narrows the field still fulfils the declaration. Fixture: unit/capturedField.ct.
+testCapturedField :: TestTree
+testCapturedField = testCase "a captured destructured field is declared as the field's type" $ do
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/capturedField.ct"]
+    getTPrgm ctss
+  case res of
+    CRes _ _ -> return ()
+    CErr ns  -> assertFailure (prettyCNotes ns)
+
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
 assertResultGuaranteed :: String -> String -> Assertion
 assertResultGuaranteed page name = do
@@ -465,6 +476,7 @@ typecheckTests = do
     , testPassedOnLink
     , testLongerShapeCall
     , testImportAfterAnnot
+    , testCapturedField
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where
