@@ -8,16 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -128,36 +119,6 @@ Prgm
                 @useI@ below is the same program with those three positions spelled Integer instead. It always
                 worked, and it is what says the fault was the variable rather than the shape." }
             )
-        , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /useG
-                ( /fn( Value /a ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /a = Value /a )
-                    ( Value /r -> /Data/Primitive/Integer = CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 5 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "6" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /useI
-                ( /fn( Value /a -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /a = Value /a )
-                    ( Value /r -> /Data/Primitive/Integer = CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 5 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "6" }
-            )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -170,101 +131,11 @@ Prgm
                 Both the element type and the accumulator are variables here, so nothing about this fold is
                 concrete until it is called." }
             )
-        , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /foldrG
-                ( Value /lst -> /Data/List/Cons
-                    ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                        ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Nil
-                            )
-                        )
-                    ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt
-                        { ciValue = 1 }
-                    )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                        ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Nil
-                            )
-                        ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt
-                            { ciValue = 2 }
-                        )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt
-                                { ciValue = 3 }
-                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                        )
-                    )
-                )
-                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
-                ( Value /init -> /Data/Primitive/Integer = CInt
-                    { ciValue = 0 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "6" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /foldrG( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
-                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
-                ( Value /init -> /Data/Primitive/Integer = CInt
-                    { ciValue = 0 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "0" }
-            )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "The accumulator need not be the element type: fold a list of Integers into a String." }
-            )
-        , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) = /foldrG
-                ( Value /lst -> /Data/List/Cons
-                    ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                        ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Nil
-                        )
-                    ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt
-                        { ciValue = 1 }
-                    )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                        ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt
-                            { ciValue = 2 }
-                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                    )
-                )
-                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
-                    ( Value /r -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                        { csValue = "x" }
-                    )
-                )
-                ( Value /init -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "s" }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "sxx" }
+                { csValue = "The accumulator need not be the element type: the last fold folds a list of Integers into a
+                String." }
             )
         ]
     }

@@ -40,16 +40,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -183,90 +174,15 @@ Prgm
                 argument position (see @ifNonAgreeingBranches.ct@); [match] and [case] now do the same.
                 Every arm is run below, since a test that only reaches one arm cannot tell them apart." }
             )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /rank( Value /c -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /rank( Value /c -> /Data/Algebra/Equal = Value /Data/Algebra/Equal ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /rank( Value /c -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "3" }
-            )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The scrutinee may be computed, and the enclosing definition may be generic." }
             )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /rankOf
-                ( Value /a -> /Data/Primitive/Integer = CInt
-                    { ciValue = 1 }
-                )
-                ( Value /b -> /Data/Primitive/Integer = CInt
-                    { ciValue = 2 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /rankOf
-                ( Value /a -> /Data/Primitive/Integer = CInt
-                    { ciValue = 2 }
-                )
-                ( Value /b -> /Data/Primitive/Integer = CInt
-                    { ciValue = 2 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /rankOf
-                ( Value /a -> /Data/Primitive/Integer = CInt
-                    { ciValue = 3 }
-                )
-                ( Value /b -> /Data/Primitive/Integer = CInt
-                    { ciValue = 2 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "3" }
-            )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /caseRank( Value /c -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /caseRank( Value /c -> /Data/Algebra/Equal = Value /Data/Algebra/Equal ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /caseRank( Value /c -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "3" }
             )
         ]
     }

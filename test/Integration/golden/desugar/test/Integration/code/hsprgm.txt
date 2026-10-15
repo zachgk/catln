@@ -541,184 +541,10 @@ Prgm
                 a Catln program can be handed one and read it. This file is what typechecks those declarations:
                 a page nothing imports is a page nothing checks." }
             )
-        , /Catln/#print
-            ( Value /p= isType( Value b= Value /Catln/ObjectBasis/TypeObj ) )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= isType( Value b= Value /Catln/ObjectBasis/ArgObj ) )
-            ( Value /result= CStr
-                { csValue = "False" }
-            )
-        , /Catln/#print
-            ( Value /p= constantKind
-                ( Value c= /Catln/Constant/CInt
-                    ( Value value= CInt
-                        { ciValue = 3 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "int" }
-            )
-        , /Catln/#print
-            ( Value /p= constantKind
-                ( Value c= /Catln/Constant/CStr
-                    ( Value value= CStr
-                        { csValue = "hi" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "str" }
-            )
-        , /Catln/#print
-            ( Value /p= intOf
-                ( Value c= /Catln/Constant/CInt
-                    ( Value value= CInt
-                        { ciValue = 42 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "42" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
                 reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do." }
-            )
-        , /Catln/#print
-            ( Value /p= keyName
-                ( Value k= /Catln/PartialKey
-                    ( Value name= CStr
-                        { csValue = "x" }
-                    )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "x" }
-            )
-        , /Catln/#print
-            ( Value /p= keyDepth
-                ( Value k= /Catln/PartialKey
-                    ( Value name= CStr
-                        { csValue = "f" }
-                    )( Value vars= Value /Data/List/Nil )
-                    ( Value args= /Data/List/Cons
-                        ( Value /head= /Catln/PartialKey
-                            ( Value name= CStr
-                                { csValue = "a" }
-                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                        )( Value /tail= Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= typeKind
-                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
-            )
-            ( Value /result= CStr
-                { csValue = "union" }
-            )
-        , /Catln/#print
-            ( Value /p= constCount
-                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
-                    ( Value consts= /Data/List/Cons
-                        ( Value /head= /Catln/Constant/CInt
-                            ( Value value= CInt
-                                { ciValue = 1 }
-                            )
-                        )
-                        ( Value /tail= /Data/List/Cons
-                            ( Value /head= /Catln/Constant/CStr
-                                ( Value value= CStr
-                                    { csValue = "s" }
-                                )
-                            )( Value /tail= Value /Data/List/Nil )
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= writtenIn
-                ( Value m= /Catln/Meta
-                    ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
-                    ( Value id= CStr
-                        { csValue = "" }
-                    )( Value dat= Value /Catln/Unit )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "nowhere" }
-            )
-        , /Catln/#print
-            ( Value /p= posLine
-                ( Value p= /Catln/SourcePos
-                    ( Value file= CStr
-                        { csValue = "a.ct" }
-                    )
-                    ( Value line= CInt
-                        { ciValue = 7 }
-                    )
-                    ( Value column= CInt
-                        { ciValue = 3 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "7" }
-            )
-        , /Catln/#print
-            ( Value /p= exprKind
-                ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                    ( Value name= CStr
-                        { csValue = "foo" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "value" }
-            )
-        , /Catln/#print
-            ( Value /p= valueName
-                ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                    ( Value name= CStr
-                        { csValue = "foo" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "foo" }
-            )
-        , /Catln/#print
-            ( Value /p= exprKind
-                ( Value e= /Catln/Expr/CExpr( Value meta= Value noMeta )
-                    ( Value const= /Catln/Constant/CInt
-                        ( Value value= CInt
-                            { ciValue = 1 }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "const" }
-            )
-        , /Catln/#print
-            ( Value /p= declCount
-                ( Value p= /Catln/Prgm
-                    ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "0" }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -730,39 +556,11 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "[intOf] is defined in this file, so the compiler answers with the one name it is written under." }
-            )
-        , /Catln/#print
-            ( Value /p= ownDeclCount
-                ( Value name= CStr
-                    { csValue = "/Test/intOf" }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A name nothing is written under is a program holding nothing, rather than a failure." }
-            )
-        , /Catln/#print
-            ( Value /p= ownDeclCount
-                ( Value name= CStr
-                    { csValue = "/Test/notWrittenAnywhere" }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
                 { csValue = "## What the suite checks
-                The `>` examples above are checked by `catln test`, and the integration suite typechecks and
-                builds this file without comparing what they evaluate to — only a page under @stack/@ has its
-                examples run as cases, and no page under @stack/@ may import [hsprgm] without closing the import
-                cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
-                what compares them, which is the one mechanism the integration runner already has for saying
-                what a program produced." }
+                The integration suite typechecks and builds this file, then runs [main] and compares what it
+                printed against @hsprgm.stdout.txt@, which is the one mechanism the integration runner has for
+                saying what a program produced. No page under @stack/@ may import [hsprgm] without closing the
+                import cycle @core/result.ct@ measures, so the values cannot be print goldens of a library page." }
             )
         , /Catln/#md
             ( Value /text= CStr

@@ -52,11 +52,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ]
@@ -83,47 +79,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "  argument and on [even(x= 0)]'s 0 for an odd one." }
-            )
-        , /Catln/#print
-            ( Value /p= odd
-                ( Value x= CInt
-                    { ciValue = 4 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p= odd
-                ( Value x= CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p= even
-                ( Value x= CInt
-                    { ciValue = 4 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p= even
-                ( Value x= CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
+                { csValue = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
+                argument and on [even(x= 0)]'s 0 for an odd one." }
             )
         ]
     }

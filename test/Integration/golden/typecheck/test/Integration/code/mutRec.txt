@@ -52,16 +52,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ]
@@ -90,52 +81,8 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even" }
-            )
-        , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "  argument and on [even(x= 0)]'s 0 for an odd one." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /odd
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 4 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /odd
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /even
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 4 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /even
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "1" }
+                { csValue = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
+                argument and on [even(x= 0)]'s 0 for an odd one." }
             )
         ]
     }

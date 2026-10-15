@@ -10,20 +10,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -70,10 +57,35 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/labelOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /labelOf
+                            ( EAppArg { eaaArg = Value /o -> /Outer.. } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /labelOf
+                            ( EAppArg
+                                { eaaArg = Value /o -> /Outer
+                                    ( /inner=/Inner( /label=/Data/Primitive/Integer ) ) = /Outer
+                                    ( EAppArg
+                                        { eaaArg = Value /inner -> /Inner( /label=/Data/Primitive/Integer ) = /Inner
+                                            ( EAppArg { eaaArg = Value /label -> /Data/Primitive/Integer } )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /label ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -108,16 +120,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Printed so the value is evaluated and not only built."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Outer
-                    ( /inner=/Inner( /label=/Data/Primitive/Integer ) ) =
-                    ( Value /Sample ↦ /Outer
-                        ( /inner=/Inner( /label=/Data/Primitive/Integer ) )
-                    )
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so the value is evaluated and not only built: the inner record's field is reached
+                  through the outer one."
                 }
             )
         ]

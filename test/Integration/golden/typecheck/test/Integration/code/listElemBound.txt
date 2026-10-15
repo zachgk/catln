@@ -60,16 +60,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -143,109 +134,11 @@ Prgm
                 Written over the [/Data/List] interface and over the [/Data/List/ConsList] the bracket literal
                 builds, as @listField.ct@ is, so that a failure says which of the two it is." }
             )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countAll( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countAll
-                ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                    ( /head=/Item( /n=/Data/Primitive/Integer )
-                    , /tail=/Data/List/Cons
-                        [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                        ( /head=/Item( /n=/Data/Primitive/Integer )
-                        , /tail=/Data/List/Nil
-                        )
-                    ) = /Data/List/Cons
-                    ( Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                        ( Value /n -> /Data/Primitive/Integer = CInt
-                            { ciValue = 1 }
-                        )
-                    )
-                    ( Value /tail -> /Data/List/Cons
-                        [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                        ( /head=/Item( /n=/Data/Primitive/Integer )
-                        , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons
-                        ( Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                            ( Value /n -> /Data/Primitive/Integer = CInt
-                                { ciValue = 2 }
-                            )
-                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countCons( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countCons
-                ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                    ( /head=/Item( /n=/Data/Primitive/Integer )
-                    , /tail=/Data/List/Cons
-                        [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                        ( /head=/Item( /n=/Data/Primitive/Integer )
-                        , /tail=/Data/List/Nil
-                        )
-                    ) = /Data/List/Cons
-                    ( Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                        ( Value /n -> /Data/Primitive/Integer = CInt
-                            { ciValue = 1 }
-                        )
-                    )
-                    ( Value /tail -> /Data/List/Cons
-                        [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                        ( /head=/Item( /n=/Data/Primitive/Integer )
-                        , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons
-                        ( Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                            ( Value /n -> /Data/Primitive/Integer = CInt
-                                { ciValue = 2 }
-                            )
-                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
-            )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
                 even while the bound above did not. Held beside it so a regression says which of the two broke." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /countBare
-                ( Value /ks -> /Data/List/Cons[ /T=/Bare ]
-                    ( /head=/Bare
-                    , /tail=/Data/List/Cons[ /T=/Bare ]
-                        ( /head=/Bare
-                        , /tail=/Data/List/Nil
-                        )
-                    ) = /Data/List/Cons( Value /head -> /Bare = Value /Bare )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Bare ]
-                        ( /head=/Bare
-                        , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons( Value /head -> /Bare = Value /Bare )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
             )
         ]
     }

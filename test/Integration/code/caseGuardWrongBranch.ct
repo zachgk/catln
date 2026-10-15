@@ -22,8 +22,7 @@ abs(x -> Integer)= case(x)
   x2 | x2 >= 0= x2
   x2= x2 * -1
 
-> abs(x= 5)
-  >>> 5
-> abs(x= -5)
-  >>> 5
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} =
+  #assert(test= abs(x= 5) == 5)
+  #assert(test= abs(x= -5) == 5)
+  io

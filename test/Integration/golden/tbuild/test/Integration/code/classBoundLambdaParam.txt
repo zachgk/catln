@@ -10,20 +10,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -222,125 +209,6 @@ Prgm
                   binds directly and always worked."
                 }
             )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /headTo
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
-                                )
-                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
-                                ( /operator==
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
-                                            )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
-                                            )
-                                        }
-                                    ) ↦ ∀/Data/Primitive/Boolean
-                                )
-                            }
-                        )
-                        ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /headTo
-                        ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
-                                ( /operator==
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
-                                            )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
-                                            )
-                                        }
-                                    ) ↦ ∀/Data/Primitive/Boolean
-                                )
-                            }
-                        )
-                        ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq && PredClass /Catln/Doc/DShow ) =
-                    ( /headTo
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
-                                )
-                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq ) =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /w = ( Value /w ↦ TVArg /w ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq )
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /dflt -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Data/Algebra/Eq && PredClass /Catln/Doc/DShow )
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
-                }
-            )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
@@ -352,92 +220,6 @@ Prgm
                   instance. What stays out is a symbolic variable, which may still resolve to anything."
                 }
             )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /viaGeneric
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
-                                )
-                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /probe -> /Data/Primitive/Integer = 3 }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /viaGeneric
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 4 }
-                                )
-                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /probe -> /Data/Primitive/Integer = 3 }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /viaGeneric
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons
-                                [ /T=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ]
-                                ( /head=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
-                                    }
-                                )
-                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /probe -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
-                            }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
-                }
-            )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
@@ -447,40 +229,11 @@ Prgm
                   the class bound itself."
                 }
             )
-        , /Catln/#print
+        , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
-                    ( /useEq
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
-                        )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
-                                ( /operator==
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
-                                            )
-                                        }
-                                    ) ↦ ∀/Data/Primitive/Boolean
-                                )
-                            }
-                        ) ↦ ∀/Data/Primitive/Boolean
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both examples for each function are the same call; only the lambda's body differs, and the one
+                  that does not need the bound is what says the traversal was never the problem."
                 }
             )
         ]

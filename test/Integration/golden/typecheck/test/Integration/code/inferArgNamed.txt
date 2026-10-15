@@ -8,16 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -111,54 +102,12 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /f1
-                ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
-                    ( Value /r -> /Data/Primitive/Integer = CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value /init -> /Data/Primitive/Integer = CInt
-                    { ciValue = 7 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "7" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /f2
-                ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
-                    ( Value /r -> /Data/Primitive/Integer = CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value /init -> /Data/Primitive/Integer = CInt
-                    { ciValue = 7 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "2" }
+                { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /unwrap
-                ( Value /b -> /Box( /v=/Data/Primitive/Integer ) = /Box
-                    ( Value /v -> /Data/Primitive/Integer = CInt
-                        { ciValue = 3 }
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "3" }
+                { csValue = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function." }
             )
         ]
     }

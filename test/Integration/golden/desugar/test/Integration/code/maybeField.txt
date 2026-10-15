@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -40,10 +36,24 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/dueOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ dueOf( Value d -> /Dated.. ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ dueOf
+                            ( Value d= Dated( Value name )( Value due ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value due
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGClass
@@ -72,24 +82,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Printed so that the values are evaluated and not only built." }
-            )
-        , /Catln/#print
-            ( Value /p= /Dated
-                ( Value name= CStr
-                    { csValue = "has one" }
-                )
-                ( Value due= /Data/Maybe/Some
-                    ( Value value= CStr
-                        { csValue = "2026-01-01" }
-                    )
-                )
-            )
-        , /Catln/#print
-            ( Value /p= /Dated
-                ( Value name= CStr
-                    { csValue = "has none" }
-                )( Value due= Value /Data/Maybe/Nothing )
+                { csValue = "Read back so that the values are evaluated and not only built: the [/Data/Maybe] field is
+                destructured and compared, which is a reading of the field the display would otherwise make." }
             )
         ]
     }

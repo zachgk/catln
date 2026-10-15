@@ -24,11 +24,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -84,26 +80,6 @@ Prgm
                 @test/Integration/code/cond.ct@ covers that form.
                 A test of a branch has to run the branch that is not taken: @case.ct@ and @match.ct@ missed this
                 because each calls @abs(0)@ and nothing else, and at zero both arms answer zero." }
-            )
-        , /Catln/#print
-            ( Value /p= abs
-                ( Value x= CInt
-                    { ciValue = 5 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "5" }
-            )
-        , /Catln/#print
-            ( Value /p= abs
-                ( Value x= /operator-
-                    ( Value /a= CInt
-                        { ciValue = 5 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "5" }
             )
         ]
     }

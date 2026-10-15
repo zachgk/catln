@@ -10,20 +10,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -239,62 +226,6 @@ Prgm
                   worked, and it is what says the fault was the variable rather than the shape."
                 }
             )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
-                    ( /useG
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /a } ) -> ∀/Data/Algebra/Add =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ ∀/Data/Algebra/Add
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 5 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /useI
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ /Data/Primitive/Integer
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 5 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
-                }
-            )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
@@ -308,166 +239,11 @@ Prgm
                   concrete until it is called."
                 }
             )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
-                    ( /foldrG
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                    ( /head=/Data/Primitive/Integer
-                                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                        ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/List/Nil
-                                        )
-                                    )
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                        ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                            ( /head=/Data/Primitive/Integer
-                                            , /tail=/Data/List/Nil
-                                            )
-                                        ) = /Data/List/Cons
-                                        ( EAppArg
-                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                ( /head=/Data/Primitive/Integer
-                                                , /tail=/Data/List/Nil
-                                                ) = /Data/List/Cons
-                                                ( EAppArg
-                                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
-                                                )
-                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ ∀/Data/Algebra/Add
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /foldrG
-                        ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Add =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ ∀/Data/Algebra/Add
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
-                }
-            )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The accumulator need not be the element type: fold a list of Integers into a String."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup ) =
-                    ( /foldrG
-                        ( EAppArg
-                            { eaaArg = Value /lst -> /Data/List/Cons
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                    ( /head=/Data/Primitive/Integer
-                                    , /tail=/Data/List/Nil
-                                    )
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                        ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
-                                        ( EAppArg
-                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
-                                        )
-                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                    }
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Semigroup =
-                                ( /operator++
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                        }
-                                    ) ↦ ∀/Data/Algebra/Semigroup
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /init -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "s"
-                            }
-                        ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Algebra/Semigroup )
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "sxx"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The accumulator need not be the element type: the last fold folds a list of Integers into a
+                  String."
                 }
             )
         ]

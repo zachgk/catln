@@ -25,10 +25,6 @@ gidI(x)= x
 useI(fn(a -> Integer) -> Integer, x -> Integer) -> Integer
 useI(fn(a), x)= fn(a= /gidI(x= x))
 
-> useG(fn(a)= a + 1, x= 5)
-  >>> 6
-> useI(fn(a)= a + 1, x= 5)
-  >>> 6
 # The same defect is what stopped a fold over a polymorphic accumulator, which is the shape it was
   found from. The recursive call is what reaches the step function, and it reached it as the
   unevaluated @/foldrG(..)@ tuple:
@@ -41,11 +37,12 @@ foldrG[$A, $B](lst -> ConsList[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init
 foldrG(lst= Nil, fn(acc, v), init)= init
 foldrG(lst= Cons(head, tail), fn(acc, v), init)= fn(acc= /foldrG(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
 
-> foldrG(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)
-  >>> 6
-> foldrG(lst= [], fn(acc, v)= acc + v, init= 0)
-  >>> 0
-# The accumulator need not be the element type: fold a list of Integers into a String.
-> foldrG(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
-  >>> sxx
-main{io -> IO}= io.exit(val= 0)
+# The accumulator need not be the element type: the last fold folds a list of Integers into a
+  String.
+main{io -> IO} =
+  #assert(test= useG(fn(a)= a + 1, x= 5) == 6)
+  #assert(test= useI(fn(a)= a + 1, x= 5) == 6)
+  #assert(test= foldrG(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0) == 6)
+  #assert(test= foldrG(lst= [], fn(acc, v)= acc + v, init= 0) == 0)
+  #assert(test= foldrG(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s") == "sxx")
+  io

@@ -22,9 +22,9 @@ import "core"
     24 fields, printed     — 252s
     24 fields, NOT printed —  60s
   So the same twenty-four-field declaration is free until something reads it, and eighteen is below
-  where that climb starts. That is why the value below is printed and not only declared: without the
-  @>@ the program typechecks, builds no tree for the value, and this file would pass while saying
-  nothing about the half of the cost that is real.
+  where that climb starts. That is why the value below is read back and not only declared: without
+  a reading of it the program typechecks, builds no tree for the value, and this file would pass
+  while saying nothing about the half of the cost that is real.
   Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
   Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
   an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
@@ -35,7 +35,16 @@ every(Wide.., isa= [/Catln/Doc/DShow])
 
 /Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")
 
-# Printed so that the value is built and not only declared, as @valueDeclFields.ct@ does and for the
-  same reason: the width that costs anything is the width something reads.
-> /Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")
-main{io -> IO}= io.exit(val= 0)
+# Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
+  the same reason: the width that costs anything is the width something reads. The first and the
+  last field, so the reading reaches across the whole width.
+firstOf(w -> Wide..) -> String
+firstOf(w= Wide(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))= a
+
+lastOf(w -> Wide..) -> String
+lastOf(w= Wide(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))= r
+
+main{io -> IO} =
+  #assert(test= firstOf(w= /Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")) == "1")
+  #assert(test= lastOf(w= /Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")) == "18")
+  io

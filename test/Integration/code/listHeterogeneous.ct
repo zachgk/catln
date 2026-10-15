@@ -19,17 +19,14 @@ countMixed(ks -> /Data/List[$T -> Mixed]) -> /Data/Primitive/Integer
 countMixed(ks= /Data/List/Nil)= 0
 countMixed(ks= /Data/List/Cons(head, tail))= 1 + countMixed(ks= tail)
 
-# Homogeneous first, as the floor: this passed on the head-alone rule too.
-> countMixed(ks= [/Mixed/Plain, /Mixed/Plain])
-  >>> 2
-# One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
-  spine starts from or one it reaches through the tail.
-> countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x")])
-  >>> 2
-> countMixed(ks= [/Mixed/Tagged(value= "x"), /Mixed/Plain])
-  >>> 2
-> countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x"), /Mixed/Plain])
-  >>> 3
-# Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
+# Homogeneous first, as the floor: this passed on the head-alone rule too. Then one of each arm,
+  in both orders — the arm carrying a field is read whether it is the cell the spine starts from or
+  one it reaches through the tail.
+  Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
   arms held in a FIELD, which has only its declaration to bound them, are @listFieldEval.ct@.
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} =
+  #assert(test= countMixed(ks= [/Mixed/Plain, /Mixed/Plain]) == 2)
+  #assert(test= countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x")]) == 2)
+  #assert(test= countMixed(ks= [/Mixed/Tagged(value= "x"), /Mixed/Plain]) == 2)
+  #assert(test= countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x"), /Mixed/Plain]) == 3)
+  io

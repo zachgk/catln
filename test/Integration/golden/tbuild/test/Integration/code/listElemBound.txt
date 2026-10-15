@@ -96,20 +96,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -204,163 +191,11 @@ Prgm
                   builds, as @listField.ct@ is, so that a failure says which of the two it is."
                 }
             )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /countAll
-                        ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /countAll
-                        ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
-                                [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                                ( /head=/Item( /n=/Data/Primitive/Integer )
-                                , /tail=/Data/List/Cons
-                                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                                    ( /head=/Item( /n=/Data/Primitive/Integer )
-                                    , /tail=/Data/List/Nil
-                                    )
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                                        ( EAppArg
-                                            { eaaArg = Value /n -> /Data/Primitive/Integer = 1 }
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /tail -> /Data/List/Cons
-                                        [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                                        ( /head=/Item( /n=/Data/Primitive/Integer )
-                                        , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
-                                        ( EAppArg
-                                            { eaaArg = Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                                                ( EAppArg
-                                                    { eaaArg = Value /n -> /Data/Primitive/Integer = 2 }
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                    }
-                                )
-                            }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /countCons
-                        ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /countCons
-                        ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons
-                                [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                                ( /head=/Item( /n=/Data/Primitive/Integer )
-                                , /tail=/Data/List/Cons
-                                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                                    ( /head=/Item( /n=/Data/Primitive/Integer )
-                                    , /tail=/Data/List/Nil
-                                    )
-                                ) = /Data/List/Cons
-                                ( EAppArg
-                                    { eaaArg = Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                                        ( EAppArg
-                                            { eaaArg = Value /n -> /Data/Primitive/Integer = 1 }
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /tail -> /Data/List/Cons
-                                        [ /T=/Item( /n=/Data/Primitive/Integer ) ]
-                                        ( /head=/Item( /n=/Data/Primitive/Integer )
-                                        , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
-                                        ( EAppArg
-                                            { eaaArg = Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
-                                                ( EAppArg
-                                                    { eaaArg = Value /n -> /Data/Primitive/Integer = 2 }
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                    }
-                                )
-                            }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
-                }
-            )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
                   even while the bound above did not. Held beside it so a regression says which of the two broke."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /countBare
-                        ( EAppArg
-                            { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Bare ]
-                                ( /head=/Bare
-                                , /tail=/Data/List/Cons[ /T=/Bare ]
-                                    ( /head=/Bare
-                                    , /tail=/Data/List/Nil
-                                    )
-                                ) = /Data/List/Cons
-                                ( EAppArg { eaaArg = Value /head -> /Bare = Value /Bare } )
-                                ( EAppArg
-                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Bare ]
-                                        ( /head=/Bare
-                                        , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
-                                        ( EAppArg { eaaArg = Value /head -> /Bare = Value /Bare } )
-                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                    }
-                                )
-                            }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
                 }
             )
         ]

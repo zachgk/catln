@@ -84,20 +84,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -128,73 +115,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  argument and on [even(x= 0)]'s 0 for an odd one."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /odd
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 4 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /odd
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /even
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 4 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /even
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
+                  argument and on [even(x= 0)]'s 0 for an odd one."
                 }
             )
         ]

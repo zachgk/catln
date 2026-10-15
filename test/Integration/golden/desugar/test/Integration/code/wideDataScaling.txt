@@ -68,16 +68,38 @@ Prgm
                     }
                 )
             ,
+                ( "/firstOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ firstOf( Value w -> /Wide.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ firstOf
+                            ( Value w= Wide( Value a )( Value b )( Value c )( Value d )( Value e )( Value f )( Value g )( Value h )( Value i )( Value j )( Value k )( Value l )( Value m )( Value n )( Value o )( Value p )( Value q )( Value r ) ) -> ∀/Data/String = Value a
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/lastOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ lastOf( Value w -> /Wide.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ lastOf
+                            ( Value w= Wide( Value a )( Value b )( Value c )( Value d )( Value e )( Value f )( Value g )( Value h )( Value i )( Value j )( Value k )( Value l )( Value m )( Value n )( Value o )( Value p )( Value q )( Value r ) ) -> ∀/Data/String = Value r
                         ]
                     }
                 )
@@ -85,6 +107,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGClass
@@ -118,9 +142,9 @@ Prgm
                   24 fields, printed     — 252s
                   24 fields, NOT printed —  60s
                 So the same twenty-four-field declaration is free until something reads it, and eighteen is below
-                where that climb starts. That is why the value below is printed and not only declared: without the
-                @>@ the program typechecks, builds no tree for the value, and this file would pass while saying
-                nothing about the half of the cost that is real.
+                where that climb starts. That is why the value below is read back and not only declared: without
+                a reading of it the program typechecks, builds no tree for the value, and this file would pass
+                while saying nothing about the half of the cost that is real.
                 Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
                 Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
                 an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
@@ -128,65 +152,9 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Printed so that the value is built and not only declared, as @valueDeclFields.ct@ does and for the
-                same reason: the width that costs anything is the width something reads." }
-            )
-        , /Catln/#print
-            ( Value /p= /Wide
-                ( Value a= CStr
-                    { csValue = "1" }
-                )
-                ( Value b= CStr
-                    { csValue = "2" }
-                )
-                ( Value c= CStr
-                    { csValue = "3" }
-                )
-                ( Value d= CStr
-                    { csValue = "4" }
-                )
-                ( Value e= CStr
-                    { csValue = "5" }
-                )
-                ( Value f= CStr
-                    { csValue = "6" }
-                )
-                ( Value g= CStr
-                    { csValue = "7" }
-                )
-                ( Value h= CStr
-                    { csValue = "8" }
-                )
-                ( Value i= CStr
-                    { csValue = "9" }
-                )
-                ( Value j= CStr
-                    { csValue = "10" }
-                )
-                ( Value k= CStr
-                    { csValue = "11" }
-                )
-                ( Value l= CStr
-                    { csValue = "12" }
-                )
-                ( Value m= CStr
-                    { csValue = "13" }
-                )
-                ( Value n= CStr
-                    { csValue = "14" }
-                )
-                ( Value o= CStr
-                    { csValue = "15" }
-                )
-                ( Value p= CStr
-                    { csValue = "16" }
-                )
-                ( Value q= CStr
-                    { csValue = "17" }
-                )
-                ( Value r= CStr
-                    { csValue = "18" }
-                )
+                { csValue = "Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
+                the same reason: the width that costs anything is the width something reads. The first and the
+                last field, so the reading reaches across the whole width." }
             )
         ]
     }

@@ -50,11 +50,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -122,69 +118,10 @@ Prgm
                 Written over the [/Data/List] interface and over the [/Data/List/ConsList] the bracket literal
                 builds, as @listField.ct@ is, so that a failure says which of the two it is." }
             )
-        , /Catln/#print
-            ( Value /p= countAll( Value ks= Value /Data/List/Nil ) )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p= countAll
-                ( Value ks= /Data/List/Cons
-                    ( Value /head= /Item
-                        ( Value n= CInt
-                            { ciValue = 1 }
-                        )
-                    )
-                    ( Value /tail= /Data/List/Cons
-                        ( Value /head= /Item
-                            ( Value n= CInt
-                                { ciValue = 2 }
-                            )
-                        )( Value /tail= Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= countCons( Value ks= Value /Data/List/Nil ) )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p= countCons
-                ( Value ks= /Data/List/Cons
-                    ( Value /head= /Item
-                        ( Value n= CInt
-                            { ciValue = 1 }
-                        )
-                    )
-                    ( Value /tail= /Data/List/Cons
-                        ( Value /head= /Item
-                            ( Value n= CInt
-                                { ciValue = 2 }
-                            )
-                        )( Value /tail= Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
                 even while the bound above did not. Held beside it so a regression says which of the two broke." }
-            )
-        , /Catln/#print
-            ( Value /p= countBare
-                ( Value ks= /Data/List/Cons( Value /head= Value /Bare )
-                    ( Value /tail= /Data/List/Cons( Value /head= Value /Bare )( Value /tail= Value /Data/List/Nil ) )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
             )
         ]
     }

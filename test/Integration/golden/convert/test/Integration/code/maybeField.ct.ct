@@ -18,7 +18,12 @@ every(Dated.., isa= [/Catln/Doc/DShow])
 /Dated(name= "has one", due= /Data/Maybe/Some(value= "2026-01-01"))
 /Dated(name= "has none", due= /Data/Maybe/Nothing)
 
-# Printed so that the values are evaluated and not only built.
-> /Dated(name= "has one", due= /Data/Maybe/Some(value= "2026-01-01"))
-> /Dated(name= "has none", due= /Data/Maybe/Nothing)
-main{io -> IO}= io.exit(val= 0)
+# Read back so that the values are evaluated and not only built: the [/Data/Maybe] field is
+  destructured and compared, which is a reading of the field the display would otherwise make.
+dueOf(d -> Dated..) -> /Data/Maybe[$T -> String]
+dueOf(d= Dated(name, due))= due
+
+main{io -> IO} =
+  #assert(test= dueOf(d= /Dated(name= "has one", due= /Data/Maybe/Some(value= "2026-01-01"))) == /Data/Maybe/Some(value= "2026-01-01"))
+  #assert(test= dueOf(d= /Dated(name= "has none", due= /Data/Maybe/Nothing)) == /Data/Maybe/Nothing)
+  io

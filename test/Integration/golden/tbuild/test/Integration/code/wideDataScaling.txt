@@ -122,6 +122,61 @@ Prgm
                     }
                 )
             ,
+                ( "/firstOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /firstOf
+                            ( EAppArg { eaaArg = Value /w -> /Wide.. } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /firstOf
+                            ( EAppArg
+                                { eaaArg = Value /w -> /Wide
+                                    ( /r=∀/Data/String
+                                    , /j=∀/Data/String
+                                    , /q=∀/Data/String
+                                    , /a=∀/Data/String
+                                    , /l=∀/Data/String
+                                    , /m=∀/Data/String
+                                    , /n=∀/Data/String
+                                    , /f=∀/Data/String
+                                    , /c=∀/Data/String
+                                    , /g=∀/Data/String
+                                    , /b=∀/Data/String
+                                    , /h=∀/Data/String
+                                    , /e=∀/Data/String
+                                    , /d=∀/Data/String
+                                    , /k=∀/Data/String
+                                    , /i=∀/Data/String
+                                    , /p=∀/Data/String
+                                    , /o=∀/Data/String
+                                    ) = /Wide
+                                    ( EAppArg { eaaArg = Value /a -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /b -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /c -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /d -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /e -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /f -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /g -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /h -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /i -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /j -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /k -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /l -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /m -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /n -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /o -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /p -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /q -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /r -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/String = ( Value /a ↦ ∀/Data/String )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -130,20 +185,62 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/lastOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /lastOf
+                            ( EAppArg { eaaArg = Value /w -> /Wide.. } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /lastOf
+                            ( EAppArg
+                                { eaaArg = Value /w -> /Wide
+                                    ( /r=∀/Data/String
+                                    , /j=∀/Data/String
+                                    , /q=∀/Data/String
+                                    , /a=∀/Data/String
+                                    , /l=∀/Data/String
+                                    , /m=∀/Data/String
+                                    , /n=∀/Data/String
+                                    , /f=∀/Data/String
+                                    , /c=∀/Data/String
+                                    , /g=∀/Data/String
+                                    , /b=∀/Data/String
+                                    , /h=∀/Data/String
+                                    , /e=∀/Data/String
+                                    , /d=∀/Data/String
+                                    , /k=∀/Data/String
+                                    , /i=∀/Data/String
+                                    , /p=∀/Data/String
+                                    , /o=∀/Data/String
+                                    ) = /Wide
+                                    ( EAppArg { eaaArg = Value /a -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /b -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /c -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /d -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /e -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /f -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /g -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /h -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /i -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /j -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /k -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /l -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /m -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /n -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /o -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /p -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /q -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /r -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/String = ( Value /r ↦ ∀/Data/String )
                         ]
                     }
                 )
@@ -151,6 +248,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGClass
@@ -185,9 +284,9 @@ Prgm
                     24 fields, printed     — 252s
                     24 fields, NOT printed —  60s
                   So the same twenty-four-field declaration is free until something reads it, and eighteen is below
-                  where that climb starts. That is why the value below is printed and not only declared: without the
-                  @>@ the program typechecks, builds no tree for the value, and this file would pass while saying
-                  nothing about the half of the cost that is real.
+                  where that climb starts. That is why the value below is read back and not only declared: without
+                  a reading of it the program typechecks, builds no tree for the value, and this file would pass
+                  while saying nothing about the half of the cost that is real.
                   Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
                   Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
                   an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
@@ -197,103 +296,9 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Printed so that the value is built and not only declared, as @valueDeclFields.ct@ does and for the
-                  same reason: the width that costs anything is the width something reads."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Wide
-                    ( EAppArg
-                        { eaaArg = Value /a -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /b -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /c -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /d -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /e -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /f -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /g -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "7"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /h -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "8"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /i -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /j -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "10"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /k -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "11"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /l -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /m -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "13"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /n -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "14"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /o -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "15"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /p -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /q -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "17"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /r -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "18"
-                        }
-                    )
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
+                  the same reason: the width that costs anything is the width something reads. The first and the
+                  last field, so the reading reaches across the whole width."
                 }
             )
         ]

@@ -10,20 +10,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -171,40 +158,11 @@ Prgm
                   preprocessors putting a pattern somewhere it could not constrain anything."
                 }
             )
-        , /Catln/#print
+        , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
-                    ( /greet
-                        ( EAppArg
-                            { eaaArg = Value /name -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ada"
-                            }
-                        )
-                        ( EAppArg { eaaArg = Value /formal -> /Data/Primitive/True = Value /Data/Primitive/True } ) ↦ ∀/Data/String
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Dear Ada"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
-                    ( /greet
-                        ( EAppArg
-                            { eaaArg = Value /name -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ada"
-                            }
-                        )
-                        ( EAppArg { eaaArg = Value /formal -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ ∀/Data/String
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Hi Ada"
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "That no agreement test is derived for [greet] is asserted by the test engine's own tests
+                  (@test/Eval/QuantificationTests.hs@); what is held here is that the branch is taken."
                 }
             )
         ]

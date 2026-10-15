@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -103,58 +99,6 @@ Prgm
                 Contrast @useEq@ further down, where the same variable is the whole type of an argument: that
                 binds directly and always worked." }
             )
-        , /Catln/#print
-            ( Value /p= headTo
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt
-                        { ciValue = 3 }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-                ( fn( Value w )= /operator==
-                    ( Value /l= /Data/Maybe/Some( Value value= Value w ) )
-                    ( Value /r= /Data/Maybe/Some
-                        ( Value value= CInt
-                            { ciValue = 3 }
-                        )
-                    )
-                )( Value dflt= Value False )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= headTo( Value lst= Value /Data/List/Nil )
-                ( fn( Value w )= /operator==
-                    ( Value /l= /Data/Maybe/Some( Value value= Value w ) )
-                    ( Value /r= /Data/Maybe/Some
-                        ( Value value= CInt
-                            { ciValue = 3 }
-                        )
-                    )
-                )( Value dflt= Value False )
-            )
-            ( Value /result= CStr
-                { csValue = "False" }
-            )
-        , /Catln/#print
-            ( Value /p= headTo
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt
-                        { ciValue = 3 }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-                ( fn( Value w )= /operator+( Value /l= Value w )
-                    ( Value /r= CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value dflt= CInt
-                    { ciValue = 0 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "4" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Called from inside a generic definition
@@ -164,48 +108,6 @@ Prgm
                 own class, so @∀Eq@ holds at every epoch and is enough to build a @Some@ that meets the @Maybe@
                 instance. What stays out is a symbolic variable, which may still resolve to anything." }
             )
-        , /Catln/#print
-            ( Value /p= viaGeneric
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt
-                        { ciValue = 3 }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-                ( Value probe= CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= viaGeneric
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt
-                        { ciValue = 4 }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-                ( Value probe= CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "False" }
-            )
-        , /Catln/#print
-            ( Value /p= viaGeneric
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CStr
-                        { csValue = "a" }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-                ( Value probe= CStr
-                    { csValue = "a" }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## The control: the variable IS the argument's type
@@ -213,22 +115,10 @@ Prgm
                 the passing half of the pair that pinned the cause on how the variable is bound rather than on
                 the class bound itself." }
             )
-        , /Catln/#print
-            ( Value /p= useEq
-                ( Value x= CInt
-                    { ciValue = 3 }
-                )
-                ( fn( Value v )= /operator==
-                    ( Value /l= /Data/Maybe/Some( Value value= Value v ) )
-                    ( Value /r= /Data/Maybe/Some
-                        ( Value value= CInt
-                            { ciValue = 3 }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Both examples for each function are the same call; only the lambda's body differs, and the one
+                that does not need the bound is what says the traversal was never the problem." }
             )
         ]
     }

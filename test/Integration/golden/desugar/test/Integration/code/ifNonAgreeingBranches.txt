@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -71,23 +67,10 @@ Prgm
                 The same fix is what makes @caseGuardWrongBranch.ct@ select correctly; both were the branch
                 preprocessors putting a pattern somewhere it could not constrain anything." }
             )
-        , /Catln/#print
-            ( Value /p= greet
-                ( Value name= CStr
-                    { csValue = "Ada" }
-                )( Value formal= Value True )
-            )
-            ( Value /result= CStr
-                { csValue = "Dear Ada" }
-            )
-        , /Catln/#print
-            ( Value /p= greet
-                ( Value name= CStr
-                    { csValue = "Ada" }
-                )( Value formal= Value False )
-            )
-            ( Value /result= CStr
-                { csValue = "Hi Ada" }
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "That no agreement test is derived for [greet] is asserted by the test engine's own tests
+                (@test/Eval/QuantificationTests.hs@); what is held here is that the branch is taken." }
             )
         ]
     }

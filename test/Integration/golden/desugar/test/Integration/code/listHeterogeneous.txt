@@ -18,11 +18,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -93,70 +89,10 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Homogeneous first, as the floor: this passed on the head-alone rule too." }
-            )
-        , /Catln/#print
-            ( Value /p= countMixed
-                ( Value ks= /Data/List/Cons( Value /head= Value /Mixed/Plain )
-                    ( Value /tail= /Data/List/Cons( Value /head= Value /Mixed/Plain )( Value /tail= Value /Data/List/Nil ) )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
-                spine starts from or one it reaches through the tail." }
-            )
-        , /Catln/#print
-            ( Value /p= countMixed
-                ( Value ks= /Data/List/Cons( Value /head= Value /Mixed/Plain )
-                    ( Value /tail= /Data/List/Cons
-                        ( Value /head= /Mixed/Tagged
-                            ( Value value= CStr
-                                { csValue = "x" }
-                            )
-                        )( Value /tail= Value /Data/List/Nil )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= countMixed
-                ( Value ks= /Data/List/Cons
-                    ( Value /head= /Mixed/Tagged
-                        ( Value value= CStr
-                            { csValue = "x" }
-                        )
-                    )
-                    ( Value /tail= /Data/List/Cons( Value /head= Value /Mixed/Plain )( Value /tail= Value /Data/List/Nil ) )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= countMixed
-                ( Value ks= /Data/List/Cons( Value /head= Value /Mixed/Plain )
-                    ( Value /tail= /Data/List/Cons
-                        ( Value /head= /Mixed/Tagged
-                            ( Value value= CStr
-                                { csValue = "x" }
-                            )
-                        )
-                        ( Value /tail= /Data/List/Cons( Value /head= Value /Mixed/Plain )( Value /tail= Value /Data/List/Nil ) )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "3" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
+                { csValue = "Homogeneous first, as the floor: this passed on the head-alone rule too. Then one of each arm,
+                in both orders — the arm carrying a field is read whether it is the cell the spine starts from or
+                one it reaches through the tail.
+                Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
                 arms held in a FIELD, which has only its declaration to bound them, are @listFieldEval.ct@." }
             )
         ]

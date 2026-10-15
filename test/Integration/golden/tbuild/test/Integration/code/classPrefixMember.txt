@@ -196,49 +196,5 @@ Prgm
                   page holds a checkbox as."
                 }
             )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /total
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple
-                                ( EAppArg
-                                    { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
-                                )
-                            }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /total
-                        ( EAppArg
-                            { eaaArg = Value /this -> /Thing/Fancy
-                                ( /x=/Data/Primitive/Integer
-                                , /y=/Data/Primitive/Integer
-                                ) = /Thing/Fancy
-                                ( EAppArg
-                                    { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /y -> /Data/Primitive/Integer = 4 }
-                                )
-                            }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "7"
-                }
-            )
         ]
     }

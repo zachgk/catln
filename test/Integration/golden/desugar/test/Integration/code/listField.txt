@@ -2,17 +2,26 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/consTagCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ consTagCount( Value t -> /ConsTagged.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ consTagCount
+                            ( Value t= ConsTagged( Value name )( Value tags ) ) -> /Data/Primitive/Integer = length( Value /this= Value tags )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -38,6 +47,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/tagCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ tagCount( Value t -> /Tagged.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ tagCount
+                            ( Value t= Tagged( Value name )( Value tags ) ) -> /Data/Primitive/Integer = length( Value /this= Value tags )
+                        ]
                     }
                 )
             ,
@@ -69,6 +91,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -106,41 +130,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Printed so that the values are evaluated and not only built." }
-            )
-        , /Catln/#print
-            ( Value /p= /Tagged
-                ( Value name= CStr
-                    { csValue = "none" }
-                )( Value tags= Value /Data/List/Nil )
-            )
-        , /Catln/#print
-            ( Value /p= /Tagged
-                ( Value name= CStr
-                    { csValue = "one" }
-                )
-                ( Value tags= /Data/List/Cons
-                    ( Value /head= CStr
-                        { csValue = "x" }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-            )
-        , /Catln/#print
-            ( Value /p= /ConsTagged
-                ( Value name= CStr
-                    { csValue = "none" }
-                )( Value tags= Value /Data/List/Nil )
-            )
-        , /Catln/#print
-            ( Value /p= /ConsTagged
-                ( Value name= CStr
-                    { csValue = "one" }
-                )
-                ( Value tags= /Data/List/Cons
-                    ( Value /head= CStr
-                        { csValue = "x" }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
+                { csValue = "Read back so that the values are evaluated and not only built: a field holding a list is
+                destructured and the list's length is what the run checks." }
             )
         ]
     }

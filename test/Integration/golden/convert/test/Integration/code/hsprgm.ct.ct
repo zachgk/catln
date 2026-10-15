@@ -17,10 +17,6 @@ module(Test)
   isType(b= /Catln/ObjectBasis/MatchObj)= False
   isType(b= /Catln/ObjectBasis/ArgObj)= False
 
-  > isType(b= /Catln/ObjectBasis/TypeObj)
-    >>> True
-  > isType(b= /Catln/ObjectBasis/ArgObj)
-    >>> False
   constantKind(c -> /Catln/Constant) -> String
     # [constantKind] says which of the four things a constant written in a program is. It reads the
       arm rather than the value, which is what a program reading a program mostly wants of one, and
@@ -31,10 +27,6 @@ module(Test)
   constantKind(c= /Catln/Constant/CStr(value))= "str"
   constantKind(c= /Catln/Constant/CChar(value))= "char"
 
-  > constantKind(c= /Catln/Constant/CInt(value= 3))
-    >>> int
-  > constantKind(c= /Catln/Constant/CStr(value= "hi"))
-    >>> str
   intOf(c -> /Catln/Constant) -> Integer
     # [intOf] reads the value out of a whole-number constant, which is destructuring a field rather
       than only matching an arm — the thing a program reading a program is actually for.
@@ -43,8 +35,6 @@ module(Test)
   intOf(c= /Catln/Constant/CStr(value))= 0
   intOf(c= /Catln/Constant/CChar(value))= 0
 
-  > intOf(c= /Catln/Constant/CInt(value= 42))
-    >>> 42
   # A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
     reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do.
   keyName(k -> /Catln/PartialKey(name, vars, args)) -> String
@@ -59,10 +49,6 @@ module(Test)
   keyDepthAll(ks= /Data/List/Nil)= 0
   keyDepthAll(ks= /Data/List/Cons(head, tail))= keyDepth(k= head) + keyDepthAll(ks= tail)
 
-  > keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))
-    >>> x
-  > keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])]))
-    >>> 2
   typeKind(t -> /Catln/Type) -> String
     # [typeKind] says whether a type is a set of things or a variable standing for one. The two are
       what a [Type] is, and telling them apart is the first thing anything reading one has to do.
@@ -75,10 +61,6 @@ module(Test)
   constCount(t= /Catln/Type/UnionType(top, leafs, consts))= consts.length
   constCount(t= /Catln/Type/TypeVar(aux, loc, inner))= 0
 
-  > typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))
-    >>> union
-  > constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1), /Catln/Constant/CStr(value= "s")]))
-    >>> 2
   writtenIn(m -> /Catln/Meta(type, pos, id, dat)) -> String
     # [writtenIn] says which file a piece of a program was written in, or that nothing wrote it.
       A [Meta] with no [pos] is a piece the compiler made while desugaring, which has a type and an
@@ -98,10 +80,6 @@ module(Test)
   posLine(p -> /Catln/SourcePos(file, line, column)) -> Integer
   posLine(p= /Catln/SourcePos(file, line, column))= line
 
-  > writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))
-    >>> nowhere
-  > posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3))
-    >>> 7
   noMeta() -> /Catln/Meta..
     # [noMeta] is the metadata of a piece of program nothing wrote: no type worth naming, no place
       in a file, and nothing the stage added. Written once here because building an [Expr] means
@@ -130,12 +108,6 @@ module(Test)
   valueName(e= /Catln/Expr/EWhere(meta, base, cond))= ""
   valueName(e= /Catln/Expr/TupleApply(meta, base, app))= ""
 
-  > exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))
-    >>> value
-  > valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))
-    >>> foo
-  > exprKind(e= /Catln/Expr/CExpr(meta= noMeta(), const= /Catln/Constant/CInt(value= 1)))
-    >>> const
   declCount(p -> /Catln/Prgm(objMap, cg, annots)) -> Integer
     # [declCount] counts the names a program declares or defines something under. Reading a whole
       program is what all of this was for: [objMap] is what it holds, [cg] is how its classes relate,
@@ -145,29 +117,21 @@ module(Test)
   mapSize(m -> /Catln/ObjectMap(items)) -> Integer
   mapSize(m= /Catln/ObjectMap(items))= items.length
 
-  > declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= []))
-    >>> 0
   # ## Being given a real program
     Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
     with the program it is actually compiling — this page and everything it reaches — narrowed to
     the things written under a name. So [ownDeclCount] below is this file reading its own source as
     data, through the same declarations the rest of the file exercises.
   ownDeclCount(name -> String) -> Integer
+    # [intOf] is defined in this file, so the compiler answers with the one name it is written
+      under; a name nothing is written under is a program holding nothing, rather than a failure.
   ownDeclCount(name)= declCount(p= /Catln/prgmFor(name= name))
 
-  # [intOf] is defined in this file, so the compiler answers with the one name it is written under.
-  > ownDeclCount(name= "/Test/intOf")
-    >>> 1
-  # A name nothing is written under is a program holding nothing, rather than a failure.
-  > ownDeclCount(name= "/Test/notWrittenAnywhere")
-    >>> 0
   # ## What the suite checks
-    The `>` examples above are checked by `catln test`, and the integration suite typechecks and
-    builds this file without comparing what they evaluate to — only a page under @stack/@ has its
-    examples run as cases, and no page under @stack/@ may import [hsprgm] without closing the import
-    cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
-    what compares them, which is the one mechanism the integration runner already has for saying
-    what a program produced.
+    The integration suite typechecks and builds this file, then runs [main] and compares what it
+    printed against @hsprgm.stdout.txt@, which is the one mechanism the integration runner has for
+    saying what a program produced. No page under @stack/@ may import [hsprgm] without closing the
+    import cycle @core/result.ct@ measures, so the values cannot be print goldens of a library page.
   # One line per answer rather than one joined string. Joining them chained eight [operator++]s and
   #   reached the [runConstraints] limit on [/operator++[$T -> Semigroup]] — the same non-convergence
   #   the suite's two standing failures are, which is being worked on elsewhere. Printing each is

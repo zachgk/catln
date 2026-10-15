@@ -26,12 +26,6 @@ headTo[$A -> /Data/Algebra/Eq, $B](lst -> /Data/List[$T -> $_A], fn(w -> $_A) ->
 headTo(lst= Nil, fn(w), dflt)= dflt
 headTo(lst= Cons(head, tail), fn(w), dflt)= fn(w= head)
 
-> headTo(lst= [3], fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= 3), dflt= False)
-  >>> True
-> headTo(lst= [], fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= 3), dflt= False)
-  >>> False
-> headTo(lst= [3], fn(w)= w + 1, dflt= 0)
-  >>> 4
 # ## Called from inside a generic definition
   The same call made where the element type is not yet concrete. In @viaGeneric@'s frame @$_A@
   reads as its own bound @∀Eq@, and the parameter was refused because it was not FULLY CONCRETE.
@@ -41,12 +35,6 @@ headTo(lst= Cons(head, tail), fn(w), dflt)= fn(w= head)
 viaGeneric[$A -> /Data/Algebra/Eq](lst -> /Data/List[$T -> $_A], probe -> $_A) -> Boolean
 viaGeneric(lst, probe)= headTo(lst= lst, fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= probe), dflt= False)
 
-> viaGeneric(lst= [3], probe= 3)
-  >>> True
-> viaGeneric(lst= [4], probe= 3)
-  >>> False
-> viaGeneric(lst= ["a"], probe= "a")
-  >>> True
 # ## The control: the variable IS the argument's type
   Nothing points anywhere, so @$A@ binds directly from @x@. This passed before either fix and is
   the passing half of the pair that pinned the cause on how the variable is bound rather than on
@@ -54,6 +42,14 @@ viaGeneric(lst, probe)= headTo(lst= lst, fn(w)= /Data/Maybe/Some(value= w) == /D
 useEq[$A -> /Data/Algebra/Eq, $B](x -> $_A, fn(v -> $_A) -> $_B) -> $_B
 useEq(x, fn(v))= fn(v= x)
 
-> useEq(x= 3, fn(v)= /Data/Maybe/Some(value= v) == /Data/Maybe/Some(value= 3))
-  >>> True
-main{io -> IO}= io.exit(val= 0)
+# Both examples for each function are the same call; only the lambda's body differs, and the one
+  that does not need the bound is what says the traversal was never the problem.
+main{io -> IO} =
+  #assert(test= headTo(lst= [3], fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= 3), dflt= False))
+  #assert(test= ~headTo(lst= [], fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= 3), dflt= False))
+  #assert(test= headTo(lst= [3], fn(w)= w + 1, dflt= 0) == 4)
+  #assert(test= viaGeneric(lst= [3], probe= 3))
+  #assert(test= ~viaGeneric(lst= [4], probe= 3))
+  #assert(test= viaGeneric(lst= ["a"], probe= "a"))
+  #assert(test= useEq(x= 3, fn(v)= /Data/Maybe/Some(value= v) == /Data/Maybe/Some(value= 3)))
+  io

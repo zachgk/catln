@@ -35,16 +35,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -120,28 +111,6 @@ Prgm
                 @test/Integration/code/cond.ct@ covers that form.
                 A test of a branch has to run the branch that is not taken: @case.ct@ and @match.ct@ missed this
                 because each calls @abs(0)@ and nothing else, and at zero both arms answer zero." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /abs
-                ( Value /x -> /Data/Primitive/Integer = CInt
-                    { ciValue = 5 }
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "5" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /abs
-                ( Value /x -> /Data/Primitive/Integer = /operator-
-                    ( Value /a -> /Data/Primitive/Integer = CInt
-                        { ciValue = 5 }
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "5" }
             )
         ]
     }

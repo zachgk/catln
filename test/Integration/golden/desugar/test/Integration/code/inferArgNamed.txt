@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -104,50 +100,11 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function." }
-            )
-        , /Catln/#print
-            ( Value /p= f1
-                ( fn( Value v )= /operator+( Value /l= Value v )
-                    ( Value /r= CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value init= CInt
-                    { ciValue = 7 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "7" }
-            )
-        , /Catln/#print
-            ( Value /p= f2
-                ( fn( Value v )= /operator+( Value /l= Value v )
-                    ( Value /r= CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value init= CInt
-                    { ciValue = 7 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
+                { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on." }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on." }
-            )
-        , /Catln/#print
-            ( Value /p= unwrap
-                ( Value b= Box
-                    ( Value v= CInt
-                        { ciValue = 3 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "3" }
+                { csValue = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function." }
             )
         ]
     }

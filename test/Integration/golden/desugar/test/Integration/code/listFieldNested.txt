@@ -85,11 +85,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -111,10 +107,26 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/memberCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ memberCount( Value j -> ∀/Json ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ memberCount
+                            ( Value j= Json/Obj( Value entries ) ) -> /Data/Primitive/Integer = length( Value /this= Value entries )
+                        , memberCount( Value j ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -170,8 +182,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Printed so that the value is evaluated and not only built." }
+                { csValue = "Read back so that the value is evaluated and not only built: the object's members are counted,
+                which builds the whole of the value beneath them." }
             )
-        , /Catln/#print( Value /p= Value /Nested )
         ]
     }

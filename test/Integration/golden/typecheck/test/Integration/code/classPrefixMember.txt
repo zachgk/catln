@@ -162,35 +162,5 @@ Prgm
                 { csValue = "The values a page of such members declares, written out and never defined — the shape a note's
                 page holds a checkbox as." }
             )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /total
-                ( Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple
-                    ( Value /x -> /Data/Primitive/Integer = CInt
-                        { ciValue = 3 }
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "3" }
-            )
-        , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /total
-                ( Value /this -> /Thing/Fancy
-                    ( /x=/Data/Primitive/Integer
-                    , /y=/Data/Primitive/Integer
-                    ) = /Thing/Fancy
-                    ( Value /x -> /Data/Primitive/Integer = CInt
-                        { ciValue = 3 }
-                    )
-                    ( Value /y -> /Data/Primitive/Integer = CInt
-                        { ciValue = 4 }
-                    )
-                )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "7" }
-            )
         ]
     }

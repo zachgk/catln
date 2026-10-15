@@ -86,21 +86,78 @@ Prgm
                     }
                 )
             ,
+                ( "/firstOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /firstOf( Value /w -> /Wide.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /firstOf
+                            ( Value /w -> /Wide
+                                ( /r=∀/Data/String
+                                , /j=∀/Data/String
+                                , /q=∀/Data/String
+                                , /a=∀/Data/String
+                                , /l=∀/Data/String
+                                , /m=∀/Data/String
+                                , /n=∀/Data/String
+                                , /f=∀/Data/String
+                                , /c=∀/Data/String
+                                , /g=∀/Data/String
+                                , /b=∀/Data/String
+                                , /h=∀/Data/String
+                                , /e=∀/Data/String
+                                , /d=∀/Data/String
+                                , /k=∀/Data/String
+                                , /i=∀/Data/String
+                                , /p=∀/Data/String
+                                , /o=∀/Data/String
+                                ) = /Wide( Value /a -> ∀/Data/String )( Value /b -> ∀/Data/String )( Value /c -> ∀/Data/String )( Value /d -> ∀/Data/String )( Value /e -> ∀/Data/String )( Value /f -> ∀/Data/String )( Value /g -> ∀/Data/String )( Value /h -> ∀/Data/String )( Value /i -> ∀/Data/String )( Value /j -> ∀/Data/String )( Value /k -> ∀/Data/String )( Value /l -> ∀/Data/String )( Value /m -> ∀/Data/String )( Value /n -> ∀/Data/String )( Value /o -> ∀/Data/String )( Value /p -> ∀/Data/String )( Value /q -> ∀/Data/String )( Value /r -> ∀/Data/String )
+                            ) -> ∀/Data/String = Value /a
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/lastOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /lastOf( Value /w -> /Wide.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /lastOf
+                            ( Value /w -> /Wide
+                                ( /r=∀/Data/String
+                                , /j=∀/Data/String
+                                , /q=∀/Data/String
+                                , /a=∀/Data/String
+                                , /l=∀/Data/String
+                                , /m=∀/Data/String
+                                , /n=∀/Data/String
+                                , /f=∀/Data/String
+                                , /c=∀/Data/String
+                                , /g=∀/Data/String
+                                , /b=∀/Data/String
+                                , /h=∀/Data/String
+                                , /e=∀/Data/String
+                                , /d=∀/Data/String
+                                , /k=∀/Data/String
+                                , /i=∀/Data/String
+                                , /p=∀/Data/String
+                                , /o=∀/Data/String
+                                ) = /Wide( Value /a -> ∀/Data/String )( Value /b -> ∀/Data/String )( Value /c -> ∀/Data/String )( Value /d -> ∀/Data/String )( Value /e -> ∀/Data/String )( Value /f -> ∀/Data/String )( Value /g -> ∀/Data/String )( Value /h -> ∀/Data/String )( Value /i -> ∀/Data/String )( Value /j -> ∀/Data/String )( Value /k -> ∀/Data/String )( Value /l -> ∀/Data/String )( Value /m -> ∀/Data/String )( Value /n -> ∀/Data/String )( Value /o -> ∀/Data/String )( Value /p -> ∀/Data/String )( Value /q -> ∀/Data/String )( Value /r -> ∀/Data/String )
+                            ) -> ∀/Data/String = Value /r
                         ]
                     }
                 )
@@ -108,6 +165,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGClass
@@ -142,9 +201,9 @@ Prgm
                   24 fields, printed     — 252s
                   24 fields, NOT printed —  60s
                 So the same twenty-four-field declaration is free until something reads it, and eighteen is below
-                where that climb starts. That is why the value below is printed and not only declared: without the
-                @>@ the program typechecks, builds no tree for the value, and this file would pass while saying
-                nothing about the half of the cost that is real.
+                where that climb starts. That is why the value below is read back and not only declared: without
+                a reading of it the program typechecks, builds no tree for the value, and this file would pass
+                while saying nothing about the half of the cost that is real.
                 Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
                 Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
                 an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
@@ -153,83 +212,9 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Printed so that the value is built and not only declared, as @valueDeclFields.ct@ does and for the
-                same reason: the width that costs anything is the width something reads." }
-            )
-        , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Wide
-                ( Value /a -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "1" }
-                )
-                ( Value /b -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "2" }
-                )
-                ( Value /c -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "3" }
-                )
-                ( Value /d -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "4" }
-                )
-                ( Value /e -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "5" }
-                )
-                ( Value /f -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "6" }
-                )
-                ( Value /g -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "7" }
-                )
-                ( Value /h -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "8" }
-                )
-                ( Value /i -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "9" }
-                )
-                ( Value /j -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "10" }
-                )
-                ( Value /k -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "11" }
-                )
-                ( Value /l -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "12" }
-                )
-                ( Value /m -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "13" }
-                )
-                ( Value /n -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "14" }
-                )
-                ( Value /o -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "15" }
-                )
-                ( Value /p -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "16" }
-                )
-                ( Value /q -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "17" }
-                )
-                ( Value /r -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "18" }
-                )
+                { csValue = "Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
+                the same reason: the width that costs anything is the width something reads. The first and the
+                last field, so the reading reaches across the whole width." }
             )
         ]
     }

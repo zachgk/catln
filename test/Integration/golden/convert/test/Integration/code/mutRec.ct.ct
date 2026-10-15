@@ -21,13 +21,10 @@ odd(x -> Integer) | x == 0= 1
 odd(x -> Integer) else = even(x= x - 1)
 
 # Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
-#   argument and on [even(x= 0)]'s 0 for an odd one.
-> odd(x= 4)
-  >>> 1
-> odd(x= 3)
-  >>> 0
-> even(x= 4)
-  >>> 0
-> even(x= 3)
-  >>> 1
-main{io -> IO}= io.exit(val= 0)
+  argument and on [even(x= 0)]'s 0 for an odd one.
+main{io -> IO} =
+  #assert(test= odd(x= 4) == 1)
+  #assert(test= odd(x= 3) == 0)
+  #assert(test= even(x= 4) == 0)
+  #assert(test= even(x= 3) == 1)
+  io

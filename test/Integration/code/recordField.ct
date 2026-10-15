@@ -21,6 +21,11 @@ every(Outer.., isa= [/Catln/Doc/DShow])
 
 /Sample= Outer(inner= Inner(label= 7))
 
-# Printed so the value is evaluated and not only built.
-> /Sample
-main{io -> IO}= io.exit(val= 0)
+# Read back so the value is evaluated and not only built: the inner record's field is reached
+  through the outer one.
+labelOf(o -> Outer..) -> Integer
+labelOf(o= Outer(inner= Inner(label)))= label
+
+main{io -> IO} =
+  #assert(test= labelOf(o= /Sample) == 7)
+  io

@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -51,10 +47,26 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/labelOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ labelOf( Value o -> /Outer.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ labelOf
+                            ( Value o= Outer
+                                ( Value inner= Inner( Value label ) )
+                            ) -> /Data/Primitive/Integer = Value label
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -86,8 +98,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Printed so the value is evaluated and not only built." }
+                { csValue = "Read back so the value is evaluated and not only built: the inner record's field is reached
+                through the outer one." }
             )
-        , /Catln/#print( Value /p= Value /Sample )
         ]
     }

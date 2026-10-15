@@ -23,17 +23,15 @@ f1(fn(v), init)= init
 f2[$B](fn(v -> Integer) -> $_B, init -> $_B) -> $_B
 f2(fn(v), init)= fn(v= 1)
 
-# Both arguments are reachable: [f1] answers from the plain one and [f2] from the function.
-> f1(fn(v)= v + 1, init= 7)
-  >>> 7
-> f2(fn(v)= v + 1, init= 7)
-  >>> 2
 # A destructuring pattern still fills its slot by inference, with no name to go on.
 data(Box(v))
 
 unwrap(b -> Box(v -> Integer)) -> Integer
 unwrap(Box(v))= v
 
-> unwrap(b= Box(v= 3))
-  >>> 3
-main{io -> IO}= io.exit(val= 0)
+# Both arguments are reachable: [f1] answers from the plain one and [f2] from the function.
+main{io -> IO} =
+  #assert(test= f1(fn(v)= v + 1, init= 7) == 7)
+  #assert(test= f2(fn(v)= v + 1, init= 7) == 2)
+  #assert(test= unwrap(b= Box(v= 3)) == 3)
+  io

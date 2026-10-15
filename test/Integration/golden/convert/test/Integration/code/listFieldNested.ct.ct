@@ -27,6 +27,12 @@ every(Json/Member.., isa= [/Catln/Doc/DShow])
 # The shape: three levels of list, two field-carrying elements in the innermost.
 /Nested= Json/Obj(entries= [Json/Member(key= "author", value= Json/Obj(entries= [Json/Member(key= "years", value= Json/Arr(entries= [Json/Num(value= 2020.0), Json/Num(value= 2026.0)]))]))])
 
-# Printed so that the value is evaluated and not only built.
-> /Nested
-main{io -> IO}= io.exit(val= 0)
+# Read back so that the value is evaluated and not only built: the object's members are counted,
+  which builds the whole of the value beneath them.
+memberCount(j -> Json) -> Integer
+memberCount(j= Json/Obj(entries))= entries.length
+memberCount(j) else = 0
+
+main{io -> IO} =
+  #assert(test= memberCount(j= /Nested) == 1)
+  io

@@ -2,6 +2,36 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/consTagCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /consTagCount
+                            ( EAppArg { eaaArg = Value /t -> /ConsTagged.. } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /consTagCount
+                            ( EAppArg
+                                { eaaArg = Value /t -> /ConsTagged
+                                    ( /name=∀/Data/String
+                                    , /tags=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                    ) = /ConsTagged
+                                    ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tags -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /length
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /tags = ( Value /tags ↦ TVArg /tags ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -10,20 +40,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -67,6 +84,36 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/tagCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /tagCount
+                            ( EAppArg { eaaArg = Value /t -> /Tagged.. } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /tagCount
+                            ( EAppArg
+                                { eaaArg = Value /t -> /Tagged
+                                    ( /name=∀/Data/String
+                                    , /tags=∀/Data/List[ /T=∀/Data/String ]
+                                    ) = /Tagged
+                                    ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tags -> ∀/Data/List[ /T=∀/Data/String ] }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /length
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /tags = ( Value /tags ↦ TVArg /tags ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
                     }
                 )
             ,
@@ -119,6 +166,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Tagged
@@ -157,83 +206,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Printed so that the values are evaluated and not only built."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                    ( EAppArg
-                        { eaaArg = Value /name -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "none"
-                        }
-                    )
-                    ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                    ( EAppArg
-                        { eaaArg = Value /name -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /tags -> /Data/List/Cons
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons
-                            ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                        }
-                    )
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                    ( EAppArg
-                        { eaaArg = Value /name -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "none"
-                        }
-                    )
-                    ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                    ( EAppArg
-                        { eaaArg = Value /name -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
-                        }
-                    )
-                    ( EAppArg
-                        { eaaArg = Value /tags -> /Data/List/Cons
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons
-                            ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                        }
-                    )
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so that the values are evaluated and not only built: a field holding a list is
+                  destructured and the list's length is what the run checks."
                 }
             )
         ]

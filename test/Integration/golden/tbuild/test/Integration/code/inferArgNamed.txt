@@ -10,20 +10,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) =
-                            ( /Catln/exit
-                                ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                ) ↦ /Catln/IO
-                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
                     }
                 )
@@ -159,88 +146,13 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /f1
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ /Data/Primitive/Integer
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /init -> /Data/Primitive/Integer = 7 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "7"
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /f2
-                        ( EAppArg
-                            { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                                ( /operator+
-                                    ( EAppArg
-                                        { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ /Data/Primitive/Integer
-                                )
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /init -> /Data/Primitive/Integer = 7 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A destructuring pattern still fills its slot by inference, with no name to go on."
                 }
             )
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A destructuring pattern still fills its slot by inference, with no name to go on."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /unwrap
-                        ( EAppArg
-                            { eaaArg = Value /b -> /Box( /v=/Data/Primitive/Integer ) = /Box
-                                ( EAppArg
-                                    { eaaArg = Value /v -> /Data/Primitive/Integer = 3 }
-                                )
-                            }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function."
                 }
             )
         ]

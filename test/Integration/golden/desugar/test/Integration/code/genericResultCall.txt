@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -117,34 +113,6 @@ Prgm
                 @useI@ below is the same program with those three positions spelled Integer instead. It always
                 worked, and it is what says the fault was the variable rather than the shape." }
             )
-        , /Catln/#print
-            ( Value /p= useG
-                ( fn( Value a )= /operator+( Value /l= Value a )
-                    ( Value /r= CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value x= CInt
-                    { ciValue = 5 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "6" }
-            )
-        , /Catln/#print
-            ( Value /p= useI
-                ( fn( Value a )= /operator+( Value /l= Value a )
-                    ( Value /r= CInt
-                        { ciValue = 1 }
-                    )
-                )
-                ( Value x= CInt
-                    { ciValue = 5 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "6" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "The same defect is what stopped a fold over a polymorphic accumulator, which is the shape it was
@@ -156,68 +124,10 @@ Prgm
                 Both the element type and the accumulator are variables here, so nothing about this fold is
                 concrete until it is called." }
             )
-        , /Catln/#print
-            ( Value /p= foldrG
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt
-                        { ciValue = 1 }
-                    )
-                    ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt
-                            { ciValue = 2 }
-                        )
-                        ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt
-                                { ciValue = 3 }
-                            )( Value /tail= Value /Data/List/Nil )
-                        )
-                    )
-                )
-                ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
-                ( Value init= CInt
-                    { ciValue = 0 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "6" }
-            )
-        , /Catln/#print
-            ( Value /p= foldrG( Value lst= Value /Data/List/Nil )
-                ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
-                ( Value init= CInt
-                    { ciValue = 0 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "The accumulator need not be the element type: fold a list of Integers into a String." }
-            )
-        , /Catln/#print
-            ( Value /p= foldrG
-                ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt
-                        { ciValue = 1 }
-                    )
-                    ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt
-                            { ciValue = 2 }
-                        )( Value /tail= Value /Data/List/Nil )
-                    )
-                )
-                ( fn( Value acc )( Value v )= /operator++( Value /l= Value acc )
-                    ( Value /r= CStr
-                        { csValue = "x" }
-                    )
-                )
-                ( Value init= CStr
-                    { csValue = "s" }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "sxx" }
+                { csValue = "The accumulator need not be the element type: the last fold folds a list of Integers into a
+                String." }
             )
         ]
     }

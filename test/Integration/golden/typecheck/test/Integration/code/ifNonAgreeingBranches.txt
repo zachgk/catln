@@ -8,16 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -120,27 +111,11 @@ Prgm
                 The same fix is what makes @caseGuardWrongBranch.ct@ select correctly; both were the branch
                 preprocessors putting a pattern somewhere it could not constrain anything." }
             )
-        , /Catln/#print
-            ( Value /p -> ∀/Data/String = /greet
-                ( Value /name -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "Ada" }
-                )( Value /formal -> /Data/Primitive/True = Value /Data/Primitive/True )
-            )
-            ( Value /result -> /Data/String/Text
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Dear Ada" }
-            )
-        , /Catln/#print
-            ( Value /p -> ∀/Data/String = /greet
-                ( Value /name -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                    { csValue = "Ada" }
-                )( Value /formal -> /Data/Primitive/False = Value /Data/Primitive/False )
-            )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Hi Ada" }
+                { csValue = "That no agreement test is derived for [greet] is asserted by the test engine's own tests
+                (@test/Eval/QuantificationTests.hs@); what is held here is that the branch is taken." }
             )
         ]
     }

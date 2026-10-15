@@ -37,11 +37,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -162,79 +158,13 @@ Prgm
                 argument position (see @ifNonAgreeingBranches.ct@); [match] and [case] now do the same.
                 Every arm is run below, since a test that only reaches one arm cannot tell them apart." }
             )
-        , /Catln/#print
-            ( Value /p= rank( Value c= Value /Data/Algebra/LessThan ) )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p= rank( Value c= Value /Data/Algebra/Equal ) )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= rank( Value c= Value /Data/Algebra/GreaterThan ) )
-            ( Value /result= CStr
-                { csValue = "3" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "The scrutinee may be computed, and the enclosing definition may be generic." }
             )
-        , /Catln/#print
-            ( Value /p= rankOf
-                ( Value a= CInt
-                    { ciValue = 1 }
-                )
-                ( Value b= CInt
-                    { ciValue = 2 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p= rankOf
-                ( Value a= CInt
-                    { ciValue = 2 }
-                )
-                ( Value b= CInt
-                    { ciValue = 2 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= rankOf
-                ( Value a= CInt
-                    { ciValue = 3 }
-                )
-                ( Value b= CInt
-                    { ciValue = 2 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "3" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor." }
-            )
-        , /Catln/#print
-            ( Value /p= caseRank( Value c= Value /Data/Algebra/LessThan ) )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p= caseRank( Value c= Value /Data/Algebra/Equal ) )
-            ( Value /result= CStr
-                { csValue = "2" }
-            )
-        , /Catln/#print
-            ( Value /p= caseRank( Value c= Value /Data/Algebra/GreaterThan ) )
-            ( Value /result= CStr
-                { csValue = "3" }
             )
         ]
     }

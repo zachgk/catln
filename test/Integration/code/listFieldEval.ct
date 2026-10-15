@@ -26,7 +26,15 @@ data(Holder(items -> /Data/List[$T -> Mixed]))
 
 every(Holder.., isa= [/Catln/Doc/DShow])
 
-# Printed so that the values are built and not only declared, which is the whole of what this adds.
-> /Tagged(name= "two different", tags= ["x", "y"])
-> /Holder(items= [/Mixed/Plain, /Mixed/Labelled(value= "x")])
-main{io -> IO}= io.exit(val= 0)
+# Read back so that the values are built and not only declared, which is the whole of what this
+  adds: each field holding a list is destructured and the list's length is what the run checks.
+tagCount(t -> Tagged..) -> Integer
+tagCount(t= Tagged(name, tags))= tags.length
+
+itemCount(h -> Holder..) -> Integer
+itemCount(h= Holder(items))= items.length
+
+main{io -> IO} =
+  #assert(test= tagCount(t= /Tagged(name= "two different", tags= ["x", "y"])) == 2)
+  #assert(test= itemCount(h= /Holder(items= [/Mixed/Plain, /Mixed/Labelled(value= "x")])) == 2)
+  io

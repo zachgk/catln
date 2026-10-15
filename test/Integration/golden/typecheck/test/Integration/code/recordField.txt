@@ -8,16 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )( Value /this -> TVArg /io = Value /io )
-                        ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -57,10 +48,27 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/labelOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /labelOf( Value /o -> /Outer.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /labelOf
+                            ( Value /o -> /Outer
+                                ( /inner=/Inner( /label=/Data/Primitive/Integer ) ) = /Outer
+                                ( Value /inner -> /Inner( /label=/Data/Primitive/Integer ) = /Inner( Value /label -> /Data/Primitive/Integer ) )
+                            ) -> /Data/Primitive/Integer = Value /label
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -94,11 +102,8 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "Printed so the value is evaluated and not only built." }
-            )
-        , /Catln/#print
-            ( Value /p -> /Outer
-                ( /inner=/Inner( /label=/Data/Primitive/Integer ) ) = Value /Sample
+                { csValue = "Read back so the value is evaluated and not only built: the inner record's field is reached
+                through the outer one." }
             )
         ]
     }

@@ -8,11 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )( Value /this= Value io )
-                        ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
             ,
@@ -46,10 +42,38 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/dueOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ dueOf( Value n -> /Noted.. ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ dueOf
+                            ( Value n= Noted( Value name )( Value tags )( Value due ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value due
+                        ]
+                    }
+                )
+            ,
+                ( "/tagCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ tagCount( Value n -> /Noted.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ tagCount
+                            ( Value n= Noted( Value name )( Value tags )( Value due ) ) -> /Data/Primitive/Integer = length( Value /this= Value tags )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGClass
@@ -81,29 +105,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Printed so that the values are evaluated and not only built." }
-            )
-        , /Catln/#print
-            ( Value /p= /Noted
-                ( Value name= CStr
-                    { csValue = "has both" }
-                )
-                ( Value tags= /Data/List/Cons
-                    ( Value /head= CStr
-                        { csValue = "x" }
-                    )( Value /tail= Value /Data/List/Nil )
-                )
-                ( Value due= /Data/Maybe/Some
-                    ( Value value= CStr
-                        { csValue = "2026-01-01" }
-                    )
-                )
-            )
-        , /Catln/#print
-            ( Value /p= /Noted
-                ( Value name= CStr
-                    { csValue = "has neither" }
-                )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
+                { csValue = "Read back so that the values are evaluated and not only built: both fields are destructured,
+                the list counted and the [/Data/Maybe] compared." }
             )
         ]
     }

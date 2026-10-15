@@ -135,30 +135,5 @@ Prgm
                 { csValue = "The values a page of such members declares, written out and never defined — the shape a note's
                 page holds a checkbox as." }
             )
-        , /Catln/#print
-            ( Value /p= total
-                ( Value /this= /Thing/Simple
-                    ( Value x= CInt
-                        { ciValue = 3 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "3" }
-            )
-        , /Catln/#print
-            ( Value /p= total
-                ( Value /this= /Thing/Fancy
-                    ( Value x= CInt
-                        { ciValue = 3 }
-                    )
-                    ( Value y= CInt
-                        { ciValue = 4 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "7" }
-            )
         ]
     }

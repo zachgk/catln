@@ -500,28 +500,6 @@ Prgm
             ( Value /text= CStr
                 { csValue = "## What a reading looked at" }
             )
-        , /Catln/#print
-            ( Value /p= pathOf
-                ( Value r= /Catln/ReadPath/ReadFile
-                    ( Value path= CStr
-                        { csValue = "a.ct" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "a.ct" }
-            )
-        , /Catln/#print
-            ( Value /p= readKind
-                ( Value r= /Catln/ReadPath/ReadDir
-                    ( Value path= CStr
-                        { csValue = "src" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "dir" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## The metadata every piece carries" }
@@ -529,28 +507,6 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## An expression as it was written" }
-            )
-        , /Catln/#print
-            ( Value /p= exprKind
-                ( Value e= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
-                    ( Value name= CStr
-                        { csValue = "foo" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "value" }
-            )
-        , /Catln/#print
-            ( Value /p= rawValueName
-                ( Value e= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
-                    ( Value name= CStr
-                        { csValue = "foo" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "foo" }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -560,109 +516,21 @@ Prgm
             ( Value /text= CStr
                 { csValue = "  difference between this page and @core/hsprgm.ct@." }
             )
-        , /Catln/#print
-            ( Value /p= exprKind
-                ( Value e= /Catln/RawExpr/RawMethod( Value meta= Value noMeta )
-                    ( Value base= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
-                        ( Value name= CStr
-                            { csValue = "io" }
-                        )
-                    )
-                    ( Value value= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
-                        ( Value name= CStr
-                            { csValue = "println" }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "method" }
-            )
-        , /Catln/#print
-            ( Value /p= exprKind
-                ( Value e= /Catln/RawExpr/RawList( Value meta= Value noMeta )( Value values= Value /Data/List/Nil ) )
-            )
-            ( Value /result= CStr
-                { csValue = "list" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## What a page holds" }
-            )
-        , /Catln/#print
-            ( Value /p= objArrName
-                ( Value oa= emptyObjArr
-                    ( Value name= CStr
-                        { csValue = "myFn" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "myFn" }
-            )
-        , /Catln/#print
-            ( Value /p= statementKind
-                ( Value s= /Catln/RawStatement/RawDeclStatement
-                    ( Value objArr= emptyObjArr
-                        ( Value name= CStr
-                            { csValue = "myFn" }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "decl" }
             )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## A whole page, and the result of reading one" }
             )
-        , /Catln/#print
-            ( Value /p= declCount( Value p= Value emptyPrgm ) )
-            ( Value /result= CStr
-                { csValue = "0" }
-            )
-        , /Catln/#print
-            ( Value /p= declCount
-                ( Value p= onePrgm
-                    ( Value name= CStr
-                        { csValue = "myFn" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p= resultDeclCount
-                ( Value r= oneResult
-                    ( Value name= CStr
-                        { csValue = "myFn" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
-        , /Catln/#print
-            ( Value /p= readsCount
-                ( Value r= oneResult
-                    ( Value name= CStr
-                        { csValue = "myFn" }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "1" }
-            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## What the suite checks
-                The `>` examples above are checked by `catln test`, and the integration suite typechecks and
-                builds this file without comparing what they evaluate to — only a page under @stack/@ has its
-                examples run as cases, and no page under @stack/@ may import [hsrawprgm] without closing the
-                import cycle @core/result.ct@ measures. So the values are printed instead, and
-                @hsrawprgm.stdout.txt@ is what compares them." }
+                The integration suite typechecks and builds this file, then runs [main] and compares what it
+                printed against @hsrawprgm.stdout.txt@. No page under @stack/@ may import [hsrawprgm] without
+                closing the import cycle @core/result.ct@ measures, so the values cannot be print goldens of a
+                library page." }
             )
         ]
     }
