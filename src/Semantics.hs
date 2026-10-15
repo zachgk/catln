@@ -273,6 +273,20 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
         [binds] -> H.fromList [ (v, abType b) | (v@TVVar{}, b) <- H.toList binds ]
         _       -> H.empty
       _ -> H.empty
+  -- A lambda added here SHADOWS an arrow of the same name the env already holds (an enclosing
+  -- definition's argument, or another call's lambda), as 'TypeCheck.TypeUtils.localArrowTypeEnv'
+  -- shadows them: inside the call, the name is this lambda. The env reads one level less fuel
+  -- ('teRederiveFuel'): it is the scope of a body being read again.
+  typeGraphWithArgArrows typeEnv [] = typeEnv
+  typeGraphWithArgArrows typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap baseTg)} arrows = merged{teRederiveFuel = teRederiveFuel typeEnv - 1}
+    where
+      lamArrows = [ ObjArr (Just (setExprMeta (mkValue (ptName p)) (emptyMetaT inT))) ArgObj Nothing [] (Just (Nothing, emptyMetaT outT))
+                  | (inT, outT) <- arrows, Just p <- [maybeGetSingleton inT] ]
+      objMap@(ObjectMap lamTg) = objectMapFromList lamArrows
+      unshadowed = ObjectMap $ H.mapWithKey (\n item -> if H.member n lamTg then item{omiDecls = notArg (omiDecls item), omiDefs = notArg (omiDefs item)} else item) baseTg
+      notArg = filter ((/= ArgObj) . oaBasis)
+      base = typeEnv{teTypeGraph = ObjArrTypeGraph unshadowed}
+      merged = withLocalArrowsOf (ObjArrTypeGraph objMap) base (mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> base)
   typeGraphDeclaredArgResults TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name =
     [ (inExprSingleton aObj, getMetaType aM)
     | decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName name) tg)
@@ -481,7 +495,7 @@ mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv
 -- an env that lives for a whole phase — the evaluator's, consulted at every dispatch — remembered
 -- nothing, and a value predicate on a leaf it compared was evaluated through the graph at every
 -- comparison.
-mkTypeEnv (Prgm objMap classGraph _) = stampQueryToken $ TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing Nothing S.empty (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = stampQueryToken $ TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing Nothing S.empty defaultRederiveFuel (mkSatCache classGraph typeNames)
   where
     -- Every name an argument pattern binds, with the arg keys that pattern gives it, recursing
     -- through the patterns written inside its arguments. Read by 'declaredArgKeys' for a name
@@ -711,9 +725,33 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
         -- The body's type is preferred, but a Top body type is not information: an arm returning a
         -- bare declaration variable (@foldl(lst= Nil, ..)= init@) presents one, and an arrow whose
         -- presented dest is Top is refused outright ("Arrow has indeterminate return type").
-        joined = case fmap dropLocalArrowCalls expr' of
+        joined = rereadForCall $ case fmap dropLocalArrowCalls expr' of
           Just t | t /= PTopType || not resolveAppFields -> t
           _                                              -> arr'
+        -- A body that is a call given lambdas, read again for THIS call. The body's type was
+        -- inferred once, for the definition's own parameters, and the call it makes holds an
+        -- input object whose arrow is local to it — so its stored result is all the definition
+        -- says, whatever the caller passes. A bind's continuation is one: @cont(x)@ (@x@ inferred
+        -- @∀Add@) holds @bindap(m= b, fn(v)= cont2(x= x, y= v))@, and a caller passing
+        -- @x= Integer@ read @∀Add@ back where the body gives an @Integer@. Read again with the
+        -- caller's bindings, each lambda's body gives its result as this call has it, and the
+        -- call given them is answered by the arrows. Both readings bound the value, so the
+        -- result is their meet. Only a call that binds something the body was inferred wider
+        -- for is read again; any other reads as the definition already says.
+        rereadForCall t = case oaArrExpr of
+          Just body | teRederiveFuel typeEnv > 0
+                    , not (null (bodyLambdas body))
+                    , any narrowedRef (exprArgRefs body)
+                    -> intersectTypes typeEnv t (rereadExpr typeEnv vaenv body)
+          _ -> t
+        -- A reference to one of the definition's parameters that this call binds within what the
+        -- parameter was inferred as, and not to all of it.
+        narrowedRef e = case (H.lookup (extKey (TVArg k)) vaenv, H.lookup k ownParams) of
+          (Just fv, Just declared) | not (typeHasVars fv), fv /= PTopType
+            -> isSubtypeOf typeEnv fv declared && not (isSubtypeOf typeEnv declared fv)
+          _ -> False
+          where k = inExprSingleton e
+        ownParams = fmap (getMetaType . snd . head) $ H.filter (not . null) $ snd $ splitVarArgEnv $ exprVarArgs (oaObjExpr oa)
         -- A body that is a call given a lambda presents what the call reaches, never the raw call:
         -- the lambda is an arrow local to that call, so outside it the unrewritten form cannot be
         -- rewritten or read (the rule 'TypeCheck.TypeUtils.arrowConstrainUbs' applies to the
@@ -783,6 +821,65 @@ arrowDestTypeBase resolveAppFields typeEnv ambient src oa@ObjArr{oaArr=Just (oaA
         -- callee's arrows produce.
         reduceApplied = reduceAppliedType typeEnv vaenv
 arrowDestTypeBase _ _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
+
+-- | The lambdas an application is given (@f(fn(v)= body)@): each applied argument whose object
+-- takes parameters and which has a body, as its object and body.
+bodyLambdas :: (ExprClass e, MetaDat m, Show m) => e m -> [(e m, e m, Meta m)]
+bodyLambdas e = [ (lamObj, lamBody, lamM) | a <- exprAppliedArgs e, Just lamObj <- [oaObj a]
+                                          , not (null (exprAppliedArgs lamObj)), Just (Just lamBody, lamM) <- [oaArr a] ]
+
+-- | The argument references an expression makes (@x@ in @f(a= x)@), through its applications and
+-- the bodies of the lambdas they are given.
+exprArgRefs :: (ExprClass e, MetaDat m, Show m) => e m -> [e m]
+exprArgRefs e
+  | isJust (maybeExprPath e), null (exprAppliedArgs e) = [e]
+  | otherwise = concat [ exprArgRefs v | a <- exprAppliedArgs e, Just (Just v, _) <- [oaArr a] ]
+
+-- | An expression's type read again under the bindings of one call ('arrowDestTypeBase'): an
+-- argument reference is what the call binds it to, and an application is answered by the
+-- arrows for the arguments it is given here — each lambda it is given an arrow from its input
+-- object to its body read the same way, with its parameters bound as its pattern types them.
+-- An application's own type is the form it is applied as, not what it gives, so a reading is
+-- met with what it gives only where that is known — a lambda's result, the definition's — and
+-- a form this cannot read (an application whose arguments are not all named, one no arrow
+-- answers or whose answer is still to be rewritten) reads as unknown.
+rereadExpr :: (TypeGraph tg, ExprClass e, MetaDat m, Show m, Show (e m)) => TypeEnv tg -> TypeVarArgEnv -> e m -> Type
+rereadExpr typeEnv vaenv e
+  -- A reference is what the call binds it to. Its own type is only its name, which says nothing
+  -- of the value.
+  | isJust (maybeExprPath e), null (exprAppliedArgs e) = case H.lookup (extKey (TVArg (inExprSingleton e))) vaenv of
+      Just fv | not (isTypeVar fv) -> fv
+      _                            -> PTopType
+  | Just callee <- maybeExprPath e
+  , args@(_:_) <- exprAppliedArgs e
+  , Just slots <- mapM slotOf args
+  = let lams = [ (getExprType lamObj, intersectTypes typeEnv (getMetaType lamM) (rereadExpr typeEnvL' (withParams lamObj) lamBody))
+               | (lamObj, lamBody, lamM) <- bodyLambdas e ]
+        -- The lambdas' bodies are read in the scope they are written in, one level down.
+        typeEnvL' = typeEnv{teRederiveFuel = teRederiveFuel typeEnv - 1}
+        typeEnvL = typeGraphWithArgArrows typeEnv lams
+        partial = (partialVal callee){ptArgs = H.fromList slots}
+    in if teRederiveFuel typeEnv <= 0 then PTopType else case typeGraphQuery typeEnvL vaenv partial of
+         []    -> PTopType
+         dests -> settledOnly (reduceAppliedTypeDeep typeEnvL vaenv (unionAllTypesWithEnv typeEnvL vaenv dests))
+  | otherwise = getExprType e
+  where
+    -- What the arrows answer is read only once it has settled: a form still to be rewritten (a
+    -- call no arrow here answers yet) reads nothing of what it will give, so the reading is
+    -- unknown rather than that form. So does an answer spelled in a variable: a callee's own
+    -- variable is not bound in the scope the reading is for, and read there it is the ⊤ it
+    -- denotes, which would hand the definition's result a link it has no binding for.
+    settledOnly t@(UnionType _ leafs _)
+      | not (typeHasVars t)
+      , all (not . null . typeGraphData typeEnv . ptName) (splitUnionType leafs) = t
+    settledOnly _ = PTopType
+    -- A lambda's slot holds its input object; any other argument is its value read again.
+    slotOf a = case (oaObj a, oaArr a) of
+      (Just o, _) | not (null (exprAppliedArgs o)) -> Just (inExprSingleton o, getExprType o)
+      (Just o, Just (Just v, _))                    -> Just (inExprSingleton o, rereadExpr typeEnv vaenv v)
+      _                                             -> Nothing
+    withParams lamObj = H.union (H.fromList [ (extKey (TVArg (inExprSingleton p)), getMetaType pM)
+                                            | ObjArr{oaObj=Just p, oaArr=Just (_, pM)} <- exprAppliedArgs lamObj ]) vaenv
 
 -- | What a term settles to once applied: each leaf the type graph rewrites is replaced by what
 -- its arrows produce; a leaf no arrow accepts (a data construction, a curried partial

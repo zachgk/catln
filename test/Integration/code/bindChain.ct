@@ -1,0 +1,65 @@
+import "core"
+
+
+# Exercises chaining several bind operators ([<-]) in one function. Each bind desugars to a
+# [bindap] whose continuation holds the rest of the body — including the later binds — so every
+# bind picks its own arm ([mmap], [fmap] or [ap]) from how its bound value is used and what the
+# rest of the body returns.
+# An [mmap] bind around an [fmap] bind: the inner continuation returns a plain [Integer] ([fmap]),
+# which makes the outer continuation return a [Maybe] ([mmap]).
+mmapFmap(a -> /Data/Maybe[$T -> Integer], b -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
+  x<- a
+
+  y<- b
+
+  x + y
+
+# An [ap] bind around an [fmap] bind: [x] is consumed whole as a [Maybe] ([ap]) and [y] by element
+# ([fmap]).
+apFmap(a -> /Data/Maybe[$T -> Integer], b -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
+  x<- a
+
+  y<- b
+
+  orZero(o= x) + y
+
+# An [fmap] bind around an [ap] bind: the inner continuation consumes [y] whole and returns an
+# [Integer], which the outer [fmap] collects back into a [Maybe].
+fmapAp(a -> /Data/Maybe[$T -> Integer], b -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
+  x<- a
+
+  y<- b
+
+  x + orZero(o= y)
+
+# Three binds, one of each arm, with a local declaration between them.
+mmapApFmap(a -> /Data/Maybe[$T -> Integer], b -> /Data/Maybe[$T -> Integer], c -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
+  x<- a
+
+  y<- b
+
+  s= x + orZero(o= y)
+
+  z<- c
+
+  s + z
+
+orZero(o -> /Data/Maybe[$T -> Integer]) -> Integer
+orZero(o= /Data/Maybe/Some(value))= value
+orZero(o= /Data/Maybe/Nothing)= 0
+
+main{io -> IO} =
+  #assert(test= mmapFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Some(value= 5))
+  #assert(test= mmapFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  #assert(test= mmapFmap(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Nothing)
+  #assert(test= apFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Some(value= 5))
+  #assert(test= apFmap(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Some(value= 3))
+  #assert(test= apFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  #assert(test= fmapAp(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Some(value= 5))
+  #assert(test= fmapAp(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Nothing) == /Data/Maybe/Some(value= 2))
+  #assert(test= fmapAp(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Nothing)
+  #assert(test= mmapApFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3), c= /Data/Maybe/Some(value= 4)) == /Data/Maybe/Some(value= 9))
+  #assert(test= mmapApFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Nothing, c= /Data/Maybe/Some(value= 4)) == /Data/Maybe/Some(value= 6))
+  #assert(test= mmapApFmap(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 3), c= /Data/Maybe/Some(value= 4)) == /Data/Maybe/Nothing)
+  #assert(test= mmapApFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3), c= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  io

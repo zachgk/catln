@@ -789,6 +789,13 @@ class TypeGraph tg where
   typeGraphInputEmbeddedNames :: TypeEnv tg -> S.HashSet TypeName
   typeGraphInputEmbeddedNames _ = S.empty
 
+  -- | The environment with arrows added for the lambdas of one call: each is given as its input
+  -- object (@fn(/v=..)@, the pattern a higher-order slot holds) and the result its body gives,
+  -- and is in scope for that call alone, as 'TreeBuild.withArgArrows' adds a call's lambdas. A
+  -- graph that holds no arrows of its own has none to add them beside.
+  typeGraphWithArgArrows :: TypeEnv tg -> [(Type, Type)] -> TypeEnv tg
+  typeGraphWithArgArrows env _ = env
+
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
@@ -853,6 +860,12 @@ data TypeEnv tg = TypeEnv {
   -- | The names of the arrows local to the scope this env was merged for (a definition's
   -- arguments, a call's lambdas), which the graph holds beside the program's own.
   teLocalNames        :: S.HashSet TypeName,
+  -- | How many levels deeper a definition's body may still be read again for a particular call
+  -- ('Semantics.arrowDestTypeBase'): each level is a call given lambdas inside the body read
+  -- before, whose lambdas' bodies are read again in turn. A recursive definition given a lambda
+  -- reads itself again at every level, so the reading stops where the fuel does and the
+  -- definition's own result is taken there, as it always was before any reading again.
+  teRederiveFuel      :: Int,
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -866,7 +879,11 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing Nothing S.empty (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing Nothing S.empty defaultRederiveFuel (mkSatCache mempty S.empty)
+
+-- | The levels a definition's body may be read again for a call ('teRederiveFuel').
+defaultRederiveFuel :: Int
+defaultRederiveFuel = 4
 
 -- | A class or type node within the 'ClassGraph'. The class arm's parts are named so that a
 -- program handed one can tell them apart.
@@ -1110,7 +1127,7 @@ instance Monoid ClassGraph where
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
   -- A merged env is a DIFFERENT value: it never carries a query-cache token.
-  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (mkSatCache cg' n')
+  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 rf1 _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 rf2 _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (min rf1 rf2) (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2

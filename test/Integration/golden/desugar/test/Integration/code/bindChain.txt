@@ -1,0 +1,278 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/orZero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ orZero
+                            ( Value o -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ orZero
+                            ( Value o= /Data/Maybe/Some( Value value ) ) -> /Data/Primitive/Integer = Value value
+                        , orZero( Value o= Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/apFmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ apFmap
+                            ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
+                            ( fn( Value v )= apFmap.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/fmapAp.$f24651"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ fmapAp.$f24651
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= fmapAp.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/fmapAp"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ fmapAp
+                            ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
+                            ( fn( Value v )= fmapAp.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/apFmap.$f24651"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ apFmap.$f24651
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= apFmap.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapFmap.$f24651"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapFmap.$f24651
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= mmapFmap.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/mmapFmap.$f24651.$b671cb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapFmap.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap
+                            ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
+                            ( fn( Value v )= mmapApFmap.$f24651( Value /c= Value /c )( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$f24651.$b671cb.s"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$f24651.$b671cb.s( Value /x )( Value /y )= /operator+( Value /l= Value x )
+                            ( Value /r= orZero( Value o= Value y ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/apFmap.$f24651.$b671cb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ apFmap.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /operator+
+                            ( Value /l= orZero( Value o= Value x ) )( Value /r= Value y )
+                        ]
+                    }
+                )
+            ,
+                ( "/fmapAp.$f24651.$b671cb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ fmapAp.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /operator+( Value /l= Value x )
+                            ( Value /r= orZero( Value o= Value y ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$f24651.$b671cb.$a33c13"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$f24651.$b671cb.$a33c13( Value /x )( Value /y )( Value $a33c13-arg@Value z )= /operator+
+                            ( Value /l= mmapApFmap.$f24651.$b671cb.s( Value /x= Value /x )( Value /y= Value /y ) )( Value /r= Value z )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapFmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapFmap
+                            ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
+                            ( fn( Value v )= mmapFmap.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$f24651.$b671cb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$f24651.$b671cb
+                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )( Value $b671cb-arg@Value y )= /Data/bindap( Value m= Value c )
+                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb.$a33c13( Value /x= Value /x )( Value /y= Value /y )( Value /$a33c13-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$f24651"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$f24651
+                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb( Value /c= Value /c )( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Exercises chaining several bind operators ([<-]) in one function. Each bind desugars to a" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[bindap] whose continuation holds the rest of the body — including the later binds — so every" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "bind picks its own arm ([mmap], [fmap] or [ap]) from how its bound value is used and what the" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "rest of the body returns." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [mmap] bind around an [fmap] bind: the inner continuation returns a plain [Integer] ([fmap])," }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "which makes the outer continuation return a [Maybe] ([mmap])." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [ap] bind around an [fmap] bind: [x] is consumed whole as a [Maybe] ([ap]) and [y] by element" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "([fmap])." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [fmap] bind around an [ap] bind: the inner continuation consumes [y] whole and returns an" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[Integer], which the outer [fmap] collects back into a [Maybe]." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Three binds, one of each arm, with a local declaration between them." }
+            )
+        ]
+    }
