@@ -355,6 +355,24 @@ testWhereRefine = testCase "a body's condition refines its value by the conditio
 -- refinement, and @onNat@'s @hGen(a= n)@ carries the predicate on. The twin error page calls it
 -- with an @S@, on which the predicate is decided false. Fixtures: unit/declResult.ct,
 -- unit/declResultFails.err.ct.
+-- | A definition passing a call's result on keeps the link that result holds: @bf@'s lambda
+-- @fn(v)= fn(v= v)@ returns @bf@'s own @$_B@, still unbound, and was read as ⊤, so the definition
+-- returned @$_F[/T=⊤]@ where @fm@ declares @$F[$T -> $_B]@. bindap's fmap arm is this shape, and
+-- read at ⊤ its result could not rule the arm out where a call needs a flat monad.
+testPassedOnLink :: TestTree
+testPassedOnLink = testCase "a definition passing a call's result on keeps its link" $ do
+  let page = "test/Typecheck/unit/passedOnLink.ct"
+  res <- runCResT $ do
+    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let defResults = [ getMetaType m | (name, omi) <- H.toList (omItems (prgmObjMap prgm)), nameStr name == "/R/bf", ObjArr{oaArr=Just (_, m)} <- omiDefs omi ]
+  case defResults of
+    [r] -> assertBool ("bf's definition returns fm's result with the continuation's $_B: " ++ show r) ("$_/B" `isInfixOf` show r)
+    rs  -> assertFailure ("one definition of bf, found " ++ show rs)
+
 testDeclResult :: TestTree
 testDeclResult = testCase "a declared result refines every call of the definition" $ do
   let page = "test/Typecheck/unit/declResult.ct"
@@ -427,6 +445,7 @@ typecheckTests = do
     , testRefineOut
     , testWhereRefine
     , testDeclResult
+    , testPassedOnLink
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

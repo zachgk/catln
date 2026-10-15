@@ -1,0 +1,19 @@
+annot(#noCore)
+
+# A definition passing a call's result on keeps the link that result holds to its own variables.
+  [bf] hands its continuation to [fm] through a lambda, [fn(v)= fn(v= v)], which returns [bf]'s
+  [$_B]. [fm] is declared [-> $F[$T -> $_B]], so [bf]'s definition returns [$_F[/T=$_B]]: the
+  element is what the continuation returns, which a call of [bf] binds.
+#noCore
+module(R)
+  class(Fun[$T])
+  class(Opt[$T], [Bx[$T -> $_T](value -> $T), Nx])
+
+  every(/R/Opt[$T -> $_T], isa= [/R/Fun])
+
+  fm[$F -> /R/Fun[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+  fm(lst= /R/Nx, fn(v))= /R/Nx
+  fm(lst= /R/Bx(value), fn(v))= /R/Bx(value= fn(v= value))
+
+  bf[$F -> /R/Fun[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+  bf[$F -> /R/Fun[$T -> $_A], $A](m -> $F, fn(v -> $_A))= /R/fm(lst= m, fn(v)= fn(v= v))

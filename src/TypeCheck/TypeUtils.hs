@@ -458,7 +458,14 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
   -- The argument's own result is read through the constraint's bindings; the declared one is
   -- NOT — it is the link the call binds, and resolving it here would read an in-scope but still
   -- unbound declaration variable (@$_B@ registered for the definition at ⊤) as the ⊤ it is now.
-  let ownResult outM = substituteTVExt (feTypeEnv env) (ambientEnv $ fmap snd vaenv) (getMetaType outM)
+  -- For the same reason a variable the constraint has not bound yet stays the link it is in the
+  -- arrow's own result: a lambda @fn(v)= fn(v= v)@ passing on the definition's @fn@ returns the
+  -- definition's @$_B@, and read as ⊤ the call it is given to (@fm(.., fn(v)= ..)@, declared
+  -- @-> $F[$T -> $_B]@) lost the link, typing the definition @-> $_F[/T=⊤]@.
+  let ownBindings = H.mapWithKey ownBinding (fmap snd vaenv)
+      ownBinding v@TVVar{} PTopType = TypeVar v TVExt PTopType
+      ownBinding _ t                = t
+  let ownResult outM = substituteTVExt (feTypeEnv env) (ambientEnv ownBindings) (getMetaType outM)
   let argResult k inExpr outM
         | not (null (exprAppliedArgs inExpr)), Just declT <- declResultFor k = intersectTypes (feTypeEnv env) (ownResult outM) declT
         | otherwise = ownResult outM
