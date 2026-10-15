@@ -44,7 +44,15 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) -> ∀/Data/Functor[ /T=$_/B ] =
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/B ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Result/Fail[ /E=TopType ]( /err=$/E )
+                            , []
+                            ) =
                             ( /Data/Functor/fmap
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
@@ -58,7 +66,15 @@ Prgm
                                             ) ↦ $_/B
                                         )
                                     }
-                                ) ↦ ∀/Data/Functor[ /T=$_/B ]
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Functor[ /T=$_/B ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Result/Fail[ /E=TopType ]( /err=$/E )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -73,7 +89,15 @@ Prgm
                         [ /strMaybe
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> ∀/Data/Functor[ /T=∀/Data/String ] =
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=∀/Data/String ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Result/Fail[ /E=TopType ]( /err=$/E )
+                            , []
+                            ) =
                             ( /applyInc
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -87,7 +111,15 @@ Prgm
                                             ) ↦ ∀/Data/String
                                         )
                                     }
-                                ) ↦ ∀/Data/Functor[ /T=∀/Data/String ]
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Functor[ /T=∀/Data/String ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Result/Fail[ /E=TopType ]( /err=$/E )
+                                , []
+                                )
                             )
                         ]
                     }
@@ -124,7 +156,15 @@ Prgm
                         [ /incMaybe
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> ∀/Data/Functor[ /T=/Data/Primitive/Integer ] =
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Result/Fail[ /E=TopType ]( /err=$/E )
+                            , []
+                            ) =
                             ( /applyInc
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -141,7 +181,15 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦ ∀/Data/Functor[ /T=/Data/Primitive/Integer ]
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Result/Fail[ /E=TopType ]( /err=$/E )
+                                , []
+                                )
                             )
                         ]
                     }

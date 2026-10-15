@@ -1,0 +1,599 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Result/Fail"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/Fail[ /E : TopType ]( Value /err -> $/E ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/ResultEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/ResultEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Monad/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/pure
+                            [ /M : ∀/Data/Result[ /T=TopType ] ]( Value /v ) -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value -> TVArg /v = Value /v )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Result/withDefault"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/withDefault[ /A : TopType ]
+                            ( Value /r -> ∀/Data/Result[ /T=$_/A ] )( Value /def -> $/A ) -> $_/A
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Result/withDefault
+                            ( Value /r -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) )( Value /def ) -> TVArg /value = Value /value
+                        , /Data/Result/withDefault
+                            ( Value /r -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err ) )( Value /def ) -> TVArg /def = Value /def
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( Value /a -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /av -> ∀/Data/Algebra/Eq ) )
+                            ( Value /b -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /bv -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/ResultEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
+                        , /Data/Algebra/rel
+                            ( Value /a -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) )
+                            ( Value /b -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err ) )( Value /this -> /Data/ResultEqv.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/rel
+                            ( Value /a -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err ) )
+                            ( Value /b -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) )( Value /this -> /Data/ResultEqv.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/rel
+                            ( Value /a -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail[ /E : ∀/Data/Algebra/Eq ]( Value /err@Value /ae -> ∀/Data/Algebra/Eq ) )
+                            ( Value /b -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail[ /E : ∀/Data/Algebra/Eq ]( Value /err@Value /be -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/ResultEqv.. ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /ae = Value /ae )( Value /r -> TVArg /be = Value /be )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq
+                            ( Value /this -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok[ /T : ∀/Data/Algebra/Eq ]( Value /value -> ∀/Data/Algebra/Eq ) ) -> /Data/ResultEqv = Value /Data/ResultEqv
+                        , /Data/Algebra/eq
+                            ( Value /this -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail[ /E : ∀/Data/Algebra/Eq ]( Value /err -> ∀/Data/Algebra/Eq ) ) -> /Data/ResultEqv = Value /Data/ResultEqv
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Monad/mmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/mmap
+                            ( Value /m -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err ) )
+                            ( /fn( Value /v ) ) -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err -> TVArg /err = Value /err )
+                        , /Data/Monad/mmap
+                            ( Value /m -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) )
+                            ( /fn( Value /v ) ) -> $_/M = /fn( Value /v -> TVArg /value = Value /value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Functor/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Functor/fmap
+                            ( Value /lst -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err ) )
+                            ( /fn( Value /v ) ) -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err -> TVArg /err = Value /err )
+                        , /Data/Functor/fmap
+                            ( Value /lst -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) )
+                            ( /fn( Value /v ) ) -> /Data/Result/Ok( /value=$_/B ) = /Data/Result/Ok
+                            ( Value /value -> $_/B = /fn( Value /v -> TVArg /value = Value /value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/msg[ /E : ∀/Data/Err ]( Value /this -> $/E ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( Value /this -> /Data/Failure( /reason=∀/Data/String ) = /Data/Failure( Value /reason -> ∀/Data/String ) ) -> ∀/Data/String = Value /reason
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Failure"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Failure( Value /reason -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Result/Ok"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/Ok[ /T : TopType ]( Value /value -> $/T ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal
+                            ( Value /other -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok( Value /value@Value /bv -> ∀/Data/Algebra/Eq ) )
+                            ( Value /this -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /av -> ∀/Data/Algebra/Eq ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
+                        , /Data/Algebra/equal
+                            ( Value /other -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail( Value /err -> ∀/Data/Algebra/Eq ) )
+                            ( Value /this -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok( Value /value -> ∀/Data/Algebra/Eq ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/equal
+                            ( Value /other -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok( Value /value -> ∀/Data/Algebra/Eq ) )
+                            ( Value /this -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail( Value /err -> ∀/Data/Algebra/Eq ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/equal
+                            ( Value /other -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail( Value /err@Value /be -> ∀/Data/Algebra/Eq ) )
+                            ( Value /this -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail[ /E : ∀/Data/Algebra/Eq ]( Value /err@Value /ae -> ∀/Data/Algebra/Eq ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /ae = Value /ae )( Value /r -> TVArg /be = Value /be )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Result/toMaybe"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/toMaybe[ /A : TopType ]
+                            ( Value /r -> ∀/Data/Result[ /T=$_/A ] ) -> ∀/Data/Maybe[ /T=$_/A ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Result/toMaybe
+                            ( Value /r -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) ) -> /Data/Maybe/Some[ /T=TopType ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
+                        , /Data/Result/toMaybe
+                            ( Value /r -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail( Value /err ) ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Result/orFail"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/orFail[ /B : TopType ][ /A : TopType ]
+                            ( Value /m -> ∀/Data/Maybe[ /T=$_/A ] )( Value /err -> $/B ) -> ∀/Data/Result
+                            [ /T=$_/A
+                            , /E=$_/B
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Result/orFail
+                            ( Value /m -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )( Value /err ) -> /Data/Result/Ok[ /T=TopType ]( /value=$/T ) = /Data/Result/Ok( Value /value -> TVArg /value = Value /value )
+                        , /Data/Result/orFail( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /err ) -> /Data/Result/Fail[ /E=TopType ]( /err=$/E ) = /Data/Result/Fail( Value /err -> TVArg /err = Value /err )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=∀/Data/Algebra/Eq
+                    , /E=∀/Data/Algebra/Eq
+                    ]
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv
+            , cgcExtends = [ /Data/ResultEqv ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends =
+                [ /Data/Failure( /reason=∀/Data/String ) ]
+            , cgcDoc = Just "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
+              declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
+              so a caller can match exactly the cause it handles."
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=$_/T
+                    , /E=$_/E
+                    ]
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=$_/T
+                    , /E=$_/E
+                    ]
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Result
+                [ /T=TopType
+                , /E=TopType
+                ]
+            , cgcExtends =
+                [ /Data/Result/Ok[ /T=$_/T ]( /value=$/T )
+                , /Data/Result/Fail[ /E=$_/E ]( /err=$/E )
+                ]
+            , cgcDoc = Just "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
+              The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
+              [/Data/Result/Ok] and [/Data/Result/Fail]."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Errors
+                An operation which can fail answers with a [Result]: either the value it computed ([Ok]), or
+                the [Err] saying why there is none ([Fail]). Unlike a [Maybe], whose [Nothing] says only that
+                there is no value, a failure keeps its cause, so a caller can tell an unset variable from a
+                reply that was not there." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
+                declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
+                so a caller can match exactly the cause it handles." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Result" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
+                The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
+                [/Data/Result/Ok] and [/Data/Result/Fail]." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Reading a Result
+                [withDefault] and [toMaybe] read a [Result] for a caller which does not need to know why it
+                failed. One which does matches [Fail] and its [err]." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
+                ( Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 3 }
+                    )
+                )
+                ( Value /def -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "3" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
+                ( Value /r -> /Data/Result/Fail
+                    ( /err=/Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ) = /Data/Result/Fail
+                    ( Value /err -> /Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ) = /Data/Failure
+                        ( Value /reason -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "no" }
+                        )
+                    )
+                )
+                ( Value /def -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/toMaybe
+                    ( Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )
+                    )
+                )
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 3 }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/Maybe/Nothing = /Data/Result/toMaybe
+                    ( Value /r -> /Data/Result/Fail
+                        ( /err=/Data/Failure
+                            ( /reason=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ) = /Data/Result/Fail
+                        ( Value /err -> /Data/Failure
+                            ( /reason=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Failure
+                            ( Value /reason -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "no" }
+                            )
+                        )
+                    )
+                )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
+                ( Value /r -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/orFail
+                    ( Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )
+                    )
+                    ( Value /err -> /Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ) = /Data/Failure
+                        ( Value /reason -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "no" }
+                        )
+                    )
+                )
+                ( Value /def -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "3" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
+                ( Value /r -> /Data/Result/Fail
+                    [ /E=/Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ]
+                    ( /err=/Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ) = /Data/Result/orFail( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                    ( Value /err -> /Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ) = /Data/Failure
+                        ( Value /reason -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "no" }
+                        )
+                    )
+                )
+                ( Value /def -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /msg
+                ( Value /this -> /Data/Failure
+                    ( /reason=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ) = /Data/Failure
+                    ( Value /reason -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "it broke" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "it broke" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Result Eq membership
+                Makes a [Result] of [Eq] values and [Eq] errors a member of [Eq]: two [Result]s are equal when
+                both are [Ok] of equal values, or both [Fail] with equal errors. [equal] repeats [rel] for the
+                reason [Maybe]'s does (see @core/maybe.ct@)." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /r -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                )
+                ( Value /r -> /Data/Result/Fail[ /E=/Data/Primitive/Integer ]( /err=/Data/Primitive/Integer ) = /Data/Result/Fail
+                    ( Value /err -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Result Functor and Monad instances
+                Makes a [Result] a [Functor] and a [Monad] over its [value], with the error left as it is:
+                [fmap] and [mmap] apply to the [value] of an [Ok] and pass a [Fail] on unchanged. So a chain of
+                operations which can fail stops at the first that does, with its error. The definitions are
+                written under the declarations' absolute names, as [Maybe]'s are." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
+                ( Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Functor/fmap
+                    ( Value /lst -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )
+                    )
+                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                        ( Value /r -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+                ( Value /def -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "4" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
+                ( Value /r -> /Data/Result/Fail
+                    ( /err=/Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ) = /Data/Monad/mmap
+                    ( Value /m -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )
+                    )
+                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Result/Fail
+                        ( /err=/Data/Failure
+                            ( /reason=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ) = /Data/Result/Fail
+                        ( Value /err -> /Data/Failure
+                            ( /reason=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Failure
+                            ( Value /reason -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "no" }
+                            )
+                        )
+                    )
+                )
+                ( Value /def -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "0" }
+            )
+        ]
+    }

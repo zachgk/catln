@@ -1,0 +1,116 @@
+import "core/string.ct"
+import "core/maybe.ct"
+
+
+module(Data)
+  # # Errors
+    An operation which can fail answers with a [Result]: either the value it computed ([Ok]), or
+    the [Err] saying why there is none ([Fail]). Unlike a [Maybe], whose [Nothing] says only that
+    there is no value, a failure keeps its cause, so a caller can tell an unset variable from a
+    reply that was not there.
+  class(Err)
+    # [Err] is the class of reasons an operation can fail. It is open: each kind of operation
+      declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
+      so a caller can match exactly the cause it handles.
+
+  :$E.msg[$E -> /Data/Err] -> /Data/String
+    # [msg] is what went wrong, written for a person to read.
+      The arms of a member are written in a `module(Data)` block, beside it, so they answer this
+      declaration rather than naming a new [msg] of their own module.
+
+  data(Failure(reason -> /Data/String), isa= [/Data/Err])
+    # A [Failure] is an [Err] that is only its [reason], for a failure with no cause of its own
+      worth matching on.
+
+  :/Data/Failure(reason).msg= reason
+
+  # ## Result
+  class(Result[$T, $E], [Result/Ok[$T -> $_T](value -> $T), Result/Fail[$E -> $_E](err -> $E)])
+    # A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
+      The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
+      [/Data/Result/Ok] and [/Data/Result/Fail].
+
+# # Reading a Result
+  [withDefault] and [toMaybe] read a [Result] for a caller which does not need to know why it
+  failed. One which does matches [Fail] and its [err].
+module(Data/Result)
+  withDefault[$A](r -> /Data/Result[$T -> $_A], def -> $_A) -> $_A
+    # [withDefault] is the [value] of an [Ok], or [def] for a [Fail].
+  withDefault(r= /Data/Result/Ok(value), def)= value
+  withDefault(r= /Data/Result/Fail(err), def)= def
+
+  > withDefault(r= /Data/Result/Ok(value= 3), def= 0)
+    >>> 3
+  > withDefault(r= /Data/Result/Fail(err= /Data/Failure(reason= "no")), def= 0)
+    >>> 0
+  toMaybe[$A](r -> /Data/Result[$T -> $_A]) -> /Data/Maybe[$T -> $_A]
+    # [toMaybe] is the [value] of an [Ok] as a [Some], and [Nothing] for a [Fail], forgetting why.
+  toMaybe(r= /Data/Result/Ok(value))= /Data/Maybe/Some(value= value)
+  toMaybe(r= /Data/Result/Fail(err))= /Data/Maybe/Nothing
+
+  > (toMaybe(r= /Data/Result/Ok(value= 3)) == /Data/Maybe/Some(value= 3))
+    >>> True
+  > (toMaybe(r= /Data/Result/Fail(err= /Data/Failure(reason= "no"))) == /Data/Maybe/Nothing)
+    >>> True
+  orFail[$A, $B](m -> /Data/Maybe[$T -> $_A], err -> $_B) -> /Data/Result[$T -> $_A, $E -> $_B]
+    # [orFail] is the [value] of a [Some] as an [Ok], and a [Fail] with [err] for a [Nothing]: it
+      says why a [Maybe] has nothing, where the one reason it can is known.
+  orFail(m= /Data/Maybe/Some(value), err)= /Data/Result/Ok(value= value)
+  orFail(m= /Data/Maybe/Nothing, err)= /Data/Result/Fail(err= err)
+
+  > withDefault(r= orFail(m= /Data/Maybe/Some(value= 3), err= /Data/Failure(reason= "no")), def= 0)
+    >>> 3
+  > withDefault(r= orFail(m= /Data/Maybe/Nothing, err= /Data/Failure(reason= "no")), def= 0)
+    >>> 0
+  > /Data/Failure(reason= "it broke").msg
+    >>> it broke
+
+# # Result Eq membership
+  Makes a [Result] of [Eq] values and [Eq] errors a member of [Eq]: two [Result]s are equal when
+  both are [Ok] of equal values, or both [Fail] with equal errors. [equal] repeats [rel] for the
+  reason [Maybe]'s does (see @core/maybe.ct@).
+module(Data)
+  every(Result[$T -> /Data/Algebra/Eq, $E -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+
+  data(ResultEqv, isa= [/Data/Algebra/Eqv])
+    # [ResultEqv] compares two [Result]s of [Eq] values and errors arm by arm.
+module(Data/Algebra)
+  :/Data/ResultEqv.rel(a= /Data/Result/Ok[$T -> /Data/Algebra/Eq](value@av), b= /Data/Result/Ok[$T -> /Data/Algebra/Eq](value@bv))= av == bv
+  :/Data/ResultEqv.rel(a= /Data/Result/Ok(value), b= /Data/Result/Fail(err))= False
+  :/Data/ResultEqv.rel(a= /Data/Result/Fail(err), b= /Data/Result/Ok(value))= False
+  :/Data/ResultEqv.rel(a= /Data/Result/Fail[$E -> /Data/Algebra/Eq](err@ae), b= /Data/Result/Fail[$E -> /Data/Algebra/Eq](err@be))= ae == be
+
+  :/Data/Result/Ok[$T -> /Data/Algebra/Eq](value).eq= /Data/ResultEqv
+  :/Data/Result/Fail[$E -> /Data/Algebra/Eq](err).eq= /Data/ResultEqv
+
+  :/Data/Result/Ok[$T -> /Data/Algebra/Eq](value@av).equal(other= /Data/Result/Ok(value@bv))= av == bv
+  :/Data/Result/Ok(value).equal(other= /Data/Result/Fail(err))= False
+  :/Data/Result/Fail(err).equal(other= /Data/Result/Ok(value))= False
+  :/Data/Result/Fail[$E -> /Data/Algebra/Eq](err@ae).equal(other= /Data/Result/Fail(err@be))= ae == be
+module(Data/Result)
+  > (/Data/Result/Ok(value= 1) == /Data/Result/Ok(value= 1))
+    >>> True
+  > (/Data/Result/Ok(value= 1) == /Data/Result/Fail(err= 1))
+    >>> False
+
+# # Result Functor and Monad instances
+  Makes a [Result] a [Functor] and a [Monad] over its [value], with the error left as it is:
+  [fmap] and [mmap] apply to the [value] of an [Ok] and pass a [Fail] on unchanged. So a chain of
+  operations which can fail stops at the first that does, with its error. The definitions are
+  written under the declarations' absolute names, as [Maybe]'s are.
+module(Data)
+  every(Result[$T -> $_T, $E -> $_E], isa= [/Data/Functor])
+  every(Result[$T -> $_T, $E -> $_E], isa= [/Data/Monad])
+module(Data/Result)
+  /Data/Functor/fmap(lst= /Data/Result/Fail(err), fn(v))= /Data/Result/Fail(err= err)
+  /Data/Functor/fmap(lst= /Data/Result/Ok(value), fn(v))= /Data/Result/Ok(value= fn(v= value))
+
+  /Data/Monad/mmap(m= /Data/Result/Fail(err), fn(v))= /Data/Result/Fail(err= err)
+  /Data/Monad/mmap(m= /Data/Result/Ok(value), fn(v))= fn(v= value)
+
+  /Data/Monad/pure[$M -> /Data/Result[$T -> $_T]](v)= /Data/Result/Ok(value= v)
+
+  > withDefault(r= /Data/Functor/fmap(lst= /Data/Result/Ok(value= 3), fn(v)= v + 1), def= 0)
+    >>> 4
+  > withDefault(r= /Data/Monad/mmap(m= /Data/Result/Ok(value= 3), fn(v)= /Data/Result/Fail(err= /Data/Failure(reason= "no"))), def= 0)
+    >>> 0

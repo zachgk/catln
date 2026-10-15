@@ -1,0 +1,1052 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Result/Fail"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/Fail
+                            ( EAppVar
+                                { eavName = /E
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /err -> $/E } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/ResultEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/ResultEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Monad/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/pure
+                            ( EAppVar
+                                { eavName = /M
+                                , eavMeta = ∀/Data/Result[ /T=TopType ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /v } ) -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Result/withDefault"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/withDefault
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Result[ /T=$_/A ] }
+                            )
+                            ( EAppArg { eaaArg = Value /def -> $/A } ) -> $_/A
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Result/withDefault
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /def } ) -> TVArg /value = ( Value /value ↦ TVArg /value )
+                        , /Data/Result/withDefault
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /def } ) -> TVArg /def = ( Value /def ↦ TVArg /def )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value@Value /av -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value@Value /bv -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /this -> /Data/ResultEqv.. } ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        , /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /this -> /Data/ResultEqv.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /this -> /Data/ResultEqv.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppVar
+                                        { eavName = /E
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /err@Value /ae -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppVar
+                                        { eavName = /E
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /err@Value /be -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /this -> /Data/ResultEqv.. } ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /ae = ( Value /ae ↦ TVArg /ae ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /be = ( Value /be ↦ TVArg /be ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
+                                }
+                            ) -> /Data/ResultEqv = Value /Data/ResultEqv
+                        , /Data/Algebra/eq
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppVar
+                                        { eavName = /E
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /err -> ∀/Data/Algebra/Eq } )
+                                }
+                            ) -> /Data/ResultEqv = Value /Data/ResultEqv
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Monad/mmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/mmap
+                            ( EAppArg
+                                { eaaArg = Value /m -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> TVArg /err = ( Value /err ↦ TVArg /err ) }
+                            )
+                        , /Data/Monad/mmap
+                            ( EAppArg
+                                { eaaArg = Value /m -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> $_/M =
+                            ( /fn
+                                ( EAppArg
+                                    { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                ) ↦ $_/M
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Functor/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Functor/fmap
+                            ( EAppArg
+                                { eaaArg = Value /lst -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> TVArg /err = ( Value /err ↦ TVArg /err ) }
+                            )
+                        , /Data/Functor/fmap
+                            ( EAppArg
+                                { eaaArg = Value /lst -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> /Data/Result/Ok( /value=$_/B ) = /Data/Result/Ok
+                            ( EAppArg
+                                { eaaArg = Value /value -> $_/B =
+                                    ( /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                        ) ↦ $_/B
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/msg
+                            ( EAppVar
+                                { eavName = /E
+                                , eavMeta = ∀/Data/Err
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /this -> $/E } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Failure( /reason=∀/Data/String ) = /Data/Failure
+                                    ( EAppArg { eaaArg = Value /reason -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/String = ( Value /reason ↦ ∀/Data/String )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Failure"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Failure
+                            ( EAppArg { eaaArg = Value /reason -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Result/Ok"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/Ok
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/T } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal
+                            ( EAppArg
+                                { eaaArg = Value /other -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value@Value /bv -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value@Value /av -> ∀/Data/Algebra/Eq } )
+                                }
+                            ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        , /Data/Algebra/equal
+                            ( EAppArg
+                                { eaaArg = Value /other -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
+                                }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/equal
+                            ( EAppArg
+                                { eaaArg = Value /other -> /Data/Result/Ok[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err -> ∀/Data/Algebra/Eq } )
+                                }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/equal
+                            ( EAppArg
+                                { eaaArg = Value /other -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err@Value /be -> ∀/Data/Algebra/Eq } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Fail[ /E=∀/Data/Algebra/Eq ]( /err=∀/Data/Algebra/Eq ) = /Data/Result/Fail
+                                    ( EAppVar
+                                        { eavName = /E
+                                        , eavMeta = ∀/Data/Algebra/Eq
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /err@Value /ae -> ∀/Data/Algebra/Eq } )
+                                }
+                            ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator==
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /ae = ( Value /ae ↦ TVArg /ae ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /be = ( Value /be ↦ TVArg /be ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Result/toMaybe"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/toMaybe
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Result[ /T=$_/A ] }
+                            ) -> ∀/Data/Maybe[ /T=$_/A ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Result/toMaybe
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            ) -> /Data/Maybe/Some[ /T=TopType ]( /value=$/T ) = /Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                        , /Data/Result/toMaybe
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Result/Fail( /err=TopType ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err } )
+                                }
+                            ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Result/orFail"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Result/orFail
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Maybe[ /T=$_/A ] }
+                            )
+                            ( EAppArg { eaaArg = Value /err -> $/B } ) -> ∀/Data/Result
+                            [ /T=$_/A
+                            , /E=$_/B
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Result/orFail
+                            ( EAppArg
+                                { eaaArg = Value /m -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /err } ) -> /Data/Result/Ok[ /T=TopType ]( /value=$/T ) = /Data/Result/Ok
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                        , /Data/Result/orFail
+                            ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /err } ) -> /Data/Result/Fail[ /E=TopType ]( /err=$/E ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> TVArg /err = ( Value /err ↦ TVArg /err ) }
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=∀/Data/Algebra/Eq
+                    , /E=∀/Data/Algebra/Eq
+                    ]
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv
+            , cgcExtends = [ /Data/ResultEqv ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends =
+                [ /Data/Failure( /reason=∀/Data/String ) ]
+            , cgcDoc = Just "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
+              declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
+              so a caller can match exactly the cause it handles."
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=$_/T
+                    , /E=$_/E
+                    ]
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=$_/T
+                    , /E=$_/E
+                    ]
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Result
+                [ /T=TopType
+                , /E=TopType
+                ]
+            , cgcExtends =
+                [ /Data/Result/Ok[ /T=$_/T ]( /value=$/T )
+                , /Data/Result/Fail[ /E=$_/E ]( /err=$/E )
+                ]
+            , cgcDoc = Just "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
+              The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
+              [/Data/Result/Ok] and [/Data/Result/Fail]."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Errors
+                  An operation which can fail answers with a [Result]: either the value it computed ([Ok]), or
+                  the [Err] saying why there is none ([Fail]). Unlike a [Maybe], whose [Nothing] says only that
+                  there is no value, a failure keeps its cause, so a caller can tell an unset variable from a
+                  reply that was not there."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
+                  declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
+                  so a caller can match exactly the cause it handles."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Result"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
+                  The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
+                  [/Data/Result/Ok] and [/Data/Result/Fail]."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading a Result
+                  [withDefault] and [toMaybe] read a [Result] for a caller which does not need to know why it
+                  failed. One which does matches [Fail] and its [err]."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Result/withDefault
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /def -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Result/withDefault
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Fail
+                                ( /err=/Data/Failure
+                                    ( /reason=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ) = /Data/Result/Fail
+                                ( EAppArg
+                                    { eaaArg = Value /err -> /Data/Failure
+                                        ( /reason=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ) = /Data/Failure
+                                        ( EAppArg
+                                            { eaaArg = Value /reason -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /def -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                ( /Data/Result/toMaybe
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Maybe/Nothing =
+                                ( /Data/Result/toMaybe
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Result/Fail
+                                            ( /err=/Data/Failure
+                                                ( /reason=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ) = /Data/Result/Fail
+                                            ( EAppArg
+                                                { eaaArg = Value /err -> /Data/Failure
+                                                    ( /reason=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) = /Data/Failure
+                                                    ( EAppArg
+                                                        { eaaArg = Value /reason -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    ) ↦ /Data/Maybe/Nothing
+                                )
+                            }
+                        )
+                        ( EAppArg { eaaArg = Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Result/withDefault
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                ( /Data/Result/orFail
+                                    ( EAppArg
+                                        { eaaArg = Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /err -> /Data/Failure
+                                            ( /reason=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Data/Failure
+                                            ( EAppArg
+                                                { eaaArg = Value /reason -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                }
+                                            )
+                                        }
+                                    ) ↦ /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /def -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Result/withDefault
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Fail
+                                [ /E=/Data/Failure
+                                    ( /reason=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
+                                ( /err=/Data/Failure
+                                    ( /reason=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ) =
+                                ( /Data/Result/orFail
+                                    ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                    ( EAppArg
+                                        { eaaArg = Value /err -> /Data/Failure
+                                            ( /reason=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Data/Failure
+                                            ( EAppArg
+                                                { eaaArg = Value /reason -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                }
+                                            )
+                                        }
+                                    ) ↦ /Data/Result/Fail
+                                    [ /E=/Data/Failure
+                                        ( /reason=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /err=/Data/Failure
+                                        ( /reason=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /def -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                    ( /msg
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/Failure
+                                ( /reason=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) = /Data/Failure
+                                ( EAppArg
+                                    { eaaArg = Value /reason -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "it broke"
+                                    }
+                                )
+                            }
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "it broke"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Result Eq membership
+                  Makes a [Result] of [Eq] values and [Eq] errors a member of [Eq]: two [Result]s are equal when
+                  both are [Ok] of equal values, or both [Fail] with equal errors. [equal] repeats [rel] for the
+                  reason [Maybe]'s does (see @core/maybe.ct@)."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Fail[ /E=/Data/Primitive/Integer ]( /err=/Data/Primitive/Integer ) = /Data/Result/Fail
+                                ( EAppArg
+                                    { eaaArg = Value /err -> /Data/Primitive/Integer = 1 }
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Result Functor and Monad instances
+                  Makes a [Result] a [Functor] and a [Monad] over its [value], with the error left as it is:
+                  [fmap] and [mmap] apply to the [value] of an [Ok] and pass a [Fail] on unchanged. So a chain of
+                  operations which can fail stops at the first that does, with its error. The definitions are
+                  written under the declarations' absolute names, as [Maybe]'s are."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Result/withDefault
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ /Data/Primitive/Integer
+                                            )
+                                        }
+                                    ) ↦ /Data/Result/Ok( /value=/Data/Primitive/Integer )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /def -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Result/withDefault
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/Result/Fail
+                                ( /err=/Data/Failure
+                                    ( /reason=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ) =
+                                ( /Data/Monad/mmap
+                                    ( EAppArg
+                                        { eaaArg = Value /m -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Result/Fail
+                                            ( /err=/Data/Failure
+                                                ( /reason=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ) = /Data/Result/Fail
+                                            ( EAppArg
+                                                { eaaArg = Value /err -> /Data/Failure
+                                                    ( /reason=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) = /Data/Failure
+                                                    ( EAppArg
+                                                        { eaaArg = Value /reason -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    ) ↦ /Data/Result/Fail
+                                    ( /err=/Data/Failure
+                                        ( /reason=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    )
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /def -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                }
+            )
+        ]
+    }
