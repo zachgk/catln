@@ -15,7 +15,7 @@ Prgm
                         [ /applyInc
                             [ /F : ∀/Data/Functor[ /T=TopType ] ]
                             ( Value /lst -> ∀/Data/Functor[ /T=TopType ] )
-                            ( /fn( Value /v ) ) -> ∀/Data/Functor[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
+                            ( /fn( Value /v ) ) -> ∀/Data/Functor[ /T=$_/B ] = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
                             ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
                         ]
                     }
@@ -28,7 +28,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /strMaybe
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=TopType ] = /applyInc( Value /lst -> TVArg /m = Value /m )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=∀/Data/String ] = /applyInc( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/String = /Data/toString( Value /this -> TVArg /v = Value /v ) )
                         ]
                     }
@@ -51,7 +51,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /incMaybe
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=TopType ] = /applyInc( Value /lst -> TVArg /m = Value /m )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Functor[ /T=/Data/Primitive/Integer ] = /applyInc( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }

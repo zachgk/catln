@@ -140,7 +140,7 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v -> $_/A } )
                                 }
-                            ) -> $_/F[ /T=TopType ] =
+                            ) -> $_/F[ /T=$_/B ] =
                             ( /Data/Functor/fmap
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -154,7 +154,7 @@ Prgm
                                             ) ↦ $_/B
                                         )
                                     }
-                                ) ↦ $_/F[ /T=TopType ]
+                                ) ↦ $_/F[ /T=$_/B ]
                             )
                         ]
                     }

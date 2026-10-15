@@ -2255,12 +2255,12 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /l -> UnionType
                                 ( Just
-                                    ( PredClass /Data/List[ /T=TopType ] && PredClass /Data/Algebra/Eq
+                                    ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
                                     , []
                                     )
                                 , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                                    ( /head=$/T
+                                    ( /head=∀/Data/Algebra/Eq
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
                                     )
                                 , []
@@ -2333,12 +2333,12 @@ Prgm
                                         }
                                     ) ↦ UnionType
                                     ( Just
-                                        ( PredClass /Data/List[ /T=TopType ] && PredClass /Data/Algebra/Eq
+                                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                                         , fromList []
                                         , []
                                         )
                                     , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                                        ( /head=$/T
+                                        ( /head=∀/Data/Algebra/Eq
                                         , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
                                         )
                                     , []

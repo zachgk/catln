@@ -567,8 +567,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l ->
-                    ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) ) = /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                ( Value /l -> /Data/Maybe/Nothing = /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                     ( /fn( Value /v ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )

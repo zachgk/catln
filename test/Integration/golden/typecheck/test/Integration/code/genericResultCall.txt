@@ -215,7 +215,7 @@ Prgm
                 { csValue = "6" }
             )
         , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) = /foldrG( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
+            ( Value /p -> /Data/Primitive/Integer = /foldrG( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
                 ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Add = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }

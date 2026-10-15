@@ -379,7 +379,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /foldrG
                         ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
                         ( EAppArg
@@ -398,7 +398,7 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )

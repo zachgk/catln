@@ -28,7 +28,53 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/intersection
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/Set/addAll
+                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Set/MkSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /map=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /insert./Data/Map/$5a3188
+                                        ( /nk=∀/Data/Algebra/Ord
+                                        , /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        , /nv=TopType
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        )|
+                                        ( PredClass /Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=$_/K
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , []
+                                    )
+                                )
+                            , []
+                            ) = /Data/Set/addAll
                             ( Value /s ->
                                 ( TopType | PredClass /Data/Set/MapSet
                                     [ /K=∀/Data/Algebra/Ord
@@ -48,8 +94,18 @@ Prgm
                                     )
                                 , []
                                 ) = /Data/List/filter
-                                ( Value /lst ->
-                                    ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
+                                ( Value /lst -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                        )
+                                    , []
+                                    ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
                                 )
                                 ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
                             )
@@ -69,9 +125,65 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/union
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/Set/addAll( Value /s -> TVArg /a = Value /a )
-                            ( Value /items ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
+                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Set/MkSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /map=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /insert./Data/Map/$5a3188
+                                        ( /nk=∀/Data/Algebra/Ord
+                                        , /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        , /nv=TopType
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        )|
+                                        ( PredClass /Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=$_/K
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , []
+                                    )
+                                )
+                            , []
+                            ) = /Data/Set/addAll( Value /s -> TVArg /a = Value /a )
+                            ( Value /items -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    )
+                                , []
+                                ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
                             )
                         ]
                     }
@@ -233,8 +345,18 @@ Prgm
                         [ /Data/Set/isSubsetOf
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /Data/List/allBy
-                            ( Value /lst ->
-                                ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
+                            ( Value /lst -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    )
+                                , []
+                                ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
                             )
                             ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
                         ]
@@ -253,7 +375,57 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/removeAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
+                            ( Value /items ->
+                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Set/MkSet
+                                [ /K=TopType
+                                , /V=TopType
+                                ]
+                                ( /map=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /remove./Data/Map/$b74ebc
+                                        ( /nk=∀/Data/Algebra/Ord
+                                        , /$b74ebc-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /nv=TopType
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        )|
+                                        ( PredClass /Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=$_/K
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , []
+                                    )
+                                )
+                            , []
+                            ) = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
                             ( /fn( Value /acc )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
@@ -470,7 +642,55 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/addAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
+                            ( Value /items ->
+                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Set/MkSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /map=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /insert./Data/Map/$5a3188
+                                        ( /nk=∀/Data/Algebra/Ord
+                                        , /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        , /nv=TopType
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        )|
+                                        ( PredClass /Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=$_/K
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , []
+                                    )
+                                )
+                            , []
+                            ) = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
                             ( /fn( Value /acc )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
@@ -556,9 +776,67 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/difference
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Set[ /T=TopType ] = /Data/Set/removeAll( Value /s -> TVArg /a = Value /a )
-                            ( Value /items ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
+                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Set/MkSet
+                                [ /K=TopType
+                                , /V=TopType
+                                ]
+                                ( /map=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /remove./Data/Map/$b74ebc
+                                        ( /nk=∀/Data/Algebra/Ord
+                                        , /$b74ebc-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /nv=TopType
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                        )|
+                                        ( PredClass /Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ] && PredClass /Data/Map
+                                            [ /K=$_/K
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , []
+                                    )
+                                )
+                            , []
+                            ) = /Data/Set/removeAll( Value /s -> TVArg /a = Value /a )
+                            ( Value /items -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    )
+                                , []
+                                ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
                             )
                         ]
                     }
@@ -979,8 +1257,18 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l ->
-                    ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/Algebra/Eq ) = /Data/Set/elements
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                        ( /head=∀/Data/Algebra/Eq
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                        )
+                    , []
+                    ) = /Data/Set/elements
                     ( Value /s -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()
@@ -1188,7 +1476,53 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /size
-                ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/union
+                ( Value /s -> UnionType
+                    ( Just
+                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Set/MkSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ]
+                        ( /map=UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /insert./Data/Map/$5a3188
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )|
+                                ( PredClass /Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=$_/K
+                                    , /V=$_/V
+                                    ]
+                                )
+                            , []
+                            )
+                        )
+                    , []
+                    ) = /Data/Set/union
                     ( Value /a -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()
@@ -1263,7 +1597,53 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /contains
-                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/union
+                ( Value /s -> UnionType
+                    ( Just
+                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Set/MkSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ]
+                        ( /map=UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /insert./Data/Map/$5a3188
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )|
+                                ( PredClass /Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=$_/K
+                                    , /V=$_/V
+                                    ]
+                                )
+                            , []
+                            )
+                        )
+                    , []
+                    ) = /Data/Set/union
                     ( Value /a -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()
@@ -1320,7 +1700,55 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /size
-                ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/difference
+                ( Value /s -> UnionType
+                    ( Just
+                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Set/MkSet
+                        [ /K=TopType
+                        , /V=TopType
+                        ]
+                        ( /map=UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /remove./Data/Map/$b74ebc
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /$b74ebc-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                , /key=∀/Data/Algebra/Ord
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )|
+                                ( PredClass /Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=$_/K
+                                    , /V=$_/V
+                                    ]
+                                )
+                            , []
+                            )
+                        )
+                    , []
+                    ) = /Data/Set/difference
                     ( Value /a -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()
@@ -1517,7 +1945,53 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /size
-                ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/intersection
+                ( Value /s -> UnionType
+                    ( Just
+                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Set/MkSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ]
+                        ( /map=UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /insert./Data/Map/$5a3188
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )|
+                                ( PredClass /Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=$_/K
+                                    , /V=$_/V
+                                    ]
+                                )
+                            , []
+                            )
+                        )
+                    , []
+                    ) = /Data/Set/intersection
                     ( Value /a -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()
@@ -1592,7 +2066,53 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /contains
-                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/intersection
+                ( Value /s -> UnionType
+                    ( Just
+                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Set/MkSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ]
+                        ( /map=UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /insert./Data/Map/$5a3188
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )|
+                                ( PredClass /Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=$_/K
+                                    , /V=$_/V
+                                    ]
+                                )
+                            , []
+                            )
+                        )
+                    , []
+                    ) = /Data/Set/intersection
                     ( Value /a -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()
@@ -1670,7 +2190,53 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /contains
-                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/intersection
+                ( Value /s -> UnionType
+                    ( Just
+                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Set/MkSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ]
+                        ( /map=UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /insert./Data/Map/$5a3188
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                )|
+                                ( PredClass /Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ] && PredClass /Data/Map
+                                    [ /K=$_/K
+                                    , /V=$_/V
+                                    ]
+                                )
+                            , []
+                            )
+                        )
+                    , []
+                    ) = /Data/Set/intersection
                     ( Value /a -> /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
                         , /V=()

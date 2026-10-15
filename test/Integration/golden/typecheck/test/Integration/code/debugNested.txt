@@ -27,8 +27,22 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bump
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
+                                    ( !
+                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
+                                        ( PredClass /Data/Maybe
+                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
+                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
+                                        )
+                                    )
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            , []
+                            ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
                             ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /bump.$9471e8
                                 ( Value /$9471e8-arg -> TVArg /v = Value /v )
                             )

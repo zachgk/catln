@@ -27,7 +27,7 @@ Prgm
                             ( /fn( Value /v -> $_/F ) ) -> $_/B = /fn( Value /v -> TVArg /m = Value /m )
                         , /Data/bindap[ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /m -> $/F )
-                            ( /fn( Value /v -> $_/A ) ) -> $_/F[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /m = Value /m )
+                            ( /fn( Value /v -> $_/A ) ) -> $_/F[ /T=$_/B ] = /Data/Functor/fmap( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v ) -> $_/B = /fn( Value /v -> TVArg /v = Value /v ) )
                         ]
                     }

@@ -974,8 +974,7 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l ->
-                                ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) ) =
+                            { eaaArg = Value /l -> /Data/Maybe/Nothing =
                                 ( /Data/Monad/mmap
                                     ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
@@ -985,8 +984,7 @@ Prgm
                                                 { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                         }
-                                    ) ↦
-                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) )
+                                    ) ↦ /Data/Maybe/Nothing
                                 )
                             }
                         )

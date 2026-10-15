@@ -22,7 +22,10 @@ Prgm
                                                 ( /r=/Data/Primitive/True
                                                 , /l=~nonNeg( /this=~/$this )
                                                 ) = /onInt
-                                                ( Value /n -> /Data/Primitive/Integer = CInt
+                                                ( Value /n -> /Data/Primitive/Integer| PredExpr /operator==
+                                                    ( /r=/Data/Primitive/True
+                                                    , /l=~nonNeg( /this=~/$this )
+                                                    ) = CInt
                                                     { ciValue = 3 }
                                                 )
                                             )
@@ -103,7 +106,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /onInt( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer| PredExpr /operator==
+                        [ /onInt
+                            ( Value /n -> /Data/Primitive/Integer| PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                )
+                            ) -> /Data/Primitive/Integer| PredExpr /operator==
                             ( /r=/Data/Primitive/True
                             , /l=~nonNeg( /this=~/$this )
                             ) = /f( Value /a -> TVArg /n = Value /n )

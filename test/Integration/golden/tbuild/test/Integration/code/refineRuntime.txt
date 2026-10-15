@@ -36,7 +36,16 @@ Prgm
                                                                                         ) =
                                                                                         ( /onInt
                                                                                             ( EAppArg
-                                                                                                { eaaArg = Value /n -> /Data/Primitive/Integer = 3 }
+                                                                                                { eaaArg = Value /n -> /Data/Primitive/Integer| PredExpr /operator==
+                                                                                                    ( /r=/Data/Primitive/True
+                                                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                                                    ) =
+                                                                                                    ( 3 ↦ /Data/Primitive/Integer| PredExpr /operator==
+                                                                                                        ( /r=/Data/Primitive/True
+                                                                                                        , /l=~nonNeg( /this=~/$this )
+                                                                                                        )
+                                                                                                    )
+                                                                                                }
                                                                                             ) ↦ /Data/Primitive/Integer| PredExpr /operator==
                                                                                             ( /r=/Data/Primitive/True
                                                                                             , /l=~nonNeg( /this=~/$this )
@@ -187,7 +196,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /onInt
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer| PredExpr /operator==
+                            ( EAppArg
+                                { eaaArg = Value /n -> /Data/Primitive/Integer| PredExpr /operator==
+                                    ( /r=/Data/Primitive/True
+                                    , /l=~nonNeg( /this=~/$this )
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer| PredExpr /operator==
                             ( /r=/Data/Primitive/True
                             , /l=~nonNeg( /this=~/$this )
                             ) =

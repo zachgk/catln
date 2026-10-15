@@ -2091,7 +2091,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Data/List/foldr
                         ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
                         ( EAppArg
@@ -2110,7 +2110,7 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -2255,7 +2255,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Data/List/foldl
                         ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
                         ( EAppArg
@@ -2274,7 +2274,7 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = Value /init -> /Data/Primitive/Integer = 0 }
-                        ) ↦ ( TopType | PredClass /Data/Algebra/Add && PredClass /Catln/Doc/DShow )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -4615,12 +4615,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/ToString ]
-                        ( /head=∀/Data/ToString
-                        , /tail=/Data/List/Nil
-                        )
-                    ) =
+                { eaaArg = Value /p -> /Data/List/Nil =
                     ( /Data/Monad/mmap
                         ( EAppArg { eaaArg = Value /m -> /Data/List/Nil = Value /Data/List/Nil } )
                         ( EAppArg
@@ -4634,12 +4629,7 @@ Prgm
                                 )
                                 ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
-                        ) ↦
-                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/ToString ]
-                            ( /head=∀/Data/ToString
-                            , /tail=/Data/List/Nil
-                            )
-                        )
+                        ) ↦ /Data/List/Nil
                     )
                 }
             )

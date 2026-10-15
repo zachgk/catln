@@ -68,36 +68,56 @@ Prgm
                                 [ /K=∀/ROrd
                                 , /V=$_/V
                                 ]
-                            , /left=/RNode
-                                [ /K=∀/ROrd
-                                , /V=$_/V
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            , /left=
+                                ( /RNode
                                     [ /K=∀/ROrd
                                     , /V=$_/V
                                     ]
-                                , /left=∀/RTree
+                                    ( /value=$/V
+                                    , /key=/RKey
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
+                                    ) + /RNode
                                     [ /K=∀/ROrd
                                     , /V=$_/V
                                     ]
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=/RLeaf
+                                    , /left=/RLeaf
+                                    )
                                 )
                             ) = /RNode
-                            ( Value /left -> /RNode
-                                [ /K=∀/ROrd
-                                , /V=TopType
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            ( Value /left ->
+                                ( /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$_/V
+                                    , /V=TopType
                                     ]
-                                , /left=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$_/V
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=/RLeaf
+                                    , /left=/RLeaf
+                                    ) + /RNode
+                                    [ /K=TopType
+                                    , /V=TopType
                                     ]
+                                    ( /value=$/V
+                                    , /key=/RKey
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=$_/K
+                                        , /V=$_/V
+                                        ]
+                                    )
                                 ) = /rput( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                             )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )
                         , /rputStep( Value /cmp -> /RGt = Value /RGt )
@@ -116,40 +136,60 @@ Prgm
                             ]
                             ( /value=$/V
                             , /key=∀/ROrd
-                            , /right=/RNode
-                                [ /K=∀/ROrd
-                                , /V=$_/V
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            , /right=
+                                ( /RNode
                                     [ /K=∀/ROrd
                                     , /V=$_/V
                                     ]
-                                , /left=∀/RTree
+                                    ( /value=$/V
+                                    , /key=/RKey
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
+                                    ) + /RNode
                                     [ /K=∀/ROrd
                                     , /V=$_/V
                                     ]
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=/RLeaf
+                                    , /left=/RLeaf
+                                    )
                                 )
                             , /left=∀/RTree
                                 [ /K=∀/ROrd
                                 , /V=$_/V
                                 ]
                             ) = /RNode( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )
-                            ( Value /right -> /RNode
-                                [ /K=∀/ROrd
-                                , /V=TopType
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            ( Value /right ->
+                                ( /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$_/V
+                                    , /V=TopType
                                     ]
-                                , /left=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$_/V
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=/RLeaf
+                                    , /left=/RLeaf
+                                    ) + /RNode
+                                    [ /K=TopType
+                                    , /V=TopType
                                     ]
+                                    ( /value=$/V
+                                    , /key=/RKey
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$_/V
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=$_/K
+                                        , /V=$_/V
+                                        ]
+                                    )
                                 ) = /rput( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
                             )
                         ]
@@ -372,7 +412,7 @@ Prgm
                                 , /V=TopType
                                 ]
                                 ( /value=$/V
-                                , /key=∀/ROrd
+                                , /key=/RKey
                                 , /right=∀/RTree
                                     [ /K=∀/ROrd
                                     , /V=$_/V
@@ -386,18 +426,18 @@ Prgm
                                     [ /K=∀/ROrd
                                     , /V=TopType
                                     ]
-                                )( Value /key@Value /nk -> ∀/ROrd )( Value /value@Value /nv )
+                                )( Value /key@Value /nk -> /RKey )( Value /value@Value /nv )
                                 ( Value /right -> ∀/RTree
                                     [ /K=∀/ROrd
                                     , /V=TopType
                                     ]
                                 )
-                            )( Value /key -> ∀/ROrd )( Value /value ) -> /RNode
+                            )( Value /key -> /RKey )( Value /value ) -> /RNode
                             [ /K=∀/ROrd
                             , /V=TopType
                             ]
                             ( /value=$/V
-                            , /key=∀/ROrd
+                            , /key=/RKey
                             , /right=∀/RTree
                                 [ /K=∀/ROrd
                                 , /V=$_/V

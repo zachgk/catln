@@ -44,7 +44,7 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) -> ∀/Data/Functor[ /T=TopType ] =
+                            ) -> ∀/Data/Functor[ /T=$_/B ] =
                             ( /Data/Functor/fmap
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
@@ -58,7 +58,7 @@ Prgm
                                             ) ↦ $_/B
                                         )
                                     }
-                                ) ↦ ∀/Data/Functor[ /T=TopType ]
+                                ) ↦ ∀/Data/Functor[ /T=$_/B ]
                             )
                         ]
                     }
@@ -73,7 +73,7 @@ Prgm
                         [ /strMaybe
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> ∀/Data/Functor[ /T=TopType ] =
+                            ) -> ∀/Data/Functor[ /T=∀/Data/String ] =
                             ( /applyInc
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -87,7 +87,7 @@ Prgm
                                             ) ↦ ∀/Data/String
                                         )
                                     }
-                                ) ↦ ∀/Data/Functor[ /T=TopType ]
+                                ) ↦ ∀/Data/Functor[ /T=∀/Data/String ]
                             )
                         ]
                     }
@@ -115,7 +115,7 @@ Prgm
                         [ /incMaybe
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> ∀/Data/Functor[ /T=TopType ] =
+                            ) -> ∀/Data/Functor[ /T=/Data/Primitive/Integer ] =
                             ( /applyInc
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -132,7 +132,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦ ∀/Data/Functor[ /T=TopType ]
+                                ) ↦ ∀/Data/Functor[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
