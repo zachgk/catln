@@ -1111,6 +1111,29 @@ propDeclClampClassMembership ioPrgms = property $ do
 -- pushing the decision out of the engine's fragment, where the materialized cover could not
 -- split the leaf between the overlapping class top and its predicated sibling. Fixture:
 -- recursiveClassBounds.ct (@every(ConsList[$T -> EqCO], isa= [EqCO])@).
+-- | A constant met with a leaf that holds it by shape, under a value predicate nothing decides at
+-- it, is the constant within that predicate: @{3} ∩ /Integer | P@ is the point leaf
+-- @/Integer | PredConstEq 3 ∧ P@, as the meet with the top spelling of the same set
+-- (@⊤ | P ∧ PredRel Integer@) gives it where @Integer@ is declared. It was ∅, the constant read as
+-- outside @P@, so a refined argument given a literal (@f(a= 3)@ for @a -> Integer_nonNeg@) was
+-- refused at tree build.
+propConstantWithinValuePredicate :: IO Prgms -> Property
+propConstantWithinValuePredicate ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "recursiveClassBounds.ct program not found"
+  let typeEnv = mkTypeEnv prgm
+  let e = (partialVal "/undecidedProp"){ptArgs = H.singleton (partialKey "this") (singletonType (partialVal "/$this"))}
+  let refinedLeaf = singletonType intLeaf{ptPreds = PredsOne (PredExpr e)}
+  let c = constantType (CInt 3)
+  let viaLeaf = intersectTypes typeEnv c refinedLeaf
+  annotate $ printf "viaLeaf = %s" (show viaLeaf)
+  assert $ not (isBottomType viaLeaf)
+  assert $ isEqType typeEnv viaLeaf (intersectTypes typeEnv refinedLeaf c)
+  assert $ isSubtypeOf typeEnv viaLeaf c
+  assert $ isSubtypeOf typeEnv viaLeaf refinedLeaf
+
 propExcludedConstantIrrelevantToData :: IO Prgms -> Property
 propExcludedConstantIrrelevantToData ioPrgms = property $ do
   prgms <- lift ioPrgms
@@ -1844,6 +1867,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propParamIsaEdgeCovariant" (withTests 1 $ propParamIsaEdgeCovariant ioPrgms)
       , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
       , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
+      , HG.testProperty "propConstantWithinValuePredicate" (withTests 1 $ propConstantWithinValuePredicate ioPrgms)
       , HG.testProperty "propOwnParamPointerCover" (withTests 1 propOwnParamPointerCover)
       , HG.testProperty "propDataIsaBindsClassParam" (withTests 1 propDataIsaBindsClassParam)
       , HG.testProperty "propFunctionParamFromArgs" (withTests 1 propFunctionParamFromArgs)

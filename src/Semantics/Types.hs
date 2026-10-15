@@ -8611,7 +8611,19 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing aPartials aConsts) (Un
     bConsts' = filter (\c -> c `elem` aConsts || constantCoveredByLeafs c aPartials) bConsts
     -- Also remove constants already covered by the intersected partial leafs
     mergedConsts = L.nub $ filter (not . (`constantCoveredByLeafs` partials')) (aConsts' ++ bConsts')
-    result = UnionType Nothing partials' mergedConsts
+    -- A constant the other side's leaf holds by its shape but under predicates left at the
+    -- constant (@{3} ∩ /Integer | P@ for a value predicate @P@) is that constant within them: the
+    -- point leaf @/Integer | PredConstEq 3 ∧ P@, as the meet with the top spelling of the same set
+    -- (@⊤ | P ∧ PredRel Integer@) gives it. Dropped, the constant read as outside @P@, which
+    -- nothing decided.
+    pointLeafs = joinUnionType
+      [ l{ptPreds = predsAnd (PredsOne (PredConstEq c)) ps}
+      | (cs, otherConsts, others) <- [(aConsts, bConsts, bPartials), (bConsts, aConsts, aPartials)]
+      , c <- cs, c `notElem` otherConsts, not (constantCoveredByLeafs c others)
+      , l <- splitUnionType others
+      , Just ps <- [predsAtConst c (ptPreds l)], ps /= PredsNone
+      , constantCoveredByLeafs c (joinUnionType [l{ptPreds = PredsNone}]) ]
+    result = UnionType Nothing (unionPartialLeafs [partials', pointLeafs]) mergedConsts
     msg = printf "[INTERSECT] %s ∩ %s = %s" (show $ UnionType Nothing aPartials aConsts) (show $ UnionType Nothing bPartials bConsts) (show result)
 intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "intersectTypesWithVarEnv: unhandled case %s ∩ %s" (show t1) (show t2)
 
