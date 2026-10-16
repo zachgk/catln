@@ -249,6 +249,12 @@ seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap o
 -- (variable-free, as 'seedDefResultTypes' takes a result). A captured parameter is recognised by
 -- carrying the parent argument's own meta, so its position; the parent definition itself is left
 -- as written.
+--
+-- A sub function is solved with its parent and its definitions are bounded by what its callers
+-- pass ('TypeCheck.Encode.nestedCallerConstraints'), but that narrows the DEFINITIONS only. The
+-- captured parameter in the sub function's DECLARATION is the one desugar wrote, and the coverage
+-- check holds the definitions to it: without this pass core fails with "Unfulfilled Declaration
+-- for /Data/toStringBase.digitsOnto" (declared @base=⊤@, defined @base=Integer@).
 seedCapturedArgTypes :: DesPrgm -> DesPrgm -> DesPrgm
 seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
     Prgm (ObjectMap objMap') classGraph annots
