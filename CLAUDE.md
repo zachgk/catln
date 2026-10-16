@@ -67,9 +67,19 @@ Lessons that repeatedly cost time:
 ## Testing
 
 - **Framework:** Tasty + HUnit + Hedgehog (property-based)
-- **Golden tests:** `test/Integration/golden/` (desugar/, tbuild/, typecheck/)
+- **Golden tests:** `test/Integration/golden/` (convert/ for what every reached page was read as, desugar/, typecheck/, tbuild/, annots/ for what a fixture's displays evaluate to)
 - **Integration test files:** `test/Integration/code/*.ct`
 - **REPL testing:** `stack repl` → `:l test/Spec` → `mt "testname"` or `main` for full suite
 - **Update golden tests:** delete specific golden files and rerun, or `GOLDEN_TEST_WRITE=1 stack test`
+
+**What goes where.** The Haskell suite tests the compiler's own infrastructure: the type algebra,
+type checking, the evaluator, the test engine, the parser and service core. Everything a program
+could have written is user space — importers (Obsidian, RSS, fileDir, Python, JSON), displays
+(`#calendar`, `#tasks`, `#prgmGraph`), library functions and `#runtime` declarations in `stack/` —
+and is tested in the Catln suite: beside its definition in `stack/` as a `#test`, an `#assert` or a
+`>` / `>>>` print golden (run by `test/Stack/StackTests.hs` and `catln test`), or as a fixture in
+`test/Integration/code/`. A fixture is checked by its `main`'s exit code, its `#assert`s, an
+optional `.stdout.txt`, its goldens, and the tests it derives (`#test`, agreement tests of its own
+arms); it does not use `>` / `>>>`.
 
 When fixing tests, fix type tests before looking at integration tests. The type tests are implemented through property tests. They should not be flaky because any failure indicates a hidden problem in the compiler. If one is encountered, keep and use the hedgehog replay seed to reproduce it. To ensure flaky tests are resolved, test with higher test count. Do not run the test suite multiple times to avoid the startup overhead. Instead, update the iteration count in TypesTests.hs and run the suite once with the larger count
