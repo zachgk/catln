@@ -334,7 +334,7 @@ annotResp ctss scope' annot = do
     let annotName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>"
     let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
     (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
-    let annotDesPrgm' = desFinalPass (annotDesPrgm, annotPrgmName, [], [])
+    annotDesPrgm' <- asCResT $ desFinalPass (annotDesPrgm, annotPrgmName, [], [])
     -- The pages of the scope which can be evaluated, with the rest reported rather than fatal. A
     -- page which did not typecheck used to take every annotation in the scope out with it, including
     -- a navigation that reads no program at all — see 'ctssEvaluableFrom' for why it cannot simply

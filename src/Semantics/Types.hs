@@ -1180,6 +1180,19 @@ mapTypePreds f (PredsOne p)  = PredsOne (f p)
 mapTypePreds f (PredsAnd ps) = PredsAnd (map (mapTypePreds f) ps)
 mapTypePreds f (PredsNot p)  = PredsNot (mapTypePreds f p)
 
+-- | 'mapTypePred' in a monad, for a mapping that can fail.
+mapTypePredM :: (Monad m) => (PartialType -> m PartialType) -> TypePredicate -> m TypePredicate
+mapTypePredM f (PredExpr p)    = PredExpr <$> f p
+mapTypePredM _ p@PredConstEq{} = return p
+mapTypePredM f (PredClass p)   = PredClass <$> f p
+mapTypePredM f (PredRel p)     = PredRel <$> f p
+
+-- | 'mapTypePreds' in a monad, for a mapping that can fail.
+mapTypePredsM :: (Monad m) => (TypePredicate -> m TypePredicate) -> TypePredicates -> m TypePredicates
+mapTypePredsM f (PredsOne p)  = PredsOne <$> f p
+mapTypePredsM f (PredsAnd ps) = PredsAnd <$> mapM (mapTypePredsM f) ps
+mapTypePredsM f (PredsNot p)  = PredsNot <$> mapTypePredsM f p
+
 pattern PredsNone :: TypePredicates
 pattern PredsNone = PredsAnd []
 

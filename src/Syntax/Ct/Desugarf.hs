@@ -289,46 +289,48 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
 
 -- | Each node carries the name of the page it came from, which names the scope that page's
 -- synthesized metas are numbered in (see 'MetaIDScope').
-desFinalPasses :: [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> [DesPrgm]
-desFinalPasses = map desFinalPass
+desFinalPasses :: [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> CRes [DesPrgm]
+desFinalPasses = mapM desFinalPass
 
 -- | One node's final passes. Rewriting a program is all this does — it reads no file and asks
 -- nothing of the world — so it is a function rather than an action, which is what lets a caller
 -- holding only the programs (such as the debugger's expression compile, @CtService.debugExprRun@)
--- run it without an 'IO' to run it in.
-desFinalPass :: (DesPrgm, FileImport, [DesPrgm], [DesPrgm]) -> DesPrgm
-desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = addPrgmMetaIDs (desugarMetaIDScope name) prgm6
+-- run it without an 'IO' to run it in. It fails where a name the class graph needs does not
+-- resolve to exactly one type or class ('resolveRelativeNames').
+desFinalPass :: (DesPrgm, FileImport, [DesPrgm], [DesPrgm]) -> CRes DesPrgm
+desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = do
+  -- This page's own names first, so a name it wrote is reported for it rather than for the program
+  -- it is resolved within.
+  prgm3 <- resolveRelativeNames fullPrgm2 prgm2
+
+  -- Expose each class's type parameters on the receivers of its methods, using the fully
+  -- resolved class graph (so a method's @$T@ ties to the class parameter it is declared over).
+  fullPrgm3 <- resolveRelativeNames fullPrgm2 fullPrgm2
+
+  -- Redirect a receiver-method instance defined in a module other than the one declaring the
+  -- method (e.g. @:Integer.eq@ in @Data/Primitive@) onto the imported declaration it implements.
+  let prgm3b = reassignImportedMethodDefs fullPrgm3 prgm3
+
+  let prgm4 = linkClassMethodReceivers fullPrgm3 prgm3b
+
+  -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
+  -- so a def under a separate decl solves like an inline-annotated one.
+  let prgm5a = seedDefResultTypes fullPrgm3 prgm4
+
+  -- Type each sub function's captured parent arguments as the enclosing argument is typed.
+  let prgm5 = seedCapturedArgTypes fullPrgm3 prgm5a
+
+  -- Name each reference to one of an object's OWN declared variables as the parent reference it
+  -- is, while the binder that gives it meaning is still lexically in view. Last, so it sees the
+  -- annotations the passes above seed.
+  let prgm6 = classifyParentVarRefs prgm5
+  return $ addPrgmMetaIDs (desugarMetaIDScope name) prgm6
   where
     fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
     fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
     -- Run removeClassInstanceObjects
     prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
-
-    -- Run resolveRelativeNames pass
-    prgm3 = resolveRelativeNames fullPrgm2 prgm2
-
-    -- Expose each class's type parameters on the receivers of its methods, using the fully
-    -- resolved class graph (so a method's @$T@ ties to the class parameter it is declared over).
-    fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
-
-    -- Redirect a receiver-method instance defined in a module other than the one declaring the
-    -- method (e.g. @:Integer.eq@ in @Data/Primitive@) onto the imported declaration it implements.
-    prgm3b = reassignImportedMethodDefs fullPrgm3 prgm3
-
-    prgm4 = linkClassMethodReceivers fullPrgm3 prgm3b
-
-    -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
-    -- so a def under a separate decl solves like an inline-annotated one.
-    prgm5a = seedDefResultTypes fullPrgm3 prgm4
-
-    -- Type each sub function's captured parent arguments as the enclosing argument is typed.
-    prgm5 = seedCapturedArgTypes fullPrgm3 prgm5a
-
-    -- Name each reference to one of an object's OWN declared variables as the parent reference it
-    -- is, while the binder that gives it meaning is still lexically in view. Last, so it sees the
-    -- annotations the passes above seed.
-    prgm6 = classifyParentVarRefs prgm5
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm (RawPrgm _ statements, name, imports) = do
@@ -351,6 +353,6 @@ desFiles prgms1 = do
   -- Each node travels with its own key, which 'mapGraphWithDeps' does not pass on and
   -- 'desFinalPasses' names its meta id scope by.
   let prgms3 = fmapGraphWithKey (\name prgm -> (prgm, name)) $ graphFromEdges prgms2
-  mapGraphWithDeps (return . desFinalPasses . map withKey) prgms3
+  mapGraphWithDeps (asCResT . desFinalPasses . map withKey) prgms3
   where
     withKey ((prgm, name), sccPeerDeps, myExtDeps) = (prgm, name, map fst sccPeerDeps, myExtDeps)

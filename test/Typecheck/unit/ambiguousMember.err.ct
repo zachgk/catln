@@ -1,0 +1,9 @@
+annot(#noCore)
+
+# A class member written as a bare name that is also another module's type is refused as ambiguous
+# rather than crashing the desugarer: Empty could be this class's own member or Other's.
+#noCore
+module(Other)
+  data(Empty)
+module(Mine)
+  class(Choice, [Full, Empty])

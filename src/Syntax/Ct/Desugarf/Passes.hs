@@ -16,6 +16,7 @@
 module Syntax.Ct.Desugarf.Passes where
 
 import           Control.Monad.Writer    (execWriter, tell)
+import           CRes
 import           CtConstants             (thisKey)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
@@ -46,46 +47,102 @@ removeClassInstanceObjects fullPrgm (Prgm objMap (ClassGraph cg) annots) = Prgm 
     classEntryMatches _                            = True
 
 
+-- | A name the class graph needed resolved to exactly one type or class, and could not be: the
+-- name, and the classes and the types it could have been.
+data NameFailure = NameFailure Name [Name] [Name]
+
 -- replaces uses of PRelativeName with PTypeName or PClassName when it can be determined
 -- e.g. PRelativeName Boolean ==> PClassName /Data/Boolean
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
-resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
-resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph cg) annots) = mapMetaPrgm resolveMeta (Prgm objMap classGraph' annots)
+--
+-- A name in the class graph — a member of a class, or a class something is declared a member of —
+-- must resolve to exactly one type or class, and one that resolves to none or to several is
+-- reported. One in an expression may be left relative for type inference to settle, so resolving
+-- it cannot fail.
+resolveRelativeNames :: DesPrgm -> DesPrgm -> CRes DesPrgm
+resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph cg) annots) = do
+  entries <- mapM mapClassEntry $ graphToNodes cg
+  return $ mapMetaPrgm resolveMeta (Prgm objMap (ClassGraph $ graphFromEdges entries) annots)
   where
-    classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
-    mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
-    mapCGNode (CGClass s clss ts doc) = CGClass s (resolveClassPartial True clss) (fmap (mapType True) ts) doc
-    mapCGNode CGType = CGType
+    mapClassEntry (node, tp, subTypes) = do
+      let within = entryContext node tp
+      node' <- mapCGNode within node
+      tp' <- required within $ resolveName True tp
+      subTypes' <- mapM (required within . resolveName True) subTypes
+      return (node', tp', subTypes')
+    mapCGNode within (CGClass s clss ts doc) = do
+      clss' <- required within $ resolveClassPartial True clss
+      ts' <- mapM (required within . mapType True) ts
+      return $ CGClass s clss' ts' doc
+    mapCGNode _ CGType = return CGType
     classNames = nub $ listClassNames $ mkTypeEnv fullPrgm
     objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap (flatObjectMap . getRecursiveObjs) $ flatObjectMap fullPrgmObjMap)
 
-    resolveMeta _ (Meta t p mid md) = return $ Meta (mapType False t) p mid md
+    resolveMeta _ (Meta t p mid md) = return $ Meta (resolvedFreely $ mapType False t) p mid md
+
+    -- | A type resolved without requiring it, which leaves a name it cannot resolve relative rather
+    -- than failing.
+    resolvedFreely :: Either NameFailure a -> a
+    resolvedFreely (Right a) = a
+    resolvedFreely (Left (NameFailure name _ _)) = error $ printf "The name %s failed to resolve where it was not required to" (nameStr name)
+
+    -- | What a class graph entry declares, for saying where one of its names was written.
+    entryContext :: CGNode -> PartialName -> String
+    entryContext CGClass{} cls = printf "the members of the class %s" (partialNameStr cls)
+    entryContext CGType tp     = printf "the classes %s is declared a member of" (partialNameStr tp)
+
+    partialNameStr :: PartialName -> String
+    partialNameStr (PRelativeName n) = nameStr n
+    partialNameStr (PTypeName n)     = nameStr n
+    partialNameStr (PClassName n)    = nameStr n
+
+    -- | A name the class graph needed, reported where it failed to resolve. It is reported at the
+    -- declaration on this page of one of the names it could have been, where there is one: a class
+    -- declares its members beside it, so a member whose name is also another type's is reported at
+    -- the class which wrote it.
+    required :: String -> Either NameFailure a -> CRes a
+    required _ (Right a) = return a
+    required within (Left (NameFailure name foundClasses foundTypes)) = CErr [MkCNote $ GenCErr pos msg]
+      where
+        candidates = map makeAbsoluteName (foundClasses ++ foundTypes)
+        pos = listToMaybe [p | oa <- flatObjectMap objMap, oaObjPath oa `elem` candidates, Just e <- [oaObj oa], let p = getMetaPos (getExprMeta e), isJust p] >>= id
+        msg = case candidates of
+          [] -> printf "The name %s in %s is not the name of any type or class in scope." (nameStr name) within
+          (c:_) -> printf "The name %s in %s is ambiguous: it could be %s. Write the one meant in full, such as %s." (nameStr name) within (showOptions candidates) (nameStr c)
+        showOptions [a]    = nameStr a
+        showOptions [a, b] = nameStr a ++ " or " ++ nameStr b
+        showOptions as     = concatMap ((++ ", ") . nameStr) (init as) ++ "or " ++ nameStr (last as)
 
     -- |
     -- requireResolveRelative -> type -> updated type
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
-    mapType :: Bool -> Type -> Type
+    mapType :: Bool -> Type -> Either NameFailure Type
     mapType reqResolve (TopType np (PredsOne (PredRel p))) | H.null np = resolveRelPartial reqResolve p
     -- A written intersection (@Functor[$T -> Eq] && Eq@, 'Syntax.Ct.Desugarf.Expr.intersectWrittenTypes'):
     -- each named part resolves as it would alone, and the parts are joined again.
-    mapType reqResolve (TopType np (PredsAnd ps)) | H.null np, not (null ps), Just rels <- mapM relAtom ps = foldr1 (intersectResolved reqResolve) (map (resolveRelPartial reqResolve) rels)
+    mapType reqResolve (TopType np (PredsAnd ps)) | H.null np, not (null ps), Just rels <- mapM relAtom ps = foldr1 (intersectResolved reqResolve) <$> mapM (resolveRelPartial reqResolve) rels
       where
         relAtom (PredsOne (PredRel p)) = Just p
         relAtom _                      = Nothing
-    mapType _ (TopType np ps) = TopType np ps
-    mapType _ tp@(TypeVar TVVar{} _ _) = tp
+    mapType _ (TopType np ps) = return $ TopType np ps
+    mapType _ tp@(TypeVar TVVar{} _ _) = return tp
     mapType _ (TypeVar TVArg{} _ _) = error "Invalid arg type"
-    mapType reqResolve (TypeVar (TVApplied b ovr) loc i) = TypeVar (TVApplied b (fmap (mapType reqResolve) ovr)) loc (mapType reqResolve i)
-    mapType reqResolve (UnionType Nothing partials []) = UnionType Nothing (joinUnionType $ map (mapPartial reqResolve) $ splitUnionType partials) []
-    mapType _ t = t
+    mapType reqResolve (TypeVar (TVApplied b ovr) loc i) = do
+      ovr' <- mapM (mapType reqResolve) ovr
+      i' <- mapType reqResolve i
+      return $ TypeVar (TVApplied b ovr') loc i'
+    mapType reqResolve (UnionType Nothing partials []) = do
+      partials' <- mapM (mapPartial reqResolve) $ splitUnionType partials
+      return $ UnionType Nothing (joinUnionType partials') []
+    mapType _ t = return t
 
-    mapPartial :: Bool -> PartialType -> PartialType
-    mapPartial reqResolve partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
-          ptVars = fmap (mapType reqResolve) ptVars,
-          ptArgs = fmap (mapType reqResolve) ptArgs,
-          ptPreds = mapTypePreds (mapTypePred (mapPartial reqResolve)) ptPreds
-                                                                                                                      }
+    mapPartial :: Bool -> PartialType -> Either NameFailure PartialType
+    mapPartial reqResolve partial@PartialType{ptVars, ptArgs, ptPreds} = do
+      ptVars' <- mapM (mapType reqResolve) ptVars
+      ptArgs' <- mapM (mapType reqResolve) ptArgs
+      ptPreds' <- mapTypePredsM (mapTypePredM (mapPartial reqResolve)) ptPreds
+      return partial{ptVars = ptVars', ptArgs = ptArgs', ptPreds = ptPreds'}
 
     -- | Two resolved parts of an intersection as one type: classes (and still-relative names) are
     -- predicates on ⊤ and join as predicates; a data type keeps its leaf, filtered by the other
@@ -97,45 +154,45 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
     intersectResolved _ a b = error $ printf "An intersection (&&) can join at most one data type, not %s and %s" (show a) (show b)
 
     -- | Resolves possibilities for a relative partial for use in the class graph
-    resolveClassPartial :: Bool -> PartialType -> PartialType
-    resolveClassPartial reqResolve p = case resolveRelPartial reqResolve p of
-      (TopType np (PredsOne (PredClass p'))) | H.null np -> p'
-      t | isJust (maybeGetSingleton t) -> getSingleton t
-      p' -> error $ printf "Unexpected resolved class partial %s" (show p')
+    resolveClassPartial :: Bool -> PartialType -> Either NameFailure PartialType
+    resolveClassPartial reqResolve p = do
+      resolved <- resolveRelPartial reqResolve p
+      return $ case resolved of
+        (TopType np (PredsOne (PredClass p'))) | H.null np -> p'
+        t | isJust (maybeGetSingleton t) -> getSingleton t
+        p' -> error $ printf "Unexpected resolved class partial %s" (show p')
 
     -- | Resolves possibilities for a relative partial
-    resolveRelPartial :: Bool -> PartialType -> Type
-    resolveRelPartial reqResolve p0 = case resolveName reqResolve (PRelativeName $ ptName p) of
-      PTypeName n'    -> singletonType p{ptName=n'}
-      -- Carry the member's type parameters (e.g. the element binding @Functor[$T->$_T]@) onto the
-      -- resolved class partial. Only 'ptVars' is restored — args/preds/argMode stay as a clean
-      -- 'partialVal' so a var-less class member is byte-identical to before.
-      PClassName n'   -> classPartial (partialVal n'){ptVars=ptVars p}
-      PRelativeName{} -> TopType H.empty (PredsOne $ PredRel p)
-      where p = mapPartial reqResolve p0
+    resolveRelPartial :: Bool -> PartialType -> Either NameFailure Type
+    resolveRelPartial reqResolve p0 = do
+      p <- mapPartial reqResolve p0
+      resolved <- resolveName reqResolve (PRelativeName $ ptName p)
+      return $ case resolved of
+        PTypeName n'    -> singletonType p{ptName=n'}
+        -- Carry the member's type parameters (e.g. the element binding @Functor[$T->$_T]@) onto the
+        -- resolved class partial. Only 'ptVars' is restored — args/preds/argMode stay as a clean
+        -- 'partialVal' so a var-less class member is byte-identical to before.
+        PClassName n'   -> classPartial (partialVal n'){ptVars=ptVars p}
+        PRelativeName{} -> TopType H.empty (PredsOne $ PredRel p)
 
 
     -- |
     -- Attempts to convert 'PRelativeName' to either a type or a class
     -- If reqResolve is true, the conversions must succeed otherwise it can be left optional
-    resolveName :: Bool -> PartialName -> PartialName
+    resolveName :: Bool -> PartialName -> Either NameFailure PartialName
     resolveName reqResolve (PRelativeName name)= case (reqResolve, relativeNameFilter name classNames, relativeNameFilter name objNames) of
                   -- is a class, replace with class type
-                  (_, [className], []) -> PClassName $ makeAbsoluteName className
+                  (_, [className], []) -> return $ PClassName $ makeAbsoluteName className
 
                   -- is data, use data after recursively cleaning classes
-                  (_, [], [typeName]) -> PTypeName $ makeAbsoluteName typeName
+                  (_, [], [typeName]) -> return $ PTypeName $ makeAbsoluteName typeName
 
                   -- This case occurs when a class is used in a multiTypeDef
                   (_, [className], [typeName]) | className == typeName -> error $ printf "Found duplicate name %s" (show className)
 
-                  -- Used to check (line below) to ensure types are always known, but may not be true for Arg Values
-                  -- (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s.\n\n\tType Options: %s\n\n\tClass Options: %s" name  (show partial) (show objNames) (show classNames)
-                  -- (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s\n\tAvailable types: %s" name (show objNames)
-
-                  (False, _, _) -> PRelativeName name
-                  (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" (nameStr name) (show foundTypeNames) (show foundClassNames)
-    resolveName _ name = name
+                  (False, _, _) -> return $ PRelativeName name
+                  (True, foundClassNames, foundTypeNames) -> Left $ NameFailure name foundClassNames foundTypeNames
+    resolveName _ name = return name
 
 
 -- |

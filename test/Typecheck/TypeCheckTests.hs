@@ -398,6 +398,15 @@ testDeclResult = testCase "a declared result refines every call of the definitio
     assertBool ("onNat carries the declared predicate on: " ++ show r) (typeHasValuePredExpr r)
 
 -- | The page fails with an error whose text contains @needle@.
+-- | A class member written as a bare name that is also another module's type is refused as
+-- ambiguous, naming both and the fix, rather than crashing the desugarer. Fixture:
+-- unit/ambiguousMember.err.ct.
+testAmbiguousMember :: TestTree
+testAmbiguousMember = testCase "an ambiguous class member names what it could be" $ do
+  let page = "test/Typecheck/unit/ambiguousMember.err.ct"
+  assertPageErrorSays page "The name Empty in the members of the class /Mine/Choice is ambiguous"
+  assertPageErrorSays page "/Mine/Empty or /Other/Empty"
+
 assertPageErrorSays :: String -> String -> Assertion
 assertPageErrorSays page needle = do
   res <- runCResT $ do
@@ -477,6 +486,7 @@ typecheckTests = do
     , testLongerShapeCall
     , testImportAfterAnnot
     , testCapturedField
+    , testAmbiguousMember
     , testGroup "Error pages" (map testErrPage errPages)
     ]
   where

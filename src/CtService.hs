@@ -944,7 +944,7 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar 
       let desNodesForFinal = [(des, name, peerDes, extDepDes)
             | (des, name, _) <- desResults
             , let peerDes = [d | (d, n, _) <- desResults, n /= name]]
-      let finalDes = desFinalPasses desNodesForFinal
+      finalDes <- asCResT $ desFinalPasses desNodesForFinal
 
       -- Step 4: Collect typechecked data from already-built dependencies
       -- Which of them those are is written down beside them, because a page's inference is read by
@@ -968,9 +968,10 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar 
       -- compiled and then compiled again.
       let tcCRes = typeCheckToRes $ typecheckPrgmsWith instruments tcNodesForTC
       let tcNotes = getCNotes tcCRes
-      -- Said here and nowhere above, because nothing above forces anything. Step 1's 'desPrgm' is
-      -- bound through 'asCResT', which settles only whether it failed, and step 3's 'desFinalPasses'
-      -- is a let. The bind below is what forces the whole of both, and is where a build of anything
+      -- Said here and nowhere above, because nothing above forces much. Step 1's 'desPrgm' and step
+      -- 3's 'desFinalPasses' are bound through 'asCResT', which settles only whether they failed —
+      -- for step 3, only whether the class graph's names resolved. The bind below is what forces the
+      -- whole of both, and is where a build of anything
       -- larger than a single page spends nearly all of its time — so reporting the steps above as
       -- done would be reporting work which has not happened yet.
       --
@@ -1922,7 +1923,7 @@ debugExprCompile prgmName scopeNodes src = do
   let exprName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<debug>"
   let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope exprName) rawPrgm
   (desP, desName, _) <- desPrgm (rawPrgm', exprName, [])
-  let desP' = desFinalPass (desP, desName, [], [])
+  desP' <- desFinalPass (desP, desName, [], [])
   scopeTPrgms <- evaluablePages ssfTPrgm True scopeNodes
   let deps = graphToNodes scopeTPrgms
   exprTprgm <- case typeCheckToRes $ typecheckPrgms [(desP', [], map fst3 deps)] of
