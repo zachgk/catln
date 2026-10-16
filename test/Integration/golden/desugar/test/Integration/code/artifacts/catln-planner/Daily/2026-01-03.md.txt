@@ -198,6 +198,205 @@ Prgm
                                     )
                                 )
                             )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "9.00-10.00 No spaces around the dash" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 9 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "1130 AM - 12:00 Without a colon, with a space" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 11 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 30 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 12 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "12:15am Midnight on a twelve-hour clock" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 0 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 15 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 1 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "2026-01-03 A day is not a time" }
+                            )( Value /state= Value /Data/Primitive/False )( Value /time= Value /Data/Maybe/Nothing )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "25:00 An hour past the day" }
+                            )( Value /state= Value /Data/Primitive/False )( Value /time= Value /Data/Maybe/Nothing )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "13:00pm A twelve-hour clock has no thirteenth hour" }
+                            )( Value /state= Value /Data/Primitive/False )( Value /time= Value /Data/Maybe/Nothing )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "9:30amble The am must end a word" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 9 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 30 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 15 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

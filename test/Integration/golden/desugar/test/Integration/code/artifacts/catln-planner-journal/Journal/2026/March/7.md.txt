@@ -1,0 +1,183 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "10:00 Extended until the next block" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 20 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 3 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 7 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "09:00 - 09:20 Written with its own end" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 9 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 9 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 20 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 3 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 7 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "10:20 The next block, with nothing after it" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 20 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 23 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 50 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 3 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 7 }
+                                    )
+                                )
+                            )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "23:50 Past midnight" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 23 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 50 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 0 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 20 }
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /plannedDay= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 3 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 7 }
+                                    )
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "7" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

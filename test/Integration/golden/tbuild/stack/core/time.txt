@@ -42,7 +42,7 @@ Prgm
                                                 ( /operator>=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -60,7 +60,7 @@ Prgm
                                                 ( /operator<=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -81,7 +81,7 @@ Prgm
                                     ( /operator==
                                         ( EAppArg
                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /length
+                                                ( /Data/String/length
                                                     ( EAppArg
                                                         { eaaArg = Value /this -> TVArg /m = ( Value /m ↦ TVArg /m ) }
                                                     ) ↦ /Data/Primitive/Integer
@@ -1005,7 +1005,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Time/clockParts
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /contains
+                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
                                 { eaaArg = Value /sub -> /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ":"
@@ -1167,7 +1167,7 @@ Prgm
                                                 ( /operator==
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -1345,7 +1345,7 @@ Prgm
                                                                             ( /operator-
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /length
+                                                                                        ( /Data/String/length
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                                                             ) ↦ /Data/Primitive/Integer
@@ -1398,7 +1398,7 @@ Prgm
                                                                             ( /operator-
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /length
+                                                                                        ( /Data/String/length
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                                                             ) ↦ /Data/Primitive/Integer
@@ -1655,7 +1655,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /width -> /Data/Primitive/Integer } ) | /operator<
                             ( EAppArg
                                 { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /length
+                                    ( /Data/String/length
                                         ( EAppArg
                                             { eaaArg = Value /this -> ∀/Data/String =
                                                 ( /toString
@@ -3080,7 +3080,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Time/dottedOrBare
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /contains
+                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
                                 { eaaArg = Value /sub -> /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "."
@@ -3119,7 +3119,7 @@ Prgm
                                                 ( /operator>=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -3140,7 +3140,7 @@ Prgm
                                     ( /operator<=
                                         ( EAppArg
                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /length
+                                                ( /Data/String/length
                                                     ( EAppArg
                                                         { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                     ) ↦ /Data/Primitive/Integer
@@ -3170,7 +3170,7 @@ Prgm
                                                             ( /operator-
                                                                 ( EAppArg
                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                        ( /length
+                                                                        ( /Data/String/length
                                                                             ( EAppArg
                                                                                 { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                             ) ↦ /Data/Primitive/Integer
@@ -3202,7 +3202,7 @@ Prgm
                                                                     ( /operator-
                                                                         ( EAppArg
                                                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                ( /length
+                                                                                ( /Data/String/length
                                                                                     ( EAppArg
                                                                                         { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                                     ) ↦ /Data/Primitive/Integer

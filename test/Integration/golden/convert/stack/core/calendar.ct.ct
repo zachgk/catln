@@ -1,5 +1,6 @@
 import "core/maybe.ct"
 import "core/string.ct"
+import "core/time.ct"
 import "core/webdoc.ct"
 
 
@@ -32,16 +33,48 @@ module(Data/Calendar)
       SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
       sake of one caller. It moves there when there is a second one.
 
-  :$E.calendarDay[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> String]
-    # [calendarDay] is the day an entry is assigned to, as the @YYYY-MM-DD@ string it is written as.
-      A day is a string here as it is everywhere a note is read: Catln has no date, and inventing
-      one for a calendar would be inventing it for the whole language rather than for a calendar.
+  :$E.calendarDay[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> /Data/Time/Date..]
+    # [calendarDay] is the day an entry is assigned to, as the [/Data/Time/Date] it is.
       An entry which sits on no day answers [/Data/Maybe/Nothing]. That is an answer and not a failure to
       give one — an undated entry is shown apart from the days rather than dropped, because a
       calendar quietly showing less than it was handed would be answering a narrower question than
       the one asked.
       The receiver is bound as [$E] and not as [$T] because [/Data/Maybe] names its own parameter
       [$T] and a parameter resolves by name, so a receiver of that name would be the same one.
+
+  :$E.calendarTime[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> /Data/Time/TimeRange..]
+    # [calendarTime] is the span of its day an entry takes up, where it takes up only part of it: a
+      meeting from nine until half past ten, or a block a day planner laid out. An entry which takes
+      up its whole day answers [/Data/Maybe/Nothing], and is drawn across the day rather than over
+      a time of it.
+      A second question rather than a richer answer to [calendarDay], so that a kind of thing which
+      sits on days and has no times of day — most of them — answers it with one arm, and the day it
+      sits on is asked the one way whether or not it has a time.
+
+  class(Event)
+    # An [Event] is something that takes up a block of a day: a meeting from nine until half past
+      ten, or a line a day planner reads a time off. It is what a day planner lays out, and the
+      whole of what one lays out along a day.
+      A narrower class than [CalendarEntry] rather than an answer it gives, because whether a thing
+      is an event is what it is and not a question it answers: a task given a time is one, and the
+      same task with none is not. So a kind of thing joins as an event where it has a time, by
+      saying so of the values that do, and has nothing to answer for the ones that do not. Both are
+      what a day planner is asked for. Its blocks are the events, which every one of has a span to
+      be drawn over; and a task on the day with no time is drawn apart from them, as an entry of
+      the calendar it still is.
+      Membership is declared by the member, as it is for [CalendarEntry] and for its reason, and its
+      questions are answered where the member is declared and not here, for the second reason given
+      there.
+
+  :$E.eventSpan[$E -> /Data/Calendar/Event] -> /Data/Time/TimeRange..
+    # [eventSpan] is the block of its day an event takes up. Every event has one, which is the
+      difference between asking it this and asking an entry [calendarTime].
+
+  :$E.eventDay[$E -> /Data/Calendar/Event] -> /Data/Maybe[$T -> /Data/Time/Date..]
+    # [eventDay] is the day an event takes up its block on, and [/Data/Maybe/Nothing] where nothing
+      says which day that is: a time written on a line of a note that names no day for it. Such an
+      event is a block of no day, which is carried rather than dropped for the reason
+      [calendarDay] gives.
 
   annot(#calendar, isa= [/Catln/Doc/DocPage])
     # A calendar of everything the page it is written in reaches which sits on a day.
@@ -71,12 +104,40 @@ module(Data/Calendar)
 
   every(Show/Calendar.., isa= [/Catln/Doc/DShow])
 
-  /Catln/Doc/dshow(s= #calendar) =
-    calendarEntries(annot) -> String
-      # [calendarEntries] renders everything the evaluation covers which sits on a day as JSON: each
-        the value it displays as, the day it sits on, and the page and expression it was written as.
-        Which values those are is asked of the class rather than listed, so a kind of thing joins a
-        calendar by saying it belongs and answering [calendarDay].
-      #runtime("calendarEntries")
+  calendarEntries(annot) -> String
+    # [calendarEntries] renders everything the evaluation covers which sits on a day as JSON: each
+      the value it displays as, the day it sits on and the span of it it takes up, and the page and
+      expression it was written as. Which values those are is asked of the class rather than listed,
+      so a kind of thing joins a calendar by saying it belongs and answering [calendarDay] and
+      [calendarTime].
+    #runtime("calendarEntries")
 
-    Show/Calendar(result= calendarEntries(annot= s))
+  /Catln/Doc/dshow(s= #calendar)= Show/Calendar(result= calendarEntries(annot= s))
+
+  annot(#dayPlanner, isa= [/Catln/Doc/DocPage])
+    # A day planner of everything the page it is written in reaches which sits on a day: the
+      [Event]s of it drawn as the blocks of one day at a time, as the Obsidian Day Planner plugin
+      draws a day, and every other entry of a calendar sitting on the day drawn across the top of
+      it, unscheduled.
+      It takes nothing, for the reason [#calendar] takes nothing, and reaches what [#calendar]
+      reaches. What it asks of it is narrower: a block is an event and is asked the span it takes up,
+      which every event has, where an entry of a calendar may or may not have a time. An entry with
+      none is a thing to be given one, which is what a planner is for, so it is shown rather than
+      left out.
+      Marked as a page of its own, as [#calendar] is.
+
+  data(Show/DayPlanner(result -> String))
+    # [Show/DayPlanner] shows what a day planner found, which is what a calendar finds and carried
+      the same way: see [Show/Calendar]. Which day is drawn, and whether a week is drawn instead, is
+      decided where it is drawn, as a calendar's view is.
+
+  every(Show/DayPlanner.., isa= [/Catln/Doc/DShow])
+
+  plannerEntries(annot) -> String
+    # [plannerEntries] renders what a day planner lays out as JSON, in the shape [calendarEntries]
+      renders a calendar in: every [Event] the evaluation covers with the day it is on and the span
+      of it it takes up, and every other [CalendarEntry] with the day it sits on and no time. A
+      value which is both is an event, and is rendered once.
+    #runtime("plannerEntries")
+
+  /Catln/Doc/dshow(s= #dayPlanner)= Show/DayPlanner(result= plannerEntries(annot= s))

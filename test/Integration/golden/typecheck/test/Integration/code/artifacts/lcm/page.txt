@@ -1,0 +1,155 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/#hint"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /#hint( Value /text -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /double( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /double( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
+                    }
+                )
+            ,
+                ( "/prompt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /prompt( Value /input -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /prompt( Value /input -> ∀/Data/String ) -> ∀/Data/String = /Llm/lcmPrompt( Value /input -> TVArg /input = Value /input ) ]
+                    }
+                )
+            ,
+                ( "/Llm/llmshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmshow
+                            ( Value /s -> /#hint( /text=∀/Data/String ) = /#hint( Value /text -> ∀/Data/String ) ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            , []
+                            ) = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "hint: " }
+                            )( Value /r -> TVArg /text = Value /text )
+                        ]
+                    }
+                )
+            ,
+                ( "/anyOver"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /anyOver[ /A : TopType ]
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
+                            ( /fn( Value /v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /anyOver
+                            ( Value /lst ->
+                                ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                            )
+                            ( /fn( Value /v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/any
+                            ( Value /lst ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
+                                    ( /head=∀/Data/Primitive/Boolean
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ]
+                                    )
+                                ) = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
+                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /fn( Value /v -> TVArg /v = Value /v ) )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A page for lcmPrompt.ct to show as [/Llm/lcm] would show it to a model: as it was written, with
+                its annotations shown and what is wrong with it noted where it is wrong. It is written to be
+                wrong in each way a prompt notes, so it is data of that test rather than a fixture of the suite:
+                a fixture's prints are its tests, and these are written to fail." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /double
+                ( Value /x -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A print whose golden is no longer what it prints is shown with the golden it was written with,
+                and noted as failing." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /double
+                ( Value /x -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "5" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "An annotation that fails is noted with what it failed with. This one asks for the page to be
+                shown while it is being shown." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /Llm/lcmPrompt
+                ( Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "And again?" }
+                )
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A definition the compiler cannot build is noted with what the compiler said." }
+            )
+        , /#hint
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "double never fails" }
+            )
+        ]
+    }

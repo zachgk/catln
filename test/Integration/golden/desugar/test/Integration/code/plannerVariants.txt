@@ -1,0 +1,36 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests importing vaults whose Day Planner and Daily Notes plugins are set some other way than
+                @artifacts/catln-planner@ sets them, since a vault can only be set one way and what a line reads
+                as is decided by the vault's settings. One vault per setting: a planner extending each block until
+                the next, with daily notes in a folder written with slashes and named in a format writing folders
+                of its own; a planner turned on and never configured, with the format left empty; and daily notes
+                named in a format spelling the weekday, the month name, an ordinal and bracketed text. The notes
+                are named as well as the vaults, for the reason @obsidianPlanner.ct@ names its notes.
+                What each line is read as is held by the goldens of the notes, and the day and span each block
+                takes up by the calendar's golden." }
+            )
+        , Value #calendar
+        ]
+    }

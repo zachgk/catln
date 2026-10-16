@@ -32,6 +32,8 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusDate":"2025-12-20","statusName":"Done"}"
                                 }
                             )
+                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
                                 { eaaArg = Value /contents -> /Data/String/Text
@@ -54,12 +56,93 @@ Prgm
                             ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = Value /due -> /Data/Maybe/Some
-                                    ( /value=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /value=/Data/Time/Date
+                                        ( /year=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 2025 }
+                                                ]
+                                            )
+                                        , /month=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 12 }
+                                                ]
+                                            )
+                                        , /day=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CInt
+                                                    { ciValue = 31 }
+                                                ]
+                                            )
+                                        )
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2025-12-31"
+                                        { eaaArg = Value /value -> /Data/Time/Date
+                                            ( /year=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 2025 }
+                                                    ]
+                                                )
+                                            , /month=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 12 }
+                                                    ]
+                                                )
+                                            , /day=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CInt
+                                                        { ciValue = 31 }
+                                                    ]
+                                                )
+                                            ) = /Data/Time/Date
+                                            ( EAppArg
+                                                { eaaArg = Value /year -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 2025 }
+                                                        ]
+                                                    ) = 2025
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /month -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 12 }
+                                                        ]
+                                                    ) = 12
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /day -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CInt
+                                                            { ciValue = 31 }
+                                                        ]
+                                                    ) = 31
+                                                }
+                                            )
                                         }
                                     )
                                 }
@@ -70,6 +153,8 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo"}"
                                 }
                             )
+                            ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

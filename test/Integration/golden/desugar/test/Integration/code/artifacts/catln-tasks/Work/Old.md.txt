@@ -17,7 +17,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusDate":"2025-12-20","statusName":"Done"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Review the archive 📅 2025-12-31" }
@@ -29,13 +29,21 @@ Prgm
                                 { csValue = "Review the archive" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2025-12-31" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2025 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 12 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 31 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

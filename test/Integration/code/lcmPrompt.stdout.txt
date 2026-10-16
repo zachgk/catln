@@ -2,8 +2,10 @@ import "core"
 import "llm"
 
 
-# What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
-  annotations shown, what is wrong with it noted where it is wrong, and then the question.
+# A page for lcmPrompt.ct to show as [/Llm/lcm] would show it to a model: as it was written, with
+  its annotations shown and what is wrong with it noted where it is wrong. It is written to be
+  wrong in each way a prompt notes, so it is data of that test rather than a fixture of the suite:
+  a fixture's prints are its tests, and these are written to fail.
 double(x -> Integer) -> Integer
   # [double] is twice [x].
 double(x)= x + x
@@ -41,6 +43,8 @@ annot(#hint(text -> String))
 
 > #hint(text= "double never fails")
   >>> hint: double never fails
-main{io -> IO}= io.println(msg= /Llm/lcmPrompt(input= "What does double do?")).exit(val= 0)
+prompt(input -> String) -> String
+  # [prompt] is what a model is asked about this page: the page, and then [input].
+prompt(input)= /Llm/lcmPrompt(input= input)
 
 What does double do?

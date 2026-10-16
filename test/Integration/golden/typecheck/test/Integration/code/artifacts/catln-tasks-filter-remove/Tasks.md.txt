@@ -21,7 +21,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -38,7 +38,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -53,7 +53,7 @@ Prgm
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Buy milk" }
-                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

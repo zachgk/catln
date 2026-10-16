@@ -1,29 +1,13 @@
 import "core"
 import "llm"
+import "artifacts/lcm/page.ct"
 
 
-# What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
+# What [/Llm/lcm] asks a model, built without asking one: a page as it was written, with its
   annotations shown, what is wrong with it noted where it is wrong, and then the question.
-double(x -> Integer) -> Integer
-  # [double] is twice [x].
-double(x)= x + x
-
-> double(x= 2)
-# A print whose golden is no longer what it prints is shown with the golden it was written with,
-  and noted as failing.
-> double(x= 3)
-  >>> 5
-# An annotation that fails is noted with what it failed with. This one asks for the page to be
-  shown while it is being shown.
-> /Llm/lcmPrompt(input= "And again?")
-# A definition the compiler cannot build is noted with what the compiler said.
-anyOver[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
-anyOver(lst, fn(v))= /Data/List/any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))
-
-annot(#hint(text -> String))
-  # A [#hint] is written for a model as what it says.
-
-/Llm/llmshow(s= #hint(text))= "hint: " ++ text
-
-#hint(text= "double never fails")
-main{io -> IO}= io.println(msg= /Llm/lcmPrompt(input= "What does double do?")).exit(val= 0)
+  The page is @artifacts/lcm/page.ct@, written to be wrong in each way a prompt notes: a print
+  with no golden, a print whose golden is stale, an annotation that fails, and a definition the
+  compiler cannot build. It is a page of its own rather than this one, because a fixture's prints
+  are its tests, which the suite runs, and these are written to fail. The page offers the prompt
+  about itself as [prompt], since the page a call is written on is the one the compiler hands it.
+main{io -> IO}= io.println(msg= prompt(input= "What does double do?")).exit(val= 0)

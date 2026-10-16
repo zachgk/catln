@@ -17,7 +17,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"created":"2026-01-01","statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Started 🛫 2026-01-02" }
@@ -29,13 +29,21 @@ Prgm
                                 { csValue = "Started" }
                             )( Value /priority= Value /Data/Note/Priority/None )
                             ( Value /start= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-02" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 2 }
+                                    )
                                 )
                             )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Scheduled ⏳ 2026-01-03" }
@@ -47,13 +55,21 @@ Prgm
                                 { csValue = "Scheduled" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )
                             ( Value /scheduled= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-03" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
                                 )
                             )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Scheduled by the other hourglass ⌛ 2026-01-03" }
@@ -65,13 +81,21 @@ Prgm
                                 { csValue = "Scheduled by the other hourglass" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )
                             ( Value /scheduled= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-03" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 3 }
+                                    )
                                 )
                             )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Due 📅 2026-01-04" }
@@ -83,13 +107,21 @@ Prgm
                                 { csValue = "Due" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-04" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 4 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Due by the tear-off calendar 📆 2026-01-05" }
@@ -101,13 +133,21 @@ Prgm
                                 { csValue = "Due by the tear-off calendar" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-05" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 5 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Due by the spiral calendar 🗓 2026-01-06" }
@@ -119,13 +159,21 @@ Prgm
                                 { csValue = "Due by the spiral calendar" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-06" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 6 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Due by the spiral calendar with a variation selector 🗓️ 2026-01-10" }
@@ -137,13 +185,21 @@ Prgm
                                 { csValue = "Due by the spiral calendar with a variation selector" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-10" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 10 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Finished ✅ 2026-01-05" }
@@ -156,7 +212,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Dropped ❌ 2026-01-06" }
@@ -169,7 +225,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Highest 🔺" }
@@ -182,7 +238,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/Highest )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "High ⏫" }
@@ -195,7 +251,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Medium 🔼" }
@@ -208,7 +264,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/Medium )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Low 🔽" }
@@ -221,7 +277,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/Low )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Lowest ⏬" }
@@ -234,7 +290,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/Lowest )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Water the plants 🔁 every day when done 🏁 delete" }
@@ -252,7 +308,7 @@ Prgm
                             )
                             ( Value /rest= CStr
                                 { csValue = "{"onCompletion":"delete","statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Do this first 🆔 dcf64c" }
@@ -265,7 +321,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"id":"dcf64c","statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Do this after ⛔ dcf64c" }
@@ -278,7 +334,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"dependsOn":["dcf64c"],"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Do this last ⛔ dcf64c,0h17ye" }
@@ -291,7 +347,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Do this last of all ⛔ dcf64c, 0h17ye" }
@@ -304,7 +360,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Linked 📅 2026-01-15 ^abc-123" }
@@ -316,13 +372,21 @@ Prgm
                                 { csValue = "Linked" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-01-15" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 15 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"blockLink":"abc-123","statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Tagged #work #urgent 📅 2026-02-10" }
@@ -334,13 +398,21 @@ Prgm
                                 { csValue = "Tagged #work #urgent" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-02-10" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 10 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo","tags":["#work","#urgent"]}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Book 📅 lunch 📅 2026-04-01" }
@@ -352,13 +424,21 @@ Prgm
                                 { csValue = "Book 📅 lunch" }
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2026-04-01" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 4 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 1 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Due then priority 📅 2025-12-28 ⏫" }
@@ -370,13 +450,21 @@ Prgm
                                 { csValue = "Due then priority" }
                             )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2025-12-28" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2025 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 12 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 28 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Priority then due ⏫ 📅 2025-12-28" }
@@ -388,13 +476,21 @@ Prgm
                                 { csValue = "Priority then due" }
                             )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2025-12-28" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2025 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 12 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 28 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Dataview in an emoji vault is writing [due:: 2026-01-04]" }
@@ -407,7 +503,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Kept as written #work 📅 2025-12-20 ⏫ ^kept" }
@@ -419,13 +515,21 @@ Prgm
                                 { csValue = "Kept as written #work" }
                             )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
                             ( Value /due= /Data/Maybe/Some
-                                ( Value /value= CStr
-                                    { csValue = "2025-12-20" }
+                                ( Value /value= /Data/Time/Date
+                                    ( Value /year= CInt
+                                        { ciValue = 2025 }
+                                    )
+                                    ( Value /month= CInt
+                                        { ciValue = 12 }
+                                    )
+                                    ( Value /day= CInt
+                                        { ciValue = 20 }
+                                    )
                                 )
                             )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"blockLink":"kept","statusName":"Todo","tags":["#work"]}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "A step under it" }
@@ -438,7 +542,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

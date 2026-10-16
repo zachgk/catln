@@ -1,0 +1,226 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/#hint"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /#hint
+                            ( EAppArg { eaaArg = Value /text -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /double
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /double
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/prompt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /prompt
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /prompt
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } ) -> ∀/Data/String =
+                            ( /Llm/lcmPrompt
+                                ( EAppArg
+                                    { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /page -> /Catln/RawPrgm.. =
+                                        ( /Catln/pageAt
+                                            ( EAppArg
+                                                { eaaArg = Value /source -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/test/Integration/code/artifacts/lcm/page.ct"
+                                                }
+                                            ) ↦ /Catln/RawPrgm..
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llmshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmshow
+                            ( EAppArg
+                                { eaaArg = Value /s -> /#hint( /text=∀/Data/String ) = /#hint
+                                    ( EAppArg { eaaArg = Value /text -> ∀/Data/String } )
+                                }
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            , []
+                            ) =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hint: "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /text = ( Value /text ↦ TVArg /text ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/anyOver"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /anyOver
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=$_/A ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> ∀/Data/Primitive/Boolean
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A page for lcmPrompt.ct to show as [/Llm/lcm] would show it to a model: as it was written, with
+                  its annotations shown and what is wrong with it noted where it is wrong. It is written to be
+                  wrong in each way a prompt notes, so it is data of that test rather than a fixture of the suite:
+                  a fixture's prints are its tests, and these are written to fail."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /double
+                        ( EAppArg
+                            { eaaArg = Value /x -> /Data/Primitive/Integer = 2 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A print whose golden is no longer what it prints is shown with the golden it was written with,
+                  and noted as failing."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /double
+                        ( EAppArg
+                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An annotation that fails is noted with what it failed with. This one asks for the page to be
+                  shown while it is being shown."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Llm/lcmPrompt
+                        ( EAppArg
+                            { eaaArg = Value /input -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "And again?"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /page -> /Catln/RawPrgm.. =
+                                ( /Catln/pageAt
+                                    ( EAppArg
+                                        { eaaArg = Value /source -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/test/Integration/code/artifacts/lcm/page.ct"
+                                        }
+                                    ) ↦ /Catln/RawPrgm..
+                                )
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A definition the compiler cannot build is noted with what the compiler said."
+                }
+            )
+        , /#hint
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "double never fails"
+                }
+            )
+        ]
+    }

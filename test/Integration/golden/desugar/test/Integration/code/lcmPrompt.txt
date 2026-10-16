@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/#hint"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ #hint( Value /text -> ∀/Data/String ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -23,7 +13,7 @@ Prgm
                                 { ciValue = 0 }
                             )
                             ( Value /this= println
-                                ( Value msg= /Llm/lcmPrompt
+                                ( Value msg= prompt
                                     ( Value input= CStr
                                         { csValue = "What does double do?" }
                                     )
@@ -32,104 +22,19 @@ Prgm
                         ]
                     }
                 )
-            ,
-                ( "/double"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ double( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ double( Value x ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value x ) ]
-                    }
-                )
-            ,
-                ( "/Llm/llmshow"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llmshow
-                            ( Value s= #hint( Value text ) )= /operator++
-                            ( Value /l= CStr
-                                { csValue = "hint: " }
-                            )( Value /r= Value text )
-                        ]
-                    }
-                )
-            ,
-                ( "/anyOver"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ anyOver[ /A : TopType ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
-                            ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ anyOver( Value lst )
-                            ( fn( Value v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/any
-                            ( Value lst= /Data/Functor/fmap( Value lst= Value lst )
-                                ( fn( Value v )= fn( Value v= Value v ) )
-                            )
-                        ]
-                    }
-                )
             ]
         }
-    , prgmCg =
-        [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        ]
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr
-                { csValue = "What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
-                annotations shown, what is wrong with it noted where it is wrong, and then the question." }
-            )
-        , /Catln/#print
-            ( Value /p= double
-                ( Value x= CInt
-                    { ciValue = 2 }
-                )
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A print whose golden is no longer what it prints is shown with the golden it was written with,
-                and noted as failing." }
-            )
-        , /Catln/#print
-            ( Value /p= double
-                ( Value x= CInt
-                    { ciValue = 3 }
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "5" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "An annotation that fails is noted with what it failed with. This one asks for the page to be
-                shown while it is being shown." }
-            )
-        , /Catln/#print
-            ( Value /p= /Llm/lcmPrompt
-                ( Value input= CStr
-                    { csValue = "And again?" }
-                )
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A definition the compiler cannot build is noted with what the compiler said." }
-            )
-        , #hint
-            ( Value text= CStr
-                { csValue = "double never fails" }
+                { csValue = "What [/Llm/lcm] asks a model, built without asking one: a page as it was written, with its
+                annotations shown, what is wrong with it noted where it is wrong, and then the question.
+                The page is @artifacts/lcm/page.ct@, written to be wrong in each way a prompt notes: a print
+                with no golden, a print whose golden is stale, an annotation that fails, and a definition the
+                compiler cannot build. It is a page of its own rather than this one, because a fixture's prints
+                are its tests, which the suite runs, and these are written to fail. The page offers the prompt
+                about itself as [prompt], since the page a call is written on is the one the compiler hands it." }
             )
         ]
     }

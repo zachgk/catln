@@ -17,7 +17,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr
                                 { csValue = "Ship it #task" }
@@ -30,7 +30,7 @@ Prgm
                             )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -44,7 +44,7 @@ Prgm
                         [ /Data/Note/Task/Simple
                             ( Value /contents= CStr
                                 { csValue = "Buy milk" }
-                            )( Value /state= Value /Data/Primitive/False )
+                            )( Value /state= Value /Data/Primitive/False )( Value /time= Value /Data/Maybe/Nothing )( Value /plannedDay= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

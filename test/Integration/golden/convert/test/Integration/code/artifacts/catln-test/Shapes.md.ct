@@ -1,22 +1,19 @@
-import "core"
-
-
 /Data/Note/Page(/title= "Shapes")
   # A note is broken at each of its checkboxes: what is written between two is the note, what is
     written under one is a comment of its task, and what is only blank lines is written nowhere.
-  /Data/Note/Task/Simple(/contents= "Read it", /state= /Data/Primitive/False)
-  /Data/Note/Task/Simple(/contents= "Write it", /state= /Data/Primitive/True)
+  /Data/Note/Task/Simple(/contents= "Read it", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
+  /Data/Note/Task/Simple(/contents= "Write it", /state= /Data/Primitive/True, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
     # Which is written
       
       under the task.
 
   # The note again. A checkbox indented deeper than the one above it is a task of that task.
-  /Data/Note/Task/Simple(/contents= "Plan it", /state= /Data/Primitive/False)
-    /Data/Note/Task/Simple(/contents= "A step of the plan", /state= /Data/Primitive/False)
+  /Data/Note/Task/Simple(/contents= "Plan it", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
+    /Data/Note/Task/Simple(/contents= "A step of the plan", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
 
   # A checkbox is a list item, and a list is written with numbers as readily as with bullets.
-  /Data/Note/Task/Simple(/contents= "Read it numbered", /state= /Data/Primitive/False)
-  /Data/Note/Task/Simple(/contents= "Write it numbered", /state= /Data/Primitive/True)
+  /Data/Note/Task/Simple(/contents= "Read it numbered", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
+  /Data/Note/Task/Simple(/contents= "Write it numbered", /state= /Data/Primitive/True, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
 
   # A fence inside a longer fence does not close it, so the checkbox between them is writing.
     
@@ -42,8 +39,8 @@ import "core"
     ```
     
     A block opened and closed under a task ends there, so the checkbox after it is a task.
-  /Data/Note/Task/Simple(/contents= "Read it with a block under it", /state= /Data/Primitive/False)
+  /Data/Note/Task/Simple(/contents= "Read it with a block under it", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
     # ```
       - [ ] A checkbox inside code under a task
       ```
-  /Data/Note/Task/Simple(/contents= "Write it after the block", /state= /Data/Primitive/False)
+  /Data/Note/Task/Simple(/contents= "Write it after the block", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)

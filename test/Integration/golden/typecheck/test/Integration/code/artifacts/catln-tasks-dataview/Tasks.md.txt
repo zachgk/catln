@@ -19,12 +19,89 @@ Prgm
                                 { csValue = "Ship it" }
                             )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /due -> /Data/Maybe/Some
-                                ( /value=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 4 }
+                                            ]
+                                        )
+                                    )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                    { csValue = "2026-01-04" }
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 4 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 4 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 4 }
+                                    )
                                 )
                             )
                             ( Value /recurrence -> /Data/Maybe/Some
@@ -39,7 +116,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -54,18 +131,95 @@ Prgm
                                 { csValue = "Ship it between parentheses" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /due -> /Data/Maybe/Some
-                                ( /value=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /value=/Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 4 }
+                                            ]
+                                        )
+                                    )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                    { csValue = "2026-01-04" }
+                                ( Value /value -> /Data/Time/Date
+                                    ( /year=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        )
+                                    , /month=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        )
+                                    , /day=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 4 }
+                                            ]
+                                        )
+                                    ) = /Data/Time/Date
+                                    ( Value /year -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 2026 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 2026 }
+                                    )
+                                    ( Value /month -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 1 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value /day -> UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CInt
+                                                { ciValue = 4 }
+                                            ]
+                                        ) = CInt
+                                        { ciValue = 4 }
+                                    )
                                 )
                             )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -82,7 +236,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"id":"abc","statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -99,7 +253,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -116,7 +270,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Question"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -133,7 +287,7 @@ Prgm
                             ( Value /rest -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"!"}" }
-                            )
+                            )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

@@ -1,0 +1,21 @@
+import "core"
+import obsidian("artifacts/catln-planner-journal")
+import obsidian("artifacts/catln-planner-journal/Journal/2026/March/7.md")
+import obsidian("artifacts/catln-planner-journal/Journal/2026/March/7th.md")
+import obsidian("artifacts/catln-planner-bare")
+import obsidian("artifacts/catln-planner-bare/2026-01-03.md")
+import obsidian("artifacts/catln-planner-named")
+import obsidian("artifacts/catln-planner-named/Days/Sat, January 3rd of 2026.md")
+
+
+# Tests importing vaults whose Day Planner and Daily Notes plugins are set some other way than
+  @artifacts/catln-planner@ sets them, since a vault can only be set one way and what a line reads
+  as is decided by the vault's settings. One vault per setting: a planner extending each block until
+  the next, with daily notes in a folder written with slashes and named in a format writing folders
+  of its own; a planner turned on and never configured, with the format left empty; and daily notes
+  named in a format spelling the weekday, the month name, an ordinal and bracketed text. The notes
+  are named as well as the vaults, for the reason @obsidianPlanner.ct@ names its notes.
+  What each line is read as is held by the goldens of the notes, and the day and span each block
+  takes up by the calendar's golden.
+#calendar
+main{io -> IO}= io.exit(val= 0)

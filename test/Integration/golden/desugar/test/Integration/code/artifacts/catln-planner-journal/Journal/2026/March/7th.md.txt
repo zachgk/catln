@@ -1,0 +1,59 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "10:00 At ten, on no day" }
+                            )( Value /state= Value /Data/Primitive/False )
+                            ( Value /time= /Data/Maybe/Some
+                                ( Value /value= /Data/Time/TimeRange
+                                    ( Value /start= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                    ( Value /end= /Data/Time/TimeOfDay
+                                        ( Value /hour= CInt
+                                            { ciValue = 10 }
+                                        )
+                                        ( Value /minute= CInt
+                                            { ciValue = 30 }
+                                        )
+                                    )
+                                )
+                            )( Value /plannedDay= Value /Data/Maybe/Nothing )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "7th" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

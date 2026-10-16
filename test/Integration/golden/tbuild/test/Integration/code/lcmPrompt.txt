@@ -2,18 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/#hint"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /#hint
-                            ( EAppArg { eaaArg = Value /text -> ∀/Data/String } )
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -37,21 +25,10 @@ Prgm
                                         ( /Catln/println
                                             ( EAppArg
                                                 { eaaArg = Value /msg -> ∀/Data/String =
-                                                    ( /Llm/lcmPrompt
+                                                    ( /prompt
                                                         ( EAppArg
                                                             { eaaArg = Value /input -> /Data/String/Text
                                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What does double do?"
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /page -> /Catln/RawPrgm.. =
-                                                                ( /Catln/pageAt
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /source -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/test/Integration/code/lcmPrompt.ct"
-                                                                        }
-                                                                    ) ↦ /Catln/RawPrgm..
-                                                                )
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -67,180 +44,20 @@ Prgm
                         ]
                     }
                 )
-            ,
-                ( "/double"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /double
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /double
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                            ( /operator+
-                                ( EAppArg
-                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ /Data/Primitive/Integer
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/llmshow"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llmshow
-                            ( EAppArg
-                                { eaaArg = Value /s -> /#hint( /text=∀/Data/String ) = /#hint
-                                    ( EAppArg { eaaArg = Value /text -> ∀/Data/String } )
-                                }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/String
-                                , fromList []
-                                , []
-                                )
-                            , /operator++
-                                ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            , []
-                            ) =
-                            ( /operator++
-                                ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hint: "
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> TVArg /text = ( Value /text ↦ TVArg /text ) }
-                                ) ↦ ∀/Data/String
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/anyOver"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /anyOver
-                            ( EAppVar
-                                { eavName = /A
-                                , eavMeta = TopType
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=$_/A ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> ∀/Data/Primitive/Boolean
-                                }
-                            ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
             ]
         }
-    , prgmCg =
-        [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        ]
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What [/Llm/lcm] asks a model, built without asking one: this page, as it was written, with its
-                  annotations shown, what is wrong with it noted where it is wrong, and then the question."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /double
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 2 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A print whose golden is no longer what it prints is shown with the golden it was written with,
-                  and noted as failing."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /double
-                        ( EAppArg
-                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                }
-            )
-            ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An annotation that fails is noted with what it failed with. This one asks for the page to be
-                  shown while it is being shown."
-                }
-            )
-        , /Catln/#print
-            ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
-                    ( /Llm/lcmPrompt
-                        ( EAppArg
-                            { eaaArg = Value /input -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "And again?"
-                            }
-                        )
-                        ( EAppArg
-                            { eaaArg = Value /page -> /Catln/RawPrgm.. =
-                                ( /Catln/pageAt
-                                    ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/test/Integration/code/lcmPrompt.ct"
-                                        }
-                                    ) ↦ /Catln/RawPrgm..
-                                )
-                            }
-                        ) ↦ ∀/Data/String
-                    )
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A definition the compiler cannot build is noted with what the compiler said."
-                }
-            )
-        , /#hint
-            ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "double never fails"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What [/Llm/lcm] asks a model, built without asking one: a page as it was written, with its
+                  annotations shown, what is wrong with it noted where it is wrong, and then the question.
+                  The page is @artifacts/lcm/page.ct@, written to be wrong in each way a prompt notes: a print
+                  with no golden, a print whose golden is stale, an annotation that fails, and a definition the
+                  compiler cannot build. It is a page of its own rather than this one, because a fixture's prints
+                  are its tests, which the suite runs, and these are written to fail. The page offers the prompt
+                  about itself as [prompt], since the page a call is written on is the one the compiler hands it."
                 }
             )
         ]

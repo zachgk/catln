@@ -41,12 +41,14 @@ Prgm
                   The vault asks every task of the Tasks plugin to carry #task, so the lines not carrying it are read
                   as /Data/Note/Task/Simple and the ones carrying it as /Data/Note/Task/Obsidian, and the planner's
                   reading is seen on both.
+                  The daily note writes a time in each form the plugin reads one, and in the forms it refuses; the
+                  three notes beside it are named for no day, for a day that does not exist, and for a day outside
+                  the daily notes folder, and so are planned for none.
                   The notes are named as well as the vault, for the reason obsidian.ct names its notes: a vault does
                   not import the notes it holds, so a golden test walking out from here would reach the vault and
                   stop.
-                  What a calendar of these notes shows is not asked here: the annotations of a page are evaluated
-                  for the file a test names and not for the pages it reaches, so what is written down here is the
-                  annotation and what answers it is CalendarTests."
+                  What each line is read as is held by the goldens of the notes; the day and the span of it each
+                  block takes up are held by the calendar's golden."
                 }
             )
         , Value /Data/Calendar/#calendar

@@ -1,0 +1,84 @@
+import "json/json.ct"
+
+
+module(Data)
+  # # Writing JSON
+    [jsonEncode] writes a [Json] out as the JSON text it is: the text a JSON file holds, or the
+    body a JSON API is sent. Written in Catln over the characters of the text, so that what a
+    string is escaped as is said here and nowhere else.
+    Nothing is added to the text that JSON does not need: no spaces between the parts, and no line
+    breaks.
+  jsonEncode(value -> Json) -> String
+    # [jsonEncode] is [value] as JSON text.
+  jsonEncode(value= Json/Null)= "null"
+  jsonEncode(value= Json/Bool(value= True))= "true"
+  jsonEncode(value= Json/Bool(value= False))= "false"
+  jsonEncode(value= Json/Number(value@n))= n.toString
+  jsonEncode(value= Json/Str(value@s))= jsonQuote(s= s)
+  jsonEncode(value= Json/Array(entries))= "[" ++ jsonEncodeEntries(entries= entries) ++ "]"
+  jsonEncode(value= Json/Object(entries))= "{" ++ jsonEncodeMembers(members= entries) ++ "}"
+
+  > jsonEncode(value= Json/Null)
+    >>> null
+  > jsonEncode(value= Json/Array(entries= [Json/Number(value= 1), Json/Bool(value= True), Json/Str(value= "x")]))
+    >>> [1,true,"x"]
+  > jsonEncode(value= Json/Object(entries= [Json/Member(key= "a", value= Json/Array(entries= [])), Json/Member(key= "b", value= Json/Number(value= 2.5))]))
+    >>> {"a":[],"b":2.5}
+  # ## Arrays and objects
+    Their entries are written in order with a comma between each two.
+  jsonEncodeEntries(entries -> /Data/List/ConsList[$T -> Json]) -> String
+  jsonEncodeEntries(entries= /Data/List/Nil)= ""
+  jsonEncodeEntries(entries= /Data/List/Cons(head, tail= /Data/List/Nil))= jsonEncode(value= head)
+  jsonEncodeEntries(entries= /Data/List/Cons(head, tail= /Data/List/Cons(head@h2, tail@t2)))= jsonEncode(value= head) ++ "," ++ jsonEncodeEntries(entries= /Data/List/Cons(head= h2, tail= t2))
+
+  jsonEncodeMembers(members -> /Data/List/ConsList[$T -> Json/Member..]) -> String
+  jsonEncodeMembers(members= /Data/List/Nil)= ""
+  jsonEncodeMembers(members= /Data/List/Cons(head, tail= /Data/List/Nil))= jsonEncodeMember(member= head)
+  jsonEncodeMembers(members= /Data/List/Cons(head, tail= /Data/List/Cons(head@h2, tail@t2)))= jsonEncodeMember(member= head) ++ "," ++ jsonEncodeMembers(members= /Data/List/Cons(head= h2, tail= t2))
+
+  jsonEncodeMember(member -> Json/Member(key -> String, value -> Json)) -> String
+  jsonEncodeMember(member= Json/Member(key, value))= jsonQuote(s= key) ++ ":" ++ jsonEncode(value= value)
+
+  # ## Strings
+    A string is written between double quotes. The two characters that would end it early — a
+    double quote, and the backslash that escapes — are escaped, as is every control character,
+    which JSON does not allow written as itself: the common ones by their short escapes and the rest
+    by their code point. Every other character is written as itself.
+  jsonQuote(s -> String) -> String
+    # [jsonQuote] is [s] as a JSON string, quotes included.
+  jsonQuote(s= String/Text(chars))= String/Text(chars= /Data/List/Cons(head= '"', tail= jsonEscapeChars(cs= chars, rest= ['"'])))
+
+  > jsonQuote(s= "say \"hi\"\n")
+    >>> "say \"hi\"\n"
+  > jsonQuote(s= "a\\b")
+    >>> "a\\b"
+  jsonEscapeChars(cs -> /Data/List/ConsList[$T -> Char], rest -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+    # [jsonEscapeChars] is the characters of [cs] escaped, followed by [rest].
+  jsonEscapeChars(cs= /Data/List/Nil, rest)= rest
+  jsonEscapeChars(cs= /Data/List/Cons(head, tail), rest)= jsonEscapeChar(c= head, rest= jsonEscapeChars(cs= tail, rest= rest))
+
+  jsonEscapeChar(c -> Char, rest -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+    # [jsonEscapeChar] is [c] as JSON writes it inside a string, followed by [rest].
+      The guards are exclusive rather than tried in order, since arms are equations and not a
+      sequence: a newline is both a control character and one with a short escape, so the short
+      escapes are chosen among the control characters, by [jsonEscapeControl].
+  jsonEscapeChar(c, rest) | c == '"'= /Data/List/append(l= ['\\', '"'], r= rest)
+  jsonEscapeChar(c, rest) | c == '\\'= /Data/List/append(l= ['\\', '\\'], r= rest)
+  jsonEscapeChar(c, rest) | c.code < 32= jsonEscapeControl(c= c, rest= rest)
+  jsonEscapeChar(c, rest) else = /Data/List/Cons(head= c, tail= rest)
+
+  jsonEscapeControl(c -> Char, rest -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+    # [jsonEscapeControl] is the control character [c] escaped, followed by [rest]: by its short
+      escape where JSON has one, and by its code point otherwise.
+  jsonEscapeControl(c, rest) | c == '\n'= /Data/List/append(l= ['\\', 'n'], r= rest)
+  jsonEscapeControl(c, rest) | c == '\r'= /Data/List/append(l= ['\\', 'r'], r= rest)
+  jsonEscapeControl(c, rest) | c == '\t'= /Data/List/append(l= ['\\', 't'], r= rest)
+  jsonEscapeControl(c, rest) else = /Data/List/append(l= ['\\', 'u', '0', '0', hexDigit(n= c.code // 16), hexDigit(n= c.code % 16)], r= rest)
+
+  hexDigit(n -> Integer) -> Char
+    # [hexDigit] is the lowercase hexadecimal digit for [n], from 0 to 15.
+  hexDigit(n) | n < 10= fromCode(code= 48 + n)
+  hexDigit(n) else = fromCode(code= 87 + n)
+
+  > jsonQuote(s= fromCode(code= 1).toString)
+    >>> "\u0001"

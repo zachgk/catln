@@ -1,16 +1,15 @@
-import "core"
 import "/repo/dir/test/Integration/code/artifacts/catln-test/Welcome.md"
 
 
 /Data/Note/Page(/title= "Tasks")
   # A note may hold tasks, written as markdown checkboxes.
-  /Data/Note/Task/Simple(/contents= "Read [[Welcome]]", /state= /Data/Primitive/False)
-  /Data/Note/Task/Simple(/contents= "Write this note", /state= /Data/Primitive/True)
+  /Data/Note/Task/Simple(/contents= "Read [[Welcome]]", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
+  /Data/Note/Task/Simple(/contents= "Write this note", /state= /Data/Primitive/True, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
     # Which is written under the task rather than beside it, so it is a comment of the task.
       
       It goes on for as long as it is indented.
-  /Data/Note/Task/Simple(/contents= "Plan the rest", /state= /Data/Primitive/False)
-    /Data/Note/Task/Simple(/contents= "A checkbox indented deeper is a task of its own", /state= /Data/Primitive/False)
+  /Data/Note/Task/Simple(/contents= "Plan the rest", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
+    /Data/Note/Task/Simple(/contents= "A checkbox indented deeper is a task of its own", /state= /Data/Primitive/False, /time= /Data/Maybe/Nothing, /plannedDay= /Data/Maybe/Nothing)
 
   # Anything written after them is the note again.
     
