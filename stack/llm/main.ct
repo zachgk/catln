@@ -147,21 +147,21 @@ module(Llm)
     The reply is the text at `choices[0].message.content` of the response, read one step at a
     time. Each step answers [/Data/Maybe/Nothing] where the part it reads is not there, and the
     steps after it pass that on.
-  llmReply(response -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
-  llmReply(response= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmReply(response= /Data/Maybe/Some(value))= llmChoice(choices= /Data/jsonMember(value= value, key= "choices"))
+  llmReply(response -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonParseErr..]) -> /Data/Maybe[$T -> String]
+  llmReply(response= /Data/Result/Fail(err))= /Data/Maybe/Nothing
+  llmReply(response= /Data/Result/Ok(value))= llmChoice(choices= /Data/Result/toMaybe(r= /Data/jsonMember(value= value, key= "choices")))
 
   llmChoice(choices -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
   llmChoice(choices= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmChoice(choices= /Data/Maybe/Some(value))= llmMessage(choice= /Data/jsonIndex(value= value, i= 0))
+  llmChoice(choices= /Data/Maybe/Some(value))= llmMessage(choice= /Data/Result/toMaybe(r= /Data/jsonIndex(value= value, i= 0)))
 
   llmMessage(choice -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
   llmMessage(choice= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmMessage(choice= /Data/Maybe/Some(value))= llmContent(message= /Data/jsonMember(value= value, key= "message"))
+  llmMessage(choice= /Data/Maybe/Some(value))= llmContent(message= /Data/Result/toMaybe(r= /Data/jsonMember(value= value, key= "message")))
 
   llmContent(message -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
   llmContent(message= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmContent(message= /Data/Maybe/Some(value))= llmText(content= /Data/jsonMember(value= value, key= "content"))
+  llmContent(message= /Data/Maybe/Some(value))= llmText(content= /Data/Result/toMaybe(r= /Data/jsonMember(value= value, key= "content")))
 
   llmText(content -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
   llmText(content= /Data/Maybe/Some(value= /Data/Json/Str(value@s)))= /Data/Maybe/Some(value= s)

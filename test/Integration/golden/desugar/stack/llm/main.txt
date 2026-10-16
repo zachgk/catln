@@ -33,9 +33,11 @@ Prgm
                         [ /Llm/llmMessage( Value choice= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
                         , /Llm/llmMessage
                             ( Value choice= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = llmContent
-                            ( Value message= /Data/jsonMember( Value value= Value value )
-                                ( Value key= CStr
-                                    { csValue = "message" }
+                            ( Value message= /Data/Result/toMaybe
+                                ( Value r= /Data/jsonMember( Value value= Value value )
+                                    ( Value key= CStr
+                                        { csValue = "message" }
+                                    )
                                 )
                             )
                         ]
@@ -54,9 +56,11 @@ Prgm
                         [ /Llm/llmContent( Value message= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
                         , /Llm/llmContent
                             ( Value message= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = llmText
-                            ( Value content= /Data/jsonMember( Value value= Value value )
-                                ( Value key= CStr
-                                    { csValue = "content" }
+                            ( Value content= /Data/Result/toMaybe
+                                ( Value r= /Data/jsonMember( Value value= Value value )
+                                    ( Value key= CStr
+                                        { csValue = "content" }
+                                    )
                                 )
                             )
                         ]
@@ -243,17 +247,24 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/llmReply
-                            ( Value response -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ( Value response -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=/Data/JsonParseErr..
+                                ]
+                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmReply( Value response= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
+                        [ /Llm/llmReply
+                            ( Value response= /Data/Result/Fail( Value err ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
                         , /Llm/llmReply
-                            ( Value response= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = llmChoice
-                            ( Value choices= /Data/jsonMember( Value value= Value value )
-                                ( Value key= CStr
-                                    { csValue = "choices" }
+                            ( Value response= /Data/Result/Ok( Value value ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = llmChoice
+                            ( Value choices= /Data/Result/toMaybe
+                                ( Value r= /Data/jsonMember( Value value= Value value )
+                                    ( Value key= CStr
+                                        { csValue = "choices" }
+                                    )
                                 )
                             )
                         ]
@@ -302,9 +313,11 @@ Prgm
                         [ /Llm/llmChoice( Value choices= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
                         , /Llm/llmChoice
                             ( Value choices= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = llmMessage
-                            ( Value choice= /Data/jsonIndex( Value value= Value value )
-                                ( Value i= CInt
-                                    { ciValue = 0 }
+                            ( Value choice= /Data/Result/toMaybe
+                                ( Value r= /Data/jsonIndex( Value value= Value value )
+                                    ( Value i= CInt
+                                        { ciValue = 0 }
+                                    )
                                 )
                             )
                         ]

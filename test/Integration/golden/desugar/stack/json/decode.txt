@@ -6,7 +6,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonNumberExp( Value x -> /Data/Primitive/Float )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -15,7 +18,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '-' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonScaled( Value x= Value x )( Value negative= Value True )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonScaled( Value x= Value x )( Value negative= Value True )
                             ( Value e= jsonDigits
                                 ( Value n= CInt
                                     { ciValue = 0 }
@@ -28,7 +34,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '+' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonScaled( Value x= Value x )( Value negative= Value False )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonScaled( Value x= Value x )( Value negative= Value False )
                             ( Value e= jsonDigits
                                 ( Value n= CInt
                                     { ciValue = 0 }
@@ -37,7 +46,10 @@ Prgm
                                     { ciValue = 0 }
                                 )( Value cs= Value tail )
                             )
-                        , /Data/jsonNumberExp( Value x )( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonScaled( Value x= Value x )( Value negative= Value False )
+                        , /Data/jsonNumberExp( Value x )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonScaled( Value x= Value x )( Value negative= Value False )
                             ( Value e= jsonDigits
                                 ( Value n= CInt
                                     { ciValue = 0 }
@@ -50,6 +62,43 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/jsonMembersUnexpected"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonMembersUnexpected
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value expected -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonMembersUnexpected( Value cs= Value /Data/List/Nil )( Value expected ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMembersStuck
+                            ( Value problem= JsonProblem/UnexpectedEnd( Value expected= Value expected ) )( Value cs= Value /Data/List/Nil )
+                        , /Data/jsonMembersUnexpected
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value expected ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMembersStuck
+                            ( Value problem= JsonProblem/Unexpected( Value c= Value head )( Value expected= Value expected ) )
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/JsonProblem/LoneSurrogate"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/JsonProblem/LoneSurrogate ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/jsonScaled"
                 , ObjectMapItem
                     { omiDecls =
@@ -59,7 +108,10 @@ Prgm
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
                                 , /count=/Data/Primitive/Integer
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -68,9 +120,18 @@ Prgm
                             ( Value e= JsonDigits( Value n )( Value count )( Value rest ) ) | /operator==( Value /l= Value count )
                             ( Value /r= CInt
                                 { ciValue = 0 }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected( Value cs= Value rest )
+                            ( Value expected= CStr
+                                { csValue = "a digit of the exponent" }
+                            )
                         , /Data/jsonScaled( Value x )( Value negative= Value True )
-                            ( Value e= JsonDigits( Value n )( Value count )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ( Value e= JsonDigits( Value n )( Value count )( Value rest ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Number
                                     ( Value value= /operator//( Value /l= Value x )
@@ -81,7 +142,10 @@ Prgm
                                 )( Value rest= Value rest )
                             )
                         , /Data/jsonScaled( Value x )( Value negative= Value False )
-                            ( Value e= JsonDigits( Value n )( Value count )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ( Value e= JsonDigits( Value n )( Value count )( Value rest ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Number
                                     ( Value value= /operator*( Value /l= Value x )
@@ -95,28 +159,79 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/jsonNegate"
+                ( "/Data/jsonEntriesUnexpected"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonNegate
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                        [ /Data/jsonEntriesUnexpected
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value expected -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonNegate( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonEntriesUnexpected( Value cs= Value /Data/List/Nil )( Value expected ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonEntriesStuck
+                            ( Value problem= JsonProblem/UnexpectedEnd( Value expected= Value expected ) )( Value cs= Value /Data/List/Nil )
+                        , /Data/jsonEntriesUnexpected
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value expected ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonEntriesStuck
+                            ( Value problem= JsonProblem/Unexpected( Value c= Value head )( Value expected= Value expected ) )
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonNegate"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonNegate
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonParsed..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonNegate
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonNegate
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonParsed
                                     ( Value value= Json/Number( Value value@Value n ) )( Value rest )
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Number
                                     ( Value value= /operator-( Value /a= Value n ) )
                                 )( Value rest= Value rest )
                             )
-                        , /Data/jsonNegate( Value parsed ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                        , /Data/jsonNegate
+                            ( Value parsed= /Data/Result/Ok
+                                ( Value value= JsonParsed( Value value@Value v )( Value rest ) )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected( Value cs= Value rest )
+                            ( Value expected= CStr
+                                { csValue = "a number" }
+                            )
                         ]
                     }
                 )
@@ -125,16 +240,23 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseUnicode( Value code -> /Data/Primitive/Integer )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value from -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParseUnicode( Value code )( Value cs ) | /operator<( Value /l= Value code )
+                        [ /Data/jsonParseUnicode( Value code )( Value cs )( Value from ) | /operator<( Value /l= Value code )
                             ( Value /r= CInt
                                 { ciValue = 0 }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = Value /Data/Maybe/Nothing
-                        , /Data/jsonParseUnicode( Value code )( Value cs ) | /operator&&
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonCharsStuck( Value problem= Value JsonProblem/BadUnicodeEscape )( Value cs= Value from )
+                        , /Data/jsonParseUnicode( Value code )( Value cs )( Value from ) | /operator&&
                             ( Value /l= /operator>=( Value /l= Value code )
                                 ( Value /r= CInt
                                     { ciValue = 55296 }
@@ -144,8 +266,14 @@ Prgm
                                 ( Value /r= CInt
                                     { ciValue = 56319 }
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonParseLowSurrogate( Value high= Value code )( Value cs= Value cs )
-                        , /Data/jsonParseUnicode( Value code )( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonParseLowSurrogate( Value high= Value code )( Value cs= Value cs )
+                        , /Data/jsonParseUnicode( Value code )( Value cs )( Value from ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= fromCode( Value code= Value code ) )
                             ( Value parsed= jsonParseChars( Value cs= Value cs ) )
                         ]
@@ -181,27 +309,105 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/JsonProblem/BadUnicodeEscape"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/JsonProblem/BadUnicodeEscape ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/jsonExpect"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonExpect
+                        [ /Data/jsonExpect( Value literal -> ∀/Data/String )
                             ( Value word -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value value -> ∀/Data/Json ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value value -> ∀/Data/Json ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonExpect( Value word= Value /Data/List/Nil )( Value cs )( Value value ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                        [ /Data/jsonExpect( Value literal )( Value word= Value /Data/List/Nil )( Value cs )( Value value ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed( Value value= Value value )( Value rest= Value cs ) )
-                        , /Data/jsonExpect
-                            ( Value word= /Data/List/Cons( Value head )( Value tail ) )( Value cs= Value /Data/List/Nil )( Value value ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
-                        , /Data/jsonExpect
+                        , /Data/jsonExpect( Value literal )
+                            ( Value word= /Data/List/Cons( Value head )( Value tail ) )( Value cs= Value /Data/List/Nil )( Value value ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected( Value cs= Value /Data/List/Nil )
+                            ( Value expected= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "'" }
+                                    )( Value /r= Value literal )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = "'" }
+                                )
+                            )
+                        , /Data/jsonExpect( Value literal )
                             ( Value word= /Data/List/Cons( Value head@Value w )( Value tail@Value ws ) )
-                            ( Value cs= /Data/List/Cons( Value head@Value c )( Value tail@Value more ) )( Value value ) | /operator==( Value /l= Value w )( Value /r= Value c ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonExpect( Value word= Value ws )( Value cs= Value more )( Value value= Value value )
-                        , /Data/jsonExpect
+                            ( Value cs= /Data/List/Cons( Value head@Value c )( Value tail@Value more ) )( Value value ) | /operator==( Value /l= Value w )( Value /r= Value c ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonExpect( Value literal= Value literal )( Value word= Value ws )( Value cs= Value more )( Value value= Value value )
+                        , /Data/jsonExpect( Value literal )
                             ( Value word= /Data/List/Cons( Value head@Value w )( Value tail@Value ws ) )
-                            ( Value cs= /Data/List/Cons( Value head@Value c )( Value tail@Value more ) )( Value value ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                            ( Value cs= /Data/List/Cons( Value head@Value c )( Value tail@Value more ) )( Value value ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected
+                            ( Value cs= /Data/List/Cons( Value head= Value c )( Value tail= Value more ) )
+                            ( Value expected= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "'" }
+                                    )( Value /r= Value literal )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = "'" }
+                                )
+                            )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/jsonEntriesStuck"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonEntriesStuck( Value problem -> ∀/Data/JsonProblem )
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonEntriesStuck( Value problem )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonStuck( Value problem= Value problem )
+                                ( Value left= length( Value /this= Value cs ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/JsonAccessErr/NotAnObject"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonAccessErr/NotAnObject( Value /found -> ∀/Data/Json )( Value /key -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -209,16 +415,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonMemberValue( Value key -> ∀/Data/String )
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonParsed..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonMemberValue( Value key )( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonMemberValue( Value key )
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonMemberValue( Value key )
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonParsed( Value value@Value v )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = jsonMemberAfter
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMemberAfter
                             ( Value member= Json/Member( Value key= Value key )( Value value= Value v ) )
                             ( Value cs= jsonSkipWs( Value cs= Value rest ) )
                         ]
@@ -229,16 +449,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonObjectOf
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonMembers..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonObjectOf( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonObjectOf
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonObjectOf
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonMembers( Value members )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Object( Value entries= Value members ) )( Value rest= Value rest )
                             )
@@ -246,19 +480,33 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/JsonProblem/BadEscape"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonProblem/BadEscape( Value /c -> /Data/Char ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/jsonReencodedOf"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonReencodedOf
-                            ( Value parsed -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> ∀/Data/String
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=/Data/JsonParseErr..
+                                ]
+                            ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonReencodedOf( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/String = CStr
-                            { csValue = "not JSON" }
+                        [ /Data/jsonReencodedOf
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/String = msg( Value /this= Value err )
                         , /Data/jsonReencodedOf
-                            ( Value parsed= /Data/Maybe/Some( Value value ) ) -> ∀/Data/String = jsonEncode( Value value= Value value )
+                            ( Value parsed= /Data/Result/Ok( Value value ) ) -> ∀/Data/String = jsonEncode( Value value= Value value )
                         ]
                     }
                 )
@@ -267,7 +515,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseArray
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -276,13 +527,29 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = ']' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Array( Value entries= Value /Data/List/Nil ) )( Value rest= Value tail )
                             )
-                        , /Data/jsonParseArray( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonArrayOf
+                        , /Data/jsonParseArray( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonArrayOf
                             ( Value parsed= jsonParseEntries( Value cs= Value cs ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/JsonAccessErr/OutOfRange"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonAccessErr/OutOfRange( Value /i -> /Data/Primitive/Integer )( Value /length -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -290,16 +557,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonConsChar( Value c -> /Data/Char )
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonChars..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonConsChar( Value c )( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonConsChar( Value c )
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonConsChar( Value c )
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonChars( Value chars )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonChars
                                 ( Value chars= /Data/List/Cons( Value head= Value c )( Value tail= Value chars ) )( Value rest= Value rest )
                             )
@@ -311,25 +592,45 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseChars
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParseChars( Value cs= Value /Data/List/Nil ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonParseChars( Value cs= Value /Data/List/Nil ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonCharsStuck
+                            ( Value problem= JsonProblem/UnexpectedEnd
+                                ( Value expected= CStr
+                                    { csValue = "a closing quote" }
+                                )
+                            )( Value cs= Value /Data/List/Nil )
                         , /Data/jsonParseChars
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonChars( Value chars= Value /Data/List/Nil )( Value rest= Value tail ) )
                         , /Data/jsonParseChars
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '\\' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonParseEscape( Value cs= Value tail )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonParseEscape( Value cs= Value tail )
                         , /Data/jsonParseChars
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar( Value c= Value head )
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar( Value c= Value head )
                             ( Value parsed= jsonParseChars( Value cs= Value tail ) )
                         ]
                     }
@@ -338,15 +639,23 @@ Prgm
                 ( "/Data/jsonParse"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonParse( Value text -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] ]
+                        [ /Data/jsonParse( Value text -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ]
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/jsonParse
-                            ( Value text= String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = jsonParsedWhole
+                            ( Value text= String/Text( Value chars ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ] = jsonParsedWhole
                             ( Value parsed= jsonParseValue
                                 ( Value cs= jsonSkipWs( Value cs= Value chars ) )
                             )
+                            ( Value total= length( Value /this= Value chars ) )
                         ]
                     }
                 )
@@ -355,17 +664,32 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseValue
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParseValue( Value cs= Value /Data/List/Nil ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonParseValue( Value cs= Value /Data/List/Nil ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected( Value cs= Value /Data/List/Nil )
+                            ( Value expected= CStr
+                                { csValue = "a value" }
+                            )
                         , /Data/jsonParseValue
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'n' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonExpect
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonExpect
+                            ( Value literal= CStr
+                                { csValue = "null" }
+                            )
                             ( Value word= /Data/List/Cons
                                 ( Value /head= CChar
                                     { chValue = 'u' }
@@ -385,7 +709,13 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 't' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonExpect
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonExpect
+                            ( Value literal= CStr
+                                { csValue = "true" }
+                            )
                             ( Value word= /Data/List/Cons
                                 ( Value /head= CChar
                                     { chValue = 'r' }
@@ -406,7 +736,13 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'f' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonExpect
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonExpect
+                            ( Value literal= CStr
+                                { csValue = "false" }
+                            )
                             ( Value word= /Data/List/Cons
                                 ( Value /head= CChar
                                     { chValue = 'a' }
@@ -432,32 +768,87 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonStrParsed
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonStrParsed
                             ( Value parsed= jsonParseChars( Value cs= Value tail ) )
                         , /Data/jsonParseValue
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '[' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonParseArray
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonParseArray
                             ( Value cs= jsonSkipWs( Value cs= Value tail ) )
                         , /Data/jsonParseValue
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '{' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonParseObject
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonParseObject
                             ( Value cs= jsonSkipWs( Value cs= Value tail ) )
                         , /Data/jsonParseValue
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '-' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonNegate
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonNegate
                             ( Value parsed= jsonParseNumber( Value cs= Value tail ) )
                         , /Data/jsonParseValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | jsonIsDigit( Value c= Value head ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonParseNumber
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | jsonIsDigit( Value c= Value head ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonParseNumber
                             ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
                         , /Data/jsonParseValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
+                            ( Value expected= CStr
+                                { csValue = "a value" }
+                            )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/jsonCharsStuck"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonCharsStuck( Value problem -> ∀/Data/JsonProblem )
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonCharsStuck( Value problem )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonStuck( Value problem= Value problem )
+                                ( Value left= length( Value /this= Value cs ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/JsonStuck"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonStuck( Value /problem -> ∀/Data/JsonProblem )( Value /left -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -483,20 +874,56 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonMemberIn
-                            ( Value members -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] )( Value key -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=∀/Data/Json ]
+                            ( Value members -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] )( Value key -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonMemberIn( Value members= Value /Data/List/Nil )( Value key ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonMemberIn( Value members= Value /Data/List/Nil )( Value key ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonAccessErr/NoMember( Value key= Value key ) )
                         , /Data/jsonMemberIn
                             ( Value members= /Data/List/Cons
                                 ( Value head= Json/Member( Value key@Value k )( Value value@Value v ) )( Value tail )
-                            )( Value key ) | /operator==( Value /l= Value k )( Value /r= Value key ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = /Data/Maybe/Some( Value value= Value v )
+                            )( Value key ) | /operator==( Value /l= Value k )( Value /r= Value key ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Ok( Value value= Value v )
                         , /Data/jsonMemberIn
                             ( Value members= /Data/List/Cons
                                 ( Value head= Json/Member( Value key@Value k )( Value value@Value v ) )( Value tail )
-                            )( Value key ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = jsonMemberIn( Value members= Value tail )( Value key= Value key )
+                            )( Value key ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = jsonMemberIn( Value members= Value tail )( Value key= Value key )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonStuck"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonStuck( Value problem -> ∀/Data/JsonProblem )
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonStuck( Value problem )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonStuck( Value problem= Value problem )
+                                ( Value left= length( Value /this= Value cs ) )
+                            )
                         ]
                     }
                 )
@@ -505,7 +932,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonEntryAfter( Value v -> ∀/Data/Json )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -514,7 +944,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = ']' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonEntries
                                 ( Value entries= /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil ) )( Value rest= Value tail )
                             )
@@ -522,9 +955,18 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = ',' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = jsonConsEntry( Value v= Value v )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsEntry( Value v= Value v )
                             ( Value parsed= jsonParseEntries( Value cs= Value tail ) )
-                        , /Data/jsonEntryAfter( Value v )( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = Value /Data/Maybe/Nothing
+                        , /Data/jsonEntryAfter( Value v )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonEntriesUnexpected( Value cs= Value cs )
+                            ( Value expected= CStr
+                                { csValue = "',' or ']'" }
+                            )
                         ]
                     }
                 )
@@ -533,7 +975,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonMemberColon( Value key -> ∀/Data/String )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -542,11 +987,20 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = ':' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = jsonMemberValue( Value key= Value key )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMemberValue( Value key= Value key )
                             ( Value parsed= jsonParseValue
                                 ( Value cs= jsonSkipWs( Value cs= Value tail ) )
                             )
-                        , /Data/jsonMemberColon( Value key )( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = Value /Data/Maybe/Nothing
+                        , /Data/jsonMemberColon( Value key )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMembersUnexpected( Value cs= Value cs )
+                            ( Value expected= CStr
+                                { csValue = "':'" }
+                            )
                         ]
                     }
                 )
@@ -555,16 +1009,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonMemberKey
-                            ( Value key -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ]
+                            ( Value key -> ∀/Data/Result
+                                [ /T=/Data/JsonChars..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonMemberKey( Value key= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonMemberKey
+                            ( Value key= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonMemberKey
-                            ( Value key= /Data/Maybe/Some
+                            ( Value key= /Data/Result/Ok
                                 ( Value value= JsonChars( Value chars )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = jsonMemberColon
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMemberColon
                             ( Value key= String/Text( Value chars= Value chars ) )
                             ( Value cs= jsonSkipWs( Value cs= Value rest ) )
                         ]
@@ -575,7 +1043,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseLowSurrogate( Value high -> /Data/Primitive/Integer )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -591,7 +1062,10 @@ Prgm
                                     )( Value tail@Value more )
                                 )
                             ) | jsonIsLowSurrogate
-                            ( Value code= jsonHex4( Value cs= Value more ) ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ( Value code= jsonHex4( Value cs= Value more ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= fromCode
                                 ( Value code= /operator+
                                     ( Value /l= /operator+
@@ -620,7 +1094,10 @@ Prgm
                             ( Value parsed= jsonParseChars
                                 ( Value cs= jsonDrop4( Value cs= Value more ) )
                             )
-                        , /Data/jsonParseLowSurrogate( Value high )( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = Value /Data/Maybe/Nothing
+                        , /Data/jsonParseLowSurrogate( Value high )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonCharsStuck( Value problem= Value JsonProblem/LoneSurrogate )( Value cs= Value cs )
                         ]
                     }
                 )
@@ -629,16 +1106,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonStrParsed
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonChars..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonStrParsed( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonStrParsed
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonStrParsed
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonChars( Value chars )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Str
                                     ( Value value= String/Text( Value chars= Value chars ) )
@@ -652,19 +1143,101 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonConsEntry( Value v -> ∀/Data/Json )
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonEntries..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonConsEntry( Value v )( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonConsEntry( Value v )
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonConsEntry( Value v )
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonEntries( Value entries )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonEntries
                                 ( Value entries= /Data/List/Cons( Value head= Value v )( Value tail= Value entries ) )( Value rest= Value rest )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonWhole"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonWhole( Value v -> ∀/Data/Json )
+                            ( Value rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value total -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonWhole( Value v )( Value rest= Value /Data/List/Nil )( Value total ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ] = /Data/Result/Ok( Value value= Value v )
+                        , /Data/jsonWhole( Value v )
+                            ( Value rest= /Data/List/Cons( Value head )( Value tail ) )( Value total ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonParseErr
+                                ( Value problem= JsonProblem/Unexpected( Value c= Value head )
+                                    ( Value expected= CStr
+                                        { csValue = "the end of the text" }
+                                    )
+                                )
+                                ( Value at= /operator-( Value /l= Value total )
+                                    ( Value /r= /operator+
+                                        ( Value /l= CInt
+                                            { ciValue = 1 }
+                                        )
+                                        ( Value /r= length( Value /this= Value tail ) )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonKind( Value j -> ∀/Data/Json ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonKind( Value j= Value Json/Null ) -> ∀/Data/String = CStr
+                            { csValue = "null" }
+                        , /Data/jsonKind
+                            ( Value j= Json/Bool( Value value ) ) -> ∀/Data/String = CStr
+                            { csValue = "a boolean" }
+                        , /Data/jsonKind
+                            ( Value j= Json/Number( Value value ) ) -> ∀/Data/String = CStr
+                            { csValue = "a number" }
+                        , /Data/jsonKind
+                            ( Value j= Json/Str( Value value ) ) -> ∀/Data/String = CStr
+                            { csValue = "a string" }
+                        , /Data/jsonKind
+                            ( Value j= Json/Array( Value entries ) ) -> ∀/Data/String = CStr
+                            { csValue = "an array" }
+                        , /Data/jsonKind
+                            ( Value j= Json/Object( Value entries ) ) -> ∀/Data/String = CStr
+                            { csValue = "an object" }
                         ]
                     }
                 )
@@ -686,16 +1259,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonArrayOf
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonEntries..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonArrayOf( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonArrayOf
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonArrayOf
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonEntries( Value entries )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Array( Value entries= Value entries ) )( Value rest= Value rest )
                             )
@@ -712,7 +1299,10 @@ Prgm
                                 , /key=∀/Data/String
                                 )
                             )
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -721,7 +1311,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '}' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonMembers
                                 ( Value members= /Data/List/Cons( Value /head= Value member )( Value /tail= Value /Data/List/Nil ) )( Value rest= Value tail )
                             )
@@ -729,12 +1322,31 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = ',' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = jsonConsMember( Value member= Value member )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsMember( Value member= Value member )
                             ( Value parsed= jsonParseMembers
                                 ( Value cs= jsonSkipWs( Value cs= Value tail ) )
                             )
-                        , /Data/jsonMemberAfter( Value member )( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = Value /Data/Maybe/Nothing
+                        , /Data/jsonMemberAfter( Value member )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMembersUnexpected( Value cs= Value cs )
+                            ( Value expected= CStr
+                                { csValue = "',' or '}'" }
+                            )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/JsonProblem/UnexpectedEnd"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonProblem/UnexpectedEnd( Value /expected -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -742,17 +1354,31 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseEscape
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParseEscape( Value cs= Value /Data/List/Nil ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonParseEscape( Value cs= Value /Data/List/Nil ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonCharsStuck
+                            ( Value problem= JsonProblem/UnexpectedEnd
+                                ( Value expected= CStr
+                                    { csValue = "an escape" }
+                                )
+                            )( Value cs= Value /Data/List/Nil )
                         , /Data/jsonParseEscape
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '"' }
                             )
@@ -761,7 +1387,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '\\' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '\\' }
                             )
@@ -770,7 +1399,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '/' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '/' }
                             )
@@ -779,7 +1411,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'b' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '\b' }
                             )
@@ -788,7 +1423,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'f' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '\f' }
                             )
@@ -797,7 +1435,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'n' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '\n' }
                             )
@@ -806,7 +1447,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'r' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '\r' }
                             )
@@ -815,7 +1459,10 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 't' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonConsChar
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonConsChar
                             ( Value c= CChar
                                 { chValue = '\t' }
                             )
@@ -824,11 +1471,20 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = 'u' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = jsonParseUnicode
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonParseUnicode
                             ( Value code= jsonHex4( Value cs= Value tail ) )
                             ( Value cs= jsonDrop4( Value cs= Value tail ) )
+                            ( Value from= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
                         , /Data/jsonParseEscape
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Maybe[ /T=/Data/JsonChars.. ] = Value /Data/Maybe/Nothing
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonChars..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonCharsStuck
+                            ( Value problem= JsonProblem/BadEscape( Value c= Value head ) )
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
                         ]
                     }
                 )
@@ -836,13 +1492,24 @@ Prgm
                 ( "/Data/jsonIndex"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonIndex( Value value -> ∀/Data/Json )( Value i -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] ]
+                        [ /Data/jsonIndex( Value value -> ∀/Data/Json )( Value i -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ]
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/jsonIndex
-                            ( Value value= Json/Array( Value entries ) )( Value i ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = jsonIndexIn( Value entries= Value entries )( Value i= Value i )
-                        , /Data/jsonIndex( Value value )( Value i ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = Value /Data/Maybe/Nothing
+                            ( Value value= Json/Array( Value entries ) )( Value i ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = jsonIndexOf( Value entries= Value entries )( Value i= Value i )
+                        , /Data/jsonIndex( Value value )( Value i ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonAccessErr/NotAnArray( Value found= Value value )( Value i= Value i ) )
                         ]
                     }
                 )
@@ -886,14 +1553,35 @@ Prgm
                 ( "/Data/jsonMember"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonMember( Value value -> ∀/Data/Json )( Value key -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] ]
+                        [ /Data/jsonMember( Value value -> ∀/Data/Json )( Value key -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ]
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/jsonMember
-                            ( Value value= Json/Object( Value entries ) )( Value key ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = jsonMemberIn( Value members= Value entries )( Value key= Value key )
-                        , /Data/jsonMember( Value value )( Value key ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = Value /Data/Maybe/Nothing
+                            ( Value value= Json/Object( Value entries ) )( Value key ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = jsonMemberIn( Value members= Value entries )( Value key= Value key )
+                        , /Data/jsonMember( Value value )( Value key ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonAccessErr/NotAnObject( Value found= Value value )( Value key= Value key ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/JsonAccessErr/NotAnArray"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonAccessErr/NotAnArray( Value /found -> ∀/Data/Json )( Value /i -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -901,12 +1589,18 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseNumber
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParseNumber( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonNumberInt
+                        [ /Data/jsonParseNumber( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonNumberInt
                             ( Value whole= jsonDigits
                                 ( Value n= CInt
                                     { ciValue = 0 }
@@ -916,6 +1610,16 @@ Prgm
                                 )( Value cs= Value cs )
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/JsonParseErr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonParseErr( Value /problem -> ∀/Data/JsonProblem )( Value /at -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -941,26 +1645,76 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/jsonParsedWhole"
+                ( "/Data/jsonAccessText"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonParsedWhole
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] ) -> ∀/Data/Maybe[ /T=∀/Data/Json ]
+                        [ /Data/jsonAccessText
+                            ( Value r -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParsedWhole( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = Value /Data/Maybe/Nothing
-                        , /Data/jsonParsedWhole
-                            ( Value parsed= /Data/Maybe/Some
-                                ( Value value= JsonParsed( Value value@Value v )( Value rest ) )
-                            ) | jsonAtEnd
-                            ( Value cs= jsonSkipWs( Value cs= Value rest ) ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = /Data/Maybe/Some( Value value= Value v )
-                        , /Data/jsonParsedWhole
-                            ( Value parsed= /Data/Maybe/Some
-                                ( Value value= JsonParsed( Value value@Value v )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonAccessText
+                            ( Value r= /Data/Result/Ok( Value value ) ) -> ∀/Data/String = jsonEncode( Value value= Value value )
+                        , /Data/jsonAccessText
+                            ( Value r= /Data/Result/Fail( Value err ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "error: " }
+                            )
+                            ( Value /r= msg( Value /this= Value err ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/jsonParsedWhole"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonParsedWhole
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonParsed..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            )( Value total -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonParsedWhole
+                            ( Value parsed= /Data/Result/Fail
+                                ( Value err= JsonStuck( Value problem )( Value left ) )
+                            )( Value total ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonParseErr( Value problem= Value problem )
+                                ( Value at= /operator-( Value /l= Value total )( Value /r= Value left ) )
+                            )
+                        , /Data/jsonParsedWhole
+                            ( Value parsed= /Data/Result/Ok
+                                ( Value value= JsonParsed( Value value@Value v )( Value rest ) )
+                            )( Value total ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=/Data/JsonParseErr..
+                            ] = jsonWhole( Value v= Value v )
+                            ( Value rest= jsonSkipWs( Value cs= Value rest ) )( Value total= Value total )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/JsonProblem/Unexpected"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonProblem/Unexpected( Value /c -> /Data/Char )( Value /expected -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -1042,28 +1796,64 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/jsonIndexIn"
+                ( "/Data/jsonMembersStuck"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/jsonIndexIn
-                            ( Value entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] )( Value i -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=∀/Data/Json ]
+                        [ /Data/jsonMembersStuck( Value problem -> ∀/Data/JsonProblem )
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonIndexIn( Value entries= Value /Data/List/Nil )( Value i ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonMembersStuck( Value problem )( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonStuck( Value problem= Value problem )
+                                ( Value left= length( Value /this= Value cs ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonIndexIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonIndexIn
+                            ( Value entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] )( Value i -> /Data/Primitive/Integer )( Value asked -> /Data/Primitive/Integer )( Value length -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonIndexIn( Value entries= Value /Data/List/Nil )( Value i )( Value asked )( Value length ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonAccessErr/OutOfRange( Value i= Value asked )( Value length= Value length ) )
                         , /Data/jsonIndexIn
-                            ( Value entries= /Data/List/Cons( Value head )( Value tail ) )( Value i ) | /operator==( Value /l= Value i )
+                            ( Value entries= /Data/List/Cons( Value head )( Value tail ) )( Value i )( Value asked )( Value length ) | /operator==( Value /l= Value i )
                             ( Value /r= CInt
                                 { ciValue = 0 }
-                            ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = /Data/Maybe/Some( Value value= Value head )
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Ok( Value value= Value head )
                         , /Data/jsonIndexIn
-                            ( Value entries= /Data/List/Cons( Value head )( Value tail ) )( Value i ) -> ∀/Data/Maybe[ /T=∀/Data/Json ] = jsonIndexIn( Value entries= Value tail )
+                            ( Value entries= /Data/List/Cons( Value head )( Value tail ) )( Value i )( Value asked )( Value length ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = jsonIndexIn( Value entries= Value tail )
                             ( Value i= /operator-( Value /l= Value i )
                                 ( Value /r= CInt
                                     { ciValue = 1 }
                                 )
-                            )
+                            )( Value asked= Value asked )( Value length= Value length )
                         ]
                     }
                 )
@@ -1090,18 +1880,87 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/jsonAtEnd"
+                ( "/Data/msg"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/jsonAtEnd
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
-                        ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonAtEnd( Value cs= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value True
-                        , /Data/jsonAtEnd
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = Value False
+                        [ /Data/msg
+                            ( Value /this= /Data/JsonParseErr( Value problem )( Value at ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "not JSON: " }
+                                    )
+                                    ( Value /r= jsonProblemText( Value problem= Value problem ) )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = ", at character " }
+                                )
+                            )
+                            ( Value /r= toString( Value /this= Value at ) )
+                        , /Data/msg
+                            ( Value /this= /Data/JsonAccessErr/NotAnObject( Value found )( Value key ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= CStr
+                                            { csValue = "there is no member "" }
+                                        )( Value /r= Value key )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = "" of " }
+                                    )
+                                )
+                                ( Value /r= jsonKind( Value j= Value found ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = ", which is not an object" }
+                            )
+                        , /Data/msg
+                            ( Value /this= /Data/JsonAccessErr/NoMember( Value key ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "the object has no member "" }
+                                )( Value /r= Value key )
+                            )
+                            ( Value /r= CStr
+                                { csValue = """ }
+                            )
+                        , /Data/msg
+                            ( Value /this= /Data/JsonAccessErr/NotAnArray( Value found )( Value i ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= CStr
+                                            { csValue = "there is no entry " }
+                                        )
+                                        ( Value /r= toString( Value /this= Value i ) )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = " of " }
+                                    )
+                                )
+                                ( Value /r= jsonKind( Value j= Value found ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = ", which is not an array" }
+                            )
+                        , /Data/msg
+                            ( Value /this= /Data/JsonAccessErr/OutOfRange( Value i )( Value length ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "there is no entry " }
+                                    )
+                                    ( Value /r= toString( Value /this= Value i ) )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = " of an array of " }
+                                )
+                            )
+                            ( Value /r= toString( Value /this= Value length ) )
                         ]
                     }
                 )
@@ -1115,16 +1974,30 @@ Prgm
                                 , /key=∀/Data/String
                                 )
                             )
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonMembers..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonConsMember( Value member )( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonConsMember( Value member )
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonConsMember( Value member )
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonMembers( Value members )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonMembers
                                 ( Value members= /Data/List/Cons( Value head= Value member )( Value tail= Value members ) )( Value rest= Value rest )
                             )
@@ -1136,7 +2009,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseObject
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1145,11 +2021,17 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '}' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Object( Value entries= Value /Data/List/Nil ) )( Value rest= Value tail )
                             )
-                        , /Data/jsonParseObject( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonObjectOf
+                        , /Data/jsonParseObject( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonObjectOf
                             ( Value parsed= jsonParseMembers( Value cs= Value cs ) )
                         ]
                     }
@@ -1260,6 +2142,37 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/jsonIndexOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonIndexOf
+                            ( Value entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] )( Value i -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonIndexOf( Value entries )( Value i ) | /operator>=( Value /l= Value i )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = jsonIndexIn( Value entries= Value entries )( Value i= Value i )( Value asked= Value i )
+                            ( Value length= length( Value /this= Value entries ) )
+                        , /Data/jsonIndexOf( Value entries )( Value i ) -> ∀/Data/Result
+                            [ /T=∀/Data/Json
+                            , /E=∀/Data/JsonAccessErr
+                            ] = /Data/Result/Fail
+                            ( Value err= JsonAccessErr/OutOfRange( Value i= Value i )
+                                ( Value length= length( Value /this= Value entries ) )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/jsonHexJoin"
                 , ObjectMapItem
                     { omiDecls =
@@ -1335,15 +2248,49 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseEntries
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonParseEntries( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = jsonEntryThen
+                        [ /Data/jsonParseEntries( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonEntryThen
                             ( Value parsed= jsonParseValue
                                 ( Value cs= jsonSkipWs( Value cs= Value cs ) )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/jsonUnexpected"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonUnexpected
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value expected -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonUnexpected( Value cs= Value /Data/List/Nil )( Value expected ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonStuck
+                            ( Value problem= JsonProblem/UnexpectedEnd( Value expected= Value expected ) )( Value cs= Value /Data/List/Nil )
+                        , /Data/jsonUnexpected
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value expected ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonStuck
+                            ( Value problem= JsonProblem/Unexpected( Value c= Value head )( Value expected= Value expected ) )
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
                         ]
                     }
                 )
@@ -1357,7 +2304,10 @@ Prgm
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
                                 , /count=/Data/Primitive/Integer
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1366,7 +2316,13 @@ Prgm
                             ( Value frac= JsonDigits( Value n@Value f )( Value count )( Value rest ) ) | /operator==( Value /l= Value count )
                             ( Value /r= CInt
                                 { ciValue = 0 }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected( Value cs= Value rest )
+                            ( Value expected= CStr
+                                { csValue = "a digit" }
+                            )
                         , /Data/jsonNumberFrac( Value n )
                             ( Value frac= JsonDigits( Value n@Value f )( Value count )
                                 ( Value rest= /Data/List/Cons( Value head )( Value tail ) )
@@ -1387,7 +2343,10 @@ Prgm
                                         { chValue = 'E' }
                                     )
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonNumberExp
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonNumberExp
                             ( Value x= /operator+
                                 ( Value /l= toFloat( Value /this= Value n ) )
                                 ( Value /r= /operator//
@@ -1398,7 +2357,10 @@ Prgm
                                 )
                             )( Value cs= Value tail )
                         , /Data/jsonNumberFrac( Value n )
-                            ( Value frac= JsonDigits( Value n@Value f )( Value count )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ( Value frac= JsonDigits( Value n@Value f )( Value count )( Value rest ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Number
                                     ( Value value= /operator+
@@ -1420,16 +2382,30 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonEntryThen
-                            ( Value parsed -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ]
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Data/JsonParsed..
+                                , /E=/Data/JsonStuck..
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/jsonEntryThen( Value parsed= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = Value /Data/Maybe/Nothing
+                        [ /Data/jsonEntryThen
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Fail( Value err= Value err )
                         , /Data/jsonEntryThen
-                            ( Value parsed= /Data/Maybe/Some
+                            ( Value parsed= /Data/Result/Ok
                                 ( Value value= JsonParsed( Value value@Value v )( Value rest ) )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonEntries.. ] = jsonEntryAfter( Value v= Value v )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonEntries..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonEntryAfter( Value v= Value v )
                             ( Value cs= jsonSkipWs( Value cs= Value rest ) )
                         ]
                     }
@@ -1439,7 +2415,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/jsonParseMembers
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ]
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1448,9 +2427,18 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator==( Value /l= Value head )
                             ( Value /r= CChar
                                 { chValue = '"' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = jsonMemberKey
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMemberKey
                             ( Value key= jsonParseChars( Value cs= Value tail ) )
-                        , /Data/jsonParseMembers( Value cs ) -> ∀/Data/Maybe[ /T=/Data/JsonMembers.. ] = Value /Data/Maybe/Nothing
+                        , /Data/jsonParseMembers( Value cs ) -> ∀/Data/Result
+                            [ /T=/Data/JsonMembers..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonMembersUnexpected( Value cs= Value cs )
+                            ( Value expected= CStr
+                                { csValue = "a quoted key" }
+                            )
                         ]
                     }
                 )
@@ -1477,7 +2465,10 @@ Prgm
                                 , /rest=∀/Data/List/ConsList[ /T=/Data/Char ]
                                 , /count=/Data/Primitive/Integer
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ]
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1486,7 +2477,13 @@ Prgm
                             ( Value whole= JsonDigits( Value n )( Value count )( Value rest ) ) | /operator==( Value /l= Value count )
                             ( Value /r= CInt
                                 { ciValue = 0 }
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = Value /Data/Maybe/Nothing
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonUnexpected( Value cs= Value rest )
+                            ( Value expected= CStr
+                                { csValue = "a digit" }
+                            )
                         , /Data/jsonNumberInt
                             ( Value whole= JsonDigits( Value n )( Value count )
                                 ( Value rest= /Data/List/Cons( Value head )( Value tail ) )
@@ -1500,7 +2497,10 @@ Prgm
                                 ( Value /r= CChar
                                     { chValue = '.' }
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonNumberFrac( Value n= Value n )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonNumberFrac( Value n= Value n )
                             ( Value frac= jsonDigits
                                 ( Value n= CInt
                                     { ciValue = 0 }
@@ -1529,13 +2529,83 @@ Prgm
                                         { chValue = 'E' }
                                     )
                                 )
-                            ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = jsonNumberExp
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = jsonNumberExp
                             ( Value x= toFloat( Value /this= Value n ) )( Value cs= Value tail )
                         , /Data/jsonNumberInt
-                            ( Value whole= JsonDigits( Value n )( Value count )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/JsonParsed.. ] = /Data/Maybe/Some
+                            ( Value whole= JsonDigits( Value n )( Value count )( Value rest ) ) -> ∀/Data/Result
+                            [ /T=/Data/JsonParsed..
+                            , /E=/Data/JsonStuck..
+                            ] = /Data/Result/Ok
                             ( Value value= JsonParsed
                                 ( Value value= Json/Number( Value value= Value n ) )( Value rest= Value rest )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/JsonAccessErr/NoMember"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/JsonAccessErr/NoMember( Value /key -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/jsonProblemText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/jsonProblemText( Value problem -> ∀/Data/JsonProblem ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/jsonProblemText
+                            ( Value problem= JsonProblem/UnexpectedEnd( Value expected ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "the text ends where " }
+                                )( Value /r= Value expected )
+                            )
+                            ( Value /r= CStr
+                                { csValue = " was expected" }
+                            )
+                        , /Data/jsonProblemText
+                            ( Value problem= JsonProblem/Unexpected( Value c )( Value expected ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= CStr
+                                            { csValue = "'" }
+                                        )
+                                        ( Value /r= toString( Value /this= Value c ) )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = "' is where " }
+                                    )
+                                )( Value /r= Value expected )
+                            )
+                            ( Value /r= CStr
+                                { csValue = " was expected" }
+                            )
+                        , /Data/jsonProblemText
+                            ( Value problem= JsonProblem/BadEscape( Value c ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "'\" }
+                                )
+                                ( Value /r= toString( Value /this= Value c ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "' is not an escape" }
+                            )
+                        , /Data/jsonProblemText( Value problem= Value JsonProblem/BadUnicodeEscape ) -> ∀/Data/String = CStr
+                            { csValue = "'\u' is not followed by four hexadecimal digits" }
+                        , /Data/jsonProblemText( Value problem= Value JsonProblem/LoneSurrogate ) -> ∀/Data/String = CStr
+                            { csValue = "the first half of a surrogate pair is not followed by the second" }
                         ]
                     }
                 )
@@ -1607,6 +2677,83 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends =
+                [ /Data/JsonParseErr
+                    ( /at=/Data/Primitive/Integer
+                    , /problem=∀/Data/JsonProblem
+                    )
+                , ∀/Data/JsonAccessErr
+                ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/JsonAccessErr
+            , cgcExtends =
+                [ /Data/JsonAccessErr/NotAnObject
+                    ( /key=∀/Data/String
+                    , /found=∀/Data/Json
+                    )
+                , /Data/JsonAccessErr/NoMember( /key=∀/Data/String )
+                , /Data/JsonAccessErr/NotAnArray
+                    ( /found=∀/Data/Json
+                    , /i=/Data/Primitive/Integer
+                    )
+                , /Data/JsonAccessErr/OutOfRange
+                    ( /length=/Data/Primitive/Integer
+                    , /i=/Data/Primitive/Integer
+                    )
+                ]
+            , cgcDoc = Just "[JsonAccessErr] is why a part of a [Json] is not there: the member [key] was asked of a value
+              [found] that is not an object ([NotAnObject]) or of an object without it ([NoMember]); or the
+              entry [i] was asked of a value [found] that is not an array ([NotAnArray]) or of an array of
+              [length] entries without it ([OutOfRange])."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/JsonProblem
+            , cgcExtends =
+                [ /Data/JsonProblem/UnexpectedEnd( /expected=∀/Data/String )
+                , /Data/JsonProblem/Unexpected
+                    ( /expected=∀/Data/String
+                    , /c=/Data/Char
+                    )
+                , /Data/JsonProblem/BadEscape( /c=/Data/Char )
+                , /Data/JsonProblem/BadUnicodeEscape
+                , /Data/JsonProblem/LoneSurrogate
+                ]
+            , cgcDoc = Just "[JsonProblem] is what is wrong where JSON text stops being JSON: the text ends where
+              [expected] was ([UnexpectedEnd]); the character [c] is where [expected] was ([Unexpected]);
+              a backslash is followed by [c], which starts no escape ([BadEscape]); a @\u@ is not followed
+              by four hexadecimal digits ([BadUnicodeEscape]); or the first half of a surrogate pair is not
+              followed by the second ([LoneSurrogate])."
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -1615,10 +2762,18 @@ Prgm
                 [jsonParse] reads JSON text into the [Json] it says: the body a JSON API answered with, say.
                 Written in Catln over the characters of the text, as a recursive descent: each kind of value is
                 read by a function taking the characters from where it starts and answering with the value and
-                the characters after it, or with [/Data/Maybe/Nothing] where the text is not that kind of value.
+                the characters after it, or failing where the text is not that kind of value.
                 It reads what JSON is and nothing more. Text that is not JSON — a trailing comma, a quote left
-                open, anything after the value but spaces — is answered with [/Data/Maybe/Nothing] rather than
-                with the part that could be read." }
+                open, anything after the value but spaces — fails with a [JsonParseErr] saying what was found
+                where, rather than answering with the part that could be read." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[JsonProblem] is what is wrong where JSON text stops being JSON: the text ends where
+                [expected] was ([UnexpectedEnd]); the character [c] is where [expected] was ([Unexpected]);
+                a backslash is followed by [c], which starts no escape ([BadEscape]); a @\u@ is not followed
+                by four hexadecimal digits ([BadUnicodeEscape]); or the first half of a surrogate pair is not
+                followed by the second ([LoneSurrogate])." }
             )
         , /Catln/#print
             ( Value /p= jsonReencoded
@@ -1641,11 +2796,20 @@ Prgm
         , /Catln/#print
             ( Value /p= jsonReencoded
                 ( Value text= CStr
+                    { csValue = ""\ud83d\ude00"" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = ""😀"" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
                     { csValue = "[1, 2,]" }
                 )
             )
             ( Value /result= CStr
-                { csValue = "not JSON" }
+                { csValue = "not JSON: ']' is where a value was expected, at character 6" }
             )
         , /Catln/#print
             ( Value /p= jsonReencoded
@@ -1654,7 +2818,7 @@ Prgm
                 )
             )
             ( Value /result= CStr
-                { csValue = "not JSON" }
+                { csValue = "not JSON: the text ends where a closing quote was expected, at character 5" }
             )
         , /Catln/#print
             ( Value /p= jsonReencoded
@@ -1663,16 +2827,79 @@ Prgm
                 )
             )
             ( Value /result= CStr
-                { csValue = "not JSON" }
+                { csValue = "not JSON: '2' is where the end of the text was expected, at character 2" }
             )
         , /Catln/#print
             ( Value /p= jsonReencoded
                 ( Value text= CStr
-                    { csValue = ""\ud83d\ude00"" }
+                    { csValue = "[1 2]" }
                 )
             )
             ( Value /result= CStr
-                { csValue = ""😀"" }
+                { csValue = "not JSON: '2' is where ',' or ']' was expected, at character 3" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = "{"a" 1}" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: '1' is where ':' was expected, at character 5" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = "{1: 2}" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: '1' is where a quoted key was expected, at character 1" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = "nul" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: the text ends where 'null' was expected, at character 3" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = ""a\qb"" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: '\q' is not an escape, at character 3" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = ""\u12"" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: '\u' is not followed by four hexadecimal digits, at character 2" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = ""\ud83d"" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: the first half of a surrogate pair is not followed by the second, at character 7" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonReencoded
+                ( Value text= CStr
+                    { csValue = "1.e5" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "not JSON: 'e' is where a digit was expected, at character 2" }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -1708,7 +2935,140 @@ Prgm
             ( Value /text= CStr
                 { csValue = "## Reading a value
                 What an API answers with is read by the path to the part of it wanted: a member of an object by
-                its key, an entry of an array by its position." }
+                its key, an entry of an array by its position. Each fails with a [JsonAccessErr] where the part
+                is not there, saying whether the value was not the kind that has such a part, or was and did
+                not have it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[JsonAccessErr] is why a part of a [Json] is not there: the member [key] was asked of a value
+                [found] that is not an object ([NotAnObject]) or of an object without it ([NoMember]); or the
+                entry [i] was asked of a value [found] that is not an array ([NotAnArray]) or of an array of
+                [length] entries without it ([OutOfRange])." }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonMember
+                    ( Value value= Json/Object
+                        ( Value entries= /Data/List/Cons
+                            ( Value /head= Json/Member
+                                ( Value key= CStr
+                                    { csValue = "a" }
+                                )
+                                ( Value value= Json/Number
+                                    ( Value value= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                    ( Value key= CStr
+                        { csValue = "a" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonMember
+                    ( Value value= Json/Object
+                        ( Value entries= /Data/List/Cons
+                            ( Value /head= Json/Member
+                                ( Value key= CStr
+                                    { csValue = "a" }
+                                )
+                                ( Value value= Json/Number
+                                    ( Value value= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                    ( Value key= CStr
+                        { csValue = "b" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: the object has no member "b"" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonMember
+                    ( Value value= Json/Str
+                        ( Value value= CStr
+                            { csValue = "s" }
+                        )
+                    )
+                    ( Value key= CStr
+                        { csValue = "b" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: there is no member "b" of a string, which is not an object" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonIndex
+                    ( Value value= Json/Array
+                        ( Value entries= /Data/List/Cons( Value /head= Value Json/Null )( Value /tail= Value /Data/List/Nil ) )
+                    )
+                    ( Value i= CInt
+                        { ciValue = 0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "null" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonIndex
+                    ( Value value= Json/Array
+                        ( Value entries= /Data/List/Cons( Value /head= Value Json/Null )( Value /tail= Value /Data/List/Nil ) )
+                    )
+                    ( Value i= CInt
+                        { ciValue = 1 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: there is no entry 1 of an array of 1" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonIndex
+                    ( Value value= Json/Array
+                        ( Value entries= /Data/List/Cons( Value /head= Value Json/Null )( Value /tail= Value /Data/List/Nil ) )
+                    )
+                    ( Value i= /operator-
+                        ( Value /l= CInt
+                            { ciValue = 0 }
+                        )
+                        ( Value /r= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: there is no entry -1 of an array of 1" }
+            )
+        , /Catln/#print
+            ( Value /p= jsonAccessText
+                ( Value r= jsonIndex( Value value= Value Json/Null )
+                    ( Value i= CInt
+                        { ciValue = 0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: there is no entry 0 of null, which is not an array" }
             )
         ]
     }
