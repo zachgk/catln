@@ -278,7 +278,7 @@ Prgm
                             ( TopType | PredClass /Data/List/ConsList[ /T=$_/A ] && PredClass /Data/Monad[ /T=$_/A ] ) = /Data/Monad/mmap( Value /m -> TVArg /lst = Value /lst )
                             ( /fn( Value /v ) ->
                                 ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                    ( /head=TopType
+                                    ( /head=$/T
                                     , /tail=/Data/List/Nil
                                     )
                                 ) = /Data/List/filter.keepIf( Value /v -> TVArg /v = Value /v )
@@ -432,9 +432,9 @@ Prgm
                                 )
                             ) = /Data/List/foldl( Value /lst -> TVArg /lst = Value /lst )
                             ( /fn
-                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /v ) -> /Data/List/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /v ) -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> /Data/List/Nil = Value /Data/List/Nil )
                         ]

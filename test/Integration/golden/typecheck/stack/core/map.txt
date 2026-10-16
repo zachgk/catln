@@ -390,9 +390,9 @@ Prgm
                                 )
                             ) = /Data/Map/foldEntries( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /k )( Value /v ) -> /Data/List/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /k )( Value /v ) -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /k = Value /k )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> /Data/List/Nil = Value /Data/List/Nil )
                         ]
@@ -1088,38 +1088,19 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            ,
-                                ( /Data/Map/Node
+                            , /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=∀/Data/Algebra/Ord
+                                , /right=∀/Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
+                                    , /V=$_/V
                                     ]
-                                    ( /value=$/V
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$_/V
-                                        ]
-                                    ) + /Data/Map/graft
-                                    ( /from=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=TopType
-                                        ]
-                                    , /into=
-                                        ( TopType | PredClass /Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=TopType
-                                            ] && PredClass /Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=TopType
-                                            ]
-                                        )
-                                    )| PredClass /Data/Map
-                                    [ /K=TopType
-                                    , /V=TopType
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$_/V
                                     ]
                                 )
                             , []
@@ -1217,9 +1198,9 @@ Prgm
                                 )
                             ) = /Data/Map/foldEntries( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /k )( Value /v ) -> /Data/List/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /k )( Value /v ) -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> TVArg /acc = Value /acc )
                             )( Value /init -> /Data/List/Nil = Value /Data/List/Nil )
                         ]

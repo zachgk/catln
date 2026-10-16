@@ -44,7 +44,7 @@ Prgm
                         [ /bindWithLocal.$9471e8
                             ( EAppArg
                                 { eaaArg = Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer }
-                            ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                            ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Primitive/Integer =
                                     ( /operator+
@@ -78,14 +78,14 @@ Prgm
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
                             ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
+                                ( !
                                     ( !
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
                                         ( PredClass /Data/Maybe
-                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
-                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
-                                        )
-                                    )
+                                            [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ] && PredClass /Data/Functor
+                                            [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                                        ) && !
+                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] )
+                                    ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
                                 , fromList []
                                 , []
                                 )
@@ -98,23 +98,23 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
                                         ( /bindWithLocal.$9471e8
                                             ( EAppArg
                                                 { eaaArg = Value /$9471e8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
+                                            ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                         )
                                     }
                                 ) ↦ UnionType
                                 ( Just
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
+                                    ( !
                                         ( !
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
                                             ( PredClass /Data/Maybe
-                                                [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
-                                                [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
-                                            )
-                                        )
+                                                [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ] && PredClass /Data/Functor
+                                                [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                                            ) && !
+                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] )
+                                        ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
                                     , fromList []
                                     , []
                                     )

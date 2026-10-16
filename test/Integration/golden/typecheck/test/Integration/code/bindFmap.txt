@@ -35,12 +35,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /fmapBind.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+( Value /l -> TVArg /x = Value /x )
+                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )

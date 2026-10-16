@@ -47,10 +47,7 @@ Prgm
                         [ /apBind.$9471e8
                             ( EAppArg
                                 { eaaArg = Value /$9471e8-arg@Value /x -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( /orZero
-                                ( /o=∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) + /Data/Primitive/Integer
-                            ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /orZero
                                 ( EAppArg
                                     { eaaArg = Value /o -> TVArg /x = ( Value /x ↦ TVArg /x ) }

@@ -156,7 +156,7 @@ fromExpr est (EWhere m base cond) = do
         (EncodeOut{}, Value _ n) -> Just n
         _                        -> Nothing
   modify $ addConstraints [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (condPredForm cond) baseVar (getExprMeta base') (getExprMeta cond') m']
-  modify $ noteNestedCall cond' bool'
+  receivedAt cond' bool'
   return $ EWhere m' base' cond'
 fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   m' <- fromMeta BAct est m $ printf "Tuple Meta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
@@ -325,9 +325,31 @@ callHoSlotLinks layerM = go
     go (TupleApply _ (_, base) arg) = link arg ++ go base
     go (AliasExpr b _)              = go b
     go _                            = []
-    link (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just _, arrM)})
-      | not (null (exprAppliedArgs obj)) = [PropEq 48 (layerM, TVArg $ inExprSingleton obj) (getExprMeta obj), HoResultReq 49 (layerM, inExprSingleton obj) arrM]
+    link (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)})
+      | not (null (exprAppliedArgs obj)) = [PropEq 48 (layerM, TVArg $ inExprSingleton obj) (getExprMeta obj)]
     link _ = []
+
+-- | A call's value received at a point: each lambda the call is given (at any layer of its
+-- application) is held to what that point needs of the call, through the call's declaration
+-- ('HoResultReq'). The need is the RECEIVER's, so it is found where the call is received rather
+-- than where the lambda is applied: what the call's arguments say of a declaration's variables is
+-- evidence of them, not a bound on the lambda.
+callResultReqs :: VExpr -> VarMeta -> [VConstraintDat]
+callResultReqs call dest = go call
+  where
+    go (TupleApply _ (_, base) arg) = link arg ++ go base
+    go (AliasExpr b _)              = go b
+    go _                            = []
+    link (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just _, arrM)})
+      | not (null (exprAppliedArgs obj)) = [HoResultReq 49 (getExprMeta call, inExprSingleton obj, dest) arrM]
+    link _ = []
+
+-- | A value received at a point: what is noted of it for the fragment's sub functions
+-- ('noteNestedCall') and what the point needs of the lambdas it was given ('callResultReqs').
+receivedAt :: VExpr -> VarMeta -> StateT FEnv TypeCheckResult ()
+receivedAt e dest = do
+  modify $ noteNestedCall e dest
+  modify $ addConstraints (callResultReqs e dest)
 
 -- | Non-linear matching: when a pattern binds one variable to several argument positions
 -- (e.g. @f(a@x, b@x)@), those positions must share a type. Encode that by equating their type
@@ -522,7 +544,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
           []
   modify $ addConstraints constraints
   case (est, oaArr') of
-    (EncodeOut{}, Just (Just argExpr', arrM')) -> modify $ noteNestedCall argExpr' arrM'
+    (EncodeOut{}, Just (Just argExpr', arrM')) -> receivedAt argExpr' arrM'
     _                                          -> return ()
   let oa' = oa{
         oaObj=oaObj',
@@ -606,7 +628,7 @@ fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
         -- among definitions by the required result ('arrowConstrainUbs').
         arrM' <- fromMeta BReq est arrM $ printf "Arrow result from %s" (show $ exprPath obj')
         modify $ addConstraints [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM']
-        modify $ noteNestedCall vExpr arrM'
+        receivedAt vExpr arrM'
         return (Just vExpr, arrM')
       Nothing -> return (Nothing, mUserReturn')
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}

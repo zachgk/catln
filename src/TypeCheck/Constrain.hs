@@ -25,10 +25,12 @@ import qualified Data.Zip            as Z
 
 import           Control.Monad.State
 import           CtConstants         (macroThisKey)
-import           Semantics           (stampQueryToken)
+import           Semantics           (ObjArrTypeGraph (..), stampQueryToken)
 import           Semantics.Prgm      (Meta (..), ObjArr (..),
-                                      ObjectBasis (ArgObj), exprAppliedArgs,
-                                      exprVarArgs)
+                                      ObjectBasis (ArgObj), ObjectMap (..),
+                                      ObjectMapItem (..), exprAppliedArgs,
+                                      exprVarArgs, getExprMeta, inExprSingleton,
+                                      oaObjExpr)
 import           Semantics.TypeGraph (ReachesEnv (..), typeGuaranteedWithin)
 import           Semantics.Types
 import           Text.Printf
@@ -407,20 +409,71 @@ computeConstraint env con@(Constraint _ _ vaenv (PropEqInferred i (super, app, b
     Just name -> let (vaenv', super', sub') = updateSchemeProp env (bodyArgsOf con) (fmap snd vaenv) super name sub
                  in (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEqInferred i (super', app, base) sub'})
     Nothing -> (False, con)
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ _ (HoResultReq i (call, argName) result)) = case declaredResult of
-    Just r | r /= PTopType -> (False, con{conDat=HoResultReq i (call, argName) result{stypeReq=meet (stypeReq result) r, stypeReqDecl=meet (stypeReqDecl result) r}})
+computeConstraint FEnv{feTypeEnv, feReachesTypeEnv} con@(Constraint _ _ _ (HoResultReq i (call, argName, dest) result)) = case declaredResult of
+    Just r | r /= PTopType -> (False, con{conDat=HoResultReq i (call, argName, dest) result{stypeReq=meet (stypeReq result) r}})
     _ -> (False, con)
   where
+    -- The need is met into the lambda's requirement, which chooses among the arms the lambda's body
+    -- reaches ('arrowConstrainUbs'), and not into its declaration-origin requirement: the lambda
+    -- declares nothing, and a declaration engaged there settles and meets the forms its body gives
+    -- (a @foldr@ step's @Cons(head= v, tail= acc)@ held to @∀ConsList[/T=⊤]@ came out as
+    -- @Cons[/T=⊤](head=⊤, ..)@), and holds the body to it as a guarantee (@elem@'s @v == item@,
+    -- whose @v@ is unresolved).
     meet a b = intersectTypes feTypeEnv a b
-    -- Each form the call may take reads the argument's declared result through its own bindings;
-    -- a form that says nothing of it leaves the result unbounded.
-    declaredResult = case stypeReq call of
-      UnionType Nothing leafs _ | not (H.null leafs) -> unionAllTypes feTypeEnv <$> mapM resultFor (splitUnionType leafs)
-      _ -> Nothing
-    resultFor leaf = case [ dr | (k, dr) <- typeGraphDeclaredArgResults feTypeEnv (ptName leaf), pkName k == pkName argName, pkArgs k == pkArgs argName ] of
-      [TypeVar (TVVar vn) _ _] -> H.lookup vn (ptVars leaf) >>= settled
-      [dr]                     -> settled dr
-      _                        -> Nothing
+    -- The continuation is held to what the call's destination needs, as the call's declaration
+    -- passes that need on to it. Its argument occurrences are no bound: under membership a
+    -- declared variable is the set the values at all its occurrences belong to, so @m@'s value is
+    -- evidence for @$M@, not a limit on what the continuation may add to it (@mmap(m= Some(5),
+    -- fn(v)= Nothing)@ is an @mmap@ whose @$M@ holds both).
+    -- What the receiver's own declaration needs ('stypeReqDecl'), not the requirement accumulated
+    -- there: that one also carries what the receiver's other occurrences say (@l == r@ binds @$T@
+    -- from @r@), which is evidence again, not a need.
+    destReq = stypeReqDecl dest
+    -- Each form the call may take reads the argument's declared result through the declarations
+    -- applying to it; a form one of them says nothing of leaves the result unbounded.
+    declaredResult
+      | destReq == PTopType = Nothing
+      | otherwise = case stypeReq call of
+          UnionType Nothing leafs _ | not (H.null leafs) -> unionAllTypes feTypeEnv <$> mapM resultFor (splitUnionType leafs)
+          _ -> Nothing
+    -- A name with several declarations (@bindap@'s @mmap@, @fmap@ and @ap@ arms) says what the
+    -- argument returns once per declaration, and the call is free to take any that applies: the
+    -- union of what they say.
+    resultFor leaf = case [ (dr, declResult decl) | decl <- applyingDecls leaf, (k, dr) <- declArgResults decl, pkName k == pkName argName, pkArgs k == pkArgs argName ] of
+      []  -> Nothing
+      drs -> unionAllTypes feTypeEnv <$> mapM readResult drs
+    -- A variable result is what the destination needs of it through the declared result: the
+    -- destination itself where the declaration returns that variable (@mmap@'s @-> $M@, @ap@'s
+    -- @-> $B@), its parameter where the declaration returns another variable re-applied with it
+    -- (@fmap@'s @-> $F[$T -> $_B]@ takes @B@ from the destination's @/T@). One the declared result
+    -- does not show is unbounded by the destination.
+    readResult (TypeVar (TVVar vn) _ _, res) = demandFor vn res >>= settled
+    readResult (dr, _)                       = settled dr
+    demandFor vn (TypeVar (TVVar vn') _ _) | vn == vn' = Just destReq
+    demandFor vn (TypeVar (TVApplied _ overrides) _ _)
+      | [p] <- [ p | (p, TypeVar (TVVar vn') _ _) <- H.toList overrides, vn' == vn ] = paramOf p destReq
+    demandFor _ _ = Nothing
+    -- The value a type gives a parameter. A type is its top's region and its leaves together, so
+    -- the readings of the two join; each leaf gives its own slot, and a top the slot its class
+    -- atoms all hold (they meet). A part that does not spell the slot gives no reading.
+    paramOf p (UnionType mTop leafs _) = do
+      fromLeafs <- mapM (H.lookup p . ptVars) (splitUnionType leafs)
+      fromTop <- case mTop of
+        Nothing -> Just Nothing
+        Just (PredsOne (PredClass c), _, _) -> Just <$> H.lookup p (ptVars c)
+        Just (PredsAnd as, _, _) -> case [ v | PredsOne (PredClass c) <- as, Just v <- [H.lookup p (ptVars c)] ] of
+          [] -> Nothing
+          vs -> Just (Just (foldr1 (intersectTypes feTypeEnv) vs))
+        Just _ -> Nothing
+      case maybe fromLeafs (: fromLeafs) fromTop of
+        [] -> Nothing
+        vs -> Just (unionAllTypes feTypeEnv vs)
+    paramOf _ _ = Nothing
+    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap reachesTg)} = feReachesTypeEnv
+    applyingDecls leaf = [ decl | decl@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup (makeAbsoluteName (ptName leaf)) reachesTg)
+                                , not (isBottomType (intersectTypes feReachesTypeEnv (singletonType leaf) (getMetaType (getExprMeta (oaObjExpr decl))))) ]
+    declResult decl = maybe PTopType (getMetaType . snd) (oaArr decl)
+    declArgResults decl = [ (inExprSingleton aObj, getMetaType aM) | ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl), not (null (exprAppliedArgs aObj)) ]
     -- Only a closed result is required of the lambda, as only a closed destination is chosen for
     -- a variable ('outVarBoundSrc'): an open class (@foldEntriesSteps[$B -> ToString]@'s bound)
     -- may gain members anywhere, so no result short of a member is within it.
@@ -489,19 +542,20 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i Union
 -- waits for it (an unresolved child is ⊤, which the union already reads as no bound).
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i ch parent children)) = (False, con{conDat=UnionOf i ch parent' children})
   where
-    side = case ch of
-      UnionAct -> stypeAct
-      _        -> stypeReq
-    sideVaenv = ambientEnv (fmap (side . snd) vaenv)
-    childrenUnion
-      | any (isTypeVar . side) children = PTopType
-      | otherwise = unionAllTypesWithEnv feTypeEnv H.empty (map side children)
-    met = intersectTypesEnv feTypeEnv sideVaenv (side parent) childrenUnion
-    parent'
-      | childrenUnion == PTopType || typeVarLost (side parent) met = parent
-      | otherwise = case ch of
-          UnionAct -> parent{stypeAct = met}
-          _        -> parent{stypeReq = met}
+    -- The channels met: the actual alone, or the two requirements. A requirement taken from the
+    -- children's receivers is what their declarations need, so the declaration-origin channel
+    -- carries it as well, where what a sub function returns is chosen.
+    sides = case ch of
+      UnionAct -> [(stypeAct, \t st -> st{stypeAct = t})]
+      _        -> [(stypeReq, \t st -> st{stypeReq = t}), (stypeReqDecl, \t st -> st{stypeReqDecl = t})]
+    meetSide st (side, set)
+      | any (isTypeVar . side) children = st
+      | childrenUnion == PTopType || typeVarLost (side st) met = st
+      | otherwise = set met st
+      where
+        childrenUnion = unionAllTypesWithEnv feTypeEnv H.empty (map side children)
+        met = intersectTypesEnv feTypeEnv (ambientEnv (fmap (side . snd) vaenv)) (side st) childrenUnion
+    parent' = foldl meetSide parent sides
 
 saveConstraint :: VConstraint -> RConstraint -> RConstraint -> FEnv -> FEnv
 saveConstraint con@(Constraint _ _ _ (UnionOf _ UnionBoth parentPnt _)) oldCon newCon@(Constraint _ _ vaenv' (UnionOf _ _ parent' _)) env = env''

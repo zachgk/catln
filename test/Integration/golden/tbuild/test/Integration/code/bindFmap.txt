@@ -55,12 +55,7 @@ Prgm
                         [ /fmapBind.$9471e8
                             ( EAppArg
                                 { eaaArg = Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer }
-                            ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) =
+                            ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }

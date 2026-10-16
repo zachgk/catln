@@ -834,9 +834,9 @@ Prgm
                                         ( EAppArg
                                             { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] }
                                         )
-                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons[ /T=TopType ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> TVArg /v = ( Value /v ↦ TVArg /v ) }

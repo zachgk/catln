@@ -150,11 +150,11 @@ data ConstraintDat p
   -- ('TypeCheck.Encode.topArgPropEqs').
   | PropEqInferred Int (p, p, p) p -- ^ Both Actual and Req, PropEqInferred (super, app, base) slot
   | AddArg Int (p, TypeVarAux) p -- ^ Both Actual and Req,
-  -- | What a call's declaration says one of its higher-order arguments returns, read with the
-  -- call's bindings, as a requirement on the result of the lambda the call is given:
-  -- @HoResultReq (call, fn) result@. @foldr@ declares @fn(..) -> $_B@, so a call choosing
-  -- @$_B=Integer@ requires its lambda to return an @Integer@ ('TypeCheck.Constrain').
-  | HoResultReq Int (p, ArgName) p -- ^ Req only
+  -- | What the call's destination needs of one of its higher-order arguments, read through the
+  -- call's declaration, as a requirement on the result of the lambda the call is given:
+  -- @HoResultReq (call, fn, dest) result@. @mmap@ declares @fn(..) -> $M@ and returns @$M@, so a
+  -- call received as a @Maybe[Integer]@ requires its lambda to return one ('TypeCheck.Constrain').
+  | HoResultReq Int (p, ArgName, p) p -- ^ Req only
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | ConWhere Int (Maybe PartialType) (Maybe TypeName) p p p -- ^ Where: the condition's form as a predicate ('TypeCheck.Encode.condPredForm'), the base's name when it is bare, base, cond, result
@@ -169,8 +169,9 @@ data ConstraintDat p
 -- function's callers are every caller it has ('TypeCheck.Encode.nestedCallerConstraints'), so the
 -- values it is applied to are the union of what they pass ('UnionAct') and what it must give is
 -- the union of what they need ('UnionReq'), while what they pass bounds nothing they need and the
--- reverse. A requirement taken from callers is not one the sub function declares, so its
--- declaration-origin requirement is left as it is.
+-- reverse. The requirement is taken on both of its channels: what the callers' receivers declare
+-- they need is a declaration-origin requirement there, and it is what the sub function's arms are
+-- chosen by.
 data UnionChannel = UnionBoth | UnionAct | UnionReq
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
@@ -226,9 +227,10 @@ mapMConDat f (PropEqInferred i (p1, pa, pb) p2) = do
   pa' <- f pa
   pb' <- f pb
   PropEqInferred i (p1', pa', pb') <$> f p2
-mapMConDat f (HoResultReq i (p1, argName) p2) = do
+mapMConDat f (HoResultReq i (p1, argName, pd) p2) = do
   p1' <- f p1
-  HoResultReq i (p1', argName) <$> f p2
+  pd' <- f pd
+  HoResultReq i (p1', argName, pd') <$> f p2
 mapMConDat f (AddArg i (p1, argName) p2) = do
   p1' <- f p1
   AddArg i (p1', argName) <$> f p2
@@ -389,7 +391,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
   show (PropEq i (s1, n) s2) = printf "(%s).(%s) %d== %s"  (show s1) (show n) i (show s2)
   show (PropEqInferred i (s1, sa, sb) s2) = printf "(%s).(inferred from %s over %s) %d== %s"  (show s1) (show sa) (show sb) i (show s2)
-  show (HoResultReq i (s1, argName) s2) = printf "(%s).(result of %s) %d=> %s" (show s1) (show argName) i (show s2)
+  show (HoResultReq i (s1, argName, sd) s2) = printf "(%s).(result of %s for %s) %d=> %s" (show s1) (show argName) (show sd) i (show s2)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
