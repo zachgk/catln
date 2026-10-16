@@ -1,0 +1,25 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests importing a directory holding both a @dir.ctc@ and a @main.ct@: it is entered through the
+                @dir.ctc@, which says what the directory is, rather than the @main.ct@, which is a program kept in
+                it. So the name the @dir.ctc@ declares is what is reachable here." }
+            )
+        ]
+    }

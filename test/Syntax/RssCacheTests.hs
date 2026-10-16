@@ -1,3 +1,7 @@
+-- | User space held in Haskell for want of a surface: the feed cache is the RSS importer's, but its
+-- cases are reads over time against a stubbed network, which no test of the Catln suite can make.
+-- What a feed is read as is @test\/Integration\/code\/rss.ct@ and its goldens.
+--
 -- | Tests for reading an RSS feed out of what an earlier run recorded of it.
 --
 -- A feed is asked of somebody else's machine, so it is asked at most once every six hours and the

@@ -1,0 +1,5 @@
+---
+related: "[[Welcome]]"
+---
+
+The note.

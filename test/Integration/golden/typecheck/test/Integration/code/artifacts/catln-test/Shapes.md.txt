@@ -1,0 +1,76 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Read it" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Write it" }
+                            )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Plan it" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "A step of the plan" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Read it numbered" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Write it numbered" }
+                            )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Read it with a block under it" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Write it after the block" }
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "Shapes" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

@@ -1,0 +1,27 @@
+import "core"
+import "/repo/dir/test/Integration/code/artifacts/catln-test/Welcome.md"
+import "/repo/dir/test/Integration/code/artifacts/catln-test/Notes/Nested.md"
+import "/repo/dir/test/Integration/code/artifacts/catln-test/test link.md"
+
+
+/Data/Note/Page(/title= "Links")
+  # Links to [Welcome](Welcome.md), [Notes/Nested](Notes/Nested.md) and [test link](test%20link.md).
+    
+    Naming a place within one, [Welcome#Getting started](Welcome.md#Getting%20started), and words of its own,
+    [the first note](Welcome.md).
+    
+    A note yet to be written, [[create a link]], and a note named by its name alone,
+    [Nested](Notes/Nested.md).
+    
+    [Welcome](Welcome.md) and [Nested](Notes/Nested.md) written more than once on a line.
+    
+    Shows ![[Welcome]] within it, and [the Importer](https://example.com/Importer).
+    
+    ```
+    Not [[Plan]].
+    ```
+  /Data/Note/Task/Simple(/contents= "Read [[Welcome]]", /state= /Data/Primitive/False)
+    # Which is in [test link](test%20link.md).
+
+  # Found past the place and the words a link goes on to name, [shown as](Notes/Nested.md#Section). A place
+    alone, [[#Heading]], and words alone, [[|shown as]], name no note.

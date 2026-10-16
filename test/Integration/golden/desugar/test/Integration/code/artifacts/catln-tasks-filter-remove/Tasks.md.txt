@@ -1,0 +1,76 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "#task Ship it" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Ship it" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Ship it #task" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Ship it" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Buy milk" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "Tasks" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

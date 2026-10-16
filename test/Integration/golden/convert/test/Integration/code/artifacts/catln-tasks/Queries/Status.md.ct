@@ -1,0 +1,20 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Status")
+  # A query asks what a task's box says.
+    
+    Done.
+  /Data/Note/#tasks(/query= "done")
+  # Not done.
+  /Data/Note/#tasks(/query= "not done")
+  # A kind of status.
+  /Data/Note/#tasks(/query= "status.type is IN_PROGRESS")
+  # A kind of status it is not.
+  /Data/Note/#tasks(/query= "status.type is not DONE")
+  # What the vault calls the status.
+  /Data/Note/#tasks(/query= "status.name includes Progress")
+  # What the vault does not call it.
+  /Data/Note/#tasks(/query= "status.name does not include Progress")
+  # A kind of status there is none of, which is a line nobody can read.
+  /Data/Note/#tasks(/query= "status.type is BEGUN")

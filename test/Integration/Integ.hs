@@ -239,6 +239,13 @@ pageTests :: [String]
 pageTests = map (\note -> "obsidian(\"test/Integration/code/artifacts/" ++ note ++ "\")")
   [ "catln-tasks/Query.md"
   , "catln-test/Tasks.md"
+  , "catln-tasks/Queries/Status.md"
+  , "catln-tasks/Queries/Dates.md"
+  , "catln-tasks/Queries/Relative.md"
+  , "catln-tasks/Queries/Other.md"
+  , "catln-tasks/Queries/Boolean.md"
+  , "catln-tasks/Queries/Whole.md"
+  , "catln-tasks/Queries/Order.md"
   ]
 
 integrationTests :: IO TestTree

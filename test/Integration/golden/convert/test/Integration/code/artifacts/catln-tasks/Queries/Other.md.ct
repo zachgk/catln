@@ -1,0 +1,50 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Other")
+  # A query asks what else a task is.
+    
+    How urgent it is.
+  /Data/Note/#tasks(/query= "priority is high")
+  # How urgent it is not.
+  /Data/Note/#tasks(/query= "priority is not high")
+  # More urgent than.
+  /Data/Note/#tasks(/query= "priority is above low")
+  # Less urgent than.
+  /Data/Note/#tasks(/query= "priority is below medium")
+  # More urgent than none.
+  /Data/Note/#tasks(/query= "priority is above none")
+  # Less urgent than none.
+  /Data/Note/#tasks(/query= "priority is below none")
+  # That it comes round again.
+  /Data/Note/#tasks(/query= "is recurring")
+  # That it does not.
+  /Data/Note/#tasks(/query= "is not recurring")
+  # What it says.
+  /Data/Note/#tasks(/query= "description includes plan")
+  # What it says, however it was capitalised.
+  /Data/Note/#tasks(/query= "description includes PLAN")
+  # What it does not say.
+  /Data/Note/#tasks(/query= "description does not include plan")
+  # A tag it wrote.
+  /Data/Note/#tasks(/query= "tags include #work")
+  # A tag it wrote, written in the singular.
+  /Data/Note/#tasks(/query= "tag includes #work")
+  # A tag it did not write.
+  /Data/Note/#tasks(/query= "tags do not include #work")
+  # That it wrote any.
+  /Data/Note/#tasks(/query= "has tags")
+  # That it wrote none.
+  /Data/Note/#tasks(/query= "no tags")
+  # Where it was written.
+  /Data/Note/#tasks(/query= "path includes Work")
+  # The folder it was written in.
+  /Data/Note/#tasks(/query= "folder includes Work")
+  # The file it was written in.
+  /Data/Note/#tasks(/query= "filename includes Old")
+  # The first folder of its path.
+  /Data/Note/#tasks(/query= "root includes Work")
+  # That it was written at the note's own level.
+  /Data/Note/#tasks(/query= "exclude sub-items")
+  # A search for nothing, which is a line nobody can read.
+  /Data/Note/#tasks(/query= "description includes")

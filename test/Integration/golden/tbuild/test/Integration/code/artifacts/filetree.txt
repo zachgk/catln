@@ -1,0 +1,156 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/FileDir/repo/dir/test/Integration/code/artifacts/filetree"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /FileDir/repo/dir/test/Integration/code/artifacts/filetree -> /Catln/CatlnResult
+                            ( /files=/Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
+                                ( /head=/Catln/BuildFile
+                                    ( /path=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /contents=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /contents=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /contents=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    )
+                                )
+                            ) = /Catln/CatlnResult
+                            ( EAppArg
+                                { eaaArg = Value /files -> /Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /contents=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /contents=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Catln/BuildFile
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /contents=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
+                                        ( /head=/Catln/BuildFile
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /contents=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Catln/BuildFile
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /contents=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Catln/BuildFile
+                                            ( EAppArg
+                                                { eaaArg = Value /path -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a.md"
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /contents -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "first"
+                                                }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                            [ /T=/Catln/BuildFile
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /contents=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            ]
+                                            ( /head=/Catln/BuildFile
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /contents=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Catln/BuildFile
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /contents=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) = /Catln/BuildFile
+                                                    ( EAppArg
+                                                        { eaaArg = Value /path -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "sub/b.md"
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /contents -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "second"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The files of /repo/dir/test/Integration/code/artifacts/filetree. Write `/FileDir/repo/dir/test/Integration/code/artifacts/filetree` to reach them."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Not text, and so not carried: logo.png."
+                }
+            )
+        ]
+    }

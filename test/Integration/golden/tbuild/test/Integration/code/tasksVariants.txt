@@ -1,0 +1,48 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests importing vaults whose Tasks plugin is set some other way than @artifacts/catln-tasks@ sets
+                  it, since a vault can only be set one way and what a checkbox reads as is decided by the vault's
+                  settings. One vault per setting: the dataview notation beside a status the vault named itself, a
+                  global filter, the filter taken out of what the task says, a plugin turned on and never configured,
+                  and a vault running some other plugin and not this one. The note of each is named as well as the
+                  vault, for the reason @obsidianTasks.ct@ names its notes: a vault does not import the notes it
+                  holds.
+                  What each checkbox is read as is held by the goldens of the notes."
+                }
+            )
+        ]
+    }

@@ -1,0 +1,32 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Order")
+  # The order a query gives what it finds, and the count it is cut to.
+    
+    By a date.
+  /Data/Note/#tasks(/query= "sort by due")
+  # By a date, turned around.
+  /Data/Note/#tasks(/query= "sort by due reverse")
+  # By what a task says.
+  /Data/Note/#tasks(/query= "sort by description")
+  # By how urgent a task is.
+  /Data/Note/#tasks(/query= "sort by priority")
+  # By the kind of status.
+  /Data/Note/#tasks(/query= "sort by status.type")
+  # By whether a task is done.
+  /Data/Note/#tasks(/query= "sort by status")
+  # By whether it comes round again.
+  /Data/Note/#tasks(/query= "sort by recurring")
+  # By where a task was written.
+  /Data/Note/#tasks(/query= "sort by path")
+  # By a tag a task wrote.
+  /Data/Note/#tasks(/query= "sort by tag")
+  # By one key and then another.
+  /Data/Note/#tasks(/query= "sort by status\nsort by description")
+  # The orders are kept in the order they were written.
+  /Data/Note/#tasks(/query= "sort by due\nsort by description reverse")
+  # Cut to the count asked for, after the order.
+  /Data/Note/#tasks(/query= "sort by due\nlimit 2")
+  # Cut with no order asked for.
+  /Data/Note/#tasks(/query= "limit 2")

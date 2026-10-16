@@ -1,0 +1,48 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/FileDir/repo/dir/test/Integration/code/artifacts/filetree"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /FileDir/repo/dir/test/Integration/code/artifacts/filetree= /Catln/CatlnResult
+                            ( Value /files= /Data/List/Cons
+                                ( Value /head= /Catln/BuildFile
+                                    ( Value /path= CStr
+                                        { csValue = "a.md" }
+                                    )
+                                    ( Value /contents= CStr
+                                        { csValue = "first" }
+                                    )
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= /Catln/BuildFile
+                                        ( Value /path= CStr
+                                            { csValue = "sub/b.md" }
+                                        )
+                                        ( Value /contents= CStr
+                                            { csValue = "second" }
+                                        )
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The files of /repo/dir/test/Integration/code/artifacts/filetree. Write `/FileDir/repo/dir/test/Integration/code/artifacts/filetree` to reach them." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Not text, and so not carried: logo.png." }
+            )
+        ]
+    }

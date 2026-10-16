@@ -1,0 +1,66 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Archive the plan ✅ 2025-12-20" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = "x" }
+                            )( Value /statusType= Value /Data/Note/StatusType/Done )
+                            ( Value /description= CStr
+                                { csValue = "Archive the plan" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusDate":"2025-12-20","statusName":"Done"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Review the archive 📅 2025-12-31" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Review the archive" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2025-12-31" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "Old" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

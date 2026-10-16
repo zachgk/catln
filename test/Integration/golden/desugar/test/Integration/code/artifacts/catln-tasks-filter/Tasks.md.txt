@@ -1,0 +1,94 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "#task Ship it 📅 2026-01-04" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "#task Ship it" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-04" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo","tags":["#task"]}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Plan the rest #task" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Plan the rest #task" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo","tags":["#task"]}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "#task Plan the plan" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = "/" }
+                            )( Value /statusType= Value /Data/Note/StatusType/InProgress )
+                            ( Value /description= CStr
+                                { csValue = "#task Plan the plan" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"In Progress","tags":["#task"]}" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Buy milk" }
+                            )( Value /state= Value /Data/Primitive/True )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "Tasks" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

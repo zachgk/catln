@@ -1,3 +1,7 @@
+-- | User space held in Haskell for want of a surface: the vault cache is the Obsidian importer's,
+-- but every case here reads a vault twice with a change to the files between, which no test of
+-- the Catln suite can do. Moves with the runtime.
+--
 -- | Tests for reading an Obsidian vault out of what an earlier run recorded of it.
 --
 -- A run records which notes each note links to, so the run after it is answered out of that rather

@@ -1,0 +1,34 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Boolean")
+  # A line joining what a task must be.
+    
+    Two things it must be.
+  /Data/Note/#tasks(/query= "(done) AND (is recurring)")
+  # Either of two.
+  /Data/Note/#tasks(/query= "(done) OR (is recurring)")
+  # One of two and not both.
+  /Data/Note/#tasks(/query= "(not done) XOR (has tags)")
+  # Something it must not be.
+  /Data/Note/#tasks(/query= "NOT (has tags)")
+  # One thing and not another.
+  /Data/Note/#tasks(/query= "(done) AND NOT (is recurring)")
+  # Either of two, the second negated.
+  /Data/Note/#tasks(/query= "(done) OR NOT (is recurring)")
+  # Written between square brackets.
+  /Data/Note/#tasks(/query= "[done] AND [has tags]")
+  # Written between braces.
+  /Data/Note/#tasks(/query= "{done} AND {has tags}")
+  # Written between quotes.
+  /Data/Note/#tasks(/query= "\"done\" AND \"has tags\"")
+  # Three things, and binding tighter than or.
+  /Data/Note/#tasks(/query= "(done) AND (is recurring) OR (has tags)")
+  # Three things joined the same way, read left to right.
+  /Data/Note/#tasks(/query= "(not done) AND (has tags) AND (has due date)")
+  # A joining written inside a joining.
+  /Data/Note/#tasks(/query= "(not done) AND ((is recurring) OR (has tags))")
+  # A search holding the letters of a joining word.
+  /Data/Note/#tasks(/query= "description includes stand OR sit")
+  # A joining of something nothing reads.
+  /Data/Note/#tasks(/query= "(done) AND (soonish)")

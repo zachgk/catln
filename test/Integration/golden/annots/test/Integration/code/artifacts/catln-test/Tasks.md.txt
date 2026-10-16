@@ -1,0 +1,63 @@
+[
+    ( "/Data/Note/Task/Simple"
+    , TupleVal /Data/Note/Task/Simple
+        ( /contents = "Read [[Welcome]]"
+        , /state = TupleVal /Data/Primitive/False
+        )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Which is written under the task rather than beside it, so it is a comment of the task.
+
+        It goes on for as long as it is indented." )
+    )
+,
+    ( "/Data/Note/Task/Simple"
+    , TupleVal /Data/Note/Task/Simple
+        ( /contents = "Write this note"
+        , /state = TupleVal /Data/Primitive/True
+        )
+    )
+,
+    ( "/Data/Note/Task/Simple"
+    , TupleVal /Data/Note/Task/Simple
+        ( /contents = "Plan the rest"
+        , /state = TupleVal /Data/Primitive/False
+        )
+    )
+,
+    ( "/Data/Note/Task/Simple"
+    , TupleVal /Data/Note/Task/Simple
+        ( /contents = "A checkbox indented deeper is a task of its own"
+        , /state = TupleVal /Data/Primitive/False
+        )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "A note may hold tasks, written as markdown checkboxes." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Anything written after them is the note again.
+
+        ```
+        - [ ] A checkbox inside code is writing about a task rather than making one
+        ```
+
+        A vault which runs no plugin still holds checkboxes, so a query written in one still has tasks to
+        find." )
+    )
+,
+    ( "/Data/Note/#tasks"
+    , TupleVal /Data/Note/Show/TaskQuery
+        ( /result = "{"qrError":null,"qrTasks":[{"ptExpr":"8f97eae7-3e86-50b2-b5d2-bb9cd087341c","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/FenceOpen.md","ptTask":{"args":{"/contents":{"contents":"Read it","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"53e1688d-3b21-5db3-8847-1a6bda01d6ac","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Links.md","ptTask":{"args":{"/contents":{"contents":"Read [[Welcome]]","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"3504f71c-59b0-59a2-a70b-ca341a7b5e23","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Overlay.md","ptTask":{"args":{"/contents":{"contents":"Finish reading the page these notes are written over","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"b60f00fd-549e-54e1-ac76-37f23fdccf26","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Properties/UnderATask.md","ptTask":{"args":{"/contents":{"contents":"Read it","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"5a083e30-4463-5f35-b402-6719e0a3f741","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Queries.md","ptTask":{"args":{"/contents":{"contents":"Plan it","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"50650a85-d353-55e8-8fd4-c15350579c3a","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Shapes.md","ptTask":{"args":{"/contents":{"contents":"Read it","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"2798a6f2-e933-5430-bcbf-52766b35ef12","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Shapes.md","ptTask":{"args":{"/contents":{"contents":"Plan it","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"88afee6e-8f42-5837-8ed9-bd1ff9d6b32d","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Shapes.md","ptTask":{"args":{"/contents":{"contents":"A step of the plan","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"96ad3a17-3dcb-5cc2-9acd-ff75fd952ea2","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Shapes.md","ptTask":{"args":{"/contents":{"contents":"Read it numbered","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"eddbd89c-f53e-524a-8f3e-c542bf2a0fb2","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Shapes.md","ptTask":{"args":{"/contents":{"contents":"Read it with a block under it","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"846a4833-6712-52eb-80eb-e6c94028bb81","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Shapes.md","ptTask":{"args":{"/contents":{"contents":"Write it after the block","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"680b5c7b-f52e-54c0-9473-9e4c18cbb857","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Tasks.md","ptTask":{"args":{"/contents":{"contents":"Read [[Welcome]]","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"a1245447-ead4-5fe9-b7bb-0177449bdb2d","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Tasks.md","ptTask":{"args":{"/contents":{"contents":"Plan the rest","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}},{"ptExpr":"bbb047ac-68ec-521f-a161-9e8d6a879fd2","ptPage":"/repo/dir/test/Integration/code/artifacts/catln-test/Tasks.md","ptTask":{"args":{"/contents":{"contents":"A checkbox indented deeper is a task of its own","tag":"StrVal"},"/state":{"args":{},"name":"/Data/Primitive/False","tag":"TupleVal"}},"name":"/Data/Note/Task/Simple","tag":"TupleVal"}}]}" )
+    )
+,
+    ( "/Data/Note/Page"
+    , TupleVal /Catln/Doc/Show/Html
+        ( /contents = "<h1>Tasks</h1>" )
+    )
+]

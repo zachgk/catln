@@ -1,0 +1,54 @@
+import "core"
+import "/repo/dir/test/Integration/code/artifacts/catln-test/Welcome.md"
+import "/repo/dir/test/Integration/code/artifacts/catln-test/Notes/Nested.md"
+
+
+/Data/Note/Page(/title= "Queries")
+  # Which blocks of a note are queries over its vault's tasks, and which are code.
+    
+    Before, [Welcome](Welcome.md).
+  /Data/Note/#tasks(/query= "not done")
+  # After, [Nested](Notes/Nested.md). A fence written in tildes, in capitals, or with a space after the word is a query
+    too.
+  /Data/Note/#tasks(/query= "not done")
+  /Data/Note/#tasks(/query= "not done")
+  /Data/Note/#tasks(/query= "not done")
+  # A fence saying it is something else, or saying the word as part of a longer one, or saying nothing,
+    is code.
+    
+    ```dataview
+    not done
+    ```
+    
+    ```tasksmore
+    not done
+    ```
+    
+    ```
+    not done
+    ```
+    
+    A query holding a fence is written between a longer one.
+  /Data/Note/#tasks(/query= "not done\n```\nsort by due")
+  # An indented tasks fence is code, not a query.
+    
+      ```tasks
+      not done
+      ```
+    
+    A tasks fence inside a longer block is a line of that block.
+    
+    ````
+    ```tasks
+    not done
+    ```
+    ````
+    
+    A query written under a checkbox is a query of it.
+  /Data/Note/Task/Simple(/contents= "Plan it", /state= /Data/Primitive/False)
+    /Data/Note/#tasks(/query= "not done")
+
+  # A query saying nothing is a query.
+  /Data/Note/#tasks(/query= "")
+  # A link written inside a query is writing about a link, and travels in the query as it was typed.
+  /Data/Note/#tasks(/query= "path includes [[Welcome]]")

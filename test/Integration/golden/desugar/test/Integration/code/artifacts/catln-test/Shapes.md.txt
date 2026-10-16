@@ -1,0 +1,67 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Read it" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Write it" }
+                            )( Value /state= Value /Data/Primitive/True )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Plan it" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "A step of the plan" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Read it numbered" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Write it numbered" }
+                            )( Value /state= Value /Data/Primitive/True )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Read it with a block under it" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task/Simple
+                            ( Value /contents= CStr
+                                { csValue = "Write it after the block" }
+                            )( Value /state= Value /Data/Primitive/False )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "Shapes" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

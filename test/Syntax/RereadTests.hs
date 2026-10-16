@@ -1,3 +1,7 @@
+-- | The incremental re-read is the service's own. The cases over a vault are the Obsidian importer's
+-- invalidation, which is user space held here for want of a surface: each writes to, moves or
+-- deletes a note between two reads, which no test of the Catln suite can do.
+--
 -- | Tests for reading files a second time: what a read reads again, and what it gives back.
 --
 -- A read gives back every page whose files are as it left them ('Syntax.Parsers.unchangedPages'),

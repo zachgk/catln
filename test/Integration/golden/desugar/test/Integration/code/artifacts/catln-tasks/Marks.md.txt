@@ -1,0 +1,469 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Created ➕ 2026-01-01" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Created" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"created":"2026-01-01","statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Started 🛫 2026-01-02" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Started" }
+                            )( Value /priority= Value /Data/Note/Priority/None )
+                            ( Value /start= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-02" }
+                                )
+                            )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Scheduled ⏳ 2026-01-03" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Scheduled" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )
+                            ( Value /scheduled= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-03" }
+                                )
+                            )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Scheduled by the other hourglass ⌛ 2026-01-03" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Scheduled by the other hourglass" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )
+                            ( Value /scheduled= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-03" }
+                                )
+                            )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Due 📅 2026-01-04" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Due" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-04" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Due by the tear-off calendar 📆 2026-01-05" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Due by the tear-off calendar" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-05" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Due by the spiral calendar 🗓 2026-01-06" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Due by the spiral calendar" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-06" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Due by the spiral calendar with a variation selector 🗓️ 2026-01-10" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Due by the spiral calendar with a variation selector" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-10" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Finished ✅ 2026-01-05" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = "x" }
+                            )( Value /statusType= Value /Data/Note/StatusType/Done )
+                            ( Value /description= CStr
+                                { csValue = "Finished" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Dropped ❌ 2026-01-06" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = "-" }
+                            )( Value /statusType= Value /Data/Note/StatusType/Cancelled )
+                            ( Value /description= CStr
+                                { csValue = "Dropped" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Highest 🔺" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Highest" }
+                            )( Value /priority= Value /Data/Note/Priority/Highest )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "High ⏫" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "High" }
+                            )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Medium 🔼" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Medium" }
+                            )( Value /priority= Value /Data/Note/Priority/Medium )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Low 🔽" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Low" }
+                            )( Value /priority= Value /Data/Note/Priority/Low )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Lowest ⏬" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Lowest" }
+                            )( Value /priority= Value /Data/Note/Priority/Lowest )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Water the plants 🔁 every day when done 🏁 delete" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Water the plants" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )
+                            ( Value /recurrence= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "every day when done" }
+                                )
+                            )
+                            ( Value /rest= CStr
+                                { csValue = "{"onCompletion":"delete","statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Do this first 🆔 dcf64c" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Do this first" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"id":"dcf64c","statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Do this after ⛔ dcf64c" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Do this after" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"dependsOn":["dcf64c"],"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Do this last ⛔ dcf64c,0h17ye" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Do this last" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Do this last of all ⛔ dcf64c, 0h17ye" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Do this last of all" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Linked 📅 2026-01-15 ^abc-123" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Linked" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-01-15" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"blockLink":"abc-123","statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Tagged #work #urgent 📅 2026-02-10" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Tagged #work #urgent" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-02-10" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo","tags":["#work","#urgent"]}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Book 📅 lunch 📅 2026-04-01" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Book 📅 lunch" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2026-04-01" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Due then priority 📅 2025-12-28 ⏫" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Due then priority" }
+                            )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2025-12-28" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Priority then due ⏫ 📅 2025-12-28" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Priority then due" }
+                            )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2025-12-28" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Dataview in an emoji vault is writing [due:: 2026-01-04]" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Dataview in an emoji vault is writing [due:: 2026-01-04]" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "Kept as written #work 📅 2025-12-20 ⏫ ^kept" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "Kept as written #work" }
+                            )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
+                                ( Value /value= CStr
+                                    { csValue = "2025-12-20" }
+                                )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"blockLink":"kept","statusName":"Todo","tags":["#work"]}" }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents= CStr
+                                { csValue = "A step under it" }
+                            )
+                            ( Value /symbol= CStr
+                                { csValue = " " }
+                            )( Value /statusType= Value /Data/Note/StatusType/Todo )
+                            ( Value /description= CStr
+                                { csValue = "A step under it" }
+                            )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
+                            ( Value /rest= CStr
+                                { csValue = "{"statusName":"Todo"}" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr
+                                { csValue = "Marks" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

@@ -1,3 +1,8 @@
+-- | User space held in Haskell for want of a surface: @IO.env@, @IO.httpPost@ and @IO.llm@ are
+-- declared in @stack\/env@, @stack\/http@ and @stack\/llm@, but a Catln @#test@ is built with no
+-- @io@, no environment and no network to mock, so what each sends and reads can only be run here.
+-- The pure parts of @llm@ are print goldens of its own page.
+--
 --------------------------------------------------------------------
 -- |
 -- Module    :  Eval.SystemTests

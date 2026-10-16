@@ -1,0 +1,13 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Tasks")
+  # This vault asks that every task carry a word; a checkbox not carrying it is a plain checkbox. The
+    setting names the filter alone, so everything else is the plugin's default: a mark is read, and a
+    symbol the plugin names by default is read as the plugin names it.
+  /Data/Note/Task/Obsidian(/contents= "#task Ship it \128197 2026-01-04", /symbol= " ", /statusType= /Data/Note/StatusType/Todo, /description= "#task Ship it", /priority= /Data/Note/Priority/None, /start= /Data/Maybe/Nothing, /scheduled= /Data/Maybe/Nothing, /due= /Data/Maybe/Some(/value= "2026-01-04"), /recurrence= /Data/Maybe/Nothing, /rest= "{\"statusName\":\"Todo\",\"tags\":[\"#task\"]}")
+
+  /Data/Note/Task/Simple(/contents= "Buy milk", /state= /Data/Primitive/True)
+
+  /Data/Note/Task/Obsidian(/contents= "Plan the rest #task", /symbol= " ", /statusType= /Data/Note/StatusType/Todo, /description= "Plan the rest #task", /priority= /Data/Note/Priority/None, /start= /Data/Maybe/Nothing, /scheduled= /Data/Maybe/Nothing, /due= /Data/Maybe/Nothing, /recurrence= /Data/Maybe/Nothing, /rest= "{\"statusName\":\"Todo\",\"tags\":[\"#task\"]}")
+  /Data/Note/Task/Obsidian(/contents= "#task Plan the plan", /symbol= "/", /statusType= /Data/Note/StatusType/InProgress, /description= "#task Plan the plan", /priority= /Data/Note/Priority/None, /start= /Data/Maybe/Nothing, /scheduled= /Data/Maybe/Nothing, /due= /Data/Maybe/Nothing, /recurrence= /Data/Maybe/Nothing, /rest= "{\"statusName\":\"In Progress\",\"tags\":[\"#task\"]}")

@@ -1,0 +1,40 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Dates")
+  # A query asks where a task's dates fall.
+    
+    On a day.
+  /Data/Note/#tasks(/query= "due on 2026-01-04")
+  # On a day, with the word left out.
+  /Data/Note/#tasks(/query= "due 2026-01-04")
+  # Before a day.
+  /Data/Note/#tasks(/query= "due before 2026-01-04")
+  # After a day.
+  /Data/Note/#tasks(/query= "due after 2026-01-04")
+  # On or before a day.
+  /Data/Note/#tasks(/query= "due on or before 2026-01-04")
+  # On or after a day.
+  /Data/Note/#tasks(/query= "due on or after 2026-01-04")
+  # When a task starts.
+  /Data/Note/#tasks(/query= "starts before 2026-01-04")
+  # When a task is scheduled.
+  /Data/Note/#tasks(/query= "scheduled on 2026-01-03")
+  # When a task was created.
+  /Data/Note/#tasks(/query= "created on 2026-01-01")
+  # When a task was finished.
+  /Data/Note/#tasks(/query= "done on 2026-01-05")
+  # When a task was dropped.
+  /Data/Note/#tasks(/query= "cancelled on 2026-01-06")
+  # When a task happens.
+  /Data/Note/#tasks(/query= "happens before 2026-01-04")
+  # Within a span.
+  /Data/Note/#tasks(/query= "due in 2025-12-27 2025-12-29")
+  # A task with such a date.
+  /Data/Note/#tasks(/query= "has due date")
+  # A task with no such date.
+  /Data/Note/#tasks(/query= "no due date")
+  # A task with no day it starts.
+  /Data/Note/#tasks(/query= "no start date")
+  # A date nobody could read.
+  /Data/Note/#tasks(/query= "due before soonish")

@@ -1,0 +1,39 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Relative")
+  # A relative date is read against the day the query was read on, which the compiler pins to a
+    Saturday, 2026-01-03.
+    
+    Today.
+  /Data/Note/#tasks(/query= "due today")
+  # Tomorrow.
+  /Data/Note/#tasks(/query= "due tomorrow")
+  # Yesterday.
+  /Data/Note/#tasks(/query= "due yesterday")
+  # The next of a day of the week.
+  /Data/Note/#tasks(/query= "due next monday")
+  # The last of a day of the week.
+  /Data/Note/#tasks(/query= "due last friday")
+  # The nearest day of the week ahead.
+  /Data/Note/#tasks(/query= "due sunday")
+  # The nearest day of the week behind.
+  /Data/Note/#tasks(/query= "due friday")
+  # The day of the week it is.
+  /Data/Note/#tasks(/query= "due saturday")
+  # This week.
+  /Data/Note/#tasks(/query= "due this week")
+  # Last week.
+  /Data/Note/#tasks(/query= "due last week")
+  # Next week.
+  /Data/Note/#tasks(/query= "due next week")
+  # This month.
+  /Data/Note/#tasks(/query= "due this month")
+  # Last month.
+  /Data/Note/#tasks(/query= "due last month")
+  # This quarter.
+  /Data/Note/#tasks(/query= "due this quarter")
+  # This year.
+  /Data/Note/#tasks(/query= "due this year")
+  # Two days written out.
+  /Data/Note/#tasks(/query= "due 2026-01-04 2026-01-06")

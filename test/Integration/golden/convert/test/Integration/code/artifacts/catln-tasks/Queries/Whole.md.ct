@@ -1,0 +1,20 @@
+import "core"
+
+
+/Data/Note/Page(/title= "Whole")
+  # A query of several lines.
+    
+    Every line saying what a task must be is joined by and.
+  /Data/Note/#tasks(/query= "not done\nhas due date")
+  # A count is read however it is written.
+  /Data/Note/#tasks(/query= "limit 10")
+  # The same count, spelt out.
+  /Data/Note/#tasks(/query= "limit to 10 tasks")
+  # A query saying nothing asks for every task.
+  /Data/Note/#tasks(/query= "")
+  # A line saying nothing, and a line of comment, are passed over.
+  /Data/Note/#tasks(/query= "\n# what is left to do\nnot done\n")
+  # Every line nothing reads is answered, not the first of them.
+  /Data/Note/#tasks(/query= "not done\nsoonish\nsort by urgency")
+  # Each order a query does not read is answered.
+  /Data/Note/#tasks(/query= "sort by random")

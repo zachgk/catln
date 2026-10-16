@@ -1,0 +1,11 @@
+import "core"
+import "core"
+import "artifacts/entry"
+
+
+# Tests importing a directory holding both a @dir.ctc@ and a @main.ct@: it is entered through the
+  @dir.ctc@, which says what the directory is, rather than the @main.ct@, which is a program kept in
+  it. So the name the @dir.ctc@ declares is what is reachable here.
+main{io -> IO} =
+  #assert(test= fromCtc == 1)
+  io

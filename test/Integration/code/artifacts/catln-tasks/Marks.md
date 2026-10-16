@@ -1,0 +1,31 @@
+Every mark the plugin writes, read out of the line it is written on. Each line carries one thing,
+so what each mark is read as is one declaration of this note.
+
+- [ ] Created ➕ 2026-01-01
+- [ ] Started 🛫 2026-01-02
+- [ ] Scheduled ⏳ 2026-01-03
+- [ ] Scheduled by the other hourglass ⌛ 2026-01-03
+- [ ] Due 📅 2026-01-04
+- [ ] Due by the tear-off calendar 📆 2026-01-05
+- [ ] Due by the spiral calendar 🗓 2026-01-06
+- [ ] Due by the spiral calendar with a variation selector 🗓️ 2026-01-10
+- [x] Finished ✅ 2026-01-05
+- [-] Dropped ❌ 2026-01-06
+- [ ] Highest 🔺
+- [ ] High ⏫
+- [ ] Medium 🔼
+- [ ] Low 🔽
+- [ ] Lowest ⏬
+- [ ] Water the plants 🔁 every day when done 🏁 delete
+- [ ] Do this first 🆔 dcf64c
+- [ ] Do this after ⛔ dcf64c
+- [ ] Do this last ⛔ dcf64c,0h17ye
+- [ ] Do this last of all ⛔ dcf64c, 0h17ye
+- [ ] Linked 📅 2026-01-15 ^abc-123
+- [ ] Tagged #work #urgent 📅 2026-02-10
+- [ ] Book 📅 lunch 📅 2026-04-01
+- [ ] Due then priority 📅 2025-12-28 ⏫
+- [ ] Priority then due ⏫ 📅 2025-12-28
+- [ ] Dataview in an emoji vault is writing [due:: 2026-01-04]
+- [ ] Kept as written #work 📅 2025-12-20 ⏫ ^kept
+  - [ ] A step under it

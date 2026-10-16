@@ -1,0 +1,23 @@
+import "core"
+import "core"
+import obsidian("artifacts/catln-tasks-dataview")
+import obsidian("artifacts/catln-tasks-dataview/Tasks.md")
+import obsidian("artifacts/catln-tasks-filter")
+import obsidian("artifacts/catln-tasks-filter/Tasks.md")
+import obsidian("artifacts/catln-tasks-filter-remove")
+import obsidian("artifacts/catln-tasks-filter-remove/Tasks.md")
+import obsidian("artifacts/catln-tasks-bare")
+import obsidian("artifacts/catln-tasks-bare/Tasks.md")
+import obsidian("artifacts/catln-tasks-other")
+import obsidian("artifacts/catln-tasks-other/Tasks.md")
+
+
+# Tests importing vaults whose Tasks plugin is set some other way than @artifacts/catln-tasks@ sets
+  it, since a vault can only be set one way and what a checkbox reads as is decided by the vault's
+  settings. One vault per setting: the dataview notation beside a status the vault named itself, a
+  global filter, the filter taken out of what the task says, a plugin turned on and never configured,
+  and a vault running some other plugin and not this one. The note of each is named as well as the
+  vault, for the reason @obsidianTasks.ct@ names its notes: a vault does not import the notes it
+  holds.
+  What each checkbox is read as is held by the goldens of the notes.
+main{io -> IO}= io.exit(val= 0)

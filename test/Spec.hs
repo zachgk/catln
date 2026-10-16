@@ -20,8 +20,6 @@ import           Syntax.LiveReloadTests      (liveReloadTests)
 import           Syntax.NativeTests          (nativeTests)
 import           Syntax.ObsidianCacheTests   (obsidianCacheTests)
 import           Syntax.ObsidianPlannerTests (obsidianPlannerTests)
-import           Syntax.ObsidianQueryTests   (obsidianQueryTests)
-import           Syntax.ObsidianTaskTests    (obsidianTaskTests)
 import           Syntax.ObsidianTests        (obsidianTests)
 import           Syntax.RereadTests          (rereadTests)
 import           Syntax.RssCacheTests        (rssCacheTests)
@@ -36,5 +34,5 @@ main = do
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
   typecheckTests' <- typecheckTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, inFlightTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianPlannerTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, hsBuiltinsTests, evalCommonTests, printGoldenTests, refinementProofTests, refinementRuntimeTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, inFlightTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianPlannerTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, hsBuiltinsTests, evalCommonTests, printGoldenTests, refinementProofTests, refinementRuntimeTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
   defaultMain catlnTests
