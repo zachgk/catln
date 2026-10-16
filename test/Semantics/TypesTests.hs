@@ -1079,6 +1079,45 @@ propParentVarBindingRespected ioPrgms = property $ do
   assertTimed "ref ⊆ alt ⇔ sub ⊆ alt" $ refAlt == subAlt
   assertTimed "alt ⊆ ref ⇔ alt ⊆ sub" $ altRef == altSub
 
+-- | The case 'propParentVarBindingRespected' drew that ran out of its allocation budget (seed
+-- @66:a15Ja2 Seed 12328065217453297638 5004468674462862067@), pinned. The bound is a value predicate
+-- conjoined with a sealed class whose member is its own unbounded parameter
+-- (@¬(length(this) == True ∧ ~Option)@, @Option[$T]@ = @[$_T, None]@): the class expands to every
+-- name of the program, and spreading the predicate over that expansion made every question about
+-- the bound a question per name ('expandPredicates'). Each stage is held to the same budget the
+-- generated law holds it to.
+unitParentVarBoundUniverseClass :: IO Prgms -> Unit ()
+unitParentVarBoundUniverseClass ioPrgms = do
+  prgms <- liftIO ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "containers.ct program not found"
+  let typeEnv = mkTypeEnv prgm
+  let relTop p = UnionType (Just (PredsOne (PredRel p), H.empty, [])) H.empty []
+      lenT = relTop (partialVal "/length"){ptArgs = H.singleton (partialKey "/this") (relTop (partialVal "/$this"))}
+      lenIsTrue = (partialVal "/operator=="){ptArgs = H.fromList [(partialKey "/r", typeVal "/Data/Primitive/True"), (partialKey "/l", lenT)]}
+      bound = UnionType (Just (PredsNot (PredsAnd [PredsOne (PredExpr lenIsTrue), PredsOne (PredRel (partialVal "/Option"))]), H.empty, [])) H.empty []
+      decoy = relTop (partialVal "#noCore")
+      tVar loc = TypeVar (TVVar (partialKey "/T")) loc PTopType
+      cons v = (partialVal "/Cons"){ ptVars = H.singleton (partialKey "/T") v
+                                   , ptArgs = H.fromList [(partialKey "/head", tVar TVInt), (partialKey "/tail", UnionType (Just (PredsOne (PredClass (partialVal "/ConsList"){ptVars = H.singleton (partialKey "/T") (tVar TVParent)}), H.empty, [])) H.empty [])] }
+      some v = singletonType (partialVal "/Some"){ ptVars = H.singleton (partialKey "/T") bound
+                                                 , ptArgs = H.singleton (partialKey "/value") (singletonType (cons v)) }
+      ref = some (tVar TVParent)
+      sub = some bound
+      alt = some decoy
+      vaenv = ambientEnv $ H.fromList [ (TVVar (partialKey "/a"), decoy), (TVVar (partialKey "/b"), decoy), (TVVar (partialKey "/c"), decoy), (TVVar (partialKey "/T"), typeVal "/Integer") ]
+  note $ printf "sub = %s" (show sub)
+  note $ printf "alt = %s" (show alt)
+  assertTimed "ref ⊆ sub" $ isSubtypeOfWithEnv typeEnv vaenv ref sub
+  assertTimed "sub ⊆ ref" $ isSubtypeOfWithEnv typeEnv vaenv sub ref
+  subAlt <- timed "sub⊆alt" $ isSubtypeOfWithEnv typeEnv vaenv sub alt
+  altSub <- timed "alt⊆sub" $ isSubtypeOfWithEnv typeEnv vaenv alt sub
+  refAlt <- timed "ref⊆alt" $ isSubtypeOfWithEnv typeEnv vaenv ref alt
+  altRef <- timed "alt⊆ref" $ isSubtypeOfWithEnv typeEnv vaenv alt ref
+  checkEq "ref⊆alt and sub⊆alt agree" refAlt subAlt
+  checkEq "alt⊆ref and alt⊆sub agree" altRef altSub
+
 -- | A declared subclass edge with a parameter mapping — @every(ConsList[$T -> $_T], isa= [/Bag])@,
 -- recorded under @Bag[$T]@ as the member template @∀ConsList[/T=$_/T]@ whose @$_/T@ names Bag's own
 -- @/T@ — asserts @ConsList[T=k] ⊆ Bag[T=k]@ for EVERY @k@. So it proves @∀ConsList[/T=a] ⊆ ∀Bag[/T=b]@
@@ -1952,6 +1991,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (p $ propOwnVarBindingRespected ioPrgms)
       , HG.testProperty "propParentVarBindingRespected" (p $ propParentVarBindingRespected ioPrgms)
+      , unitCase "unitParentVarBoundUniverseClass" (unitParentVarBoundUniverseClass ioPrgms)
       , HG.testProperty "propExtensionKeepsProofs" (p $ propExtensionKeepsProofs ioPrgms)
       , HG.testProperty "propOpenProofsHoldClosed" (p $ propOpenProofsHoldClosed gPrgm)
                                         ]

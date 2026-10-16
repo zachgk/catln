@@ -2088,13 +2088,25 @@ expandPredicates typeEnv vaenv conj@(PredsAnd ps)
     -- ('compactFalsePredExprLeafs'): every Mammal is fluffy, so @⊤ | Mammal ∧ ¬fluffy@ is
     -- empty, which the symbolic top cannot show. An open class, or one the expansion cannot
     -- exhaust, keeps the literals on the top.
+    --
+    -- A sealed class whose members already reach every value — one of them is its own unbounded
+    -- parameter (@Option[$T]@'s @$_T@) — expands to every name of the program, each with any
+    -- arguments: the universe, enumerated. Attached per member there, the literals are the
+    -- symbolic top again spelled once per name, and every later meet, compaction and emptiness
+    -- question about it is asked once per name too (a subtype question over such a top made
+    -- ~500 compactions of a 49-name union). The universe a value predicate filters is kept
+    -- symbolic, as 'expandPredicate' keeps it.
     attach t@(TopType _ tps) atoms
       | predsPositiveSealed typeEnv tps
-      , (leafs, False) <- expandTypesWithNamesFull typeEnv vaenv t (teNames typeEnv) =
+      , (leafs, False) <- expandTypesWithNamesFull typeEnv vaenv t (teNames typeEnv)
+      , not (enumeratesUniverse leafs) =
           compactType typeEnv vaenv (typeAddPreds (UnionType Nothing leafs []) atoms)
       | otherwise = typeAddPreds t atoms
     attach t@(UnionType Nothing _ []) atoms = typeAddPreds t atoms
     attach t atoms                        = intersectTypesEnv typeEnv vaenv t (TopType H.empty atoms)
+    enumeratesUniverse leafs =
+      let anyArgs = S.fromList [ ptName l | l <- splitUnionType leafs, l == (partialVal (ptName l)){ptArgMode=PtArgUnbounded} ]
+      in teNames typeEnv `S.isSubsetOf` anyArgs
 expandPredicates typeEnv vaenv (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPredicates typeEnv vaenv p
 
 expandPredicate :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> Type
