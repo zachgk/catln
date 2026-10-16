@@ -11,7 +11,7 @@ Prgm
                         [ /abs.$490dbb
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$490dbb-arg@Value /x2 }
+                                { eaaArg = Value /$490dbb-arg@Value /x2 -> /Data/Primitive/Integer }
                             ) | /operator>=
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
@@ -22,18 +22,12 @@ Prgm
                         , /abs.$490dbb
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$490dbb-arg@Value /x2 -> ∀/Data/Algebra/Ring }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            , /operator*
+                                { eaaArg = Value /$490dbb-arg@Value /x2 -> /Data/Primitive/Integer }
+                            ) ->
+                            ( /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=∀/Data/Algebra/Ring
-                                )
-                            , []
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) =
                             ( /operator*
                                 ( EAppArg
@@ -47,7 +41,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦ ∀/Data/Algebra/Ring
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -96,7 +90,7 @@ Prgm
                             ( /abs.$490dbb
                                 ( /$490dbb-arg=/Data/Primitive/Integer
                                 , /x=/Data/Primitive/Integer
-                                ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
@@ -108,7 +102,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = Value /$490dbb-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                 ) ↦
-                                ( /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ( /operator*[ /T=/Data/Primitive/Integer ]
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Primitive/Integer

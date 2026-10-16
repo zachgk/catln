@@ -82,23 +82,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /f.innerVar -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /operator==
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal
-                                    ( /this=/Data/Primitive/Integer
-                                    , /other=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
-                            ) =
+                        [ Value /f.innerVar -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
@@ -114,18 +98,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Algebra/equal
-                                    ( /this=/Data/Primitive/Integer
-                                    , /other=/Data/Primitive/Integer
-                                    )
-                                , []
-                                )
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }

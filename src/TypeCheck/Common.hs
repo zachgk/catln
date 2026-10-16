@@ -112,6 +112,9 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feEnvStamp           :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feUniverseKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
                  , feBatchDeclVars      :: H.HashMap TypeName (H.HashMap TypeVarAux Type) -- ^ The type variables the declarations of each name being encoded apply, with the bound each applies it with (@applyInc[$F, $A, $B]@'s @/F@, @/A@, @/B@). A definition is read as its declarations augment it, so a variable only its declaration spells (a higher-order argument's declared result @$_B@) is registered in the definition's own scope ('TypeCheck.Encode.fromObjectMap').
                  , feCallArrs           :: IM.IntMap [VObjArr] -- ^ Per call point (a 'TupleApply' level encoded in output position), the higher-order arguments given at that level or any level of its base — the lambdas the call adds to its environment. Attached to the constraints reading that call ('conCallArrs') when the fragment's constraints are finalized.
+                 , feNestedNames        :: S.HashSet TypeName -- ^ The sub functions defined in the fragment being encoded (nested in a definition it also holds — 'TypeCheck.Partition.nestedParentOf'). Every caller one has is in the fragment, so its calls are collected as they are encoded ('feNestedCalls') and bound it once the fragment is ('TypeCheck.Encode.nestedCallerConstraints').
+                 , feNestedRefs         :: H.HashMap TypeName Int -- ^ How many times each of 'feNestedNames' is referred to in the fragment.
+                 , feNestedCalls        :: H.HashMap TypeName [(VarMeta, VarMeta)] -- ^ Each call of one of 'feNestedNames' whose value something receives: the call's point and the point it is received at. A reference that is not such a call (a sub function handed on as a value) leaves this shorter than 'feNestedRefs', and then the calls are not all of its callers.
                  , feConMemo            :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
                  , feInstruments        :: [AnyInstrument] -- ^ What is watching this solve, in the order it was asked for. The solve does not read them and behaves identically whichever are attached; what they kept is read off here once it is over ('instrumentResults') or while it is failing ('instrumentDiagnostics'). Empty is a solve nothing is watching.
                  } deriving (Show)
@@ -155,8 +158,21 @@ data ConstraintDat p
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | ConWhere Int (Maybe PartialType) (Maybe TypeName) p p p -- ^ Where: the condition's form as a predicate ('TypeCheck.Encode.condPredForm'), the base's name when it is bare, base, cond, result
-  | UnionOf Int p [p] -- ^ Both Actual and Req
+  -- | The point is within the union of the others, on the channels given: @UnionOf i ch p ps@.
+  | UnionOf Int UnionChannel p [p]
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
+
+-- | Which of a point's upper bounds a 'UnionOf' meets with the union of its children's.
+--
+-- Both, for a point that is exactly the union of the others (every object of the program, the
+-- union of each object). One alone, where the children say only one thing about it: a sub
+-- function's callers are every caller it has ('TypeCheck.Encode.nestedCallerConstraints'), so the
+-- values it is applied to are the union of what they pass ('UnionAct') and what it must give is
+-- the union of what they need ('UnionReq'), while what they pass bounds nothing they need and the
+-- reverse. A requirement taken from callers is not one the sub function declares, so its
+-- declaration-origin requirement is left as it is.
+data UnionChannel = UnionBoth | UnionAct | UnionReq
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data Constraint p = Constraint {
   -- | The arrows this constraint's CALL adds to its environment: each higher-order argument
@@ -226,10 +242,10 @@ mapMConDat f (ConWhere i form baseVar p1 p2 p3) = do
   p1' <- f p1
   p2' <- f p2
   ConWhere i form baseVar p1' p2' <$> f p3
-mapMConDat f (UnionOf i p1 p2s) = do
+mapMConDat f (UnionOf i ch p1 p2s) = do
   p1' <- f p1
   p2s' <- mapM f p2s
-  return $ UnionOf i p1' p2s'
+  return $ UnionOf i ch p1' p2s'
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
@@ -379,7 +395,8 @@ instance (Show p) => Show (ConstraintDat p) where
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
   show (SetArgMode i False s t) = printf "%s.. %d⊇ %s" (show s) i (show t)
   show (ConWhere i form _ b c r) = printf "%s %d| %s (%s) = %s" (show b) i (show c) (maybe "no predicate" show form) (show r)
-  show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)
+  show (UnionOf i UnionBoth s _) = printf "SUnionOf %d for %s" i (show s)
+  show (UnionOf i ch s cs) = printf "%s %d⊆%s %s" (show s) i (show ch) (show cs)
 
 instance (Show p) => Show (Constraint p) where
   show (Constraint _ _ _ d) = show d

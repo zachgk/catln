@@ -10,11 +10,7 @@ Prgm
                     , omiDefs =
                         [ /fmapBind
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) ->
-                            ( TopType | !
-                                ( !
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                            ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
                             ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /fmapBind.$9471e8
                                 ( Value /$9471e8-arg -> TVArg /v = Value /v )
                             )
@@ -39,17 +35,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /fmapBind.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> ∀/Data/Algebra/Add ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Add
-                                , fromList []
-                                , []
-                                )
-                            , /operator+
+                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) ->
+                            ( /operator+
                                 ( /r=/Data/Primitive/Integer
-                                , /l=∀/Data/Algebra/Add
-                                )
-                            , []
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator+( Value /l -> TVArg /x = Value /x )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }

@@ -985,32 +985,20 @@ Prgm
                                     { eaaArg = Value /x -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /lst -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    { eaaArg = Value /lst ->
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                             ( /head=∀/Data/Algebra/Ord
                                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             )
-                                        , []
                                         ) =
                                         ( /Data/List/sorted
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> TVArg /t = ( Value /t ↦ TVArg /t ) }
-                                            ) ↦ UnionType
-                                            ( Just
-                                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ) ↦
+                                            ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                                 ( /head=∀/Data/Algebra/Ord
                                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                                 )
-                                            , []
                                             )
                                         )
                                     }
@@ -2992,18 +2980,8 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/ToString ]
-                        ( /head=∀/Data/ToString
-                        , /tail=/Data/List/Nil
-                        )
-                    , []
-                    ) =
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) =
                     ( /Data/List/filter
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
@@ -3076,18 +3054,8 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                            , fromList []
-                            , []
-                            )
-                        , /Data/List/Cons[ /T=∀/Data/ToString ]
-                            ( /head=∀/Data/ToString
-                            , /tail=/Data/List/Nil
-                            )
-                        , []
-                        )
+                        ) ↦
+                        ( TopType | PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] )
                     )
                 }
             )
@@ -3107,8 +3075,13 @@ Prgm
                         , fromList []
                         , []
                         )
-                    ,
-                        ( /Data/List/Cons
+                    , /Data/List/Cons
+                        [ /T=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ]
+                        ( /head=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /tail=/Data/List/Cons
                             [ /T=/Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                             ]
@@ -3120,18 +3093,8 @@ Prgm
                                 ]
                                 ( /head=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /tail=/Data/List/Cons
-                                    [ /T=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=/Data/List/Nil
-                                    )
+                                , /tail=/Data/List/Nil
                                 )
-                            ) + /Data/List/Cons[ /T=∀/Data/ToString ]
-                            ( /head=∀/Data/ToString
-                            , /tail=/Data/List/Nil
                             )
                         )
                     , []
@@ -3231,8 +3194,13 @@ Prgm
                             , fromList []
                             , []
                             )
-                        ,
-                            ( /Data/List/Cons
+                        , /Data/List/Cons
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /tail=/Data/List/Cons
                                 [ /T=/Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ]
@@ -3244,18 +3212,8 @@ Prgm
                                     ]
                                     ( /head=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=/Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /tail=/Data/List/Nil
-                                        )
+                                    , /tail=/Data/List/Nil
                                     )
-                                ) + /Data/List/Cons[ /T=∀/Data/ToString ]
-                                ( /head=∀/Data/ToString
-                                , /tail=/Data/List/Nil
                                 )
                             )
                         , []

@@ -49,13 +49,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /f.n( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator+[ /T=/Data/Primitive/Integer ]
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Lib/foo( /this=/Data/Primitive/Integer ) + /Data/Primitive/Integer
-                            ) = /foo( Value /this -> TVArg /x = Value /x )
-                        ]
+                        [ /f.n( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /foo( Value /this -> TVArg /x = Value /x ) ]
                     }
                 )
             ,

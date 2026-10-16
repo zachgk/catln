@@ -29,6 +29,7 @@ import           Data.Graph           (flattenSCC, stronglyConnCompR)
 import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
 import           Data.List            (nub, partition, sortOn)
+import qualified Data.List            as L
 import           Data.Maybe
 
 import           MapMeta              (mapMetaObjArrM)
@@ -92,6 +93,13 @@ objArrRefNames oa = objArrExprRefNames oa ++ metaNames
       tell $ typeRefNames $ getMetaType m
       return m
 
+-- | The definition a sub function is nested in: the item whose name its own extends by a dot
+-- ('Syntax.Ct.Desugarf.Nested.nestedSubName' — @/Data/List/sorted.insert@ is nested in
+-- @/Data/List/sorted@). The innermost when several do, as a sub function of a sub function
+-- extends both.
+nestedParentOf :: S.HashSet Name -> Name -> Maybe Name
+nestedParentOf keys k = listToMaybe [ p | i <- reverse (L.elemIndices '.' (nameStr k)), let p = mkName (take i (nameStr k)), S.member p keys ]
+
 -- | Dependency-first solve groups of object-map item keys.
 --
 -- The first group is the DATA PRELUDE: every item whose ObjArrs are all
@@ -101,6 +109,11 @@ objArrRefNames oa = objArrExprRefNames oa ++ metaNames
 -- function items, in dependency-first order ('stronglyConnCompR' returns
 -- dependencies before dependents). Nodes and edges are sorted by name so the
 -- grouping is deterministic.
+--
+-- A sub function is solved with the definition it is nested in, not before it as a dependency: its
+-- callers are exactly the ones in that definition ('nestedParentOf'), so what they pass and what
+-- they need of it are part of its typing ('TypeCheck.Encode.nestedCallerConstraints'). The parent
+-- already refers to it, so an edge back to the parent puts both in one group.
 itemSccGroups :: (MetaDat m, Show m) => ObjectMap Expr m -> [[Name]]
 itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
   where
@@ -108,7 +121,7 @@ itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
     isDataItem item = all (isNothing . oaArr) (flatObjectMapItem item)
     (dataKeys, funcKeys) = partition (\k -> isDataItem (H.lookupDefault (error "itemSccGroups: missing key") k omap)) keys
     funcKeySet = S.fromList funcKeys
-    itemEdges k = sortOn nameStr $ filter (/= k) $ filter (`S.member` funcKeySet) $ nub $ concatMap resolveRef refs
+    itemEdges k = sortOn nameStr $ filter (/= k) $ filter (`S.member` funcKeySet) $ nub $ maybeToList (nestedParentOf funcKeySet k) ++ concatMap resolveRef refs
       where
         refs = nub $ concatMap objArrRefNames $ flatObjectMapItem $ H.lookupDefault (error "itemSccGroups: missing key") k omap
         -- A relative reference resolves to EVERY matching item (the

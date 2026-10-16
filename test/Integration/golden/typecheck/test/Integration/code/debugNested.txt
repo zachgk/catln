@@ -9,9 +9,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bump.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> ∀/Data/Algebra/Add ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
-                            ( Value /value -> ∀/Data/Algebra/Add = /operator+
-                                ( Value /l -> ∀/Data/Algebra/Add = /bump.$9471e8.doubled( Value /x -> TVArg /x = Value /x ) )
+                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /bump.$9471e8.doubled( Value /x -> TVArg /x = Value /x ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )
@@ -43,7 +43,7 @@ Prgm
                             , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                             , []
                             ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /bump.$9471e8
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /bump.$9471e8
                                 ( Value /$9471e8-arg -> TVArg /v = Value /v )
                             )
                         ]
@@ -128,19 +128,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /bump.$9471e8.doubled( Value /x -> ∀/Data/Algebra/Add ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Add
-                                , fromList []
-                                , []
-                                )
-                            , /operator+
-                                ( /r=∀/Data/Algebra/Add
-                                , /l=∀/Data/Algebra/Add
-                                )
-                            , []
-                            ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x )
-                        ]
+                        [ /bump.$9471e8.doubled( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
                     }
                 )
             ,
@@ -170,7 +158,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                )| PredClass /Catln/Doc/DShow + /Data/Primitive/Integer
                             ) = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
                         ]
                     }
@@ -243,7 +231,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sign( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator-[ /T=/Data/Primitive/Integer ]( /a=/Data/Primitive/Integer ) + /sign.$c1be8f
+                            ( /operator-( /a=/Data/Primitive/Integer ) + /sign.$c1be8f
                                 ( /$c1be8f-arg=( /Catln/Else + /Catln/Then ) ) + /Data/Primitive/Integer
                             ) = /sign.$c1be8f
                             ( Value /$c1be8f-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool

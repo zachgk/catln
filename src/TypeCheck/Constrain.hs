@@ -477,16 +477,34 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (ConWhere i form bas
     -- ambient var-env.
     refine side = intersectTypesEnv feTypeEnv (ambientEnv (fmap (side . snd) vaenv)) (side res) $ typeAddPreds (side base) preds
     res' = res{stypeAct=refine stypeAct, stypeReq=refine stypeReq, stypeReqDecl=refine stypeReqDecl}
-computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
+computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i UnionBoth parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i UnionBoth parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeAct children
     chReq = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeReq children
     chReqDecl = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeReqDecl children
     actVaenv = ambientEnv (fmap (stypeAct . snd) vaenv)
     (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq chReqDecl Nothing "")
+-- One channel alone: the parent's bound on it is met with the union of the children's, and its
+-- other bounds are left as they are. A child still a variable bounds nothing yet, so the union
+-- waits for it (an unresolved child is ⊤, which the union already reads as no bound).
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (UnionOf i ch parent children)) = (False, con{conDat=UnionOf i ch parent' children})
+  where
+    side = case ch of
+      UnionAct -> stypeAct
+      _        -> stypeReq
+    sideVaenv = ambientEnv (fmap (side . snd) vaenv)
+    childrenUnion
+      | any (isTypeVar . side) children = PTopType
+      | otherwise = unionAllTypesWithEnv feTypeEnv H.empty (map side children)
+    met = intersectTypesEnv feTypeEnv sideVaenv (side parent) childrenUnion
+    parent'
+      | childrenUnion == PTopType || typeVarLost (side parent) met = parent
+      | otherwise = case ch of
+          UnionAct -> parent{stypeAct = met}
+          _        -> parent{stypeReq = met}
 
 saveConstraint :: VConstraint -> RConstraint -> RConstraint -> FEnv -> FEnv
-saveConstraint con@(Constraint _ _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ _ vaenv' (UnionOf _ parent' _)) env = env''
+saveConstraint con@(Constraint _ _ _ (UnionOf _ UnionBoth parentPnt _)) oldCon newCon@(Constraint _ _ vaenv' (UnionOf _ _ parent' _)) env = env''
   -- TODO Delete special case of saveConstraint for UnionOf by fixing the bug
   where
     env' = setScheme env con (oldCon, newCon) parentPnt (return parent') "UnionOf"

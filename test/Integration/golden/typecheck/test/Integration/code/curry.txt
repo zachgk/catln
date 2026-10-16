@@ -58,23 +58,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /f.innerVar -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /operator==
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal
-                                    ( /this=/Data/Primitive/Integer
-                                    , /other=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
-                            ) = /operator==
+                        [ Value /f.innerVar -> ∀/Data/Primitive/Boolean = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }

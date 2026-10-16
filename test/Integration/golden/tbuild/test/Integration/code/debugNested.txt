@@ -10,23 +10,23 @@ Prgm
                     , omiDefs =
                         [ /bump.$9471e8
                             ( EAppArg
-                                { eaaArg = Value /$9471e8-arg@Value /x -> ∀/Data/Algebra/Add }
-                            ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) = /Data/Maybe/Some
+                                { eaaArg = Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer }
+                            ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                             ( EAppArg
-                                { eaaArg = Value /value -> ∀/Data/Algebra/Add =
+                                { eaaArg = Value /value -> /Data/Primitive/Integer =
                                     ( /operator+
                                         ( EAppArg
-                                            { eaaArg = Value /l -> ∀/Data/Algebra/Add =
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
                                                 ( /bump.$9471e8.doubled
                                                     ( EAppArg
                                                         { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                                    ) ↦ ∀/Data/Algebra/Add
+                                                    ) ↦ /Data/Primitive/Integer
                                                 )
                                             }
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ ∀/Data/Algebra/Add
+                                        ) ↦ /Data/Primitive/Integer
                                     )
                                 }
                             )
@@ -65,11 +65,11 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some( /value=∀/Data/Algebra/Add ) =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) =
                                         ( /bump.$9471e8
                                             ( EAppArg
                                                 { eaaArg = Value /$9471e8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ /Data/Maybe/Some( /value=∀/Data/Algebra/Add )
+                                            ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
                                         )
                                     }
                                 ) ↦ UnionType
@@ -215,25 +215,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bump.$9471e8.doubled
-                            ( EAppArg { eaaArg = Value /x -> ∀/Data/Algebra/Add } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Add
-                                , fromList []
-                                , []
-                                )
-                            , /operator+
-                                ( /r=∀/Data/Algebra/Add
-                                , /l=∀/Data/Algebra/Add
-                                )
-                            , []
-                            ) =
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ ∀/Data/Algebra/Add
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -277,7 +266,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                )| PredClass /Catln/Doc/DShow + /Data/Primitive/Integer
                             ) =
                             ( /operator+
                                 ( EAppArg
@@ -285,7 +274,12 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                ) ↦ /Data/Primitive/Integer
+                                ) ↦
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    )| PredClass /Catln/Doc/DShow + /Data/Primitive/Integer
+                                )
                             )
                         ]
                     }
@@ -403,7 +397,7 @@ Prgm
                     , omiDefs =
                         [ /sign
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
-                            ( /operator-[ /T=/Data/Primitive/Integer ]( /a=/Data/Primitive/Integer ) + /sign.$c1be8f
+                            ( /operator-( /a=/Data/Primitive/Integer ) + /sign.$c1be8f
                                 ( /$c1be8f-arg=( /Catln/Else + /Catln/Then ) ) + /Data/Primitive/Integer
                             ) =
                             ( /sign.$c1be8f

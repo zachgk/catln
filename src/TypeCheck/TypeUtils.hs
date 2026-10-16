@@ -119,7 +119,7 @@ addUnionObjToEnv vobjMap tobjMapRec tPrecedenceMap = do
   let unionAllObjsPs' = mkVarMeta unionAllObjsPs
 
   let constraints = [
-        UnionOf 1 unionAllObjs' (typecheckedAllObjs' : vobjMetas),
+        UnionOf 1 UnionBoth unionAllObjs' (typecheckedAllObjs' : vobjMetas),
         SetArgMode 2 True unionAllObjs' unionAllObjsPs'
         ]
   modify (\env -> env{feUnionAllObjs=unionAllObjsPs'})
@@ -387,7 +387,14 @@ outVarReqKey typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} dest ke
 -- ones. An open class may gain a member in any later file, so a value is within it only by naming a
 -- member it already has.
 closedType :: (TypeGraph tg) => TypeEnv tg -> Type -> Bool
-closedType typeEnv (UnionType (Just (preds, _, _)) _ _) = predsSealed typeEnv preds
+closedType typeEnv (UnionType (Just (preds, _, _)) _ _) = predsSealed typeEnv preds || sealedConjunct preds
+  where
+    -- A conjunction lies within each of its positive conjuncts, so one sealed class among them
+    -- closes it whatever the others are: @∀Maybe[Integer] ∧ ∀Functor[Integer]@ holds only
+    -- @Maybe@s. ('predsSealed' asks whether every class may be expanded, which is not this.)
+    sealedConjunct p@(PredsOne PredClass{}) = predsSealed typeEnv p
+    sealedConjunct (PredsAnd ps)            = any sealedConjunct ps
+    sealedConjunct _                        = False
 closedType _ _                                          = True
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))

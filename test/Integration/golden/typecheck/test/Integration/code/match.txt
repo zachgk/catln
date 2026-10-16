@@ -9,22 +9,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$490dbb( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$490dbb-arg@Value /x2 ) | /operator>=( Value /l -> TVArg /x = Value /x )
+                            ( Value /$490dbb-arg@Value /x2 -> /Data/Primitive/Integer ) | /operator>=( Value /l -> TVArg /x = Value /x )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             ) -> TVArg /x2 = Value /x2
                         , /abs.$490dbb( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$490dbb-arg@Value /x2 -> ∀/Data/Algebra/Ring ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            , /operator*
+                            ( Value /$490dbb-arg@Value /x2 -> /Data/Primitive/Integer ) ->
+                            ( /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=∀/Data/Algebra/Ring
-                                )
-                            , []
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
                             ( Value /r -> /Data/Primitive/Integer = /operator-
                                 ( Value /a -> /Data/Primitive/Integer = CInt
@@ -66,7 +60,7 @@ Prgm
                             ( /abs.$490dbb
                                 ( /$490dbb-arg=/Data/Primitive/Integer
                                 , /x=/Data/Primitive/Integer
-                                ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                                ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer

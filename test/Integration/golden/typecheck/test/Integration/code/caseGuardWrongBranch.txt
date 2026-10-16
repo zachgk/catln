@@ -8,17 +8,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$bfef16-1( Value /$bfef16-arg@Value /x2 -> ∀/Data/Algebra/Ring ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            , /operator*
+                        [ /abs.$bfef16-1( Value /$bfef16-arg@Value /x2 -> /Data/Primitive/Integer ) ->
+                            ( /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=∀/Data/Algebra/Ring
-                                )
-                            , []
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
                             ( Value /r -> /Data/Primitive/Integer = /operator-
                                 ( Value /a -> /Data/Primitive/Integer = CInt
@@ -46,7 +40,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*[ /T=∀/Data/Algebra/Ring ]
+                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
@@ -61,23 +55,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$bfef16-0( Value /$bfef16-arg@Value /x2 -> ∀/Data/Algebra/Ord ) | /operator>=( Value /l -> TVArg /x2 = Value /x2 )
+                        [ /abs.$bfef16-0( Value /$bfef16-arg@Value /x2 -> /Data/Primitive/Integer ) | /operator>=( Value /l -> TVArg /x2 = Value /x2 )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$bfef16-0( Value /$bfef16-arg -> ∀/Data/Algebra/Ring ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Ring
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /abs.$bfef16-1( /$bfef16-arg=∀/Data/Algebra/Ring ) + /operator*[ /T=∀/Data/Algebra/Ring ]
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=∀/Data/Algebra/Ring
-                                    )
-                                )
-                            , []
+                        , /abs.$bfef16-0( Value /$bfef16-arg -> /Data/Primitive/Integer ) ->
+                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /abs.$bfef16-1( Value /$bfef16-arg -> TVArg /$bfef16-arg = Value /$bfef16-arg )
                         ]
                     }

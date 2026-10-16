@@ -34,6 +34,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
+import           TypeCheck.Partition (nestedParentOf)
 import           TypeCheck.TypeUtils (addUnionObjToEnv,
                                       recursiveObjsWithPrecedence)
 import           Utils
@@ -90,6 +91,9 @@ makeBaseFEnv instruments prgm = FEnv{
   feLocalDefNames = S.empty,
   feEnvStamp = 0,
   feCallArrs = IM.empty,
+  feNestedNames = S.empty,
+  feNestedRefs = H.empty,
+  feNestedCalls = H.empty,
   feBatchDeclVars = H.empty,
   feConMemo = IM.empty,
   feInstruments = instruments
@@ -121,6 +125,7 @@ fromExpr est (CExpr m c) = do
 fromExpr est@EncodeOut{} (Value m name) = do
   m' <- fromMeta BAct est m ("Out Val " ++ nameStr name)
   modify $ addConstraints [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m' PTopType]
+  modify $ noteNestedRef name
   return $ Value m' name
 fromExpr est@EncodeIn{} (Value m name) = do
   m' <- fromMeta BAct est m ("In Val " ++ nameStr name)
@@ -151,6 +156,7 @@ fromExpr est (EWhere m base cond) = do
         (EncodeOut{}, Value _ n) -> Just n
         _                        -> Nothing
   modify $ addConstraints [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (condPredForm cond) baseVar (getExprMeta base') (getExprMeta cond') m']
+  modify $ noteNestedCall cond' bool'
   return $ EWhere m' base' cond'
 fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   m' <- fromMeta BAct est m $ printf "Tuple Meta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
@@ -515,6 +521,9 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
           -- Input with (x -> T)
           []
   modify $ addConstraints constraints
+  case (est, oaArr') of
+    (EncodeOut{}, Just (Just argExpr', arrM')) -> modify $ noteNestedCall argExpr' arrM'
+    _                                          -> return ()
   let oa' = oa{
         oaObj=oaObj',
         oaArr=oaArr',
@@ -597,6 +606,7 @@ fromObjectMap oa@ObjArr{oaAnnots=oaAnnots0, oaObj=Just obj0, oaArr=oaArr0} = do
         -- among definitions by the required result ('arrowConstrainUbs').
         arrM' <- fromMeta BReq est arrM $ printf "Arrow result from %s" (show $ exprPath obj')
         modify $ addConstraints [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM']
+        modify $ noteNestedCall vExpr arrM'
         return (Just vExpr, arrM')
       Nothing -> return (Nothing, mUserReturn')
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}
@@ -667,8 +677,11 @@ addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgm
 fromPrgmsFragment :: [PPrgm] -> (TObjectMap, H.HashMap TypeName [Int]) -> StateT FEnv TypeCheckResult ([VPrgm], [VConstraint])
 fromPrgmsFragment pprgms (tobjMapRec, tPrecedenceMap) = do
   accumCons <- gets feCons
-  modify $ \e -> e{feCons=[], feBatchDeclVars = H.unionWith (H.unionWith joinDeclVarBounds) (declVarsOf pprgms) (feBatchDeclVars e)}
+  let fragKeys = S.fromList $ concat [ H.keys om | Prgm{prgmObjMap=ObjectMap om} <- pprgms ]
+  modify $ \e -> e{ feCons=[], feBatchDeclVars = H.unionWith (H.unionWith joinDeclVarBounds) (declVarsOf pprgms) (feBatchDeclVars e)
+                  , feNestedNames = S.filter (isJust . nestedParentOf fragKeys) fragKeys, feNestedRefs = H.empty, feNestedCalls = H.empty }
   vprgms <- mapM fromPrgm pprgms
+  nestedCallerConstraints (mconcat $ map fst3 vprgms)
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tobjMapRec tPrecedenceMap
   -- Last, once every constraint (including the universe's, added just above) is in: hand the
   -- solver the list in the order values flow through it rather than the reverse the O(1)
@@ -678,6 +691,49 @@ fromPrgmsFragment pprgms (tobjMapRec, tPrecedenceMap) = do
   fragCons <- gets feCons
   modify $ \e -> e{feCons = accumCons ++ fragCons}
   return (vprgms, fragCons)
+
+-- | A reference in output position to one of the fragment's sub functions ('feNestedNames').
+noteNestedRef :: TypeName -> FEnv -> FEnv
+noteNestedRef name env
+  | S.member n (feNestedNames env) = env{feNestedRefs = H.insertWith (+) n 1 (feNestedRefs env)}
+  | otherwise = env
+  where n = makeAbsoluteName name
+
+-- | A value received at a point (an argument's slot, a definition's result, a guard's boolean):
+-- when it is a call of one of the fragment's sub functions, the call and where it is received.
+noteNestedCall :: VExpr -> VarMeta -> FEnv -> FEnv
+noteNestedCall e dest env = case maybeExprPath e of
+  Just name | n <- makeAbsoluteName name, S.member n (feNestedNames env)
+    -> env{feNestedCalls = H.insertWith (++) n [(getExprMeta e, dest)] (feNestedCalls env)}
+  _ -> env
+
+-- | A sub function's callers are all in the definition it is nested in, which the fragment holds
+-- ('TypeCheck.Partition.itemSccGroups'), so the calls collected while encoding it are every call it
+-- has. Each of its arms is then applied to no more than they pass it, and need give no more than
+-- what receives their values needs: its object is within the union of the calls ('UnionAct') and
+-- its result within the union of their destinations' requirements ('UnionReq').
+--
+-- Nested @x <- a@ binds desugar to such sub functions: a continuation called once, from the
+-- lambda of the bind before it. It is applied only to what that bind passes (@x@ is the
+-- @Integer@ element, not every 'Add' its body would take), and what that bind's arm needs of its
+-- lambda (@mmap@'s @$M@) is what the continuation must return, which chooses among the arms of a
+-- bind inside it.
+--
+-- Only where the collected calls are all of its references: one handed on as a value is called
+-- wherever it is passed, by callers the fragment does not show.
+nestedCallerConstraints :: ObjectMap Expr VarMetaDat -> StateT FEnv TypeCheckResult ()
+nestedCallerConstraints (ObjectMap objMap) = do
+  FEnv{feNestedRefs, feNestedCalls} <- get
+  let cons = concat
+        [ [ UnionOf 50 UnionAct (getExprMeta (oaObjExpr arm)) (map fst calls)
+          , UnionOf 50 UnionReq arrM (map snd calls) ]
+        | (name, calls@(_:_)) <- H.toList feNestedCalls
+        , H.lookup name feNestedRefs == Just (length calls)
+        , arm@ObjArr{oaArr=Just (Just _, arrM)} <- maybe [] omiDefs (H.lookup name objMap) ]
+  unless (null cons) $ do
+    modify startConstrainBlock
+    modify $ addConstraints cons
+    modify $ endConstraintBlock Nothing H.empty
 
 -- | Give each constraint that reads a call the arrows that call adds to its environment: an
 -- 'ArrowTo' whose source is a call point carries that call's higher-order arguments

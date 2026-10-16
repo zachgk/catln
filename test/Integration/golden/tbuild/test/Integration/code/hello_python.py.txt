@@ -360,7 +360,7 @@ Prgm
                         [ /add_ints
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } ) ->
-                            ( /operator+[ /T=/Data/Primitive/Integer ]
+                            ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /add_ints.result

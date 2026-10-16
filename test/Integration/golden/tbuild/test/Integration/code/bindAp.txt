@@ -77,7 +77,9 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /v -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                                            { eaaArg = Value /v ->
+                                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                            }
                                         ) -> /Data/Primitive/Integer =
                                         ( /apBind.$9471e8
                                             ( EAppArg
