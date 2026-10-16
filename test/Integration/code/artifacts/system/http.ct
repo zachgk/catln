@@ -2,9 +2,9 @@ import "core"
 import "http"
 
 
-# Sends one request and prints what came back.
+# Sends one request and prints what came back, or why nothing did.
 main{io -> IO} -> (){IO} =
   reply<- httpPost(url= "http://example.test/echo", headers= [/Http/Header(name= "X-Test", value= "tok")], body= "h\233llo")
-  _<- println(msg= reply)
+  _<- println(msg= reply.toString)
   _<- exit(val= 0)
   ()

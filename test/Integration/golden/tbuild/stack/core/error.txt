@@ -100,7 +100,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /value -> ∀/Data/ToString } )
                                 }
                             ) -> ∀/Data/String =
-                            ( /Data/toString
+                            ( /toString
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /value = ( Value /value ↦ TVArg /value ) }
                                 ) ↦ ∀/Data/String
@@ -1008,7 +1008,7 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                            { eaaArg = Value /l -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                 )
@@ -1034,7 +1034,7 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                            { eaaArg = Value /l -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                 )
@@ -1070,7 +1070,7 @@ Prgm
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Data/Result/withDefault
                         ( EAppArg
-                            { eaaArg = Value /r -> /Data/Result/Ok( /value=/Data/Primitive/Integer ) =
+                            { eaaArg = Value /r -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
                                 ( /Data/Functor/fmap
                                     ( EAppArg
                                         { eaaArg = Value /lst -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
@@ -1091,7 +1091,7 @@ Prgm
                                                 ) ↦ /Data/Primitive/Integer
                                             )
                                         }
-                                    ) ↦ /Data/Result/Ok( /value=/Data/Primitive/Integer )
+                                    ) ↦ /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                 )
                             }
                         )
@@ -1111,11 +1111,18 @@ Prgm
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Data/Result/withDefault
                         ( EAppArg
-                            { eaaArg = Value /r -> /Data/Result/Fail
-                                ( /err=/Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
+                            { eaaArg = Value /r ->
+                                ( /Data/Result/Fail
+                                    [ /E=/Data/Failure
+                                        ( /reason=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ]
+                                    ( /err=/Data/Failure
+                                        ( /reason=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                 ) =
                                 ( /Data/Monad/mmap
                                     ( EAppArg
@@ -1146,11 +1153,18 @@ Prgm
                                                 }
                                             )
                                         }
-                                    ) ↦ /Data/Result/Fail
-                                    ( /err=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                    ) ↦
+                                    ( /Data/Result/Fail
+                                        [ /E=/Data/Failure
+                                            ( /reason=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ]
+                                        ( /err=/Data/Failure
+                                            ( /reason=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                     )
                                 )
                             }

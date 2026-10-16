@@ -11,14 +11,26 @@ module(Http)
   data(Header(name -> String, value -> String))
     # One header of a request: its name, and what it is set to.
 
-  httpPost{io -> IO}(url -> String, headers -> /Data/List[$T -> Header..], body -> String) -> String{IO}
+  class(HttpErr, [HttpErr/InvalidUrl(url -> String, detail -> String), HttpErr/Unreachable(url -> String, detail -> String), HttpErr/Status(url -> String, code -> Integer, body -> String), HttpErr/NotSent(url -> String)], isa= [/Data/Err])
+    # [HttpErr] is why a request to [url] has no response: the URL is not one ([InvalidUrl]); the
+      request could not be made, as where the host does not answer ([Unreachable]); the response's
+      status [code] is not a success, with the [body] it came with, which is where an API says what
+      the matter was ([Status]); or the run reaches no network, so it was not sent ([NotSent]).
+      [detail] is what the system said went wrong.
+
+  httpPost{io -> IO}(url -> String, headers -> /Data/List[$T -> Header..], body -> String) -> /Data/Result[$T -> String, $E -> HttpErr]{IO}
     # [httpPost] sends [body] to [url] as the body of a POST request with [headers] set, and answers
-      with the body of the response. The body is sent and read as UTF-8.
-      A request that cannot be made — a URL that is not one, a host that does not answer — and a
-      response whose status is not a success both fail the evaluation with what went wrong, which
-      for a response includes the body it answered with, since that is where an API says what the
-      matter was.
+      with the body of the response, or the [HttpErr] saying why there is none. The body is sent
+      and read as UTF-8.
       What a run can reach is decided by whatever started it. A program run by `catln run` reaches
-      the network; the webdocs' debugger reaches none, and a request made in it fails rather than
-      being sent.
+      the network; the webdocs' debugger reaches none, and a request made in it is answered with
+      [HttpErr/NotSent] rather than being sent.
     #runtime("ioHttpPost")
+module(Data)
+  :/Http/HttpErr/InvalidUrl(url, detail).msg= url ++ " is not a URL a request can be sent to: " ++ detail
+  :/Http/HttpErr/Unreachable(url, detail).msg= "the request to " ++ url ++ " could not be made: " ++ detail
+  :/Http/HttpErr/Status(url, code, body).msg= "the request to " ++ url ++ " answered with status " ++ code.toString ++ ": " ++ body
+  :/Http/HttpErr/NotSent(url).msg= "the request to " ++ url ++ " was not sent, as this run reaches no network"
+module(Http)
+  > /Data/Result/Fail(err= HttpErr/Status(url= "http://x.test", code= 401, body= "no key"))
+    >>> error: the request to http://x.test answered with status 401: no key

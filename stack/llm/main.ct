@@ -21,17 +21,16 @@ module(Llm)
     reads the environment and it sends a request.
     This is not part of the standard library. A program which asks no model has no use for it, and
     one that does writes `import "llm"`.
-  class(LlmErr, [LlmErr/Unset(variable -> String), LlmErr/NotJson(cause -> /Data/JsonParseErr..), LlmErr/ApiError(message -> String), LlmErr/NoReply(path -> String, cause -> /Data/JsonAccessErr), LlmErr/NotText(path -> String, found -> /Data/Json)], isa= [/Data/Err])
+  class(LlmErr, [LlmErr/Unset(variable -> String), LlmErr/Request(cause -> /Http/HttpErr), LlmErr/NotJson(cause -> /Data/JsonParseErr..), LlmErr/ApiError(message -> String), LlmErr/NoReply(path -> String, cause -> /Data/JsonAccessErr), LlmErr/NotText(path -> String, found -> /Data/Json)], isa= [/Data/Err])
     # [LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
-      ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+      ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+      response is not JSON ([NotJson]); the API answered with an error saying
       [message] ([ApiError]); or the response has nothing at [path], where the reply is
       ([NoReply]), or something other than text there ([NotText]).
 
   llm{io -> IO}(input -> String) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
     # [llm] is the reply of the configured model to the prompt [input], or the [LlmErr] saying why
       there is none.
-      A request that could not be made, or that was answered with a failure, fails the evaluation
-      with what went wrong, as [/Http/httpPost] does.
   llm{io -> IO}(input) =
     base<- /System/env(name= "OPENAI_BASE_URL")
 
@@ -47,9 +46,14 @@ module(Llm)
   llmWith{io -> IO}(input, base= /Data/Maybe/Nothing, model, key)= /Data/Result/Fail(err= LlmErr/Unset(variable= "OPENAI_BASE_URL")){io}
   llmWith{io -> IO}(input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Result/Fail(err= LlmErr/Unset(variable= "OPENAI_MODEL")){io}
   llmWith{io -> IO}(input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key) =
-    text<- /Http/httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))
+    response<- /Http/httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))
 
-    llmReply(response= /Data/jsonParse(text= text))
+    llmSent(response= response)
+
+  llmSent(response -> /Data/Result[$T -> String, $E -> /Http/HttpErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+    # [llmSent] is the reply in the body of the [response], or why the request has none.
+  llmSent(response= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/Request(cause= err))
+  llmSent(response= /Data/Result/Ok(value))= llmReply(response= /Data/jsonParse(text= value))
 
   # ## Showing a model
     What a model is shown of a value is its own question, as what a person is shown of one is
@@ -201,8 +205,11 @@ module(Llm)
     >>> error: the model's reply at choices[0].message.content is a number, not text
   > llmReply(response= /Data/jsonParse(text= "<html>"))
     >>> error: the model's response is not JSON: '<' is where a value was expected, at character 0
+  > llmSent(response= /Data/Result/Fail(err= /Http/HttpErr/Status(url= "http://model.test/v1/chat/completions", code= 401, body= "no key")))
+    >>> error: the model could not be asked: the request to http://model.test/v1/chat/completions answered with status 401: no key
 module(Data)
   :/Llm/LlmErr/Unset(variable).msg= variable ++ " is not set, so there is no model to ask"
+  :/Llm/LlmErr/Request(cause).msg= "the model could not be asked: " ++ cause.msg
   :/Llm/LlmErr/NotJson(cause).msg= "the model's response is " ++ cause.msg
   :/Llm/LlmErr/ApiError(message).msg= "the model's API answered with an error: " ++ message
   :/Llm/LlmErr/NoReply(path, cause).msg= "the model's response has no reply at " ++ path ++ ": " ++ cause.msg

@@ -21,15 +21,14 @@ module Eval.Runtime.System (
   realHttpPost,
   ) where
 
-import           Control.Exception         (SomeException, displayException,
-                                            try)
+import           Control.Exception         (displayException, try)
 import           CtConstants
 import qualified Data.ByteString.Lazy.UTF8 as LBU
 import qualified Data.ByteString.UTF8      as BU
 import qualified Data.HashMap.Strict       as H
 import           Data.String               (fromString)
 import           Eval.Common
-import           Network.HTTP.Simple       (getResponseBody,
+import           Network.HTTP.Simple       (HttpException, getResponseBody,
                                             getResponseStatusCode, httpLBS,
                                             parseRequest, setRequestBodyLBS,
                                             setRequestHeaders)
@@ -57,27 +56,29 @@ realIOHandle = IOHandle
       hFlush stdout
       eof <- isEOF
       if eof
-        then return $ Left "There is no more input to read"
+        then return $ Left EndOfInput
         else Right <$> getLine
 
 -- | Sends a POST request over the network.
 --
 -- The body is sent and read as UTF-8, which is what a Catln String is written out as and what a JSON
--- API answers in. A request that could not be made — a URL that is not one, a host that does not
--- answer — and a response whose status is not a success are both reported rather than raised, with
--- the response body kept in the report, since that is where an API says what was wrong.
+-- API answers in. A URL that is not one, a request that could not be made, and a response whose
+-- status is not a success are each reported rather than raised, with the response body kept in the
+-- report, since that is where an API says what was wrong.
 realHttpPost :: HttpPost
 realHttpPost url headers body = do
-  res <- try $ do
-    req <- parseRequest ("POST " ++ url)
-    let req' = setRequestBodyLBS (LBU.fromString body) $ setRequestHeaders [(fromString k, BU.fromString v) | (k, v) <- headers] req
-    httpLBS req'
-  return $ case res of
-    Left e -> Left $ printf "The request to %s could not be made: %s" url (displayException (e :: SomeException))
-    Right resp
-      | status >= 200 && status < 300 -> Right $ LBU.toString $ getResponseBody resp
-      | otherwise -> Left $ printf "The request to %s answered with status %d: %s" url status (LBU.toString $ getResponseBody resp)
-      where status = getResponseStatusCode resp
+  parsed <- try $ parseRequest ("POST " ++ url)
+  case parsed of
+    Left e -> return $ Left $ HttpInvalidUrl $ displayException (e :: HttpException)
+    Right req -> do
+      let req' = setRequestBodyLBS (LBU.fromString body) $ setRequestHeaders [(fromString k, BU.fromString v) | (k, v) <- headers] req
+      res <- try $ httpLBS req'
+      return $ case res of
+        Left e -> Left $ HttpUnreachable $ displayException (e :: HttpException)
+        Right resp
+          | status >= 200 && status < 300 -> Right $ LBU.toString $ getResponseBody resp
+          | otherwise -> Left $ HttpStatus status (LBU.toString $ getResponseBody resp)
+          where status = getResponseStatusCode resp
 
 -- | An IO primitive's answer: its value in the io it was called in.
 ioContextVal' :: H.HashMap String Val -> Val -> Val
@@ -94,14 +95,18 @@ ioEnv = EIOPrim "ioEnv" prim
     maybeStr Nothing  = TupleVal ctMaybeNothing H.empty
     maybeStr (Just v) = TupleVal ctMaybeSome (H.singleton (runtimeArgKey ctMaybeSomeValue) (StrVal v))
 
--- | Backs @httpPost{io -> IO}(url -> String, headers -> List[Http/Header], body -> String) -> String{IO}@:
--- the body of the response.
+-- | Backs @httpPost{io -> IO}(url -> String, headers -> List[Http/Header], body -> String) ->
+-- Result[String, Http/HttpErr]{IO}@: the body of the response, or why there is none, in the io it is
+-- called in.
+--
+-- Arguments of the wrong shape still fail the evaluation, since a program that type-checked cannot
+-- pass them and so one that does is a fault of the compiler's rather than of the request.
 ioHttpPost :: EPrim
 ioHttpPost = EIOPrim "ioHttpPost" prim
   where
     prim handle args = case request args of
       Left err -> return $ Left err
-      Right (url, headers, body) -> fmap (ioContextVal' args . StrVal) <$> iohHttpPost handle url headers body
+      Right (url, headers, body) -> Right . ioContextVal' args . resultVal . either (Left . httpErrVal url) (Right . StrVal) <$> iohHttpPost handle url headers body
     request args = do
       url <- valStrArg "IO.httpPost" "url" args
       body <- valStrArg "IO.httpPost" "body" args
@@ -110,3 +115,13 @@ ioHttpPost = EIOPrim "ioHttpPost" prim
       return (url, headers, body)
     header (TupleVal name hArgs) = (,) <$> valStrArg name "name" hArgs <*> valStrArg name "value" hArgs
     header v = Left $ printf "%s is not an HTTP header" (show v)
+
+-- | The @\/Http\/HttpErr@ saying why the request to @url@ has no response.
+httpErrVal :: String -> HttpFailure -> Val
+httpErrVal url failure = case failure of
+  HttpInvalidUrl detail   -> err ctHttpErrInvalidUrl [(ctHttpErrDetail, StrVal detail)]
+  HttpUnreachable detail  -> err ctHttpErrUnreachable [(ctHttpErrDetail, StrVal detail)]
+  HttpStatus code resBody -> err ctHttpErrStatus [(ctHttpErrCode, IntVal $ toInteger code), (ctHttpErrBody, StrVal resBody)]
+  HttpNotSent             -> err ctHttpErrNotSent []
+  where
+    err name fields = TupleVal name $ H.fromList [(runtimeArgKey k, v) | (k, v) <- (ctHttpErrUrl, StrVal url) : fields]

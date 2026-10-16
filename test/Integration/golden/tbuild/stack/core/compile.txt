@@ -23,6 +23,21 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/readLine"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/readLine
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Catln/InputErr
+                            ]
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Else ]
@@ -50,40 +65,19 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/#argEnd"
+                ( "/Catln/InputErr/EndOfInput"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/#argEnd ]
+                    { omiDecls = [ Value /Catln/InputErr/EndOfInput ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
             ,
-                ( "/ContextIn"
+                ( "/Catln/#argEnd"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /ContextIn
-                            ( EAppArg
-                                { eaaArg = Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
-                                    ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
-                            ( /value=()
-                            , /io=/Catln/IO
-                            )..
-                        , /ContextIn
-                            ( EAppArg
-                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
-                            ( /value=()
-                            , /io=/Catln/IO
-                            )..
-                        ]
+                    { omiDecls = [ Value /Catln/#argEnd ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -110,6 +104,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/exit"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/exit
+                            ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Catln/IO
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator?->"
                 , ObjectMapItem
                     { omiDecls = []
@@ -130,6 +137,15 @@ Prgm
                 ( "/Catln/#invalid"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#invalid ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/InputErr/NoInput"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/InputErr/NoInput ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -220,6 +236,22 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( EAppArg { eaaArg = Value /this -> /Catln/InputErr/EndOfInput.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the input has ended"
+                        , /Data/msg
+                            ( EAppArg { eaaArg = Value /this -> /Catln/InputErr/NoInput.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "this run has no input to read"
+                        ]
+                    }
+                )
+            ,
                 ( "/Catln/ThenElse/fromBool"
                 , ObjectMapItem
                     { omiDecls =
@@ -270,6 +302,19 @@ Prgm
                             )
                         ]
                     , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/println"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/println
+                            ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Catln/IO
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -329,6 +374,21 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/InputErr
+            , cgcExtends =
+                [ /Catln/InputErr/EndOfInput
+                , /Catln/InputErr/NoInput
+                ]
+            , cgcDoc = Just "[InputErr] is why there is no line of input to read: the input has ended ([EndOfInput]), or
+              the run has no input to read at all, as a debugger's has not ([NoInput])."
+            }
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/ThenElse
@@ -337,6 +397,12 @@ Prgm
                 , /Catln/Else
                 ]
             , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Catln/InputErr ]
+            , cgcDoc = Nothing
             }
         ]
     , prgmAnnots =
@@ -350,6 +416,13 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## IO"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[InputErr] is why there is no line of input to read: the input has ended ([EndOfInput]), or
+                  the run has no input to read at all, as a debugger's has not ([NoInput])."
                 }
             )
         , /Catln/#md

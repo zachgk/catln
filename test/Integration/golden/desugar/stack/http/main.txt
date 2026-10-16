@@ -2,20 +2,117 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/ContextIn"
+                ( "/Http/httpPost"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /ContextIn
-                            ( Value /value= /Http/httpPost( Value url -> ∀/Data/String )
-                                ( Value headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value body -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
-                            ( /value=∀/Data/String
-                            , /io=/Catln/IO
-                            )..
+                        [ /Http/httpPost( Value url -> ∀/Data/String )
+                            ( Value headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value body -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Http/HttpErr
+                            ]
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Http/HttpErr/Unreachable"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Http/HttpErr/Unreachable( Value /url -> ∀/Data/String )( Value /detail -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Http/HttpErr/InvalidUrl"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Http/HttpErr/InvalidUrl( Value /url -> ∀/Data/String )( Value /detail -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Http/HttpErr/Status"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Http/HttpErr/Status( Value /url -> ∀/Data/String )( Value /code -> /Data/Primitive/Integer )( Value /body -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Http/HttpErr/NotSent"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Http/HttpErr/NotSent( Value /url -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( Value /this= /Http/HttpErr/InvalidUrl( Value url )( Value detail ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++( Value /l= Value url )
+                                ( Value /r= CStr
+                                    { csValue = " is not a URL a request can be sent to: " }
+                                )
+                            )( Value /r= Value detail )
+                        , /Data/msg
+                            ( Value /this= /Http/HttpErr/Unreachable( Value url )( Value detail ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "the request to " }
+                                    )( Value /r= Value url )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = " could not be made: " }
+                                )
+                            )( Value /r= Value detail )
+                        , /Data/msg
+                            ( Value /this= /Http/HttpErr/Status( Value url )( Value code )( Value body ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= CStr
+                                                { csValue = "the request to " }
+                                            )( Value /r= Value url )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = " answered with status " }
+                                        )
+                                    )
+                                    ( Value /r= toString( Value /this= Value code ) )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = ": " }
+                                )
+                            )( Value /r= Value body )
+                        , /Data/msg
+                            ( Value /this= /Http/HttpErr/NotSent( Value url ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "the request to " }
+                                )( Value /r= Value url )
+                            )
+                            ( Value /r= CStr
+                                { csValue = " was not sent, as this run reaches no network" }
+                            )
+                        ]
                     }
                 )
             ,
@@ -33,16 +130,78 @@ Prgm
     , prgmCg =
         [ CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Http/HttpErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Http/HttpErr
+            , cgcExtends =
+                [ /Http/HttpErr/InvalidUrl
+                    ( /url=∀/Data/String
+                    , /detail=∀/Data/String
+                    )
+                , /Http/HttpErr/Unreachable
+                    ( /url=∀/Data/String
+                    , /detail=∀/Data/String
+                    )
+                , /Http/HttpErr/Status
+                    ( /body=∀/Data/String
+                    , /url=∀/Data/String
+                    , /code=/Data/Primitive/Integer
+                    )
+                , /Http/HttpErr/NotSent( /url=∀/Data/String )
+                ]
+            , cgcDoc = Just "[HttpErr] is why a request to [url] has no response: the URL is not one ([InvalidUrl]); the
+              request could not be made, as where the host does not answer ([Unreachable]); the response's
+              status [code] is not a success, with the [body] it came with, which is where an API says what
+              the matter was ([Status]); or the run reaches no network, so it was not sent ([NotSent]).
+              [detail] is what the system said went wrong."
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr
                 { csValue = "# HTTP
-                Requests over the network. Sending one runs in an [/Catln/IO] context, because it reaches
-                outside the program: what comes back is decided by whatever answers, and sending it can change
-                what answers the next one. So a program can only send a request where it runs in an io.
+                Requests over the network. Sending one is a method of [/Catln/IO], because it reaches outside
+                the program: what comes back is decided by whatever answers, and sending it can change what
+                answers the next one. So a program can only send a request where it holds an IO value to send it
+                through.
                 This is not part of the standard library. A program which sends no request has no use for it,
                 and one that does writes `import "http"`." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[HttpErr] is why a request to [url] has no response: the URL is not one ([InvalidUrl]); the
+                request could not be made, as where the host does not answer ([Unreachable]); the response's
+                status [code] is not a success, with the [body] it came with, which is where an API says what
+                the matter was ([Status]); or the run reaches no network, so it was not sent ([NotSent]).
+                [detail] is what the system said went wrong." }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/Result/Fail
+                ( Value err= HttpErr/Status
+                    ( Value url= CStr
+                        { csValue = "http://x.test" }
+                    )
+                    ( Value code= CInt
+                        { ciValue = 401 }
+                    )
+                    ( Value body= CStr
+                        { csValue = "no key" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: the request to http://x.test answered with status 401: no key" }
             )
         ]
     }

@@ -325,7 +325,7 @@ Prgm
                                                     ) + /Llm/LlmErr/Unset
                                                     ( /variable=/Data/String/Text
                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    )
+                                                    ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                                                 )
                                             ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
                                         )
@@ -368,7 +368,7 @@ Prgm
                                                         ) + /Llm/LlmErr/Unset
                                                         ( /variable=/Data/String/Text
                                                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
+                                                        ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                                                     )
                                                 ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
                                             )
@@ -406,7 +406,7 @@ Prgm
                                                             ) + /Llm/LlmErr/Unset
                                                             ( /variable=/Data/String/Text
                                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
+                                                            ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                                                         )
                                                     ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
                                                 )
@@ -437,6 +437,72 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/llmSent"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/llmSent
+                            ( EAppArg
+                                { eaaArg = Value /response -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Http/HttpErr
+                                    ]
+                                }
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmSent
+                            ( EAppArg
+                                { eaaArg = Value /response -> /Data/Result/Fail[ /E=∀/Http/HttpErr ]( /err=∀/Http/HttpErr ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err -> ∀/Http/HttpErr } )
+                                }
+                            ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) ]
+                            ( /err=/Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> /Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) = /Llm/LlmErr/Request
+                                    ( EAppArg
+                                        { eaaArg = Value /cause -> TVArg /err = ( Value /err ↦ TVArg /err ) }
+                                    )
+                                }
+                            )
+                        , /Llm/llmSent
+                            ( EAppArg
+                                { eaaArg = Value /response -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] =
+                            ( /Llm/llmReply
+                                ( EAppArg
+                                    { eaaArg = Value /response -> ∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=/Data/JsonParseErr..
+                                        ] =
+                                        ( /Data/jsonParse
+                                            ( EAppArg
+                                                { eaaArg = Value /text -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                            ) ↦ ∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=/Data/JsonParseErr..
+                                            ]
+                                        )
+                                    }
+                                ) ↦ ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            )
+                        ]
                     }
                 )
             ,
@@ -700,32 +766,76 @@ Prgm
                             [ /T=∀/Data/String
                             , /E=∀/Llm/LlmErr
                             ] =
-                            ( /Llm/llmReply
+                            ( /Llm/llmSent
                                 ( EAppArg
                                     { eaaArg = Value /response -> ∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=/Data/JsonParseErr..
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Http/HttpErr
                                         ] =
-                                        ( /Data/jsonParse
+                                        ( /Http/httpPost
                                             ( EAppArg
-                                                { eaaArg = Value /text -> ∀/Data/String =
-                                                    ( /Http/httpPost
+                                                { eaaArg = Value /url -> ∀/Data/String =
+                                                    ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /url -> ∀/Data/String =
-                                                                ( /operator++
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/chat/completions"
-                                                                        }
-                                                                    ) ↦ ∀/Data/String
-                                                                )
-                                                            }
+                                                            { eaaArg = Value /l -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /headers -> /Data/List/Cons
+                                                            { eaaArg = Value /r -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/chat/completions"
+                                                            }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /headers -> /Data/List/Cons
+                                                    [ /T=/Http/Header
+                                                        ( /name=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /value=∀/Data/String
+                                                        )
+                                                    ]
+                                                    ( /head=/Http/Header
+                                                        ( /name=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /value=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        )
+                                                    , /tail=
+                                                        ( /Data/List/Nil + /Data/List/Cons
+                                                            [ /T=/Http/Header
+                                                                ( /name=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                , /value=∀/Data/String
+                                                                )
+                                                            ]
+                                                            ( /head=/Http/Header
+                                                                ( /name=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                , /value=∀/Data/String
+                                                                )
+                                                            , /tail=/Data/List/Nil
+                                                            )
+                                                        )
+                                                    ) =
+                                                    ( /Llm/llmHeaders
+                                                        ( EAppArg
+                                                            { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                                        ) ↦ /Data/List/Cons
+                                                        [ /T=/Http/Header
+                                                            ( /name=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /value=∀/Data/String
+                                                            )
+                                                        ]
+                                                        ( /head=/Http/Header
+                                                            ( /name=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
+                                                        , /tail=
+                                                            ( /Data/List/Nil + /Data/List/Cons
                                                                 [ /T=/Http/Header
                                                                     ( /name=/Data/String/Text
                                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -735,82 +845,32 @@ Prgm
                                                                 ( /head=/Http/Header
                                                                     ( /name=/Data/String/Text
                                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                    , /value=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /value=∀/Data/String
                                                                     )
-                                                                , /tail=
-                                                                    ( /Data/List/Nil + /Data/List/Cons
-                                                                        [ /T=/Http/Header
-                                                                            ( /name=/Data/String/Text
-                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                            , /value=∀/Data/String
-                                                                            )
-                                                                        ]
-                                                                        ( /head=/Http/Header
-                                                                            ( /name=/Data/String/Text
-                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                            , /value=∀/Data/String
-                                                                            )
-                                                                        , /tail=/Data/List/Nil
-                                                                        )
-                                                                    )
-                                                                ) =
-                                                                ( /Llm/llmHeaders
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                                                    ) ↦ /Data/List/Cons
-                                                                    [ /T=/Http/Header
-                                                                        ( /name=/Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                        , /value=∀/Data/String
-                                                                        )
-                                                                    ]
-                                                                    ( /head=/Http/Header
-                                                                        ( /name=/Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                        , /value=/Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                        )
-                                                                    , /tail=
-                                                                        ( /Data/List/Nil + /Data/List/Cons
-                                                                            [ /T=/Http/Header
-                                                                                ( /name=/Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                                , /value=∀/Data/String
-                                                                                )
-                                                                            ]
-                                                                            ( /head=/Http/Header
-                                                                                ( /name=/Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                                , /value=∀/Data/String
-                                                                                )
-                                                                            , /tail=/Data/List/Nil
-                                                                            )
-                                                                        )
-                                                                    )
+                                                                , /tail=/Data/List/Nil
                                                                 )
-                                                            }
+                                                            )
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /body -> ∀/Data/String =
+                                                    ( /Llm/llmRequest
+                                                        ( EAppArg
+                                                            { eaaArg = Value /model -> TVArg /m = ( Value /m ↦ TVArg /m ) }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /body -> ∀/Data/String =
-                                                                ( /Llm/llmRequest
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /model -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
-                                                                    ) ↦ ∀/Data/String
-                                                                )
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                            { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                             ) ↦ ∀/Data/Result
-                                            [ /T=∀/Data/Json
-                                            , /E=/Data/JsonParseErr..
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Http/HttpErr
                                             ]
                                         )
                                     }
@@ -1033,21 +1093,6 @@ Prgm
                                 )
                             ,
                                 ( /Data/Result/Fail
-                                    [ /E=
-                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /cause=∀/Data/JsonAccessErr
-                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /found=∀/Data/Json
-                                            ) + /Llm/LlmErr/Unset
-                                            ( /variable=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            )
-                                        )
-                                    ]
                                     ( /err=
                                         ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
                                             ( /path=/Data/String/Text
@@ -1060,7 +1105,7 @@ Prgm
                                             ) + /Llm/LlmErr/Unset
                                             ( /variable=/Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            )
+                                            ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                                         )
                                     ) + /Llm/llmMessage
                                     ( /choice=∀/Data/Result
@@ -1071,6 +1116,11 @@ Prgm
                                     ( /message=∀/Data/Result
                                         [ /T=∀/Data/Json
                                         , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    ) + /Llm/llmSent
+                                    ( /response=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Http/HttpErr
                                         ]
                                     ) + /Llm/llmReply
                                     ( /response=∀/Data/Result
@@ -1132,21 +1182,6 @@ Prgm
                                     )
                                 ,
                                     ( /Data/Result/Fail
-                                        [ /E=
-                                            ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
-                                                ( /path=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /cause=∀/Data/JsonAccessErr
-                                                ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
-                                                ( /path=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /found=∀/Data/Json
-                                                ) + /Llm/LlmErr/Unset
-                                                ( /variable=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
-                                            )
-                                        ]
                                         ( /err=
                                             ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
                                                 ( /path=/Data/String/Text
@@ -1159,7 +1194,7 @@ Prgm
                                                 ) + /Llm/LlmErr/Unset
                                                 ( /variable=/Data/String/Text
                                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
+                                                ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                                             )
                                         ) + /Llm/llmMessage
                                         ( /choice=∀/Data/Result
@@ -1170,6 +1205,11 @@ Prgm
                                         ( /message=∀/Data/Result
                                             [ /T=∀/Data/Json
                                             , /E=∀/Data/JsonAccessErr
+                                            ]
+                                        ) + /Llm/llmSent
+                                        ( /response=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Http/HttpErr
                                             ]
                                         ) + /Llm/llmReply
                                         ( /response=∀/Data/Result
@@ -1343,6 +1383,28 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = Value /r -> /Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not set, so there is no model to ask"
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) = /Llm/LlmErr/Request
+                                    ( EAppArg { eaaArg = Value /cause -> ∀/Http/HttpErr } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model could not be asked: "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /msg
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /cause = ( Value /cause ↦ TVArg /cause ) }
+                                            ) ↦ ∀/Data/String
+                                        )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -2534,10 +2596,24 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/Llm/LlmErr/Request"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Request
+                            ( EAppArg { eaaArg = Value /cause -> ∀/Http/HttpErr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -2573,6 +2649,7 @@ Prgm
             , cgcPartial = /Llm/LlmErr
             , cgcExtends =
                 [ /Llm/LlmErr/Unset( /variable=∀/Data/String )
+                , /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                 , /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. )
                 , /Llm/LlmErr/ApiError( /message=∀/Data/String )
                 , /Llm/LlmErr/NoReply
@@ -2585,7 +2662,8 @@ Prgm
                     )
                 ]
             , cgcDoc = Just "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
-              ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+              ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+              response is not JSON ([NotJson]); the API answered with an error saying
               [message] ([ApiError]); or the response has nothing at [path], where the reply is
               ([NoReply]), or something other than text there ([NotText])."
             }
@@ -2625,7 +2703,8 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
-                  ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+                  ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+                  response is not JSON ([NotJson]); the API answered with an error saying
                   [message] ([ApiError]); or the response has nothing at [path], where the reply is
                   ([NoReply]), or something other than text there ([NotText])."
                 }
@@ -3015,6 +3094,65 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /result -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the model's response is not JSON: '<' is where a value was expected, at character 0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Result/Fail
+                    [ /E=/Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) ]
+                    ( /err=/Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) ) =
+                    ( /Llm/llmSent
+                        ( EAppArg
+                            { eaaArg = Value /response -> /Data/Result/Fail
+                                [ /E=/Http/HttpErr/Status
+                                    ( /body=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /url=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /code=/Data/Primitive/Integer
+                                    )
+                                ]
+                                ( /err=/Http/HttpErr/Status
+                                    ( /body=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /url=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /code=/Data/Primitive/Integer
+                                    )
+                                ) = /Data/Result/Fail
+                                ( EAppArg
+                                    { eaaArg = Value /err -> /Http/HttpErr/Status
+                                        ( /body=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /url=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /code=/Data/Primitive/Integer
+                                        ) = /Http/HttpErr/Status
+                                        ( EAppArg
+                                            { eaaArg = Value /url -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "http://model.test/v1/chat/completions"
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /code -> /Data/Primitive/Integer = 401 }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /body -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no key"
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        ) ↦ /Data/Result/Fail
+                        [ /E=/Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) ]
+                        ( /err=/Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the model could not be asked: the request to http://model.test/v1/chat/completions answered with status 401: no key"
                 }
             )
         ]

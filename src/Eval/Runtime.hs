@@ -242,13 +242,27 @@ println = EIOPrim "println" prim
         return $ Right $ ioContextVal unitVal io
       _ -> return $ Left $ printf "Invalid println signature with args: %s" (show args)
 
--- | Reads a line through the handle of the io it is called in.
+-- | Reads a line through the handle of the io it is called in, for Python's @input()@: where there is
+-- none, the evaluation fails, as Python's raises @EOFError@.
 ioInput :: EPrim
 ioInput = EIOPrim "ioInput" prim
   where
     prim handle args = case H.lookup ioStr args of
-      Just io -> fmap (\l -> ioContextVal (StrVal l) io) <$> iohGetLine handle
+      Just io -> either (Left . failed) (\l -> Right $ ioContextVal (StrVal l) io) <$> iohGetLine handle
       Nothing -> return $ Left "Invalid input signature"
+    failed EndOfInput = "There is no more input to read"
+    failed NoInput    = "A mocked run has no input to read"
+
+-- | Backs @readLine{io -> IO} -> Result[String, InputErr]{IO}@: the next line of input, or why there
+-- is none, in the io it is called in.
+ioReadLine :: EPrim
+ioReadLine = EIOPrim "ioReadLine" prim
+  where
+    prim handle args = case H.lookup ioStr args of
+      Just io -> Right . (`ioContextVal` io) . resultVal . either (Left . failed) (Right . StrVal) <$> iohGetLine handle
+      Nothing -> return $ Left "Invalid readLine signature"
+    failed EndOfInput = TupleVal ctInputErrEndOfInput H.empty
+    failed NoInput    = TupleVal ctInputErrNoInput H.empty
 
 arrExists :: Op
 arrExists = ("arrExists", Right (MacroFunction macroBuild))
@@ -362,6 +376,7 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , ioExit
             , println
             , ioInput
+            , ioReadLine
             , intAbs
             , floatAbs
             , intPow

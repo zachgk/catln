@@ -565,6 +565,33 @@ ctMaybeSome = "/Data/Maybe/Some"
 ctMaybeSomeValue = "value"
 ctMaybeNothing = "/Data/Maybe/Nothing"
 
+-- | The two arms of a @\/Data\/Result@ (@stack\/core\/error.ct@), for answering with the value an
+-- operation computed or the error it failed with.
+ctResultOk, ctResultOkValue, ctResultFail, ctResultFailErr :: String
+ctResultOk = "/Data/Result/Ok"
+ctResultOkValue = "value"
+ctResultFail = "/Data/Result/Fail"
+ctResultFailErr = "err"
+
+-- | Why a request has no response, as @stack\/http\/main.ct@ declares it: the @\/Http\/HttpErr@
+-- arms and their fields.
+ctHttpErrInvalidUrl, ctHttpErrUnreachable, ctHttpErrStatus, ctHttpErrNotSent :: String
+ctHttpErrInvalidUrl = "/Http/HttpErr/InvalidUrl"
+ctHttpErrUnreachable = "/Http/HttpErr/Unreachable"
+ctHttpErrStatus = "/Http/HttpErr/Status"
+ctHttpErrNotSent = "/Http/HttpErr/NotSent"
+
+ctHttpErrUrl, ctHttpErrDetail, ctHttpErrCode, ctHttpErrBody :: String
+ctHttpErrUrl = "url"
+ctHttpErrDetail = "detail"
+ctHttpErrCode = "code"
+ctHttpErrBody = "body"
+
+-- | Why there is no line of input, as @stack\/core\/compile.ct@ declares it.
+ctInputErrEndOfInput, ctInputErrNoInput :: String
+ctInputErrEndOfInput = "/Catln/InputErr/EndOfInput"
+ctInputErrNoInput = "/Catln/InputErr/NoInput"
+
 -- | The type variable a parameterized standard-library type takes its element type as: the @$T@ of
 -- @\/Data\/List[$T -> String]@ in @stack\/core\/result.ct@.
 --

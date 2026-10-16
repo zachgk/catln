@@ -761,16 +761,44 @@ oaTestId = getMetaId . getExprMeta . oaObjExpr
 data IOHandle = IOHandle
   { iohPutLine   :: String -> IO ()
   -- | The next line of input, or why there is none.
-  , iohGetLine   :: IO (Either String String)
+  , iohGetLine   :: IO (Either InputFailure String)
   -- | The value of an environment variable, where it is set.
   , iohLookupEnv :: String -> IO (Maybe String)
   , iohHttpPost  :: HttpPost
   }
 
+-- | Why there is no line of input to read. A program is answered with one of these as the
+-- @\/Catln\/InputErr@ of the same name (@stack\/core\/compile.ct@).
+data InputFailure
+  -- | The input has ended.
+  = EndOfInput
+  -- | The run has no input to read at all, as a mocked one has not.
+  | NoInput
+  deriving (Eq, Show)
+
 -- | Sends a POST request: the URL, the headers as name and value, and the body. Answers with the
--- response body, or why there is none — a request that could not be made, or a response whose
--- status is not a success.
-type HttpPost = String -> [(String, String)] -> String -> IO (Either String String)
+-- response body, or why there is none.
+type HttpPost = String -> [(String, String)] -> String -> IO (Either HttpFailure String)
+
+-- | Why a request has no response body to answer with. A program is answered with one of these as
+-- the @\/Http\/HttpErr@ of the same name (@stack\/http\/main.ct@), so each says only what a program
+-- could tell apart, with the details as text.
+data HttpFailure
+  -- | The URL is not one a request can be sent to, and why.
+  = HttpInvalidUrl String
+  -- | The request could not be made, as where the host does not answer, and why.
+  | HttpUnreachable String
+  -- | The response's status is not a success: the status, and the body it came with, which is where
+  -- an API says what was wrong.
+  | HttpStatus Int String
+  -- | The run reaches no network, so the request was not sent.
+  | HttpNotSent
+  deriving (Eq, Show)
+
+-- | A @\/Data\/Result@ of the value given, or of the error, as an evaluation holds one.
+resultVal :: Either Val Val -> Val
+resultVal (Right v) = TupleVal ctResultOk (H.singleton (runtimeArgKey ctResultOkValue) v)
+resultVal (Left e)  = TupleVal ctResultFail (H.singleton (runtimeArgKey ctResultFailErr) e)
 
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
 -- stdout. Create with 'newMockIO' or 'newMockIOWith', pass to 'Eval.evalRunMock', then read
@@ -784,7 +812,7 @@ data MockIO = MockIO
 
 -- | A mock with an empty environment and no network: every request is refused rather than made.
 newMockIO :: IO MockIO
-newMockIO = newMockIOWith H.empty (\url _ _ -> return $ Left $ printf "A mocked run makes no network requests, so the request to %s was not sent" url)
+newMockIO = newMockIOWith H.empty (\_ _ _ -> return $ Left HttpNotSent)
 
 -- | A mock that sees the environment given, and sends requests through the function given.
 newMockIOWith :: H.HashMap String String -> HttpPost -> IO MockIO
@@ -805,7 +833,7 @@ getMockIOOutput MockIO{mockOut} = unlines . reverse <$> readIORef mockOut
 mockIOHandle :: MockIO -> IOHandle
 mockIOHandle MockIO{mockOut, mockEnv, mockHttp} = IOHandle
   { iohPutLine = \msg -> modifyIORef mockOut (msg:)
-  , iohGetLine = return $ Left "A mocked run has no input to read"
+  , iohGetLine = return $ Left NoInput
   , iohLookupEnv = \name -> return $ H.lookup name mockEnv
   , iohHttpPost = mockHttp
   }

@@ -149,6 +149,38 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/llmSent"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/llmSent
+                            ( Value response -> ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Http/HttpErr
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmSent
+                            ( Value response= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Data/Result/Fail
+                            ( Value err= LlmErr/Request( Value cause= Value err ) )
+                        , /Llm/llmSent
+                            ( Value response= /Data/Result/Ok( Value value ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = llmReply
+                            ( Value response= /Data/jsonParse( Value text= Value value ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/llmshow"
                 , ObjectMapItem
                     { omiDecls = []
@@ -255,17 +287,15 @@ Prgm
                             ( Value model= /Data/Maybe/Some( Value value@Value m ) )( Value key ) -> ∀/Data/Result
                             [ /T=∀/Data/String
                             , /E=∀/Llm/LlmErr
-                            ] = llmReply
-                            ( Value response= /Data/jsonParse
-                                ( Value text= httpPost
-                                    ( Value url= /operator++( Value /l= Value b )
-                                        ( Value /r= CStr
-                                            { csValue = "/chat/completions" }
-                                        )
+                            ] = llmSent
+                            ( Value response= httpPost
+                                ( Value url= /operator++( Value /l= Value b )
+                                    ( Value /r= CStr
+                                        { csValue = "/chat/completions" }
                                     )
-                                    ( Value headers= llmHeaders( Value key= Value key ) )
-                                    ( Value body= llmRequest( Value model= Value m )( Value input= Value input ) )( Value /this= Value io )
                                 )
+                                ( Value headers= llmHeaders( Value key= Value key ) )
+                                ( Value body= llmRequest( Value model= Value m )( Value input= Value input ) )( Value /this= Value io )
                             )
                         ]
                     }
@@ -456,6 +486,12 @@ Prgm
                             ( Value /r= CStr
                                 { csValue = " is not set, so there is no model to ask" }
                             )
+                        , /Data/msg
+                            ( Value /this= /Llm/LlmErr/Request( Value cause ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "the model could not be asked: " }
+                            )
+                            ( Value /r= msg( Value /this= Value cause ) )
                         , /Data/msg
                             ( Value /this= /Llm/LlmErr/NotJson( Value cause ) ) -> ∀/Data/String = /operator++
                             ( Value /l= CStr
@@ -697,10 +733,22 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/Llm/LlmErr/Request"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Request( Value /cause -> ∀/Http/HttpErr ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -736,6 +784,7 @@ Prgm
             , cgcPartial = /Llm/LlmErr
             , cgcExtends =
                 [ /Llm/LlmErr/Unset( /variable=∀/Data/String )
+                , /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
                 , /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. )
                 , /Llm/LlmErr/ApiError( /message=∀/Data/String )
                 , /Llm/LlmErr/NoReply
@@ -748,7 +797,8 @@ Prgm
                     )
                 ]
             , cgcDoc = Just "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
-              ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+              ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+              response is not JSON ([NotJson]); the API answered with an error saying
               [message] ([ApiError]); or the response has nothing at [path], where the reply is
               ([NoReply]), or something other than text there ([NotText])."
             }
@@ -785,7 +835,8 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
-                ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+                ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+                response is not JSON ([NotJson]); the API answered with an error saying
                 [message] ([ApiError]); or the response has nothing at [path], where the reply is
                 ([NoReply]), or something other than text there ([NotText])." }
             )
@@ -949,6 +1000,25 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "error: the model's response is not JSON: '<' is where a value was expected, at character 0" }
+            )
+        , /Catln/#print
+            ( Value /p= llmSent
+                ( Value response= /Data/Result/Fail
+                    ( Value err= /Http/HttpErr/Status
+                        ( Value url= CStr
+                            { csValue = "http://model.test/v1/chat/completions" }
+                        )
+                        ( Value code= CInt
+                            { ciValue = 401 }
+                        )
+                        ( Value body= CStr
+                            { csValue = "no key" }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: the model could not be asked: the request to http://model.test/v1/chat/completions answered with status 401: no key" }
             )
         ]
     }

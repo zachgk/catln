@@ -3062,13 +3062,13 @@ Prgm
                     , omiDefs =
                         [ /Data/jsonIsDigit( Value /c -> /Data/Char.. ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 48 }
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 57 }
                                 )
@@ -3085,41 +3085,41 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/jsonHexValue( Value /c -> /Data/Char.. ) | /Data/jsonIsDigit( Value /c -> TVArg /c = Value /c ) -> /Data/Primitive/Integer = /operator-
-                            ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                            ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 48 }
                             )
                         , /Data/jsonHexValue( Value /c -> /Data/Char.. ) | /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 97 }
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 102 }
                                 )
                             ) -> /Data/Primitive/Integer = /operator-
-                            ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                            ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 87 }
                             )
                         , /Data/jsonHexValue( Value /c -> /Data/Char.. ) | /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 65 }
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 70 }
                                 )
                             ) -> /Data/Primitive/Integer = /operator-
-                            ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                            ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 55 }
                             )
@@ -3571,7 +3571,7 @@ Prgm
                                     )
                                 )
                                 ( Value /r -> /Data/Primitive/Integer = /operator-
-                                    ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /head = Value /head ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /head = Value /head ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 48 }
                                     )

@@ -67,7 +67,7 @@ Prgm
                             )( Value /r -> TVArg /rest = Value /rest )
                         , /Data/jsonEscapeChar( Value /c -> /Data/Char )
                             ( Value /rest -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) | /operator<
-                            ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                            ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 32 }
                             ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/jsonEscapeControl( Value /c -> TVArg /c = Value /c )( Value /rest -> TVArg /rest = Value /rest )
@@ -376,7 +376,7 @@ Prgm
                                                 ) = /Data/List/Cons
                                                 ( Value /head -> /Data/Char = /Data/hexDigit
                                                     ( Value /n -> /Data/Primitive/Integer = /operator//
-                                                        ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                                        ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                                         ( Value /r -> /Data/Primitive/Integer = CInt
                                                             { ciValue = 16 }
                                                         )
@@ -388,7 +388,7 @@ Prgm
                                                     ) = /Data/List/Cons
                                                     ( Value /head -> /Data/Char = /Data/hexDigit
                                                         ( Value /n -> /Data/Primitive/Integer = /operator%
-                                                            ( Value /l -> /Data/Primitive/Integer = /Data/code( Value /this -> TVArg /c = Value /c ) )
+                                                            ( Value /l -> /Data/Primitive/Integer = /code( Value /this -> TVArg /c = Value /c ) )
                                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                                 { ciValue = 16 }
                                                             )

@@ -1,0 +1,9 @@
+import "core"
+
+
+# Reads one line and prints it, or why there was none.
+main{io -> IO} -> (){IO} =
+  line<- readLine
+  _<- println(msg= line.toString)
+  _<- exit(val= 0)
+  ()

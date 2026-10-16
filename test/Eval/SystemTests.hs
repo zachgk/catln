@@ -12,7 +12,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- The IO methods that reach the system a program runs on: @IO.env@ and @IO.httpPost@.
+-- The IO methods that reach the system a program runs on: @IO.env@, @IO.httpPost@ and
+-- @IO.readLine@.
 --
 -- Each program is run against a mock, which is what says what the environment holds and what a
 -- request answers with, so the programs are checked without depending on the machine running the
@@ -31,8 +32,9 @@ import qualified Data.HashMap.Strict       as H
 import           Data.IORef
 import           Data.List                 (isInfixOf)
 import qualified Data.Text.Lazy            as TL
-import           Eval.Common               (HttpPost, MockIO, getMockIOOutput,
-                                            newMockIO, newMockIOWith)
+import           Eval.Common               (HttpFailure (..), HttpPost, MockIO,
+                                            getMockIOOutput, newMockIO,
+                                            newMockIOWith)
 import           Eval.Runtime.System       (realHttpPost)
 import           Network.HTTP.Types        (status500)
 import           Semantics                 (testCtssConfig)
@@ -48,7 +50,9 @@ systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup 
   [ testEnvReadsTheMockEnvironment getCtss
   , testHttpPostSendsThroughTheHandle getCtss
   , testMockRefusesTheNetwork getCtss
+  , testReadLineWithoutInput getCtss
   , testLlmAsksTheConfiguredModel getCtss
+  , testLlmReportsAFailedRequest getCtss
   , testLlmWithoutAModelAsksNothing getCtss
   , testProcessAnswersQueries getCtss
   , testProcessWithoutAModelAnswersNothing getCtss
@@ -57,7 +61,7 @@ systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup 
   where
     -- One service for every fixture, so the library they import is built once rather than once
     -- per test.
-    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct", fixture "llm.ct", fixture "query.ct"] :: IO CTSS
+    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct", fixture "readline.ct", fixture "llm.ct", fixture "query.ct"] :: IO CTSS
 
 fixture :: String -> FilePath
 fixture name = "test/Integration/code/artifacts/system/" ++ name
@@ -83,7 +87,7 @@ testEnvReadsTheMockEnvironment getCtss = testCase "IO.env reads the environment 
       assertEqual "it exits cleanly" 0 code
       assertEqual "a set variable is its value, and an unset one is nothing" "set to hello\nnot set\n" out
   where
-    refuse _ _ _ = return $ Left "no requests expected"
+    refuse _ _ _ = return $ Left HttpNotSent
 
 testHttpPostSendsThroughTheHandle :: IO CTSS -> TestTree
 testHttpPostSendsThroughTheHandle getCtss = testCase "IO.httpPost sends through the handle and answers with the body" $ do
@@ -102,12 +106,24 @@ testHttpPostSendsThroughTheHandle getCtss = testCase "IO.httpPost sends through 
       assertEqual "and what it answered is what was printed" "pong\n" out
 
 testMockRefusesTheNetwork :: IO CTSS -> TestTree
-testMockRefusesTheNetwork getCtss = testCase "a run with the default mock makes no request" $ do
+testMockRefusesTheNetwork getCtss = testCase "a run with the default mock makes no request, and says so" $ do
   mockIO <- newMockIO
-  (res, _) <- runWith getCtss (fixture "http.ct") mockIO
+  (res, out) <- runWith getCtss (fixture "http.ct") mockIO
   case res of
-    CRes _ _ -> assertFailure "the request was answered, so something was sent"
-    CErr notes -> assertBool ("the refusal is what failed the run: " ++ prettyCNotes notes) ("makes no network requests" `isInfixOf` prettyCNotes notes)
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ _ -> assertEqual "the program is answered with why there is no response" "error: the request to http://example.test/echo was not sent, as this run reaches no network\n" out
+
+-- | A mocked run has no input, and a program reading a line is answered with that rather than
+-- failing.
+testReadLineWithoutInput :: IO CTSS -> TestTree
+testReadLineWithoutInput getCtss = testCase "IO.readLine in a run with no input answers why" $ do
+  mockIO <- newMockIO
+  (res, out) <- runWith getCtss (fixture "readline.ct") mockIO
+  case res of
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ code -> do
+      assertEqual "it exits cleanly" 0 code
+      assertEqual "it is answered with why there is no line" "error: this run has no input to read\n" out
 
 -- | @IO.llm@ end to end: the environment it is configured by, the request it sends, and the reply
 -- it reads back out of the response. The response is a chat completion as the API answers one.
@@ -132,10 +148,23 @@ testLlmAsksTheConfiguredModel getCtss = testCase "IO.llm asks the configured mod
         requests
       assertEqual "and the reply is what the model said" "Hi there!\n" out
 
+-- | A request answered with a failure is the reply's failure, with the status and the body the API
+-- said what was wrong in.
+testLlmReportsAFailedRequest :: IO CTSS -> TestTree
+testLlmReportsAFailedRequest getCtss = testCase "IO.llm answered with a failing status says so" $ do
+  let answer :: HttpPost
+      answer _ _ _ = return $ Left $ HttpStatus 401 "{\"error\": {\"message\": \"Incorrect API key\"}}"
+  let env = H.fromList [("OPENAI_BASE_URL", "http://model.test/v1"), ("OPENAI_MODEL", "m-1")]
+  mockIO <- newMockIOWith env answer
+  (res, out) <- runWith getCtss (fixture "llm.ct") mockIO
+  case res of
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ _   -> assertEqual "the status and body are the reply's failure" "error: the model could not be asked: the request to http://model.test/v1/chat/completions answered with status 401: {\"error\": {\"message\": \"Incorrect API key\"}}\n" out
+
 -- | Without a model to ask there is nothing to send, and the answer says which setting is missing.
 testLlmWithoutAModelAsksNothing :: IO CTSS -> TestTree
 testLlmWithoutAModelAsksNothing getCtss = testCase "IO.llm without OPENAI_MODEL sends nothing" $ do
-  mockIO <- newMockIOWith (H.singleton "OPENAI_BASE_URL" "http://model.test/v1") (\_ _ _ -> return $ Left "no request should be sent")
+  mockIO <- newMockIOWith (H.singleton "OPENAI_BASE_URL" "http://model.test/v1") (\_ _ _ -> return $ Left HttpNotSent)
   (res, out) <- runWith getCtss (fixture "llm.ct") mockIO
   case res of
     CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
@@ -178,7 +207,7 @@ testProcessAnswersQueries getCtss = testCase "processing a page asks each unansw
 -- not answered is reported.
 testProcessWithoutAModelAnswersNothing :: IO CTSS -> TestTree
 testProcessWithoutAModelAnswersNothing getCtss = testCase "processing a page without a model leaves its queries unanswered and says why" $ do
-  mockIO <- newMockIOWith H.empty (\_ _ _ -> return $ Left "no request should be sent")
+  mockIO <- newMockIOWith H.empty (\_ _ _ -> return $ Left HttpNotSent)
   res <- processWith getCtss (fixture "query.ct") mockIO
   case res of
     CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
@@ -195,9 +224,11 @@ testRealHttpPost = testCase "realHttpPost sends a request and reads the response
     ok <- untilAnswered 50 $ realHttpPost (base ++ "/echo") [("X-Test", "tok")] "héllo"
     assertEqual "the header and body arrive as sent" (Right "tok|héllo") ok
     failed <- realHttpPost (base ++ "/fail") [] ""
-    case failed of
-      Right r -> assertFailure $ "a failing status was answered as a success: " ++ r
-      Left err -> assertBool ("the status and body are reported: " ++ err) ("500" `isInfixOf` err && "broken" `isInfixOf` err)
+    assertEqual "a failing status is reported with its body" (Left $ HttpStatus 500 "broken") failed
+    invalid <- realHttpPost "not a url" [] ""
+    case invalid of
+      Left HttpInvalidUrl{} -> return ()
+      other -> assertFailure $ "a URL that is not one was not reported as one: " ++ show other
   where
     port = 38472
     base = "http://127.0.0.1:" ++ show port
@@ -210,9 +241,9 @@ testRealHttpPost = testCase "realHttpPost sends a request and reads the response
         status status500
         raw "broken"
     -- The server is started on another thread, so the first requests can arrive before it listens.
-    untilAnswered :: Int -> IO (Either String String) -> IO (Either String String)
+    untilAnswered :: Int -> IO (Either HttpFailure String) -> IO (Either HttpFailure String)
     untilAnswered tries req = do
       r <- req
       case r of
-        Left err | "could not be made" `isInfixOf` err && tries > 0 -> threadDelay 100000 >> untilAnswered (tries - 1) req
+        Left HttpUnreachable{} | tries > 0 -> threadDelay 100000 >> untilAnswered (tries - 1) req
         _ -> return r
