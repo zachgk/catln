@@ -2,6 +2,18 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/compareChars./Data/$ba75a7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ compareChars./Data/$ba75a7( Value /at )( Value /bt )( Value /$ba75a7-arg@Value c -> /Data/Algebra/Equal )= compareChars( Value a= Value at )( Value b= Value bt )
+                        , compareChars./Data/$ba75a7( Value /at )( Value /bt )( Value /$ba75a7-arg@Value c )= Value c
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/String/words"
                 , ObjectMapItem
                     { omiDecls =
@@ -101,19 +113,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/String/parseIntegerBase"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/parseIntegerBase( Value base -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/parseIntegerBase( Value base )
-                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = signedValue( Value cs= Value chars )( Value base= Value base )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/String/fromChars"
                 , ObjectMapItem
                     { omiDecls =
@@ -124,24 +123,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/fromChars( Value chars ) -> ∀/Data/String = /Data/String/Text( Value chars= Value chars ) ]
-                    }
-                )
-            ,
-                ( "/Data/String/digitsValue.$6d5c93"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/digitsValue.$6d5c93( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
-                            ( Value /$6d5c93-arg= /Data/Maybe/Some( Value value@Value d ) ) | /operator<( Value /l= Value d )( Value /r= Value base )= digitsValue( Value cs= Value tail )( Value base= Value base )( Value sign= Value sign )
-                            ( Value acc= /operator+
-                                ( Value /l= /operator*( Value /l= Value acc )( Value /r= Value base ) )
-                                ( Value /r= /operator*( Value /l= Value sign )( Value /r= Value d ) )
-                            )
-                        , /Data/String/digitsValue.$6d5c93( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
-                            ( Value /$6d5c93-arg@Value m )= Value /Data/Maybe/Nothing
-                        ]
                     }
                 )
             ,
@@ -158,6 +139,27 @@ Prgm
                             ( Value /this= /Data/String/Text
                                 ( Value chars= /Data/List/Cons( Value head )( Value tail ) )
                             ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/length./Data/String/countChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ length./Data/String/countChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ length./Data/String/countChars( Value cs= Value /Data/List/Nil )( Value n ) -> /Data/Primitive/Integer = Value n
+                        , length./Data/String/countChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> /Data/Primitive/Integer = countChars( Value cs= Value tail )
+                            ( Value n= /operator+( Value /l= Value n )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
                         ]
                     }
                 )
@@ -186,26 +188,6 @@ Prgm
                     , omiDefs =
                         [ /Data/toString( Value /this -> /Data/Char.. ) -> ∀/Data/String = String/Text
                             ( Value chars= /Data/List/Cons( Value head= Value this )( Value tail= Value /Data/List/Nil ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/String/unsignedValue"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/unsignedValue
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer )( Value sign -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/unsignedValue( Value cs= Value /Data/List/Nil )( Value base )( Value sign ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
-                        , /Data/String/unsignedValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = digitsValue
-                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value base= Value base )( Value sign= Value sign )
-                            ( Value acc= CInt
-                                { ciValue = 0 }
-                            )
                         ]
                     }
                 )
@@ -563,29 +545,8 @@ Prgm
                             ( Value a= /Data/List/Cons( Value head )( Value tail ) )( Value b= Value /Data/List/Nil ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
                         , /Data/compareChars
                             ( Value a= /Data/List/Cons( Value head@Value ah )( Value tail@Value at ) )
-                            ( Value b= /Data/List/Cons( Value head@Value bh )( Value tail@Value bt ) ) -> ∀/Data/Algebra/Comparison = /Data/compareChars.$ba75a7( Value /at= Value /at )( Value /bt= Value /bt )
+                            ( Value b= /Data/List/Cons( Value head@Value bh )( Value tail@Value bt ) ) -> ∀/Data/Algebra/Comparison = $ba75a7( Value /at= Value /at )( Value /bt= Value /bt )
                             ( Value /$ba75a7-arg= compareTo( Value other= Value bh )( Value /this= Value ah ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/String/length.countChars"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/length.countChars
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/length.countChars( Value cs= Value /Data/List/Nil )( Value n ) -> /Data/Primitive/Integer = Value n
-                        , /Data/String/length.countChars
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value n ) -> /Data/Primitive/Integer = /Data/String/length.countChars( Value cs= Value tail )
-                            ( Value n= /operator+( Value /l= Value n )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
                         ]
                     }
                 )
@@ -626,7 +587,7 @@ Prgm
                                 )
                             )
                         , /Data/toStringBase( Value base )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = String/Text
-                            ( Value chars= /Data/toStringBase.digitsOnto( Value /base= Value /base )( Value n= Value this )( Value acc= Value /Data/List/Nil ) )
+                            ( Value chars= digitsOnto( Value /base= Value /base )( Value n= Value this )( Value acc= Value /Data/List/Nil ) )
                         ]
                     }
                 )
@@ -692,59 +653,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/String/signedValue"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/signedValue
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/signedValue( Value cs= Value /Data/List/Nil )( Value base ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
-                        , /Data/String/signedValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) | /operator==( Value /l= Value head )
-                            ( Value /r= CChar
-                                { chValue = '-' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = unsignedValue( Value cs= Value tail )( Value base= Value base )
-                            ( Value sign= /operator-
-                                ( Value /l= CInt
-                                    { ciValue = 0 }
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        , /Data/String/signedValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) | /operator==( Value /l= Value head )
-                            ( Value /r= CChar
-                                { chValue = '+' }
-                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = unsignedValue( Value cs= Value tail )( Value base= Value base )
-                            ( Value sign= CInt
-                                { ciValue = 1 }
-                            )
-                        , /Data/String/signedValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = unsignedValue
-                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value base= Value base )
-                            ( Value sign= CInt
-                                { ciValue = 1 }
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/compareChars.$ba75a7"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/compareChars.$ba75a7( Value /at )( Value /bt )( Value /$ba75a7-arg@Value c -> /Data/Algebra/Equal )= compareChars( Value a= Value at )( Value b= Value bt )
-                        , /Data/compareChars.$ba75a7( Value /at )( Value /bt )( Value /$ba75a7-arg@Value c )= Value c
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/StrOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/StrOrdering ]
@@ -777,6 +685,28 @@ Prgm
                         , /Data/String/wordsOf
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value cur ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = wordsOf( Value cs= Value tail )
                             ( Value cur= /Data/List/Cons( Value head= Value head )( Value tail= Value cur ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/toStringBase./Data/digitsOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ toStringBase./Data/digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer )
+                            ( Value acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ toStringBase./Data/digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n )( Value acc ) | /operator<( Value /l= Value n )( Value /r= Value base ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
+                            ( Value head= digitChar( Value digit= Value n ) )( Value tail= Value acc )
+                        , toStringBase./Data/digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = digitsOnto( Value /base= Value /base )
+                            ( Value n= /operator//( Value /l= Value n )( Value /r= Value base ) )
+                            ( Value acc= /Data/List/Cons
+                                ( Value head= digitChar
+                                    ( Value digit= /operator%( Value /l= Value n )( Value /r= Value base ) )
+                                )( Value tail= Value acc )
+                            )
                         ]
                     }
                 )
@@ -825,7 +755,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/length
-                            ( Value /this= /Data/String/Text( Value chars ) ) -> /Data/Primitive/Integer = /Data/String/length.countChars( Value cs= Value chars )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> /Data/Primitive/Integer = countChars( Value cs= Value chars )
                             ( Value n= CInt
                                 { ciValue = 0 }
                             )
@@ -990,28 +920,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/toStringBase.digitsOnto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/toStringBase.digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n -> /Data/Primitive/Integer )
-                            ( Value acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/toStringBase.digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n )( Value acc ) | /operator<( Value /l= Value n )( Value /r= Value base ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons
-                            ( Value head= digitChar( Value digit= Value n ) )( Value tail= Value acc )
-                        , /Data/toStringBase.digitsOnto( Value /base -> /Data/Primitive/Integer )( Value n )( Value acc ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/toStringBase.digitsOnto( Value /base= Value /base )
-                            ( Value n= /operator//( Value /l= Value n )( Value /r= Value base ) )
-                            ( Value acc= /Data/List/Cons
-                                ( Value head= digitChar
-                                    ( Value digit= /operator%( Value /l= Value n )( Value /r= Value base ) )
-                                )( Value tail= Value acc )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/String/toLower"
                 , ObjectMapItem
                     { omiDecls =
@@ -1079,22 +987,6 @@ Prgm
                                 )
                             )
                         , /Data/pointDown( Value r )( Value s )( Value mUp )( Value n ) -> /Data/Primitive/Integer = Value n
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/String/parseInteger"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/parseInteger( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/parseInteger
-                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = signedValue( Value cs= Value chars )
-                            ( Value base= CInt
-                                { ciValue = 10 }
-                            )
                         ]
                     }
                 )
@@ -1314,23 +1206,6 @@ Prgm
                                 )
                                 ( Value /r= /operator+( Value /l= Value r )( Value /r= Value mUp ) )
                             )( Value /r= Value s )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/String/digitsValue"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/String/digitsValue
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer )( Value sign -> /Data/Primitive/Integer )( Value acc -> /Data/Primitive/Integer ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/String/digitsValue( Value cs= Value /Data/List/Nil )( Value base )( Value sign )( Value acc ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Maybe/Some( Value value= Value acc )
-                        , /Data/String/digitsValue
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign )( Value acc ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/String/digitsValue.$6d5c93( Value /base= Value /base )( Value /acc= Value /acc )( Value /tail= Value /tail )( Value /sign= Value /sign )
-                            ( Value /$6d5c93-arg= digitValue( Value /this= Value head ) )
                         ]
                     }
                 )
@@ -1995,12 +1870,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -3155,99 +3024,6 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "x, y" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "## Reading numbers" }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= parseInteger
-                    ( Value /this= CStr
-                        { csValue = "42" }
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= CInt
-                        { ciValue = 42 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= parseInteger
-                    ( Value /this= CStr
-                        { csValue = "-17" }
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= /operator-
-                        ( Value /l= CInt
-                            { ciValue = 0 }
-                        )
-                        ( Value /r= CInt
-                            { ciValue = 17 }
-                        )
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= parseIntegerBase
-                    ( Value base= CInt
-                        { ciValue = 16 }
-                    )
-                    ( Value /this= CStr
-                        { csValue = "ff" }
-                    )
-                )
-                ( Value /r= /Data/Maybe/Some
-                    ( Value value= CInt
-                        { ciValue = 255 }
-                    )
-                )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= parseInteger
-                    ( Value /this= CStr
-                        { csValue = "12a" }
-                    )
-                )( Value /r= Value /Data/Maybe/Nothing )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= parseInteger
-                    ( Value /this= CStr
-                        { csValue = "-" }
-                    )
-                )( Value /r= Value /Data/Maybe/Nothing )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
-            )
-        , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= parseInteger
-                    ( Value /this= CStr
-                        { csValue = "" }
-                    )
-                )( Value /r= Value /Data/Maybe/Nothing )
-            )
-            ( Value /result= CStr
-                { csValue = "True" }
             )
         ]
     }

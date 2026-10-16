@@ -4,6 +4,7 @@ import "core/data.ct"
 import "core/maybe.ct"
 import "core/ord.ct"
 import "core/string.ct"
+import "core/parse.ct"
 
 
 module(Data/Time)
@@ -137,51 +138,62 @@ module(Data/Time)
 
   > Date(year= 2026, month= 1, day= 3)
     >>> 2026-01-03
-  natural(s -> String) -> /Data/Maybe[$T -> Integer]
-    # [natural] reads [s] as a whole number written in decimal digits alone, with no sign. A string
-      holding anything else, or nothing, has [/Data/Maybe/Nothing].
-  natural(s= String/Text(chars)) =
-    allDigits(cs -> /Data/List/ConsList[$T -> Char]) -> Boolean
-    allDigits(cs= /Data/List/Nil)= True
-    allDigits(cs= /Data/List/Cons(head, tail))= head.isDigit && allDigits(cs= tail)
+  natural(s -> String) -> /Data/Result[$T -> Integer, $E -> /Data/IntegerParseErr]
+    # [natural] reads [s] as a whole number written in decimal digits alone, with no sign, or fails
+      with why it is not one.
+  natural(s= String/Text(chars= /Data/List/Nil))= /Data/Result/Fail(err= /Data/IntegerParseErr/NoText)
+  natural(s= String/Text(chars= /Data/List/Cons(head, tail)))= /Data/digitsValue(cs= /Data/List/Cons(head= head, tail= tail), base= 10, sign= 1, acc= 0, at= 0)
 
-    digitsOnly(digits -> Boolean, text -> String) -> /Data/Maybe[$T -> Integer]
-    digitsOnly(digits= True, text)= text.parseInteger
-    digitsOnly(digits= False, text)= /Data/Maybe/Nothing
-    digitsOnly(digits= allDigits(cs= chars), text= String/Text(chars= chars))
+  > natural(s= "042")
+    >>> 42
+  > natural(s= "+42")
+    >>> error: '+' at 0 is not a digit of base 10
+  > natural(s= "")
+    >>> error: there is no number in an empty string
+  class(DateParseErr, [DateParseErr/BadShape(text -> String), DateParseErr/BadPart(part -> String, cause -> /Data/IntegerParseErr), DateParseErr/MonthOutOfRange(month -> Integer), DateParseErr/NoSuchDay(year -> Integer, month -> Integer, day -> Integer)], isa= [/Data/Err])
+    # [DateParseErr] is why a string is no [Date]: it is not written @YYYY-MM-DD@ ([BadShape]), the
+      year, month or day written is not a number ([BadPart]), the month is not one of the twelve
+      ([MonthOutOfRange]), or the day is not one the month has ([NoSuchDay]).
 
-  > (natural(s= "042") == /Data/Maybe/Some(value= 42))
-    >>> True
-  > (natural(s= "+42") == /Data/Maybe/Nothing)
-    >>> True
-  > (natural(s= "") == /Data/Maybe/Nothing)
-    >>> True
-  parseDate(s -> String) -> /Data/Maybe[$T -> Date..]
-    # [parseDate] reads a day written as ISO 8601 writes one, @YYYY-MM-DD@, with every digit there.
-      Anything else, and a day that does not exist such as the 30th of February, has
-      [/Data/Maybe/Nothing].
+  parseDate(s -> String) -> /Data/Result[$T -> Date.., $E -> DateParseErr]
+    # [parseDate] reads a day written as ISO 8601 writes one, @YYYY-MM-DD@, with every digit there,
+      or fails with why it is not one. A day that does not exist, such as the 30th of February, is
+      not one.
   parseDate(s) | s.length == 10 && s.at(index= 4) == /Data/Maybe/Some(value= '-') && s.at(index= 7) == /Data/Maybe/Some(value= '-')= dateOf(y= natural(s= s.take(n= 4)), m= natural(s= s.slice(start= 5, end= 7)), d= natural(s= s.drop(n= 8)))
-  parseDate(s) else = /Data/Maybe/Nothing
+  parseDate(s) else = /Data/Result/Fail(err= DateParseErr/BadShape(text= s))
 
-  dateOf(y -> /Data/Maybe[$T -> Integer], m -> /Data/Maybe[$T -> Integer], d -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Date..]
-    # [dateOf] is the date of the year, month and day read, where all three were read and name a day
-      that exists.
-  dateOf(y= /Data/Maybe/Some(value@yv), m= /Data/Maybe/Some(value@mv), d= /Data/Maybe/Some(value@dv)) | mv >= 1 && mv <= 12 && dv >= 1 && dv <= daysInMonth(year= yv, month= mv)= /Data/Maybe/Some(value= Date(year= yv, month= mv, day= dv))
-  dateOf(y= /Data/Maybe/Some(value@yv), m= /Data/Maybe/Some(value@mv), d= /Data/Maybe/Some(value@dv)) else = /Data/Maybe/Nothing
-  dateOf(y= /Data/Maybe/Nothing, m, d)= /Data/Maybe/Nothing
-  dateOf(y= /Data/Maybe/Some(value), m= /Data/Maybe/Nothing, d)= /Data/Maybe/Nothing
-  dateOf(y= /Data/Maybe/Some(value@yv), m= /Data/Maybe/Some(value@mv), d= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  dateOf(y -> /Data/Result[$T -> Integer, $E -> /Data/IntegerParseErr], m -> /Data/Result[$T -> Integer, $E -> /Data/IntegerParseErr], d -> /Data/Result[$T -> Integer, $E -> /Data/IntegerParseErr]) -> /Data/Result[$T -> Date.., $E -> DateParseErr]
+    # [dateOf] is the date of the year, month and day read, where all three were read and name a
+      month there is.
+  dateOf(y= /Data/Result/Ok(value@yv), m= /Data/Result/Ok(value@mv), d= /Data/Result/Ok(value@dv)) | mv >= 1 && mv <= 12= dayOf(year= yv, month= mv, day= dv)
+  dateOf(y= /Data/Result/Ok(value@yv), m= /Data/Result/Ok(value@mv), d= /Data/Result/Ok(value@dv)) else = /Data/Result/Fail(err= DateParseErr/MonthOutOfRange(month= mv))
+  dateOf(y= /Data/Result/Fail(err), m, d)= /Data/Result/Fail(err= DateParseErr/BadPart(part= "year", cause= err))
+  dateOf(y= /Data/Result/Ok(value), m= /Data/Result/Fail(err), d)= /Data/Result/Fail(err= DateParseErr/BadPart(part= "month", cause= err))
+  dateOf(y= /Data/Result/Ok(value@yv), m= /Data/Result/Ok(value@mv), d= /Data/Result/Fail(err))= /Data/Result/Fail(err= DateParseErr/BadPart(part= "day", cause= err))
 
-  > (parseDate(s= "2026-01-03") == /Data/Maybe/Some(value= Date(year= 2026, month= 1, day= 3)))
-    >>> True
-  > (parseDate(s= "2024-02-29") == /Data/Maybe/Some(value= Date(year= 2024, month= 2, day= 29)))
-    >>> True
-  > (parseDate(s= "2026-02-29") == /Data/Maybe/Nothing)
-    >>> True
-  > (parseDate(s= "2026-13-01") == /Data/Maybe/Nothing)
-    >>> True
-  > (parseDate(s= "lunch") == /Data/Maybe/Nothing)
-    >>> True
+  dayOf(year -> Integer, month -> Integer, day -> Integer) -> /Data/Result[$T -> Date.., $E -> DateParseErr]
+    # [dayOf] is the [day] of a [month] there is, where the month has that day.
+  dayOf(year, month, day) | day >= 1 && day <= daysInMonth(year= year, month= month)= /Data/Result/Ok(value= Date(year= year, month= month, day= day))
+  dayOf(year, month, day) else = /Data/Result/Fail(err= DateParseErr/NoSuchDay(year= year, month= month, day= day))
+
+  > parseDate(s= "2026-01-03")
+    >>> 2026-01-03
+  > parseDate(s= "2024-02-29")
+    >>> 2024-02-29
+  > parseDate(s= "2026-02-29")
+    >>> error: 2026-02-29 is not a day that exists
+  > parseDate(s= "2026-13-01")
+    >>> error: 13 is not a month from 1 to 12
+  > parseDate(s= "2026-0x-01")
+    >>> error: the month is not a number: 'x' at 1 is not a digit of base 10
+  > parseDate(s= "lunch")
+    >>> error: "lunch" is not a date written YYYY-MM-DD
+module(Data)
+  :/Data/Time/DateParseErr/BadShape(text).msg= "\"" ++ text ++ "\" is not a date written YYYY-MM-DD"
+  :/Data/Time/DateParseErr/BadPart(part, cause).msg= "the " ++ part ++ " is not a number: " ++ cause.msg
+  :/Data/Time/DateParseErr/MonthOutOfRange(month).msg= month.toString ++ " is not a month from 1 to 12"
+  :/Data/Time/DateParseErr/NoSuchDay(year, month, day).msg= /Data/Time/Date(year= year, month= month, day= day).toString ++ " is not a day that exists"
+module(Data/Time)
   # ## Ordering days
     Days are ordered by when they fall, which is the order of their counts.
   every(Date.., isa= [/Data/Algebra/Ord])
@@ -266,81 +278,104 @@ module(Data/Time)
     case and with or without a space, where the colon may be left out too, @9:30pm@ or @930 PM@.
     The minutes are always two digits. This is what the Obsidian Day Planner plugin reads at the
     start of a line.
-  parseTimeOfDay(s -> String) -> /Data/Maybe[$T -> TimeOfDay..]
-    # [parseTimeOfDay] reads a time of day written either way, or has [/Data/Maybe/Nothing] for
-      anything else, including a time that does not exist such as 25:00 or 13pm.
+  class(TimeParseErr, [TimeParseErr/BadShape(text -> String), TimeParseErr/BadDigits(hour -> String, minute -> String), TimeParseErr/BadPart(part -> String, cause -> /Data/IntegerParseErr), TimeParseErr/MinuteOutOfRange(minute -> Integer), TimeParseErr/HourOutOfRange(hour -> Integer), TimeParseErr/TwelveHourOutOfRange(hour -> Integer)], isa= [/Data/Err])
+    # [TimeParseErr] is why a string is no [TimeOfDay]: it does not write an hour and minutes apart
+      ([BadShape]); the hour is not one or two digits or the minutes not two ([BadDigits]); the
+      hour or minutes written are not a number ([BadPart]); or the minutes are 60 or more
+      ([MinuteOutOfRange]), the hour of a 24-hour clock is past 23 ([HourOutOfRange]), or the hour
+      of a 12-hour one is not 1 to 12 ([TwelveHourOutOfRange]).
+
+  parseTimeOfDay(s -> String) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
+    # [parseTimeOfDay] reads a time of day written either way, or fails with why it is not one. A
+      time that does not exist, such as 25:00 or 13pm, is not one.
   parseTimeOfDay(s)= clockOf(t= s.trim.toLower)
 
-  clockOf(t -> String) -> /Data/Maybe[$T -> TimeOfDay..]
+  clockOf(t -> String) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
     # [clockOf] reads a time already trimmed and in lower case, by the clock its ending says.
   clockOf(t) | t.endsWith(suffix= "am")= twelveHour(clock= clockParts(clock= t.take(n= t.length - 2).trimEnd, bare= True), pm= False)
   clockOf(t) | t.endsWith(suffix= "pm")= twelveHour(clock= clockParts(clock= t.take(n= t.length - 2).trimEnd, bare= True), pm= True)
   clockOf(t) else = twentyFourHour(clock= clockParts(clock= t, bare= False))
 
-  clockParts(clock -> String, bare -> Boolean) -> /Data/Maybe[$T -> TimeOfDay..]
+  clockParts(clock -> String, bare -> Boolean) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
     # [clockParts] reads the hour and minutes [clock] writes, as a [TimeOfDay] whose hour is not yet
       checked against either clock. They are written apart by a colon or a dot, or where [bare] is
       [True], may be written together as the three or four digits of @930@ or @1130@.
-  clockParts(clock, bare) | clock.contains(sub= ":")= partsOf(parts= clock.split(sep= ":"))
+  clockParts(clock, bare) | clock.contains(sub= ":")= partsOf(clock= clock, parts= clock.split(sep= ":"))
   clockParts(clock, bare) else = dottedOrBare(clock= clock, bare= bare)
 
-  dottedOrBare(clock -> String, bare -> Boolean) -> /Data/Maybe[$T -> TimeOfDay..]
+  dottedOrBare(clock -> String, bare -> Boolean) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
     # [dottedOrBare] reads a clock written with no colon: with a dot, or with nothing at all where
       that is allowed.
-  dottedOrBare(clock, bare) | clock.contains(sub= ".")= partsOf(parts= clock.split(sep= "."))
-  dottedOrBare(clock, bare) | bare && clock.length >= 3 && clock.length <= 4= partsOf(parts= [clock.take(n= clock.length - 2), clock.drop(n= clock.length - 2)])
-  dottedOrBare(clock, bare) else = /Data/Maybe/Nothing
+  dottedOrBare(clock, bare) | clock.contains(sub= ".")= partsOf(clock= clock, parts= clock.split(sep= "."))
+  dottedOrBare(clock, bare) | bare && clock.length >= 3 && clock.length <= 4= partsOf(clock= clock, parts= [clock.take(n= clock.length - 2), clock.drop(n= clock.length - 2)])
+  dottedOrBare(clock, bare) else = /Data/Result/Fail(err= TimeParseErr/BadShape(text= clock))
 
-  partsOf(parts -> /Data/List/ConsList[$T -> String]) -> /Data/Maybe[$T -> TimeOfDay..]
-    # [partsOf] is the hour and minutes of exactly two pieces: an hour of one or two digits and
-      minutes of exactly two, below 60.
-  partsOf(parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Nil))) | h.length >= 1 && h.length <= 2 && m.length == 2= minutesOf(hour= natural(s= h), minute= natural(s= m))
-  partsOf(parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Nil))) else = /Data/Maybe/Nothing
-  partsOf(parts= /Data/List/Nil)= /Data/Maybe/Nothing
-  partsOf(parts= /Data/List/Cons(head, tail= /Data/List/Nil))= /Data/Maybe/Nothing
-  partsOf(parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Cons(head, tail))))= /Data/Maybe/Nothing
+  partsOf(clock -> String, parts -> /Data/List/ConsList[$T -> String]) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
+    # [partsOf] is the hour and minutes of exactly two pieces of [clock]: an hour of one or two
+      digits and minutes of exactly two, below 60.
+  partsOf(clock, parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Nil))) | h.length >= 1 && h.length <= 2 && m.length == 2= minutesOf(hour= natural(s= h), minute= natural(s= m))
+  partsOf(clock, parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Nil))) else = /Data/Result/Fail(err= TimeParseErr/BadDigits(hour= h, minute= m))
+  partsOf(clock, parts= /Data/List/Nil)= /Data/Result/Fail(err= TimeParseErr/BadShape(text= clock))
+  partsOf(clock, parts= /Data/List/Cons(head, tail= /Data/List/Nil))= /Data/Result/Fail(err= TimeParseErr/BadShape(text= clock))
+  partsOf(clock, parts= /Data/List/Cons(head@h, tail= /Data/List/Cons(head@m, tail= /Data/List/Cons(head, tail))))= /Data/Result/Fail(err= TimeParseErr/BadShape(text= clock))
 
-  minutesOf(hour -> /Data/Maybe[$T -> Integer], minute -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> TimeOfDay..]
+  minutesOf(hour -> /Data/Result[$T -> Integer, $E -> /Data/IntegerParseErr], minute -> /Data/Result[$T -> Integer, $E -> /Data/IntegerParseErr]) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
     # [minutesOf] is the time of an hour and minutes both read, with the minutes below 60.
-  minutesOf(hour= /Data/Maybe/Some(value@h), minute= /Data/Maybe/Some(value@m)) | m < 60= /Data/Maybe/Some(value= TimeOfDay(hour= h, minute= m))
-  minutesOf(hour= /Data/Maybe/Some(value@h), minute= /Data/Maybe/Some(value@m)) else = /Data/Maybe/Nothing
-  minutesOf(hour= /Data/Maybe/Nothing, minute)= /Data/Maybe/Nothing
-  minutesOf(hour= /Data/Maybe/Some(value), minute= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  minutesOf(hour= /Data/Result/Ok(value@h), minute= /Data/Result/Ok(value@m)) | m < 60= /Data/Result/Ok(value= TimeOfDay(hour= h, minute= m))
+  minutesOf(hour= /Data/Result/Ok(value@h), minute= /Data/Result/Ok(value@m)) else = /Data/Result/Fail(err= TimeParseErr/MinuteOutOfRange(minute= m))
+  minutesOf(hour= /Data/Result/Fail(err), minute)= /Data/Result/Fail(err= TimeParseErr/BadPart(part= "hour", cause= err))
+  minutesOf(hour= /Data/Result/Ok(value), minute= /Data/Result/Fail(err))= /Data/Result/Fail(err= TimeParseErr/BadPart(part= "minute", cause= err))
 
-  twentyFourHour(clock -> /Data/Maybe[$T -> TimeOfDay..]) -> /Data/Maybe[$T -> TimeOfDay..]
+  twentyFourHour(clock -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
     # [twentyFourHour] keeps a time read on a 24-hour clock where its hour is one, 0 to 23.
-  twentyFourHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute))) | hour <= 23= /Data/Maybe/Some(value= TimeOfDay(hour= hour, minute= minute))
-  twentyFourHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute))) else = /Data/Maybe/Nothing
-  twentyFourHour(clock= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  twentyFourHour(clock= /Data/Result/Ok(value= TimeOfDay(hour, minute))) | hour <= 23= /Data/Result/Ok(value= TimeOfDay(hour= hour, minute= minute))
+  twentyFourHour(clock= /Data/Result/Ok(value= TimeOfDay(hour, minute))) else = /Data/Result/Fail(err= TimeParseErr/HourOutOfRange(hour= hour))
+  twentyFourHour(clock= /Data/Result/Fail(err))= /Data/Result/Fail(err= err)
 
-  twelveHour(clock -> /Data/Maybe[$T -> TimeOfDay..], pm -> Boolean) -> /Data/Maybe[$T -> TimeOfDay..]
+  twelveHour(clock -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr], pm -> Boolean) -> /Data/Result[$T -> TimeOfDay.., $E -> TimeParseErr]
     # [twelveHour] turns a time read on a 12-hour clock, whose hour is 1 to 12, into the time it is
       on a 24-hour one: 12am is midnight and 12pm is noon.
-  twelveHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute)), pm) | hour >= 1 && hour <= 12= /Data/Maybe/Some(value= TimeOfDay(hour= hour % 12 + afternoon(pm= pm), minute= minute))
-  twelveHour(clock= /Data/Maybe/Some(value= TimeOfDay(hour, minute)), pm) else = /Data/Maybe/Nothing
-  twelveHour(clock= /Data/Maybe/Nothing, pm)= /Data/Maybe/Nothing
+  twelveHour(clock= /Data/Result/Ok(value= TimeOfDay(hour, minute)), pm) | hour >= 1 && hour <= 12= /Data/Result/Ok(value= TimeOfDay(hour= hour % 12 + afternoon(pm= pm), minute= minute))
+  twelveHour(clock= /Data/Result/Ok(value= TimeOfDay(hour, minute)), pm) else = /Data/Result/Fail(err= TimeParseErr/TwelveHourOutOfRange(hour= hour))
+  twelveHour(clock= /Data/Result/Fail(err), pm)= /Data/Result/Fail(err= err)
 
   afternoon(pm -> Boolean) -> Integer
     # [afternoon] is how many hours a 12-hour clock's half of the day starts after midnight.
   afternoon(pm= True)= 12
   afternoon(pm= False)= 0
 
-  > (parseTimeOfDay(s= "9:30") == /Data/Maybe/Some(value= TimeOfDay(hour= 9, minute= 30)))
-    >>> True
-  > (parseTimeOfDay(s= "09.00") == /Data/Maybe/Some(value= TimeOfDay(hour= 9, minute= 0)))
-    >>> True
-  > (parseTimeOfDay(s= "9:30pm") == /Data/Maybe/Some(value= TimeOfDay(hour= 21, minute= 30)))
-    >>> True
-  > (parseTimeOfDay(s= "930 PM") == /Data/Maybe/Some(value= TimeOfDay(hour= 21, minute= 30)))
-    >>> True
-  > (parseTimeOfDay(s= "12:15am") == /Data/Maybe/Some(value= TimeOfDay(hour= 0, minute= 15)))
-    >>> True
-  > (parseTimeOfDay(s= "25:00") == /Data/Maybe/Nothing)
-    >>> True
-  > (parseTimeOfDay(s= "13pm") == /Data/Maybe/Nothing)
-    >>> True
-  > (parseTimeOfDay(s= "930") == /Data/Maybe/Nothing)
-    >>> True
+  > parseTimeOfDay(s= "9:30")
+    >>> 09:30
+  > parseTimeOfDay(s= "09.00")
+    >>> 09:00
+  > parseTimeOfDay(s= "9:30pm")
+    >>> 21:30
+  > parseTimeOfDay(s= "930 PM")
+    >>> 21:30
+  > parseTimeOfDay(s= "12:15am")
+    >>> 00:15
+  > parseTimeOfDay(s= "25:00")
+    >>> error: 25 is not an hour of a 24-hour clock, 0 to 23
+  > parseTimeOfDay(s= "13:00pm")
+    >>> error: 13 is not an hour of a 12-hour clock, 1 to 12
+  > parseTimeOfDay(s= "13pm")
+    >>> error: "13" does not write an hour and minutes apart
+  > parseTimeOfDay(s= "930")
+    >>> error: "930" does not write an hour and minutes apart
+  > parseTimeOfDay(s= "9:75")
+    >>> error: 75 is not a minute, 0 to 59
+  > parseTimeOfDay(s= "9:3")
+    >>> error: "9" and "3" are not an hour of one or two digits and minutes of two
+  > parseTimeOfDay(s= "9:3x")
+    >>> error: the minute is not a number: 'x' at 1 is not a digit of base 10
+module(Data)
+  :/Data/Time/TimeParseErr/BadShape(text).msg= "\"" ++ text ++ "\" does not write an hour and minutes apart"
+  :/Data/Time/TimeParseErr/BadDigits(hour, minute).msg= "\"" ++ hour ++ "\" and \"" ++ minute ++ "\" are not an hour of one or two digits and minutes of two"
+  :/Data/Time/TimeParseErr/BadPart(part, cause).msg= "the " ++ part ++ " is not a number: " ++ cause.msg
+  :/Data/Time/TimeParseErr/MinuteOutOfRange(minute).msg= minute.toString ++ " is not a minute, 0 to 59"
+  :/Data/Time/TimeParseErr/HourOutOfRange(hour).msg= hour.toString ++ " is not an hour of a 24-hour clock, 0 to 23"
+  :/Data/Time/TimeParseErr/TwelveHourOutOfRange(hour).msg= hour.toString ++ " is not an hour of a 12-hour clock, 1 to 12"
+module(Data/Time)
   # ## Lengths of time and spans of a day
   data(Duration(minutes -> Integer))
     # A [Duration] is a length of time, counted in whole minutes.

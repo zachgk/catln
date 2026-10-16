@@ -169,7 +169,7 @@ A `String` is not a primitive: it is the one member of the class `String/Text(ch
 firstChar(s= String/Text(chars= Cons(head, tail)))= head
 ```
 
-A `Char` is a primitive, compared by its Unicode code point (`'a'.code` is `97`, and `fromCode(code= 98)` is `'b'`). Everything a string does, from `++` and `==` to `split`, `replace` and `parseInteger`, is written in Catln in `stack/core/string.ct`, and what a character does in `stack/core/char.ct`.
+A `Char` is a primitive, compared by its Unicode code point (`'a'.code` is `97`, and `fromCode(code= 98)` is `'b'`). Everything a string does, from `++` and `==` to `split` and `replace`, is written in Catln in `stack/core/string.ct`, reading a number from one (`parseInteger`) in `stack/core/parse.ct`, and what a character does in `stack/core/char.ct`.
 
 You can also define annotations similarly to data objects:
 

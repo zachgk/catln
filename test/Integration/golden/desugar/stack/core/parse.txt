@@ -1,0 +1,409 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/IntegerParseErr/NotADigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/IntegerParseErr/NotADigit( Value /c -> /Data/Char )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/digitsValue./Data/$e16d3b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ digitsValue./Data/$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
+                            ( Value /$e16d3b-arg= /Data/Maybe/Some( Value value@Value d ) ) | /operator<( Value /l= Value d )( Value /r= Value base )= digitsValue( Value cs= Value tail )( Value base= Value base )( Value sign= Value sign )
+                            ( Value acc= /operator+
+                                ( Value /l= /operator*( Value /l= Value acc )( Value /r= Value base ) )
+                                ( Value /r= /operator*( Value /l= Value sign )( Value /r= Value d ) )
+                            )
+                            ( Value at= /operator+( Value /l= Value at )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , digitsValue./Data/$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )( Value /$e16d3b-arg@Value m )= /Data/Result/Fail
+                            ( Value err= /Data/IntegerParseErr/NotADigit( Value c= Value head )( Value at= Value at )( Value base= Value base ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/IntegerParseErr/BadBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/IntegerParseErr/BadBase( Value /base -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/unsignedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/unsignedValue
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer )( Value sign -> /Data/Primitive/Integer )( Value at -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/unsignedValue( Value cs= Value /Data/List/Nil )( Value base )( Value sign )( Value at ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = /Data/Result/Fail( Value err= Value /Data/IntegerParseErr/NoDigits )
+                        , /Data/unsignedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign )( Value at ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = digitsValue
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value base= Value base )( Value sign= Value sign )
+                            ( Value acc= CInt
+                                { ciValue = 0 }
+                            )( Value at= Value at )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/parseIntegerBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/parseIntegerBase( Value base -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/parseIntegerBase( Value base )
+                            ( Value /this= /Data/String/Text( Value chars ) ) | /operator&&
+                            ( Value /l= /operator>=( Value /l= Value base )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                            ( Value /r= /operator<=( Value /l= Value base )
+                                ( Value /r= CInt
+                                    { ciValue = 36 }
+                                )
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = signedValue( Value cs= Value chars )( Value base= Value base )
+                        , /Data/parseIntegerBase( Value base )
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = /Data/Result/Fail
+                            ( Value err= /Data/IntegerParseErr/BadBase( Value base= Value base ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/IntegerParseErr/NoText"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/IntegerParseErr/NoText ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/signedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/signedValue
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/signedValue( Value cs= Value /Data/List/Nil )( Value base ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = /Data/Result/Fail( Value err= Value /Data/IntegerParseErr/NoText )
+                        , /Data/signedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) | /operator==( Value /l= Value head )
+                            ( Value /r= CChar
+                                { chValue = '-' }
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = unsignedValue( Value cs= Value tail )( Value base= Value base )
+                            ( Value sign= /operator-
+                                ( Value /l= CInt
+                                    { ciValue = 0 }
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value at= CInt
+                                { ciValue = 1 }
+                            )
+                        , /Data/signedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) | /operator==( Value /l= Value head )
+                            ( Value /r= CChar
+                                { chValue = '+' }
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = unsignedValue( Value cs= Value tail )( Value base= Value base )
+                            ( Value sign= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value at= CInt
+                                { ciValue = 1 }
+                            )
+                        , /Data/signedValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = unsignedValue
+                            ( Value cs= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value base= Value base )
+                            ( Value sign= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value at= CInt
+                                { ciValue = 0 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/parseInteger"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/parseInteger( Value /this -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/parseInteger
+                            ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = signedValue( Value cs= Value chars )
+                            ( Value base= CInt
+                                { ciValue = 10 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg( Value /this -> /Data/IntegerParseErr/NoText.. ) -> ∀/Data/String = CStr
+                            { csValue = "there is no number in an empty string" }
+                        , /Data/msg( Value /this -> /Data/IntegerParseErr/NoDigits.. ) -> ∀/Data/String = CStr
+                            { csValue = "a sign has no digits after it" }
+                        , /Data/msg
+                            ( Value /this= /Data/IntegerParseErr/NotADigit( Value c )( Value at )( Value base ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= CStr
+                                                { csValue = "'" }
+                                            )
+                                            ( Value /r= toString( Value /this= Value c ) )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = "' at " }
+                                        )
+                                    )
+                                    ( Value /r= toString( Value /this= Value at ) )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = " is not a digit of base " }
+                                )
+                            )
+                            ( Value /r= toString( Value /this= Value base ) )
+                        , /Data/msg
+                            ( Value /this= /Data/IntegerParseErr/BadBase( Value base ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= toString( Value /this= Value base ) )
+                            ( Value /r= CStr
+                                { csValue = " is not a base from 2 to 36" }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/IntegerParseErr/NoDigits"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/IntegerParseErr/NoDigits ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/digitsValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitsValue
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value base -> /Data/Primitive/Integer )( Value sign -> /Data/Primitive/Integer )( Value acc -> /Data/Primitive/Integer )( Value at -> /Data/Primitive/Integer ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsValue( Value cs= Value /Data/List/Nil )( Value base )( Value sign )( Value acc )( Value at ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = /Data/Result/Ok( Value value= Value acc )
+                        , /Data/digitsValue
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign )( Value acc )( Value at ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] = $e16d3b( Value /head= Value /head )( Value /at= Value /at )( Value /base= Value /base )( Value /acc= Value /acc )( Value /tail= Value /tail )( Value /sign= Value /sign )
+                            ( Value /$e16d3b-arg= digitValue( Value /this= Value head ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Data/IntegerParseErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/IntegerParseErr
+            , cgcExtends =
+                [ /Data/IntegerParseErr/NoText
+                , /Data/IntegerParseErr/NoDigits
+                , /Data/IntegerParseErr/NotADigit
+                    ( /at=/Data/Primitive/Integer
+                    , /base=/Data/Primitive/Integer
+                    , /c=/Data/Char
+                    )
+                , /Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer )
+                ]
+            , cgcDoc = Just "[IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
+              sign with no digits after it ([NoDigits]), the character [c] at position [at] (counting from
+              0) is no digit of [base] ([NotADigit]), or [base] is no base a number can be written in, 2
+              to 36 ([BadBase])."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# Reading numbers
+                A number is read from a [String] as a [Result]: the number written there, or the
+                [IntegerParseErr] saying why there is none." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
+                sign with no digits after it ([NoDigits]), the character [c] at position [at] (counting from
+                0) is no digit of [base] ([NotADigit]), or [base] is no base a number can be written in, 2
+                to 36 ([BadBase])." }
+            )
+        , /Catln/#print
+            ( Value /p= parseInteger
+                ( Value /this= CStr
+                    { csValue = "42" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "42" }
+            )
+        , /Catln/#print
+            ( Value /p= parseInteger
+                ( Value /this= CStr
+                    { csValue = "-17" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "-17" }
+            )
+        , /Catln/#print
+            ( Value /p= parseIntegerBase
+                ( Value base= CInt
+                    { ciValue = 16 }
+                )
+                ( Value /this= CStr
+                    { csValue = "ff" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "255" }
+            )
+        , /Catln/#print
+            ( Value /p= parseInteger
+                ( Value /this= CStr
+                    { csValue = "12a" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: 'a' at 2 is not a digit of base 10" }
+            )
+        , /Catln/#print
+            ( Value /p= parseInteger
+                ( Value /this= CStr
+                    { csValue = "-" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: a sign has no digits after it" }
+            )
+        , /Catln/#print
+            ( Value /p= parseInteger
+                ( Value /this= CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: there is no number in an empty string" }
+            )
+        , /Catln/#print
+            ( Value /p= parseIntegerBase
+                ( Value base= CInt
+                    { ciValue = 1 }
+                )
+                ( Value /this= CStr
+                    { csValue = "12" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: 1 is not a base from 2 to 36" }
+            )
+        ]
+    }

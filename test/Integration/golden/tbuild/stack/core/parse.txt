@@ -1,0 +1,1131 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/IntegerParseErr/NotADigit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/IntegerParseErr/NotADigit
+                            ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/digitsValue./Data/$e16d3b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /digitsValue./Data/$e16d3b
+                            ( EAppArg { eaaArg = Value /head } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /$e16d3b-arg -> /Data/Maybe/Some
+                                    ( /value=( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /d -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) }
+                                    )
+                                }
+                            ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /d = ( Value /d ↦ TVArg /d ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                            ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /digitsValue./Data/$e16d3b
+                                ( /head=/Data/Char
+                                , /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /acc=/Data/Primitive/Integer
+                                , /$e16d3b-arg=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                , /sign=/Data/Primitive/Integer
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/digitsValue
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /acc=/Data/Primitive/Integer
+                                , /cs=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                , /sign=/Data/Primitive/Integer
+                                )
+                            ) = /Data/digitsValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /sign -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /acc -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator*
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) =
+                                                ( /operator*
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> TVArg /d = ( Value /d ↦ TVArg /d ) }
+                                                    ) ↦ ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord )
+                                                )
+                                            }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /at -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                        , /digitsValue./Data/$e16d3b
+                            ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /tail } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /$e16d3b-arg@Value /m } ) -> /Data/Result/Fail
+                            ( /err=/Data/IntegerParseErr/NotADigit
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /c=/Data/Char
+                                )
+                            ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> /Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    ) = /Data/IntegerParseErr/NotADigit
+                                    ( EAppArg
+                                        { eaaArg = Value /c -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /at -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/IntegerParseErr/BadBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/IntegerParseErr/BadBase
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/unsignedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/unsignedValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/unsignedValue
+                            ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } ) -> /Data/Result/Fail[ /E=/Data/IntegerParseErr/NoDigits ]( /err=/Data/IntegerParseErr/NoDigits ) = /Data/Result/Fail
+                            ( EAppArg { eaaArg = Value /err -> /Data/IntegerParseErr/NoDigits = Value /Data/IntegerParseErr/NoDigits } )
+                        , /Data/unsignedValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /Data/digitsValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sign -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /acc -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /at -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ]
+                                    ( /err=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/parseIntegerBase"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/parseIntegerBase
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/parseIntegerBase
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) | /operator&&
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
+                                    ( /operator<=
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 36 }
+                                        ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                }
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] =
+                            ( /Data/signedValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                ) ↦ ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ]
+                            )
+                        , /Data/parseIntegerBase
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) -> /Data/Result/Fail
+                            [ /E=/Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer ) ]
+                            ( /err=/Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer ) ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> /Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer ) = /Data/IntegerParseErr/BadBase
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/IntegerParseErr/NoText"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/IntegerParseErr/NoText ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/signedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/signedValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/signedValue
+                            ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) -> /Data/Result/Fail[ /E=/Data/IntegerParseErr/NoText ]( /err=/Data/IntegerParseErr/NoText ) = /Data/Result/Fail
+                            ( EAppArg { eaaArg = Value /err -> /Data/IntegerParseErr/NoText = Value /Data/IntegerParseErr/NoText } )
+                        , /Data/signedValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '-' }
+                            ) ->
+                            ( /Data/Result/Fail
+                                [ /E=
+                                    ( /Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        ) + /Data/IntegerParseErr/NoDigits
+                                    )
+                                ]
+                                ( /err=
+                                    ( /Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        ) + /Data/IntegerParseErr/NoDigits
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /Data/unsignedValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sign -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 0 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /at -> /Data/Primitive/Integer = 1 }
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoDigits
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoDigits
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            )
+                        , /Data/signedValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Char = '+' }
+                            ) ->
+                            ( /Data/Result/Fail
+                                [ /E=
+                                    ( /Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        ) + /Data/IntegerParseErr/NoDigits
+                                    )
+                                ]
+                                ( /err=
+                                    ( /Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        ) + /Data/IntegerParseErr/NoDigits
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /Data/unsignedValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sign -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /at -> /Data/Primitive/Integer = 1 }
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoDigits
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoDigits
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            )
+                        , /Data/signedValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /Data/unsignedValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sign -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /at -> /Data/Primitive/Integer = 0 }
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ]
+                                    ( /err=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/parseInteger"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/parseInteger
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/parseInteger
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] =
+                            ( /Data/signedValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> /Data/Primitive/Integer = 10 }
+                                ) ↦ ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( EAppArg { eaaArg = Value /this -> /Data/IntegerParseErr/NoText.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "there is no number in an empty string"
+                        , /Data/msg
+                            ( EAppArg { eaaArg = Value /this -> /Data/IntegerParseErr/NoDigits.. } ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a sign has no digits after it"
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    ) = /Data/IntegerParseErr/NotADigit
+                                    ( EAppArg { eaaArg = Value /c -> /Data/Char } )
+                                    ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
+                                    ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> ∀/Data/String =
+                                                                ( /operator++
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> ∀/Data/String =
+                                                                            ( /operator++
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/String/Text
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "'"
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Data/String/Text
+                                                                                        ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                                                                            ( /head=/Data/Char
+                                                                                            , /tail=/Data/List/Nil
+                                                                                            )
+                                                                                        ) =
+                                                                                        ( /Data/toString
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
+                                                                                            ) ↦ /Data/String/Text
+                                                                                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
+                                                                                                ( /head=/Data/Char
+                                                                                                , /tail=/Data/List/Nil
+                                                                                                )
+                                                                                            )
+                                                                                        )
+                                                                                    }
+                                                                                ) ↦ ∀/Data/String
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "' at "
+                                                                        }
+                                                                    ) ↦ ∀/Data/String
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> ∀/Data/String =
+                                                                ( /Data/toString
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                                                    ) ↦ ∀/Data/String
+                                                                )
+                                                            }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a digit of base "
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /Data/toString
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer ) = /Data/IntegerParseErr/BadBase
+                                    ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /Data/toString
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a base from 2 to 36"
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/IntegerParseErr/NoDigits"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/IntegerParseErr/NoDigits ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/digitsValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/digitsValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } ) -> ∀/Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsValue
+                            ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } ) -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                            )
+                        , /Data/digitsValue
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char.. } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /$e16d3b
+                                ( EAppArg
+                                    { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /at -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sign -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /$e16d3b-arg -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
+                                        ( /Data/Char/digitValue
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                        )
+                                    }
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ]
+                                    ( /err=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Data/IntegerParseErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/IntegerParseErr
+            , cgcExtends =
+                [ /Data/IntegerParseErr/NoText
+                , /Data/IntegerParseErr/NoDigits
+                , /Data/IntegerParseErr/NotADigit
+                    ( /at=/Data/Primitive/Integer
+                    , /base=/Data/Primitive/Integer
+                    , /c=/Data/Char
+                    )
+                , /Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer )
+                ]
+            , cgcDoc = Just "[IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
+              sign with no digits after it ([NoDigits]), the character [c] at position [at] (counting from
+              0) is no digit of [base] ([NotADigit]), or [base] is no base a number can be written in, 2
+              to 36 ([BadBase])."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading numbers
+                  A number is read from a [String] as a [Result]: the number written there, or the
+                  [IntegerParseErr] saying why there is none."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
+                  sign with no digits after it ([NoDigits]), the character [c] at position [at] (counting from
+                  0) is no digit of [base] ([NotADigit]), or [base] is no base a number can be written in, 2
+                  to 36 ([BadBase])."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseInteger
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseInteger
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-17"
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-17"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseIntegerBase
+                        ( EAppArg
+                            { eaaArg = Value /base -> /Data/Primitive/Integer = 16 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "ff"
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "255"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseInteger
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12a"
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 'a' at 2 is not a digit of base 10"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseInteger
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: a sign has no digits after it"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseInteger
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: there is no number in an empty string"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p ->
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
+                    ) =
+                    ( /Data/parseIntegerBase
+                        ( EAppArg
+                            { eaaArg = Value /base -> /Data/Primitive/Integer = 1 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12"
+                            }
+                        ) ↦
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 1 is not a base from 2 to 36"
+                }
+            )
+        ]
+    }

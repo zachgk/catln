@@ -83,6 +83,59 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/toString"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/toString
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Ok[ /T=∀/Data/ToString ]( /value=∀/Data/ToString ) = /Data/Result/Ok
+                                    ( EAppVar
+                                        { eavName = /T
+                                        , eavMeta = ∀/Data/ToString
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/ToString } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /Data/toString
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/toString
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Result/Fail[ /E=∀/Data/Err ]( /err=∀/Data/Err ) = /Data/Result/Fail
+                                    ( EAppVar
+                                        { eavName = /E
+                                        , eavMeta = ∀/Data/Err
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /err -> ∀/Data/Err } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /msg
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /err = ( Value /err ↦ TVArg /err ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/rel"
                 , ObjectMapItem
                     { omiDecls = []
@@ -522,6 +575,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Result
@@ -584,6 +638,18 @@ Prgm
               The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
               [/Data/Result/Ok] and [/Data/Result/Fail]."
             }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Result
+            , cgcExtends =
+                [ ∀/Data/Result
+                    [ /T=∀/Data/ToString
+                    , /E=∀/Data/Err
+                    ]
+                ]
+            , cgcDoc = Just "A [Result] of a [ToString] value is written as its [value] where it is [Ok], and as what went
+              wrong where it is a [Fail]: `error: ` and then the [msg] of its [err]."
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -616,6 +682,58 @@ Prgm
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
                   The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
                   [/Data/Result/Ok] and [/Data/Result/Fail]."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Result] of a [ToString] value is written as its [value] where it is [Ok], and as what went
+                  wrong where it is a [Fail]: `error: ` and then the [msg] of its [err]."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
+                    ( EAppArg
+                        { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Result/Fail
+                    [ /E=/Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ]
+                    ( /err=/Data/Failure
+                        ( /reason=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ) = /Data/Result/Fail
+                    ( EAppArg
+                        { eaaArg = Value /err -> /Data/Failure
+                            ( /reason=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Failure
+                            ( EAppArg
+                                { eaaArg = Value /reason -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "it broke"
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: it broke"
                 }
             )
         , /Catln/#md

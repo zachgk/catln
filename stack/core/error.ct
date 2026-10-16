@@ -1,5 +1,6 @@
 import "core/string.ct"
 import "core/maybe.ct"
+import "core/data.ct"
 
 
 module(Data)
@@ -29,6 +30,18 @@ module(Data)
     # A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
       The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
       [/Data/Result/Ok] and [/Data/Result/Fail].
+
+  every(Result[$T -> /Data/ToString, $E -> /Data/Err], isa= [/Data/ToString])
+    # A [Result] of a [ToString] value is written as its [value] where it is [Ok], and as what went
+      wrong where it is a [Fail]: `error: ` and then the [msg] of its [err].
+
+  :/Data/Result/Ok[$T -> /Data/ToString](value).toString= value.toString
+  :/Data/Result/Fail[$E -> /Data/Err](err).toString= "error: " ++ err.msg
+module(Data/Result)
+  > /Data/Result/Ok(value= 3)
+    >>> 3
+  > /Data/Result/Fail(err= /Data/Failure(reason= "it broke"))
+    >>> error: it broke
 
 # # Reading a Result
   [withDefault] and [toMaybe] read a [Result] for a caller which does not need to know why it
