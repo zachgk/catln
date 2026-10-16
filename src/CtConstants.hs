@@ -263,6 +263,12 @@ processFun = "/Catln/process"
 processFunIO = "/io"
 processFunAnnot = "/annot"
 
+-- | The field an annotation is processed into where processing it failed, holding why. Such an
+-- annotation is reported with that reason and written back as it was, so it is processed again
+-- the next time rather than being answered with its failure.
+processFailureText :: String
+processFailureText = "failure"
+
 -- | What the compiler or an evaluation said about a statement, written under it for a reader of the
 -- page as @!!! kind: text@ lines ('Syntax.Ct.Results.notePage'). Only ever written: nothing parses
 -- @!!!@, so a page shown with its notes is shown them rather than given them.

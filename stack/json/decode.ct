@@ -22,7 +22,7 @@ module(Data)
       followed by the second ([LoneSurrogate]).
 
   data(JsonParseErr(problem -> JsonProblem, at -> Integer), isa= [/Data/Err])
-    # A [JsonParseErr..] is the [problem] that stopped [jsonParse], and the position [at] in the text,
+    # A [JsonParseErr] is the [problem] that stopped [jsonParse], and the position [at] in the text,
       counting characters from 0, where it was found.
   data(JsonStuck(problem -> JsonProblem, left -> Integer))
     # A [JsonStuck] is a [problem] found while reading, with how many characters were [left] from

@@ -2,13 +2,9 @@ import "core"
 import "llm"
 
 
-# Asks the configured model one thing and prints what it answered, or that it did not.
-showReply(r -> /Data/Maybe[$T -> String]) -> String
-showReply(r= /Data/Maybe/Nothing)= "no reply"
-showReply(r= /Data/Maybe/Some(value))= value
-
+# Asks the configured model one thing and prints what it answered, or why it did not.
 main{io -> IO} -> (){IO} =
   reply<- llm(input= "Say hi")
-  _<- println(msg= showReply(r= reply))
+  _<- println(msg= reply.toString)
   _<- exit(val= 0)
   ()

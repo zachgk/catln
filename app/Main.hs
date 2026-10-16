@@ -66,7 +66,7 @@ xProcess prgmName = do
     Nothing   -> fail $ printf "Could not find a file to write the processed %s back to" prgmName
   lift $ writeFile path $ formatRootPrgm page
   lift $ putStrLn $ printf "Processed %d annotation(s) in %s" processed path
-  when (unchanged > 0) $ lift $ putStrLn $ printf "%d of them came back unchanged (a #q is unanswered where OPENAI_BASE_URL or OPENAI_MODEL is unset)" unchanged
+  when (unchanged > 0) $ lift $ putStrLn $ printf "%d of them came back unchanged" unchanged
 
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do

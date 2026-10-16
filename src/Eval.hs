@@ -701,7 +701,9 @@ evalProcessAnnot env0@Env{evTbEnv, evTypeEnv} ioVal os annot
 -- again.
 --
 -- Each annotation is processed in an evaluation of its own, so one that fails is noted and the
--- rest are still processed.
+-- rest are still processed. One processed into an annotation holding a 'processFailureText' was
+-- processed without failing but could not be answered, such as a question asked of a model that is
+-- not configured: it is noted with why, and left as it was rather than written back holding it.
 evalProcessPage :: EvalPages -> Val -> FilePath -> EPrgm -> CResT IO (RawPrgm (), H.HashMap UUID Val)
 evalProcessPage pages ioVal file prgm = do
   EvalPage{epRaw=page} <- case H.lookup file pages of
@@ -712,10 +714,20 @@ evalProcessPage pages ioVal file prgm = do
   processed <- forM unprocessed $ \(os, a) -> do
     res <- lift $ runCResT $ evalProcessAnnot env ioVal os a
     case res of
-      CRes notes (Just val) -> asCResT (CRes notes ()) >> return (Just (getMetaId $ getExprMeta a, val))
+      CRes notes (Just val) -> asCResT (CRes notes ()) >> answered a val
       CRes notes Nothing    -> asCResT (CRes notes ()) >> return Nothing
       CErr notes            -> asCResT (CRes notes ()) >> return Nothing
   return (page, H.fromList $ catMaybes processed)
+  where
+    answered a val = case processFailure val of
+      Just failure -> do
+        asCResT $ CRes [MkCNote $ GenCNote (getMetaPos $ getExprMeta a) $ printf "The annotation was not processed: %s" failure] ()
+        return Nothing
+      Nothing -> return $ Just (getMetaId $ getExprMeta a, val)
+    processFailure (TupleVal _ args) = case H.lookup (runtimeArgKey processFailureText) args of
+      Just (StrVal failure) -> Just failure
+      _                     -> Nothing
+    processFailure _ = Nothing
 
 -- | Flattens the program reachable from a file into one. It is polymorphic in the program because
 -- every pipeline stage holds one, and scoping a stage to a file has to mean the same thing at each:

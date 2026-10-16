@@ -132,14 +132,14 @@ testLlmAsksTheConfiguredModel getCtss = testCase "IO.llm asks the configured mod
         requests
       assertEqual "and the reply is what the model said" "Hi there!\n" out
 
--- | Without a model to ask there is nothing to send, and the answer says there is no reply.
+-- | Without a model to ask there is nothing to send, and the answer says which setting is missing.
 testLlmWithoutAModelAsksNothing :: IO CTSS -> TestTree
 testLlmWithoutAModelAsksNothing getCtss = testCase "IO.llm without OPENAI_MODEL sends nothing" $ do
   mockIO <- newMockIOWith (H.singleton "OPENAI_BASE_URL" "http://model.test/v1") (\_ _ _ -> return $ Left "no request should be sent")
   (res, out) <- runWith getCtss (fixture "llm.ct") mockIO
   case res of
     CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
-    CRes _ _   -> assertEqual "no reply" "no reply\n" out
+    CRes _ _   -> assertEqual "the unset variable is named" "error: OPENAI_MODEL is not set, so there is no model to ask\n" out
 
 -- | Processes a fixture's annotations against the mock given ('getProcessedMock'): the page as it is
 -- written back, and how many annotations were processed and came back unchanged.
@@ -174,16 +174,18 @@ testProcessAnswersQueries getCtss = testCase "processing a page asks each unansw
       assertBool ("the reply is written under the question:\n" ++ page) ("q> What does double do?\n  >>> Twice x.\n  >>> Always.\n" `isInfixOf` page)
       assertBool ("the answered query is left as it was:\n" ++ page) ("q> Is double fast?\n  >>> Yes.\n" `isInfixOf` page)
 
--- | Without a model to ask, nothing is sent, and the query is written back as it was.
+-- | Without a model to ask, nothing is sent, the query is written back as it was, and why it was
+-- not answered is reported.
 testProcessWithoutAModelAnswersNothing :: IO CTSS -> TestTree
-testProcessWithoutAModelAnswersNothing getCtss = testCase "processing a page without OPENAI_MODEL leaves its queries unanswered" $ do
+testProcessWithoutAModelAnswersNothing getCtss = testCase "processing a page without a model leaves its queries unanswered and says why" $ do
   mockIO <- newMockIOWith H.empty (\_ _ _ -> return $ Left "no request should be sent")
   res <- processWith getCtss (fixture "query.ct") mockIO
   case res of
     CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
-    CRes _ (page, processed, unchanged) -> do
-      assertEqual "the query is processed, and comes back unchanged" (1, 1) (processed, unchanged)
+    CRes notes (page, processed, unchanged) -> do
+      assertEqual "no annotation is processed" (0, 0) (processed, unchanged)
       assertBool ("it is written back unanswered:\n" ++ page) ("q> What does double do?\nq> Is double fast?" `isInfixOf` page)
+      assertBool ("the unset variable is reported: " ++ prettyCNotes notes) ("OPENAI_BASE_URL is not set" `isInfixOf` prettyCNotes notes)
 
 -- | The transport, against a server answering on a port of this machine: the header and the UTF-8
 -- body arrive as sent, and a status that is not a success is reported with the body it came with.

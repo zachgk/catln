@@ -21,15 +21,17 @@ module(Llm)
     reads the environment and it sends a request.
     This is not part of the standard library. A program which asks no model has no use for it, and
     one that does writes `import "llm"`.
-  llm{io -> IO}(input -> String) -> /Data/Maybe[$T -> String]{IO}
-    # [llm] is the reply of the configured model to the prompt [input], or [/Data/Maybe/Nothing]
-      where there is none to give: `OPENAI_BASE_URL` or `OPENAI_MODEL` is unset, or the response
-      holds no reply at `choices[0].message.content`.
+  class(LlmErr, [LlmErr/Unset(variable -> String), LlmErr/NotJson(cause -> /Data/JsonParseErr..), LlmErr/ApiError(message -> String), LlmErr/NoReply(path -> String, cause -> /Data/JsonAccessErr), LlmErr/NotText(path -> String, found -> /Data/Json)], isa= [/Data/Err])
+    # [LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+      ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+      [message] ([ApiError]); or the response has nothing at [path], where the reply is
+      ([NoReply]), or something other than text there ([NotText]).
+
+  llm{io -> IO}(input -> String) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
+    # [llm] is the reply of the configured model to the prompt [input], or the [LlmErr] saying why
+      there is none.
       A request that could not be made, or that was answered with a failure, fails the evaluation
       with what went wrong, as [/Http/httpPost] does.
-      TODO: Answer with a Result that says which of those it was, once Catln has one. As a
-      [/Data/Maybe] the reason is lost, and an unset variable reads the same as a model that
-      answered with nothing.
   llm{io -> IO}(input) =
     base<- /System/env(name= "OPENAI_BASE_URL")
 
@@ -40,10 +42,10 @@ module(Llm)
     reply<- llmWith(input= input, base= base, model= model, key= key)
     reply
 
-  llmWith{io -> IO}(input -> String, base -> /Data/Maybe[$T -> String], model -> /Data/Maybe[$T -> String], key -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]{IO}
+  llmWith{io -> IO}(input -> String, base -> /Data/Maybe[$T -> String], model -> /Data/Maybe[$T -> String], key -> /Data/Maybe[$T -> String]) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
     # [llmWith] asks the model [model] at [base] about [input], where both are configured.
-  llmWith{io -> IO}(input, base= /Data/Maybe/Nothing, model, key)= /Data/Maybe/Nothing{io}
-  llmWith{io -> IO}(input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Maybe/Nothing{io}
+  llmWith{io -> IO}(input, base= /Data/Maybe/Nothing, model, key)= /Data/Result/Fail(err= LlmErr/Unset(variable= "OPENAI_BASE_URL")){io}
+  llmWith{io -> IO}(input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Result/Fail(err= LlmErr/Unset(variable= "OPENAI_MODEL")){io}
   llmWith{io -> IO}(input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key) =
     text<- /Http/httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))
 
@@ -80,11 +82,11 @@ module(Llm)
     The page is the one the program was compiled from, handed to the call by the compiler rather
     than read again from the file: a call written as `lcm(input= ...)` is completed to
     `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
-  lcm{io -> IO}(input -> String) -> /Data/Maybe[$T -> String]{IO}
+  lcm{io -> IO}(input -> String) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
     # [lcm] is the reply of the configured model to the prompt [input], asked with the page the call
       is written in. It answers as [llm] does.
     #runtime("callerPage")
-  lcm{io -> IO}(input -> String, page -> /Catln/RawPrgm..) -> /Data/Maybe[$T -> String]{IO} =
+  lcm{io -> IO}(input -> String, page -> /Catln/RawPrgm..) -> /Data/Result[$T -> String, $E -> LlmErr]{IO} =
     reply<- llm(input= lcmPrompt(input= input, page= page))
     reply
 
@@ -115,20 +117,24 @@ module(Llm)
     # [#q] is a question for a model about the page it is written on, asked by [lcm].
   annot(#q(input -> String, result -> String))
     # The [#q] can also hold the [result] the model replied with.
+  annot(#q(input -> String, failure -> String))
+    # A [#q] the model gave no reply to holds the [failure] saying why, for `catln process` to
+      report. It is not written back: the question is left unanswered, to be asked again.
 
   /Catln/process{io -> /Catln/IO}(annot -> #q(input -> String)) -> #q..{IO}
     # A [#q] is processed by asking it with the page it is written on, and is updated to hold the
-      reply as its [result]. Where there is no reply it is left as it was.
+      reply as its [result]. Where there is no reply it holds the [failure] saying why.
     #runtime("callerPage")
   /Catln/process{io -> /Catln/IO}(annot= #q(input -> String), page -> /Catln/RawPrgm..) -> #q..{IO} =
     reply<- lcm(input= input, page= page)
 
     qAnswered(input= input, reply= reply)
 
-  qAnswered(input -> String, reply -> /Data/Maybe[$T -> String]) -> #q..
-    # [qAnswered] is the [#q] asking [input], holding the [reply] where there is one.
-  qAnswered(input, reply= /Data/Maybe/Nothing)= #q(input= input)
-  qAnswered(input, reply= /Data/Maybe/Some(value))= #q(input= input, result= value)
+  qAnswered(input -> String, reply -> /Data/Result[$T -> String, $E -> LlmErr]) -> #q..
+    # [qAnswered] is the [#q] asking [input], holding the [reply] where there is one, and why there
+      is none where there is not.
+  qAnswered(input, reply= /Data/Result/Fail(err))= #q(input= input, failure= err.msg)
+  qAnswered(input, reply= /Data/Result/Ok(value))= #q(input= input, result= value)
 
   # ## The request
   llmRequest(model -> String, input -> String) -> String
@@ -145,29 +151,59 @@ module(Llm)
 
   # ## The reply
     The reply is the text at `choices[0].message.content` of the response, read one step at a
-    time. Each step answers [/Data/Maybe/Nothing] where the part it reads is not there, and the
-    steps after it pass that on.
-  llmReply(response -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonParseErr..]) -> /Data/Maybe[$T -> String]
-  llmReply(response= /Data/Result/Fail(err))= /Data/Maybe/Nothing
-  llmReply(response= /Data/Result/Ok(value))= llmChoice(choices= /Data/Result/toMaybe(r= /Data/jsonMember(value= value, key= "choices")))
+    time. A step which finds nothing where it reads fails with the path read so far, and the steps
+    after it pass that on. A response holding an `error` is the API saying what was wrong, and is
+    answered with that rather than with the reply it does not hold.
+  llmReply(response -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonParseErr..]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmReply(response= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NotJson(cause= err))
+  llmReply(response= /Data/Result/Ok(value))= llmAnswer(error= /Data/jsonMember(value= value, key= "error"), response= value)
 
-  llmChoice(choices -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
-  llmChoice(choices= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmChoice(choices= /Data/Maybe/Some(value))= llmMessage(choice= /Data/Result/toMaybe(r= /Data/jsonIndex(value= value, i= 0)))
+  llmAnswer(error -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr], response -> /Data/Json) -> /Data/Result[$T -> String, $E -> LlmErr]
+    # [llmAnswer] is the reply in [response], or the [error] it holds instead.
+  llmAnswer(error= /Data/Result/Ok(value), response)= /Data/Result/Fail(err= LlmErr/ApiError(message= llmErrorText(e= value)))
+  llmAnswer(error= /Data/Result/Fail(err), response)= llmChoice(choices= /Data/jsonMember(value= response, key= "choices"))
 
-  llmMessage(choice -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
-  llmMessage(choice= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmMessage(choice= /Data/Maybe/Some(value))= llmContent(message= /Data/Result/toMaybe(r= /Data/jsonMember(value= value, key= "message")))
+  llmErrorText(e -> /Data/Json) -> String
+    # [llmErrorText] is what an API's error [e] says: its `message` where it has one, as the
+      OpenAI API writes one, and the error written out as JSON where it does not.
+  llmErrorText(e)= llmErrorMessage(message= /Data/jsonMember(value= e, key= "message"), e= e)
 
-  llmContent(message -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
-  llmContent(message= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
-  llmContent(message= /Data/Maybe/Some(value))= llmText(content= /Data/Result/toMaybe(r= /Data/jsonMember(value= value, key= "content")))
+  llmErrorMessage(message -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr], e -> /Data/Json) -> String
+  llmErrorMessage(message= /Data/Result/Ok(value= /Data/Json/Str(value@m)), e)= m
+  llmErrorMessage(message, e) else = /Data/jsonEncode(value= e)
 
-  llmText(content -> /Data/Maybe[$T -> /Data/Json]) -> /Data/Maybe[$T -> String]
-  llmText(content= /Data/Maybe/Some(value= /Data/Json/Str(value@s)))= /Data/Maybe/Some(value= s)
-  llmText(content) else = /Data/Maybe/Nothing
+  llmChoice(choices -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmChoice(choices= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices", cause= err))
+  llmChoice(choices= /Data/Result/Ok(value))= llmMessage(choice= /Data/jsonIndex(value= value, i= 0))
 
-  > llmReply(response= /Data/jsonParse(text= "{\"choices\": [{\"message\": {\"role\": \"assistant\", \"content\": \"Hello!\"}}]}")) == /Data/Maybe/Some(value= "Hello!")
-    >>> True
-  > llmReply(response= /Data/jsonParse(text= "{\"error\": \"no\"}")) == /Data/Maybe/Nothing
-    >>> True
+  llmMessage(choice -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmMessage(choice= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices[0]", cause= err))
+  llmMessage(choice= /Data/Result/Ok(value))= llmContent(message= /Data/jsonMember(value= value, key= "message"))
+
+  llmContent(message -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmContent(message= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices[0].message", cause= err))
+  llmContent(message= /Data/Result/Ok(value))= llmText(content= /Data/jsonMember(value= value, key= "content"))
+
+  llmText(content -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmText(content= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices[0].message.content", cause= err))
+  llmText(content= /Data/Result/Ok(value= /Data/Json/Str(value@s)))= /Data/Result/Ok(value= s)
+  llmText(content= /Data/Result/Ok(value@v)) else = /Data/Result/Fail(err= LlmErr/NotText(path= "choices[0].message.content", found= v))
+
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": [{\"message\": {\"role\": \"assistant\", \"content\": \"Hello!\"}}]}"))
+    >>> Hello!
+  > llmReply(response= /Data/jsonParse(text= "{\"error\": {\"message\": \"Incorrect API key\"}}"))
+    >>> error: the model's API answered with an error: Incorrect API key
+  > llmReply(response= /Data/jsonParse(text= "{\"error\": \"no\"}"))
+    >>> error: the model's API answered with an error: "no"
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": []}"))
+    >>> error: the model's response has no reply at choices[0]: there is no entry 0 of an array of 0
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": [{\"message\": {\"content\": 3}}]}"))
+    >>> error: the model's reply at choices[0].message.content is a number, not text
+  > llmReply(response= /Data/jsonParse(text= "<html>"))
+    >>> error: the model's response is not JSON: '<' is where a value was expected, at character 0
+module(Data)
+  :/Llm/LlmErr/Unset(variable).msg= variable ++ " is not set, so there is no model to ask"
+  :/Llm/LlmErr/NotJson(cause).msg= "the model's response is " ++ cause.msg
+  :/Llm/LlmErr/ApiError(message).msg= "the model's API answered with an error: " ++ message
+  :/Llm/LlmErr/NoReply(path, cause).msg= "the model's response has no reply at " ++ path ++ ": " ++ cause.msg
+  :/Llm/LlmErr/NotText(path, found).msg= "the model's reply at " ++ path ++ " is " ++ /Data/jsonKind(j= found) ++ ", not text"

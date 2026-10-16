@@ -37,33 +37,84 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/llmMessage
-                            ( Value /choice -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ( Value /choice -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmMessage( Value /choice -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        [ /Llm/llmMessage
+                            ( Value /choice -> /Data/Result/Fail[ /E=∀/Data/JsonAccessErr ]( /err=∀/Data/JsonAccessErr ) = /Data/Result/Fail( Value /err -> ∀/Data/JsonAccessErr ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                ) = /Llm/LlmErr/NoReply
+                                ( Value /path -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "choices[0]" }
+                                )( Value /cause -> TVArg /err = Value /err )
+                            )
                         , /Llm/llmMessage
-                            ( Value /choice -> /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Maybe/Some( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmContent
-                            ( Value /message -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                , []
-                                ) = /Data/Result/toMaybe
-                                ( Value /r -> ∀/Data/Result
-                                    [ /T=∀/Data/Json
-                                    , /E=∀/Data/JsonAccessErr
-                                    ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
-                                    ( Value /key -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                        { csValue = "message" }
-                                    )
+                            ( Value /choice -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmContent
+                            ( Value /message -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
+                                ( Value /key -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "message" }
                                 )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llmErrorMessage"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/llmErrorMessage
+                            ( Value /message -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            )( Value /e -> ∀/Data/Json ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmErrorMessage
+                            ( Value /message -> /Data/Result/Ok
+                                ( /value=/Data/Json/Str( /value=∀/Data/String ) ) = /Data/Result/Ok
+                                ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value@Value /m -> ∀/Data/String ) )
+                            )( Value /e -> ∀/Data/Json ) -> ∀/Data/String = Value /m
+                        , /Llm/llmErrorMessage
+                            ( Value /message -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            )( Value /e -> ∀/Data/Json ) -> ∀/Data/String = /Data/jsonEncode( Value /value -> TVArg /e = Value /e )
                         ]
                     }
                 )
@@ -72,31 +123,54 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/llmContent
-                            ( Value /message -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ( Value /message -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmContent( Value /message -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        [ /Llm/llmContent
+                            ( Value /message -> /Data/Result/Fail[ /E=∀/Data/JsonAccessErr ]( /err=∀/Data/JsonAccessErr ) = /Data/Result/Fail( Value /err -> ∀/Data/JsonAccessErr ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                ) = /Llm/LlmErr/NoReply
+                                ( Value /path -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "choices[0].message" }
+                                )( Value /cause -> TVArg /err = Value /err )
+                            )
                         , /Llm/llmContent
-                            ( Value /message -> /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Maybe/Some( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmText
-                            ( Value /content -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                , []
-                                ) = /Data/Result/toMaybe
-                                ( Value /r -> ∀/Data/Result
-                                    [ /T=∀/Data/Json
-                                    , /E=∀/Data/JsonAccessErr
-                                    ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
-                                    ( Value /key -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                        { csValue = "content" }
-                                    )
+                            ( Value /message -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmText
+                            ( Value /content -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
+                                ( Value /key -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "content" }
                                 )
                             )
                         ]
@@ -117,26 +191,69 @@ Prgm
                             ( /Llm/qAnswered
                                 ( /reply=UnionType
                                     ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
                                         , fromList []
                                         , []
                                         )
-                                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    ,
+                                        ( /Data/Result/Fail
+                                            ( /err=
+                                                ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /cause=∀/Data/JsonAccessErr
+                                                    ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /found=∀/Data/Json
+                                                    ) + /Llm/LlmErr/Unset
+                                                    ( /variable=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                )
+                                            ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                        )
                                     , []
                                     )
                                 , /input=∀/Data/String
-                                ) + /Llm/#q( /input=∀/Data/String ) + /Llm/#q
+                                ) + /Llm/#q
                                 ( /input=∀/Data/String
                                 , /result=∀/Data/String
+                                ) + /Llm/#q
+                                ( /input=∀/Data/String
+                                , /failure=∀/Data/String
                                 )
                             ) = /Llm/qAnswered( Value /input -> TVArg /input = Value /input )
                             ( Value /reply -> UnionType
                                 ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                    ( PredClass /Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
                                     , fromList []
                                     , []
                                     )
-                                , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                ,
+                                    ( /Data/Result/Fail[ /E=∀/Llm/LlmErr ]
+                                        ( /err=
+                                            ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /cause=∀/Data/JsonAccessErr
+                                                ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /found=∀/Data/Json
+                                                ) + /Llm/LlmErr/Unset
+                                                ( /variable=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                )
+                                            )
+                                        ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    )
                                 , []
                                 ) = /Llm/lcm( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page )( Value /this -> TVArg /io = Value /io )
                             )
@@ -168,14 +285,23 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/qAnswered( Value /input -> ∀/Data/String )
-                            ( Value /reply -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Llm/#q..
+                            ( Value /reply -> ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ) -> /Llm/#q..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/qAnswered( Value /input -> ∀/Data/String )( Value /reply -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q( Value /input -> TVArg /input = Value /input )
+                        [ /Llm/qAnswered( Value /input -> ∀/Data/String )
+                            ( Value /reply -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail( Value /err -> ∀/Llm/LlmErr ) ) -> /Llm/#q
+                            ( /input=∀/Data/String
+                            , /failure=∀/Data/String
+                            ) = /Llm/#q( Value /input -> TVArg /input = Value /input )
+                            ( Value /failure -> ∀/Data/String = /msg( Value /this -> TVArg /err = Value /err ) )
                         , /Llm/qAnswered( Value /input -> ∀/Data/String )
-                            ( Value /reply -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) ) -> /Llm/#q
+                            ( Value /reply -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok( Value /value -> ∀/Data/String ) ) -> /Llm/#q
                             ( /input=∀/Data/String
                             , /result=∀/Data/String
                             ) = /Llm/#q( Value /input -> TVArg /input = Value /input )( Value /result -> TVArg /value = Value /value )
@@ -191,34 +317,33 @@ Prgm
                                 [ /T=∀/Data/Json
                                 , /E=/Data/JsonParseErr..
                                 ]
-                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/llmReply
-                            ( Value /response -> /Data/Result/Fail[ /E=/Data/JsonParseErr.. ]( /err=/Data/JsonParseErr.. ) = /Data/Result/Fail( Value /err -> /Data/JsonParseErr.. ) ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                            ( Value /response -> /Data/Result/Fail[ /E=/Data/JsonParseErr.. ]( /err=/Data/JsonParseErr.. ) = /Data/Result/Fail( Value /err -> /Data/JsonParseErr.. ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) ]
+                            ( /err=/Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) = /Llm/LlmErr/NotJson( Value /cause -> TVArg /err = Value /err ) )
                         , /Llm/llmReply
-                            ( Value /response -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmChoice
-                            ( Value /choices -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                , []
-                                ) = /Data/Result/toMaybe
-                                ( Value /r -> ∀/Data/Result
-                                    [ /T=∀/Data/Json
-                                    , /E=∀/Data/JsonAccessErr
-                                    ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
-                                    ( Value /key -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                        { csValue = "choices" }
-                                    )
+                            ( Value /response -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmAnswer
+                            ( Value /error -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
+                                ( Value /key -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "error" }
                                 )
-                            )
+                            )( Value /response -> TVArg /value = Value /value )
                         ]
                     }
                 )
@@ -229,17 +354,58 @@ Prgm
                         [ /Llm/llmWith( Value /io -> /Catln/IO )( Value /input -> ∀/Data/String )
                             ( Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                             ( Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/llmWith( Value /io -> /Catln/IO )( Value /input -> ∀/Data/String )( Value /base -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/Unset
+                                ( /variable=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/Unset
+                                ( /variable=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/Unset
+                                ( /variable=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) = /Llm/LlmErr/Unset
+                                ( Value /variable -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "OPENAI_BASE_URL" }
+                                )
+                            )
                         , /Llm/llmWith( Value /io -> /Catln/IO )( Value /input -> ∀/Data/String )
                             ( Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> ∀/Data/String ) )( Value /model -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                            ( Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/Unset
+                                ( /variable=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/Unset
+                                ( /variable=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/Unset
+                                ( /variable=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ) = /Llm/LlmErr/Unset
+                                ( Value /variable -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "OPENAI_MODEL" }
+                                )
+                            )
                         , /Llm/llmWith( Value /io -> /Catln/IO.. )( Value /input -> ∀/Data/String )
                             ( Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value@Value /b -> ∀/Data/String ) )
                             ( Value /model -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value@Value /m -> ∀/Data/String ) )
@@ -252,7 +418,10 @@ Prgm
                                 , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
                                 , []
                                 )
-                            ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmReply
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmReply
                             ( Value /response -> ∀/Data/Result
                                 [ /T=∀/Data/Json
                                 , /E=/Data/JsonParseErr..
@@ -302,12 +471,33 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/LlmErr/ApiError"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/ApiError( Value /message -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Llm/#q"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/#q( Value /input -> ∀/Data/String )
                         , /Llm/#q( Value /input -> ∀/Data/String )( Value /result -> ∀/Data/String )
+                        , /Llm/#q( Value /input -> ∀/Data/String )( Value /failure -> ∀/Data/String )
                         ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NoReply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NoReply( Value /path -> ∀/Data/String )( Value /cause -> ∀/Data/JsonAccessErr ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -318,32 +508,86 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/llmChoice
-                            ( Value /choices -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ( Value /choices -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmChoice( Value /choices -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        [ /Llm/llmChoice
+                            ( Value /choices -> /Data/Result/Fail[ /E=∀/Data/JsonAccessErr ]( /err=∀/Data/JsonAccessErr ) = /Data/Result/Fail( Value /err -> ∀/Data/JsonAccessErr ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                ) = /Llm/LlmErr/NoReply
+                                ( Value /path -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "choices" }
+                                )( Value /cause -> TVArg /err = Value /err )
+                            )
                         , /Llm/llmChoice
-                            ( Value /choices -> /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Maybe/Some( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmMessage
-                            ( Value /choice -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                , []
-                                ) = /Data/Result/toMaybe
-                                ( Value /r -> ∀/Data/Result
-                                    [ /T=∀/Data/Json
-                                    , /E=∀/Data/JsonAccessErr
-                                    ] = /Data/jsonIndex( Value /value -> TVArg /value = Value /value )
-                                    ( Value /i -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 0 }
-                                    )
+                            ( Value /choices -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmMessage
+                            ( Value /choice -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ] = /Data/jsonIndex( Value /value -> TVArg /value = Value /value )
+                                ( Value /i -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 0 }
                                 )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotJson"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotJson( Value /cause -> /Data/JsonParseErr.. ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/llmErrorText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/llmErrorText( Value /e -> ∀/Data/Json ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmErrorText( Value /e -> ∀/Data/Json ) -> ∀/Data/String = /Llm/llmErrorMessage
+                            ( Value /message -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ] = /Data/jsonMember( Value /value -> TVArg /e = Value /e )
+                                ( Value /key -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "message" }
+                                )
+                            )( Value /e -> TVArg /e = Value /e )
                         ]
                     }
                 )
@@ -352,36 +596,63 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Llm/lcm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
+                        [ /Llm/lcm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/lcm( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /this -> /Catln/IO.. ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                ( PredClass /Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
                                 , fromList []
                                 , []
                                 )
                             ,
-                                ( /Llm/llmMessage
-                                    ( /choice=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                            , fromList []
-                                            , []
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /cause=∀/Data/JsonAccessErr
+                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /found=∀/Data/Json
+                                            ) + /Llm/LlmErr/Unset
+                                            ( /variable=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                             )
-                                        , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                        , []
                                         )
+                                    ]
+                                    ( /err=
+                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /cause=∀/Data/JsonAccessErr
+                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /found=∀/Data/Json
+                                            ) + /Llm/LlmErr/Unset
+                                            ( /variable=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            )
+                                        )
+                                    ) + /Llm/llmMessage
+                                    ( /choice=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
                                     ) + /Llm/llmContent
-                                    ( /message=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                        , []
-                                        )
+                                    ( /message=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
                                     ) + /Llm/llmReply
                                     ( /response=∀/Data/Result
                                         [ /T=∀/Data/Json
@@ -393,27 +664,23 @@ Prgm
                                     , /input=∀/Data/String
                                     , /key=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /io=/Catln/IO
-                                    ) + /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) + /Llm/llmChoice
-                                    ( /choices=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                        , []
-                                        )
+                                    ) + /Llm/llmChoice
+                                    ( /choices=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
                                     ) + /Llm/llmText
-                                    ( /content=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=∀/Data/Json ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some[ /T=∀/Data/Json ]( /value=∀/Data/Json )
-                                        , []
-                                        )
-                                    ) + /Llm/llm
+                                    ( /content=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    ) + /Llm/llmAnswer
+                                    ( /error=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    , /response=∀/Data/Json
+                                    ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) + /Llm/llm
                                     ( /this=/Catln/IO..
                                     , /input=∀/Data/String
                                     )
@@ -429,18 +696,156 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Llm/llmText
-                            ( Value /content -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
+                            ( Value /content -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/llmText
-                            ( Value /content -> /Data/Maybe/Some
-                                ( /value=/Data/Json/Str( /value=∀/Data/String ) ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value@Value /s -> ∀/Data/String ) )
-                            ) -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value -> TVArg /s = Value /s )
+                            ( Value /content -> /Data/Result/Fail[ /E=∀/Data/JsonAccessErr ]( /err=∀/Data/JsonAccessErr ) = /Data/Result/Fail( Value /err -> ∀/Data/JsonAccessErr ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NoReply
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /cause=∀/Data/JsonAccessErr
+                                ) = /Llm/LlmErr/NoReply
+                                ( Value /path -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "choices[0].message.content" }
+                                )( Value /cause -> TVArg /err = Value /err )
+                            )
                         , /Llm/llmText
-                            ( Value /content -> ∀/Data/Maybe[ /T=∀/Data/Json ] ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                            ( Value /content -> /Data/Result/Ok
+                                ( /value=/Data/Json/Str( /value=∀/Data/String ) ) = /Data/Result/Ok
+                                ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value@Value /s -> ∀/Data/String ) )
+                            ) -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok( Value /value -> TVArg /s = Value /s )
+                        , /Llm/llmText
+                            ( Value /content -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value@Value /v -> ∀/Data/Json ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NotText
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /found=∀/Data/Json
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/NotText
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /found=∀/Data/Json
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NotText
+                                ( /path=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /found=∀/Data/Json
+                                ) = /Llm/LlmErr/NotText
+                                ( Value /path -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "choices[0].message.content" }
+                                )( Value /found -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotText( Value /path -> ∀/Data/String )( Value /found -> ∀/Data/Json ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( Value /this -> /Llm/LlmErr/Unset( /variable=∀/Data/String ) = /Llm/LlmErr/Unset( Value /variable -> ∀/Data/String ) ) -> ∀/Data/String = /operator++( Value /l -> TVArg /variable = Value /variable )
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = " is not set, so there is no model to ask" }
+                            )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) = /Llm/LlmErr/NotJson( Value /cause -> /Data/JsonParseErr.. ) ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "the model's response is " }
+                            )
+                            ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/ApiError( /message=∀/Data/String ) = /Llm/LlmErr/ApiError( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "the model's API answered with an error: " }
+                            )( Value /r -> TVArg /message = Value /message )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NoReply
+                                ( /path=∀/Data/String
+                                , /cause=∀/Data/JsonAccessErr
+                                ) = /Llm/LlmErr/NoReply( Value /path -> ∀/Data/String )( Value /cause -> ∀/Data/JsonAccessErr )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = "the model's response has no reply at " }
+                                    )( Value /r -> TVArg /path = Value /path )
+                                )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = ": " }
+                                )
+                            )
+                            ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NotText
+                                ( /path=∀/Data/String
+                                , /found=∀/Data/Json
+                                ) = /Llm/LlmErr/NotText( Value /path -> ∀/Data/String )( Value /found -> ∀/Data/Json )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> ∀/Data/String = /operator++
+                                        ( Value /l -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            { csValue = "the model's reply at " }
+                                        )( Value /r -> TVArg /path = Value /path )
+                                    )
+                                    ( Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = " is " }
+                                    )
+                                )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/jsonKind( Value /j -> TVArg /found = Value /found )
+                                )
+                            )
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = ", not text" }
+                            )
                         ]
                     }
                 )
@@ -566,6 +971,57 @@ Prgm
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Llm/llmAnswer"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/llmAnswer
+                            ( Value /error -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ]
+                            )( Value /response -> ∀/Data/Json ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmAnswer
+                            ( Value /error -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) )( Value /response -> ∀/Data/Json ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/ApiError( /message=∀/Data/String ) ]
+                            ( /err=/Llm/LlmErr/ApiError( /message=∀/Data/String ) ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/ApiError( /message=∀/Data/String ) = /Llm/LlmErr/ApiError
+                                ( Value /message -> ∀/Data/String = /Llm/llmErrorText( Value /e -> TVArg /value = Value /value ) )
+                            )
+                        , /Llm/llmAnswer
+                            ( Value /error -> /Data/Result/Fail[ /E=∀/Data/JsonAccessErr ]( /err=∀/Data/JsonAccessErr ) = /Data/Result/Fail( Value /err -> ∀/Data/JsonAccessErr ) )( Value /response -> ∀/Data/Json ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmChoice
+                            ( Value /choices -> ∀/Data/Result
+                                [ /T=∀/Data/Json
+                                , /E=∀/Data/JsonAccessErr
+                                ] = /Data/jsonMember( Value /value -> TVArg /response = Value /response )
+                                ( Value /key -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "choices" }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/Unset"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Unset( Value /variable -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -1239,11 +1695,18 @@ Prgm
                 ( "/Llm/llm"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Llm/llm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
+                        [ /Llm/llm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmWith( Value /io -> TVArg /this = Value /this )( Value /input -> TVArg /input = Value /input )
+                        [ /Llm/llm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ] = /Llm/llmWith( Value /io -> TVArg /this = Value /this )( Value /input -> TVArg /input = Value /input )
                             ( Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] = /System/env
                                 ( Value /name -> /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
@@ -1284,6 +1747,42 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Llm/LlmErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Llm/LlmErr
+            , cgcExtends =
+                [ /Llm/LlmErr/Unset( /variable=∀/Data/String )
+                , /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. )
+                , /Llm/LlmErr/ApiError( /message=∀/Data/String )
+                , /Llm/LlmErr/NoReply
+                    ( /path=∀/Data/String
+                    , /cause=∀/Data/JsonAccessErr
+                    )
+                , /Llm/LlmErr/NotText
+                    ( /path=∀/Data/String
+                    , /found=∀/Data/Json
+                    )
+                ]
+            , cgcDoc = Just "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+              ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+              [message] ([ApiError]); or the response has nothing at [path], where the reply is
+              ([NoReply]), or something other than text there ([NotText])."
+            }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Llm/LlmShow
@@ -1314,6 +1813,14 @@ Prgm
                 the environment and it sends a request.
                 This is not part of the standard library. A program which asks no model has no use for it, and
                 one that does writes `import "llm"`." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+                ([Unset]); the response is not JSON ([NotJson]); the API answered with an error saying
+                [message] ([ApiError]); or the response has nothing at [path], where the reply is
+                ([NoReply]), or something other than text there ([NotText])." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
@@ -1427,56 +1934,135 @@ Prgm
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## The reply
                 The reply is the text at `choices[0].message.content` of the response, read one step at a
-                time. Each step answers [/Data/Maybe/Nothing] where the part it reads is not there, and the
-                steps after it pass that on." }
+                time. A step which finds nothing where it reads fails with the path read so far, and the steps
+                after it pass that on. A response holding an `error` is the API saying what was wrong, and is
+                answered with that rather than with the reply it does not hold." }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmReply
-                    ( Value /response -> ∀/Data/Result
-                        [ /T=∀/Data/Json
-                        , /E=/Data/JsonParseErr..
-                        ] = /Data/jsonParse
-                        ( Value /text -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                            { csValue = "{"choices": [{"message": {"role": "assistant", "content": "Hello!"}}]}" }
-                        )
-                    )
-                )
-                ( Value /r -> /Data/Maybe/Some
-                    [ /T=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+            ( Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
+                    [ /T=∀/Data/String
+                    , /E=∀/Llm/LlmErr
                     ]
-                    ( /value=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/String/Text
+                ) = /Llm/llmReply
+                ( Value /response -> ∀/Data/Result
+                    [ /T=∀/Data/Json
+                    , /E=/Data/JsonParseErr..
+                    ] = /Data/jsonParse
+                    ( Value /text -> /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                        { csValue = "Hello!" }
+                        { csValue = "{"choices": [{"message": {"role": "assistant", "content": "Hello!"}}]}" }
                     )
                 )
             )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "True" }
+                { csValue = "Hello!" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Llm/llmReply
-                    ( Value /response -> ∀/Data/Result
-                        [ /T=∀/Data/Json
-                        , /E=/Data/JsonParseErr..
-                        ] = /Data/jsonParse
-                        ( Value /text -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                            { csValue = "{"error": "no"}" }
-                        )
+            ( Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
+                    [ /T=∀/Data/String
+                    , /E=∀/Llm/LlmErr
+                    ]
+                ) = /Llm/llmReply
+                ( Value /response -> ∀/Data/Result
+                    [ /T=∀/Data/Json
+                    , /E=/Data/JsonParseErr..
+                    ] = /Data/jsonParse
+                    ( Value /text -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "{"error": {"message": "Incorrect API key"}}" }
                     )
-                )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                )
             )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "True" }
+                { csValue = "error: the model's API answered with an error: Incorrect API key" }
+            )
+        , /Catln/#print
+            ( Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
+                    [ /T=∀/Data/String
+                    , /E=∀/Llm/LlmErr
+                    ]
+                ) = /Llm/llmReply
+                ( Value /response -> ∀/Data/Result
+                    [ /T=∀/Data/Json
+                    , /E=/Data/JsonParseErr..
+                    ] = /Data/jsonParse
+                    ( Value /text -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "{"error": "no"}" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "error: the model's API answered with an error: "no"" }
+            )
+        , /Catln/#print
+            ( Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
+                    [ /T=∀/Data/String
+                    , /E=∀/Llm/LlmErr
+                    ]
+                ) = /Llm/llmReply
+                ( Value /response -> ∀/Data/Result
+                    [ /T=∀/Data/Json
+                    , /E=/Data/JsonParseErr..
+                    ] = /Data/jsonParse
+                    ( Value /text -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "{"choices": []}" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "error: the model's response has no reply at choices[0]: there is no entry 0 of an array of 0" }
+            )
+        , /Catln/#print
+            ( Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
+                    [ /T=∀/Data/String
+                    , /E=∀/Llm/LlmErr
+                    ]
+                ) = /Llm/llmReply
+                ( Value /response -> ∀/Data/Result
+                    [ /T=∀/Data/Json
+                    , /E=/Data/JsonParseErr..
+                    ] = /Data/jsonParse
+                    ( Value /text -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "{"choices": [{"message": {"content": 3}}]}" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "error: the model's reply at choices[0].message.content is a number, not text" }
+            )
+        , /Catln/#print
+            ( Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
+                    [ /T=∀/Data/String
+                    , /E=∀/Llm/LlmErr
+                    ]
+                ) = /Llm/llmReply
+                ( Value /response -> ∀/Data/Result
+                    [ /T=∀/Data/Json
+                    , /E=/Data/JsonParseErr..
+                    ] = /Data/jsonParse
+                    ( Value /text -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "<html>" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "error: the model's response is not JSON: '<' is where a value was expected, at character 0" }
             )
         ]
     }
