@@ -94,6 +94,19 @@ semiDesExpr sdm obj (RawTypeProp m base (TypePropProj t v)) = semiDesExpr sdm ob
 semiDesExpr sdm obj (RawTypeProp m base (TypePropRel t v)) = semiDesExpr sdm obj (RawWhere m base (RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal (nameStr t) `applyRawArgs` [(Just $ partialKey (mkName operatorArgR), v)]))) -- $this.gte(r= v)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
+-- A named spread in a pattern (@Context(value, ..c)@) names the whole matched value: the spread
+-- stands for the fields the pattern does not list, and @c@ for the value carrying them. It is the
+-- open pattern with the value aliased (@Context(value, .._)\@c@), so building a value from @c@
+-- (@Context(..c, value= x)@) carries every field it has.
+semiDesExpr sdm@SDInput{} obj (RawTupleApply m (bm, be) args)
+  | (pre, (True, spreadArg) : post) <- break namedSpread args
+  , Just alias <- spreadArgExpr spreadArg
+  = semiDesExpr sdm obj (RawAliasExpr (RawTupleApply m (bm, be) (pre ++ (True, rawInObjArr True (RawHoleExpr (emptyMetaE alias) (HoleActive Nothing))) : post)) alias)
+  where
+    namedSpread (True, oa) = isJust (spreadArgExpr oa)
+    namedSpread _          = False
+    spreadArgExpr RawObjArr{roaObj=Just v@RawValue{}, roaArr=Nothing} = Just v
+    spreadArgExpr _                                                   = Nothing
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ snd $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
