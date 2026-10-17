@@ -30,6 +30,7 @@ import           Data.Text.Lazy.Encoding       (decodeUtf8, encodeUtf8)
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
+import           CompileExpr                   (prgmFromGraphData)
 import           Control.Concurrent            (threadDelay)
 import           Control.Concurrent.STM        (STM, atomically, orElse,
                                                 readTVar, registerDelay, retry)
@@ -46,8 +47,7 @@ import           Data.Char                     (toLower)
 import           Data.Graph
 import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
-import           Eval                          (evalAllTargetModes, evalAnnots,
-                                                prgmFromGraphData)
+import           Eval                          (evalAllTargetModes, evalAnnots)
 import           Eval.Common                   (EvalMode, SSF (..), Val,
                                                 newEvalService)
 import           Eval.Runtime.WebDocs          (sidebarOrder)

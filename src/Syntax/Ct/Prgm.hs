@@ -659,7 +659,11 @@ importPath imp = case impAbs imp of
 -- standard library to itself — so a display asking which pages are the library's asks this rather
 -- than matching on paths again, and the two cannot come apart.
 isCorePage :: FileImport -> Bool
-isCorePage imp = maybe False ("core" `isInfixOf`) (importPath imp)
+isCorePage imp = maybe False isCorePath (importPath imp)
+
+-- | Whether the page read from a path is part of the standard library ('isCorePage').
+isCorePath :: FilePath -> Bool
+isCorePath = ("core" `isInfixOf`)
 
 type ImportParseResult = IO ParsedImport
 type ImportPreloadResult = IO PreloadImport

@@ -21,7 +21,8 @@ import           Control.Monad              (forM)
 import           Control.Monad.Trans.Writer (execWriter, tell)
 import qualified Data.HashMap.Strict        as H
 import           Data.List                  (mapAccumL, maximumBy, sortOn)
-import           Data.Maybe                 (fromMaybe, isNothing, mapMaybe)
+import           Data.Maybe                 (catMaybes, fromMaybe, isNothing,
+                                             mapMaybe)
 import           Data.Ord                   (comparing)
 import           Data.UUID                  (UUID)
 import           Text.Megaparsec            (SourcePos (..))
@@ -152,6 +153,13 @@ notePage notes (RawPrgm imports stmts) = RawPrgm imports (map noteTree unplaced 
     -- Numbered as 'starts' is, before the statements under it.
     place i (RawStatementTree st subs) = (i', RawStatementTree st (map noteTree (H.lookupDefault [] i placed) ++ subs'))
       where (i', subs') = mapAccumL place (i + 1) subs
+
+-- | Where a statement was written: from the earliest place any part of it was written to the latest
+-- place any part of it ends. Its children are not part of it.
+statementSpan :: (MetaDat m, Show m) => RawStatement RawExpr m -> Maybe (SourcePos, SourcePos)
+statementSpan st = case catMaybes $ execWriter $ mapMetaRawStatementM (\_ m -> tell [getMetaPos m] >> return m) st of
+  []    -> Nothing
+  spans -> Just (minimum $ map fst spans, maximum $ map snd spans)
 
 -- | Where a statement starts: the earliest place any part of it was written.
 statementStart :: (MetaDat m, Show m) => RawStatement RawExpr m -> Maybe SourcePos

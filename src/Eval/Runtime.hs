@@ -33,6 +33,7 @@ import           Eval.Runtime.Prgm     (prgmPrims)
 import           Eval.Runtime.System   (systemPrims)
 import           Eval.Runtime.Tasks    (tasksPrims)
 import           Eval.Runtime.WebDocs  (webDocsPrims)
+import           Semantics.CtType      (toCt)
 import           Text.Megaparsec       (sourceName)
 import           Text.Printf
 
@@ -346,6 +347,45 @@ callerPage = ("callerPage", Right (MacroFunction macroBuild))
     positionedAs e e' = setExprMeta e' (getExprMeta e'){getMetaPos = getMetaPos (getExprMeta e)}
     isContextValue k = nameStr (makeAbsoluteName (exprPath k)) == contextValStr
 
+-- | Completes a call with the path of the page it is written in, as a @source@ argument: a call of
+-- @parseExpr(input, type)@ written in a page is a call of @parseExpr(input, type, source)@.
+--
+-- The path names the page rather than holding it, which is what a call wants that reads the page's
+-- scope rather than its text: names written in source it compiles mean what they mean on that page
+-- ('Eval.parseExprPrim'). A call that also wants the text asks @\/Catln\/pageAt@ with the path.
+--
+-- As with 'callerPage', a call with no position is reported rather than completed with some other
+-- page, and so is a call whose type is not one tuple.
+callerSource :: Op
+callerSource = ("callerSource", Right (MacroFunction macroBuild))
+  where
+    macroBuild input MacroData{} = do
+      source <- case getMetaPos (getExprMeta input) of
+        Just (start, _) -> return $ sourceName start
+        Nothing -> fail $ printf "%s asks for the page it is written in, but the call has no position to say which page that is" (show input)
+      case maybeGetSingleton (getExprType input) of
+        Nothing -> fail $ printf "%s asks for the page it is written in, but it is not a call of one shape to add the page to: %s" (show input) (show $ getExprType input)
+        Just _ -> return $ Right $ input `eApplyOAs` [mkIOObjArr (emptyMetaT strType) (partialKey (mkName "/source")) (valToEExpr (StrVal source))]
+
+-- | The type written as the type argument of @\/Catln\/typeOf[$T -> ...]@, as a value: the
+-- @\/Catln\/Type@ the compiler holds it as.
+--
+-- A macro because the type argument is gone by evaluation ('Eval.evalExpr' of an 'EAppVar' is its
+-- base), and the call is where it was written. So it is the type the call was typechecked to give
+-- @$T@, and it must be one: a @$T@ still standing for a variable of an enclosing generic definition
+-- names a type that varies by call, and there is no one value to answer with. That is reported, not
+-- answered with the variable.
+typeOfMacro :: Op
+typeOfMacro = ("typeOf", Right (MacroFunction macroBuild))
+  where
+    macroBuild input MacroData{} = case H.toList (exprAppliedVars input) of
+      [(_, m)] -> do
+        let tp = getMetaType m
+        if typeHasTypeVars tp
+          then fail $ printf "typeOf is asked for the type %s, which is a type variable rather than a type: typeOf answers only where its type is written out" (show tp)
+          else return $ Left $ toCt tp
+      vars -> fail $ printf "typeOf takes the one type it answers with, as typeOf[$T -> ...], and was given %d in %s" (length vars) (show input)
+
 primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
@@ -397,4 +437,4 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatCeil
             , intDiv
             ]
-    macros = [arrExists, contextMacro, llvm, callerPage]
+    macros = [arrExists, contextMacro, llvm, callerPage, callerSource, typeOfMacro]

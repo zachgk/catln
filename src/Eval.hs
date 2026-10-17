@@ -16,6 +16,8 @@
 
 module Eval where
 
+import           CompileExpr             (compileStatementsIn, parseExprSource,
+                                          prgmFromGraphData)
 import           CRes
 import qualified Data.HashMap.Strict     as H
 import           Semantics.Prgm
@@ -42,8 +44,10 @@ import           Semantics.CtType        (fromCt)
 import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
                                           reachesHasCutSubtypeOf,
                                           reachesPartials, reachesTo)
+import           Syntax.Ct.Builder       (rawVal)
 import           Syntax.Ct.Formatter     (formatRootPrgm)
-import           Syntax.Ct.Prgm          (RawPrgm (..), RawStatement (..),
+import           Syntax.Ct.Prgm          (RawObjArr (..), RawPrgm (..),
+                                          RawStatement (..),
                                           RawStatementTree (..))
 import           Syntax.Ct.Results       (AnnotShown (..), notePage,
                                           showAnnotResults, statementStart)
@@ -583,7 +587,7 @@ evalBaseEnvWith pages service prgm@Prgm{prgmObjMap} = Env {
 -- | The primitives an evaluation supplies itself, because answering them evaluates more of the
 -- program ('EEvalPrim'): they are written over the evaluator, which the other primitives are beneath.
 evalPrims :: ResBuildPrims
-evalPrims = H.fromList [(mkName (ePrimName p), Left p) | p <- [llmShowPage]]
+evalPrims = H.fromList [(mkName (ePrimName p), Left p) | p <- [llmShowPage, parseExprPrim]]
 
 -- | Backs @\/Llm\/showPage@: a page as it was written, with each of its annotations a language model
 -- can be shown given what it is shown as ('llmshowClass'), and what is wrong with the page written
@@ -643,6 +647,74 @@ llmShowPage = EEvalPrim "llmShowPage" prim
     -- The page a page was read from is the one its statements say they were written in.
     pageFile (RawPrgm _ trees) = listToMaybe [sourceName start | tree <- trees, Just start <- [treeStart tree]]
     treeStart (RawStatementTree st subs) = statementStart st <|> asum (map treeStart subs)
+
+-- | Backs @\/Catln\/parseExprIn@: the value of a Catln expression written as text, required to be a
+-- value of a type, with the names in it meaning what they mean on the page @source@.
+--
+-- The text is read by the parser a page's expressions are read with ('parseExprSource'), and
+-- compiled as the one definition of a page importing @source@, declared to answer the type
+-- ('parsedDecl'), so typechecking it is what says whether it is one. The value is then evaluated
+-- in an evaluation of its own over that program, and checked against the type once it is a value
+-- ('valWithinType'), which is what decides a refinement the typecheck left to evaluation.
+--
+-- Each way the text can fail to be a value of the type is answered as a @\/Catln\/ParseExprErr@: not
+-- an expression, not typechecking as the type, failing to evaluate, or evaluating to something else.
+-- What is wrong with the CALL rather than the text is an error of the evaluation: a page that is
+-- not one the program was read from, or whose scope did not typecheck.
+parseExprPrim :: EPrim
+parseExprPrim = EEvalPrim "parseExpr" prim
+  where
+    parsedName = "parsedExpr"
+    prim args = case (H.lookup "/input" args, H.lookup "/type" args, H.lookup "/source" args) of
+      (Just (StrVal input), Just tpVal, Just (StrVal source)) -> case fromCt tpVal of
+        Right tp -> parseAs input tp source
+        Left err -> evalError $ printf "parseExpr was given %s, which is not a type: %s" (show tpVal) err
+      _ -> evalError $ printf "parseExpr takes the text /input, the /type and the page /source, and was given %s" (show $ H.keys args)
+
+    parseAs :: String -> Type -> String -> EvalM Val
+    parseAs input tp source = do
+      Env{evPages} <- get
+      scope <- case H.lookup source evPages of
+        Just EvalPage{epScope} -> asCResT' epScope
+        Nothing -> evalError $ printf "parseExpr was asked to read text as written on %s, which is not a page the program was read from" source
+      case parseExprSource "<parseExpr>" input of
+        Left err -> return $ failed ctParseExprErrSyntax [(ctParseExprErrMessage, StrVal err)]
+        Right parsed -> case compileStatementsIn "<parseExpr>" scope [parsedDecl parsed] (return . declaredAs tp) of
+          CErr notes -> return $ failed ctParseExprErrType [(ctParseExprErrMessage, StrVal $ prettyCNotes notes)]
+          CRes _ (_, prgm) -> do
+            res <- liftIO $ runCResT $ evalParsed prgm tp
+            case res of
+              CErr notes -> return $ failed ctParseExprErrEval [(ctParseExprErrMessage, StrVal $ prettyCNotes notes)]
+              CRes _ (val, True) -> return $ resultVal $ Right val
+              CRes _ (val, False) -> return $ failed ctParseExprErrNotOf [(ctParseExprErrFound, val)]
+
+    asCResT' (CRes _ r)  = return r
+    asCResT' (CErr notes) = evalError $ printf "parseExpr reads text against the pages its page reaches, which did not all typecheck:\n%s" (prettyCNotes notes)
+
+    failed name fields = resultVal $ Left $ TupleVal name (H.fromList [(runtimeArgKey k, v) | (k, v) <- fields])
+
+    -- The one statement of the page: the parsed expression as the definition of 'parsedName'.
+    parsedDecl parsed = RawStatementTree (RawDeclStatement (RawObjArr (Just $ rawVal parsedName) FunctionObj Nothing [] (Just (Just parsed, Nothing)) Nothing)) []
+
+    -- The definition declared to answer the type, as though the page also wrote @parsedExpr -> T@.
+    -- The declaration is what the typecheck holds the definition to: a definition answering more
+    -- than its declaration is an error ('ResultNotGuaranteed'), and that is the text not being a
+    -- value of the type.
+    declaredAs tp prgm@Prgm{prgmObjMap=ObjectMap items} = prgm{prgmObjMap=ObjectMap $ H.mapWithKey declareItem items}
+      where
+        declareItem name item@ObjectMapItem{omiDefs}
+          | nameStr name == '/' : parsedName = item{omiDecls=[declOf oa | oa@ObjArr{oaArr=Just _} <- omiDefs]}
+          | otherwise = item
+        declOf oa@ObjArr{oaArr=Just (_, m)} = oa{oaArr=Just (Nothing, mWithType tp m)}
+        declOf oa = oa
+
+    evalParsed prgm tp = do
+      let env@Env{evTbEnv} = evalBaseEnvWith H.empty Nothing prgm
+      tree <- asCResT $ toTExprDest evTbEnv [] (eVal ('/' : parsedName)) (emptyMetaT tp)
+      evalStateT (do
+        val <- evalExpr tree
+        within <- valWithinType val tp
+        return (val, within)) env
 
 -- | The meta ID of each annotation a page writes, at whatever depth.
 rawPrgmAnnotIds :: RawPrgm m -> [UUID]
@@ -728,14 +800,6 @@ evalProcessPage pages ioVal file prgm = do
       Just (StrVal failure) -> Just failure
       _                     -> Nothing
     processFailure _ = Nothing
-
--- | Flattens the program reachable from a file into one. It is polymorphic in the program because
--- every pipeline stage holds one, and scoping a stage to a file has to mean the same thing at each:
--- that file plus everything it imports.
-prgmFromGraphData :: (Monoid p) => FileImport -> GraphData p FileImport -> CRes p
-prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case vertexFromKey prgmName of
-  Just v -> return $ mconcat $ map (fst3 . nodeFromVertex) $ reachable prgmGraph v
-  Nothing -> fail $ printf "Could not find prgm %s" (show prgmName)
 
 -- | Tries to TreeBuild all ObjArrs, returning all built successfully
 evalBuildAll :: EPrgmGraphData -> GraphData (CRes (Prgm TExpr EvalMetaDat)) FileImport

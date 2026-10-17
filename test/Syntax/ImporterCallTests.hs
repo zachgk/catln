@@ -16,6 +16,7 @@
 -- defect they found lay between two pieces that each passed their own tests.
 module Syntax.ImporterCallTests where
 
+import           CompileExpr          (prgmFromGraphData)
 import           CRes                 (CRes (..), asCResT, prettyCNotes,
                                        runCResT)
 import           CtConstants          (runtimeArgKey)
@@ -25,8 +26,7 @@ import           CtService            (CTSS, ctssBaseFiles, ctssBuildFrom,
                                        getSource)
 import qualified Data.HashMap.Strict  as H
 import           Data.List            (isInfixOf)
-import           Eval                 (evalBaseEnv, evalCallTo,
-                                       prgmFromGraphData)
+import           Eval                 (evalBaseEnv, evalCallTo)
 import           Eval.Common          (EPrim (..), SSF (..), Val)
 import           Eval.Runtime.Import  (importPathArg, pyImport)
 import           Semantics            (testCtssConfig)

@@ -93,7 +93,7 @@ dshowName = "/Catln/Doc/dshow"
 dshowArg = "s"
 
 -- | The class of what a language model can be shown, the function resolving a value to what it is
--- shown as, and the argument it takes it in, all declared in @stack\/llm\/main.ct@.
+-- shown as, and the argument it takes it in, all declared in @stack\/llm\/show.ct@.
 --
 -- The counterpart of 'dshowClassName' and 'dshowName' for a reader that is a model rather than a
 -- person: a type may be displayed one way in the webdocs and written another way for a model. The
@@ -247,7 +247,7 @@ printAnnot = "/Catln/#print"
 printAnnotText = "p"
 resultAnnotText = "result"
 
--- | A question asked of a model about the page it is written on, declared in @stack/llm/main.ct@
+-- | A question asked of a model about the page it is written on, declared in @stack/llm/q.ct@
 -- and written @q> text@. @catln process@ answers it into its 'resultAnnotText', the @>>>@ lines
 -- under it.
 queryAnnot, queryAnnotText, queryAnnotShort :: String
@@ -591,6 +591,18 @@ ctHttpErrBody = "body"
 ctInputErrEndOfInput, ctInputErrNoInput :: String
 ctInputErrEndOfInput = "/Catln/InputErr/EndOfInput"
 ctInputErrNoInput = "/Catln/InputErr/NoInput"
+
+-- | Why source is not a value of a type, as @stack\/reflect\/main.ct@ declares it: the
+-- @\/Catln\/ParseExprErr@ arms and their fields.
+ctParseExprErrSyntax, ctParseExprErrType, ctParseExprErrNotOf, ctParseExprErrEval :: String
+ctParseExprErrSyntax = "/Catln/ParseExprErr/Syntax"
+ctParseExprErrType = "/Catln/ParseExprErr/Type"
+ctParseExprErrNotOf = "/Catln/ParseExprErr/NotOf"
+ctParseExprErrEval = "/Catln/ParseExprErr/Eval"
+
+ctParseExprErrMessage, ctParseExprErrFound :: String
+ctParseExprErrMessage = "message"
+ctParseExprErrFound = "found"
 
 -- | The type variable a parameterized standard-library type takes its element type as: the @$T@ of
 -- @\/Data\/List[$T -> String]@ in @stack\/core\/result.ct@.

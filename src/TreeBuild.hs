@@ -17,7 +17,7 @@ module TreeBuild where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.List           (nub, partition)
+import           Data.List           (nub, nubBy, partition)
 import           Data.Maybe
 
 import           Text.Printf
@@ -921,6 +921,12 @@ toTExprDestWith readArgRefs env0@TBEnv{tbTypeEnv} os e m = do
     TCTId                                   -> return e'
     TCMacro _ (MacroFunction f)             -> fromMacro f
     (TCSeq (TCMacro _ (MacroFunction f)) _) -> fromMacro f
+    -- A call of a macro's object is typed as the call or what it answers ('TCMatch'): the call
+    -- itself, taken by the macro, beside each shape of its declared result, taken as it is. Its value
+    -- before dispatch is always the call, since that is what the expression is written as, so the
+    -- macro is what it is built as. Left in the match, the macro would be reached at evaluation,
+    -- which cannot run one.
+    TCMatch _ opts | [(_, MacroFunction f)] <- ownMacros opts -> fromMacro f
     _                                       -> return $ TCalls m e' ct
   where
     -- The applied-arg partial's key carries accreted 'pkVars' (a declaration's contract
@@ -932,6 +938,11 @@ toTExprDestWith readArgRefs env0@TBEnv{tbTypeEnv} os e m = do
       Nothing -> case [v | (TVArg k', v) <- H.toList venv, pkName k' == pkName k, pkArgs k' == pkArgs k] of
         [v] -> Just v
         _   -> Nothing
+    -- By the declaration each comes from, since what a macro does cannot be compared.
+    ownMacros opts = nubBy (\(a, _) (b, _) -> a == b) [(oa, macro) | opt <- H.elems opts, Just (oa, macro) <- [treeMacro opt], oaObjPath oa == exprPath e]
+    treeMacro (TCMacro oa macro)           = Just (oa, macro)
+    treeMacro (TCSeq (TCMacro oa macro) _) = Just (oa, macro)
+    treeMacro _                            = Nothing
     fromMacro f = do
       macroResult <- f e (MacroData env0 os)
       case macroResult of

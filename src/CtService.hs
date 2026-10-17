@@ -16,6 +16,8 @@
 {-# LANGUAGE PatternSynonyms #-}
 
 module CtService where
+import           CompileExpr             (compileStatementsIn, parseExprSource,
+                                          prgmFromGraphData)
 import           Control.Concurrent      (MVar, forkIO, modifyMVar, modifyMVar_,
                                           newMVar, readMVar, withMVar)
 import           Control.Concurrent.STM  (STM, TVar, atomically, modifyTVar',
@@ -46,8 +48,7 @@ import           Eval                    (evalAnnots, evalBaseEnv,
                                           evalDShowCall, evalDebugExprPrgm,
                                           evalDebugPrgm, evalPageAsk,
                                           evalPageValues, evalProcessPage,
-                                          evalRun, evalRunMock,
-                                          prgmFromGraphData)
+                                          evalRun, evalRunMock)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EExpr, EPrgm, EvalMetaDat,
                                           EvalPage (..), EvalPages, MockIO,
@@ -66,7 +67,6 @@ import           FileWatch               (Watch, Watcher, allCovered,
                                           awaitSettled, covered, startWatcher,
                                           watchReads, withPending)
 import           GHC.Generics            (Generic)
-import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig, ctssCachePath,
                                           ctssQuietPage, ctssToday)
 import           Semantics.CtType        (fromCt)
@@ -74,13 +74,9 @@ import           Semantics.Prgm
 import           Semantics.Types         (Name, mkName, nameStr, partialKey)
 import           Semantics.Val           hiding (Val)
 import           Syntax.Ct.Builder       (applyRawArgs, rawVal)
-import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
-                                          validPrgm)
-import           Syntax.Ct.Desugarf.Expr (desFileImport)
+import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
 import           Syntax.Ct.Formatter     (formatExpr)
-import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs,
-                                          rawStatementExprIds)
-import           Syntax.Ct.Parser.Expr   (pExpr)
+import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Ct.Results       (setAnnotsById, valToRawExpr)
@@ -90,10 +86,9 @@ import           Syntax.Parsers
 import           System.Directory        (createDirectoryIfMissing)
 import           System.FilePath         (addTrailingPathSeparator,
                                           takeDirectory)
-import           Text.Megaparsec         (errorBundlePretty, runParser,
-                                          sourceName)
+import           Text.Megaparsec         (sourceName)
 import           Text.Printf
-import           TypeCheck               (typecheckPrgms, typecheckPrgmsWith)
+import           TypeCheck               (typecheckPrgmsWith)
 import           TypeCheck.Common        (AnyInstrument, InstrumentResults,
                                           TPrgm, VPrgm, lookupEpochCountResult,
                                           lookupFragmentCountResult,
@@ -1859,9 +1854,15 @@ scopeRaws nodes = [(file, raw) | (SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- node
 -- A stage's notes are of everything it was run over — a typecheck's are of its whole SCC — so a
 -- page keeps those placed in it, and those placed nowhere, which could be about any page of the
 -- stage. The notes are left unread ('epNotes'): reading the tree build's builds the page's trees.
-rawPagesByPath :: [(SSF, FileImport, a)] -> EvalPages
-rawPagesByPath nodes = H.fromList [(file, EvalPage raw (notesOf file ssf)) | (ssf@SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
+--
+-- So is each page's typechecked scope ('epScope'), the pages of these it reaches. A page it reaches
+-- which is not among them is reported by 'evaluablePages' rather than left out, since source compiled
+-- against a scope missing a page would fail on names that page declares, saying nothing of why.
+rawPagesByPath :: [(SSF, FileImport, [FileImport])] -> EvalPages
+rawPagesByPath nodes = H.fromList [(file, EvalPage raw (notesOf file ssf) (scopeOf imp)) | (ssf@SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
   where
+    graph = graphFromEdges nodes
+    scopeOf imp = graphToNodes <$> evaluablePages ssfTPrgm True (graphToNodes $ graphFilterReaches imp graph)
     notesOf file SSF{ssfRaw, ssfDes, ssfTPrgm, ssfTBPrgm} = nub $ filter (inPage file) $ concat [stageNotes ssfRaw, stageNotes ssfDes, stageNotes ssfTPrgm, stageNotes ssfTBPrgm]
     stageNotes :: Maybe (CRes r) -> [CNote]
     stageNotes = maybe [] getCNotes
@@ -1908,9 +1909,7 @@ debugExprRun prgmName scopeNodes src = do
 -- Pure: every step of the compile is a rewrite of a program that is already read and already built.
 debugExprCompile :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CRes (EExpr, EPrgm)
 debugExprCompile prgmName scopeNodes src = do
-  parsed <- case runParser pExpr debugExprFile src of
-    Left err     -> fail $ errorBundlePretty err
-    Right parsed -> return parsed
+  parsed <- either fail return $ parseExprSource debugExprFile src
   -- Written as the value of a @#print@, which is what it is: an expression evaluated toward @DShow@
   -- ('evalDebugExprPrgm') from no enclosing object. A program's annotation statements are typed as
   -- annotations, each required to be the annotation it names ('TypeCheck.Encode.annotSeedConstraints'),
@@ -1919,18 +1918,8 @@ debugExprCompile prgmName scopeNodes src = do
   -- print's value is, required to be a @DShow@, and a @> expr@ on a page and the same expression
   -- debugged are compiled alike.
   let printed = rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), parsed)]
-  let rawPrgm = RawPrgm [] [RawStatementTree (RawAnnot printed) []]
-  let exprName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<debug>"
-  let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope exprName) rawPrgm
-  (desP, desName, _) <- desPrgm (rawPrgm', exprName, [])
-  desP' <- desFinalPass (desP, desName, [], [])
   scopeTPrgms <- evaluablePages ssfTPrgm True scopeNodes
-  let deps = graphToNodes scopeTPrgms
-  exprTprgm <- case typeCheckToRes $ typecheckPrgms [(desP', [], map fst3 deps)] of
-    CErr notes   -> CErr notes
-    CRes _ []    -> fail $ printf "The debugger could not typecheck %s" src
-    CRes _ (t:_) -> return t
-  prgm <- prgmFromGraphData desName $ graphFromEdges ((exprTprgm, desName, map snd3 deps) : deps)
+  (exprTprgm, prgm) <- compileStatementsIn "<debug>" (graphToNodes scopeTPrgms) [RawStatementTree (RawAnnot printed) []] return
   -- The one expression parsed above, now compiled: the @p@ of the one statement. Read back off the
   -- program rather than kept from before it, so what is run is what the whole pipeline produced.
   expr <- case prgmAnnots exprTprgm of

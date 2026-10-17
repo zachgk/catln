@@ -405,9 +405,15 @@ instance ToJSON EPrim where
 -- The notes are lazy and stay so. They include what building the page's trees reported, and reading
 -- that builds them ('CtService.ctssPagesOf'), so only an evaluation that shows the page to a reader
 -- ('Eval.llmShowPage') pays for it.
+--
+-- The scope is lazy for the same reason: the typechecked pages the page reaches, itself among them,
+-- under the import each was read as and with the imports each reaches. It is what source compiled as
+-- though it were written on the page is typechecked against ('Eval.parseExprPrim'), and only an
+-- evaluation that compiles some pays for gathering it.
 data EvalPage = EvalPage {
   epRaw   :: RawPrgm (),
-  epNotes :: [CNote]
+  epNotes :: [CNote],
+  epScope :: CRes [(TPrgm, FileImport, [FileImport])]
   }
 
 -- | The pages a program was read from, under the path each was parsed as.
