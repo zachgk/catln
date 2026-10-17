@@ -1,0 +1,90 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box[ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/boxValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /boxValue
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ].. ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /boxValue
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box( Value /value -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value /value
+                        ]
+                    }
+                )
+            ,
+                ( "/sameBox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /sameBox
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ].. ) -> /Box[ /V=/Data/Primitive/Integer ]..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sameBox
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box( Value /value -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            ) -> /Box[ /V=/Data/Primitive/Integer ].. = Value /c
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A pattern spread ([.._]) stands for the fields a pattern does not list, so an arm over open data" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "matches a value carrying more fields than it names." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "The value matched by an open pattern is the whole value, extra fields and all, so an alias of it" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "can be returned as it came." }
+            )
+        ]
+    }

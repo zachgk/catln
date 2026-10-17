@@ -1,0 +1,20 @@
+import "core"
+import "core"
+
+
+# A pattern spread ([.._]) stands for the fields a pattern does not list, so an arm over open data
+# matches a value carrying more fields than it names.
+data(Box[$V](value -> $V, .._))
+
+boxValue(b -> Box..[$V -> Integer]) -> Integer
+boxValue(b= Box(value, .._))= value
+
+# The value matched by an open pattern is the whole value, extra fields and all, so an alias of it
+# can be returned as it came.
+sameBox(b -> Box..[$V -> Integer]) -> Box..[$V -> Integer]
+sameBox(b= Box(value, .._)@c)= c
+
+main{io -> IO} =
+  #assert(test= boxValue(b= Box(value= 5, n= 7)) == 5)
+  #assert(test= boxValue(b= sameBox(b= Box(value= 6, n= 7))) == 6)
+  io

@@ -1282,7 +1282,10 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
         _                  -> H.singleton (nameStr (exprPath obj)) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
-    fromArg (EAppSpread a) _ = error $ printf "Not yet implemented exprArgsWithVal fromArg of %s and %s" (show a) (show val)
+    -- A spread in a pattern (@Box(value, .._)@) stands for the rest of the matched value, so it is
+    -- matched against the value itself: the hole @.._@ binds nothing, and the fields it stands for
+    -- are left to whatever else the value is matched by.
+    fromArg (EAppSpread a) _ = exprArgsWithVal a val
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 
 -- | Extracts the arguments from a value using a matching expression
@@ -1309,7 +1312,8 @@ texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be 
         _                   -> H.singleton (nameStr (exprPath obj)) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
-    fromArg (EAppSpread a) _ = error $ printf "Not yet defined spread exprArgsWithVal fromArg of %s and %s" (show a) (show val)
+    -- A pattern spread, as in 'exprArgsWithVal' above.
+    fromArg (EAppSpread a) _ = texprArgsWithVal a val
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 texprArgsWithVal (TCalls _ e _) val = texprArgsWithVal e val
 

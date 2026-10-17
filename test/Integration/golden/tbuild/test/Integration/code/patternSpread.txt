@@ -1,0 +1,120 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/boxValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /boxValue
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ].. }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /boxValue
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box
+                                    ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /value ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
+                ( "/sameBox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /sameBox
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ].. }
+                            ) -> /Box[ /V=/Data/Primitive/Integer ]..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sameBox
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box
+                                    ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )@Value /c
+                                }
+                            ) -> /Box[ /V=/Data/Primitive/Integer ].. =
+                            ( Value /c ↦ /Box[ /V=/Data/Primitive/Integer ].. )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A pattern spread ([.._]) stands for the fields a pattern does not list, so an arm over open data"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "matches a value carrying more fields than it names."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The value matched by an open pattern is the whole value, extra fields and all, so an alias of it"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "can be returned as it came."
+                }
+            )
+        ]
+    }
