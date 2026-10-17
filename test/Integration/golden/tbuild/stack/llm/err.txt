@@ -1,0 +1,388 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Llm/LlmErr/ApiError"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/ApiError
+                            ( EAppArg { eaaArg = Value /message -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NoReply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NoReply
+                            ( EAppArg { eaaArg = Value /path -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /cause -> ∀/Data/JsonAccessErr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotJson"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotJson
+                            ( EAppArg { eaaArg = Value /cause -> /Data/JsonParseErr.. } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotOf
+                            ( EAppArg { eaaArg = Value /reply -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /cause -> ∀/Catln/ParseExprErr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotText
+                            ( EAppArg { eaaArg = Value /path -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /found -> ∀/Data/Json } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/Unset( /variable=∀/Data/String ) = /Llm/LlmErr/Unset
+                                    ( EAppArg { eaaArg = Value /variable -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /variable = ( Value /variable ↦ TVArg /variable ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not set, so there is no model to ask"
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) = /Llm/LlmErr/Request
+                                    ( EAppArg { eaaArg = Value /cause -> ∀/Http/HttpErr } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model could not be asked: "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /msg
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /cause = ( Value /cause ↦ TVArg /cause ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) = /Llm/LlmErr/NotJson
+                                    ( EAppArg { eaaArg = Value /cause -> /Data/JsonParseErr.. } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's response is "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /msg
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /cause = ( Value /cause ↦ TVArg /cause ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/ApiError( /message=∀/Data/String ) = /Llm/LlmErr/ApiError
+                                    ( EAppArg { eaaArg = Value /message -> ∀/Data/String } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's API answered with an error: "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /message = ( Value /message ↦ TVArg /message ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/NoReply
+                                    ( /path=∀/Data/String
+                                    , /cause=∀/Data/JsonAccessErr
+                                    ) = /Llm/LlmErr/NoReply
+                                    ( EAppArg { eaaArg = Value /path -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /cause -> ∀/Data/JsonAccessErr } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's response has no reply at "
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /path = ( Value /path ↦ TVArg /path ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ": "
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /msg
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /cause = ( Value /cause ↦ TVArg /cause ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/NotText
+                                    ( /path=∀/Data/String
+                                    , /found=∀/Data/Json
+                                    ) = /Llm/LlmErr/NotText
+                                    ( EAppArg { eaaArg = Value /path -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /found -> ∀/Data/Json } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> ∀/Data/String =
+                                                                ( /operator++
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's reply at "
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> TVArg /path = ( Value /path ↦ TVArg /path ) }
+                                                                    ) ↦ ∀/Data/String
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is "
+                                                            }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                    ( /Data/jsonKind
+                                                        ( EAppArg
+                                                            { eaaArg = Value /j -> TVArg /found = ( Value /found ↦ TVArg /found ) }
+                                                        ) ↦ /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", not text"
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        , /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Llm/LlmErr/NotOf
+                                    ( /reply=∀/Data/String
+                                    , /cause=∀/Catln/ParseExprErr
+                                    ) = /Llm/LlmErr/NotOf
+                                    ( EAppArg { eaaArg = Value /reply -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /cause -> ∀/Catln/ParseExprErr } )
+                                }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's reply is not a value of the type asked for: "
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> ∀/Data/String =
+                                                                ( /msg
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /this -> TVArg /cause = ( Value /cause ↦ TVArg /cause ) }
+                                                                    ) ↦ ∀/Data/String
+                                                                )
+                                                            }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                                                  The reply was: "
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /reply = ( Value /reply ↦ TVArg /reply ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/Unset"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Unset
+                            ( EAppArg { eaaArg = Value /variable -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/Request"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Request
+                            ( EAppArg { eaaArg = Value /cause -> ∀/Http/HttpErr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Llm/LlmErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Llm/LlmErr
+            , cgcExtends =
+                [ /Llm/LlmErr/Unset( /variable=∀/Data/String )
+                , /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                , /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. )
+                , /Llm/LlmErr/ApiError( /message=∀/Data/String )
+                , /Llm/LlmErr/NoReply
+                    ( /path=∀/Data/String
+                    , /cause=∀/Data/JsonAccessErr
+                    )
+                , /Llm/LlmErr/NotText
+                    ( /path=∀/Data/String
+                    , /found=∀/Data/Json
+                    )
+                , /Llm/LlmErr/NotOf
+                    ( /reply=∀/Data/String
+                    , /cause=∀/Catln/ParseExprErr
+                    )
+                ]
+            , cgcDoc = Just "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+              ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+              response is not JSON ([NotJson]); the API answered with an error saying
+              [message] ([ApiError]); or the response has nothing at [path], where the reply is
+              ([NoReply]), or something other than text there ([NotText]); or, asked for a value of a type, the
+              [reply] is not one, for the [cause] given ([NotOf])."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+                  ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+                  response is not JSON ([NotJson]); the API answered with an error saying
+                  [message] ([ApiError]); or the response has nothing at [path], where the reply is
+                  ([NoReply]), or something other than text there ([NotText]); or, asked for a value of a type, the
+                  [reply] is not one, for the [cause] given ([NotOf])."
+                }
+            )
+        ]
+    }

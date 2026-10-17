@@ -1,0 +1,475 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Llm/typedValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/typedValue( Value /reply -> ∀/Data/String )
+                            ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/typedValue( Value /reply -> ∀/Data/String )
+                            ( Value /parsed -> /Data/Result/Ok( /value=TopType ) = /Data/Result/Ok( Value /value ) ) -> /Data/Result/Ok[ /T=TopType ]( /value=$/T ) = /Data/Result/Ok( Value /value -> TVArg /value = Value /value )
+                        , /Llm/typedValue( Value /reply -> ∀/Data/String )
+                            ( Value /parsed -> /Data/Result/Fail[ /E=∀/Catln/ParseExprErr ]( /err=∀/Catln/ParseExprErr ) = /Data/Result/Fail( Value /err -> ∀/Catln/ParseExprErr ) ) -> /Data/Result/Fail
+                            [ /E=/Llm/LlmErr/NotOf
+                                ( /reply=∀/Data/String
+                                , /cause=∀/Catln/ParseExprErr
+                                )
+                            ]
+                            ( /err=/Llm/LlmErr/NotOf
+                                ( /reply=∀/Data/String
+                                , /cause=∀/Catln/ParseExprErr
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Llm/LlmErr/NotOf
+                                ( /reply=∀/Data/String
+                                , /cause=∀/Catln/ParseExprErr
+                                ) = /Llm/LlmErr/NotOf( Value /reply -> TVArg /reply = Value /reply )( Value /cause -> TVArg /err = Value /err )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/typedDecls"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/typedDecls( Value /decls -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/typedDecls( Value /decls -> ∀/Data/String ) | /isEmpty( Value /this -> TVArg /decls = Value /decls ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "" }
+                        , /Llm/typedDecls( Value /decls -> ∀/Data/String ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = " It is declared as:
+                                " }
+                            )( Value /r -> TVArg /decls = Value /decls )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/tlcm"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Llm/tlcm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tlcm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )( Value /this -> /Catln/IO.. ) ->
+                            ( /Llm/typedValue
+                                ( /parsed=∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
+                                , /reply=∀/Data/String
+                                ) + /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) + /Data/Result/Ok[ /T=TopType ]( /value=TopType ) + /Llm/typedReply
+                                ( /type=∀/Catln/Type
+                                , /reply=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    ,
+                                        ( /Data/Result/Fail
+                                            ( /err=
+                                                ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /cause=∀/Data/JsonAccessErr
+                                                    ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /found=∀/Data/Json
+                                                    ) + /Llm/LlmErr/Unset
+                                                    ( /variable=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                                )
+                                            ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                        )
+                                    , []
+                                    )
+                                , /source=∀/Data/String
+                                )
+                            ) = /Llm/typedReply
+                            ( Value /reply -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /Data/Result/Fail
+                                        ( /err=
+                                            ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /cause=∀/Data/JsonAccessErr
+                                                ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /found=∀/Data/Json
+                                                ) + /Llm/LlmErr/Unset
+                                                ( /variable=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                            )
+                                        ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    )
+                                , []
+                                ) = /Llm/lcm
+                                ( Value /input -> ∀/Data/String = /Llm/typedPrompt( Value /input -> TVArg /input = Value /input )( Value /type -> TVArg /type = Value /type ) )
+                                ( Value /page -> /Catln/RawPrgm.. = /Catln/pageAt( Value /source -> TVArg /source = Value /source ) )( Value /this -> TVArg /this = Value /this )
+                            )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/TypedExample/Answer"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/TypedExample/Answer( Value /text -> ∀/Data/String )( Value /sure -> ∀/Data/Primitive/Boolean ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/tllm"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Llm/tllm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tllm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )( Value /this -> /Catln/IO.. ) ->
+                            ( /Llm/typedValue
+                                ( /parsed=∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
+                                , /reply=∀/Data/String
+                                ) + /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) + /Data/Result/Ok[ /T=TopType ]( /value=TopType ) + /Llm/typedReply
+                                ( /type=∀/Catln/Type
+                                , /reply=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /source=∀/Data/String
+                                )
+                            ) = /Llm/typedReply
+                            ( Value /reply -> ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ] = /Llm/llm
+                                ( Value /input -> ∀/Data/String = /Llm/typedPrompt( Value /input -> TVArg /input = Value /input )( Value /type -> TVArg /type = Value /type ) )( Value /this -> TVArg /this = Value /this )
+                            )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/typedPrompt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/typedPrompt( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/typedPrompt( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /input = Value /input )
+                                        ( Value /r -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            { csValue = "
+
+                                            Answer with only a Catln expression of type " }
+                                        )
+                                    )
+                                    ( Value /r -> ∀/Data/String = /Catln/typeText( Value /type -> TVArg /type = Value /type ) )
+                                )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = ", with nothing before or after it." }
+                                )
+                            )
+                            ( Value /r -> ∀/Data/String = /Llm/typedDecls
+                                ( Value /decls -> ∀/Data/String = /Catln/typeDecls( Value /type -> TVArg /type = Value /type ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/TypedExample/answerErrShown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/TypedExample/answerErrShown( Value /e -> ∀/Llm/LlmErr ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/TypedExample/answerErrShown
+                            ( Value /e -> /Llm/LlmErr/NotOf
+                                ( /reply=∀/Data/String
+                                , /cause=∀/Catln/ParseExprErr
+                                ) = /Llm/LlmErr/NotOf( Value /reply -> ∀/Data/String )( Value /cause -> ∀/Catln/ParseExprErr )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "the reply is not an answer: " }
+                            )( Value /r -> TVArg /reply = Value /reply )
+                        , /Llm/TypedExample/answerErrShown( Value /e -> ∀/Llm/LlmErr ) -> ∀/Data/String = /msg( Value /this -> TVArg /e = Value /e )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/typedReply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/typedReply
+                            ( Value /reply -> ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/typedReply
+                            ( Value /reply -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail( Value /err -> ∀/Llm/LlmErr ) )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=$/E ) = /Data/Result/Fail( Value /err -> TVArg /err = Value /err )
+                        , /Llm/typedReply
+                            ( Value /reply -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok( Value /value -> ∀/Data/String ) )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Llm/LlmErr/NotOf
+                                    ( /reply=∀/Data/String
+                                    , /cause=∀/Catln/ParseExprErr
+                                    )
+                                ]
+                                ( /err=/Llm/LlmErr/NotOf
+                                    ( /reply=∀/Data/String
+                                    , /cause=∀/Catln/ParseExprErr
+                                    )
+                                ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
+                            ) = /Llm/typedValue( Value /reply -> TVArg /value = Value /value )
+                            ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExprIn( Value /input -> TVArg /value = Value /value )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/TypedExample/answerShown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/TypedExample/answerShown
+                            ( Value /r -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/TypedExample/answerShown
+                            ( Value /r -> /Data/Result/Ok
+                                ( /value=/Llm/TypedExample/Answer
+                                    ( /sure=∀/Data/Primitive/Boolean
+                                    , /text=∀/Data/String
+                                    )
+                                ) = /Data/Result/Ok
+                                ( Value /value -> /Llm/TypedExample/Answer
+                                    ( /sure=∀/Data/Primitive/Boolean
+                                    , /text=∀/Data/String
+                                    ) = /Llm/TypedExample/Answer( Value /text -> ∀/Data/String )( Value /sure -> ∀/Data/Primitive/Boolean )
+                                )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /text = Value /text )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = ", sure: " }
+                                )
+                            )
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString( Value /this -> TVArg /sure = Value /sure )
+                            )
+                        , /Llm/TypedExample/answerShown
+                            ( Value /r -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail( Value /err -> ∀/Llm/LlmErr ) ) -> ∀/Data/String = /Llm/TypedExample/answerErrShown( Value /e -> TVArg /err = Value /err )
+                        , /Llm/TypedExample/answerShown
+                            ( Value /r -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "something other than an answer" }
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Asking for a value
+                [tllm] and [tlcm] ask as [llm] and [lcm] do, but for a value of a type rather than for text.
+                The model is told to answer with a Catln expression of the type, and shown the declarations of
+                what the type is made of ([/Catln/typeDecls]). Its reply is read as Catln ([/Catln/parseExpr]),
+                as though it were written on the page the call is written on, so a reply naming the page's own
+                types means what the page means by them. A reply that is not an expression, or not one of the
+                type, is answered with why ([LlmErr/NotOf]) rather than with the text.
+                The type is a value, written as [/Catln/typeOf] of the type:
+                `io.tllm(input= "...", type= /Catln/typeOf[$T -> Point..])`." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Asking for a value, without asking
+                What [/Llm/tllm] asks and what it makes of the reply are checked here without asking a model.
+                [Answer] is the type asked for, a type of this page." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "The model is told what to answer with, and shown what an [Answer] is." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /Llm/typedPrompt
+                ( Value /input -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "Is the sky blue?" }
+                )
+                ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Is the sky blue?
+
+                Answer with only a Catln expression of type /Llm/TypedExample/Answer, with nothing before or after it. It is declared as:
+                data(Answer(text -> String, sure -> Boolean))" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A reply which is an [Answer] is answered with it, and one which is not with why." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /Llm/TypedExample/answerShown
+                ( Value /r ->
+                    ( /Data/Result/Fail
+                        [ /E=/Llm/LlmErr/NotOf
+                            ( /reply=∀/Data/String
+                            , /cause=∀/Catln/ParseExprErr
+                            )
+                        ]
+                        ( /err=/Llm/LlmErr/NotOf
+                            ( /reply=∀/Data/String
+                            , /cause=∀/Catln/ParseExprErr
+                            )
+                        ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
+                    ) = /Llm/typedValue
+                    ( Value /reply -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "Answer(text= "yes", sure= True)" }
+                    )
+                    ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
+                        ( Value /input -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "Answer(text= "yes", sure= True)" }
+                        )
+                        ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "yes, sure: True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /Llm/TypedExample/answerShown
+                ( Value /r ->
+                    ( /Data/Result/Fail
+                        [ /E=/Llm/LlmErr/NotOf
+                            ( /reply=∀/Data/String
+                            , /cause=∀/Catln/ParseExprErr
+                            )
+                        ]
+                        ( /err=/Llm/LlmErr/NotOf
+                            ( /reply=∀/Data/String
+                            , /cause=∀/Catln/ParseExprErr
+                            )
+                        ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
+                    ) = /Llm/typedValue
+                    ( Value /reply -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "yes" }
+                    )
+                    ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
+                        ( Value /input -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "yes" }
+                        )
+                        ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "the reply is not an answer: yes" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "No reply at all is passed on as it was." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /Llm/TypedExample/answerShown
+                ( Value /r -> /Data/Result/Fail
+                    [ /E=/Llm/LlmErr/Unset
+                        ( /variable=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ]
+                    ( /err=/Llm/LlmErr/Unset
+                        ( /variable=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        )
+                    ) = /Llm/typedReply
+                    ( Value /reply -> /Data/Result/Fail
+                        ( /err=/Llm/LlmErr/Unset
+                            ( /variable=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                        ) = /Data/Result/Fail
+                        ( Value /err -> /Llm/LlmErr/Unset
+                            ( /variable=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Llm/LlmErr/Unset
+                            ( Value /variable -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "OPENAI_MODEL" }
+                            )
+                        )
+                    )
+                    ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
+                    ( Value /source -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "OPENAI_MODEL is not set, so there is no model to ask" }
+            )
+        ]
+    }

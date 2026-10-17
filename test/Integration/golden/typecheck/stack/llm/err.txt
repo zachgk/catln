@@ -1,0 +1,234 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Llm/LlmErr/ApiError"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/ApiError( Value /message -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NoReply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NoReply( Value /path -> ∀/Data/String )( Value /cause -> ∀/Data/JsonAccessErr ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotJson"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotJson( Value /cause -> /Data/JsonParseErr.. ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotOf( Value /reply -> ∀/Data/String )( Value /cause -> ∀/Catln/ParseExprErr ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/NotText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/NotText( Value /path -> ∀/Data/String )( Value /found -> ∀/Data/Json ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( Value /this -> /Llm/LlmErr/Unset( /variable=∀/Data/String ) = /Llm/LlmErr/Unset( Value /variable -> ∀/Data/String ) ) -> ∀/Data/String = /operator++( Value /l -> TVArg /variable = Value /variable )
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = " is not set, so there is no model to ask" }
+                            )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) = /Llm/LlmErr/Request( Value /cause -> ∀/Http/HttpErr ) ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "the model could not be asked: " }
+                            )
+                            ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) = /Llm/LlmErr/NotJson( Value /cause -> /Data/JsonParseErr.. ) ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "the model's response is " }
+                            )
+                            ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/ApiError( /message=∀/Data/String ) = /Llm/LlmErr/ApiError( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = "the model's API answered with an error: " }
+                            )( Value /r -> TVArg /message = Value /message )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NoReply
+                                ( /path=∀/Data/String
+                                , /cause=∀/Data/JsonAccessErr
+                                ) = /Llm/LlmErr/NoReply( Value /path -> ∀/Data/String )( Value /cause -> ∀/Data/JsonAccessErr )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = "the model's response has no reply at " }
+                                    )( Value /r -> TVArg /path = Value /path )
+                                )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = ": " }
+                                )
+                            )
+                            ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NotText
+                                ( /path=∀/Data/String
+                                , /found=∀/Data/Json
+                                ) = /Llm/LlmErr/NotText( Value /path -> ∀/Data/String )( Value /found -> ∀/Data/Json )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> ∀/Data/String = /operator++
+                                        ( Value /l -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            { csValue = "the model's reply at " }
+                                        )( Value /r -> TVArg /path = Value /path )
+                                    )
+                                    ( Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = " is " }
+                                    )
+                                )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/jsonKind( Value /j -> TVArg /found = Value /found )
+                                )
+                            )
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                { csValue = ", not text" }
+                            )
+                        , /Data/msg
+                            ( Value /this -> /Llm/LlmErr/NotOf
+                                ( /reply=∀/Data/String
+                                , /cause=∀/Catln/ParseExprErr
+                                ) = /Llm/LlmErr/NotOf( Value /reply -> ∀/Data/String )( Value /cause -> ∀/Catln/ParseExprErr )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = "the model's reply is not a value of the type asked for: " }
+                                    )
+                                    ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
+                                )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "
+                                    The reply was: " }
+                                )
+                            )( Value /r -> TVArg /reply = Value /reply )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/Unset"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Unset( Value /variable -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/LlmErr/Request"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/LlmErr/Request( Value /cause -> ∀/Http/HttpErr ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Llm/LlmErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Llm/LlmErr
+            , cgcExtends =
+                [ /Llm/LlmErr/Unset( /variable=∀/Data/String )
+                , /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                , /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. )
+                , /Llm/LlmErr/ApiError( /message=∀/Data/String )
+                , /Llm/LlmErr/NoReply
+                    ( /path=∀/Data/String
+                    , /cause=∀/Data/JsonAccessErr
+                    )
+                , /Llm/LlmErr/NotText
+                    ( /path=∀/Data/String
+                    , /found=∀/Data/Json
+                    )
+                , /Llm/LlmErr/NotOf
+                    ( /reply=∀/Data/String
+                    , /cause=∀/Catln/ParseExprErr
+                    )
+                ]
+            , cgcDoc = Just "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+              ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+              response is not JSON ([NotJson]); the API answered with an error saying
+              [message] ([ApiError]); or the response has nothing at [path], where the reply is
+              ([NoReply]), or something other than text there ([NotText]); or, asked for a value of a type, the
+              [reply] is not one, for the [cause] given ([NotOf])."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+                ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+                response is not JSON ([NotJson]); the API answered with an error saying
+                [message] ([ApiError]); or the response has nothing at [path], where the reply is
+                ([NoReply]), or something other than text there ([NotText]); or, asked for a value of a type, the
+                [reply] is not one, for the [cause] given ([NotOf])." }
+            )
+        ]
+    }

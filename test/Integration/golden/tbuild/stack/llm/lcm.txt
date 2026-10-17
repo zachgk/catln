@@ -1,0 +1,294 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Llm/lcmPrompt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Llm/lcmPrompt
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } ) -> ∀/Data/String
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/lcmPrompt
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=∀/Data/String
+                                )
+                            , []
+                            ) =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                    ( /Llm/showPage
+                                                        ( EAppArg
+                                                            { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                                                  "
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/lcm"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Llm/lcm
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Llm/LlmErr
+                            ]
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/lcm
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Result/Fail
+                                    ( /err=
+                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /cause=∀/Data/JsonAccessErr
+                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /found=∀/Data/Json
+                                            ) + /Llm/LlmErr/Unset
+                                            ( /variable=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                        )
+                                    ) + /Llm/llmMessage
+                                    ( /choice=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    ) + /Llm/llmContent
+                                    ( /message=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    ) + /Llm/llmSent
+                                    ( /response=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Http/HttpErr
+                                        ]
+                                    ) + /Llm/llmReply
+                                    ( /response=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=/Data/JsonParseErr..
+                                        ]
+                                    ) + /Llm/llmWith
+                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /base=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /input=∀/Data/String
+                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /io=/Catln/IO
+                                    ) + /Llm/llmChoice
+                                    ( /choices=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    ) + /Llm/llmText
+                                    ( /content=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    ) + /Llm/llmAnswer
+                                    ( /error=∀/Data/Result
+                                        [ /T=∀/Data/Json
+                                        , /E=∀/Data/JsonAccessErr
+                                        ]
+                                    , /response=∀/Data/Json
+                                    ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) + /Llm/llm
+                                    ( /this=/Catln/IO..
+                                    , /input=∀/Data/String
+                                    )
+                                )
+                            , []
+                            ) =
+                            ( /Llm/llm
+                                ( EAppArg
+                                    { eaaArg = Value /input -> ∀/Data/String =
+                                        ( /Llm/lcmPrompt
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /Data/Result/Fail
+                                        ( /err=
+                                            ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /cause=∀/Data/JsonAccessErr
+                                                ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                ( /path=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /found=∀/Data/Json
+                                                ) + /Llm/LlmErr/Unset
+                                                ( /variable=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                            )
+                                        ) + /Llm/llmMessage
+                                        ( /choice=∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=∀/Data/JsonAccessErr
+                                            ]
+                                        ) + /Llm/llmContent
+                                        ( /message=∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=∀/Data/JsonAccessErr
+                                            ]
+                                        ) + /Llm/llmSent
+                                        ( /response=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Http/HttpErr
+                                            ]
+                                        ) + /Llm/llmReply
+                                        ( /response=∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=/Data/JsonParseErr..
+                                            ]
+                                        ) + /Llm/llmWith
+                                        ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
+                                        , /base=∀/Data/Maybe[ /T=∀/Data/String ]
+                                        , /input=∀/Data/String
+                                        , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                        , /io=/Catln/IO
+                                        ) + /Llm/llmChoice
+                                        ( /choices=∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=∀/Data/JsonAccessErr
+                                            ]
+                                        ) + /Llm/llmText
+                                        ( /content=∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=∀/Data/JsonAccessErr
+                                            ]
+                                        ) + /Llm/llmAnswer
+                                        ( /error=∀/Data/Result
+                                            [ /T=∀/Data/Json
+                                            , /E=∀/Data/JsonAccessErr
+                                            ]
+                                        , /response=∀/Data/Json
+                                        ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking about the program it is asked from
+                  [lcm], a large code model, asks [llm] with the program it is written in. The page the call is
+                  written on is put before what it asks, as it was written and with each of its annotations shown
+                  with what it evaluates to: a `> expr` with its `>>>` result, and any other annotation a model
+                  can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
+                  page says it computes, and not only what it says.
+                  The page is the one the program was compiled from, handed to the call by the compiler rather
+                  than read again from the file: a call written as `io.lcm(input= ...)` is completed to
+                  `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
+                  it is shown as nothing, so what is asked is the question alone."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /Llm/lcmPrompt
+                        ( EAppArg
+                            { eaaArg = Value /input -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What is on this page?"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /page -> /Catln/RawPrgm
+                                ( /statements=/Data/List/Nil
+                                , /imports=/Data/List/Nil
+                                ) = /Catln/RawPrgm
+                                ( EAppArg { eaaArg = Value /imports -> /Data/List/Nil = Value /Data/List/Nil } )
+                                ( EAppArg { eaaArg = Value /statements -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                  What is on this page?"
+                }
+            )
+        ]
+    }

@@ -1,0 +1,105 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Llm/showPage"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Llm/showPage
+                            ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } ) -> ∀/Data/String
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/llmshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmshow
+                            ( EAppArg { eaaArg = Value /s -> ∀/Llm/LlmShow } ) -> TVArg /s = ( Value /s ↦ TVArg /s )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Llm/LlmShow
+            , cgcExtends =
+                [ ∀/Data/String
+                , ∀/Data/ToString
+                ]
+            , cgcDoc = Just "Represents values which can be shown to a language model.
+
+              Every [/Data/ToString] value is shown to a model as its text, the same text the webdocs show a
+              person ([/Catln/Doc/DShow])."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Showing a model
+                  What a model is shown of a value is its own question, as what a person is shown of one is
+                  [/Catln/Doc/dshow]'s. A type may be displayed in the webdocs as markup, or as a chart, and be
+                  written for a model as something else again. The two share the text of a [/Data/ToString],
+                  which either reader can read, so a type need only say how a model sees it where that differs."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Represents values which can be shown to a language model."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Every [/Data/ToString] value is shown to a model as its text, the same text the webdocs show a
+                  person ([/Catln/Doc/DShow])."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                    ( /Llm/llmshow
+                        ( EAppArg
+                            { eaaArg = Value /s -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "text"
+                            }
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "text"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Llm/llmshow
+                        ( EAppArg
+                            { eaaArg = Value /s -> /Data/Primitive/Integer = 3 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
+            )
+        ]
+    }

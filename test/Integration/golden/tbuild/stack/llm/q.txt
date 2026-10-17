@@ -1,0 +1,276 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Catln/process"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/process
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                            ( EAppArg
+                                { eaaArg = Value /annot -> /Llm/#q( /input=∀/Data/String ) }
+                            ) -> /Llm/#q..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/process
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                            ( EAppArg
+                                { eaaArg = Value /annot -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } ) ->
+                            ( /Llm/qAnswered
+                                ( /reply=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    ,
+                                        ( /Data/Result/Fail
+                                            ( /err=
+                                                ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /cause=∀/Data/JsonAccessErr
+                                                    ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                    ( /path=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /found=∀/Data/Json
+                                                    ) + /Llm/LlmErr/Unset
+                                                    ( /variable=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                                )
+                                            ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                        )
+                                    , []
+                                    )
+                                , /input=∀/Data/String
+                                ) + /Llm/#q
+                                ( /input=∀/Data/String
+                                , /result=∀/Data/String
+                                ) + /Llm/#q
+                                ( /input=∀/Data/String
+                                , /failure=∀/Data/String
+                                )
+                            ) =
+                            ( /Llm/qAnswered
+                                ( EAppArg
+                                    { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /reply -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        ,
+                                            ( /Data/Result/Fail
+                                                [ /E=
+                                                    ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                        ( /path=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /cause=∀/Data/JsonAccessErr
+                                                        ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                        ( /path=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /found=∀/Data/Json
+                                                        ) + /Llm/LlmErr/Unset
+                                                        ( /variable=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                                    )
+                                                ]
+                                                ( /err=
+                                                    ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                        ( /path=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /cause=∀/Data/JsonAccessErr
+                                                        ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                        ( /path=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /found=∀/Data/Json
+                                                        ) + /Llm/LlmErr/Unset
+                                                        ( /variable=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                                    )
+                                                ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                            )
+                                        , []
+                                        ) =
+                                        ( /Llm/lcm
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ UnionType
+                                            ( Just
+                                                ( PredClass /Data/Result
+                                                    [ /T=∀/Data/String
+                                                    , /E=∀/Llm/LlmErr
+                                                    ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            ,
+                                                ( /Data/Result/Fail
+                                                    [ /E=
+                                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                            ( /path=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /cause=∀/Data/JsonAccessErr
+                                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                            ( /path=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /found=∀/Data/Json
+                                                            ) + /Llm/LlmErr/Unset
+                                                            ( /variable=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                                        )
+                                                    ]
+                                                    ( /err=
+                                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
+                                                            ( /path=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /cause=∀/Data/JsonAccessErr
+                                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
+                                                            ( /path=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /found=∀/Data/Json
+                                                            ) + /Llm/LlmErr/Unset
+                                                            ( /variable=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
+                                                        )
+                                                    ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                                )
+                                            , []
+                                            )
+                                        )
+                                    }
+                                ) ↦
+                                ( /Llm/#q
+                                    ( /input=∀/Data/String
+                                    , /result=∀/Data/String
+                                    ) + /Llm/#q
+                                    ( /input=∀/Data/String
+                                    , /failure=∀/Data/String
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/qAnswered"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/qAnswered
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /reply -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                }
+                            ) -> /Llm/#q..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/qAnswered
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /reply -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail
+                                    ( EAppArg { eaaArg = Value /err -> ∀/Llm/LlmErr } )
+                                }
+                            ) -> /Llm/#q
+                            ( /input=∀/Data/String
+                            , /failure=∀/Data/String
+                            ) = /Llm/#q
+                            ( EAppArg
+                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /failure -> ∀/Data/String =
+                                    ( /msg
+                                        ( EAppArg
+                                            { eaaArg = Value /this -> TVArg /err = ( Value /err ↦ TVArg /err ) }
+                                        ) ↦ ∀/Data/String
+                                    )
+                                }
+                            )
+                        , /Llm/qAnswered
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /reply -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                }
+                            ) -> /Llm/#q
+                            ( /input=∀/Data/String
+                            , /result=∀/Data/String
+                            ) = /Llm/#q
+                            ( EAppArg
+                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /result -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/#q"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/#q
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                        , /Llm/#q
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /result -> ∀/Data/String } )
+                        , /Llm/#q
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /failure -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking about a page from the page
+                  A question about a page can be written on the page itself, as `q> ` and then the question. It
+                  is a [#q], and is asked by `catln process`, which writes the reply under the question as the
+                  `>>>` lines of its [result], the way `catln test --update` writes what a `> expr` prints. A
+                  question with a reply is not asked again; its `>>>` lines are removed to ask it again."
+                }
+            )
+        ]
+    }

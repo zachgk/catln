@@ -1,0 +1,84 @@
+import "core"
+import hsrawprgm()
+import "reflect"
+import "llm/err.ct"
+import "llm/api.ct"
+import "llm/lcm.ct"
+
+
+module(Llm)
+  # ## Asking for a value
+    [tllm] and [tlcm] ask as [llm] and [lcm] do, but for a value of a type rather than for text.
+    The model is told to answer with a Catln expression of the type, and shown the declarations of
+    what the type is made of ([/Catln/typeDecls]). Its reply is read as Catln ([/Catln/parseExpr]),
+    as though it were written on the page the call is written on, so a reply naming the page's own
+    types means what the page means by them. A reply that is not an expression, or not one of the
+    type, is answered with why ([LlmErr/NotOf]) rather than with the text.
+    The type is a value, written as [/Catln/typeOf] of the type:
+    `tllm(input= "...", type= /Catln/typeOf[$T -> Point..])`.
+  tllm{io -> IO}(input -> String, type -> /Catln/Type) -> /Data/Result[$E -> LlmErr]{IO}
+    # [tllm] is the value of [type] the configured model replies with to the prompt [input], or the
+      [LlmErr] saying why there is none.
+    #runtime("callerSource")
+  tllm{io -> IO}(input -> String, type -> /Catln/Type, source -> String) -> /Data/Result[$E -> LlmErr]{IO} =
+    reply<- llm(input= typedPrompt(input= input, type= type))
+
+    typedReply(reply= reply, type= type, source= source)
+
+  tlcm{io -> IO}(input -> String, type -> /Catln/Type) -> /Data/Result[$E -> LlmErr]{IO}
+    # [tlcm] is [tllm] asked with the page the call is written in, as [lcm] asks.
+    #runtime("callerSource")
+  tlcm{io -> IO}(input -> String, type -> /Catln/Type, source -> String) -> /Data/Result[$E -> LlmErr]{IO} =
+    reply<- lcm(input= typedPrompt(input= input, type= type), page= /Catln/pageAt(source= source))
+
+    typedReply(reply= reply, type= type, source= source)
+
+  typedPrompt(input -> String, type -> /Catln/Type) -> String
+    # [typedPrompt] is what [tllm] asks the model: [input], and then what to answer with.
+  typedPrompt(input, type)= input ++ "\n\nAnswer with only a Catln expression of type " ++ /Catln/typeText(type= type) ++ ", with nothing before or after it." ++ typedDecls(decls= /Catln/typeDecls(type= type))
+
+  typedDecls(decls -> String) -> String
+    # [typedDecls] shows the model the declarations [decls] of the type, where there are any.
+  typedDecls(decls) | decls.isEmpty= ""
+  typedDecls(decls) else = " It is declared as:\n" ++ decls
+
+  typedReply(reply -> /Data/Result[$T -> String, $E -> LlmErr], type -> /Catln/Type, source -> String) -> /Data/Result[$E -> LlmErr]
+    # [typedReply] is the value of [type] the [reply] is, read as written on the page [source].
+  typedReply(reply= /Data/Result/Fail(err), type, source)= /Data/Result/Fail(err= err)
+  typedReply(reply= /Data/Result/Ok(value), type, source)= typedValue(reply= value, parsed= /Catln/parseExprIn(input= value, type= type, source= source))
+
+  typedValue(reply -> String, parsed -> /Data/Result[$E -> /Catln/ParseExprErr]) -> /Data/Result[$E -> LlmErr]
+  typedValue(reply, parsed= /Data/Result/Ok(value))= /Data/Result/Ok(value= value)
+  typedValue(reply, parsed= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NotOf(reply= reply, cause= err))
+module(Llm/TypedExample)
+  # ## Asking for a value, without asking
+    What [/Llm/tllm] asks and what it makes of the reply are checked here without asking a model.
+    [Answer] is the type asked for, a type of this page.
+  data(Answer(text -> String, sure -> Boolean))
+
+  answerShown(r -> /Data/Result[$E -> /Llm/LlmErr]) -> String
+    # [answerShown] is what [r] holds: the answer, or why there is none.
+  answerShown(r= /Data/Result/Ok(value= Answer(text, sure)))= text ++ ", sure: " ++ sure.toString
+  answerShown(r= /Data/Result/Fail(err))= answerErrShown(e= err)
+  answerShown(r) else = "something other than an answer"
+
+  answerErrShown(e -> /Llm/LlmErr) -> String
+    # [answerErrShown] is why there is no answer. A reply that is not one is shown by itself, without
+      the typecheck's account of how it found that, which is long and says nothing of the reply.
+  answerErrShown(e= /Llm/LlmErr/NotOf(reply, cause))= "the reply is not an answer: " ++ reply
+  answerErrShown(e) else = e.msg
+
+  # The model is told what to answer with, and shown what an [Answer] is.
+  > /Llm/typedPrompt(input= "Is the sky blue?", type= /Catln/typeOf[$T -> Answer..])
+    >>> Is the sky blue?
+    >>>
+    >>> Answer with only a Catln expression of type /Llm/TypedExample/Answer, with nothing before or after it. It is declared as:
+    >>> data(Answer(text -> String, sure -> Boolean))
+  # A reply which is an [Answer] is answered with it, and one which is not with why.
+  > answerShown(r= /Llm/typedValue(reply= "Answer(text= \"yes\", sure= True)", parsed= /Catln/parseExpr(input= "Answer(text= \"yes\", sure= True)", type= /Catln/typeOf[$T -> Answer..])))
+    >>> yes, sure: True
+  > answerShown(r= /Llm/typedValue(reply= "yes", parsed= /Catln/parseExpr(input= "yes", type= /Catln/typeOf[$T -> Answer..])))
+    >>> the reply is not an answer: yes
+  # No reply at all is passed on as it was.
+  > answerShown(r= /Llm/typedReply(reply= /Data/Result/Fail(err= /Llm/LlmErr/Unset(variable= "OPENAI_MODEL")), type= /Catln/typeOf[$T -> Answer..], source= ""))
+    >>> OPENAI_MODEL is not set, so there is no model to ask

@@ -1,0 +1,32 @@
+import "core"
+import hsrawprgm()
+
+
+module(Llm)
+  # ## Showing a model
+    What a model is shown of a value is its own question, as what a person is shown of one is
+    [/Catln/Doc/dshow]'s. A type may be displayed in the webdocs as markup, or as a chart, and be
+    written for a model as something else again. The two share the text of a [/Data/ToString],
+    which either reader can read, so a type need only say how a model sees it where that differs.
+  class(LlmShow)
+    # Represents values which can be shown to a language model.
+
+  llmshow(s -> LlmShow)= s
+    # [llmshow] resolves a value to what a language model is shown of it. The identity arm passes a
+      value that is already [LlmShow] straight through. A type is shown some other way by an arm of
+      its own, written beside it.
+
+  every(String, isa= [/Llm/LlmShow])
+  every(/Data/ToString, isa= [/Llm/LlmShow])
+    # Every [/Data/ToString] value is shown to a model as its text, the same text the webdocs show a
+      person ([/Catln/Doc/DShow]).
+
+  > llmshow(s= "text")
+    >>> text
+  > llmshow(s= 3)
+    >>> 3
+  showPage(page -> /Catln/RawPrgm..) -> String
+    # [showPage] is the [page] as it was written, with each annotation of it a model can be shown
+      shown with what it evaluates to. An annotation which cannot be, or which fails to evaluate, is
+      written as it was.
+    #runtime("llmShowPage")
