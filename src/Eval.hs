@@ -509,7 +509,14 @@ evalExpr (TTupleApply m (_, b) (EAppArg oa)) = do
         Just nm -> nameStr nm
         Nothing -> n
   return $ TupleVal n' (H.insert (nameStr (oaObjPath oa)) v args)
-evalExpr (TTupleApply _ (_, _) (EAppSpread a)) = error $ printf "Not yet implemented evalExpr %s" (show a)
+-- A value spread into a call gives the call each of its arguments, over any the base already has
+-- (it is written after them), as each argument written after it does over its own.
+evalExpr (TTupleApply _ (_, b) (EAppSpread a)) = do
+  TupleVal n args <- evalExpr b
+  spread <- evalExpr a
+  case spread of
+    TupleVal _ spreadArgs -> return $ TupleVal n (H.union spreadArgs args)
+    _ -> error $ printf "A spread must be a value with arguments, but %s is %s" (show a) (show spread)
 evalExpr (TCalls m b callTree) = do
   b' <- evalExpr b
   -- Marked after the base, whose own expressions are recorded as themselves, so the steps are the

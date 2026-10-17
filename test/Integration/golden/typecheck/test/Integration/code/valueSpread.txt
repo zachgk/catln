@@ -1,0 +1,218 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ptX"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ptX( Value /p -> /Pt.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ptX
+                            ( Value /p -> /Pt( /x=/Data/Primitive/Integer ).. = /Pt( Value /x -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value /x
+                        ]
+                    }
+                )
+            ,
+                ( "/bumped"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /bumped
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ].. ) -> /Box[ /V=/Data/Primitive/Integer ]..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bumped
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box( Value /value -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            ) -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box( ..Value /c )
+                            ( Value /value -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /value = Value /value )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/spreadLast"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /spreadLast( Value /p -> /Pt.. ) -> /Pt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /spreadLast
+                            ( Value /p -> /Pt( /x=/Data/Primitive/Integer ).. = /Pt( Value /x -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            ) -> /Pt
+                            ( /x=/Data/Primitive/Integer
+                            , /y=/Data/Primitive/Integer
+                            ).. = /Pt
+                            ( Value /x -> /Data/Primitive/Integer = CInt
+                                { ciValue = 9 }
+                            )( ..Value /c )
+                        ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box[ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/boxValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /boxValue
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ].. ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /boxValue
+                            ( Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box( Value /value -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value /value
+                        ]
+                    }
+                )
+            ,
+                ( "/movedX"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /movedX( Value /p -> /Pt.. ) -> /Pt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /movedX
+                            ( Value /p -> /Pt( /x=/Data/Primitive/Integer ).. = /Pt( Value /x -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            ) -> /Pt
+                            ( /x=/Data/Primitive/Integer
+                            , /y=/Data/Primitive/Integer
+                            ).. = /Pt( ..Value /c )
+                            ( Value /x -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ptY"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ptY( Value /p -> /Pt.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ptY
+                            ( Value /p -> /Pt( /y=/Data/Primitive/Integer ).. = /Pt( Value /y -> /Data/Primitive/Integer )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value /y
+                        ]
+                    }
+                )
+            ,
+                ( "/Pt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Pt( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/both"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /both( Value /a -> /Pt.. )( Value /b -> /Pt.. ) -> /Pt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /both( Value /a -> /Pt.. )( Value /b -> /Pt.. ) -> /Pt.. = /Pt( ..Value /a )( ..Value /b ) ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A value spread into a call ([..c]) gives the call every field of [c]. Fields written after the" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "spread override it, and a spread written after a field overrides that field." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[..c] in a pattern names the whole matched value, so a value rebuilt from it keeps every field" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "the pattern did not touch." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "The spread is written last, so its [x] wins over the one written before it." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Of two spreads, the later one's fields win." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Open data keeps fields its declaration never names through a spread, as a context keeps its" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "states." }
+            )
+        ]
+    }

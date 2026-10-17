@@ -284,7 +284,18 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       a' <- fromExpr est a
       modify $ addConstraints [SetArgMode 11 False baseM' m']
       return $ EAppSpread a'
-    EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
+    -- A value spread into a call (@Context(..c, value= x)@) gives the call every argument the
+    -- value has. The spread is an expression like any argument's, so what it is read as is what it
+    -- reaches ('ArrowTo', as an argument's value reaches its slot), and the call is its base given
+    -- those arguments ('SpreadArgs'). A pattern's named spread is its alias by now (the desugarer's
+    -- @Context(value, .._)\@c@), so only the hole reaches an input.
+    EAppSpread a | EncodeOut{} <- est -> do
+      a' <- fromExpr est a
+      spreadM' <- fromMeta BAct est (emptyMetaM m) $ printf "Spread value %s" (show a)
+      modify $ addConstraints [ArrowTo 53 (getExprMeta a') spreadM', SpreadArgs 53 (baseM', spreadM') m']
+      receivedAt a' spreadM'
+      return $ EAppSpread a'
+    EAppSpread a -> error $ printf "A pattern spread other than the hole (.._) should have been desugared to an alias: %s" (show a)
   -- 'BoundedByObjs' narrows only @m'@'s requirement channels, and requirements travel backward, so
   -- emitting it last is running it first in the reversed epoch — ahead of the 'PropEq' carrying the
   -- narrowed argument slot down into the argument.

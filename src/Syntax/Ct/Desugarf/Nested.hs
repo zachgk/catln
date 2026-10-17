@@ -72,7 +72,7 @@ scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames (TupleApply m (bm, bE
     arg' = case arg of
       EAppArg a -> EAppArg $ mapTupleArgValue (scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames) a
       a@EAppVar{} -> a
-      EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
+      EAppSpread a -> EAppSpread $ scopeSubDeclFunNamesInExpr inheritPath prefix replaceNames a
 
 scopeSubDeclFunNamesInMeta :: String -> TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
 scopeSubDeclFunNamesInMeta inheritPath prefix replaceNames (Meta (UnionType Nothing partials []) pos mid md) = Meta (UnionType Nothing partials' []) pos mid md
@@ -145,7 +145,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgsFor (TupleApply tm (tbm, tbe) tar
     targ' = case targ of
       EAppArg a -> EAppArg $ mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgsFor) a
       a@EAppVar{} -> a
-      EAppSpread a -> error $ printf "Not yet implemented: %s" (show a)
+      EAppSpread a -> EAppSpread $ currySubFunctionsUpdateExpr toUpdate parentArgsFor a
 
 currySubFunctions :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
 currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, objectMapFromList decls')

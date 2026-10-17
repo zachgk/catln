@@ -156,6 +156,9 @@ data ConstraintDat p
   -- call received as a @Maybe[Integer]@ requires its lambda to return one ('TypeCheck.Constrain').
   | HoResultReq Int (p, ArgName, p) p -- ^ Req only
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
+  -- | The application of a spread (@X(..c)@): the base given every argument of the value spread
+  -- into it, the spread's own winning where both have one: @SpreadArgs (base, spread) dest@.
+  | SpreadArgs Int (p, p) p -- ^ Both Actual and Req
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | ConWhere Int (Maybe PartialType) (Maybe TypeName) p p p -- ^ Where: the condition's form as a predicate ('TypeCheck.Encode.condPredForm'), the base's name when it is bare, base, cond, result
   -- | The point is within the union of the others, on the channels given: @UnionOf i ch p ps@.
@@ -237,6 +240,10 @@ mapMConDat f (AddArg i (p1, argName) p2) = do
 mapMConDat f (AddInferArg i p1 p2) = do
   p1' <- f p1
   AddInferArg i p1' <$> f p2
+mapMConDat f (SpreadArgs i (p1, ps) p2) = do
+  p1' <- f p1
+  ps' <- f ps
+  SpreadArgs i (p1', ps') <$> f p2
 mapMConDat f (SetArgMode i m p1 p2) = do
   p1' <- f p1
   SetArgMode i m p1' <$> f p2
@@ -394,6 +401,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (HoResultReq i (s1, argName, sd) s2) = printf "(%s).(result of %s for %s) %d=> %s" (show s1) (show argName) (show sd) i (show s2)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
+  show (SpreadArgs i (base, spread) res) = printf "(%s)(..%s) %d== %s" (show base) (show spread) i (show res)
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
   show (SetArgMode i False s t) = printf "%s.. %d⊇ %s" (show s) i (show t)
   show (ConWhere i form _ b c r) = printf "%s %d| %s (%s) = %s" (show b) i (show c) (maybe "no predicate" show form) (show r)

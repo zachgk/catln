@@ -1,0 +1,204 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ptX"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ ptX( Value p -> /Pt.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ ptX
+                            ( Value p= Pt( Value x )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value x
+                        ]
+                    }
+                )
+            ,
+                ( "/bumped"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ bumped
+                            ( Value b -> /Box[ /V=/Data/Primitive/Integer ].. ) -> /Box[ /V=/Data/Primitive/Integer ]..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bumped
+                            ( Value b= Box( Value value )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value c
+                            ) -> /Box[ /V=/Data/Primitive/Integer ].. = Box( ..Value c )
+                            ( Value value= /operator+( Value /l= Value value )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/spreadLast"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ spreadLast( Value p -> /Pt.. ) -> /Pt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ spreadLast
+                            ( Value p= Pt( Value x )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value c
+                            ) -> /Pt.. = Pt
+                            ( Value x= CInt
+                                { ciValue = 9 }
+                            )( ..Value c )
+                        ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Box[ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/boxValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ boxValue
+                            ( Value b -> /Box[ /V=/Data/Primitive/Integer ].. ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ boxValue
+                            ( Value b= Box( Value value )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value value
+                        ]
+                    }
+                )
+            ,
+                ( "/movedX"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ movedX( Value p -> /Pt.. ) -> /Pt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ movedX
+                            ( Value p= Pt( Value x )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value c
+                            ) -> /Pt.. = Pt( ..Value c )
+                            ( Value x= /operator+( Value /l= Value x )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ptY"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ ptY( Value p -> /Pt.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ ptY
+                            ( Value p= Pt( Value y )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Data/Primitive/Integer = Value y
+                        ]
+                    }
+                )
+            ,
+                ( "/Pt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Pt( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/both"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ both( Value a -> /Pt.. )( Value b -> /Pt.. ) -> /Pt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ both( Value a )( Value b ) -> /Pt.. = Pt( ..Value a )( ..Value b ) ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A value spread into a call ([..c]) gives the call every field of [c]. Fields written after the" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "spread override it, and a spread written after a field overrides that field." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[..c] in a pattern names the whole matched value, so a value rebuilt from it keeps every field" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "the pattern did not touch." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The spread is written last, so its [x] wins over the one written before it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Of two spreads, the later one's fields win." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Open data keeps fields its declaration never names through a spread, as a context keeps its" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "states." }
+            )
+        ]
+    }

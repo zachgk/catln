@@ -1,0 +1,318 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ptX"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ptX
+                            ( EAppArg { eaaArg = Value /p -> /Pt.. } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ptX
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Pt( /x=/Data/Primitive/Integer ).. = /Pt
+                                    ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /x ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
+                ( "/bumped"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /bumped
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ].. }
+                            ) -> /Box[ /V=/Data/Primitive/Integer ]..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bumped
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box
+                                    ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )@Value /c
+                                }
+                            ) -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box
+                            ( EAppSpread
+                                { easExpr = ( Value /c ↦ TopType ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/spreadLast"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /spreadLast
+                            ( EAppArg { eaaArg = Value /p -> /Pt.. } ) -> /Pt..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /spreadLast
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Pt( /x=/Data/Primitive/Integer ).. = /Pt
+                                    ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )@Value /c
+                                }
+                            ) -> /Pt
+                            ( /x=/Data/Primitive/Integer
+                            , /y=/Data/Primitive/Integer
+                            ).. = /Pt
+                            ( EAppArg
+                                { eaaArg = Value /x -> /Data/Primitive/Integer = 9 }
+                            )
+                            ( EAppSpread
+                                { easExpr = ( Value /c ↦ TopType ) }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/boxValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /boxValue
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ].. }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /boxValue
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Box
+                                    ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /value ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
+                ( "/movedX"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /movedX
+                            ( EAppArg { eaaArg = Value /p -> /Pt.. } ) -> /Pt..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /movedX
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Pt( /x=/Data/Primitive/Integer ).. = /Pt
+                                    ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )@Value /c
+                                }
+                            ) -> /Pt
+                            ( /x=/Data/Primitive/Integer
+                            , /y=/Data/Primitive/Integer
+                            ).. = /Pt
+                            ( EAppSpread
+                                { easExpr = ( Value /c ↦ TopType ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /x -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ptY"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ptY
+                            ( EAppArg { eaaArg = Value /p -> /Pt.. } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ptY
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Pt( /y=/Data/Primitive/Integer ).. = /Pt
+                                    ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /y ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
+                ( "/Pt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Pt
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/both"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /both
+                            ( EAppArg { eaaArg = Value /a -> /Pt.. } )
+                            ( EAppArg { eaaArg = Value /b -> /Pt.. } ) -> /Pt..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /both
+                            ( EAppArg { eaaArg = Value /a -> /Pt.. } )
+                            ( EAppArg { eaaArg = Value /b -> /Pt.. } ) -> /Pt.. = /Pt
+                            ( EAppSpread
+                                { easExpr = ( Value /a ↦ TopType ) }
+                            )
+                            ( EAppSpread
+                                { easExpr = ( Value /b ↦ TopType ) }
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A value spread into a call ([..c]) gives the call every field of [c]. Fields written after the"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "spread override it, and a spread written after a field overrides that field."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[..c] in a pattern names the whole matched value, so a value rebuilt from it keeps every field"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the pattern did not touch."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The spread is written last, so its [x] wins over the one written before it."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Of two spreads, the later one's fields win."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Open data keeps fields its declaration never names through a spread, as a context keeps its"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "states."
+                }
+            )
+        ]
+    }

@@ -60,7 +60,9 @@ semiDesExpr sdm@(SDInput True) obj (RawTheExpr t) = semiDesExpr sdm obj t
 semiDesExpr SDInput{} _ e@(RawTheExpr t) = Value (emptyMetaE e) tN
   where
     (_tM, tN) = desugarTheExpr t
-semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = e' `setExprMeta` m'
+-- The type spread @X..@ (a value given only the hole spread) is every value of @X@. A value spread
+-- into it instead (@X(..c)@) is a call given @c@'s arguments.
+semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, RawObjArr{roaObj=Just RawHoleExpr{}})]) = e' `setExprMeta` m'
   where
     e' = semiDesExpr sdm obj e
     m = getExprMeta e'

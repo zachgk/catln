@@ -1,0 +1,44 @@
+import "core"
+import "core"
+
+
+# A value spread into a call ([..c]) gives the call every field of [c]. Fields written after the
+# spread override it, and a spread written after a field overrides that field.
+data(Pt(x -> Integer, y -> Integer, .._))
+
+# [..c] in a pattern names the whole matched value, so a value rebuilt from it keeps every field
+# the pattern did not touch.
+movedX(p -> Pt..) -> Pt..
+movedX(p= Pt(x, ..c))= Pt(..c, x= x + 1)
+
+# The spread is written last, so its [x] wins over the one written before it.
+spreadLast(p -> Pt..) -> Pt..
+spreadLast(p= Pt(x, ..c))= Pt(x= 9, ..c)
+
+# Of two spreads, the later one's fields win.
+both(a -> Pt.., b -> Pt..) -> Pt..
+both(a, b)= Pt(..a, ..b)
+
+ptX(p -> Pt..) -> Integer
+ptX(p= Pt(x, .._))= x
+
+ptY(p -> Pt..) -> Integer
+ptY(p= Pt(y, .._))= y
+
+# Open data keeps fields its declaration never names through a spread, as a context keeps its
+# states.
+data(Box[$V](value -> $V, .._))
+
+boxValue(b -> Box..[$V -> Integer]) -> Integer
+boxValue(b= Box(value, .._))= value
+
+bumped(b -> Box..[$V -> Integer]) -> Box..[$V -> Integer]
+bumped(b= Box(value, ..c))= Box(..c, value= value + 1)
+
+main{io -> IO} =
+  #assert(test= ptX(p= movedX(p= Pt(x= 1, y= 2))) == 2)
+  #assert(test= ptY(p= movedX(p= Pt(x= 1, y= 2))) == 2)
+  #assert(test= ptX(p= spreadLast(p= Pt(x= 1, y= 2))) == 1)
+  #assert(test= ptX(p= both(a= Pt(x= 1, y= 2), b= Pt(x= 3, y= 4))) == 3)
+  #assert(test= boxValue(b= bumped(b= Box(value= 5, n= 7))) == 6)
+  io

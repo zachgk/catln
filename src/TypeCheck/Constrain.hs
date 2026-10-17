@@ -250,6 +250,34 @@ addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq,
       Just addDestReqDecl -> intersectTypesEnv feTypeEnv (envOf stypeReqDecl) destReqDecl addDestReqDecl
       Nothing             -> destReqDecl
 
+-- | A helper for the 'SpreadArgs' 'Constraint': the base applied to every argument of the value
+-- spread into it. Each base partial meets each partial the spread may be, taking the spread's
+-- arguments over its own where both name one (it is written after them), and is left open to more
+-- arguments where the spread is (@c@ matched by @Context(value, ..c)@ carries fields its pattern
+-- never named). A base or spread not yet known as a union of partials gives nothing yet, as
+-- 'addArgToType' does.
+spreadArgsToType :: FEnv -> TypeVarArgEnv -> Type -> Type -> Maybe Type
+spreadArgsToType env vaenv (TypeVar v _ _) spread = spreadArgsToType env vaenv (vaenvLookup (feTypeEnv env) vaenv v) spread
+spreadArgsToType env vaenv base (TypeVar v _ _) = spreadArgsToType env vaenv base (vaenvLookup (feTypeEnv env) vaenv v)
+spreadArgsToType FEnv{feTypeEnv} _ (UnionType Nothing basePartials []) (UnionType Nothing spreadPartials []) =
+  Just $ unionAllTypes feTypeEnv [ singletonType (spreadInto b s) | b <- splitUnionType basePartials, s <- splitUnionType spreadPartials ]
+  where
+    spreadInto b@PartialType{ptArgs=bArgs, ptArgMode=PtArgMode bLb bUb} PartialType{ptArgs=sArgs, ptArgMode=PtArgMode _ sUb} =
+      b{ptArgs=H.union sArgs bArgs, ptArgMode=PtArgMode bLb (bUb && sUb)}
+spreadArgsToType _ _ _ _ = Nothing
+
+-- | A helper for the 'SpreadArgs' 'Constraint', on each channel as 'addArgToScheme'.
+spreadArgsToScheme :: FEnv -> STypeVarArgEnv -> SType -> SType -> SType -> SType
+spreadArgsToScheme env@FEnv{feTypeEnv} vaenv base spread dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl} = dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}
+  where
+    envOf f = ambientEnv (fmap f vaenv)
+    onChannel f destT = case spreadArgsToType env (envOf f) (f base) (f spread) of
+      Just spreadDest -> intersectTypesEnv feTypeEnv (envOf f) destT spreadDest
+      Nothing         -> destT
+    destAct' = onChannel stypeAct destAct
+    destReq' = onChannel stypeReq destReq
+    destReqDecl' = onChannel stypeReqDecl destReqDecl
+
 -- | A helper for the 'AddArg' 'Constraint'
 -- | A helper for the 'AddInferArg' 'Constraint'. The grafted source is met INTO the destination
 -- under the constraint's own var env, as 'addArgToScheme' does: the source carries the
@@ -485,6 +513,9 @@ computeConstraint env con@(Constraint _ _ vaenv (AddArg i (src, newArgName) dest
 computeConstraint env con@(Constraint _ _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
   where
     dest' = addInferArgToScheme env (fmap snd vaenv) src dest
+computeConstraint env con@(Constraint _ _ vaenv (SpreadArgs i (base, spread) dest)) = (False, con{conDat=SpreadArgs i (base, spread) dest'})
+  where
+    dest' = spreadArgsToScheme env (fmap snd vaenv) base spread dest
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}})
   where
     vaenv' = ambientEnv (fmap (stypeAct . snd) vaenv)

@@ -667,7 +667,10 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
   arg' <- case arg of
     EAppArg a     -> EAppArg <$> toTEObjArr env os True a
     EAppVar vn vm -> return $ EAppVar vn vm
-    EAppSpread a  -> EAppSpread <$> toTExpr env os a
+    -- A value spread into a call is read for its arguments, so it has to be a value by then: a
+    -- reference to an argument resolved and an applied term called. Built toward ⊤, which is what
+    -- 'toTExprDest' does for a destination that imposes nothing on the value but that it be one.
+    EAppSpread a  -> EAppSpread <$> toTExprDest env os a (emptyMetaT PTopType)
   return $ TTupleApply m (bm, be') arg'
 
 -- | The destination an application's BASE is built toward.
