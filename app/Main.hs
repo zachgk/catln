@@ -54,19 +54,21 @@ xRun prgmName function = do
     0 -> return ()
     i -> fail $ "error code " ++ show i
 
--- | Processes the annotations of a file which can be processed, writing each back into the file as
--- what processing it gives ('getProcessed'), and reformatting the file (like @catln fmt@).
+-- | Processes the annotations of a file which can be processed ('getProcessed'): the file processors
+-- rewrite the file until none changes it, and each annotation a line processor updates is written
+-- back into the file as what it gives, reformatting the file (like @catln fmt@).
 xProcess :: String -> CResT IO ()
 xProcess prgmName = do
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
-  (page, processed, unchanged) <- getProcessed ctss prgmName'
+  ProcessReport{prPage, prLines, prLinesUnchanged, prFileRounds} <- getProcessed ctss prgmName'
   path <- case importPath prgmName' of
     Just path -> return path
     Nothing   -> fail $ printf "Could not find a file to write the processed %s back to" prgmName
-  lift $ writeFile path $ formatRootPrgm page
-  lift $ putStrLn $ printf "Processed %d annotation(s) in %s" processed path
-  when (unchanged > 0) $ lift $ putStrLn $ printf "%d of them came back unchanged" unchanged
+  lift $ writeFile path $ formatRootPrgm prPage
+  when (prFileRounds > 0) $ lift $ putStrLn $ printf "File processors changed %s %d time(s)" path prFileRounds
+  lift $ putStrLn $ printf "Processed %d annotation(s) in %s" prLines path
+  when (prLinesUnchanged > 0) $ lift $ putStrLn $ printf "%d of them came back unchanged" prLinesUnchanged
 
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do

@@ -193,7 +193,20 @@ q> What does double do?
   >>> It doubles its argument.
 ```
 
-`>>>` lines may be written under any annotation that declares a `result -> String` argument, and are that argument. `catln process` runs the processing step of every annotation that has one: an arm of `/Catln/process(io, annot)` that takes the annotation and returns its updated form.
+`>>>` lines may be written under any annotation that declares a `result -> String` argument, and are that argument.
+
+`catln process` runs the processor of every annotation that has one, from the top of the page to the bottom. There are two kinds of processor:
+
+- A line processor is an arm of `/Catln/process{io}(annot)` that takes the annotation and returns its updated form, which is written back in its place. `q> ` is one. An annotation holding a `result` has been processed, and is skipped.
+- A file processor is an arm of `/Catln/processFile{io}(annot, source, withoutAnnot)`, run in an io context, that returns the new text of the page it is written on. It is given the text of the page as `source` (with the line processors above it applied), and the same text without the annotation itself as `withoutAnnot`. Where it changes the page, the file is written, compiled again and processed again from the top. Processing ends once a pass over the page makes no change to it.
+
+The `process` library has a file processor, `#findReplace(find, with)`, which replaces each `find` on the page with `with` and removes itself, so it runs once:
+
+```
+import "process"
+
+#findReplace(find= "oldName", with= "newName")
+```
 
 ## Programs
 

@@ -1,0 +1,19 @@
+import "core"
+import "process/findReplace.ct"
+
+
+module(Process)
+  # # Processing a page
+    `catln process` runs the processors of the annotations written on a page, top to bottom. There
+    are two kinds:
+    - A line processor, an arm of `/Catln/process{io}(annot)`, updates its annotation and nothing
+      else, as a [/Llm/#q] is answered.
+    - A file processor, an arm of `/Catln/processFile{io}(annot, source, withoutAnnot)`, gives the
+      new text of the page it is written on. It is given the text of the page as `source`, and the
+      text of the page without itself as `withoutAnnot`. Where it changes the page, the page is
+      written, compiled again and processed again from the top, until a pass over the page changes
+      nothing.
+    This is not part of the standard library, and a page using its processors writes
+    `import "process"`.
+    It is written in parts, each a page of this directory:
+    - @process/findReplace.ct@ is [#findReplace], replacing text throughout a page.

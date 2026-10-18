@@ -1,0 +1,11 @@
+import "core"
+import "process"
+
+
+# Renamed throughout by `catln process`.
+#findReplace(find= "oldName", with= "newName")
+oldName(x -> Integer) -> Integer
+  # [oldName] is one more than [x].
+oldName(x)= x + 1
+
+twice(x -> Integer)= oldName(x= oldName(x= x))

@@ -1,0 +1,16 @@
+import "core"
+
+
+module(Process)
+  # ## Find and replace
+    A page can be rewritten by writing on it what to replace. It is a [#findReplace], and is run by
+    `catln process`, which replaces each occurrence of its [find] in the rest of the page with its
+    [with], removes it, and compiles the page again.
+  annot(#findReplace(find -> String, with -> String))
+    # [#findReplace] replaces each occurrence of [find] on the page it is written on with [with].
+      It is done once it has run, so it removes itself: it is never run on what it wrote, and a
+      [with] holding its [find] is replaced once rather than without end.
+
+  /Catln/processFile{io -> /Catln/IO}(annot -> #findReplace(find -> String, with -> String), source -> String, withoutAnnot -> String) -> String{IO}
+    # A [#findReplace] is processed by replacing in the page without it, which leaves it out.
+  /Catln/processFile{io -> /Catln/IO}(annot= #findReplace(find, with), source, withoutAnnot)= (withoutAnnot.replace(old= find, new= with)){io}

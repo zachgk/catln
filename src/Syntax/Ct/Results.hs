@@ -77,6 +77,14 @@ setAnnotsById updated = mapRawAnnots $ \annot -> RawAnnot $ case H.lookup (getMe
   Just annot' -> annot' `setExprMeta` getExprMeta annot
   Nothing     -> annot
 
+-- | The program without the annotation of the meta ID, at whatever depth, nor anything written under
+-- it.
+removeAnnotById :: UUID -> RawPrgm m -> RawPrgm m
+removeAnnotById i (RawPrgm imports stmts) = RawPrgm imports (mapMaybe fixTree stmts)
+  where
+    fixTree (RawStatementTree (RawAnnot annot) _) | getMetaId (getExprMeta annot) == i = Nothing
+    fixTree (RawStatementTree st subs) = Just $ RawStatementTree st (mapMaybe fixTree subs)
+
 -- | A value written as the expression constructing it: a literal, or a tuple of its name applied to
 -- each of its arguments written the same way. A value only the runtime can hold has no such
 -- expression.

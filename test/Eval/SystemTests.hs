@@ -25,6 +25,7 @@ module Eval.SystemTests (systemTests) where
 
 import           Control.Concurrent        (forkIO, killThread, threadDelay)
 import           Control.Exception         (bracket)
+import           Control.Monad             (forM_)
 import           CRes
 import           CtService
 import qualified Data.ByteString.Lazy.UTF8 as LBU
@@ -40,6 +41,10 @@ import           Network.HTTP.Types        (status500)
 import           Semantics                 (testCtssConfig)
 import           Syntax.Ct.Formatter       (formatRootPrgm)
 import           Syntax.Parsers            (mkDesCanonicalImportStr)
+import           System.Directory          (copyFile, createDirectoryIfMissing,
+                                            getTemporaryDirectory,
+                                            removePathForcibly)
+import           System.FilePath           ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Web.Scotty                (body, header, post, raw, scotty,
@@ -56,6 +61,7 @@ systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup 
   , testLlmWithoutAModelAsksNothing getCtss
   , testProcessAnswersQueries getCtss
   , testProcessWithoutAModelAnswersNothing getCtss
+  , fileProcessorTests
   , testRealHttpPost
   ]
   where
@@ -171,14 +177,15 @@ testLlmWithoutAModelAsksNothing getCtss = testCase "IO.llm without OPENAI_MODEL 
     CRes _ _   -> assertEqual "the unset variable is named" "error: OPENAI_MODEL is not set, so there is no model to ask\n" out
 
 -- | Processes a fixture's annotations against the mock given ('getProcessedMock'): the page as it is
--- written back, and how many annotations were processed and came back unchanged.
-processWith :: IO CTSS -> FilePath -> MockIO -> IO (CRes (String, Int, Int))
+-- written back, how many annotations line processors updated and how many of those came back
+-- unchanged, and how many times file processors changed the file.
+processWith :: IO CTSS -> FilePath -> MockIO -> IO (CRes (String, Int, Int, Int))
 processWith getCtss page mockIO = do
   ctss <- getCtss
   name <- mkDesCanonicalImportStr testCtssConfig page
   ctssBuildFrom ctss name
   res <- runCResT $ getProcessedMock ctss mockIO name
-  return $ fmap (\(prgm, processed, unchanged) -> (formatRootPrgm prgm, processed, unchanged)) res
+  return $ fmap (\ProcessReport{prPage, prLines, prLinesUnchanged, prFileRounds} -> (formatRootPrgm prPage, prLines, prLinesUnchanged, prFileRounds)) res
 
 -- | @catln process@ end to end: each unanswered @q>@ is asked of the model with the page it is
 -- written on, and written back with the reply as its @>>>@ lines. One already answered is not asked.
@@ -195,7 +202,7 @@ testProcessAnswersQueries getCtss = testCase "processing a page asks each unansw
   requests <- readIORef sent
   case res of
     CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
-    CRes _ (page, processed, unchanged) -> do
+    CRes _ (page, processed, unchanged, _) -> do
       assertEqual "only the unanswered query is asked" 1 (length requests)
       assertBool "it is asked with the page it is written on" (all ("double(x)= x + x" `isInfixOf`) requests)
       assertBool "and with the question" (all ("What does double do?" `isInfixOf`) requests)
@@ -211,10 +218,103 @@ testProcessWithoutAModelAnswersNothing getCtss = testCase "processing a page wit
   res <- processWith getCtss (fixture "query.ct") mockIO
   case res of
     CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
-    CRes notes (page, processed, unchanged) -> do
+    CRes notes (page, processed, unchanged, _) -> do
       assertEqual "no annotation is processed" (0, 0) (processed, unchanged)
       assertBool ("it is written back unanswered:\n" ++ page) ("q> What does double do?\nq> Is double fast?" `isInfixOf` page)
       assertBool ("the unset variable is reported: " ++ prettyCNotes notes) ("OPENAI_BASE_URL is not set" `isInfixOf` prettyCNotes notes)
+
+-- | File processors rewrite the file they are written in, so each is run on a copy of its fixture in
+-- a directory of its own rather than on the fixture.
+fileProcessorTests :: TestTree
+fileProcessorTests = withResource copies (const $ return ()) $ \getCopies -> testGroup "file processors"
+  [ testFindReplaceRenames getCopies
+  , testFindReplaceIsDoneOnceRun getCopies
+  , testFindReplaceWithNothingToReplace getCopies
+  , testFileProcessorAfterLineProcessor getCopies
+  ]
+  where
+    pages = ["findReplace.ct", "findReplaceGrows.ct", "findReplaceAbsent.ct", "findReplaceAfterQuery.ct"]
+    -- One service for every copy, so the library they import is built once rather than once per
+    -- test.
+    copies = do
+      tmp <- getTemporaryDirectory
+      let dir = tmp </> "catln-file-processors"
+      removePathForcibly dir
+      createDirectoryIfMissing True dir
+      forM_ pages $ \page -> copyFile (fixture page) (dir </> page)
+      ctss <- ctssBaseFiles testCtssConfig (map (dir </>) pages)
+      return (ctss, dir)
+
+-- | Processes a copied fixture ('processWith'), and reads back the file it was written to.
+processCopy :: IO (CTSS, FilePath) -> FilePath -> MockIO -> IO (CRes (String, Int, Int, Int), String)
+processCopy getCopies page mockIO = do
+  (ctss, dir) <- getCopies
+  res <- processWith (return ctss) (dir </> page) mockIO
+  file <- readFile (dir </> page)
+  length file `seq` return (res, file)
+
+-- | A @#findReplace@ replaces what it finds throughout the page, removes itself, and the page it
+-- leaves compiles.
+testFindReplaceRenames :: IO (CTSS, FilePath) -> TestTree
+testFindReplaceRenames getCopies = testCase "#findReplace replaces throughout the page and removes itself" $ do
+  mockIO <- newMockIO
+  (res, file) <- processCopy getCopies "findReplace.ct" mockIO
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (page, _, _, rounds) -> do
+      assertEqual "the file is changed once" 1 rounds
+      assertBool ("nothing is left to replace:\n" ++ file) (not $ "oldName" `isInfixOf` file)
+      assertBool ("the definition is renamed:\n" ++ file) ("newName(x)= x + 1" `isInfixOf` file)
+      assertBool ("its uses are renamed:\n" ++ file) ("newName(x= newName(x= x))" `isInfixOf` file)
+      assertBool ("the annotation removes itself:\n" ++ file) (not $ "#findReplace" `isInfixOf` file)
+      assertEqual "the page processed last is the file written" file page
+
+-- | A @#findReplace@ whose replacement holds what it finds is run once, as it is not run on what it
+-- wrote.
+testFindReplaceIsDoneOnceRun :: IO (CTSS, FilePath) -> TestTree
+testFindReplaceIsDoneOnceRun getCopies = testCase "#findReplace is not run on what it wrote" $ do
+  mockIO <- newMockIO
+  (res, file) <- processCopy getCopies "findReplaceGrows.ct" mockIO
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (_, _, _, rounds) -> do
+      assertEqual "the file is changed once" 1 rounds
+      assertBool ("each occurrence is replaced once:\n" ++ file) ("incinc(x -> Integer)= x + 1" `isInfixOf` file)
+      assertBool ("and no more than once:\n" ++ file) (not $ "incincinc" `isInfixOf` file)
+
+-- | A @#findReplace@ which finds nothing still removes itself, which is a change to the page.
+testFindReplaceWithNothingToReplace :: IO (CTSS, FilePath) -> TestTree
+testFindReplaceWithNothingToReplace getCopies = testCase "#findReplace finding nothing still removes itself" $ do
+  mockIO <- newMockIO
+  (res, file) <- processCopy getCopies "findReplaceAbsent.ct" mockIO
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (_, _, _, rounds) -> do
+      assertEqual "the file is changed once" 1 rounds
+      assertBool ("the annotation removes itself:\n" ++ file) (not $ "#findReplace" `isInfixOf` file)
+      assertBool ("the rest is as it was:\n" ++ file) ("inc(x -> Integer)= x + 1" `isInfixOf` file)
+
+-- | Processors run top to bottom: a question above a @#findReplace@ is answered first, the rewrite is
+-- of the page with the answer, and the page processed again from the top does not ask it again.
+testFileProcessorAfterLineProcessor :: IO (CTSS, FilePath) -> TestTree
+testFileProcessorAfterLineProcessor getCopies = testCase "a file processor rewrites the page with the line processors above it applied" $ do
+  sent <- newIORef []
+  let answer :: HttpPost
+      answer _ _ reqBody = do
+        modifyIORef sent (reqBody:)
+        return $ Right "{\"choices\": [{\"message\": {\"content\": \"Twice x.\"}}]}"
+  let env = H.fromList [("OPENAI_BASE_URL", "http://model.test/v1"), ("OPENAI_MODEL", "m-1")]
+  mockIO <- newMockIOWith env answer
+  (res, file) <- processCopy getCopies "findReplaceAfterQuery.ct" mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (_, _, _, rounds) -> do
+      assertEqual "the question is asked once" 1 (length requests)
+      assertBool "it is asked of the page before the rewrite" (all ("double(x)= x + x" `isInfixOf`) requests)
+      assertEqual "the file is changed once" 1 rounds
+      assertBool ("the answer is kept by the rewrite:\n" ++ file) ("q> What does twice do?\n  >>> Twice x.\n" `isInfixOf` file)
+      assertBool ("the page is rewritten:\n" ++ file) ("twice(x)= x + x" `isInfixOf` file)
 
 -- | The transport, against a server answering on a port of this machine: the header and the UTF-8
 -- body arrive as sent, and a status that is not a success is reported with the body it came with.

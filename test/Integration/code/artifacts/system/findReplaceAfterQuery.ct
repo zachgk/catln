@@ -1,0 +1,12 @@
+import "core"
+import "llm"
+import "process"
+
+
+double(x -> Integer) -> Integer
+  # [double] is twice [x].
+double(x)= x + x
+
+# The question is answered before the page is rewritten, so the rewrite keeps the answer.
+q> What does double do?
+#findReplace(find= "double", with= "twice")

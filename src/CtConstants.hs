@@ -255,13 +255,23 @@ queryAnnot = "/Llm/#q"
 queryAnnotText = "input"
 queryAnnotShort = "#q"
 
--- | What @catln process@ asks of each annotation on a page: @\/Catln\/process(io, annot)@, its
--- updated form. An annotation is processable where the program has an arm of it that takes the
--- annotation; a library declares one beside each annotation it can process.
+-- | What @catln process@ asks of each annotation on a page with a line processor:
+-- @\/Catln\/process{io}(annot)@, its updated form. An annotation is processable where the program
+-- has an arm of it that takes the annotation; a library declares one beside each annotation it can
+-- process.
 processFun, processFunIO, processFunAnnot :: String
 processFun = "/Catln/process"
 processFunIO = "/io"
 processFunAnnot = "/annot"
+
+-- | What @catln process@ asks of each annotation on a page with a file processor:
+-- @\/Catln\/processFile{io}(annot, source, withoutAnnot)@ run in an io, the new text of the page it is written
+-- in. It is given the text of the page as @source@, and the same text without the annotation as
+-- @withoutAnnot@, for a processor which is done once it has run to leave itself out.
+processFileFun, processFileSource, processFileWithoutAnnot :: String
+processFileFun = "/Catln/processFile"
+processFileSource = "/source"
+processFileWithoutAnnot = "/withoutAnnot"
 
 -- | The field an annotation is processed into where processing it failed, holding why. Such an
 -- annotation is reported with that reason and written back as it was, so it is processed again
