@@ -13,6 +13,7 @@
 module Syntax.Ct.Builder where
 import           CtConstants
 import           Data.Bifunctor          (first)
+import           Data.Char               (toLower)
 import           Data.UUID               (nil)
 import           MapMeta                 (DerivedMeta, derivedMetaID)
 import           Semantics
@@ -190,3 +191,16 @@ classWithObjs cls objs extends = RawDeclStatement $ rawOutObjArr (rawVal classSt
 -- no builder, since nothing in the compiler built a type until the builtins page did.
 dataSt :: PExpr -> PStatement
 dataSt tp = RawDeclStatement $ rawOutObjArr (rawVal dataStr `applyRawEIArgs` [(tp, IArgNothing)])
+
+-- | The name a state written in a context's braces is keyed by. One given by its name (@{io -> IO}@,
+-- @{io}@) is keyed by that name, and one given only by its type (@{IO}@) by the type's own name
+-- lowercased (@io@).
+contextStateName :: PObjArr -> Maybe String
+contextStateName RawObjArr{roaObj=Just (RawValue _ n), roaArr}
+  | Just (_, Just _) <- roaArr = Just (nameStr n)
+  | isTypeName = Just $ map toLower base
+  | otherwise = Just (nameStr n)
+  where
+    base = last $ npathPath $ getPath $ nameStr n
+    isTypeName = take 1 base /= map toLower (take 1 base)
+contextStateName _ = Nothing

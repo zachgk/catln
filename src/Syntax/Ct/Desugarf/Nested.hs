@@ -92,7 +92,11 @@ scopeSubDeclFunNamesInMeta _ _ _ m = m
 scopeSubDeclFunNames :: String -> PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
 scopeSubDeclFunNames inheritPath oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, objectMapFromList decls')
   where
-    prefix = exprPath objExpression
+    -- A definition in a context (@ContextIn(value= main, io)@) names its sub functions after the
+    -- function it defines, not after the context it is defined in.
+    prefix = case H.lookup (partialKey (mkName contextValStr)) (exprAppliedArgsMap objExpression) of
+      Just (Just (_, Just v)) | nameStr (exprPath objExpression) == ContextInStr -> exprPath v
+      _ -> exprPath objExpression
     declNames = S.fromList $ map oaObjPath $ flatObjectMap decls
     addPrefix = nestedSubName inheritPath prefix
     scopeM = scopeSubDeclFunNamesInMeta inheritPath prefix declNames

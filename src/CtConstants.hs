@@ -55,8 +55,7 @@ pattern ContextStr :: String
 pattern ContextStr = "/Context"
 pattern ContextInStr :: String
 pattern ContextInStr = "/ContextIn"
-contextOutStr, contextValStr, ioStr :: String
-contextOutStr = "/ContextOut"
+contextValStr, ioStr :: String
 contextValStr = "/value"
 ioStr = "/io"
 

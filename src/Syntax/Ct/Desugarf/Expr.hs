@@ -96,6 +96,10 @@ semiDesExpr sdm obj (RawTypeProp m base (TypePropProj t v)) = semiDesExpr sdm ob
 semiDesExpr sdm obj (RawTypeProp m base (TypePropRel t v)) = semiDesExpr sdm obj (RawWhere m base (RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal (nameStr t) `applyRawArgs` [(Just $ partialKey (mkName operatorArgR), v)]))) -- $this.gte(r= v)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
+-- A function declared in a context is written with the context before its arguments
+-- (@println{io -> IO}(msg -> String)@), but runs as the call in the context
+-- (@println(msg -> String){io -> IO}@): it is the call that the states are given to.
+semiDesExpr sdm@SDInput{} obj (RawTupleApply m (bm, RawContextApply cm (cbm, f) ctxs) args) = semiDesExpr sdm obj (RawContextApply cm (cbm, RawTupleApply m (bm, f) args) ctxs)
 -- A named spread in a pattern (@Context(value, ..c)@) names the whole matched value: the spread
 -- stands for the fields the pattern does not list, and @c@ for the value carrying them. It is the
 -- open pattern with the value aliased (@Context(value, .._)\@c@), so building a value from @c@
@@ -179,13 +183,28 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = (`setExprMeta` m) $ foldr aux be' v
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType (mobjExprVaenv obj) varExpr)
         varVal = maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv obj)) (roaArr >>= snd)
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
-semiDesExpr sdm@SDOutput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN (mkName contextOutStr)) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
+-- A value given a context (@(){io}@) is the 'ContextStr' holding it, each state keyed by the name it
+-- is written with.
+semiDesExpr sdm@SDOutput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN (mkName ContextStr)) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
   where
     mapCtx ctx = (Just $ rawVal $ nameStr $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
+-- A context written as a type (@(){IO}@) is every 'ContextStr' whose value is of the type it is
+-- given, holding a state of each type in the braces and any others besides. A state is keyed as a
+-- value of it is: by its name, which for a bare type (@{IO}@) is the type's own name lowercased
+-- (@io@), and is written out where it is not (@{out -> IO}@).
+semiDesExpr SDType obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr SDType obj $ RawTupleApply m (emptyMetaN, RawValue emptyMetaN (mkName ContextStr)) (stateArg (rawVal contextValStr) be : map mapCtx ctxs ++ [(True, rawInObjArr True (RawHoleExpr emptyMetaN (HoleActive Nothing)))])
+  where
+    stateArg k t = (False, RawObjArr (Just k) ArgObj Nothing [] (Just (Nothing, Just t)) Nothing)
+    mapCtx RawObjArr{roaObj=Just k, roaArr=Just (_, Just t)} = stateArg k t
+    mapCtx ctx@RawObjArr{roaObj=Just t, roaArr=Nothing} | Just n <- contextStateName ctx = stateArg (rawVal n) t
+    mapCtx ctx = error $ printf "Invalid context type: %s" (show ctx)
+
 semiDesExpr sdm@SDInput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN (mkName ContextInStr)) ((partialKey (mkName contextValStr), IArgE be) : map mapCtx ctxs)
   where
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
+    -- A state given only by its type (@{IO}@) is keyed by the type's name ('contextStateName').
+    mapCtx ctx@RawObjArr{roaObj=Just t, roaArr=Nothing} | Just n <- contextStateName ctx = (partialKey (mkName n), IArgM (Just t))
     mapCtx ctx = error $ printf "Invalid input context: %s" (show ctx)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
 semiDesExpr sdm obj (RawMethod m (RawTheExpr n) method) = (`setExprMeta` m) $ semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n'))]) -- Parse type methods like :Integer.toString, Only for input expressions
