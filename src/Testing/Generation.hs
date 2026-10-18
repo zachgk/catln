@@ -1002,8 +1002,13 @@ genPrgms = do
 -- type is a bare type variable (e.g. @Cons@'s polymorphic @head -> $T@) is defaulted to 'Integer',
 -- since the structural derivations that consume these values (such as @length@) are
 -- element-agnostic. Recursion is bounded by 'genValForType' (see there).
+--
+-- A spread (@Context..[$V -> Integer]@) lists none of its declared fields, so it is read through its
+-- declared floor ('spreadFloor') as every partial-level operation reads it. Read as written, it was
+-- a nullary type and generated the field-less @/Context@, which is not a value of the type. A field
+-- typed by one of the partial's own parameters takes the parameter's type.
 genVal :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Gen Val
-genVal typeEnv pt
+genVal typeEnv pt0
   | pt == intLeaf   = IntVal <$> HG.integral (linear (-1000) 1000)
   | pt == floatLeaf = FloatVal <$> HG.double (linearFrac (-1000) 1000)
   | pt == strLeaf   = StrVal <$> HG.string (linear 0 20) HG.unicode
@@ -1018,9 +1023,11 @@ genVal typeEnv pt
       pure $ TupleVal (nameStr (ptName pt)) (H.fromList argVals)
   where
     TypeEnv{teNames} = typeEnv
+    pt = spreadFloor typeEnv pt0
     genArg (k, at) = (nameStr (pkName k),) <$> genValForType typeEnv (fieldType at)
     -- A field carrying a class/relation (e.g. @tail -> ConsList@) expands to its member data leaves;
     -- a bare type variable has no members to expand to, so default it to 'Integer'.
+    fieldType (TypeVar (TVVar v) _ _) | Just vt@(UnionType Nothing _ _) <- H.lookup v (ptVars pt) = fieldType vt
     fieldType TypeVar{} = intType
     fieldType at        = UnionType Nothing (expandTypeWithNames typeEnv H.empty at teNames) []
 

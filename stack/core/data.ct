@@ -1,6 +1,8 @@
 import "core/primitives.ct"
 import "core/eq.ct"
 import "core/string.ct"
+import "core/functor.ct"
+import "core/monad.ct"
 
 
 module(Data)
@@ -45,14 +47,56 @@ module(Data)
   # ## Context
   data(/Context[$V](value -> $V, .._))
     # The context is used to represent state.
-  data(/ContextIn[$V](value -> $V, .._))
-    # The [ContextIn] is used to represent an input state in a function.
-  data(/ContextOut[$V](value -> $V, .._))
-    # The [ContextOut] is used to represent an output state in a function.
 
-  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $_V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T
-    #runtime("context")
+  # TODO A [Context] holding a call ran the call in its states, through the runtime's [context]
+  #   macro. As every [Context] is a value, that arrow from every one of them kept any from staying
+  #   one. It returns in a modified form for running a call in a context.
+  # /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $_V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T
+  #   #runtime("context")
 
+# # Reading a context's value
+  [unwrap] lives in [module(Data/Context)], the namespace of what is done with a [Context], so a
+  page's own [unwrap] of another type is a function of its own rather than an arm of this one.
+module(Data/Context)
+  unwrap[$V](this -> /Context..[$V -> $_V]) -> $V
+    # [unwrap] reads the [value] out of a [Context], leaving its states behind. That a value can be
+      read out like this is what makes state a [Context] rather than a [Monad] to be run.
+  :/Context(value, .._).unwrap= value
+
+  > /Context(value= 1, n= 7).unwrap
+    >>> 1
+
+# # Context Functor and Monad instances
+  A [Context] is a [Functor] over its [value]: [fmap] applies a function to the value and keeps every
+  state beside it as it was. It is a [Monad]: [mmap] applies a function returning a [Context] to the
+  value, and gives that context's value with its states over the original's — a state the function
+  returns replaces the one it was given, and every other state carries through. [pure] is a
+  [Context] holding no states, so it replaces none. The instances are written under the
+  declarations' absolute names (see the [ConsList] instance in [Data/list] for the naming rationale).
+module(Data)
+  every(/Context..[$V -> $_V], isa= [/Data/Functor[$T -> $_V]])
+  every(/Context..[$V -> $_V], isa= [/Data/Monad[$T -> $_V]])
+
+  /Data/Functor/fmap(lst= /Context(value, ..c), fn(v))= /Context(..c, value= fn(v= value))
+
+  > /Data/Functor/fmap(lst= /Context(value= 1, n= 7), fn(v)= v + 1).unwrap
+    >>> 2
+  /Data/Monad/mmap(m= /Context(value, ..c), fn(v))= /Context(..c, ..fn(v= value))
+
+  # TODO The arm above is given one result, read from its own patterns (@Context(value=⊤)..@), with no
+  #   link to what a call passes or to [fn]'s declared result, so [unwrap] of it has no type to show:
+  #   "Failed to build arrow tree from /Data/Context/unwrap(/this=/Context(/value=TopType)..)".
+  # > /Data/Monad/mmap(m= /Context(value= 1, n= 7), fn(v)= /Context(value= v + 1, n= 8)).unwrap
+  #   >>> 2
+  /Data/Monad/pure[$M -> /Context..[$V -> $_V]](v)= /Context(value= v)
+
+  # [pure] is chosen by the expected result type, as for [Maybe] (see [pure] in [Data/monad]).
+  pureContextInt(v -> Integer) -> /Context..[$V -> Integer]
+  pureContextInt(v)= /Data/Monad/pure(v= v)
+
+  > pureContextInt(v= 5).unwrap
+    >>> 5
+module(Data)
   # ## Collections
   class(Option[$T], [$_T, None])
     # [Option] defines a type that might have a value or [None].

@@ -39,7 +39,7 @@ import           Data.UUID                  (UUID)
 import           Eval                       (checkPrintGolden, evalBaseEnv,
                                              evalBaseEnvWith, evalBuildPrgm,
                                              evalDShowAnnot, evalExpr,
-                                             evalValEq, printRange,
+                                             evalValEq, printPArg, printRange,
                                              printResultArg, valWithinType)
 import           Eval.Common
 import           Eval.ExprBuilder
@@ -710,7 +710,9 @@ derivePrintTests pages own prgm = catMaybes <$> mapM mkTest (collectPrintAnnots 
         CErr notes                    -> Just (desc $ CResT $ return $ CErr notes)
       where
         crange = printRange annot
-        testName = printf "%s :: print-golden" (maybe "<print>" showCodeRange crange)
+        -- A print with no position of its own is named by what it prints, which is what tells it
+        -- apart from the others.
+        testName = printf "%s :: print-golden" (maybe (maybe "<print>" (\p -> "<print " ++ take 120 (show p) ++ ">") (printPArg annot)) showCodeRange crange)
         -- A print inside a definition belongs to that definition; one written at the top of a file
         -- belongs to the annotation itself, which is a statement of that file in its own right.
         (owner, ownerId) = case os of
