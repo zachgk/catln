@@ -666,8 +666,8 @@ pageAnnots page (Prgm objMap _ globalAnnots) =
     written = S.fromList $ rawPrgmAnnotIds page
     annotId = getMetaId . getExprMeta
 
--- | What processing an annotation updates it to: @\/Catln\/process(io, annot)@ ('processFun'),
--- evaluated with @ioVal@ as its @io@. 'Nothing' where the annotation is not processable, which is
+-- | What processing an annotation updates it to: @\/Catln\/process{io}(annot)@ ('processFun') run
+-- in the io @ioVal@, read out of the context it answers with. 'Nothing' where the annotation is not processable, which is
 -- where this program has no arm of 'processFun' taking it to an annotation of the same name.
 --
 -- Asked closed-world, as 'evalShowAnnot' asks whether an annotation can be shown: whether this
@@ -680,13 +680,18 @@ evalProcessAnnot :: Env -> Val -> [(PartialType, EObjArr)] -> EExpr -> CResT IO 
 evalProcessAnnot env0@Env{evTbEnv, evTypeEnv} ioVal os annot
   | reachesTo evTypeEnv{tePrgmEnv=True} H.empty (getExprType call) dest = do
       tree <- asCResT $ toTExprDest evTbEnv os call (emptyMetaT dest)
-      Just <$> evalStateT (evalExpr tree) env
+      res <- evalStateT (evalExpr tree) env
+      -- What processing gives is the annotation, in the io processing left.
+      case res of
+        TupleVal n args | n == ContextStr, Just v <- H.lookup contextValStr args -> return (Just v)
+        _ -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos (getExprMeta annot)) $ printf "Processing %s did not answer with it in an io, but with %s" (show annot) (show res)]
   | otherwise = return Nothing
   where
     env = evalSetArgs (H.singleton processFunIO ioVal) env0{evAnnotObj = listToMaybe (map snd os)}
-    call = positioned $ (eVal processFun `eApply` (processFunAnnot, annot)) `eApplyM` processFunIO $ ioM
+    -- Processing runs in an io: it is the call of 'processFun' on the annotation, in the io.
+    call = positioned $ (eVal ContextInStr `eApply` (contextValStr, positioned (eVal processFun `eApply` (processFunAnnot, annot)))) `eApplyM` processFunIO $ ioM
     positioned e = exprWithMeta (getExprMeta e){getMetaPos = getMetaPos (getExprMeta annot)} e
-    dest = singletonType (partialVal $ exprPath annot){ptArgMode = PtArgAny}
+    dest = ioContextType $ singletonType (partialVal $ exprPath annot){ptArgMode = PtArgAny}
 
 -- | Each annotation written on the page at @file@ which is processable and not yet processed,
 -- updated to what processing it gives ('evalProcessAnnot'), by its meta ID.

@@ -21,6 +21,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 
 -- import           Emit                (codegenPrgm)
+import           Control.Applicative   ((<|>))
 import           CtConstants
 import           Data.Char             (chr, ord)
 import           Data.Maybe            (fromMaybe)
@@ -302,7 +303,11 @@ callerPage = ("callerPage", Right (MacroFunction macroBuild))
   where
     pageAtName = "/Catln/pageAt"
     macroBuild input MacroData{mdTbEnv=TBEnv{tbPrgm=Prgm{prgmObjMap=ObjectMap objMap}}} = do
-      source <- case getMetaPos (getExprMeta input) of
+      -- A call in a context (@ContextIn(value= lcm(input= ..), io)@, as a bind writes it) is the
+      -- call it holds, given its states: that call is what is completed, and where it is written is
+      -- where the call is.
+      let called = fromMaybe input (contextValueOf input)
+      source <- case getMetaPos (getExprMeta input) <|> getMetaPos (getExprMeta called) of
         Just (start, _) -> return $ sourceName start
         Nothing -> fail $ printf "%s asks for the page it is written in, but the call has no position to say which page that is" (show input)
       pageType <- case H.lookup (mkName pageAtName) objMap of
@@ -312,7 +317,20 @@ callerPage = ("callerPage", Right (MacroFunction macroBuild))
         Nothing -> fail $ printf "%s asks for the page it is written in, but it is not a call of one shape to add the page to: %s" (show input) (show $ getExprType input)
         Just _ -> do
           let pageCall = eVal pageAtName `eApply` ("/source", valToEExpr (StrVal source))
-          return $ Right $ input `eApplyOAs` [mkIOObjArr (emptyMetaT pageType) (partialKey (mkName "/page")) pageCall]
+          let withPage e = e `eApplyOAs` [mkIOObjArr (emptyMetaT pageType) (partialKey (mkName "/page")) pageCall]
+          return $ Right $ fromMaybe (withPage input) (inContextValue withPage input)
+    -- The call a call in a context holds, and the context given the call changed.
+    contextValueOf e = case [v | ObjArr{oaObj=Just k, oaArr=Just (Just v, _)} <- exprAppliedArgs e, isContextValue k] of
+      (v:_) | nameStr (exprPath e) == ContextInStr -> Just v
+      _                                            -> Nothing
+    -- Built again rather than edited in place, so the context's type is the completed call's: the
+    -- states are given to the call as it now is.
+    inContextValue f e = do
+      v <- contextValueOf e
+      let states = [oa | oa@ObjArr{oaObj=Just k} <- exprAppliedArgs e, not (isContextValue k)]
+      return $ positionedAs e $ (eVal ContextInStr `eApply` (contextValStr, f v)) `eApplyOAs` states
+    positionedAs e e' = setExprMeta e' (getExprMeta e'){getMetaPos = getMetaPos (getExprMeta e)}
+    isContextValue k = nameStr (makeAbsoluteName (exprPath k)) == contextValStr
 
 primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]

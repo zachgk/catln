@@ -78,13 +78,15 @@ module(Llm)
     can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
     page says it computes, and not only what it says.
     The page is the one the program was compiled from, handed to the call by the compiler rather
-    than read again from the file: a call written as `io.lcm(input= ...)` is completed to
-    `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
-  :IO.lcm(input -> String) -> /Data/Maybe[$T -> String]
+    than read again from the file: a call written as `lcm(input= ...)` is completed to
+    `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
+  lcm{io -> IO}(input -> String) -> /Data/Maybe[$T -> String]{IO}
     # [lcm] is the reply of the configured model to the prompt [input], asked with the page the call
       is written in. It answers as [llm] does.
     #runtime("callerPage")
-  :IO.lcm(input -> String, page -> /Catln/RawPrgm..)= this.llm(input= lcmPrompt(input= input, page= page))
+  lcm{io -> IO}(input -> String, page -> /Catln/RawPrgm..) -> /Data/Maybe[$T -> String]{IO} =
+    reply<- llm(input= lcmPrompt(input= input, page= page))
+    reply
 
   lcmPrompt(input -> String) -> String
     # [lcmPrompt] is what [lcm] asks the model: the page the call is written in, and then [input].
@@ -114,11 +116,14 @@ module(Llm)
   annot(#q(input -> String, result -> String))
     # The [#q] can also hold the [result] the model replied with.
 
-  /Catln/process(io -> /Catln/IO, annot -> #q(input -> String)) -> #q..
+  /Catln/process{io -> /Catln/IO}(annot -> #q(input -> String)) -> #q..{IO}
     # A [#q] is processed by asking it with the page it is written on, and is updated to hold the
       reply as its [result]. Where there is no reply it is left as it was.
     #runtime("callerPage")
-  /Catln/process(io -> /Catln/IO, annot= #q(input -> String), page -> /Catln/RawPrgm..)= qAnswered(input= input, reply= io.lcm(input= input, page= page))
+  /Catln/process{io -> /Catln/IO}(annot= #q(input -> String), page -> /Catln/RawPrgm..) -> #q..{IO} =
+    reply<- lcm(input= input, page= page)
+
+    qAnswered(input= input, reply= reply)
 
   qAnswered(input -> String, reply -> /Data/Maybe[$T -> String]) -> #q..
     # [qAnswered] is the [#q] asking [input], holding the [reply] where there is one.
