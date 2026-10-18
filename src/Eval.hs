@@ -494,12 +494,14 @@ evalExpr (TWhere _ b c) = do
   if c' == true
     then return v
     else evalError $ printf "The value %s does not satisfy its condition %s" (show v) (show c)
-evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
+-- An argument applied without a value is given by the argument of the evaluation of its name, as
+-- the @io@ of a run is, and the page a file processor is given ('Process.processCall').
+evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ argName), oaArr=Just (Nothing, _)})) = do
   Env{evArgs} <- get
   TupleVal n args <- evalExpr b
-  case H.lookup "/io" evArgs of
-    Just io -> return $ TupleVal n (H.insert (nameStr (oaObjPath oa)) io args)
-    Nothing -> error $ printf "evalExpr with no io"
+  case H.lookup (nameStr argName) evArgs of
+    Just v  -> return $ TupleVal n (H.insert (nameStr (oaObjPath oa)) v args)
+    Nothing -> error $ printf "evalExpr with no %s" (nameStr argName)
 evalExpr (TTupleApply _ (_, b) (EAppVar{})) = evalExpr b
 evalExpr (TTupleApply m (_, b) (EAppArg oa)) = do
   (TupleVal n args) <- evalExpr b

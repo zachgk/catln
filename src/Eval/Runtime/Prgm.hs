@@ -23,11 +23,15 @@
 
 module Eval.Runtime.Prgm where
 
+import           CtConstants          (parsePageErr, parsePageErrMessage,
+                                       runtimeArgKey)
 import           Data.Char            (isSpace)
 import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
 import           Data.List            (dropWhileEnd, intercalate, nub, sortOn)
 import           Data.Maybe           (fromMaybe, listToMaybe, mapMaybe)
+import           Data.UUID            (UUID)
+import qualified Data.UUID            as UUID
 import           Eval.Common
 import           Eval.Runtime.WebDocs (filterByType)
 import           MapMeta              (clearMetaDat, mapMetaPrgm)
@@ -35,16 +39,19 @@ import           Semantics.CtType     (fromCt, toCt)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Formatter  (formatRootPrgm)
+import           Syntax.Ct.Parser     (contents, pPrgm)
 import           Syntax.Ct.Prgm       (RawExpr, RawPrgm (..),
                                        RawStatementTree (..), isCorePath)
-import           Syntax.Ct.Results    (statementSpan)
-import           Text.Megaparsec      (SourcePos (..), sourceName)
+import           Syntax.Ct.Results    (removeAnnotById, setAnnotsById,
+                                       statementSpan, valToRawExpr)
+import           Text.Megaparsec      (SourcePos (..), errorBundlePretty,
+                                       runParser, sourceName)
 import           Text.Printf
 import           Utils                (graphLookup)
 
 -- | The primitives backing the compiler's own program types.
 prgmPrims :: [EPrim]
-prgmPrims = [prgmFor, pageAt, typeText, typeDecls]
+prgmPrims = [prgmFor, pageAt, typeText, typeDecls, formatPage, parsePage, removeAnnot, setAnnot]
 
 -- | The argument of @\/Catln\/prgmFor@ naming what to be given.
 prgmForNameArg :: String
@@ -87,6 +94,59 @@ pageAt = EEnvPrim "pageAt" prim
         Nothing -> Left $ printf "pageAt was asked for %s, which is not a page this evaluation was handed (it holds %s)" source (show $ H.keys evPages)
       Just v -> Left $ printf "pageAt was given %s, which is not a source" (show v)
       Nothing -> Left $ printf "pageAt has no %s argument, only %s" pageAtSourceArg (show $ H.keys args)
+
+-- | A page a primitive was handed as a @\/Catln\/RawPrgm@, under the argument @arg@, read back as the
+-- one the compiler holds.
+pageArgOf :: String -> String -> H.HashMap String Val -> Either String (RawPrgm ())
+pageArgOf primName arg args = case H.lookup arg args of
+  Just v -> case fromCt v of
+    Right page -> Right page
+    Left err -> Left $ printf "%s was given %s, which is not a page: %s" primName (show v) err
+  Nothing -> Left $ printf "%s has no %s argument, only %s" primName arg (show $ H.keys args)
+
+-- | The meta ID a primitive was handed as text under the argument @/annotId@.
+annotIdArgOf :: String -> H.HashMap String Val -> Either String UUID
+annotIdArgOf primName args = case H.lookup "/annotId" args of
+  Just (StrVal t) | Just i <- UUID.fromString t -> Right i
+  Just v -> Left $ printf "%s was given %s, which is not the ID of an annotation" primName (show v)
+  Nothing -> Left $ printf "%s has no /annotId argument, only %s" primName (show $ H.keys args)
+
+-- | Backs @\/Process\/formatPage@: a page written out as text, as the formatter writes a page back
+-- to its file ('formatRootPrgm').
+formatPage :: EPrim
+formatPage = EPrim "formatPage" (fmap (StrVal . formatRootPrgm) . pageArgOf "formatPage" "/page")
+
+-- | Backs @\/Process\/parsePage@: text read as a page, by the parser a @.ct@ file is read with.
+-- Text which is not a page is answered with a @\/Process\/ParsePageErr@ holding what the parser
+-- said of it, as text which is not an expression is by @\/Catln\/parseExpr@.
+parsePage :: EPrim
+parsePage = EPrim "parsePage" prim
+  where
+    prim args = case H.lookup "/text" args of
+      Just (StrVal text) -> Right $ resultVal $ case runParser (contents pPrgm) "<parsePage>" text of
+        Left err   -> Left $ TupleVal parsePageErr (H.singleton (runtimeArgKey parsePageErrMessage) (StrVal $ errorBundlePretty err))
+        Right page -> Right $ toCt page
+      Just v -> Left $ printf "parsePage was given %s, which is not text" (show v)
+      Nothing -> Left $ printf "parsePage has no /text argument, only %s" (show $ H.keys args)
+
+-- | Backs @\/Process\/removeAnnot@: the page without the annotation of the meta ID, nor what is
+-- written under it ('removeAnnotById').
+removeAnnot :: EPrim
+removeAnnot = EPrim "removeAnnot" $ \args -> do
+  page <- pageArgOf "removeAnnot" "/page" args
+  i <- annotIdArgOf "removeAnnot" args
+  return $ toCt $ removeAnnotById i page
+
+-- | Backs @\/Process\/setAnnot@: the page with the annotation of the meta ID written as the value
+-- @annot@, as a line processor's annotation is written back ('setAnnotsById', 'valToRawExpr').
+setAnnot :: EPrim
+setAnnot = EPrim "setAnnot" $ \args -> do
+  page <- pageArgOf "setAnnot" "/page" args
+  i <- annotIdArgOf "setAnnot" args
+  annot <- case H.lookup "/annot" args of
+    Just v  -> valToRawExpr v
+    Nothing -> Left $ printf "setAnnot has no /annot argument, only %s" (show $ H.keys args)
+  return $ toCt $ setAnnotsById (H.singleton i annot) page
 
 -- | The argument of @\/Catln\/typeText@ and @\/Catln\/typeDecls@ holding the type.
 typeArg :: String

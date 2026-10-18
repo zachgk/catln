@@ -1,4 +1,6 @@
 import "core"
+import hsrawprgm()
+import "process/page.ct"
 
 
 module(Process)
@@ -11,6 +13,8 @@ module(Process)
       It is done once it has run, so it removes itself: it is never run on what it wrote, and a
       [with] holding its [find] is replaced once rather than without end.
 
-  /Catln/processFile{io -> /Catln/IO}(annot -> #findReplace(find -> String, with -> String), source -> String, withoutAnnot -> String) -> String{IO}
-    # A [#findReplace] is processed by replacing in the page without it, which leaves it out.
-  /Catln/processFile{io -> /Catln/IO}(annot= #findReplace(find, with), source, withoutAnnot)= (withoutAnnot.replace(old= find, new= with)){io}
+  /Catln/processFile{io -> /Catln/IO}(annot -> #findReplace(find -> String, with -> String), page -> /Catln/RawPrgm.., annotId -> String) -> /Data/Result[$T -> /Catln/RawPrgm.., $E -> ParsePageErr]{IO}
+    # A [#findReplace] is processed by replacing in the text of the page without it, which leaves it
+      out. A replacement which leaves text that is not a page is reported, and the page is left as it
+      was.
+  /Catln/processFile{io -> /Catln/IO}(annot= #findReplace(find, with), page, annotId)= (parsePage(text= formatPage(page= removeAnnot(page= page, annotId= annotId)).replace(old= find, new= with))){io}

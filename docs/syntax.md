@@ -198,7 +198,7 @@ q> What does double do?
 `catln process` runs the processor of every annotation that has one, from the top of the page to the bottom. There are two kinds of processor:
 
 - A line processor is an arm of `/Catln/process{io}(annot)` that takes the annotation and returns its updated form, which is written back in its place. `q> ` is one. An annotation holding a `result` has been processed, and is skipped.
-- A file processor is an arm of `/Catln/processFile{io}(annot, source, withoutAnnot)`, run in an io context, that returns the new text of the page it is written on. It is given the text of the page as `source` (with the line processors above it applied), and the same text without the annotation itself as `withoutAnnot`. Where it changes the page, the file is written, compiled again and processed again from the top. Processing ends once a pass over the page makes no change to it.
+- A file processor is an arm of `/Catln/processFile{io}(annot, page, annotId)`, run in an io context, that returns the page it is written on as it is to become, as a `/Data/Result` of a `/Catln/RawPrgm`. It is given the page as `page` (with the line processors above it applied), and the ID of the annotation itself as `annotId`, which `removeAnnot` and `setAnnot` from the `process` library find it by. `formatPage` and `parsePage` turn a page into text and back. A `Fail` is reported and leaves the page as it was. Where it changes the page, the file is written, compiled again and processed again from the top. Processing ends once a pass over the page makes no change to it.
 
 The `process` library has a file processor, `#findReplace(find, with)`, which replaces each `find` on the page with `with` and removes itself, so it runs once:
 
@@ -218,18 +218,7 @@ A runnable program is one which can be executed. It is most similar to what you 
 
 ```
 f -> Showable
-f{io -> IO} -> (){IO}
-```
-
-A function run in an IO context performs its effects through binds. Each bind runs a function in
-the IO it is given and continues in the IO that function leaves, and the last line is the value the
-function returns in that IO:
-
-```
-main{io -> IO} -> (){IO} =
-  _<- println(msg= "hello world")
-  _<- exit(val= 0)
-  ()
+f{IO io} -> IO
 ```
 
 ### Build - main
@@ -241,7 +230,7 @@ In addition, some runnable functions can also be built. This corresponds to appl
 The possible signatures to build are:
 
 ```
-f{io -> IO} -> (){IO}
+f{IO io} -> IO
 f -> CatlnResult
-f{io -> IO} -> CatlnResult{IO}
+f{IO io} -> CatlnResult
 ```

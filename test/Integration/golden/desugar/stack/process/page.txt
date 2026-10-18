@@ -1,0 +1,168 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Process/parsedText"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Process/parsedText
+                            ( Value r -> ∀/Data/Result
+                                [ /T=/Catln/RawPrgm..
+                                , /E=∀/Process/ParsePageErr
+                                ]
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Process/parsedText
+                            ( Value r= /Data/Result/Ok( Value value ) ) -> ∀/Data/String = trimEnd
+                            ( Value /this= formatPage( Value page= Value value ) )
+                        , /Process/parsedText
+                            ( Value r= /Data/Result/Fail( Value err ) ) -> ∀/Data/String = trimEnd
+                            ( Value /this= msg( Value /this= Value err ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Process/removeAnnot"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Process/removeAnnot( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String ) -> /Catln/RawPrgm.. ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Process/setAnnot"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Process/setAnnot( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )( Value annot ) -> /Catln/RawPrgm.. ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Process/ParsePageErr/Syntax"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Process/ParsePageErr/Syntax( Value /message -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Process/parsePage"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Process/parsePage( Value text -> ∀/Data/String ) -> ∀/Data/Result
+                            [ /T=/Catln/RawPrgm..
+                            , /E=∀/Process/ParsePageErr
+                            ]
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Process/formatPage"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Process/formatPage( Value page -> /Catln/RawPrgm.. ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( Value /this= /Process/ParsePageErr/Syntax( Value message ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "the text is not a page: " }
+                            )( Value /r= Value message )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Process/ParsePageErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Process/ParsePageErr
+            , cgcExtends =
+                [ /Process/ParsePageErr/Syntax( /message=∀/Data/String ) ]
+            , cgcDoc = Just "[ParsePageErr] is why text is not a page: the [message] the parser said of it."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## The page a file processor rewrites
+                A file processor is given the page it is written on as a [/Catln/RawPrgm], the page as it was
+                written, and answers with the page it is to become. These are what it is rewritten with: in
+                place, by the annotation it is written as ([setAnnot], [removeAnnot]), or as text
+                ([formatPage], [parsePage])." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[ParsePageErr] is why text is not a page: the [message] the parser said of it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A page read from text is written back as the formatter writes it, and text which is not a page
+                is answered with what the parser says of it." }
+            )
+        , /Catln/#print
+            ( Value /p= parsedText
+                ( Value r= parsePage
+                    ( Value text= CStr
+                        { csValue = "x=1
+                        " }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "x= 1" }
+            )
+        , /Catln/#print
+            ( Value /p= parsedText
+                ( Value r= parsePage
+                    ( Value text= CStr
+                        { csValue = "x= (
+                        " }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "the text is not a page: <parsePage>:1:5:
+                  |
+                1 | x= (
+                  |     ^
+                unexpected newline
+                expecting "${", "->", "..", '"', '$', ''', '(', ')', ',', '-', ':', '[', '_', '~', digit, or integer" }
+            )
+        ]
+    }

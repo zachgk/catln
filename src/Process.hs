@@ -26,19 +26,21 @@ import qualified Data.HashMap.Strict as H
 import           Data.List           (sortOn)
 import           Data.Maybe          (listToMaybe)
 import           Data.UUID           (UUID)
+import qualified Data.UUID           as UUID
 import           Eval                (evalBaseEnvWith, evalExpr, ioContextType,
-                                      pageAnnots, rawPrgmAnnotIds)
+                                      pageAnnots,
+                                      rawPrgmAnnotIds)
 import           Eval.Common
 import           Eval.Env            (evalSetArgs)
 import           Eval.ExprBuilder
 import           Semantics           (exprWithMeta)
+import           Semantics.CtType    (fromCt, toCt)
 import           Semantics.Prgm
 import           Semantics.TypeGraph (reachesTo)
 import           Semantics.Types
 import           Syntax.Ct.Formatter (formatRootPrgm)
-import           Syntax.Ct.Prgm      (RawExpr)
-import           Syntax.Ct.Results   (removeAnnotById, setAnnotsById,
-                                      valToRawExpr)
+import           Syntax.Ct.Prgm      (RawExpr, RawPrgm)
+import           Syntax.Ct.Results   (setAnnotsById, valToRawExpr)
 import           Text.Printf
 import           TreeBuild           (toTExprDest)
 
@@ -46,8 +48,8 @@ import           TreeBuild           (toTExprDest)
 --
 -- A line processor (@\/Catln\/process{io}(annot)@, 'processFun') updates the annotation itself: the
 -- annotation is written back as what it gives, and nothing else on the page changes. A file processor
--- (@\/Catln\/processFile{io}(annot, source, withoutAnnot)@, 'processFileFun') updates the page the
--- annotation is written in: it is given the text of the page and gives the text it is to become.
+-- (@\/Catln\/processFile{io}(annot, page, annotId)@, 'processFileFun') updates the page the
+-- annotation is written in: it is given the page and gives the page it is to become.
 data ProcessKind = LineProcess | FileProcess
   deriving (Eq, Show)
 
@@ -57,16 +59,28 @@ data ProcessKind = LineProcess | FileProcess
 --
 -- It is the call a page makes of its annotation, and an arm asking for the page it is written in
 -- (@callerPage@) is asking for that one, rather than for the library declaring the arm.
-processCall :: String -> EExpr -> [(String, EExpr)] -> EExpr
-processCall fun annot args = positioned $ (eVal ContextInStr `eApply` (contextValStr, positioned (foldl eApply (eVal fun `eApply` (processFunAnnot, annot)) args))) `eApplyM` processFunIO $ ioM
+--
+-- The arguments given by an argument of the evaluation rather than as a value, as the @io@ is, are
+-- @envArgs@: the page a file processor is given is one, as it is too large a value to build an
+-- expression of.
+processCall :: String -> EExpr -> [String] -> [(String, EExpr)] -> EExpr
+processCall fun annot envArgs args = positioned $ (eVal ContextInStr `eApply` (contextValStr, positioned inner)) `eApplyM` processFunIO $ ioM
   where
+    inner = foldl eApply (foldl (\e a -> eApplyM e a pageM) (eVal fun `eApply` (processFunAnnot, annot)) envArgs) args
     positioned e = exprWithMeta (getExprMeta e){getMetaPos = getMetaPos (getExprMeta annot)} e
 
 -- | The destination the processor of a kind is to reach for an annotation, in the io it ends in: the
--- annotation updated, for a line processor, and the text of the page, for a file processor.
+-- annotation updated, for a line processor, and the page as it is to become or why it can not be, for
+-- a file processor.
 processDest :: ProcessKind -> EExpr -> Type
 processDest LineProcess annot = ioContextType $ singletonType (partialVal $ exprPath annot){ptArgMode = PtArgAny}
-processDest FileProcess _ = ioContextType strType
+processDest FileProcess _ = ioContextType $ UnionType Nothing (joinUnionType [anyOf ctResultOk, anyOf ctResultFail]) []
+  where
+    anyOf name = (partialVal $ mkName name){ptArgMode = PtArgAny}
+
+-- | The type of the page a file processor is given: any @\/Catln\/RawPrgm@.
+pageM :: EvalMeta
+pageM = Meta (singletonType (partialVal $ mkName rawPrgmPath){ptArgMode = PtArgAny}) Nothing UUID.nil emptyMetaDat
 
 -- | Which kind of processor an annotation is processed by, if any: the kind with an arm in this
 -- program taking the annotation to its destination ('processDest').
@@ -80,40 +94,54 @@ processKindOf Env{evTypeEnv} annot = case filter reaches [LineProcess, FileProce
   [kind] -> return $ Just kind
   _      -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s has both a line processor (%s) and a file processor (%s), so there is no saying which processes it" (show $ exprPath annot) processFun processFileFun]
   where
-    reaches kind = reachesTo evTypeEnv{tePrgmEnv=True} H.empty (getExprType $ processCall (kindFun kind) annot (kindArgs kind)) (processDest kind annot)
+    reaches kind = reachesTo evTypeEnv{tePrgmEnv=True} H.empty (getExprType $ processCall (kindFun kind) annot (kindEnvArgs kind) (kindArgs kind)) (processDest kind annot)
     kindFun LineProcess = processFun
     kindFun FileProcess = processFileFun
+    kindEnvArgs LineProcess = []
+    kindEnvArgs FileProcess = [processFilePage]
     kindArgs LineProcess = []
-    kindArgs FileProcess = [(processFileSource, valToEExpr (StrVal "")), (processFileWithoutAnnot, valToEExpr (StrVal ""))]
+    kindArgs FileProcess = [(processFileAnnotId, valToEExpr (StrVal ""))]
 
--- | Evaluates the call of a processor of an annotation to its destination, run in the io @ioVal@, and
--- reads what it gives out of the context it answers with.
-evalProcessCall :: Env -> Val -> [(PartialType, EObjArr)] -> ProcessKind -> EExpr -> [(String, EExpr)] -> String -> CResT IO Val
-evalProcessCall env0@Env{evTbEnv} ioVal os kind annot args fun = do
-  tree <- asCResT $ toTExprDest evTbEnv os (processCall fun annot args) (emptyMetaT $ processDest kind annot)
+-- | Evaluates the call of a processor of an annotation to its destination, run in the io @ioVal@ with
+-- each of @envArgs@ given by the argument of the evaluation it names, and reads what it gives out of
+-- the context it answers with.
+evalProcessCall :: Env -> Val -> [(PartialType, EObjArr)] -> ProcessKind -> EExpr -> [(String, Val)] -> [(String, EExpr)] -> String -> CResT IO Val
+evalProcessCall env0@Env{evTbEnv} ioVal os kind annot envArgs args fun = do
+  tree <- asCResT $ toTExprDest evTbEnv os (processCall fun annot (map fst envArgs) args) (emptyMetaT $ processDest kind annot)
   res <- evalStateT (evalExpr tree) env
   -- What processing gives is its value, in the io processing left.
   case res of
     TupleVal n resArgs | n == ContextStr, Just v <- H.lookup contextValStr resArgs -> return v
     _ -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos (getExprMeta annot)) $ printf "Processing %s did not answer with it in an io, but with %s" (show annot) (show res)]
   where
-    env = evalSetArgs (H.singleton processFunIO ioVal) env0{evAnnotObj = listToMaybe (map snd os)}
+    env = evalSetArgs (H.fromList $ (processFunIO, ioVal) : envArgs) env0{evAnnotObj = listToMaybe (map snd os)}
 
 -- | What a line processor updates an annotation to: @\/Catln\/process{io}(annot)@ ('processFun').
 evalProcessLine :: Env -> Val -> [(PartialType, EObjArr)] -> EExpr -> CResT IO Val
-evalProcessLine env ioVal os annot = evalProcessCall env ioVal os LineProcess annot [] processFun
+evalProcessLine env ioVal os annot = evalProcessCall env ioVal os LineProcess annot [] [] processFun
 
--- | What a file processor updates the text of the page an annotation is written in to:
--- @\/Catln\/processFile{io}(annot, source, withoutAnnot)@ ('processFileFun'), given the text of the
--- page as @source@ and the text of the page without the annotation as @withoutAnnot@.
-evalProcessFile :: Env -> Val -> [(PartialType, EObjArr)] -> EExpr -> String -> String -> CResT IO String
-evalProcessFile env ioVal os annot source withoutAnnot = do
-  val <- evalProcessCall env ioVal os FileProcess annot args processFileFun
+-- | What a file processor updates the page an annotation is written in to:
+-- @\/Catln\/processFile{io}(annot, page, annotId)@ ('processFileFun'), given the page as @page@ and
+-- the meta ID of the annotation as @annotId@. It answers with a @\/Data\/Result@: the page it is to
+-- become, or why it can not be processed, which is reported with the @msg@ of the error.
+evalProcessFile :: Env -> Val -> [(PartialType, EObjArr)] -> EExpr -> RawPrgm () -> CResT IO (RawPrgm ())
+evalProcessFile env ioVal os annot page = do
+  val <- evalProcessCall env ioVal os FileProcess annot [(processFilePage, toCt page)] [(processFileAnnotId, valToEExpr (StrVal $ UUID.toString $ getMetaId $ getExprMeta annot))] processFileFun
   case val of
-    StrVal text -> return text
-    _ -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s was processed by %s into %s, which is not the text of a page" (show $ exprPath annot) processFileFun (show val)]
+    TupleVal name args | name == ctResultOk, Just pageVal <- H.lookup (runtimeArgKey ctResultOkValue) args -> case fromCt pageVal of
+      Right page' -> return page'
+      Left err    -> notPage (show pageVal) err
+    TupleVal name args | name == ctResultFail, Just err <- H.lookup (runtimeArgKey ctResultFailErr) args -> do
+      msg <- evalStateT (evalExpr =<< lift (asCResT $ errMsgTree err)) env
+      case msg of
+        StrVal msg' -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s could not be processed: %s" (show $ exprPath annot) msg']
+        _ -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s could not be processed: %s" (show $ exprPath annot) (show err)]
+    _ -> notPage (show val) "it is not a /Data/Result"
   where
-    args = [(processFileSource, valToEExpr (StrVal source)), (processFileWithoutAnnot, valToEExpr (StrVal withoutAnnot))]
+    notPage :: String -> String -> CResT IO a
+    notPage shown err = asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s was processed by %s into %s, which is not a page: %s" (show $ exprPath annot) processFileFun shown err]
+    -- Why the processor failed, as the error says it: its @msg@.
+    errMsgTree err = toTExprDest (evTbEnv env) [] (eVal errMsgFun `eApply` (errMsgThis, valToEExpr err)) (emptyMetaT strType)
 
 -- | Where a pass of processing over a page ended ('evalProcessPage').
 data ProcessStep
@@ -168,8 +196,8 @@ evalProcessPage pages ioVal file prgm = do
         Just (Just FileProcess) -> do
           let page' = setAnnotsById updated page
           let source = formatRootPrgm page'
-          text <- noted $ evalProcessFile env ioVal os a source (formatRootPrgm $ removeAnnotById (annotId a) page')
-          case text of
+          page'' <- noted $ evalProcessFile env ioVal os a page'
+          case formatRootPrgm <$> page'' of
             Just text' | text' /= source -> return $ ProcessFileChanged text'
             _                            -> go env page updated rest
         _ -> go env page updated rest

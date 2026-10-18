@@ -55,7 +55,8 @@ pattern ContextStr :: String
 pattern ContextStr = "/Context"
 pattern ContextInStr :: String
 pattern ContextInStr = "/ContextIn"
-contextValStr, ioStr :: String
+contextOutStr, contextValStr, ioStr :: String
+contextOutStr = "/ContextOut"
 contextValStr = "/value"
 ioStr = "/io"
 
@@ -265,13 +266,25 @@ processFunIO = "/io"
 processFunAnnot = "/annot"
 
 -- | What @catln process@ asks of each annotation on a page with a file processor:
--- @\/Catln\/processFile{io}(annot, source, withoutAnnot)@ run in an io, the new text of the page it is written
--- in. It is given the text of the page as @source@, and the same text without the annotation as
--- @withoutAnnot@, for a processor which is done once it has run to leave itself out.
-processFileFun, processFileSource, processFileWithoutAnnot :: String
+-- @\/Catln\/processFile{io}(annot, page, annotId)@, the page it is written in as it is to become,
+-- as a @\/Data\/Result@ of a @\/Catln\/RawPrgm@. It is given the page as @page@, and the meta ID of
+-- the annotation as @annotId@, for a processor to find itself in the page by.
+processFileFun, processFilePage, processFileAnnotId, rawPrgmPath :: String
 processFileFun = "/Catln/processFile"
-processFileSource = "/source"
-processFileWithoutAnnot = "/withoutAnnot"
+processFilePage = "/page"
+processFileAnnotId = "/annotId"
+rawPrgmPath = "/Catln/RawPrgm"
+
+-- | Why text is not a page, declared in @stack/process/page.ct@: what the parser said of it.
+parsePageErr, parsePageErrMessage :: String
+parsePageErr = "/Process/ParsePageErr/Syntax"
+parsePageErrMessage = "message"
+
+-- | What went wrong, written for a person to read: @\/Data\/Err@'s @msg@, declared in
+-- @stack/core/error.ct@ as a method of the error, its @this@.
+errMsgFun, errMsgThis :: String
+errMsgFun = "/Data/msg"
+errMsgThis = "/this"
 
 -- | The field an annotation is processed into where processing it failed, holding why. Such an
 -- annotation is reported with that reason and written back as it was, so it is processed again
