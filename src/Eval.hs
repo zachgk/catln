@@ -75,19 +75,28 @@ evalPrgmTargetMode function prgm =
     Nothing -> NoEval (reachesPartials reachEnv [partialVal (mkName function)]) (reachesPartials reachEnv [partialVal (mkName function)])
     Just f ->
       let function' = ptName f
-          funCtxTp = (partialVal (mkName ContextStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), typeVal function')], ptArgMode=PtArgAny}
+          funCtxTp = (partialVal (mkName ContextInStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), typeVal function'), (partialKey (mkName ioStr), ioType)], ptArgMode=PtArgAny}
           funTp = partialVal function'
           funCtxReaches = reachesPartials reachEnv [funCtxTp]
           funReaches = reachesPartials reachEnv [funTp]
       in case (funCtxReaches, funReaches) of
-           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext (nameStr function')
-           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext (nameStr function')
+           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt (ioContextType resultType) -> EvalBuildWithContext (nameStr function')
+           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt (ioContextType PTopType) -> EvalRunWithContext (nameStr function')
            (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild (nameStr function')
            (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun (nameStr function') -- Should require isShowable for run result
            _ -> NoEval funCtxReaches funReaches
   where
     typeEnv = mkTypeEnv prgm
     reachEnv = ReachesEnv typeEnv H.empty S.empty
+
+-- | What a function run in an io answers with: a 'ContextStr' holding its value, of the type given,
+-- in the io it ends in. A run's is any value (@(){IO}@) and a build's a result (@CatlnResult{IO}@).
+ioContextType :: Type -> Type
+ioContextType valT = singletonType $ (partialVal (mkName ContextStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), valT), (partialKey (mkName ioStr), ioType)], ptArgMode=PtArgAny}
+
+-- | The input a run or build of a function in an io starts from: the function in an io.
+ioContextInput :: String -> EExpr
+ioContextInput function' = eApplyM (eVal ContextInStr `eApply` (contextValStr, eVal function')) ioStr ioM
 
 evalTargetMode :: String -> FileImport -> EPrgmGraphData -> CRes EvalMode
 evalTargetMode function prgmName prgmGraphData = do
@@ -99,7 +108,7 @@ evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
 evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ flatObjectMap prgmObjMap
   where
     targetMode oa = case nameStr (oaObjPath oa) of
-      ContextStr -> case H.lookupDefault Nothing (partialKey (mkName contextValStr)) $ exprAppliedArgsMap $ oaObjExpr oa of
+      ContextInStr -> case H.lookupDefault Nothing (partialKey (mkName contextValStr)) $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valE) -> case maybeExprPath valE of
           Just valName -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr valName) prgm)
           _ -> Nothing
@@ -286,33 +295,34 @@ evalCallTree input (TCArg _ name) = do
     Nothing -> evalError $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
 evalCallTree input (TCObjArr oa) = evalObjArr input (Left oa)
 evalCallTree input (TCPrim oa (EPrim _ f)) = do
-  case input of
-    (TupleVal _ args) -> case f args of
+  case primInputArgs input of
+    Just args -> case f args of
       Right val -> return val
       Left err  -> evalError err
     _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree input (TCPrim oa (EEnvPrim _ f)) = do
   env <- get
-  case input of
-    (TupleVal _ args) -> case f env args of
+  case primInputArgs input of
+    Just args -> case f env args of
       Right val -> return val
       Left err  -> evalError err
     _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 -- An effect, which only an IO value can ask for: the primitive is handed the handle of the IO value
--- it was called on, and a call on anything else is refused rather than given some other handle.
+-- in the context it was called in, and a call in anything else is refused rather than given some
+-- other handle.
 evalCallTree input (TCPrim oa (EIOPrim name f)) = do
-  case input of
-    (TupleVal _ args) -> case H.lookup "/this" args of
+  case primInputArgs input of
+    Just args -> case H.lookup ioStr args of
       Just (IOVal _ handle) -> do
         res <- liftIO $ f handle args
         case res of
           Right val -> return val
           Left err  -> evalError err
-      _ -> evalError $ printf "The IO primitive %s can only be called as a method of an IO value, but was called with %s" name (show args)
+      _ -> evalError $ printf "The IO primitive %s can only be called in an io context, but was called with %s" name (show args)
     _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree input (TCPrim oa (EEvalPrim _ f)) = do
-  case input of
-    (TupleVal _ args) -> f args
+  case primInputArgs input of
+    Just args -> f args
     _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
@@ -1229,20 +1239,21 @@ evalRunPrgm :: EvalPages -> Val -> String -> EPrgm -> CResT IO (Integer, EvalRes
 evalRunPrgm pages ioVal function prgm = do
   input <- asCResT $ case evalPrgmTargetMode function prgm of
         EvalRunWithContext function' ->
-          -- Case for eval Context(value=main, io=IO)
-
-          return $ eApplyM (eVal ContextStr `eApply` (contextValStr, eVal function')) "/io" ioM
+          -- Case for eval ContextIn(value=main, io=IO)
+          return (ioContextInput function', ioContextType PTopType)
         EvalRun function' ->
           -- Case for eval main
-          return $ eVal function'
+          return (eVal function', ioType)
         _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
-  let src = getExprPartialType input
-  let dest = ioType
-  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
-  let env2 = evalSetArgs (H.singleton "/io" ioVal) env{evPages = pages}
+  let (inputE, dest) = input
+  let src = getExprPartialType inputE
+  (expr, env) <- asCResT $ evalBuildPrgm inputE src dest prgm
+  let env2 = evalSetArgs (H.singleton ioStr ioVal) env{evPages = pages}
   (res, env') <- runStateT (evalExpr expr) env2
   case res of
     (IOVal r _) -> return (r, evalResult env')
+    -- A run in an io answers with the io it ended in, in the context it returns.
+    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- H.lookup ioStr args -> return (r, evalResult env')
     _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
 evalRun :: EvalPages -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
@@ -1343,6 +1354,9 @@ showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDe
       return $ EvalTreebugClosed oa input' val' children' nodeId callShow
     showParts (TupleVal name args) = TupleVal name <$> mapM showVal args
     showParts v                    = return v
+    -- A value holding an io (the one a context carries) has no equality to key a display by, and
+    -- no display: it is shown by its parts.
+    showVal v@TupleVal{} | holdsIO v = showParts v
     showVal v@TupleVal{} = do
       (cache, built) <- get
       case H.lookup v cache of
@@ -1358,6 +1372,9 @@ showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDe
           modify $ \(c, b) -> (H.insert v shown c, b)
           return shown
     showVal v = return v
+    holdsIO IOVal{}         = True
+    holdsIO (TupleVal _ as) = any holdsIO (H.elems as)
+    holdsIO _               = False
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do
@@ -1368,16 +1385,22 @@ evalBuild function prgmName prgmGraphData = do
           -- Case for eval llvm(c=Context(value=main, io=IO))
           return $ eVal "/Catln/llvm" `eApply` ("/c", eVal function')
         EvalBuildWithContext function' ->
-          -- Case for buildable Context(value=main, io=IO)
-          return $ eApplyM (eVal ContextStr `eApply` (contextValStr, eVal function')) "/io" ioM
+          -- Case for buildable ContextIn(value=main, io=IO)
+          return $ ioContextInput function'
         EvalBuild function' ->
           -- Case for buildable main
           return $ eVal function'
         unexpectedEvalMode -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build with unexpected eval mode %s" (show function) (show unexpectedEvalMode)]
   let src = getExprPartialType input
-  let dest = resultType
+  let dest = case targetMode of
+        EvalBuildWithContext{} -> ioContextType resultType
+        _                      -> resultType
   (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
-  (res, env') <- runStateT (evalExpr expr) env
+  (res0, env') <- runStateT (evalExpr expr) env
+  -- A build in an io answers with its result in the context it returns.
+  let res = case res0 of
+        TupleVal n args | n == ContextStr, Just v <- H.lookup contextValStr args -> v
+        _ -> res0
   case res of
     (LLVMVal _) -> do
       -- llvmStr <- codegenExInit toCodegen

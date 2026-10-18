@@ -3,16 +3,15 @@ import "core"
 
 module(Http)
   # # HTTP
-    Requests over the network. Sending one is a method of [/Catln/IO], because it reaches outside
-    the program: what comes back is decided by whatever answers, and sending it can change what
-    answers the next one. So a program can only send a request where it holds an IO value to send it
-    through.
+    Requests over the network. Sending one runs in an [/Catln/IO] context, because it reaches
+    outside the program: what comes back is decided by whatever answers, and sending it can change
+    what answers the next one. So a program can only send a request where it runs in an io.
     This is not part of the standard library. A program which sends no request has no use for it,
     and one that does writes `import "http"`.
   data(Header(name -> String, value -> String))
     # One header of a request: its name, and what it is set to.
 
-  :IO.httpPost(url -> String, headers -> /Data/List[$T -> Header..], body -> String) -> String
+  httpPost{io -> IO}(url -> String, headers -> /Data/List[$T -> Header..], body -> String) -> String{IO}
     # [httpPost] sends [body] to [url] as the body of a POST request with [headers] set, and answers
       with the body of the response. The body is sent and read as UTF-8.
       A request that cannot be made — a URL that is not one, a host that does not answer — and a

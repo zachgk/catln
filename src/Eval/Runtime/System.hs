@@ -79,25 +79,29 @@ realHttpPost url headers body = do
       | otherwise -> Left $ printf "The request to %s answered with status %d: %s" url status (LBU.toString $ getResponseBody resp)
       where status = getResponseStatusCode resp
 
--- | Backs @:IO.env(name -> String) -> Maybe[String]@: an environment variable's value, or
+-- | An IO primitive's answer: its value in the io it was called in.
+ioContextVal' :: H.HashMap String Val -> Val -> Val
+ioContextVal' args v = ioContextVal v (H.lookupDefault unitVal ioStr args)
+
+-- | Backs @env{io -> IO}(name -> String) -> Maybe[String]{IO}@: an environment variable's value, or
 -- @Nothing@ where it is not set.
 ioEnv :: EPrim
 ioEnv = EIOPrim "ioEnv" prim
   where
     prim handle args = case valStrArg "IO.env" "name" args of
       Left err   -> return $ Left err
-      Right name -> Right . maybeStr <$> iohLookupEnv handle name
+      Right name -> Right . ioContextVal' args . maybeStr <$> iohLookupEnv handle name
     maybeStr Nothing  = TupleVal ctMaybeNothing H.empty
     maybeStr (Just v) = TupleVal ctMaybeSome (H.singleton (runtimeArgKey ctMaybeSomeValue) (StrVal v))
 
--- | Backs @:IO.httpPost(url -> String, headers -> List[Http/Header], body -> String) -> String@:
+-- | Backs @httpPost{io -> IO}(url -> String, headers -> List[Http/Header], body -> String) -> String{IO}@:
 -- the body of the response.
 ioHttpPost :: EPrim
 ioHttpPost = EIOPrim "ioHttpPost" prim
   where
     prim handle args = case request args of
       Left err -> return $ Left err
-      Right (url, headers, body) -> fmap StrVal <$> iohHttpPost handle url headers body
+      Right (url, headers, body) -> fmap (ioContextVal' args . StrVal) <$> iohHttpPost handle url headers body
     request args = do
       url <- valStrArg "IO.httpPost" "url" args
       body <- valStrArg "IO.httpPost" "body" args

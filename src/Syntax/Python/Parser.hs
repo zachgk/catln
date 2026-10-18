@@ -598,14 +598,12 @@ convertPyBuiltinCall "oct"   [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "oct")
 convertPyBuiltinCall "bin"   [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "bin")
--- input() -> io.input  (reads a line from stdin via the IO context)
+-- input() -> input  (reads a line from stdin; a call run in the IO context, so it is bound)
 convertPyBuiltinCall "input" [] =
-  Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "input")
--- print(*args) -> io.println(msg=arg.toString) for single-arg case
+  Just $ rawVal "input"
+-- print(*args) -> println(msg=arg.toString) for single-arg case, run in the IO context
 convertPyBuiltinCall "print" [PyPosArg x] =
-  Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "println")
-    `applyRawArgs` [(Just $ partialKey "msg",
-                     RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+  Just $ pyPrintCall x
 -- sum(lst) -> sum(lst=lst)
 convertPyBuiltinCall "sum" [PyPosArg x] =
   Just $ rawVal "sum"
@@ -687,39 +685,34 @@ isContextParam _                                         = False
 -- | Build sub-statements for a function body using the nestedDeclaration approach.
 -- IO effect statements (print calls) become RawBindStatements threading 'io'.
 -- Local variable assignments become RawDeclStatements.
--- The return expression (or final 'io' for IO functions) becomes a bare expression sub-statement.
+-- | The @print(x)@ of Python: @println(msg= x.toString)@, run in the IO context.
+pyPrintCall :: PyExpr -> RawExpr ()
+pyPrintCall x = rawVal "println" `applyRawArgs` [(Just $ partialKey "msg", RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+
+-- Build the sub-statements of a function body, in the order they are written.
+-- The return expression (or unit, for a function with none) becomes a bare expression
+-- sub-statement. In an IO function each effect is a bind (@_<- println(msg= ..)@,
+-- @x<- input@), which runs it in the IO context and the rest of the body in the context it leaves.
 buildFuncSubStmts :: Bool -> [PyStatement] -> [RawStatementTree RawExpr ()]
-buildFuncSubStmts isIO stmts = localDecls ++ ioBinds ++ [finalStmt]
+buildFuncSubStmts isIO stmts = mapMaybe toStmt stmts ++ [finalStmt]
   where
-    -- Local variable declarations (PyAssign with type annotation)
-    localDecls = mapMaybe toLocalDecl stmts
-    toLocalDecl s = case s of
-      PyAssign _ (Just _) _ -> convertPyStatementToTree s
-      PyAssign _ Nothing  _ -> convertPyStatementToTree s
-      _                     -> Nothing
-    -- IO-effect bind statements: print(x) -> io <- io.println(/msg= x.toString)
-    ioBinds
-      | isIO = mapMaybe toIOBind stmts
-      | otherwise = []
-    toIOBind (PyExprStmt (PyCall (PyVar "print") [PyPosArg x])) =
-      let printExpr = RawMethod emptyMetaN (rawVal "io") (rawVal "println")
-                        `applyRawArgs` [(Just $ partialKey "msg",
-                                         RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
-          bindDecl = RawObjArr
-            { roaObj    = Just (rawVal "io")
+    toStmt (PyAssign (PyVar v) _ (Just (PyCall (PyVar "input") []))) | isIO = Just $ bindStmt (rawVal v) (rawVal "input")
+    toStmt s@PyAssign{} = convertPyStatementToTree s
+    toStmt (PyExprStmt (PyCall (PyVar "print") [PyPosArg x])) | isIO = Just $ bindStmt (RawHoleExpr emptyMetaN (HoleActive Nothing)) (pyPrintCall x)
+    toStmt _ = Nothing
+    bindStmt pat e = RawStatementTree (RawBindStatement RawObjArr
+            { roaObj    = Just pat
             , roaBasis  = FunctionObj
             , roaDoc    = Nothing
             , roaAnnots = []
-            , roaArr    = Just (Just printExpr, Nothing)
+            , roaArr    = Just (Just e, Nothing)
             , roaDef    = Nothing
-            }
-      in Just $ RawStatementTree (RawBindStatement bindDecl) []
-    toIOBind _ = Nothing
-    -- Final sub-statement: return expression, or 'io' for IO functions, or anonymous
+            }) []
+    -- Final sub-statement: return expression, or unit
     returnExprs = [convertPyExpr e | PyReturn (Just e) <- stmts]
     finalExpr = case returnExprs of
       (e:_) -> e
-      []    -> if isIO then rawVal "io" else rawAnon
+      []    -> rawAnon
     finalStmt = RawStatementTree
       (RawDeclStatement RawObjArr
         { roaObj    = Just finalExpr
@@ -763,21 +756,12 @@ convertPyStatementToTree stmt = case stmt of
         isLocalOrIO (PyExprStmt _) = True
         isLocalOrIO _              = False
         hasReturn = any (\s -> case s of PyReturn (Just _) -> True; _ -> False) body
-        hasLocalDecls = any (\s -> case s of PyAssign {} -> True; _ -> False) body
-        -- IO effect statements for direct chaining (print calls only)
-        ioEffects = [e | PyExprStmt e <- body]
-        -- Chain a single IO-effect expression onto an accumulated IO value.
-        chainIOEffect acc (PyCall (PyVar "print") [PyPosArg x]) =
-          RawMethod emptyMetaN acc (rawVal "println")
-            `applyRawArgs` [(Just $ partialKey "msg",
-                             RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
-        chainIOEffect acc _ = acc
         (bodyExpr, bodySubStmts)
-          -- IO functions with only print calls (no local variable declarations) use
-          -- direct IO chaining to avoid intermediate lambdas that fail BoundedByObjs9.
-          | isIO && not hasLocalDecls && not hasReturn =
-              (Just (foldl chainIOEffect (rawVal "io") ioEffects), [])
-          | hasLocalOrIO || (isIO && not hasReturn) =
+          -- An IO function is always a body of statements: its effects are binds, and its last
+          -- line is what it returns in the context they leave.
+          | isIO =
+              (Just (rawVal nestedDeclaration), subStmts)
+          | hasLocalOrIO =
               (Just (rawVal nestedDeclaration), subStmts)
           | hasReturn =
               (fmap convertPyExpr (listToMaybe [e | PyReturn (Just e) <- body]), [])
@@ -786,10 +770,17 @@ convertPyStatementToTree stmt = case stmt of
         funcHead   = case ctxParams of
           []  -> baseHead
           cps -> RawContextApply emptyMetaN (emptyMetaN, baseHead) (map convertPyParam cps)
-        -- Context-parameterized functions (ContextIn) must not carry an
-        -- explicit return-type annotation — the type is inferred from the
-        -- context.  Plain functions keep the Python return-type annotation.
-        retTypeExpr = if null ctxParams then fmap convertPyTypeExpr retType else Nothing
+        -- A function run in a context returns its value in the context (@(){IO}@, or
+        -- @Integer{IO}@ for one returning an @int@), which a body of binds has to declare.
+        -- Plain functions keep the Python return-type annotation.
+        retTypeExpr
+          | null ctxParams = fmap convertPyTypeExpr retType
+          | otherwise = Just $ RawContextApply emptyMetaN (emptyMetaN, ctxValueType) [RawObjArr (Just (rawVal "IO")) ArgObj Nothing [] Nothing Nothing]
+        ctxValueType = case retType of
+          Just (PyVar t) | mapPyBuiltinType t == "IO" -> rawAnon
+          Just PyNone                                 -> rawAnon
+          Nothing                                     -> rawAnon
+          Just t                                      -> convertPyTypeExpr t
         decl = RawObjArr
           { roaObj    = Just funcHead
           , roaBasis  = FunctionObj

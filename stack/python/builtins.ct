@@ -4,7 +4,7 @@ import "core/data.ct"
 
 module(Python/Builtins)
   # ## IO built-ins
-  :IO.input -> String
+  input{io -> IO} -> String{IO}
     #runtime("ioInput")
 
   # ## Python built-in abs and pow mapped to methods

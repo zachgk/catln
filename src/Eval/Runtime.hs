@@ -222,29 +222,32 @@ floatCeil = EPrim "floatCeil" prim
 intDiv :: EPrim
 intDiv = liftIntOp "//" div
 
+-- | Sets the exit code of the io it is called in, answering with unit in the io carrying it.
 ioExit :: EPrim
 ioExit = EPrim "ioExit" prim
   where
-    prim args = case (H.lookup "/this" args, H.lookup "/val" args) of
-      (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
+    prim args = case (H.lookup ioStr args, H.lookup "/val" args) of
+      (Just (IOVal _ io), Just (IntVal val)) -> Right $ ioContextVal unitVal (IOVal val io)
       _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
 
--- | Writes a line through the IO value's handle, as it is evaluated, and answers with the same IO
--- value so later effects are sequenced after this one.
+-- | Writes a line through the handle of the io it is called in, as it is evaluated, and answers
+-- with unit in that io so later effects are sequenced after this one.
 println :: EPrim
 println = EIOPrim "println" prim
   where
-    prim handle args = case (H.lookup "/this" args, H.lookup "/msg" args) of
+    prim handle args = case (H.lookup ioStr args, H.lookup "/msg" args) of
       (Just io@IOVal{}, Just (StrVal msg)) -> do
         iohPutLine handle msg
-        return $ Right io
-      _ -> return $ Left "Invalid println signature"
+        return $ Right $ ioContextVal unitVal io
+      _ -> return $ Left $ printf "Invalid println signature with args: %s" (show args)
 
--- | Reads a line through the IO value's handle.
+-- | Reads a line through the handle of the io it is called in.
 ioInput :: EPrim
 ioInput = EIOPrim "ioInput" prim
   where
-    prim handle _ = fmap StrVal <$> iohGetLine handle
+    prim handle args = case H.lookup ioStr args of
+      Just io -> fmap (\l -> ioContextVal (StrVal l) io) <$> iohGetLine handle
+      Nothing -> return $ Left "Invalid input signature"
 
 arrExists :: Op
 arrExists = ("arrExists", Right (MacroFunction macroBuild))

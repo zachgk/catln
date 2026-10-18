@@ -896,6 +896,24 @@ resultLeaf, queueLeaf :: PartialType
 resultLeaf = (partialVal (mkName catlnResultPath)){ptArgMode=PtArgAny}
 queueLeaf = partialVal "llvmQueue"
 
+-- | What a function run in an io answers with: its value in the io it leaves ('ContextStr').
+ioContextVal :: Val -> Val -> Val
+ioContextVal v io = TupleVal ContextStr (H.fromList [(contextValStr, v), (ioStr, io)])
+
+-- | The unit value @()@.
+unitVal :: Val
+unitVal = TupleVal anonStr H.empty
+
+-- | The arguments a primitive is given from the value it is called on. A primitive declared in a
+-- context (@println{io -> IO}(msg -> String)@) is called on the call in its states
+-- (@ContextIn(value= println(msg= ..), io= ..)@), and is given the call's arguments beside the
+-- states.
+primInputArgs :: Val -> Maybe (H.HashMap String Val)
+primInputArgs (TupleVal n args)
+  | n == ContextInStr, Just (TupleVal _ callArgs) <- H.lookup contextValStr args = Just $ H.union callArgs (H.delete contextValStr args)
+  | otherwise = Just args
+primInputArgs _ = Nothing
+
 resultType :: Type
 resultType = singletonType resultLeaf
 

@@ -13,11 +13,11 @@ module(Catln)
       Files and external values can change unexpectedly.
       But, all of the impurity is managed in this single type.
 
-  :IO.exit(val -> Integer) -> IO
-    # [exit] will immediately terminate the process and return [val] as the status value.
+  exit{io -> IO}(val -> Integer) -> (){IO}
+    # [exit] sets [val] as the status value the process ends with.
     #runtime("ioExit")
 
-  :IO.println(msg -> String) -> IO
+  println{io -> IO}(msg -> String) -> (){IO}
     # [println] will print the [msg] to the standard output along with a newline character.
     #runtime("println")
 
