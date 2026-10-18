@@ -131,7 +131,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
         case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
              (Just (Just (_, Just e))) -> printf "> %s%s" (formatExpr e) (resultLines annot)
              e -> error $ printf "Can't format unexpected print annot %s" (show e)
-      RawAnnot annot | Just q <- queryText annot -> printf "q> %s%s" q (resultLines annot)
+      RawAnnot annot | Just (prefix, q) <- lineAnnot annot -> printf "%s%s%s" prefix q (resultLines annot)
       RawAnnot annot | nameStr (exprPath annot) == noteAnnot ->
         let argStr k = case H.lookup (partialKey (mkName k)) $ rawExprAppliedArgsMap annot of
               (Just (Just (_, Just (RawCExpr _ (CStr s))))) -> s
@@ -147,16 +147,17 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
     resultLines annot = maybe "" (concatMap (\l -> "\n" ++ formatIndent (indent + 1) ++ (if null l then ">>>" else ">>> " ++ l)) . lines) (resultText annot)
     withoutResult = rawExprWithoutArg resultAnnotText
 
-    -- What a query written @q> text@ asks: a @#q@ asking one line of text, and holding nothing
-    -- else but its result.
-    queryText annot
-      | nameStr (exprPath annot) `elem` [queryAnnot, queryAnnotShort]
-      , all (\(spread, oa) -> not spread && any (`rawArgNamed` oa) [queryAnnotText, resultAnnotText]) (rawTupleArgs annot)
-      , Just (RawCExpr _ (CStr q)) <- rawExprArgNamed queryAnnotText annot
+    -- What an annotation written as a line of text asks, with the prefix it is written with: a
+    -- @#q@ written @q> text@ or an @#agent@ written @a> text@, each asking one line of text and
+    -- holding nothing else but its result.
+    lineAnnot annot
+      | Just prefix <- lookup (nameStr (exprPath annot)) lineAnnotPrefixes
+      , all (\(spread, oa) -> not spread && any (`rawArgNamed` oa) [lineAnnotText, resultAnnotText]) (rawTupleArgs annot)
+      , Just (RawCExpr _ (CStr q)) <- rawExprArgNamed lineAnnotText annot
       , '\n' `notElem` q
       , not (null q)
       , q == dropWhileEnd (== ' ') q
-      = Just q
+      = Just (prefix, q)
       | otherwise = Nothing
 
 -- |

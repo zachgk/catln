@@ -80,21 +80,23 @@ pPrintStatement = L.indentBlock scn p
       let annot = rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), e)]
       return (L.IndentMany Nothing (\rls -> return $ RawStatementTree (RawAnnot $ withResultLines annot rls) []) pResultLine)
 
--- | A question written @q> text@: the rest of the line, as written, is what a @#q@ asks.
+-- | A line written @prefix text@, short for an annotation of one line of text: a question written
+-- @q> text@ ('queryAnnot'), or a request of an agent written @a> text@ ('agentAnnot'). The rest of
+-- the line, as written, is the annotation's input.
 --
 -- Unlike a print, the annotation is positioned at its line. Nothing else in it is, and both
 -- answering it (the page it is asked about is the one its position names) and writing the answer
 -- back (by that position) need to know where it is written.
-pQueryStatement :: Parser PStatementTree
-pQueryStatement = L.indentBlock scn p
+pLineAnnotStatement :: String -> String -> Parser PStatementTree
+pLineAnnotStatement prefix annotName = L.indentBlock scn p
   where
     p = do
       start <- getSourcePos
-      _ <- try $ string "q> "
+      _ <- try $ string prefix
       text <- takeLine
       end <- getSourcePos
       let m = emptyMeta start end
-          annot = RawValue m (mkName queryAnnot) `applyRawArgs` [(Just $ partialKey (mkName queryAnnotText), RawCExpr m (CStr $ dropWhileEnd (== ' ') text))]
+          annot = RawValue m (mkName annotName) `applyRawArgs` [(Just $ partialKey (mkName lineAnnotText), RawCExpr m (CStr $ dropWhileEnd (== ' ') text))]
       return (L.IndentMany Nothing (\rls -> return $ RawStatementTree (RawAnnot $ withResultLines annot rls) []) pResultLine)
 
 -- | An annotation statement. The @>>>@ lines under it are its 'resultAnnotText', as under a print,
@@ -116,7 +118,8 @@ pStatementTree :: Parser PStatementTree
 pStatementTree = do
   notFollowedBy newline
   pCommentStatement
-    <|> pQueryStatement
+    <|> pLineAnnotStatement queryAnnotPrefix queryAnnot
+    <|> pLineAnnotStatement agentAnnotPrefix agentAnnot
     <|> pPrintStatement
     <|> pAnnotStatement
     <|> liftPStatement pDeclStatement

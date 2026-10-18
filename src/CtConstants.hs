@@ -251,10 +251,26 @@ resultAnnotText = "result"
 -- | A question asked of a model about the page it is written on, declared in @stack/llm/q.ct@
 -- and written @q> text@. @catln process@ answers it into its 'resultAnnotText', the @>>>@ lines
 -- under it.
-queryAnnot, queryAnnotText, queryAnnotShort :: String
+queryAnnot, queryAnnotShort, queryAnnotPrefix :: String
 queryAnnot = "/Llm/#q"
-queryAnnotText = "input"
 queryAnnotShort = "#q"
+queryAnnotPrefix = "q> "
+
+-- | A request of an agent working on the page it is written on, declared in
+-- @stack/llm/agent.ct@ and written @a> text@. @catln process@ runs it until it responds, into its
+-- 'resultAnnotText', the @>>>@ lines under it.
+agentAnnot, agentAnnotShort, agentAnnotPrefix :: String
+agentAnnot = "/Llm/#agent"
+agentAnnotShort = "#agent"
+agentAnnotPrefix = "a> "
+
+-- | The field holding the line of text of an annotation written as one ('lineAnnotPrefixes').
+lineAnnotText :: String
+lineAnnotText = "input"
+
+-- | Each annotation written as a line of text, by its name, with the prefix it is written with.
+lineAnnotPrefixes :: [(String, String)]
+lineAnnotPrefixes = [(queryAnnot, queryAnnotPrefix), (queryAnnotShort, queryAnnotPrefix), (agentAnnot, agentAnnotPrefix), (agentAnnotShort, agentAnnotPrefix)]
 
 -- | What @catln process@ asks of each annotation on a page with a line processor:
 -- @\/Catln\/process{io}(annot)@, its updated form. An annotation is processable where the program
