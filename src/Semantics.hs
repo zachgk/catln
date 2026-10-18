@@ -392,14 +392,22 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- class-graph node's @#noCore@ vs the objMap's @/#noCore@) matches by
   -- 'relativeNameFilter'; its realizable arg-sets are bounded by the union over every
   -- matching declaration. A name matching no declaration is open world ('Nothing').
+  --
+  -- A declaration whose own arguments end in a spread (@data(/Context[$V](value -> $V, .._))@)
+  -- admits arguments beyond the ones it lists, so it bounds none of them: the name is open
+  -- ('Nothing'). Read as its listed keys alone, every @Context..@ was closed to @Context(value)@
+  -- exactly, and a context holding any state was outside its own type.
   typeGraphArgKeys TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
-    Just item -> Just $ itemArgKeys item
+    Just item | itemOpen item -> Nothing
+              | otherwise     -> Just $ itemArgKeys item
     Nothing   -> case relativeNameFilter name (H.keys tg) of
       []    -> Nothing
-      names -> Just $ concatMap (itemArgKeys . (tg H.!)) names
+      names | any (itemOpen . (tg H.!)) names -> Nothing
+            | otherwise -> Just $ concatMap (itemArgKeys . (tg H.!)) names
     where
       itemArgKeys item = [ S.fromList [inExprSingleton (oaObjExpr a) | a <- exprAppliedArgs (oaObjExpr oa)]
                          | oa <- flatObjectMapItem item ]
+      itemOpen item = any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)
 
   typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
     foldl' (intersectTypesEnv typeEnv vaenv) unrefined (coveringRefinementResults typeEnv vaenv item partial)

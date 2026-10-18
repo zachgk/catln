@@ -463,6 +463,11 @@ class ExprClass e where
   -- | Returns all arguments applied to a value
   exprAppliedArgs :: (Show m, MetaDat m) => e m -> [ObjArr e m]
 
+  -- | Whether a value is applied to a spread (@Context(value, .._)@): it takes arguments beyond
+  -- the ones it is applied to. Only the desugared forms spread; the raw forms read as not.
+  exprSpreadsArgs :: e m -> Bool
+  exprSpreadsArgs _ = False
+
   -- | Returns all vars applied to a value
   exprAppliedOrdVars :: (Show m, MetaDat m) => e m -> [(TypeVarName, Meta m)]
 
@@ -477,6 +482,12 @@ class ExprClass e where
 
 
 instance ExprClass Expr where
+  exprSpreadsArgs (TupleApply _ (_, be) arg) = case arg of
+    EAppSpread{} -> True
+    _            -> exprSpreadsArgs be
+  exprSpreadsArgs (AliasExpr b _) = exprSpreadsArgs b
+  exprSpreadsArgs (EWhere _ b _) = exprSpreadsArgs b
+  exprSpreadsArgs _ = False
   getExprMeta expr = case expr of
     CExpr m _        -> m
     Value m _        -> m

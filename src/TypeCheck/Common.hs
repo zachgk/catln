@@ -737,8 +737,8 @@ verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme
 verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (SType oldAct oldReq oldReqDecl _ _)) (TypeCheckResult _ (SType act req reqDecl _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just (printf "verifySchemeActLowers\n\t\tGrows by: %s" (show $ differenceTypeWithEnv typeEnv vaenv act oldAct)),
   if verifyNoTypeVarLost then Nothing else Just (printf "verifyNoTypeVarLost\n\t\tLost a TypeVar going from %s to %s" (show oldAct) (show act)),
-  if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
-  if verifySchemeReqDeclLowers then Nothing else Just "verifySchemeReqDeclLowers",
+  if verifySchemeReqLowers then Nothing else Just (printf "verifySchemeReqLowers\n\t\tGrows by: %s\n\t\tOutside the old requirement: %s" (show $ differenceTypeWithEnv typeEnv vaenv req oldReq) (show $ outsideOf req oldReq)),
+  if verifySchemeReqDeclLowers then Nothing else Just (printf "verifySchemeReqDeclLowers\n\t\tGrows by: %s\n\t\tOutside the old requirement: %s" (show $ differenceTypeWithEnv typeEnv vaenv reqDecl oldReqDecl) (show $ outsideOf reqDecl oldReqDecl)),
   if verifyCompacted then Nothing else Just (printf "verifyCompacted\n\t\tCan be compacted to %s" (show $ compactType typeEnv vaenv act))
   ]
   where
@@ -754,8 +754,24 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     -- the walk as a second opinion — the prover-consistency doctrine 'predImplies' already
     -- applies via 'predsEmpty'. Refusing a real narrowing poisons the point: the update is
     -- dropped and re-derived identically every epoch, which is what those 52 errors were.
-    lowers a b = isSubtypeOfWithEnv typeEnv vaenv a b
-                   || isBottomType (snd (differenceTypeWithEnv typeEnv vaenv a b))
+    --
+    -- Each prover is incomplete on different leaves, so a union is decided a leaf at a time
+    -- (@A ∪ B ⊆ C ⟺ A ⊆ C ∧ B ⊆ C@, exactly): asked of the whole, a union with one leaf only the
+    -- walk proves and another only the difference proves is proved by neither. A context's bind
+    -- gave exactly that pair — its ap and mmap arms — and the requirement was refused.
+    lowers a b = lowersWhole a b || all (\l -> lowersWhole l b) (unionPieces a)
+    lowersWhole a b = isSubtypeOfWithEnv typeEnv vaenv a b
+                        || isBottomType (snd (differenceTypeWithEnv typeEnv vaenv a b))
+    unionPieces (UnionType mTop leafs consts)
+      | length pieces > 1 = pieces
+      where pieces = [UnionType mTop H.empty [] | Just _ <- [mTop]] ++ map singletonType (splitUnionType leafs) ++ [UnionType Nothing H.empty consts | not (null consts)]
+    unionPieces _ = []
+    -- The leaves of a grown channel that the old one does not hold, which is what a report of the
+    -- growth has to name: the whole of either side is too long to compare by reading.
+    outsideOf (UnionType mTop leafs consts) old = map show [l | l <- splitUnionType leafs, not (lowers (singletonType l) old)]
+      ++ [ "the class part " ++ show topT | Just _ <- [mTop], let topT = UnionType mTop H.empty [], not (lowers topT old) ]
+      ++ [ "the constants " ++ show consts | not (null consts), not (lowers (UnionType Nothing H.empty consts) old) ]
+    outsideOf t old = [show t | not (lowers t old)]
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
       _         -> lowers act oldAct

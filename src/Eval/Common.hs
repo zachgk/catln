@@ -1119,6 +1119,13 @@ instance MapMeta TExpr where
     return $ TCalls m' e' t
 
 instance ExprClass TExpr where
+  exprSpreadsArgs (TTupleApply _ (_, be) arg) = case arg of
+    EAppSpread{} -> True
+    _            -> exprSpreadsArgs be
+  exprSpreadsArgs (TAliasExpr b _) = exprSpreadsArgs b
+  exprSpreadsArgs (TWhere _ b _) = exprSpreadsArgs b
+  exprSpreadsArgs (TCalls _ b _) = exprSpreadsArgs b
+  exprSpreadsArgs _ = False
   getExprMeta :: TExpr m -> Meta m
   getExprMeta expr = case expr of
     TCExpr m _        -> m
