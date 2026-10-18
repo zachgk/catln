@@ -40,7 +40,7 @@ class(Thing, [Thing/Simple(x -> Integer), Thing/Fancy(x -> Integer, y -> Integer
 :/Thing/Simple(x).total= x
 :/Thing/Fancy(x, y).total= x + y
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= /Thing/Simple(x= 3).total == 3)
   #assert(test= /Thing/Fancy(x= 3, y= 4).total == 7)
-  io
+  ()

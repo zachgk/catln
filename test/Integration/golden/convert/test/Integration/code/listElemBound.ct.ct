@@ -30,10 +30,10 @@ countBare(ks -> /Data/List[$T -> Bare]) -> /Data/Primitive/Integer
 countBare(ks= /Data/List/Nil)= 0
 countBare(ks= /Data/List/Cons(head, tail))= 1 + countBare(ks= tail)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= countAll(ks= []) == 0)
   #assert(test= countAll(ks= [/Item(n= 1), /Item(n= 2)]) == 2)
   #assert(test= countCons(ks= []) == 0)
   #assert(test= countCons(ks= [/Item(n= 1), /Item(n= 2)]) == 2)
   #assert(test= countBare(ks= [/Bare, /Bare]) == 2)
-  io
+  ()

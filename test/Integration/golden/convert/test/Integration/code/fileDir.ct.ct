@@ -8,4 +8,6 @@ import fileDirReference("artifacts/filetree")
   a file which is not text is left out and said to be. All of that is held by the goldens of the page
   the directory is read as; the name is built from an absolute path, which the golden runner writes
   as a fixed string.
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

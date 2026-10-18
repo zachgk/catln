@@ -10,4 +10,7 @@ import "artifacts/lcm/page.ct"
   compiler cannot build. It is a page of its own rather than this one, because a fixture's prints
   are its tests, which the suite runs, and these are written to fail. The page offers the prompt
   about itself as [prompt], since the page a call is written on is the one the compiler hands it.
-main{io -> IO}= io.println(msg= prompt(input= "What does double do?")).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- println(msg= prompt(input= "What does double do?"))
+  _<- exit(val= 0)
+  ()

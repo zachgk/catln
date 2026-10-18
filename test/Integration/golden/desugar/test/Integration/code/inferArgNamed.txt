@@ -2,23 +2,28 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Boxes/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Boxes/unwrap
+                            ( Value b -> /Boxes/Box( /v=/Data/Primitive/Integer ) ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Boxes/unwrap
+                            ( Box( Value v ) ) -> /Data/Primitive/Integer = Value v
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
-                    }
-                )
-            ,
-                ( "/Box"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ Box( Value /v ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io ) ]
                     }
                 )
             ,
@@ -40,18 +45,13 @@ Prgm
                     }
                 )
             ,
-                ( "/unwrap"
+                ( "/Boxes/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ unwrap
-                            ( Value b -> /Box( /v=/Data/Primitive/Integer ) ) -> /Data/Primitive/Integer
-                        ]
+                        [ /Boxes/Box( Value /v ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ unwrap
-                            ( Box( Value v ) ) -> /Data/Primitive/Integer = Value v
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -100,7 +100,8 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on." }
+                { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on. Kept in a
+                module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]." }
             )
         , /Catln/#md
             ( Value /text= CStr

@@ -22,4 +22,6 @@ import obsidian("artifacts/catln-tasks/Query.md")
   the file a test names and not for the pages it reaches, so what is written down here is the
   annotation. The note is named to the suite on its own as well (@Integ.pageTests@), and what its
   query finds is the golden of its annotations, as it is for the query notes under @Queries/@.
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

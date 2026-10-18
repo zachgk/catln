@@ -9,26 +9,48 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow( Value s= Value #calendar )= Show/Calendar
-                            ( Value result= /Catln/Doc/dshow.calendarEntries( Value annot= Value s ) )
+                            ( Value result= calendarEntries( Value annot= Value s ) )
+                        , /Catln/Doc/dshow( Value s= Value #dayPlanner )= Show/DayPlanner
+                            ( Value result= plannerEntries( Value annot= Value s ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/Calendar/calendarEntries"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Calendar/calendarEntries( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
                 ( "/Data/Calendar/calendarDay"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
+                        [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
             ,
-                ( "/Catln/Doc/dshow.calendarEntries"
+                ( "/Data/Calendar/plannerEntries"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow.calendarEntries( Value annot ) -> ∀/Data/String ]
+                        [ /Data/Calendar/plannerEntries( Value annot ) -> ∀/Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/eventSpan"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/eventSpan[ /E : ∀/Data/Calendar/Event ]( Value /this -> $/E ) -> /Data/Time/TimeRange.. ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -37,6 +59,25 @@ Prgm
                 ( "/Data/Calendar/#calendar"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Calendar/#calendar ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/calendarTime"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/calendarTime[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeRange.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/#dayPlanner"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Calendar/#dayPlanner ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -52,10 +93,36 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Calendar/Show/DayPlanner"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/Show/DayPlanner( Value /result -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Calendar/eventDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Calendar/eventDay[ /E : ∀/Data/Calendar/Event ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/Time/Date.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -66,6 +133,7 @@ Prgm
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Catln/Doc/DShow ]
                 , /Data/Calendar/Show/Calendar..
+                , /Data/Calendar/Show/DayPlanner..
                 ]
             , cgcDoc = Just "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
               [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
@@ -78,7 +146,10 @@ Prgm
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Catln/Doc/DocPage
-            , cgcExtends = [ /Data/Calendar/#calendar ]
+            , cgcExtends =
+                [ /Data/Calendar/#calendar
+                , /Data/Calendar/#dayPlanner
+                ]
             , cgcDoc = Nothing
             }
         , CGClass
@@ -95,6 +166,24 @@ Prgm
               fulfilling the declaration unless it is written in a different file from the declaration. So
               [calendarDay] is declared here and answered elsewhere, and this file sits below the files
               holding its members rather than above them. The layering that forces is the one wanted anyway."
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Calendar/Event
+            , cgcExtends = []
+            , cgcDoc = Just "An [Event] is something that takes up a block of a day: a meeting from nine until half past
+              ten, or a line a day planner reads a time off. It is what a day planner lays out, and the
+              whole of what one lays out along a day.
+              A narrower class than [CalendarEntry] rather than an answer it gives, because whether a thing
+              is an event is what it is and not a question it answers: a task given a time is one, and the
+              same task with none is not. So a kind of thing joins as an event where it has a time, by
+              saying so of the values that do, and has nothing to answer for the ones that do not. Both are
+              what a day planner is asked for. Its blocks are the events, which every one of has a span to
+              be drawn over; and a task on the day with no time is drawn apart from them, as an entry of
+              the calendar it still is.
+              Membership is declared by the member, as it is for [CalendarEntry] and for its reason, and its
+              questions are answered where the member is declared and not here, for the second reason given
+              there."
             }
         ]
     , prgmAnnots =
@@ -130,6 +219,22 @@ Prgm
                 it is. That file does not reach the webdocs, and having it reach them would put it in the
                 SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
                 sake of one caller. It moves there when there is a second one." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [Event] is something that takes up a block of a day: a meeting from nine until half past
+                ten, or a line a day planner reads a time off. It is what a day planner lays out, and the
+                whole of what one lays out along a day.
+                A narrower class than [CalendarEntry] rather than an answer it gives, because whether a thing
+                is an event is what it is and not a question it answers: a task given a time is one, and the
+                same task with none is not. So a kind of thing joins as an event where it has a time, by
+                saying so of the values that do, and has nothing to answer for the ones that do not. Both are
+                what a day planner is asked for. Its blocks are the events, which every one of has a span to
+                be drawn over; and a task on the day with no time is drawn apart from them, as an entry of
+                the calendar it still is.
+                Membership is declared by the member, as it is for [CalendarEntry] and for its reason, and its
+                questions are answered where the member is declared and not here, for the second reason given
+                there." }
             )
         ]
     }

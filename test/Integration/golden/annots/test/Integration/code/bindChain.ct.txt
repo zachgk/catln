@@ -1,0 +1,71 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Exercises chaining several bind operators ([<-]) in one function. Each bind desugars to a" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[bindap] whose continuation holds the rest of the body — including the later binds — so every" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "bind picks its own arm ([mmap], [fmap] or [ap]) from how its bound value is used and what the" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "rest of the body returns." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Two [mmap] binds: the final line returns a [Maybe], so each continuation returns a [Maybe] to" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "flatten. Only the outer bind's arm tells the inner one which it is: an [fmap] inside would nest" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "the [Maybe], so what the outer continuation must return (its [mmap]'s [$M]) chooses [mmap]." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "An [mmap] bind around an [fmap] bind: the inner continuation returns a plain [Integer] ([fmap])," )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "which makes the outer continuation return a [Maybe] ([mmap])." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "An [ap] bind around an [fmap] bind: [x] is consumed whole as a [Maybe] ([ap]) and [y] by element" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "([fmap])." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "An [fmap] bind around an [ap] bind: the inner continuation consumes [y] whole and returns an" )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[Integer], which the outer [fmap] collects back into a [Maybe]." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "Three binds, one of each arm, with a local declaration between them." )
+    )
+]

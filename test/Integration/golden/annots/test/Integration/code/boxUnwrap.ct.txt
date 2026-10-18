@@ -2,6 +2,7 @@
     ( "/Catln/#md"
     , TupleVal /Catln/Doc/Show/MD
         ( /text = "Repro: a return-position element var must bind from a parameterized argument.
-        unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType." )
+        unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType.
+        Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]." )
     )
 ]

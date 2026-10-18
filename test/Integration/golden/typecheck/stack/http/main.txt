@@ -2,12 +2,21 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/Http/httpPost"
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Http/httpPost( Value /url -> ∀/Data/String )
-                            ( Value /headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value /body -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/String
+                        [ /ContextIn
+                            ( Value /value -> /Http/httpPost
+                                ( /body=∀/Data/String
+                                , /headers=∀/Data/List[ /T=/Http/Header.. ]
+                                , /url=∀/Data/String
+                                ) = /Http/httpPost( Value /url -> ∀/Data/String )
+                                ( Value /headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value /body -> ∀/Data/String )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/String
+                            , /io=/Catln/IO
+                            )..
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -34,10 +43,9 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# HTTP
-                Requests over the network. Sending one is a method of [/Catln/IO], because it reaches outside
-                the program: what comes back is decided by whatever answers, and sending it can change what
-                answers the next one. So a program can only send a request where it holds an IO value to send it
-                through.
+                Requests over the network. Sending one runs in an [/Catln/IO] context, because it reaches
+                outside the program: what comes back is decided by whatever answers, and sending it can change
+                what answers the next one. So a program can only send a request where it runs in an io.
                 This is not part of the standard library. A program which sends no request has no use for it,
                 and one that does writes `import "http"`." }
             )

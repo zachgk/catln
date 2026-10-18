@@ -17,11 +17,11 @@ module(Llm)
     - `OPENAI_MODEL` is the model to ask.
     - `OPENAI_API_KEY` is the key to ask with, sent as a bearer token. It may be left unset, for a
       server that asks for none.
-    It is a method of [/Catln/IO] because everything it does reaches outside the program: it reads
-    the environment and it sends a request.
+    It runs in an [/Catln/IO] context because everything it does reaches outside the program: it
+    reads the environment and it sends a request.
     This is not part of the standard library. A program which asks no model has no use for it, and
     one that does writes `import "llm"`.
-  :IO.llm(input -> String) -> /Data/Maybe[$T -> String]
+  llm{io -> IO}(input -> String) -> /Data/Maybe[$T -> String]{IO}
     # [llm] is the reply of the configured model to the prompt [input], or [/Data/Maybe/Nothing]
       where there is none to give: `OPENAI_BASE_URL` or `OPENAI_MODEL` is unset, or the response
       holds no reply at `choices[0].message.content`.
@@ -30,13 +30,24 @@ module(Llm)
       TODO: Answer with a Result that says which of those it was, once Catln has one. As a
       [/Data/Maybe] the reason is lost, and an unset variable reads the same as a model that
       answered with nothing.
-  :IO.llm(input)= llmWith(io= this, input= input, base= this.env(name= "OPENAI_BASE_URL"), model= this.env(name= "OPENAI_MODEL"), key= this.env(name= "OPENAI_API_KEY"))
+  llm{io -> IO}(input) =
+    base<- /System/env(name= "OPENAI_BASE_URL")
 
-  llmWith(io -> IO, input -> String, base -> /Data/Maybe[$T -> String], model -> /Data/Maybe[$T -> String], key -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]
+    model<- /System/env(name= "OPENAI_MODEL")
+
+    key<- /System/env(name= "OPENAI_API_KEY")
+
+    reply<- llmWith(input= input, base= base, model= model, key= key)
+    reply
+
+  llmWith{io -> IO}(input -> String, base -> /Data/Maybe[$T -> String], model -> /Data/Maybe[$T -> String], key -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]{IO}
     # [llmWith] asks the model [model] at [base] about [input], where both are configured.
-  llmWith(io, input, base= /Data/Maybe/Nothing, model, key)= /Data/Maybe/Nothing
-  llmWith(io, input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Maybe/Nothing
-  llmWith(io, input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key)= llmReply(response= /Data/jsonParse(text= io.httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))))
+  llmWith{io -> IO}(input, base= /Data/Maybe/Nothing, model, key)= /Data/Maybe/Nothing{io}
+  llmWith{io -> IO}(input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Maybe/Nothing{io}
+  llmWith{io -> IO}(input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key) =
+    text<- /Http/httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))
+
+    llmReply(response= /Data/jsonParse(text= text))
 
   # ## Showing a model
     What a model is shown of a value is its own question, as what a person is shown of one is
@@ -67,13 +78,15 @@ module(Llm)
     can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
     page says it computes, and not only what it says.
     The page is the one the program was compiled from, handed to the call by the compiler rather
-    than read again from the file: a call written as `io.lcm(input= ...)` is completed to
-    `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
-  :IO.lcm(input -> String) -> /Data/Maybe[$T -> String]
+    than read again from the file: a call written as `lcm(input= ...)` is completed to
+    `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
+  lcm{io -> IO}(input -> String) -> /Data/Maybe[$T -> String]{IO}
     # [lcm] is the reply of the configured model to the prompt [input], asked with the page the call
       is written in. It answers as [llm] does.
     #runtime("callerPage")
-  :IO.lcm(input -> String, page -> /Catln/RawPrgm..)= this.llm(input= lcmPrompt(input= input, page= page))
+  lcm{io -> IO}(input -> String, page -> /Catln/RawPrgm..) -> /Data/Maybe[$T -> String]{IO} =
+    reply<- llm(input= lcmPrompt(input= input, page= page))
+    reply
 
   lcmPrompt(input -> String) -> String
     # [lcmPrompt] is what [lcm] asks the model: the page the call is written in, and then [input].
@@ -103,11 +116,14 @@ module(Llm)
   annot(#q(input -> String, result -> String))
     # The [#q] can also hold the [result] the model replied with.
 
-  /Catln/process(io -> /Catln/IO, annot -> #q(input -> String)) -> #q..
+  /Catln/process{io -> /Catln/IO}(annot -> #q(input -> String)) -> #q..{IO}
     # A [#q] is processed by asking it with the page it is written on, and is updated to hold the
       reply as its [result]. Where there is no reply it is left as it was.
     #runtime("callerPage")
-  /Catln/process(io -> /Catln/IO, annot= #q(input -> String), page -> /Catln/RawPrgm..)= qAnswered(input= input, reply= io.lcm(input= input, page= page))
+  /Catln/process{io -> /Catln/IO}(annot= #q(input -> String), page -> /Catln/RawPrgm..) -> #q..{IO} =
+    reply<- lcm(input= input, page= page)
+
+    qAnswered(input= input, reply= reply)
 
   qAnswered(input -> String, reply -> /Data/Maybe[$T -> String]) -> #q..
     # [qAnswered] is the [#q] asking [input], holding the [reply] where there is one.

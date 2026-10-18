@@ -19,4 +19,6 @@ import obsidian("artifacts/catln-tasks-other/Tasks.md")
   vault, for the reason @obsidianTasks.ct@ names its notes: a vault does not import the notes it
   holds.
   What each checkbox is read as is held by the goldens of the notes.
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

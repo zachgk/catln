@@ -36,9 +36,9 @@ tagCount(t= Tagged(name, tags))= tags.length
 consTagCount(t -> ConsTagged..) -> Integer
 consTagCount(t= ConsTagged(name, tags))= tags.length
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= tagCount(t= /Tagged(name= "none", tags= [])) == 0)
   #assert(test= tagCount(t= /Tagged(name= "one", tags= ["x"])) == 1)
   #assert(test= consTagCount(t= /ConsTagged(name= "none", tags= [])) == 0)
   #assert(test= consTagCount(t= /ConsTagged(name= "one", tags= ["x"])) == 1)
-  io
+  ()

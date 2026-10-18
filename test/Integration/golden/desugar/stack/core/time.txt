@@ -329,57 +329,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/fromMarch"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )( Value mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value y )( Value mp ) -> /Data/Primitive/Integer = fromEra
-                            ( Value era= /operator//( Value /l= Value y )
-                                ( Value /r= CInt
-                                    { ciValue = 400 }
-                                )
-                            )
-                            ( Value yoe= /operator-( Value /l= Value y )
-                                ( Value /r= /operator*
-                                    ( Value /l= /operator//( Value /l= Value y )
-                                        ( Value /r= CInt
-                                            { ciValue = 400 }
-                                        )
-                                    )
-                                    ( Value /r= CInt
-                                        { ciValue = 400 }
-                                    )
-                                )
-                            )
-                            ( Value doy= /operator-
-                                ( Value /l= /operator+
-                                    ( Value /l= /operator//
-                                        ( Value /l= /operator+
-                                            ( Value /l= /operator*
-                                                ( Value /l= CInt
-                                                    { ciValue = 153 }
-                                                )( Value /r= Value mp )
-                                            )
-                                            ( Value /r= CInt
-                                                { ciValue = 2 }
-                                            )
-                                        )
-                                        ( Value /r= CInt
-                                            { ciValue = 5 }
-                                        )
-                                    )( Value /r= Value day )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/clockParts"
                 , ObjectMapItem
                     { omiDecls =
@@ -401,6 +350,81 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofMonth"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofMonth( Value y -> /Data/Primitive/Integer )( Value doy -> /Data/Primitive/Integer )( Value mp -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofMonth( Value y )( Value doy )( Value mp ) | /operator<( Value /l= Value mp )
+                            ( Value /r= CInt
+                                { ciValue = 10 }
+                            ) -> /Data/Time/Date.. = Date( Value year= Value y )
+                            ( Value month= /operator+( Value /l= Value mp )
+                                ( Value /r= CInt
+                                    { ciValue = 3 }
+                                )
+                            )
+                            ( Value day= /operator+
+                                ( Value /l= /operator-( Value /l= Value doy )
+                                    ( Value /r= /operator//
+                                        ( Value /l= /operator+
+                                            ( Value /l= /operator*
+                                                ( Value /l= CInt
+                                                    { ciValue = 153 }
+                                                )( Value /r= Value mp )
+                                            )
+                                            ( Value /r= CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 5 }
+                                        )
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , /Data/Time/fromDaysSinceEpoch.ofMonth( Value y )( Value doy )( Value mp ) -> /Data/Time/Date.. = Date
+                            ( Value year= /operator+( Value /l= Value y )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value month= /operator-( Value /l= Value mp )
+                                ( Value /r= CInt
+                                    { ciValue = 9 }
+                                )
+                            )
+                            ( Value day= /operator+
+                                ( Value /l= /operator-( Value /l= Value doy )
+                                    ( Value /r= /operator//
+                                        ( Value /l= /operator+
+                                            ( Value /l= /operator*
+                                                ( Value /l= CInt
+                                                    { ciValue = 153 }
+                                                )( Value /r= Value mp )
+                                            )
+                                            ( Value /r= CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 5 }
+                                        )
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/fromDaysSinceEpoch"
                 , ObjectMapItem
                     { omiDecls =
@@ -408,7 +432,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Time/fromDaysSinceEpoch( Value days ) -> /Data/Time/Date.. = ofEra
+                        [ /Data/Time/fromDaysSinceEpoch( Value days ) -> /Data/Time/Date.. = /Data/Time/fromDaysSinceEpoch.ofEra
                             ( Value era= /operator//
                                 ( Value /l= /operator+( Value /l= Value days )
                                     ( Value /r= CInt
@@ -433,6 +457,24 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/natural.allDigits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/natural.allDigits
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/natural.allDigits( Value cs= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Time/natural.allDigits
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l= isDigit( Value /this= Value head ) )
+                            ( Value /r= /Data/Time/natural.allDigits( Value cs= Value tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/daysSinceEpoch"
                 , ObjectMapItem
                     { omiDecls =
@@ -441,7 +483,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/daysSinceEpoch
-                            ( Value /this= Date( Value year )( Value month )( Value day ) ) -> /Data/Primitive/Integer = startOfYear( Value /day= Value /day )( Value y= Value year )( Value m= Value month )
+                            ( Value /this= Date( Value year )( Value month )( Value day ) ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.startOfYear( Value /day= Value /day )( Value y= Value year )( Value m= Value month )
                         ]
                     }
                 )
@@ -570,6 +612,49 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/daysSinceEpoch.fromEra"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/daysSinceEpoch.fromEra( Value era -> /Data/Primitive/Integer )( Value yoe -> /Data/Primitive/Integer )( Value doy -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/daysSinceEpoch.fromEra( Value era )( Value yoe )( Value doy ) -> /Data/Primitive/Integer = /operator-
+                            ( Value /l= /operator+
+                                ( Value /l= /operator-
+                                    ( Value /l= /operator+
+                                        ( Value /l= /operator+
+                                            ( Value /l= /operator*( Value /l= Value era )
+                                                ( Value /r= CInt
+                                                    { ciValue = 146097 }
+                                                )
+                                            )
+                                            ( Value /r= /operator*( Value /l= Value yoe )
+                                                ( Value /r= CInt
+                                                    { ciValue = 365 }
+                                                )
+                                            )
+                                        )
+                                        ( Value /r= /operator//( Value /l= Value yoe )
+                                            ( Value /r= CInt
+                                                { ciValue = 4 }
+                                            )
+                                        )
+                                    )
+                                    ( Value /r= /operator//( Value /l= Value yoe )
+                                        ( Value /r= CInt
+                                            { ciValue = 100 }
+                                        )
+                                    )
+                                )( Value /r= Value doy )
+                            )
+                            ( Value /r= CInt
+                                { ciValue = 719468 }
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/natural"
                 , ObjectMapItem
                     { omiDecls =
@@ -578,8 +663,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/natural
-                            ( Value s= String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = digitsOnly
-                            ( Value digits= allDigits( Value cs= Value chars ) )
+                            ( Value s= String/Text( Value chars ) ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Time/natural.digitsOnly
+                            ( Value digits= /Data/Time/natural.allDigits( Value cs= Value chars ) )
                             ( Value text= String/Text( Value chars= Value chars ) )
                         ]
                     }
@@ -607,6 +692,33 @@ Prgm
                                 ( Value value= TimeOfDay( Value hour )( Value minute ) )
                             ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeOfDay.. ] = Value /Data/Maybe/Nothing
                         , /Data/Time/twentyFourHour( Value clock= Value /Data/Maybe/Nothing ) -> ∀/Data/Maybe[ /T=/Data/Time/TimeOfDay.. ] = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofDay( Value y -> /Data/Primitive/Integer )( Value doy -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofDay( Value y )( Value doy ) -> /Data/Time/Date.. = /Data/Time/fromDaysSinceEpoch.ofMonth( Value y= Value y )( Value doy= Value doy )
+                            ( Value mp= /operator//
+                                ( Value /l= /operator+
+                                    ( Value /l= /operator*
+                                        ( Value /l= CInt
+                                            { ciValue = 5 }
+                                        )( Value /r= Value doy )
+                                    )
+                                    ( Value /r= CInt
+                                        { ciValue = 2 }
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 153 }
+                                )
+                            )
                         ]
                     }
                 )
@@ -666,38 +778,31 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofEra"
+                ( "/Data/Time/daysSinceEpoch.startOfYear"
                 , ObjectMapItem
                     { omiDecls =
-                        [ fromDaysSinceEpoch./Data/Time/ofEra( Value era -> /Data/Primitive/Integer )( Value doe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                        [ /Data/Time/daysSinceEpoch.startOfYear( Value /day -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )( Value m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ fromDaysSinceEpoch./Data/Time/ofEra( Value era )( Value doe ) -> /Data/Time/Date.. = ofYear( Value era= Value era )( Value doe= Value doe )
-                            ( Value yoe= /operator//
-                                ( Value /l= /operator-
-                                    ( Value /l= /operator+
-                                        ( Value /l= /operator-( Value /l= Value doe )
-                                            ( Value /r= /operator//( Value /l= Value doe )
-                                                ( Value /r= CInt
-                                                    { ciValue = 1460 }
-                                                )
-                                            )
-                                        )
-                                        ( Value /r= /operator//( Value /l= Value doe )
-                                            ( Value /r= CInt
-                                                { ciValue = 36524 }
-                                            )
-                                        )
-                                    )
-                                    ( Value /r= /operator//( Value /l= Value doe )
-                                        ( Value /r= CInt
-                                            { ciValue = 146096 }
-                                        )
-                                    )
-                                )
+                        [ /Data/Time/daysSinceEpoch.startOfYear( Value /day -> /Data/Primitive/Integer )( Value y )( Value m ) | /operator<=( Value /l= Value m )
+                            ( Value /r= CInt
+                                { ciValue = 2 }
+                            ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.fromMarch( Value /day= Value /day )
+                            ( Value y= /operator-( Value /l= Value y )
                                 ( Value /r= CInt
-                                    { ciValue = 365 }
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value mp= /operator+( Value /l= Value m )
+                                ( Value /r= CInt
+                                    { ciValue = 9 }
+                                )
+                            )
+                        , /Data/Time/daysSinceEpoch.startOfYear( Value /day -> /Data/Primitive/Integer )( Value y )( Value m ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.fromMarch( Value /day= Value /day )( Value y= Value y )
+                            ( Value mp= /operator-( Value /l= Value m )
+                                ( Value /r= CInt
+                                    { ciValue = 3 }
                                 )
                             )
                         ]
@@ -731,49 +836,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/fromEra"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ daysSinceEpoch./Data/Time/fromEra( Value era -> /Data/Primitive/Integer )( Value yoe -> /Data/Primitive/Integer )( Value doy -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ daysSinceEpoch./Data/Time/fromEra( Value era )( Value yoe )( Value doy ) -> /Data/Primitive/Integer = /operator-
-                            ( Value /l= /operator+
-                                ( Value /l= /operator-
-                                    ( Value /l= /operator+
-                                        ( Value /l= /operator+
-                                            ( Value /l= /operator*( Value /l= Value era )
-                                                ( Value /r= CInt
-                                                    { ciValue = 146097 }
-                                                )
-                                            )
-                                            ( Value /r= /operator*( Value /l= Value yoe )
-                                                ( Value /r= CInt
-                                                    { ciValue = 365 }
-                                                )
-                                            )
-                                        )
-                                        ( Value /r= /operator//( Value /l= Value yoe )
-                                            ( Value /r= CInt
-                                                { ciValue = 4 }
-                                            )
-                                        )
-                                    )
-                                    ( Value /r= /operator//( Value /l= Value yoe )
-                                        ( Value /r= CInt
-                                            { ciValue = 100 }
-                                        )
-                                    )
-                                )( Value /r= Value doy )
-                            )
-                            ( Value /r= CInt
-                                { ciValue = 719468 }
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls = []
@@ -784,19 +846,6 @@ Prgm
                             ( Value /this= /Data/Time/Date( Value year )( Value month )( Value day ) ) -> ∀/Data/Algebra/Eqv = Value /Data/Time/DateOrdering
                         , /Data/Algebra/eq
                             ( Value /this= /Data/Time/TimeOfDay( Value hour )( Value minute ) ) -> ∀/Data/Algebra/Eqv = Value /Data/Time/TimeOfDayOrdering
-                        ]
-                    }
-                )
-            ,
-                ( "/natural./Data/Time/digitsOnly"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ natural./Data/Time/digitsOnly( Value digits -> ∀/Data/Primitive/Boolean )( Value text -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ natural./Data/Time/digitsOnly( Value digits= Value True )( Value text ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = parseInteger( Value /this= Value text )
-                        , natural./Data/Time/digitsOnly( Value digits= Value False )( Value text ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
                         ]
                     }
                 )
@@ -855,37 +904,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/startOfYear"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )( Value m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value y )( Value m ) | /operator<=( Value /l= Value m )
-                            ( Value /r= CInt
-                                { ciValue = 2 }
-                            ) -> /Data/Primitive/Integer = fromMarch( Value /day= Value /day )
-                            ( Value y= /operator-( Value /l= Value y )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                            ( Value mp= /operator+( Value /l= Value m )
-                                ( Value /r= CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                        , daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value y )( Value m ) -> /Data/Primitive/Integer = fromMarch( Value /day= Value /day )( Value y= Value y )
-                            ( Value mp= /operator-( Value /l= Value m )
-                                ( Value /r= CInt
-                                    { ciValue = 3 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/dateOf"
                 , ObjectMapItem
                     { omiDecls =
@@ -938,33 +956,6 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ fromDaysSinceEpoch./Data/Time/ofDay( Value y -> /Data/Primitive/Integer )( Value doy -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ fromDaysSinceEpoch./Data/Time/ofDay( Value y )( Value doy ) -> /Data/Time/Date.. = ofMonth( Value y= Value y )( Value doy= Value doy )
-                            ( Value mp= /operator//
-                                ( Value /l= /operator+
-                                    ( Value /l= /operator*
-                                        ( Value /l= CInt
-                                            { ciValue = 5 }
-                                        )( Value /r= Value doy )
-                                    )
-                                    ( Value /r= CInt
-                                        { ciValue = 2 }
-                                    )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 153 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/addMinutes"
                 , ObjectMapItem
                     { omiDecls =
@@ -1003,40 +994,38 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofYear"
+                ( "/Data/Time/fromDaysSinceEpoch.ofEra"
                 , ObjectMapItem
                     { omiDecls =
-                        [ fromDaysSinceEpoch./Data/Time/ofYear( Value era -> /Data/Primitive/Integer )( Value doe -> /Data/Primitive/Integer )( Value yoe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                        [ /Data/Time/fromDaysSinceEpoch.ofEra( Value era -> /Data/Primitive/Integer )( Value doe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ fromDaysSinceEpoch./Data/Time/ofYear( Value era )( Value doe )( Value yoe ) -> /Data/Time/Date.. = ofDay
-                            ( Value y= /operator+( Value /l= Value yoe )
-                                ( Value /r= /operator*( Value /l= Value era )
-                                    ( Value /r= CInt
-                                        { ciValue = 400 }
-                                    )
-                                )
-                            )
-                            ( Value doy= /operator-( Value /l= Value doe )
-                                ( Value /r= /operator-
+                        [ /Data/Time/fromDaysSinceEpoch.ofEra( Value era )( Value doe ) -> /Data/Time/Date.. = /Data/Time/fromDaysSinceEpoch.ofYear( Value era= Value era )( Value doe= Value doe )
+                            ( Value yoe= /operator//
+                                ( Value /l= /operator-
                                     ( Value /l= /operator+
-                                        ( Value /l= /operator*
-                                            ( Value /l= CInt
-                                                { ciValue = 365 }
-                                            )( Value /r= Value yoe )
+                                        ( Value /l= /operator-( Value /l= Value doe )
+                                            ( Value /r= /operator//( Value /l= Value doe )
+                                                ( Value /r= CInt
+                                                    { ciValue = 1460 }
+                                                )
+                                            )
                                         )
-                                        ( Value /r= /operator//( Value /l= Value yoe )
+                                        ( Value /r= /operator//( Value /l= Value doe )
                                             ( Value /r= CInt
-                                                { ciValue = 4 }
+                                                { ciValue = 36524 }
                                             )
                                         )
                                     )
-                                    ( Value /r= /operator//( Value /l= Value yoe )
+                                    ( Value /r= /operator//( Value /l= Value doe )
                                         ( Value /r= CInt
-                                            { ciValue = 100 }
+                                            { ciValue = 146096 }
                                         )
                                     )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 365 }
                                 )
                             )
                         ]
@@ -1087,20 +1076,42 @@ Prgm
                     }
                 )
             ,
-                ( "/natural./Data/Time/allDigits"
+                ( "/Data/Time/fromDaysSinceEpoch.ofYear"
                 , ObjectMapItem
                     { omiDecls =
-                        [ natural./Data/Time/allDigits
-                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
-                        ]
+                        [ /Data/Time/fromDaysSinceEpoch.ofYear( Value era -> /Data/Primitive/Integer )( Value doe -> /Data/Primitive/Integer )( Value yoe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ natural./Data/Time/allDigits( Value cs= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value True
-                        , natural./Data/Time/allDigits
-                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator&&
-                            ( Value /l= isDigit( Value /this= Value head ) )
-                            ( Value /r= allDigits( Value cs= Value tail ) )
+                        [ /Data/Time/fromDaysSinceEpoch.ofYear( Value era )( Value doe )( Value yoe ) -> /Data/Time/Date.. = /Data/Time/fromDaysSinceEpoch.ofDay
+                            ( Value y= /operator+( Value /l= Value yoe )
+                                ( Value /r= /operator*( Value /l= Value era )
+                                    ( Value /r= CInt
+                                        { ciValue = 400 }
+                                    )
+                                )
+                            )
+                            ( Value doy= /operator-( Value /l= Value doe )
+                                ( Value /r= /operator-
+                                    ( Value /l= /operator+
+                                        ( Value /l= /operator*
+                                            ( Value /l= CInt
+                                                { ciValue = 365 }
+                                            )( Value /r= Value yoe )
+                                        )
+                                        ( Value /r= /operator//( Value /l= Value yoe )
+                                            ( Value /r= CInt
+                                                { ciValue = 4 }
+                                            )
+                                        )
+                                    )
+                                    ( Value /r= /operator//( Value /l= Value yoe )
+                                        ( Value /r= CInt
+                                            { ciValue = 100 }
+                                        )
+                                    )
+                                )
+                            )
                         ]
                     }
                 )
@@ -1126,81 +1137,6 @@ Prgm
                             ( Value minute= /operator%( Value /l= Value minutes )
                                 ( Value /r= CInt
                                     { ciValue = 60 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofMonth"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ fromDaysSinceEpoch./Data/Time/ofMonth( Value y -> /Data/Primitive/Integer )( Value doy -> /Data/Primitive/Integer )( Value mp -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ fromDaysSinceEpoch./Data/Time/ofMonth( Value y )( Value doy )( Value mp ) | /operator<( Value /l= Value mp )
-                            ( Value /r= CInt
-                                { ciValue = 10 }
-                            ) -> /Data/Time/Date.. = Date( Value year= Value y )
-                            ( Value month= /operator+( Value /l= Value mp )
-                                ( Value /r= CInt
-                                    { ciValue = 3 }
-                                )
-                            )
-                            ( Value day= /operator+
-                                ( Value /l= /operator-( Value /l= Value doy )
-                                    ( Value /r= /operator//
-                                        ( Value /l= /operator+
-                                            ( Value /l= /operator*
-                                                ( Value /l= CInt
-                                                    { ciValue = 153 }
-                                                )( Value /r= Value mp )
-                                            )
-                                            ( Value /r= CInt
-                                                { ciValue = 2 }
-                                            )
-                                        )
-                                        ( Value /r= CInt
-                                            { ciValue = 5 }
-                                        )
-                                    )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        , fromDaysSinceEpoch./Data/Time/ofMonth( Value y )( Value doy )( Value mp ) -> /Data/Time/Date.. = Date
-                            ( Value year= /operator+( Value /l= Value y )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                            ( Value month= /operator-( Value /l= Value mp )
-                                ( Value /r= CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                            ( Value day= /operator+
-                                ( Value /l= /operator-( Value /l= Value doy )
-                                    ( Value /r= /operator//
-                                        ( Value /l= /operator+
-                                            ( Value /l= /operator*
-                                                ( Value /l= CInt
-                                                    { ciValue = 153 }
-                                                )( Value /r= Value mp )
-                                            )
-                                            ( Value /r= CInt
-                                                { ciValue = 2 }
-                                            )
-                                        )
-                                        ( Value /r= CInt
-                                            { ciValue = 5 }
-                                        )
-                                    )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
                                 )
                             )
                         ]
@@ -1312,12 +1248,76 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/natural.digitsOnly"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/natural.digitsOnly( Value digits -> ∀/Data/Primitive/Boolean )( Value text -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/natural.digitsOnly( Value digits= Value True )( Value text ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = parseInteger( Value /this= Value text )
+                        , /Data/Time/natural.digitsOnly( Value digits= Value False )( Value text ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/TimeOfDayOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Time/TimeOfDayOrdering ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Time/daysSinceEpoch.fromMarch"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/daysSinceEpoch.fromMarch( Value /day -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )( Value mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/daysSinceEpoch.fromMarch( Value /day -> /Data/Primitive/Integer )( Value y )( Value mp ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.fromEra
+                            ( Value era= /operator//( Value /l= Value y )
+                                ( Value /r= CInt
+                                    { ciValue = 400 }
+                                )
+                            )
+                            ( Value yoe= /operator-( Value /l= Value y )
+                                ( Value /r= /operator*
+                                    ( Value /l= /operator//( Value /l= Value y )
+                                        ( Value /r= CInt
+                                            { ciValue = 400 }
+                                        )
+                                    )
+                                    ( Value /r= CInt
+                                        { ciValue = 400 }
+                                    )
+                                )
+                            )
+                            ( Value doy= /operator-
+                                ( Value /l= /operator+
+                                    ( Value /l= /operator//
+                                        ( Value /l= /operator+
+                                            ( Value /l= /operator*
+                                                ( Value /l= CInt
+                                                    { ciValue = 153 }
+                                                )( Value /r= Value mp )
+                                            )
+                                            ( Value /r= CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 5 }
+                                        )
+                                    )( Value /r= Value day )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
                     }
                 )
             ,

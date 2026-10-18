@@ -2,6 +2,27 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Boxes/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Boxes/unwrap
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Boxes/Box( /v=/Data/Primitive/Integer ) }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Boxes/unwrap
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Boxes/Box( /v=/Data/Primitive/Integer ) = /Boxes/Box
+                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /v ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -10,20 +31,17 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                            )
                         ]
-                    }
-                )
-            ,
-                ( "/Box"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Box
-                            ( EAppArg { eaaArg = Value /v } )
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -62,24 +80,15 @@ Prgm
                     }
                 )
             ,
-                ( "/unwrap"
+                ( "/Boxes/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /unwrap
-                            ( EAppArg
-                                { eaaArg = Value /b -> /Box( /v=/Data/Primitive/Integer ) }
-                            ) -> /Data/Primitive/Integer
+                        [ /Boxes/Box
+                            ( EAppArg { eaaArg = Value /v } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /unwrap
-                            ( EAppArg
-                                { eaaArg = Value /b -> /Box( /v=/Data/Primitive/Integer ) = /Box
-                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } )
-                                }
-                            ) -> /Data/Primitive/Integer = ( Value /v ↦ /Data/Primitive/Integer )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -146,7 +155,8 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A destructuring pattern still fills its slot by inference, with no name to go on."
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A destructuring pattern still fills its slot by inference, with no name to go on. Kept in a
+                  module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]."
                 }
             )
         , /Catln/#md

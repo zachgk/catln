@@ -2,11 +2,16 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/System/env"
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /System/env( Value /name -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
+                        [ /ContextIn
+                            ( Value /value -> /System/env( /name=∀/Data/String ) = /System/env( Value /name -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -19,10 +24,10 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Environment
-                What a program can read of the environment it was started in. It is a method of [/Catln/IO]
-                because it reaches outside the program: a run started with different variables set answers
-                differently, so reading one is an effect, and a program can only do it where it holds an IO
-                value to do it through.
+                What a program can read of the environment it was started in. It runs in an [/Catln/IO]
+                context because it reaches outside the program: a run started with different variables set
+                answers differently, so reading one is an effect, and a program can only do it where it runs in
+                an io.
                 This is not part of the standard library. A program which reads no variable has no use for it,
                 and one that does writes `import "env"`." }
             )

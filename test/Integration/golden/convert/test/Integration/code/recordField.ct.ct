@@ -26,6 +26,6 @@ every(Outer.., isa= [/Catln/Doc/DShow])
 labelOf(o -> Outer..) -> Integer
 labelOf(o= Outer(inner= Inner(label)))= label
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= labelOf(o= /Sample) == 7)
-  io
+  ()

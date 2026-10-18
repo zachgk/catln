@@ -33,6 +33,6 @@ memberCount(j -> Json) -> Integer
 memberCount(j= Json/Obj(entries))= entries.length
 memberCount(j) else = 0
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= memberCount(j= /Nested) == 1)
-  io
+  ()
