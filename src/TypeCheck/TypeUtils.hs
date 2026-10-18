@@ -19,6 +19,7 @@
 
 module TypeCheck.TypeUtils where
 
+import           CtConstants
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
@@ -63,14 +64,25 @@ objectPrecedence ObjArr{oaBasis=MatchObj}                             =   [4]
 objectPrecedence ObjArr{oaBasis=ArgObj}                               =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
+--
+-- Precedence is among the objects of one function ('oaPrecedenceName'), not of one name: the
+-- definitions in a context are all kept under the context's name, and ranked together one
+-- function's declaration outranked every other function's definitions, which then left the
+-- object universe.
 buildPrecedenceMap :: (Show m, MetaDat m) => ObjectMap Expr m -> H.HashMap TypeName [Int]
-buildPrecedenceMap (ObjectMap objMap) = fmap (minimum . map objectPrecedence . flatObjectMapItem) objMap
+buildPrecedenceMap (ObjectMap objMap) = H.fromListWith min [ (precedenceKey k oa, objectPrecedence oa) | (k, item) <- H.toList objMap, oa <- flatObjectMapItem item ]
+  where
+    -- Read under the key the object is kept by, which every recursive object has though not every
+    -- one is a name; only the context's item is split by the function each definition holds.
+    precedenceKey k oa
+      | nameStr k == ContextInStr = oaPrecedenceName oa
+      | otherwise                 = k
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
 -- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
 filterBestPrecedence :: (Show m, MetaDat m) => H.HashMap TypeName [Int] -> ObjectMap Expr m -> ObjectMap Expr m
-filterBestPrecedence precedenceMap = filterObjectMap (\oa -> objectPrecedence oa == H.lookupDefault (error $ printf "Could not find obj in union.\n\tObj: %s\n\tKeys: %s" (show oa) (show $ H.keys precedenceMap)) (makeAbsoluteName $ oaObjPath oa) precedenceMap)
+filterBestPrecedence precedenceMap = filterObjectMap (\oa -> objectPrecedence oa == H.lookupDefault (error $ printf "Could not find obj in union.\n\tObj: %s\n\tKeys: %s" (show oa) (show $ H.keys precedenceMap)) (oaPrecedenceName oa) precedenceMap)
 
 -- | Recursively enumerates an object map with its precedence map, in the form
 -- 'addUnionObjToEnv' consumes for the typechecked dependency side. Associative inputs for an

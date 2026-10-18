@@ -18,6 +18,7 @@ import           Control.Monad.State
 import           CtConstants         (existAnnot, proofAnnot, thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import qualified Data.List           as L
 import           Data.Maybe          (isJust, mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat,
                                       mapMetaObjectMap, mapMetaPrgm)
@@ -420,7 +421,14 @@ toPrgms vprgms = do
   FEnv{feTTypeGraph = ObjectMap depObjMap} <- get
   let importedDecls name = maybe [] omiDecls (H.lookup name depObjMap)
   solvedTypeEnv <- gets (solvedVerifyTypeEnv (ObjectMap mergedObjMap))
-  _ <- H.traverseWithKey (\name -> verifyObjMapItem solvedTypeEnv name (importedDecls name)) mergedObjMap
+  -- Each function is verified on its own ('oaDefinedName'): every definition in a context is kept
+  -- under the context's name, and checked together one function's definitions read as outside
+  -- another's declaration.
+  let byFunction item = [ (f, filterItem ((== f) . oaDefinedName) item) | f <- L.nub (map oaDefinedName (flatObjectMapItem item)) ]
+      filterItem p (ObjectMapItem ds rs fs dfs) = ObjectMapItem (filter p ds) (filter p rs) (filter p fs) (filter p dfs)
+  _ <- H.traverseWithKey (\name item -> forM_ (byFunction item) $ \(f, fItem) ->
+         let reported = if f == makeAbsoluteName name then name else f
+         in verifyObjMapItem solvedTypeEnv reported (filter ((== f) . oaDefinedName) (importedDecls name)) fItem) mergedObjMap
 
   return tprgms
 

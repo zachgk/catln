@@ -953,6 +953,24 @@ omiQuant omi
   | any (oaHasAnnotRel existAnnot) (omiDecls omi ++ omiRuntimeDecls omi) = QuantExist
   | otherwise = QuantUnique
 
+-- | The function an object defines. That is its own name, except for a definition in a context
+-- (@ContextIn(value= main, io)@), which is kept under the context's name — the name a call in a
+-- context is looked up by — but defines the function it holds.
+oaDefinedName :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> TypeName
+oaDefinedName oa = case H.lookup (partialKey (mkName contextValStr)) (exprAppliedArgsMap $ oaObjExpr oa) of
+  Just (Just (_, Just v)) | nameStr (oaObjPath oa) == ContextInStr, Just n <- maybeExprPath v -> makeAbsoluteName n
+  _ -> makeAbsoluteName (oaObjPath oa)
+
+-- | The name an object's precedence is ranked under: what it defines among the objects kept under
+-- its name. A definition in a context ranks with the other definitions of its own function in a
+-- context (@/ContextIn/main@) — not with every function in a context, and not with the function
+-- it holds, whose nested patterns (@exit(val -> Integer)@ in @ContextIn(value= exit(..), io)@) are
+-- objects of that name in their own right.
+oaPrecedenceName :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> TypeName
+oaPrecedenceName oa
+  | nameStr (oaObjPath oa) == ContextInStr = mkName (ContextInStr ++ nameStr (oaDefinedName oa))
+  | otherwise = makeAbsoluteName (oaObjPath oa)
+
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
 singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where

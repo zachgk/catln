@@ -54,6 +54,17 @@ runConstraintsLimit :: Integer
 -- non-convergence: unbounded growth is a bug (and was fixed, not budgeted around).
 runConstraintsLimit = 25
 
+-- | The epochs a fragment is given: 'runConstraintsLimit', and two more for each level its sub
+-- functions nest. A sub function is solved with its parent, and what one level learns reaches the
+-- next an epoch or two later, so a chain of them converges in time linear in its depth — a body of
+-- binds is a chain one continuation deep per bind (measured: 13 binds need about 46 epochs over a
+-- page, 20 binds about 60). This budgets that work; it does not raise the limit for a fragment
+-- that does not nest, and a solve that never settles still meets it.
+fragmentEpochLimit :: [PPrgm] -> Integer
+fragmentEpochLimit frag = runConstraintsLimit + 2 * depth
+  where
+    depth = maximum (0 : [ fromIntegral (length (filter (== '.') (nameStr n))) | p <- frag, n <- H.keys (omItems (prgmObjMap p)) ])
+
 -- | A typechecked item's pre-computed contribution to a fragment's dependency side:
 -- its recursive objects, their precedences, the typed arrow-graph piece, and the
 -- metadata-cleared form of that piece. Computed ONCE per item (at page start for
@@ -139,7 +150,7 @@ typecheckPrgmsSt pprgms typechecked = do
           let tCleared = mconcat [c | (_, _, _, c) <- cPieces]
           modify $ \e -> e{feVTypeGraph = mempty, feTTypeGraph = tGraph, feTTypeGraphCleared = tCleared}
           (vprgms', cons) <- fromPrgmsFragment frag (tRec, tPrec)
-          converged <- runConstraints runConstraintsLimit cons
+          converged <- runConstraints (fragmentEpochLimit frag) cons
           when converged $ verifyGuaranteedResults cons
           modify nextConstrainEpoch
           tprgms' <- toPrgms vprgms'

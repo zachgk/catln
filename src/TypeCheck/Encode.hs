@@ -185,7 +185,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   -- encode-time form of the head-vs-argument comparison 'exprVarArgsWithSrc' makes against a call
   -- source once one is known.
   definedNames <- getDefinedNames
-  let patternHeadIsDefined e = S.member (makeAbsoluteName $ exprPath e) definedNames
+  let patternHeadIsDefined e = nameIsDefined definedNames (exprPath e)
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
@@ -406,7 +406,7 @@ topArgPropEqs :: S.HashSet Name -> VExpr -> [VConstraintDat]
 topArgPropEqs definedNames obj' = go obj'
   where
     whole = getExprMeta obj'
-    headDefined nObj = S.member (makeAbsoluteName $ exprPath nObj) definedNames
+    headDefined nObj = nameIsDefined definedNames (exprPath nObj)
     go (TupleApply layerM (_, base) arg) = argLink layerM base arg ++ go base
     go (AliasExpr b _)                   = go b
     go (EWhere _ b _)                    = go b
@@ -451,6 +451,15 @@ getDefinedNames = do
   localDefNames <- gets feLocalDefNames
   return $ S.map makeAbsoluteName (H.keysSet objTg) <> localDefNames
 
+-- | Whether a pattern's head names something the program defines. A head is written as the page
+-- writes it, so inside a module a relative one (@Box@ in @module(Boxes)@) names the defined
+-- @/Boxes/Box@: it matches as a reference does ('relativeNameMatches'), not only at the root.
+nameIsDefined :: S.HashSet TypeName -> TypeName -> Bool
+nameIsDefined definedNames n
+  | S.member (makeAbsoluteName n) definedNames = True
+  | take 1 (nameStr n) == "/" = False
+  | otherwise = any (relativeNameMatches n) (S.toList definedNames)
+
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   definedNames <- getDefinedNames
@@ -461,7 +470,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   -- binding is open and receives the field's declared type (see below), whereas a reference
   -- keeps its own resolved type. A name is a binding exactly when nothing defines it.
   -- A pattern whose head names a defined type ('fromExpr''s @patternHeadIsDefined@).
-  let isDestructure e@TupleApply{} = S.member (makeAbsoluteName $ exprPath e) definedNames
+  let isDestructure e@TupleApply{} = nameIsDefined definedNames (exprPath e)
       isDestructure _              = False
   let isBindingVar t = case maybeGetSingleton t of
         Just p  -> not $ S.member (makeAbsoluteName $ ptName p) definedNames
