@@ -48,7 +48,7 @@ rsize(m= RLeaf)= 0
   runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
   binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
   the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm).
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= risNode(m= rput(m= rput(m= RLeaf, key= RKey, value= RVal), key= RKey, value= RVal)))
   #assert(test= rsize(m= rput(m= rput(m= RLeaf, key= RKey, value= RVal), key= RKey, value= RVal)) == 2)
-  io
+  ()

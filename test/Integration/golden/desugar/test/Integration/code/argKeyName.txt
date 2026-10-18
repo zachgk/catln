@@ -23,22 +23,63 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value /this= println
-                                ( Value msg= toString
-                                    ( Value /this= power
-                                        ( Value exp= CInt
-                                            { ciValue = 3 }
-                                        )
-                                        ( Value /this= CInt
-                                            { ciValue = 2 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= power
+                                            ( Value exp= CInt
+                                                { ciValue = 3 }
+                                            )
+                                            ( Value /this= CInt
+                                                { ciValue = 2 }
+                                            )
                                         )
                                     )
-                                )( Value /this= Value io )
+                                )( Value io= Value io )
                             )
+                            ( fn( Value v )= main.$b68362( Value /$b68362-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$b68362"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$b68362
+                            ( Value $b68362-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$b68362.$620336
+                                ( Value /$620336-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$b68362.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$b68362.$620336
+                            ( Value $620336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
                         ]
                     }
                 )
@@ -56,6 +97,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         ]

@@ -56,25 +56,43 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /total
-                                    ( Value /a -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 1 }
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = /operator-
+                                        ( Value /l -> /Data/Primitive/Integer = /total
+                                            ( Value /a -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 1 }
+                                            )
+                                            ( Value /b -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 63 }
+                                        )
                                     )
-                                    ( Value /b -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 2 }
-                                    )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 63 }
-                                )
-                            )( Value /this -> TVArg /io = Value /io )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$dce14e( Value /$dce14e-arg -> TVArg /v = Value /v )
+                            )
                         ]
                     }
                 )
@@ -101,6 +119,24 @@ Prgm
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 10 }
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$dce14e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$dce14e
+                            ( Value /$dce14e-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -273,6 +309,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

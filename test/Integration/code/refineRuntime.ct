@@ -25,4 +25,6 @@ narrow(n -> Integer) -> Integer= n | n >= 0
 
 narrowDecl(n -> Integer) -> Integer_nonNeg= n | n.nonNeg == True
 
-main{io -> IO}= io.exit(val= onInt(n= 3) - keep(n= 2) - narrow(n= 1) - keepOut(n= 0) + narrowDecl(n= 0))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= onInt(n= 3) - keep(n= 2) - narrow(n= 1) - keepOut(n= 0) + narrowDecl(n= 0))
+  ()

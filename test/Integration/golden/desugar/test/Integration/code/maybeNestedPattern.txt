@@ -2,6 +2,44 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$18b348.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$18b348.$620336
+                            ( Value $620336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$18b348"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$18b348
+                            ( Value $18b348-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$18b348.$620336
+                                ( Value /$620336-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Pair"
                 , ObjectMapItem
                     { omiDecls =
@@ -18,25 +56,30 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value /this= println
-                                ( Value msg= toString
-                                    ( Value /this= sumOf
-                                        ( Value m= /Data/Maybe/Some
-                                            ( Value value= Pair
-                                                ( Value a= CInt
-                                                    { ciValue = 1 }
-                                                )
-                                                ( Value b= CInt
-                                                    { ciValue = 2 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= sumOf
+                                            ( Value m= /Data/Maybe/Some
+                                                ( Value value= Pair
+                                                    ( Value a= CInt
+                                                        { ciValue = 1 }
+                                                    )
+                                                    ( Value b= CInt
+                                                        { ciValue = 2 }
+                                                    )
                                                 )
                                             )
                                         )
                                     )
-                                )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$18b348
+                                ( Value /$18b348-arg= Value v )
                             )
                         ]
                     }
@@ -64,6 +107,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         ]

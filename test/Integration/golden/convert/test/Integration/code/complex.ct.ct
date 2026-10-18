@@ -6,4 +6,6 @@ data(Complex(a -> Number, b -> Number))
 
 real(c= Complex(a, b))= a
 
-main{io -> IO}= io.exit(val= real(c= Complex(a= 0, b= 7)))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= real(c= Complex(a= 0, b= 7)))
+  ()

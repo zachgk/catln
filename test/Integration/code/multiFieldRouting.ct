@@ -22,6 +22,6 @@ data(Pair[$A, $B](first -> $A, second -> $B))
 bothUnbox(p -> Pair[$A -> /Boxed, $B -> /Boxed](first, second)) -> /Data/Primitive/Integer
 bothUnbox(p= Pair(first@f, second@s))= unbox(b= f)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= bothUnbox(p= Pair(first= 5, second= 7)) == 5)
-  io
+  ()

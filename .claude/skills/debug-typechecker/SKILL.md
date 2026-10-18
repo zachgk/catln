@@ -81,7 +81,7 @@ main -> IO= g(x= <the expression under test>)
 usual `main{io -> IO}` form needs core's whole `Context` machinery. The run ends in "Eval did
 not return an instance of IO … TupleVal /Catln/IO" — that is this harness's own tail, not a
 failure, and everything before it really ran. Where a repro has to report a value and core is
-in play anyway, `io.exit(val= …)` makes the process exit code the answer, which needs no `==`,
+in play anyway, `_<- exit(val= …)` makes the process exit code the answer, which needs no `==`,
 `#assert` or `String`.
 
 **Which stage is at fault**, before theorising about any of them: `catln epochs FILES` stops

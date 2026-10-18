@@ -12,6 +12,6 @@ import "core"
   stone until shared-type-variable unification lands for Eq.
 isOne(a)= 1 + a == 2
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= isOne(a= 1))
-  io
+  ()

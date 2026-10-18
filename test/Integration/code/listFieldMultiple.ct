@@ -24,4 +24,6 @@ every(Tagged.., isa= [/Catln/Doc/DShow])
 /Tagged(name= "two of the same", tags= ["x", "x"])
 /Tagged(name= "two different", tags= ["x", "y"])
 
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

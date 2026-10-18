@@ -7,4 +7,8 @@ showReply(r -> /Data/Maybe[$T -> String]) -> String
 showReply(r= /Data/Maybe/Nothing)= "no reply"
 showReply(r= /Data/Maybe/Some(value))= value
 
-main{io -> IO}= io.println(msg= showReply(r= io.llm(input= "Say hi"))).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  reply<- llm(input= "Say hi")
+  _<- println(msg= showReply(r= reply))
+  _<- exit(val= 0)
+  ()

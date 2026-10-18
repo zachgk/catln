@@ -23,7 +23,7 @@ greet(name -> String, formal -> Boolean) -> String= if(formal)
 
 # That no agreement test is derived for [greet] is asserted by the test engine's own tests
   (@test/Eval/QuantificationTests.hs@); what is held here is that the branch is taken.
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= greet(name= "Ada", formal= True) == "Dear Ada")
   #assert(test= greet(name= "Ada", formal= False) == "Hi Ada")
-  io
+  ()

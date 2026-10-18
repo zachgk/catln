@@ -2,6 +2,117 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$3f8b58"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$3f8b58
+                            ( EAppArg
+                                { eaaArg = Value /$3f8b58-arg -> /Context
+                                    ( /value=TopType
+                                    , /io=/Catln/IO
+                                    ).. = /Context
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /io=/Catln/IO
+                                        ).. =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                                    ( EAppArg
+                                                        { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /io=/Catln/IO
+                                            )..
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /io=/Catln/IO
+                                                )..
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /main.$3f8b58.$620336
+                                            ( EAppArg
+                                                { eaaArg = Value /$620336-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$3f8b58.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$3f8b58.$620336
+                            ( EAppArg
+                                { eaaArg = Value /$620336-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    ).. = /Context
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/digs"
                 , ObjectMapItem
                     { omiDecls =
@@ -114,86 +225,123 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
                             ) =
-                            ( /Catln/exit
+                            ( /Data/bindap
                                 ( EAppArg
-                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /this -> /Catln/IO =
-                                        ( /Catln/println
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /io=/Catln/IO
+                                        ).. =
+                                        ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /msg -> ∀/Data/String =
-                                                    ( /showD
-                                                        ( EAppArg
-                                                            { eaaArg = Value /d -> /Digits
-                                                                ( /v=/Data/Primitive/Integer
-                                                                , /k=/Data/Primitive/Integer
-                                                                ) =
-                                                                ( /digs
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /acc -> /Data/Primitive/Integer = 0 }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                            ( /head=/Data/Primitive/Integer
-                                                                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                                ( /head=/Data/Primitive/Integer
-                                                                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                                                                    ( /head=/Data/Primitive/Integer
-                                                                                    , /tail=/Data/List/Nil
-                                                                                    )
-                                                                                )
-                                                                            ) = /Data/List/Cons
+                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                            ( /showD
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /d -> /Digits
+                                                                        ( /v=/Data/Primitive/Integer
+                                                                        , /k=/Data/Primitive/Integer
+                                                                        ) =
+                                                                        ( /digs
                                                                             ( EAppArg
-                                                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                                                                { eaaArg = Value /acc -> /Data/Primitive/Integer = 0 }
                                                                             )
                                                                             ( EAppArg
-                                                                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                                                     ( /head=/Data/Primitive/Integer
                                                                                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                                                         ( /head=/Data/Primitive/Integer
-                                                                                        , /tail=/Data/List/Nil
+                                                                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                                            ( /head=/Data/Primitive/Integer
+                                                                                            , /tail=/Data/List/Nil
+                                                                                            )
                                                                                         )
                                                                                     ) = /Data/List/Cons
                                                                                     ( EAppArg
-                                                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                                                                     )
                                                                                     ( EAppArg
                                                                                         { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                                                             ( /head=/Data/Primitive/Integer
-                                                                                            , /tail=/Data/List/Nil
+                                                                                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                                                ( /head=/Data/Primitive/Integer
+                                                                                                , /tail=/Data/List/Nil
+                                                                                                )
                                                                                             ) = /Data/List/Cons
                                                                                             ( EAppArg
-                                                                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 30 }
+                                                                                                { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
                                                                                             )
-                                                                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                                                                    ( /head=/Data/Primitive/Integer
+                                                                                                    , /tail=/Data/List/Nil
+                                                                                                    ) = /Data/List/Cons
+                                                                                                    ( EAppArg
+                                                                                                        { eaaArg = Value /head -> /Data/Primitive/Integer = 30 }
+                                                                                                    )
+                                                                                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                }
+                                                                                            )
                                                                                         }
                                                                                     )
                                                                                 }
+                                                                            ) ↦ /Digits
+                                                                            ( /v=/Data/Primitive/Integer
+                                                                            , /k=/Data/Primitive/Integer
                                                                             )
-                                                                        }
-                                                                    ) ↦ /Digits
-                                                                    ( /v=/Data/Primitive/Integer
-                                                                    , /k=/Data/Primitive/Integer
-                                                                    )
-                                                                )
-                                                            }
-                                                        ) ↦ ∀/Data/String
+                                                                        )
+                                                                    }
+                                                                ) ↦ ∀/Data/String
+                                                            )
+                                                        }
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                            ) ↦ /Catln/IO
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /io=/Catln/IO
+                                            )..
                                         )
                                     }
-                                ) ↦ /Catln/IO
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /io=/Catln/IO
+                                                )..
+                                            }
+                                        ) -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /main.$3f8b58
+                                            ( EAppArg
+                                                { eaaArg = Value /$3f8b58-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                )
                             )
                         ]
                     }
@@ -269,6 +417,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

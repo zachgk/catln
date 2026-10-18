@@ -13,6 +13,6 @@ f(a -> Integer, b -> Integer, c -> Integer) -> Integer= a + b + c
 
 g= f(b= 2, c= 3)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= g(a= 1) == 6)
-  io
+  ()

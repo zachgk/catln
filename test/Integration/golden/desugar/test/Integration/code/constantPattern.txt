@@ -2,27 +2,18 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/ContextIn"
+                ( "/main.$33dea6.$b16fa6"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value /this= println
-                                ( Value msg= toString
-                                    ( Value /this= startsA
-                                        ( Value cs= /Data/List/Cons
-                                            ( Value /head= CChar
-                                                { chValue = 'b' }
-                                            )( Value /tail= Value /Data/List/Nil )
-                                        )
-                                    )
-                                )
-                                ( Value /this= println
+                        [ main.$33dea6.$b16fa6
+                            ( Value $b16fa6-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
                                     ( Value msg= toString
                                         ( Value /this= startsA
                                             ( Value cs= /Data/List/Cons
@@ -37,25 +28,62 @@ Prgm
                                             )
                                         )
                                     )
-                                    ( Value /this= println
-                                        ( Value msg= toString
-                                            ( Value /this= isZero
-                                                ( Value x= CInt
-                                                    { ciValue = 5 }
-                                                )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$33dea6.$b16fa6.$2f4383
+                                ( Value /$2f4383-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= isZero
+                                            ( Value x= CInt
+                                                { ciValue = 0 }
                                             )
                                         )
-                                        ( Value /this= println
-                                            ( Value msg= toString
-                                                ( Value /this= isZero
-                                                    ( Value x= CInt
-                                                        { ciValue = 0 }
-                                                    )
-                                                )
-                                            )( Value /this= Value io )
-                                        )
                                     )
-                                )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$33dea6
+                                ( Value /$33dea6-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$33dea6.$b16fa6.$2f4383.$e7cc3d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$33dea6.$b16fa6.$2f4383.$e7cc3d
+                            ( Value $e7cc3d-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$33dea6.$b16fa6.$2f4383.$e7cc3d.$620336
+                                ( Value /$620336-arg= Value v )
                             )
                         ]
                     }
@@ -81,6 +109,32 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$33dea6"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$33dea6
+                            ( Value $33dea6-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= isZero
+                                            ( Value x= CInt
+                                                { ciValue = 5 }
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$33dea6.$b16fa6( Value /$b16fa6-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/isZero"
                 , ObjectMapItem
                     { omiDecls =
@@ -96,10 +150,57 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/main.$33dea6.$b16fa6.$2f4383.$e7cc3d.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$33dea6.$b16fa6.$2f4383.$e7cc3d.$620336
+                            ( Value $620336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$33dea6.$b16fa6.$2f4383"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$33dea6.$b16fa6.$2f4383
+                            ( Value $2f4383-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= startsA
+                                            ( Value cs= /Data/List/Cons
+                                                ( Value /head= CChar
+                                                    { chValue = 'b' }
+                                                )( Value /tail= Value /Data/List/Nil )
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$33dea6.$b16fa6.$2f4383.$e7cc3d( Value /$e7cc3d-arg= Value v ) )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         ]

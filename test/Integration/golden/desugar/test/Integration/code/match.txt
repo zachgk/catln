@@ -2,6 +2,20 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$d7326a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$d7326a
+                            ( Value $d7326a-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/abs.$490dbb"
                 , ObjectMapItem
                     { omiDecls = []
@@ -30,12 +44,20 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= abs
-                                ( CInt
-                                    { ciValue = 0 }
-                                )
-                            )( Value /this= Value io )
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= abs
+                                        ( CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$d7326a( Value /$d7326a-arg= Value v ) )
                         ]
                     }
                 )
@@ -55,6 +77,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         ]

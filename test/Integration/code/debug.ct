@@ -12,4 +12,6 @@ inc(x -> Integer) =
   #debug(d= x + 1)
   x + 1
 
-main{io -> IO}= io.exit(val= inc(x= -1))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= inc(x= -1))
+  ()

@@ -8,19 +8,37 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = /defInt
-                                ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
-                                    ( Value /val -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 0 }
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = /defInt
+                                        ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 0 }
+                                            )
+                                        )
                                     )
-                                )
-                            )( Value /this -> TVArg /io = Value /io )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$e7f538( Value /$e7f538-arg -> TVArg /v = Value /v )
+                            )
                         ]
                     }
                 )
@@ -35,6 +53,24 @@ Prgm
                             ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = Value /val
                         , /defInt( Value /x -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$e7f538"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$e7f538
+                            ( Value /$e7f538-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -61,6 +97,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

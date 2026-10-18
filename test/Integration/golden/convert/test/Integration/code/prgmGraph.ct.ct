@@ -12,4 +12,6 @@ import obsidian("artifacts/catln-tasks/Tasks.md")
   and the one note it names, every page of the standard library marked as such, and one edge per
   page imported however often it is imported.
 #prgmGraph
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

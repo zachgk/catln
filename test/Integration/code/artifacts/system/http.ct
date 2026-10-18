@@ -3,4 +3,8 @@ import "http"
 
 
 # Sends one request and prints what came back.
-main{io -> IO}= io.println(msg= io.httpPost(url= "http://example.test/echo", headers= [/Http/Header(name= "X-Test", value= "tok")], body= "h\233llo")).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  reply<- httpPost(url= "http://example.test/echo", headers= [/Http/Header(name= "X-Test", value= "tok")], body= "h\233llo")
+  _<- println(msg= reply)
+  _<- exit(val= 0)
+  ()

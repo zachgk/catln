@@ -13,4 +13,6 @@ import "core"
 > "differs from its golden"
   >>> some other text
 > "has no golden"
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

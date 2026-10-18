@@ -2,6 +2,27 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Boxes/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Boxes/unwrap
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Boxes/Box[ /T=$_/T ]( /v=TopType ) }
+                            ) -> $_/T
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Boxes/unwrap
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Boxes/Box[ /T=TopType ]( /v=TopType ) = /Boxes/Box
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> TVArg /v = ( Value /v ↦ TVArg /v )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -10,15 +31,24 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                            )
                         ]
                     }
                 )
             ,
-                ( "/Box"
+                ( "/Boxes/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Box
+                        [ /Boxes/Box
                             ( EAppVar
                                 { eavName = /T
                                 , eavMeta = TopType
@@ -29,27 +59,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/unwrap"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /unwrap
-                            ( EAppArg
-                                { eaaArg = Value /b -> /Box[ /T=$_/T ]( /v=TopType ) }
-                            ) -> $_/T
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /unwrap
-                            ( EAppArg
-                                { eaaArg = Value /b -> /Box( /v=TopType ) = /Box
-                                    ( EAppArg { eaaArg = Value /v } )
-                                }
-                            ) -> TVArg /v = ( Value /v ↦ TVArg /v )
-                        ]
                     }
                 )
             ]
@@ -64,7 +73,8 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Repro: a return-position element var must bind from a parameterized argument.
-                  unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType."
+                  unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType.
+                  Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]."
                 }
             )
         ]

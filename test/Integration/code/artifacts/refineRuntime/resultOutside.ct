@@ -6,4 +6,6 @@ import "core"
   run fails as the result is returned.
 keep(n -> Integer) -> Integer_nonNeg= n
 
-main{io -> IO}= io.exit(val= keep(n= -2))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= keep(n= -2))
+  ()

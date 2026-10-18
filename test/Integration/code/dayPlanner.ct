@@ -11,4 +11,6 @@ import obsidian("artifacts/catln-planner/Plans.md")
   finds is held by its golden: each block on its day and over its span, and a task with no time
   carried apart from the blocks.
 #dayPlanner
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

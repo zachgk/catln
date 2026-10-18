@@ -2,46 +2,70 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$1ff46a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$1ff46a
+                            ( Value $1ff46a-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator+
-                                ( Value /l= /operator-
-                                    ( Value /l= /operator-
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator+
                                         ( Value /l= /operator-
-                                            ( Value /l= onInt
-                                                ( Value n= CInt
-                                                    { ciValue = 3 }
+                                            ( Value /l= /operator-
+                                                ( Value /l= /operator-
+                                                    ( Value /l= onInt
+                                                        ( Value n= CInt
+                                                            { ciValue = 3 }
+                                                        )
+                                                    )
+                                                    ( Value /r= keep
+                                                        ( Value n= CInt
+                                                            { ciValue = 2 }
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /r= narrow
+                                                    ( Value n= CInt
+                                                        { ciValue = 1 }
+                                                    )
                                                 )
                                             )
-                                            ( Value /r= keep
+                                            ( Value /r= keepOut
                                                 ( Value n= CInt
-                                                    { ciValue = 2 }
+                                                    { ciValue = 0 }
                                                 )
                                             )
                                         )
-                                        ( Value /r= narrow
+                                        ( Value /r= narrowDecl
                                             ( Value n= CInt
-                                                { ciValue = 1 }
+                                                { ciValue = 0 }
                                             )
                                         )
                                     )
-                                    ( Value /r= keepOut
-                                        ( Value n= CInt
-                                            { ciValue = 0 }
-                                        )
-                                    )
-                                )
-                                ( Value /r= narrowDecl
-                                    ( Value n= CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$1ff46a
+                                ( Value /$1ff46a-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -140,6 +164,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

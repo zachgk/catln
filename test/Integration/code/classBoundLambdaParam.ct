@@ -44,7 +44,7 @@ useEq(x, fn(v))= fn(v= x)
 
 # Both examples for each function are the same call; only the lambda's body differs, and the one
   that does not need the bound is what says the traversal was never the problem.
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= headTo(lst= [3], fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= 3), dflt= False))
   #assert(test= ~headTo(lst= [], fn(w)= /Data/Maybe/Some(value= w) == /Data/Maybe/Some(value= 3), dflt= False))
   #assert(test= headTo(lst= [3], fn(w)= w + 1, dflt= 0) == 4)
@@ -52,4 +52,4 @@ main{io -> IO} =
   #assert(test= ~viaGeneric(lst= [4], probe= 3))
   #assert(test= viaGeneric(lst= ["a"], probe= "a"))
   #assert(test= useEq(x= 3, fn(v)= /Data/Maybe/Some(value= v) == /Data/Maybe/Some(value= 3)))
-  io
+  ()

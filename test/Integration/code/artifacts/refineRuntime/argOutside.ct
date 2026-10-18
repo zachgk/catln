@@ -8,4 +8,6 @@ f(a -> Integer_nonNeg) -> Integer= a
 
 onInt(n -> Integer) -> Integer= f(a= n)
 
-main{io -> IO}= io.exit(val= onInt(n= -3))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= onInt(n= -3))
+  ()

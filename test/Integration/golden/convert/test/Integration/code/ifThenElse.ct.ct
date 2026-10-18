@@ -7,4 +7,6 @@ abs(x -> Integer)= if(x >= 0)
 
   Else= -1 * x
 
-main{io -> IO}= io.exit(val= abs(0))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= abs(0))
+  ()

@@ -34,7 +34,7 @@ tagCount(t= Tagged(name, tags))= tags.length
 itemCount(h -> Holder..) -> Integer
 itemCount(h= Holder(items))= items.length
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= tagCount(t= /Tagged(name= "two different", tags= ["x", "y"])) == 2)
   #assert(test= itemCount(h= /Holder(items= [/Mixed/Plain, /Mixed/Labelled(value= "x")])) == 2)
-  io
+  ()

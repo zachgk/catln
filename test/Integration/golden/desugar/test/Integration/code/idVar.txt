@@ -8,12 +8,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= id
-                                ( Value x= CInt
-                                    { ciValue = 0 }
-                                )
-                            )( Value /this= Value io )
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= id
+                                        ( Value x= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$99a285
+                                ( Value /$99a285-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -27,10 +37,25 @@ Prgm
                         [ id[ /T : TopType ]( Value x -> $/T ) -> $/T = Value x ]
                     }
                 )
+            ,
+                ( "/main.$99a285"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$99a285
+                            ( Value $99a285-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =

@@ -19,4 +19,6 @@ import rss("artifacts/xkcd.xml")
   arm that joins them, so they have no name to be called by either.
   What holds the markup down is the treebuild golden of @stack/rss/main.ct@, which carries every
   string the arm joins and the [/Catln/Doc/Show/Html] it resolves to.
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

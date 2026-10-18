@@ -59,6 +59,36 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                    ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/#test"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#test ]
@@ -75,19 +105,6 @@ Prgm
                             ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Catln/exit"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/exit
-                            ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Catln/IO
-                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -258,19 +275,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/println"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/println
-                            ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Catln/IO
-                        ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/#exist"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#exist ]
@@ -301,7 +305,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
         , CGType
         , CGType
         , CGType

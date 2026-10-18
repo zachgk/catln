@@ -41,20 +41,28 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator-
-                                ( Value /l= total
-                                    ( Value a= CInt
-                                        { ciValue = 1 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= total
+                                            ( Value a= CInt
+                                                { ciValue = 1 }
+                                            )
+                                            ( Value b= CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 63 }
+                                        )
                                     )
-                                    ( Value b= CInt
-                                        { ciValue = 2 }
-                                    )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 63 }
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$dce14e( Value /$dce14e-arg= Value v ) )
                         ]
                     }
                 )
@@ -81,6 +89,20 @@ Prgm
                             ( Value /r= CInt
                                 { ciValue = 10 }
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$dce14e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$dce14e
+                            ( Value $dce14e-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
                         ]
                     }
                 )
@@ -201,6 +223,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

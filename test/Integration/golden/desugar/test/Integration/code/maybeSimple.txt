@@ -8,12 +8,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= defInt
-                                ( Value x= CInt
-                                    { ciValue = 0 }
-                                )
-                            )( Value /this= Value io )
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= defInt
+                                        ( Value x= CInt
+                                            { ciValue = 0 }
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$9bb62d
+                                ( Value /$9bb62d-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -39,10 +49,25 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/main.$9bb62d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$9bb62d
+                            ( Value $9bb62d-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGClass

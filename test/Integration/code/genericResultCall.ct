@@ -39,10 +39,10 @@ foldrG(lst= Cons(head, tail), fn(acc, v), init)= fn(acc= /foldrG(lst= tail, fn(a
 
 # The accumulator need not be the element type: the last fold folds a list of Integers into a
   String.
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= useG(fn(a)= a + 1, x= 5) == 6)
   #assert(test= useI(fn(a)= a + 1, x= 5) == 6)
   #assert(test= foldrG(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0) == 6)
   #assert(test= foldrG(lst= [], fn(acc, v)= acc + v, init= 0) == 0)
   #assert(test= foldrG(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s") == "sxx")
-  io
+  ()

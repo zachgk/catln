@@ -2,7 +2,9 @@ import "core"
 
 
 # Tests the match syntax
-main{io -> IO}= io.exit(val= abs(0))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= abs(0))
+  ()
 
 abs(x -> Integer)= match(x)
   x2 | x >= 0= x2

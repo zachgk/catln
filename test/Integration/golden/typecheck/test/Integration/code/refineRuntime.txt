@@ -2,76 +2,113 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$1ff46a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$1ff46a
+                            ( Value /$1ff46a-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /operator-
-                                    ( Value /l -> /Data/Primitive/Integer = /operator-
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = /operator+
                                         ( Value /l -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer| PredExpr /operator==
-                                                ( /r=/Data/Primitive/True
-                                                , /l=~nonNeg( /this=~/$this )
-                                                ) = /onInt
-                                                ( Value /n -> /Data/Primitive/Integer| PredExpr /operator==
-                                                    ( /r=/Data/Primitive/True
-                                                    , /l=~nonNeg( /this=~/$this )
-                                                    ) = CInt
-                                                    { ciValue = 3 }
+                                            ( Value /l -> /Data/Primitive/Integer = /operator-
+                                                ( Value /l -> /Data/Primitive/Integer = /operator-
+                                                    ( Value /l -> /Data/Primitive/Integer| PredExpr /operator==
+                                                        ( /r=/Data/Primitive/True
+                                                        , /l=~nonNeg( /this=~/$this )
+                                                        ) = /onInt
+                                                        ( Value /n -> /Data/Primitive/Integer| PredExpr /operator==
+                                                            ( /r=/Data/Primitive/True
+                                                            , /l=~nonNeg( /this=~/$this )
+                                                            ) = CInt
+                                                            { ciValue = 3 }
+                                                        )
+                                                    )
+                                                    ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                                        ( /r=/Data/Primitive/True
+                                                        , /l=~nonNeg( /this=~/$this )
+                                                        ) = /keep
+                                                        ( Value /n -> /Data/Primitive/Integer = CInt
+                                                            { ciValue = 2 }
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /r -> /Data/Primitive/Integer| PredExpr /operator>=
+                                                    ( /r=UnionType
+                                                        ( Nothing
+                                                        , ∅
+                                                        ,
+                                                            [ CInt
+                                                                { ciValue = 0 }
+                                                            ]
+                                                        )
+                                                    , /l=~/$this
+                                                    ) = /narrow
+                                                    ( Value /n -> /Data/Primitive/Integer = CInt
+                                                        { ciValue = 1 }
+                                                    )
                                                 )
                                             )
                                             ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
-                                                ( /r=/Data/Primitive/True
+                                                ( /r=~True
                                                 , /l=~nonNeg( /this=~/$this )
-                                                ) = /keep
+                                                ) = /keepOut
                                                 ( Value /n -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 2 }
+                                                    { ciValue = 0 }
                                                 )
                                             )
                                         )
-                                        ( Value /r -> /Data/Primitive/Integer| PredExpr /operator>=
-                                            ( /r=UnionType
-                                                ( Nothing
-                                                , ∅
-                                                ,
-                                                    [ CInt
-                                                        { ciValue = 0 }
-                                                    ]
-                                                )
-                                            , /l=~/$this
-                                            ) = /narrow
+                                        ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
+                                            ( /r=/Data/Primitive/True
+                                            , /l=~nonNeg( /this=~/$this )
+                                            ) = /narrowDecl
                                             ( Value /n -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 1 }
+                                                { ciValue = 0 }
                                             )
                                         )
                                     )
-                                    ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
-                                        ( /r=~True
-                                        , /l=~nonNeg( /this=~/$this )
-                                        ) = /keepOut
-                                        ( Value /n -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 0 }
-                                        )
-                                    )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer| PredExpr /operator==
-                                    ( /r=/Data/Primitive/True
-                                    , /l=~nonNeg( /this=~/$this )
-                                    ) = /narrowDecl
-                                    ( Value /n -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                            )( Value /this -> TVArg /io = Value /io )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$1ff46a
+                                ( Value /$1ff46a-arg -> TVArg /v = Value /v )
+                            )
                         ]
                     }
                 )
@@ -189,6 +226,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

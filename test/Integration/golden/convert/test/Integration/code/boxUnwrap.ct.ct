@@ -3,11 +3,13 @@ import "core"
 
 # Repro: a return-position element var must bind from a parameterized argument.
   unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType.
-data(Box[$T](v -> $T))
+  Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap].
+module(Boxes)
+  data(Box[$T](v -> $T))
 
-unwrap(b -> Box[$T -> $_T](v)) -> $_T
-unwrap(Box(v))= v
+  unwrap(b -> Box[$T -> $_T](v)) -> $_T
+  unwrap(Box(v))= v
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= unwrap(b= Box(v= 5)) == 5)
-  io
+  ()

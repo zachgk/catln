@@ -78,7 +78,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /items ->
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] && PredClass /Data/Monad[ /T=∀/Data/Algebra/Ord ] ) =
+                                        ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] ) =
                                         ( /Data/List/filter
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> UnionType
@@ -124,7 +124,7 @@ Prgm
                                                     )
                                                 }
                                             ) ↦
-                                            ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] && PredClass /Data/Monad[ /T=∀/Data/Algebra/Ord ] )
+                                            ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
                                         )
                                     }
                                 ) ↦ UnionType

@@ -8,7 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io ) ]
                     }
                 )
             ,
@@ -34,13 +34,13 @@ Prgm
                     }
                 )
             ,
-                ( "/ContextIn.innerVar"
+                ( "/main.innerVar"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /ContextIn.innerVar= /operator==
+                        [ Value main.innerVar= /operator==
                             ( Value /l= /operator+
                                 ( Value /l= CInt
                                     { ciValue = 1 }

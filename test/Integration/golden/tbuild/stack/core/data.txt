@@ -2,23 +2,23 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/ContextOut"
+                ( "/Data/Monad/pure"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /ContextOut
-                            ( EAppVar
-                                { eavName = /V
-                                , eavMeta = TopType
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /value -> $/V } )
-                            ( EAppSpread
-                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
-                            )
-                        ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/Monad/pure
+                            ( EAppVar
+                                { eavName = /M
+                                , eavMeta = /Context[ /V=TopType ]( /value=$/V )..
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /v } ) -> /Context( /value=TopType ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                            )
+                        ]
                     }
                 )
             ,
@@ -65,26 +65,6 @@ Prgm
                     }
                 )
             ,
-                ( "/ContextIn"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /ContextIn
-                            ( EAppVar
-                                { eavName = /V
-                                , eavMeta = TopType
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /value -> $/V } )
-                            ( EAppSpread
-                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
-                            )
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
@@ -99,43 +79,81 @@ Prgm
                                 { easExpr = Hole TopType HoleActive { haName = Nothing } }
                             )
                         ]
-                    , omiRuntimeDecls =
-                        [ /Context
-                            ( EAppVar
-                                { eavName = /T
-                                , eavMeta = TopType
-                                }
-                            )
-                            ( EAppVar
-                                { eavName = /V
-                                , eavMeta = TopType
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /value -> $/V } )
-                            ( EAppSpread
-                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
-                            ) | /operator?->
-                            ( EAppArg
-                                { eaaArg = Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn
-                                    ( EAppVar
-                                        { eavName = /V
-                                        , eavMeta = $_/V
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> $/V = Hole $/V HoleActive { haName = Nothing } }
-                                    )
-                                    ( EAppSpread
-                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
-                            ) -> $/T
-                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Monad/mmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/mmap
+                            ( EAppArg
+                                { eaaArg = Value /m -> /Context( /value=TopType ).. = /Context
+                                    ( EAppArg { eaaArg = Value /value } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )@Value /c
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            )= /Context
+                            ( EAppSpread
+                                { easExpr = ( Value /c ↦ TopType ) }
+                            )
+                            ( EAppSpread
+                                { easExpr =
+                                    ( /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                        ) ↦ TopType
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Functor/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Functor/fmap
+                            ( EAppArg
+                                { eaaArg = Value /lst -> /Context( /value=TopType ).. = /Context
+                                    ( EAppArg { eaaArg = Value /value } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )@Value /c
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> /Context( /value=$_/B ).. = /Context
+                            ( EAppSpread
+                                { easExpr = ( Value /c ↦ TopType ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /value -> $_/B =
+                                    ( /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                        ) ↦ $_/B
+                                    )
+                                }
+                            )
+                        ]
                     }
                 )
             ,
@@ -147,6 +165,55 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Context/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Context/unwrap
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Context[ /V=$_/V ].. }
+                            ) -> $/V
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Context/unwrap
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Context( /value=TopType ).. = /Context
+                                    ( EAppArg { eaaArg = Value /value } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> TVArg /value = ( Value /value ↦ TVArg /value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pureContextInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pureContextInt
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Context[ /V=/Data/Primitive/Integer ]..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pureContextInt
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                            ( /Data/Monad/pure
+                                ( EAppArg
+                                    { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                ) ↦ /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
@@ -155,6 +222,23 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Context
+            , cgcExtends =
+                [ /Context[ /V=$_/T ].. ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Context
+            , cgcExtends =
+                [ /Context[ /V=$_/T ].. ]
+            , cgcDoc = Just ""
+            }
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Option[ /T=TopType ]
@@ -278,6 +362,182 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Context"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "TODO A [Context] holding a call ran the call in its states, through the runtime's [context]"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  macro. As every [Context] is a value, that arrow from every one of them kept any from staying"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  one. It returns in a modified form for running a call in a context."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $_V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  #runtime("context")"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading a context's value
+                  [unwrap] lives in [module(Data/Context)], the namespace of what is done with a [Context], so a
+                  page's own [unwrap] of another type is a function of its own rather than an arm of this one."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Context/unwrap
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /n=/Data/Primitive/Integer
+                                ) = /Context
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Context Functor and Monad instances
+                  A [Context] is a [Functor] over its [value]: [fmap] applies a function to the value and keeps every
+                  state beside it as it was. It is a [Monad]: [mmap] applies a function returning a [Context] to the
+                  value, and gives that context's value with its states over the original's — a state the function
+                  returns replaces the one it was given, and every other state carries through. [pure] is a
+                  [Context] holding no states, so it replaces none. The instances are written under the
+                  declarations' absolute names (see the [ConsList] instance in [Data/list] for the naming rationale)."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Context/unwrap
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Context( /value=/Data/Primitive/Integer ).. =
+                                ( /Data/Functor/fmap
+                                    ( EAppArg
+                                        { eaaArg = Value /lst -> /Context[ /V=/Data/Primitive/Integer ]
+                                            ( /value=/Data/Primitive/Integer
+                                            , /n=/Data/Primitive/Integer
+                                            ) = /Context
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = /fn
+                                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                            ( /operator+
+                                                ( EAppArg
+                                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                ) ↦ /Data/Primitive/Integer
+                                            )
+                                        }
+                                    ) ↦ /Context( /value=/Data/Primitive/Integer )..
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "TODO The arm above is given one result, read from its own patterns (@Context(value=⊤)..@), with no"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  link to what a call passes or to [fn]'s declared result, so [unwrap] of it has no type to show:"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  "Failed to build arrow tree from /Data/Context/unwrap(/this=/Context(/value=TopType)..)"."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "> /Data/Monad/mmap(m= /Context(value= 1, n= 7), fn(v)= /Context(value= v + 1, n= 8)).unwrap"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  >>> 2"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[pure] is chosen by the expected result type, as for [Maybe] (see [pure] in [Data/monad])."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Context/unwrap
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. =
+                                ( /Data/pureContextInt
+                                    ( EAppArg
+                                        { eaaArg = Value /v -> /Data/Primitive/Integer = 5 }
+                                    ) ↦ /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )..
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
                 }
             )
         , /Catln/#md

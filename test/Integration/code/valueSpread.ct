@@ -34,10 +34,10 @@ boxValue(b= Box(value, .._))= value
 bumped(b -> Box..[$V -> Integer]) -> Box..[$V -> Integer]
 bumped(b= Box(value, ..c))= Box(..c, value= value + 1)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= ptX(p= movedX(p= Pt(x= 1, y= 2))) == 2)
   #assert(test= ptY(p= movedX(p= Pt(x= 1, y= 2))) == 2)
   #assert(test= ptX(p= spreadLast(p= Pt(x= 1, y= 2))) == 1)
   #assert(test= ptX(p= both(a= Pt(x= 1, y= 2), b= Pt(x= 3, y= 4))) == 3)
   #assert(test= boxValue(b= bumped(b= Box(value= 5, n= 7))) == 6)
-  io
+  ()

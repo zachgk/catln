@@ -6,4 +6,6 @@ import "core"
   So, it must be read as `id($T) -> $T`, not (id(Any) -> Any).
 id(x)= x
 
-main{io -> IO}= io.exit(val= id(x= 0))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= id(x= 0))
+  ()

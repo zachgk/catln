@@ -2,14 +2,58 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$47d595"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$47d595
+                            ( Value /$47d595-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /f( /io=/Catln/IO ) + /Catln/IO ) = /f( Value /io -> TVArg /io = Value /io )
+                        [ /ContextIn( Value /value -> /f = Value /f )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /ContextIn( Value /value -> /f = Value /f )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$47d595
+                                ( Value /$47d595-arg -> TVArg /v = Value /v )
+                            )
                         ]
                     }
                 )
@@ -58,7 +102,23 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /f.innerVar -> ∀/Data/Primitive/Boolean = /operator==
+                        [ Value /f.innerVar -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /operator==
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
@@ -71,16 +131,6 @@ Prgm
                                 { ciValue = 2 }
                             )
                         ]
-                    }
-                )
-            ,
-                ( "/f"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /f( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
             ]

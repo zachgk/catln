@@ -8,14 +8,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= defInt
-                                ( Value x= Just
-                                    ( Value val= CInt
-                                        { ciValue = 0 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= defInt
+                                        ( Value x= Just
+                                            ( Value val= CInt
+                                                { ciValue = 0 }
+                                            )
+                                        )
                                     )
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$e7f538( Value /$e7f538-arg= Value v ) )
                         ]
                     }
                 )
@@ -30,6 +38,20 @@ Prgm
                             ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
                         , defInt( Value x= Value Nothing )= CInt
                             { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$e7f538"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$e7f538
+                            ( Value $e7f538-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
                         ]
                     }
                 )
@@ -56,6 +78,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

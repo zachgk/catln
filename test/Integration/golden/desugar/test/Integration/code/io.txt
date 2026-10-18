@@ -8,20 +8,67 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= CStr
+                                        { csValue = "hello world" }
+                                    )
+                                )( Value io= Value io )
                             )
-                            ( Value /this= println
-                                ( Value msg= CStr
-                                    { csValue = "hello world" }
-                                )( Value /this= Value io )
+                            ( fn( Value v )= main.$5cb687
+                                ( Value /$5cb687-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$5cb687.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$5cb687.$620336
+                            ( Value $620336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$5cb687"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$5cb687
+                            ( Value $5cb687-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$5cb687.$620336
+                                ( Value /$620336-arg= Value v )
                             )
                         ]
                     }
                 )
             ]
         }
-    , prgmCg = [ CGType ]
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
     , prgmAnnots = []
     }

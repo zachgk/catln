@@ -58,7 +58,7 @@ orZero(o -> /Data/Maybe[$T -> Integer]) -> Integer
 orZero(o= /Data/Maybe/Some(value))= value
 orZero(o= /Data/Maybe/Nothing)= 0
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= mmapMmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Some(value= 5))
   #assert(test= mmapMmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
   #assert(test= mmapMmap(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 3)) == /Data/Maybe/Nothing)
@@ -75,4 +75,4 @@ main{io -> IO} =
   #assert(test= mmapApFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Nothing, c= /Data/Maybe/Some(value= 4)) == /Data/Maybe/Some(value= 6))
   #assert(test= mmapApFmap(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value= 3), c= /Data/Maybe/Some(value= 4)) == /Data/Maybe/Nothing)
   #assert(test= mmapApFmap(a= /Data/Maybe/Some(value= 2), b= /Data/Maybe/Some(value= 3), c= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
-  io
+  ()

@@ -12,4 +12,7 @@ step(count -> Integer, more -> Boolean) -> Integer
 step(count, more= False)= count
 step(count, more= True)= count + count(lst= [1, 2, 3], fn(v)= v > 1)
 
-main{io -> IO}= io.println(msg= step(count= 1, more= True).toString).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- println(msg= step(count= 1, more= True).toString)
+  _<- exit(val= 0)
+  ()

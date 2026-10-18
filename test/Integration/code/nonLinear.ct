@@ -9,7 +9,7 @@ diag(a -> Integer, b -> Integer) -> Boolean
 diag(a@x, b@x)= True
 diag(a, b)= a == b
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= diag(a= 2, b= 2))
   #assert(test= ~diag(a= 2, b= 3))
   # Core's subtraction has a non-linear diagonal `(_@x - _@x)= 0`, so x - x short-circuits to 0
@@ -17,4 +17,4 @@ main{io -> IO} =
   #   core) checks the diagonal agrees with the primitive — i.e. it verifies `x - x == 0`.
   #assert(test= (7 - 7) == 0)
   #assert(test= (7 - 4) == 3)
-  io
+  ()

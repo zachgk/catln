@@ -23,8 +23,8 @@ B= C
 isC(c -> C) -> /Data/Primitive/Boolean
 isC(c= C)= True
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= isC(c= C))
   #assert(test= isC(c= B))
   #assert(test= isC(c= A))
-  io
+  ()

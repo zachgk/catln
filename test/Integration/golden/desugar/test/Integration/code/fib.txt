@@ -8,17 +8,27 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator-
-                                ( Value /l= fib
-                                    ( CInt
-                                        { ciValue = 3 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= fib
+                                            ( CInt
+                                                { ciValue = 3 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 3 }
+                                        )
                                     )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 3 }
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$8aae5a
+                                ( Value /$8aae5a-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -52,10 +62,25 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/main.$8aae5a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$8aae5a
+                            ( Value $8aae5a-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =

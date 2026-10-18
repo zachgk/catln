@@ -5,4 +5,6 @@ import "core"
 abs(x -> Integer) | x >= 0= x
 abs(x -> Integer) else = x
 
-main{io -> IO}= io.exit(val= abs(0))
+main{io -> IO} -> (){IO} =
+  _<- exit(val= abs(0))
+  ()

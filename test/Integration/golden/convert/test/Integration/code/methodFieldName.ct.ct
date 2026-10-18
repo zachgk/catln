@@ -17,4 +17,7 @@ f(x) =
 
   n + 1
 
-main{io -> IO}= io.println(msg= f(x= -3).toString).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- println(msg= f(x= -3).toString)
+  _<- exit(val= 0)
+  ()

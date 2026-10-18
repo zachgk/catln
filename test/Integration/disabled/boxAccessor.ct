@@ -5,6 +5,6 @@ import "core"
   Box(v= 1).v should type-check to Integer, not TopType.
 data(Box[$T](v -> $T))
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= Box(v= 1).v == 1)
-  io
+  ()

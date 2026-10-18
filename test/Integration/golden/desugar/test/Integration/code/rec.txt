@@ -8,17 +8,39 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator-
-                                ( Value /l= fact
-                                    ( CInt
-                                        { ciValue = 3 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= fact
+                                            ( CInt
+                                                { ciValue = 3 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 6 }
+                                        )
                                     )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 6 }
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$b2ad4a( Value /$b2ad4a-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$b2ad4a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$b2ad4a
+                            ( Value $b2ad4a-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
                         ]
                     }
                 )
@@ -49,6 +71,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =

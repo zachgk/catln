@@ -50,6 +50,41 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$af0acc.$974bb3.$66f693"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693
+                            ( Value $66f693-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= keyDepth
+                                            ( Value k= /Catln/PartialKey
+                                                ( Value name= CStr
+                                                    { csValue = "f" }
+                                                )( Value vars= Value /Data/List/Nil )
+                                                ( Value args= /Data/List/Cons
+                                                    ( Value /head= /Catln/PartialKey
+                                                        ( Value name= CStr
+                                                            { csValue = "a" }
+                                                        )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523( Value /$d51523-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/noMeta"
                 , ObjectMapItem
                     { omiDecls = [ Value /Test/noMeta -> /Catln/Meta.. ]
@@ -81,6 +116,122 @@ Prgm
                     , omiDefs =
                         [ /Test/posFile
                             ( Value p= /Catln/SourcePos( Value file )( Value line )( Value column ) ) -> ∀/Data/String = Value file
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3
+                            ( Value $40b2f3-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= declCount
+                                            ( Value p= /Catln/Prgm
+                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81
+                                ( Value /$11ae81-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5
+                            ( Value $6499d5-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= constCount
+                                            ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
+                                                ( Value consts= /Data/List/Cons
+                                                    ( Value /head= /Catln/Constant/CInt
+                                                        ( Value value= CInt
+                                                            { ciValue = 1 }
+                                                        )
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336( Value /$b61336-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df
+                            ( Value $64e1df-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= exprKind
+                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
+                                            ( Value name= CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08
+                                ( Value /$873d08-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08
+                            ( Value $873d08-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= valueName
+                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
+                                            ( Value name= CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3
+                                ( Value /$40b2f3-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -138,140 +289,36 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= constantKind
+                                        ( Value c= /Catln/Constant/CInt
+                                            ( Value value= CInt
+                                                { ciValue = 3 }
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
                             )
-                            ( Value /this= println
-                                ( Value msg= toString
-                                    ( Value /this= ownDeclCount
-                                        ( Value name= CStr
-                                            { csValue = "/Test/intOf" }
-                                        )
-                                    )
-                                )
-                                ( Value /this= println
-                                    ( Value msg= toString
-                                        ( Value /this= declCount
-                                            ( Value p= /Catln/Prgm
-                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
-                                            )
-                                        )
-                                    )
-                                    ( Value /this= println
-                                        ( Value msg= valueName
-                                            ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                                                ( Value name= CStr
-                                                    { csValue = "foo" }
-                                                )
-                                            )
-                                        )
-                                        ( Value /this= println
-                                            ( Value msg= exprKind
-                                                ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                                                    ( Value name= CStr
-                                                        { csValue = "foo" }
-                                                    )
-                                                )
-                                            )
-                                            ( Value /this= println
-                                                ( Value msg= toString
-                                                    ( Value /this= posLine
-                                                        ( Value p= /Catln/SourcePos
-                                                            ( Value file= CStr
-                                                                { csValue = "a.ct" }
-                                                            )
-                                                            ( Value line= CInt
-                                                                { ciValue = 7 }
-                                                            )
-                                                            ( Value column= CInt
-                                                                { ciValue = 3 }
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                                ( Value /this= println
-                                                    ( Value msg= writtenIn
-                                                        ( Value m= /Catln/Meta
-                                                            ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
-                                                            ( Value id= CStr
-                                                                { csValue = "" }
-                                                            )( Value dat= Value /Catln/Unit )
-                                                        )
-                                                    )
-                                                    ( Value /this= println
-                                                        ( Value msg= toString
-                                                            ( Value /this= constCount
-                                                                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
-                                                                    ( Value consts= /Data/List/Cons
-                                                                        ( Value /head= /Catln/Constant/CInt
-                                                                            ( Value value= CInt
-                                                                                { ciValue = 1 }
-                                                                            )
-                                                                        )( Value /tail= Value /Data/List/Nil )
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                        ( Value /this= println
-                                                            ( Value msg= typeKind
-                                                                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
-                                                            )
-                                                            ( Value /this= println
-                                                                ( Value msg= toString
-                                                                    ( Value /this= keyDepth
-                                                                        ( Value k= /Catln/PartialKey
-                                                                            ( Value name= CStr
-                                                                                { csValue = "f" }
-                                                                            )( Value vars= Value /Data/List/Nil )
-                                                                            ( Value args= /Data/List/Cons
-                                                                                ( Value /head= /Catln/PartialKey
-                                                                                    ( Value name= CStr
-                                                                                        { csValue = "a" }
-                                                                                    )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                                                                )( Value /tail= Value /Data/List/Nil )
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                )
-                                                                ( Value /this= println
-                                                                    ( Value msg= keyName
-                                                                        ( Value k= /Catln/PartialKey
-                                                                            ( Value name= CStr
-                                                                                { csValue = "x" }
-                                                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                                                        )
-                                                                    )
-                                                                    ( Value /this= println
-                                                                        ( Value msg= toString
-                                                                            ( Value /this= intOf
-                                                                                ( Value c= /Catln/Constant/CInt
-                                                                                    ( Value value= CInt
-                                                                                        { ciValue = 42 }
-                                                                                    )
-                                                                                )
-                                                                            )
-                                                                        )
-                                                                        ( Value /this= println
-                                                                            ( Value msg= constantKind
-                                                                                ( Value c= /Catln/Constant/CInt
-                                                                                    ( Value value= CInt
-                                                                                        { ciValue = 3 }
-                                                                                    )
-                                                                                )
-                                                                            )( Value /this= Value io )
-                                                                        )
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
+                            ( fn( Value v )= main.$af0acc( Value /$af0acc-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d.$620336
+                            ( Value $620336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
                         ]
                     }
                 )
@@ -314,6 +361,34 @@ Prgm
                     , omiDefs =
                         [ /Test/ownDeclCount( Value name ) -> /Data/Primitive/Integer = declCount
                             ( Value p= /Catln/prgmFor( Value name= Value name ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3
+                            ( Value $974bb3-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= keyName
+                                        ( Value k= /Catln/PartialKey
+                                            ( Value name= CStr
+                                                { csValue = "x" }
+                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693
+                                ( Value /$66f693-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -375,6 +450,36 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$af0acc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc
+                            ( Value $af0acc-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= intOf
+                                            ( Value c= /Catln/Constant/CInt
+                                                ( Value value= CInt
+                                                    { ciValue = 42 }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3
+                                ( Value /$974bb3-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/intOf"
                 , ObjectMapItem
                     { omiDecls =
@@ -393,6 +498,93 @@ Prgm
                         , /Test/intOf
                             ( Value c= /Catln/Constant/CChar( Value value ) ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b
+                            ( Value $f1991b-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= posLine
+                                            ( Value p= /Catln/SourcePos
+                                                ( Value file= CStr
+                                                    { csValue = "a.ct" }
+                                                )
+                                                ( Value line= CInt
+                                                    { ciValue = 7 }
+                                                )
+                                                ( Value column= CInt
+                                                    { ciValue = 3 }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df
+                                ( Value /$64e1df-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336
+                            ( Value $b61336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= writtenIn
+                                        ( Value m= /Catln/Meta
+                                            ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
+                                            ( Value id= CStr
+                                                { csValue = "" }
+                                            )( Value dat= Value /Catln/Unit )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b( Value /$f1991b-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523
+                            ( Value $d51523-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= typeKind
+                                        ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5
+                                ( Value /$6499d5-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -447,6 +639,30 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d
+                            ( Value $83078d-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d.$620336
+                                ( Value /$620336-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/startFile"
                 , ObjectMapItem
                     { omiDecls =
@@ -465,6 +681,34 @@ Prgm
                     , omiDefs =
                         [ /Test/startFile
                             ( Value r= /Catln/Pair( Value first )( Value second ) ) -> ∀/Data/String = posFile( Value p= Value first )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81
+                            ( Value $11ae81-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= ownDeclCount
+                                            ( Value name= CStr
+                                                { csValue = "/Test/intOf" }
+                                            )
+                                        )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d
+                                ( Value /$83078d-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -514,6 +758,19 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

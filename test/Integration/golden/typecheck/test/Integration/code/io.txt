@@ -8,26 +8,114 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = "hello world" }
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
                             )
-                            ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                    { csValue = "hello world" }
-                                )( Value /this -> TVArg /io = Value /io )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$5cb687
+                                ( Value /$5cb687-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$5cb687.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$5cb687.$620336
+                            ( Value /$620336-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$5cb687"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$5cb687
+                            ( Value /$5cb687-arg -> /Context
+                                ( /value=TopType
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$5cb687.$620336
+                                ( Value /$620336-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }
                 )
             ]
         }
-    , prgmCg = [ CGType ]
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
     , prgmAnnots = []
     }

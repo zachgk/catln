@@ -27,20 +27,44 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator-
-                                ( Value /l= evenAdd
-                                    ( Value a= CInt
-                                        { ciValue = 2 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= evenAdd
+                                            ( Value a= CInt
+                                                { ciValue = 2 }
+                                            )
+                                            ( Value b= CInt
+                                                { ciValue = 4 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 6 }
+                                        )
                                     )
-                                    ( Value b= CInt
-                                        { ciValue = 4 }
-                                    )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 6 }
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$19cbd4
+                                ( Value /$19cbd4-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$19cbd4"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$19cbd4
+                            ( Value $19cbd4-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
                         ]
                     }
                 )
@@ -58,6 +82,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         ]

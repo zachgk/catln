@@ -18,6 +18,6 @@ import "core"
 f(a -> Integer, b -> Integer, c -> Integer) -> Integer= a + b + c
 f= f(b= 2, c= 3)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= f(a= 1) == 6)
-  io
+  ()

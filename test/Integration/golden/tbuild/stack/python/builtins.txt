@@ -129,6 +129,22 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /Python/Builtins/input = Value /Python/Builtins/input } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=∀/Data/String
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/abs"
                 , ObjectMapItem
                     { omiDecls = []
@@ -336,18 +352,6 @@ Prgm
                         , /Python/Builtins/max
                             ( EAppArg { eaaArg = Value /l -> /Data/Primitive/Float } )
                             ( EAppArg { eaaArg = Value /r -> /Data/Primitive/Float } ) -> /Data/Primitive/Float
-                        ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Python/Builtins/input"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/input
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

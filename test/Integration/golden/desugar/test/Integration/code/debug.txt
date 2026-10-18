@@ -2,20 +2,44 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$82294b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$82294b
+                            ( Value $82294b-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= inc
-                                ( Value x= /operator-
-                                    ( Value /a= CInt
-                                        { ciValue = 1 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= inc
+                                        ( Value x= /operator-
+                                            ( Value /a= CInt
+                                                { ciValue = 1 }
+                                            )
+                                        )
                                     )
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$82294b
+                                ( Value /$82294b-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -37,6 +61,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =

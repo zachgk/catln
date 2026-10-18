@@ -3,6 +3,6 @@ import "core"
 
 # Repro: a field accessor on the real stdlib ConsList must bind the element type.
   Cons(head= 1, tail= Nil).head should type-check to Integer, not TopType.
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= /Data/List/Cons(head= 1, tail= Nil).head == 1)
-  io
+  ()

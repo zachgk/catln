@@ -5,4 +5,5 @@ add_ints(x -> Integer, y -> Integer) -> Integer= x + y
 class(Point)
 PI -> Float= 3.14
 
-main{io -> IO}= io
+main{io -> IO} -> {IO} =
+  

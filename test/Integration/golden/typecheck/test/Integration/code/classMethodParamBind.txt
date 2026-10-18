@@ -17,7 +17,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /Scratch/main = Value /Scratch/main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                        [ /ContextIn( Value /value -> /Scratch/main = Value /Scratch/main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
                     }
                 )
             ,

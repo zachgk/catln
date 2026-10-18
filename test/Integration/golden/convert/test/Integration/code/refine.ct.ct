@@ -12,4 +12,6 @@ even(x -> Integer) -> Boolean= x % 2 == 0
 # evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b
 evenAdd(a -> Integer, b -> Integer) | even(a) -> Integer= a + b
 
-main{io -> IO}= io.exit(val= evenAdd(a= 2, b= 4) - 6)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= evenAdd(a= 2, b= 4) - 6)
+  ()

@@ -29,7 +29,7 @@ caseRank(c -> /Data/Algebra/Comparison) -> Integer= case(c)
   c -> /Data/Algebra/Equal= 2
   c -> /Data/Algebra/GreaterThan= 3
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= rank(c= /Data/Algebra/LessThan) == 1)
   #assert(test= rank(c= /Data/Algebra/Equal) == 2)
   #assert(test= rank(c= /Data/Algebra/GreaterThan) == 3)
@@ -39,4 +39,4 @@ main{io -> IO} =
   #assert(test= caseRank(c= /Data/Algebra/LessThan) == 1)
   #assert(test= caseRank(c= /Data/Algebra/Equal) == 2)
   #assert(test= caseRank(c= /Data/Algebra/GreaterThan) == 3)
-  io
+  ()

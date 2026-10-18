@@ -2,26 +2,48 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$e7dc4b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$e7dc4b
+                            ( Value $e7dc4b-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= /operator-
-                                ( Value /l= sumOf
-                                    ( Value a= CInt
-                                        { ciValue = 1 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= sumOf
+                                            ( Value a= CInt
+                                                { ciValue = 1 }
+                                            )
+                                            ( Value d= CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 3 }
+                                        )
                                     )
-                                    ( Value d= CInt
-                                        { ciValue = 2 }
-                                    )
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 3 }
-                                )
-                            )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$e7dc4b( Value /$e7dc4b-arg= Value v ) )
                         ]
                     }
                 )
@@ -70,6 +92,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

@@ -2,31 +2,112 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$4a13e6"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$4a13e6
+                            ( Value /$4a13e6-arg -> /Context
+                                ( /value=TopType
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$4a13e6.$620336
+                                ( Value /$620336-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$4a13e6.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$4a13e6.$620336
+                            ( Value /$620336-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> /Data/Primitive/Integer = /f
-                                        ( Value /x -> /Data/Primitive/Integer = /operator-
-                                            ( Value /a -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 3 }
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /f
+                                            ( Value /x -> /Data/Primitive/Integer = /operator-
+                                                ( Value /a -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 3 }
+                                                )
                                             )
                                         )
                                     )
-                                )( Value /this -> TVArg /io = Value /io )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$4a13e6
+                                ( Value /$4a13e6-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }
@@ -82,6 +163,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

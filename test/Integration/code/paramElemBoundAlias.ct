@@ -20,6 +20,6 @@ data(Box[$A](x -> $A))
 useBox(p -> Box[$A -> /Boxed](x)) -> /Data/Primitive/Integer
 useBox(p= Box(x@v))= unbox(b= v)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= useBox(p= Box(x= 5)) == 5)
-  io
+  ()

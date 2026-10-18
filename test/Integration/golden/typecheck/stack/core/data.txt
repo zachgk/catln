@@ -2,15 +2,15 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/ContextOut"
+                ( "/Data/Monad/pure"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /ContextOut[ /V : TopType ]( Value /value -> $/V )
-                            ( ..Hole TopType HoleActive { haName = Nothing } )
-                        ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/Monad/pure
+                            [ /M : /Context[ /V=TopType ]( /value=$/V ).. ]( Value /v ) -> /Context( /value=TopType ) = /Context( Value /value -> TVArg /v = Value /v )
+                        ]
                     }
                 )
             ,
@@ -32,10 +32,10 @@ Prgm
                     }
                 )
             ,
-                ( "/ContextIn"
+                ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextIn[ /V : TopType ]( Value /value -> $/V )
+                        [ /Context[ /V : TopType ]( Value /value -> $/V )
                             ( ..Hole TopType HoleActive { haName = Nothing } )
                         ]
                     , omiRuntimeDecls = []
@@ -44,23 +44,35 @@ Prgm
                     }
                 )
             ,
-                ( "/Context"
+                ( "/Data/Monad/mmap"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /Context[ /V : TopType ]( Value /value -> $/V )
-                            ( ..Hole TopType HoleActive { haName = Nothing } )
-                        ]
-                    , omiRuntimeDecls =
-                        [ /Context[ /T : TopType ][ /V : TopType ]( Value /value -> $/V )
-                            ( ..Hole TopType HoleActive { haName = Nothing } ) | /operator?->
-                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn[ /V : $_/V ]
-                                ( Value /value -> $/V = Hole $/V HoleActive { haName = Nothing } )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )
-                            ( Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } ) -> $/T
-                        ]
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/Monad/mmap
+                            ( Value /m -> /Context( /value=TopType ).. = /Context( Value /value )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            )
+                            ( /fn( Value /v ) )= /Context( ..Value /c )
+                            ( ../fn( Value /v -> TVArg /value = Value /value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Functor/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Functor/fmap
+                            ( Value /lst -> /Context( /value=TopType ).. = /Context( Value /value )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            )
+                            ( /fn( Value /v ) ) -> /Context( /value=$_/B ).. = /Context( ..Value /c )
+                            ( Value /value -> $_/B = /fn( Value /v -> TVArg /value = Value /value ) )
+                        ]
                     }
                 )
             ,
@@ -72,6 +84,34 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Context/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Context/unwrap[ /V : TopType ]
+                            ( Value /this -> /Context[ /V=$_/V ].. ) -> $/V
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Context/unwrap
+                            ( Value /this -> /Context( /value=TopType ).. = /Context( Value /value )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> TVArg /value = Value /value
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pureContextInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pureContextInt( Value /v -> /Data/Primitive/Integer ) -> /Context[ /V=/Data/Primitive/Integer ].. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pureContextInt( Value /v -> /Data/Primitive/Integer ) -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v ) ]
+                    }
+                )
             ]
         }
     , prgmCg =
@@ -80,6 +120,23 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Context
+            , cgcExtends =
+                [ /Context[ /V=$_/T ].. ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Context
+            , cgcExtends =
+                [ /Context[ /V=$_/T ].. ]
+            , cgcDoc = Just ""
+            }
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Option[ /T=TopType ]
@@ -181,6 +238,134 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Context" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "TODO A [Context] holding a call ran the call in its states, through the runtime's [context]" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  macro. As every [Context] is a value, that arrow from every one of them kept any from staying" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  one. It returns in a modified form for running a call in a context." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "/Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $_V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  #runtime("context")" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Reading a context's value
+                [unwrap] lives in [module(Data/Context)], the namespace of what is done with a [Context], so a
+                page's own [unwrap] of another type is a function of its own rather than an arm of this one." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
+                ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                    ( /value=/Data/Primitive/Integer
+                    , /n=/Data/Primitive/Integer
+                    ) = /Context
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /n -> /Data/Primitive/Integer = CInt
+                        { ciValue = 7 }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "1" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Context Functor and Monad instances
+                A [Context] is a [Functor] over its [value]: [fmap] applies a function to the value and keeps every
+                state beside it as it was. It is a [Monad]: [mmap] applies a function returning a [Context] to the
+                value, and gives that context's value with its states over the original's — a state the function
+                returns replaces the one it was given, and every other state carries through. [pure] is a
+                [Context] holding no states, so it replaces none. The instances are written under the
+                declarations' absolute names (see the [ConsList] instance in [Data/list] for the naming rationale)." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
+                ( Value /this -> /Context( /value=/Data/Primitive/Integer ).. = /Data/Functor/fmap
+                    ( Value /lst -> /Context[ /V=/Data/Primitive/Integer ]
+                        ( /value=/Data/Primitive/Integer
+                        , /n=/Data/Primitive/Integer
+                        ) = /Context
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /n -> /Data/Primitive/Integer = CInt
+                            { ciValue = 7 }
+                        )
+                    )
+                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                        ( Value /r -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "2" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "TODO The arm above is given one result, read from its own patterns (@Context(value=⊤)..@), with no" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  link to what a call passes or to [fn]'s declared result, so [unwrap] of it has no type to show:" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  "Failed to build arrow tree from /Data/Context/unwrap(/this=/Context(/value=TopType)..)"." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "> /Data/Monad/mmap(m= /Context(value= 1, n= 7), fn(v)= /Context(value= v + 1, n= 8)).unwrap" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  >>> 2" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[pure] is chosen by the expected result type, as for [Maybe] (see [pure] in [Data/monad])." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
+                ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Data/pureContextInt
+                    ( Value /v -> /Data/Primitive/Integer = CInt
+                        { ciValue = 5 }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "5" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text

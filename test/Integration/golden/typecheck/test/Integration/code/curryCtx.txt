@@ -8,7 +8,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
                     }
                 )
             ,
@@ -50,13 +55,29 @@ Prgm
                     }
                 )
             ,
-                ( "/ContextIn.innerVar"
+                ( "/main.innerVar"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /ContextIn.innerVar -> ∀/Data/Primitive/Boolean = /operator==
+                        [ Value /main.innerVar -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /operator==
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal
+                                    ( /this=/Data/Primitive/Integer
+                                    , /other=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }

@@ -16,6 +16,6 @@ module(Scratch)
 
   :MyEqv.rel(a -> Integer, b -> Integer)= /Data/Primitive/intEq(l= a, r= b)
 
-  main{io -> IO} =
+  main{io -> IO} -> (){IO} =
     #assert(test= MyEqv.rel(a= 2, b= 2))
-    io
+    ()

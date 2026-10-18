@@ -18,9 +18,9 @@ incMaybe(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
 strMaybe(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> String] =
   applyInc(lst= m, fn(v)= v.toString)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= incMaybe(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 6))
   #assert(test= incMaybe(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
   #assert(test= strMaybe(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= "5"))
   #assert(test= strMaybe(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
-  io
+  ()

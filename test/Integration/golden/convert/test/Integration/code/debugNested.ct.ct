@@ -35,7 +35,8 @@ totals(xs -> /Data/List[$T -> Integer]) -> /Data/List[$T -> Integer] =
   shifted= fmap(lst= xs, fn(v)= total(a= v, b= 2))
   shifted
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= bump(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 11))
   #assert(test= totals(xs= [1, 2]) == [63, 84])
-  io.exit(val= total(a= 1, b= 2) - 63)
+  _<- exit(val= total(a= 1, b= 2) - 63)
+  ()

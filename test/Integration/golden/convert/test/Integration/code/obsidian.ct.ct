@@ -55,4 +55,6 @@ import obsidian("artifacts/catln-test/Properties/LinksOnlyInProperties.md")
   @.ct@ declaration is displayed like a read one, this becomes the gate it was written to be.
 /Data/Note/Page(title= "A page written rather than read")
 
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

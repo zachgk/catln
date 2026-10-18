@@ -423,6 +423,69 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0
+                            ( Value /$d4a4c0-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                    ( Value /msg -> ∀/Data/String = /Test/objArrName
+                                        ( Value /oa -> /Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            ) = /Test/emptyObjArr
+                                            ( Value /name -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                { csValue = "myFn" }
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
+                                ( Value /$5f4b62-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/noMeta"
                 , ObjectMapItem
                     { omiDecls = [ Value /Test/noMeta -> /Catln/Meta.. ]
@@ -460,258 +523,46 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> ∀/Data/String = /Data/toString
-                                    ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
-                                        ( Value /r -> /Catln/ImportResult
-                                            ( /prgm=/Catln/RawPrgm..
-                                            , /reads=∀/Data/Maybe
-                                                [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                            , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                            ) = /Test/oneResult
-                                            ( Value /name -> /Data/String/Text
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/pathOf
+                                        ( Value /r -> /Catln/ReadPath/ReadFile
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Catln/ReadPath/ReadFile
+                                            ( Value /path -> /Data/String/Text
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                { csValue = "myFn" }
+                                                { csValue = "a.ct" }
                                             )
                                         )
                                     )
-                                )
-                                ( Value /this -> /Catln/IO = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
-                                        ( Value /this -> /Data/Primitive/Integer = /Test/resultDeclCount
-                                            ( Value /r -> /Catln/ImportResult
-                                                ( /prgm=/Catln/RawPrgm..
-                                                , /reads=∀/Data/Maybe
-                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                ) = /Test/oneResult
-                                                ( Value /name -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                    { csValue = "myFn" }
-                                                )
-                                            )
-                                        )
-                                    )
-                                    ( Value /this -> /Catln/IO = /Catln/println
-                                        ( Value /msg -> ∀/Data/String = /Data/toString
-                                            ( Value /this -> /Data/Primitive/Integer = /Test/declCount
-                                                ( Value /p -> /Catln/RawPrgm
-                                                    ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
-                                                    , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
-                                                    ) = /Test/onePrgm
-                                                    ( Value /name -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                        { csValue = "myFn" }
-                                                    )
-                                                )
-                                            )
-                                        )
-                                        ( Value /this -> /Catln/IO = /Catln/println
-                                            ( Value /msg -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/statementKind
-                                                ( Value /s -> /Catln/RawStatement/RawDeclStatement
-                                                    ( /objArr=/Catln/RawObjArr
-                                                        ( /arr=∀/Data/Maybe
-                                                            [ /T=/Catln/Pair
-                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                ]..
-                                                            ]
-                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /basis=∀/Catln/ObjectBasis
-                                                        )..
-                                                    ) = /Catln/RawStatement/RawDeclStatement
-                                                    ( Value /objArr -> /Catln/RawObjArr
-                                                        ( /arr=∀/Data/Maybe
-                                                            [ /T=/Catln/Pair
-                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                ]..
-                                                            ]
-                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /basis=∀/Catln/ObjectBasis
-                                                        ).. = /Test/emptyObjArr
-                                                        ( Value /name -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                            { csValue = "myFn" }
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                            ( Value /this -> /Catln/IO = /Catln/println
-                                                ( Value /msg -> ∀/Data/String = /Test/objArrName
-                                                    ( Value /oa -> /Catln/RawObjArr
-                                                        ( /arr=∀/Data/Maybe
-                                                            [ /T=/Catln/Pair
-                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                ]..
-                                                            ]
-                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /basis=∀/Catln/ObjectBasis
-                                                        ) = /Test/emptyObjArr
-                                                        ( Value /name -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                            { csValue = "myFn" }
-                                                        )
-                                                    )
-                                                )
-                                                ( Value /this -> /Catln/IO = /Catln/println
-                                                    ( Value /msg -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
-                                                        ( Value /e -> /Catln/RawExpr/RawList
-                                                            ( /values=/Data/List/Nil
-                                                            , /meta=/Catln/Meta
-                                                                ( /type=∀/Catln/Type
-                                                                , /dat=/Catln/Unit..
-                                                                , /id=∀/Data/String
-                                                                , /pos=∀/Data/Maybe
-                                                                    [ /T=/Catln/Pair
-                                                                        [ /B=/Catln/SourcePos..
-                                                                        , /A=/Catln/SourcePos..
-                                                                        ]..
-                                                                    ]
-                                                                )..
-                                                            ) = /Catln/RawExpr/RawList
-                                                            ( Value /meta -> /Catln/Meta
-                                                                ( /type=∀/Catln/Type
-                                                                , /dat=/Catln/Unit..
-                                                                , /id=∀/Data/String
-                                                                , /pos=∀/Data/Maybe
-                                                                    [ /T=/Catln/Pair
-                                                                        [ /B=/Catln/SourcePos..
-                                                                        , /A=/Catln/SourcePos..
-                                                                        ]..
-                                                                    ]
-                                                                ).. = Value /Test/noMeta
-                                                            )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
-                                                        )
-                                                    )
-                                                    ( Value /this -> /Catln/IO = /Catln/println
-                                                        ( Value /msg -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/rawValueName
-                                                            ( Value /e -> /Catln/RawExpr/RawValue
-                                                                ( /name=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                , /meta=/Catln/Meta
-                                                                    ( /type=∀/Catln/Type
-                                                                    , /dat=/Catln/Unit..
-                                                                    , /id=∀/Data/String
-                                                                    , /pos=∀/Data/Maybe
-                                                                        [ /T=/Catln/Pair
-                                                                            [ /B=/Catln/SourcePos..
-                                                                            , /A=/Catln/SourcePos..
-                                                                            ]..
-                                                                        ]
-                                                                    )..
-                                                                ) = /Catln/RawExpr/RawValue
-                                                                ( Value /meta -> /Catln/Meta
-                                                                    ( /type=∀/Catln/Type
-                                                                    , /dat=/Catln/Unit..
-                                                                    , /id=∀/Data/String
-                                                                    , /pos=∀/Data/Maybe
-                                                                        [ /T=/Catln/Pair
-                                                                            [ /B=/Catln/SourcePos..
-                                                                            , /A=/Catln/SourcePos..
-                                                                            ]..
-                                                                        ]
-                                                                    ).. = Value /Test/noMeta
-                                                                )
-                                                                ( Value /name -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                                    { csValue = "foo" }
-                                                                )
-                                                            )
-                                                        )
-                                                        ( Value /this -> /Catln/IO = /Catln/println
-                                                            ( Value /msg -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
-                                                                ( Value /e -> /Catln/RawExpr/RawValue
-                                                                    ( /name=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                    , /meta=/Catln/Meta
-                                                                        ( /type=∀/Catln/Type
-                                                                        , /dat=/Catln/Unit..
-                                                                        , /id=∀/Data/String
-                                                                        , /pos=∀/Data/Maybe
-                                                                            [ /T=/Catln/Pair
-                                                                                [ /B=/Catln/SourcePos..
-                                                                                , /A=/Catln/SourcePos..
-                                                                                ]..
-                                                                            ]
-                                                                        )..
-                                                                    ) = /Catln/RawExpr/RawValue
-                                                                    ( Value /meta -> /Catln/Meta
-                                                                        ( /type=∀/Catln/Type
-                                                                        , /dat=/Catln/Unit..
-                                                                        , /id=∀/Data/String
-                                                                        , /pos=∀/Data/Maybe
-                                                                            [ /T=/Catln/Pair
-                                                                                [ /B=/Catln/SourcePos..
-                                                                                , /A=/Catln/SourcePos..
-                                                                                ]..
-                                                                            ]
-                                                                        ).. = Value /Test/noMeta
-                                                                    )
-                                                                    ( Value /name -> /Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                                        { csValue = "foo" }
-                                                                    )
-                                                                )
-                                                            )
-                                                            ( Value /this -> /Catln/IO = /Catln/println
-                                                                ( Value /msg -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/readKind
-                                                                    ( Value /r -> /Catln/ReadPath/ReadDir
-                                                                        ( /path=/Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                        ) = /Catln/ReadPath/ReadDir
-                                                                        ( Value /path -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                                            { csValue = "src" }
-                                                                        )
-                                                                    )
-                                                                )
-                                                                ( Value /this -> /Catln/IO = /Catln/println
-                                                                    ( Value /msg -> /Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/pathOf
-                                                                        ( Value /r -> /Catln/ReadPath/ReadFile
-                                                                            ( /path=/Data/String/Text
-                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                            ) = /Catln/ReadPath/ReadFile
-                                                                            ( Value /path -> /Data/String/Text
-                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                                                                { csValue = "a.ct" }
-                                                                            )
-                                                                        )
-                                                                    )( Value /this -> TVArg /io = Value /io )
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36
+                                ( Value /$13df36-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }
@@ -886,6 +737,189 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f
+                            ( Value /$ad3f7f-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/resultDeclCount
+                                            ( Value /r -> /Catln/ImportResult
+                                                ( /prgm=/Catln/RawPrgm..
+                                                , /reads=∀/Data/Maybe
+                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                ) = /Test/oneResult
+                                                ( Value /name -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
+                                ( Value /$4e2f62-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36.$5a9cdd"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd
+                            ( Value /$5a9cdd-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
+                                        ( Value /e -> /Catln/RawExpr/RawValue
+                                            ( /name=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /meta=/Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                )..
+                                            ) = /Catln/RawExpr/RawValue
+                                            ( Value /meta -> /Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                ).. = Value /Test/noMeta
+                                            )
+                                            ( Value /name -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c( Value /$e3172c-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
+                            ( Value /$4ed8f8-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
+                                ( Value /$620336-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/emptyPrgm"
                 , ObjectMapItem
                     { omiDecls = [ Value /Test/emptyPrgm -> /Catln/RawPrgm.. ]
@@ -1008,6 +1042,221 @@ Prgm
                                         )
                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
+                            ( Value /$5f4b62-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/statementKind
+                                        ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                                            ( /objArr=/Catln/RawObjArr
+                                                ( /arr=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        ]..
+                                                    ]
+                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /basis=∀/Catln/ObjectBasis
+                                                )..
+                                            ) = /Catln/RawStatement/RawDeclStatement
+                                            ( Value /objArr -> /Catln/RawObjArr
+                                                ( /arr=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        ]..
+                                                    ]
+                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /basis=∀/Catln/ObjectBasis
+                                                ).. = /Test/emptyObjArr
+                                                ( Value /name -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
+                                ( Value /$57841b-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36
+                            ( Value /$13df36-arg -> /Context
+                                ( /value=TopType
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/readKind
+                                        ( Value /r -> /Catln/ReadPath/ReadDir
+                                            ( /path=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Catln/ReadPath/ReadDir
+                                            ( Value /path -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                { csValue = "src" }
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd
+                                ( Value /$5a9cdd-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b
+                            ( Value /$d86d4b-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
+                                        ( Value /e -> /Catln/RawExpr/RawList
+                                            ( /values=/Data/List/Nil
+                                            , /meta=/Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                )..
+                                            ) = /Catln/RawExpr/RawList
+                                            ( Value /meta -> /Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                ).. = Value /Test/noMeta
+                                            )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0( Value /$d4a4c0-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }
@@ -1226,6 +1475,86 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$13df36.$5a9cdd.$e3172c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c
+                            ( Value /$e3172c-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /Catln/println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/rawValueName
+                                        ( Value /e -> /Catln/RawExpr/RawValue
+                                            ( /name=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /meta=/Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                )..
+                                            ) = /Catln/RawExpr/RawValue
+                                            ( Value /meta -> /Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                ).. = Value /Test/noMeta
+                                            )
+                                            ( Value /name -> /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b( Value /$d86d4b-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/statementKind"
                 , ObjectMapItem
                     { omiDecls =
@@ -1248,10 +1577,156 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
+                            ( Value /$4e2f62-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
+                                            ( Value /r -> /Catln/ImportResult
+                                                ( /prgm=/Catln/RawPrgm..
+                                                , /reads=∀/Data/Maybe
+                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                ) = /Test/oneResult
+                                                ( Value /name -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
+                                ( Value /$4ed8f8-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
+                            ( Value /$57841b-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/declCount
+                                            ( Value /p -> /Catln/RawPrgm
+                                                ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
+                                                , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
+                                                ) = /Test/onePrgm
+                                                ( Value /name -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f( Value /$ad3f7f-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
+                            ( Value /$620336-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

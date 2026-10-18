@@ -14,7 +14,7 @@ boxValue(b= Box(value, .._))= value
 sameBox(b -> Box..[$V -> Integer]) -> Box..[$V -> Integer]
 sameBox(b= Box(value, .._)@c)= c
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= boxValue(b= Box(value= 5, n= 7)) == 5)
   #assert(test= boxValue(b= sameBox(b= Box(value= 6, n= 7))) == 6)
-  io
+  ()

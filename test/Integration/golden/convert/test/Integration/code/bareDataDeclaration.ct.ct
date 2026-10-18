@@ -21,6 +21,6 @@ data(Plain(name -> String, other -> String))
 :Plain.nameOf -> String
 /Plain(name, other).nameOf= name
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= /Plain(name= "a", other= "b").nameOf == "a")
-  io
+  ()

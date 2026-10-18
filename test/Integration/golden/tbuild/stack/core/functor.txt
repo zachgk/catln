@@ -11,7 +11,8 @@ Prgm
                         [ /Data/Functor/testFunctorComposition
                             ( EAppVar
                                 { eavName = /F
-                                , eavMeta = ∀/Data/Functor[ /T=/Data/Primitive/Integer ]
+                                , eavMeta =
+                                    ( TopType | PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] && PredClass /Data/Algebra/Eq )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /x -> $/F } ) -> /Data/Primitive/Integer = 0
@@ -182,7 +183,9 @@ Prgm
                   body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
                   cannot yet relate. Checked against every [Functor] instance whose elements are
                   [Integer] - so the increments apply - at arbitrary members of that instance,
-                  instantiating per file like the identity law above."
+                  instantiating per file like the identity law above. The two mappings are compared with
+                  [operator==], so the law is checked against the instances that are themselves [Eq], as the
+                  identity law is."
                 }
             )
         ]

@@ -5,11 +5,13 @@ import "core"
   nested application (Box[$T -> $U]) must bind from the argument's content the same way the
   implicit $_T spelling does. unwrap(b= Box(v= 5)) should reduce to 5 at eval, not leak the
   raw call tuple into equal's dispatch.
-data(Box[$T](v -> $T))
+  Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap].
+module(Boxes)
+  data(Box[$T](v -> $T))
 
-unwrap[$U](b -> Box[$T -> $U](v)) -> $U
-unwrap(Box(v))= v
+  unwrap[$U](b -> Box[$T -> $U](v)) -> $U
+  unwrap(Box(v))= v
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= unwrap(b= Box(v= 5)) == 5)
-  io
+  ()

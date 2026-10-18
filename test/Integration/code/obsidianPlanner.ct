@@ -23,4 +23,6 @@ import obsidian("artifacts/catln-planner/2026-01-06.md")
   What each line is read as is held by the goldens of the notes; the day and the span of it each
   block takes up are held by the calendar's golden.
 #calendar
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()

@@ -2,38 +2,43 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Boxes/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Boxes/unwrap
+                            ( Value /b -> /Boxes/Box[ /T=$_/T ]( /v=TopType ) ) -> $_/T
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Boxes/unwrap
+                            ( Value /b -> /Boxes/Box[ /T=TopType ]( /v=TopType ) = /Boxes/Box( Value /v ) ) -> TVArg /v = Value /v
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
                     }
                 )
             ,
-                ( "/Box"
+                ( "/Boxes/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Box[ /T : TopType ]( Value /v -> $/T ) ]
+                        [ /Boxes/Box[ /T : TopType ]( Value /v -> $/T ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/unwrap"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /unwrap
-                            ( Value /b -> /Box[ /T=$_/T ]( /v=TopType ) ) -> $_/T
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /unwrap
-                            ( Value /b -> /Box( /v=TopType ) = /Box( Value /v ) ) -> TVArg /v = Value /v
-                        ]
                     }
                 )
             ]
@@ -48,7 +53,8 @@ Prgm
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Repro: a return-position element var must bind from a parameterized argument.
-                unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType." }
+                unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType.
+                Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]." }
             )
         ]
     }

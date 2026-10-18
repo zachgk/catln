@@ -81,39 +81,98 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value -> /say_hello( /msg=∀/Data/String ) = /say_hello( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/println
-                                ( /this=/Catln/IO
-                                , /msg=∀/Data/String
-                                ) + /Catln/IO
-                            ) = /println( Value /this -> TVArg /io = Value /io )
-                            ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            ( Value /value -> /say_hello( /msg=∀/Data/String ) = /say_hello( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
+                                    ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /say_hello.$dd8e51( Value /$dd8e51-arg -> TVArg /v = Value /v )
+                            )
                         , /ContextIn
-                            ( Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/println
-                                ( /this=/Catln/IO
-                                , /msg=∀/Data/String
-                                ) + /Catln/IO
-                            ) = /println
-                            ( Value /this -> /Catln/IO = /println( Value /this -> TVArg /io = Value /io )
-                                ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            ( Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
+                                    ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                )( Value /io -> TVArg /io = Value /io )
                             )
-                            ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                        , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/println
-                                ( /this=/Catln/IO
-                                , /msg=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) + /Catln/IO
-                            ) = /println( Value /this -> TVArg /io = Value /io )
-                            ( Value /msg -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /toString
-                                ( Value /this -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                                    { csValue = """" }
-                                )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /print_twice.$dd8e51( Value /msg -> TVArg /msg = Value /msg )( Value /$dd8e51-arg -> TVArg /v = Value /v )
                             )
-                        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
+                        , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println
+                                    ( /msg=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) = /println
+                                    ( Value /msg -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /toString
+                                        ( Value /this -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            { csValue = """" }
+                                        )
+                                    )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /echo.$698ad1
+                                ( Value /$698ad1-arg -> TVArg /v = Value /v )
+                            )
+                        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -209,6 +268,65 @@ Prgm
                     }
                 )
             ,
+                ( "/print_twice.$dd8e51"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /print_twice.$dd8e51( Value /msg -> ∀/Data/String )
+                            ( Value /$dd8e51-arg -> /Context
+                                ( /value=TopType
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
+                                    ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /print_twice.$dd8e51.$dd8e51( Value /$dd8e51-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/echo.$698ad1"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /echo.$698ad1
+                            ( Value /$698ad1-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
                 ( "/PI"
                 , ObjectMapItem
                     { omiDecls = []
@@ -262,6 +380,28 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /int_min( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                    }
+                )
+            ,
+                ( "/print_twice.$dd8e51.$dd8e51"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /print_twice.$dd8e51.$dd8e51
+                            ( Value /$dd8e51-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /Context( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
                     }
                 )
             ,
@@ -409,6 +549,24 @@ Prgm
                     }
                 )
             ,
+                ( "/say_hello.$dd8e51"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /say_hello.$dd8e51
+                            ( Value /$dd8e51-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
                 ( "/MAX_SIZE"
                 , ObjectMapItem
                     { omiDecls = []
@@ -464,6 +622,10 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

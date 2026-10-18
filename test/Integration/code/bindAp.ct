@@ -12,7 +12,7 @@ orZero(o -> /Data/Maybe[$T -> Integer]) -> Integer
 orZero(o= /Data/Maybe/Some(value))= value
 orZero(o= /Data/Maybe/Nothing)= 0
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= apBind(m= /Data/Maybe/Some(value= 5)) == 5)
   #assert(test= apBind(m= /Data/Maybe/Nothing) == 0)
-  io
+  ()

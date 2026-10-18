@@ -12,4 +12,10 @@ startsA(cs -> /Data/List/ConsList[$T -> Char]) -> Boolean
 startsA(cs= /Data/List/Cons(head= 'a', tail))= True
 startsA(cs) else = False
 
-main{io -> IO}= io.println(msg= isZero(x= 0).toString).println(msg= isZero(x= 5).toString).println(msg= startsA(cs= ['a', 'b']).toString).println(msg= startsA(cs= ['b']).toString).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- println(msg= isZero(x= 0).toString)
+  _<- println(msg= isZero(x= 5).toString)
+  _<- println(msg= startsA(cs= ['a', 'b']).toString)
+  _<- println(msg= startsA(cs= ['b']).toString)
+  _<- exit(val= 0)
+  ()

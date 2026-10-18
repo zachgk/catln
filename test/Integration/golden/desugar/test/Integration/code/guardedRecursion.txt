@@ -2,6 +2,44 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/main.$3f8b58"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$3f8b58
+                            ( Value $3f8b58-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$3f8b58.$620336
+                                ( Value /$620336-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$3f8b58.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$3f8b58.$620336
+                            ( Value $620336-arg= /Context( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/digs"
                 , ObjectMapItem
                     { omiDecls =
@@ -54,33 +92,38 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value /this= println
-                                ( Value msg= showD
-                                    ( Value d= digs
-                                        ( Value acc= CInt
-                                            { ciValue = 0 }
-                                        )
-                                        ( Value cs= /Data/List/Cons
-                                            ( Value /head= CInt
-                                                { ciValue = 1 }
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= showD
+                                        ( Value d= digs
+                                            ( Value acc= CInt
+                                                { ciValue = 0 }
                                             )
-                                            ( Value /tail= /Data/List/Cons
+                                            ( Value cs= /Data/List/Cons
                                                 ( Value /head= CInt
-                                                    { ciValue = 2 }
+                                                    { ciValue = 1 }
                                                 )
                                                 ( Value /tail= /Data/List/Cons
                                                     ( Value /head= CInt
-                                                        { ciValue = 30 }
-                                                    )( Value /tail= Value /Data/List/Nil )
+                                                        { ciValue = 2 }
+                                                    )
+                                                    ( Value /tail= /Data/List/Cons
+                                                        ( Value /head= CInt
+                                                            { ciValue = 30 }
+                                                        )( Value /tail= Value /Data/List/Nil )
+                                                    )
                                                 )
                                             )
                                         )
                                     )
-                                )( Value /this= Value io )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= main.$3f8b58
+                                ( Value /$3f8b58-arg= Value v )
                             )
                         ]
                     }
@@ -119,6 +162,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

@@ -65,6 +65,20 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /ContextIn( Value /value= Value /Python/Builtins/input )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/String
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/abs"
                 , ObjectMapItem
                     { omiDecls = []
@@ -172,16 +186,6 @@ Prgm
                         [ /Python/Builtins/max( Value l -> /Data/Primitive/Integer )( Value r -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
                         , /Python/Builtins/max( Value l -> /Data/Primitive/Float )( Value r -> /Data/Primitive/Float ) -> /Data/Primitive/Float
                         ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Python/Builtins/input"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Python/Builtins/input( Value /this -> /Catln/IO.. ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

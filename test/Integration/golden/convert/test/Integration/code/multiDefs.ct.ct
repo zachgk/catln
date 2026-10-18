@@ -9,6 +9,6 @@ import "core"
 mdbl(v -> Integer) -> Integer= v
 mdbl(v -> Integer) -> /Data/Maybe[$T -> Integer]= /Data/Maybe/Some(value= v)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= mdbl(v= 1) + 1 == 2)
-  io
+  ()

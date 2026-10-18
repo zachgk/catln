@@ -7,6 +7,6 @@ data(T(x))
 tst[$T](d= T(x -> $_T), f(y -> $_T) -> Boolean) -> Boolean
 tst(d= T(x), f(y))= f(y= x)
 
-main{io -> IO} =
+main{io -> IO} -> (){IO} =
   #assert(test= tst(d= T(0), f(y)= y == 0))
-  io
+  ()

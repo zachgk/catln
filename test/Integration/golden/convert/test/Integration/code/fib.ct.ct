@@ -5,4 +5,6 @@ import "core"
 fib(:Integer) | integer > 1= fib(integer= integer - 1) + fib(integer= integer - 2)
 fib(:Integer) else = 1
 
-main{io -> IO}= io.exit(val= fib(3) - 3)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= fib(3) - 3)
+  ()

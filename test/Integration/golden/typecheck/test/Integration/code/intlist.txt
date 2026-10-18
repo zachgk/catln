@@ -27,38 +27,75 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /this=/Catln/IO
-                                , /val=/Data/Primitive/Integer
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /len
-                                    ( Value /this -> /IntCons
-                                        ( /head=/Data/Primitive/Integer
-                                        , /tail=/IntCons
-                                            ( /head=/Data/Primitive/Integer
-                                            , /tail=/IntNil
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=() ]
+                            ( /value=()
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = /operator-
+                                        ( Value /l -> /Data/Primitive/Integer = /len
+                                            ( Value /this -> /IntCons
+                                                ( /head=/Data/Primitive/Integer
+                                                , /tail=/IntCons
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/IntNil
+                                                    )
+                                                ) = /IntCons
+                                                ( Value /head -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 5 }
+                                                )
+                                                ( Value /tail -> /IntCons
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/IntNil
+                                                    ) = /IntCons
+                                                    ( Value /head -> /Data/Primitive/Integer = CInt
+                                                        { ciValue = 3 }
+                                                    )( Value /tail -> /IntNil = Value /IntNil )
+                                                )
                                             )
-                                        ) = /IntCons
-                                        ( Value /head -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 5 }
                                         )
-                                        ( Value /tail -> /IntCons
-                                            ( /head=/Data/Primitive/Integer
-                                            , /tail=/IntNil
-                                            ) = /IntCons
-                                            ( Value /head -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 3 }
-                                            )( Value /tail -> /IntNil = Value /IntNil )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 2 }
                                         )
                                     )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 2 }
-                                )
-                            )( Value /this -> TVArg /io = Value /io )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /io=/Catln/IO
+                                    )..
+                                ) -> /Context
+                                ( /value=()
+                                , /io=/Catln/IO
+                                ) = /main.$395546
+                                ( Value /$395546-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$395546"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$395546
+                            ( Value /$395546-arg -> /Context( /io=TopType ).. = /Context( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /io=TopType
+                            ) = /Context
+                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -89,6 +126,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

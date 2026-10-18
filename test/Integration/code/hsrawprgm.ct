@@ -135,4 +135,16 @@ module(Test)
     closing the import cycle @core/result.ct@ measures, so the values cannot be print goldens of a
     library page.
 
-main{io -> IO}= io.println(msg= pathOf(r= /Catln/ReadPath/ReadFile(path= "a.ct"))).println(msg= readKind(r= /Catln/ReadPath/ReadDir(path= "src"))).println(msg= exprKind(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo"))).println(msg= rawValueName(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo"))).println(msg= exprKind(e= /Catln/RawExpr/RawList(meta= noMeta(), values= []))).println(msg= objArrName(oa= emptyObjArr(name= "myFn"))).println(msg= statementKind(s= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= "myFn")))).println(msg= declCount(p= onePrgm(name= "myFn")).toString).println(msg= resultDeclCount(r= oneResult(name= "myFn")).toString).println(msg= readsCount(r= oneResult(name= "myFn")).toString).exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- println(msg= pathOf(r= /Catln/ReadPath/ReadFile(path= "a.ct")))
+  _<- println(msg= readKind(r= /Catln/ReadPath/ReadDir(path= "src")))
+  _<- println(msg= exprKind(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo")))
+  _<- println(msg= rawValueName(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo")))
+  _<- println(msg= exprKind(e= /Catln/RawExpr/RawList(meta= noMeta(), values= [])))
+  _<- println(msg= objArrName(oa= emptyObjArr(name= "myFn")))
+  _<- println(msg= statementKind(s= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= "myFn"))))
+  _<- println(msg= declCount(p= onePrgm(name= "myFn")).toString)
+  _<- println(msg= resultDeclCount(r= oneResult(name= "myFn")).toString)
+  _<- println(msg= readsCount(r= oneResult(name= "myFn")).toString)
+  _<- exit(val= 0)
+  ()

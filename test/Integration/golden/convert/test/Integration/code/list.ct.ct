@@ -6,4 +6,6 @@ import "core"
 Nil.llength= 0
 Cons(head, tail).llength= 1 + tail.llength
 
-main{io -> IO}= io.exit(val= [5, 3].llength - 2)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= [5, 3].llength - 2)
+  ()

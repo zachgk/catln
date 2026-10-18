@@ -19,4 +19,6 @@ total(acc -> Integer) -> Integer= acc
 sumOf(a, d)= total(acc= a + d)
 
 # Exits 0 only when the untyped sum built and evaluated to 3.
-main{io -> IO}= io.exit(val= sumOf(a= 1, d= 2) - 3)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= sumOf(a= 1, d= 2) - 3)
+  ()

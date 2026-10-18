@@ -2,38 +2,38 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Boxes/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Boxes/unwrap[ /U : TopType ]
+                            ( Value b -> /Boxes/Box[ /T=$_/U ]( /v=TopType ) ) -> $/U
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Boxes/unwrap
+                            ( Box( Value v ) )= Value v
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io ) ]
                     }
                 )
             ,
-                ( "/Box"
+                ( "/Boxes/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Box[ /T : TopType ]( Value /v -> $/T ) ]
+                        [ /Boxes/Box[ /T : TopType ]( Value /v -> $/T ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/unwrap"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ unwrap[ /U : TopType ]
-                            ( Value b -> /Box[ /T=$_/U ]( /v=TopType ) ) -> $/U
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ unwrap
-                            ( Box( Value v ) )= Value v
-                        ]
                     }
                 )
             ]
@@ -49,7 +49,8 @@ Prgm
                 { csValue = "Repro: the EXPLICIT-parameter twin of boxUnwrap — a declared [$U] referenced inside a
                 nested application (Box[$T -> $U]) must bind from the argument's content the same way the
                 implicit $_T spelling does. unwrap(b= Box(v= 5)) should reduce to 5 at eval, not leak the
-                raw call tuple into equal's dispatch." }
+                raw call tuple into equal's dispatch.
+                Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]." }
             )
         ]
     }

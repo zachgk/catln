@@ -1,4 +1,7 @@
 import "core"
 
 
-main{io -> IO}= io.println(msg= "hello world").exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- println(msg= "hello world")
+  _<- exit(val= 0)
+  ()

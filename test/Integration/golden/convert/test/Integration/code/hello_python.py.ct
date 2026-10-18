@@ -79,10 +79,18 @@ reverse_list(lst -> List) -> List= reversed(/lst= lst)
 
 sort_list(lst -> List[$T -> Integer]) -> List[$T -> Integer]= sorted(/lst= lst)
 
-say_hello(msg -> String){io -> IO}= io.println(/msg= msg.toString)
+say_hello(msg -> String){io -> IO} -> {IO} =
+  _<- println(/msg= msg.toString)
+  
 
-print_twice(msg -> String){io -> IO}= io.println(/msg= msg.toString).println(/msg= msg.toString)
+print_twice(msg -> String){io -> IO} -> {IO} =
+  _<- println(/msg= msg.toString)
+  _<- println(/msg= msg.toString)
+  
 
-echo{io -> IO}= io.println(/msg= "\"\"".toString)
+echo{io -> IO} -> {IO} =
+  _<- println(/msg= "\"\"".toString)
+  
 
-main{io -> IO}= io
+main{io -> IO} -> {IO} =
+  

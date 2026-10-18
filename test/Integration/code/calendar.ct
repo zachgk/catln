@@ -15,4 +15,6 @@ import obsidian("artifacts/catln-tasks/Tasks.md")
   which sits on a day, each on the day it sits on, beside the day the calendar was answered on,
   which the compiler pins for every test.
 #calendar
-main{io -> IO}= io.exit(val= 0)
+main{io -> IO} -> (){IO} =
+  _<- exit(val= 0)
+  ()
