@@ -536,7 +536,7 @@ data ParsedImport = ParsedImport {
 -- destination naming a type nothing inhabits. What a caller means is an @ImportResult@ whatever it
 -- holds.
 importResultType :: Type
-importResultType = singletonType (partialVal (mkName $ ctBuiltinNamespace ++ "ImportResult")){ptArgMode = PtArgMode True False}
+importResultType = singletonType (partialVal (mkName $ ctBuiltinNamespace ++ "ImportResult")){ptArgMode = PtArgAny}
 
 instance CtType ParsedImport where
   ctPath _ = ctBuiltinNamespace ++ "ImportResult"

@@ -224,7 +224,7 @@ addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ u
     -- method-style form (@Integer(/r=Integer)@ from @5 - 2@), and an undeclared name is open
     -- world. Purely structural (parse-time arg-name sets), so the decision is epoch-stable;
     -- if every candidate would drop, keep them all (never publish an empty union).
-    argsRefuted p@PartialType{ptArgMode=PtArgMode lb _} =
+    argsRefuted p@PartialType{ptArgMode=PtArgMode lb _ _} =
       lb && null (typeGraphData feTypeEnv (ptName p)) && not (relArgKeysFeasible feTypeEnv p (ptName p))
     kept = case filter (not . argsRefuted) grafted of
       [] -> grafted
@@ -259,11 +259,43 @@ addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq,
 spreadArgsToType :: FEnv -> TypeVarArgEnv -> Type -> Type -> Maybe Type
 spreadArgsToType env vaenv (TypeVar v _ _) spread = spreadArgsToType env vaenv (vaenvLookup (feTypeEnv env) vaenv v) spread
 spreadArgsToType env vaenv base (TypeVar v _ _) = spreadArgsToType env vaenv base (vaenvLookup (feTypeEnv env) vaenv v)
-spreadArgsToType FEnv{feTypeEnv} _ (UnionType Nothing basePartials []) (UnionType Nothing spreadPartials []) =
-  Just $ unionAllTypes feTypeEnv [ singletonType (spreadInto b s) | b <- splitUnionType basePartials, s <- splitUnionType spreadPartials ]
+spreadArgsToType FEnv{feTypeEnv} vaenv (UnionType Nothing basePartials []) (UnionType Nothing spreadPartials []) =
+  case spreadValues of
+    [] -> Nothing
+    _  -> Just $ unionAllTypes feTypeEnv [ singletonType (spreadInto b s) | b <- splitUnionType basePartials, s <- spreadValues ]
   where
-    spreadInto b@PartialType{ptArgs=bArgs, ptArgMode=PtArgMode bLb bUb} PartialType{ptArgs=sArgs, ptArgMode=PtArgMode _ sUb} =
-      b{ptArgs=H.union sArgs bArgs, ptArgMode=PtArgMode bLb (bUb && sUb)}
+    -- What a spread gives is the arguments of the VALUE it evaluates to: a spread call is called
+    -- before its arguments are read (it is built toward a value, 'TreeBuild'). So of what the spread
+    -- may be, only the values give arguments. A call form still to be called (an arrow applies to
+    -- it: @ContextIn(value= counter, io)@ before @counter@ runs) is not one, and read as one it
+    -- gave the call's own arguments as the value's. Until some value is known, nothing is.
+    spreadValues = [ sp | sp <- splitUnionType spreadPartials, null (typeGraphQuery feTypeEnv vaenv sp) ]
+    -- Each argument is the spread's where the spread has it and the base's where it does not: one
+    -- the spread requires is the spread's, and one it may lack (it lists it as optional, or admits
+    -- unlisted ones) is either. An argument either side requires is required, and every other is
+    -- optional ('PtArgMode').
+    spreadInto b@PartialType{ptArgs=bArgs, ptArgMode=PtArgMode _ bUb _} s@PartialType{ptArgs=sArgs, ptArgMode=PtArgMode _ sUb _} =
+      canonicalArgOpt b{ptArgs=args, ptArgMode=PtArgMode True (bUb && sUb) (H.keysSet args `S.difference` req)}
+      where
+        sReq = ptRequiredArgs s
+        req = ptRequiredArgs b `S.union` sReq
+        args = H.fromList [ (k, argAt k) | k <- S.toList (H.keysSet bArgs `S.union` H.keysSet sArgs) ]
+        argAt k
+          | S.member k sReq = sVal
+          | otherwise = unionTypes feTypeEnv (if sMay then sVal else BottomType) bVal
+          where
+            sMay = H.member k sArgs || not sUb
+            sVal = H.lookupDefault PTopType k sArgs
+            bVal = case H.lookup k bArgs of
+              Just t            -> t
+              Nothing | bUb     -> BottomType
+                      | otherwise -> PTopType
+-- A spread of a value nothing is known of yet may give any arguments, over any the base has: the
+-- call is its base's name with any arg-set ('PtArgUnbounded'). Read as unknown instead, a spread of
+-- an unannotated argument (@(..states, ..ctx)@ in core's 'within') left the call ⊤, which nothing
+-- can build.
+spreadArgsToType FEnv{feTypeEnv} _ (UnionType Nothing basePartials []) PTopType =
+  Just $ unionAllTypes feTypeEnv [ singletonType b{ptArgs=H.empty, ptArgMode=PtArgUnbounded} | b <- splitUnionType basePartials ]
 spreadArgsToType _ _ _ _ = Nothing
 
 -- | A helper for the 'SpreadArgs' 'Constraint', on each channel as 'addArgToScheme'.

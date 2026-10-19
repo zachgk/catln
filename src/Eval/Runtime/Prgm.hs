@@ -192,7 +192,7 @@ showPartialSource PartialType{ptName, ptVars, ptArgs, ptArgMode} = nameStr ptNam
     args | H.null ptArgs = ""
          | otherwise = "(" ++ intercalate ", " [dropSlash (nameStr (pkName k)) ++ " -> " ++ showTypeSource v | (k, v) <- sortOn fst (H.toList ptArgs)] ++ ")" ++ more
     more = case ptArgMode of
-      PtArgMode True _ -> ""
+      PtArgMode True _ _ -> ""
       _                -> ".."
     dropSlash ('/' : n) = n
     dropSlash n         = n

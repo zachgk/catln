@@ -1935,6 +1935,28 @@ unitFunctionParamFromArgs = do
       note $ printf "%s world: %s -> %s" (world :: String) n (show ok)
     assertTimed (world ++ " world: every check") $ all snd checks
 
+-- | A lower-bounded partial meets one typing an arg it need not have, and the meet keeps the
+-- lower bound with that arg optional ('PtArgMode'): @F(value=V, io=IO)..@ meeting
+-- @F(value=⊤, counter=Counter, io=⊤)..??@ is @F(value=V, counter?=Counter, io=IO)..@. Without an
+-- optional arg the meet dropped the lower bound (it admitted values with no @io@) and so was not
+-- within its operand; and the difference by a partial typing that arg outside @Counter@ came back
+-- unchanged.
+unitOptionalArgMeet :: Unit ()
+unitOptionalArgMeet = do
+  let typeEnv = mkTypeEnv (mempty :: Prgm Expr ())
+      v n = singletonType (partialVal n)
+      f args mode = singletonType (partialVal "/F"){ptArgs = H.fromList [(partialKey k, t) | (k, t) <- args], ptArgMode = mode}
+      a = f [("/value", v "/V"), ("/io", v "/IO")] PtArgAny
+      b = f [("/value", PTopType), ("/counter", v "/Counter"), ("/io", PTopType)] PtArgUnbounded
+      notCounter = f [("/value", v "/V"), ("/io", v "/IO"), ("/counter", complementTypeEnv typeEnv H.empty (v "/Counter"))] PtArgAny
+      ab = intersectTypes typeEnv a b
+  note $ printf "a ∩ b = %s" (show ab)
+  assertTimed "a ∩ b ⊆ a" $ isSubtypeOf typeEnv ab a
+  assertTimed "a ∩ b ⊆ b" $ isSubtypeOf typeEnv ab b
+  assertTimed "a ∩ b = a − (a − b)" $ isEqType typeEnv ab (differenceTypeEnv typeEnv a (differenceTypeEnv typeEnv a b))
+  assertTimed "a − (counter outside Counter) = a ∩ b" $ isEqType typeEnv ab (differenceTypeEnv typeEnv a notCounter)
+  assertTimed "a ⊄ a ∩ b" $ not (isSubtypeOf typeEnv a ab)
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -1987,6 +2009,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , unitCase "unitPredicatedLeafWithinOwnMeet" (unitPredicatedLeafWithinOwnMeet ioPrgms)
       , unitCase "unitOuterVarNotCaptured" unitOuterVarNotCaptured
       , unitCase "unitCoverDerivedParam" unitCoverDerivedParam
+      , unitCase "unitOptionalArgMeet" unitOptionalArgMeet
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (p $ propOwnVarBindingRespected ioPrgms)

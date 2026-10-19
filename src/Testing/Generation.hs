@@ -18,6 +18,7 @@ import           CtConstants
 import           Data.Either             (partitionEithers)
 import           Data.Graph              (graphFromEdges)
 import qualified Data.HashMap.Strict     as H
+import qualified Data.HashSet            as S
 import           Data.List               (partition)
 import qualified Data.List               as L
 import           Data.Maybe
@@ -77,23 +78,22 @@ genTypeVarWith spec prgm = do
   inner <- HG.frequency [(2, return PTopType), (1, HG.small (genUnionTypeWith spec prgm))]
   return $ TypeVar aux loc inner
 
--- | The three argument modes that are EXACT under all the set operations.
---
--- The fully-unbounded mode (lb=False, ub=False) is excluded for partials with args: its
--- intersection with a lower-bounded partial of the same name is "required x, optional typed y,
--- extras allowed", which provably cannot be expressed as positive partials (it needs a negative
--- partial). The limit is a property of the representation, not of where a leaf sits, so it
--- applies to every leaf position, a top's exclusions included.
-safeArgModes :: [PtArgMode]
-safeArgModes = [PtArgExact, PtArgAny, PtArgMode False True]
+-- | The four argument-set intervals ('PtArgMode'). Each is exact under all the set operations:
+-- the meet of a lower-bounded partial with one typing an arg it need not have
+-- (@F(x).. ∩ F(y=Y)..??@) is the lower-bounded partial with that arg optional (@F(x, y?=Y)..@).
+argModes :: [PtArgMode]
+argModes = [PtArgExact, PtArgAny, PtArgMode False True S.empty, PtArgUnbounded]
 
--- | A partial re-moded to one of the 'safeArgModes'.
+-- | A partial re-moded to one of the 'argModes'. A lower-bounded one makes some of its listed
+-- args optional ('ptArgOpt'), as a meet or difference does, kept canonical as they keep it.
 remodePartial :: PartialType -> Gen PartialType
 remodePartial p = do
-  mode <- HG.element safeArgModes
+  mode <- HG.element argModes
   -- the lower bound is vacuous with no args, so keep it set then (avoids producing a
   -- representation set-equivalent to a different one)
-  return p{ptArgMode = if H.null (ptArgs p) then mode{ptArgLb=True} else mode}
+  let mode' = if H.null (ptArgs p) then mode{ptArgLb=True} else mode
+  opt <- if ptArgLb mode' then S.fromList <$> HG.subsequence (H.keys (ptArgs p)) else return S.empty
+  return $ withOptionalArgs opt p{ptArgMode = mode'}
 
 -- | A constant drawn from the constant kinds a type can hold.
 --
