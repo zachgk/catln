@@ -40,4 +40,6 @@ main{io -> IO} -> (){IO} =
   #assert(test= ptX(p= spreadLast(p= Pt(x= 1, y= 2))) == 1)
   #assert(test= ptX(p= both(a= Pt(x= 1, y= 2), b= Pt(x= 3, y= 4))) == 3)
   #assert(test= boxValue(b= bumped(b= Box(value= 5, n= 7))) == 6)
+  # A field no function takes as an argument is declared where it is given.
+  #assert(test= boxValue(b= bumped(b= Box(value= 5, unread= 7))) == 6)
   ()

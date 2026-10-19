@@ -66,7 +66,11 @@ semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, RawObjArr{roaObj=
   where
     e' = semiDesExpr sdm obj e
     m = getExprMeta e'
-    m' = mWithType (spreadType H.empty $ getMetaType m) m
+    -- A name not typed yet is spread as itself: the spread of ⊤ is ⊤, which says nothing of the
+    -- args, and @data((.._))@ then declared only the argument-less @()@.
+    m' = mWithType (spreadType H.empty $ case getMetaType m of
+                      PTopType -> maybe PTopType (singletonType . partialVal) (maybeExprPath e')
+                      t        -> t) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 -- A condition refining a TYPE is written over the value of that type, which it names @$this@ or,
 -- as what an arrow produces, @$out@ ('thisMacro', 'outMacro'). Nothing else binds either name:

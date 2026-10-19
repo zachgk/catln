@@ -129,8 +129,14 @@ fromExpr est@EncodeOut{} (Value m name) = do
   return $ Value m' name
 fromExpr est@EncodeIn{} (Value m name) = do
   m' <- fromMeta BAct est m ("In Val " ++ nameStr name)
-  modify $ addConstraints [BoundedByKnown 5 m' (relTypeVal name)]
+  modify $ addConstraints [BoundedByKnown 5 m' (knownBound (getMetaType m))]
   return $ Value m' name
+  where
+    -- A name pattern given a spread (@/Context(..c)@ is @/Context..\@c@: the name with any
+    -- arguments) is bounded by the name's applied spellings too; the bare relation is only its
+    -- argument-less value.
+    knownBound (UnionType Nothing leafs []) | any ((/= PtArgExact) . ptArgMode) (splitUnionType leafs) = relTypeAppliedVal name
+    knownBound _ = relTypeVal name
 fromExpr est (HoleExpr m hole) = do
   m' <- fromMeta BAct est m ("Hole " ++ show hole)
   forM_ (getPnt m') $ \p -> modify $ \e -> e{feHolePoints = S.insert p (feHolePoints e)}

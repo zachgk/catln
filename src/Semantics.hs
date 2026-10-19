@@ -409,6 +409,12 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
                          | oa <- flatObjectMapItem item ]
       itemOpen item = any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)
 
+  typeGraphNameOpen TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+    Just item -> itemOpen item
+    Nothing   -> any (itemOpen . (tg H.!)) (relativeNameFilter name (H.keys tg))
+    where
+      itemOpen item = any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)
+
   typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
     foldl' (intersectTypesEnv typeEnv vaenv) unrefined (coveringRefinementResults typeEnv vaenv item partial)
     where
@@ -524,7 +530,26 @@ mkTypeEnv (Prgm objMap classGraph _) = stampQueryToken $ TypeEnv classGraph (Obj
     (declaredNames, valueHeads) = mconcat $ map getAllObjArrNameSplit (flatObjectMap objMap)
     declaredAbs = map makeAbsoluteName $ map mkName builtinAnnotNames ++ declaredNames
     headDeclares h = "/" `isPrefixOf` nameStr h || not (any (relativeNameMatches h) declaredAbs)
-    typeNames = S.fromList $ declaredAbs ++ map makeAbsoluteName (filter headDeclares valueHeads)
+    typeNames = S.fromList $ declaredAbs ++ map makeAbsoluteName (filter headDeclares valueHeads) ++ openKeys
+    -- A key given to a declaration that admits keys beyond the ones it lists
+    -- (@data(/Context[$V](value -> $V, .._))@, see 'typeGraphArgKeys') is declared where it is
+    -- given: @/Context(value= (), counter= Counter(0))@ is the only place @counter@ need be written,
+    -- as a pattern's argument is the only place its name is. Read only from its patterns, a key no
+    -- function took as an argument was no name at all, and its value met ∅.
+    openKeys = [ makeAbsoluteName k
+               | oa <- flatObjectMap objMap
+               , e <- maybeToList (oaObj oa) ++ maybe [] (maybeToList . fst) (oaArr oa) ++ oaAnnots oa
+               , c <- subExprs e
+               , Just h <- [maybeExprPath c]
+               , headOpen h
+               , ObjArr{oaObj=Just keyE} <- exprAppliedArgs c
+               , Just k <- [maybeExprPath keyE] ]
+    subExprs e = e : concatMap subExprs (exprChildren e)
+    ObjectMap objItems = objMap
+    openNames = [n | (n, item) <- H.toList objItems, any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)]
+    headOpen h
+      | "/" `isPrefixOf` nameStr h = h `elem` openNames
+      | otherwise = any (relativeNameMatches h) openNames
 
 emptyMetaM :: (MetaDat m) => Meta m -> Meta m
 emptyMetaM m = emptyMetaN{getMetaPos=getMetaPos m}
@@ -561,6 +586,8 @@ classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, P
 mapExprPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
 mapExprPath f (Value m n) = f (m, n)
 mapExprPath f (EWhere m b c) = EWhere m (mapExprPath f b) c
+-- An aliased pattern (@/Context(.._)\@c@) has its base's path; the alias names the whole value.
+mapExprPath f (AliasExpr b a) = AliasExpr (mapExprPath f b) a
 mapExprPath f (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprPath f be) a
 mapExprPath _ e = error $ printf "Unexpected expr to mapExprPath: %s" (show e)
 

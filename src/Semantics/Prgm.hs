@@ -468,6 +468,12 @@ class ExprClass e where
   exprSpreadsArgs :: e m -> Bool
   exprSpreadsArgs _ = False
 
+  -- | The expressions written directly inside an expression: an applied value, each argument's
+  -- key and value, a spread value, an alias's base and name, a condition. Only the desugared forms
+  -- are walked; the raw forms read as having none.
+  exprChildren :: e m -> [e m]
+  exprChildren _ = []
+
   -- | Returns all vars applied to a value
   exprAppliedOrdVars :: (Show m, MetaDat m) => e m -> [(TypeVarName, Meta m)]
 
@@ -487,7 +493,19 @@ instance ExprClass Expr where
     _            -> exprSpreadsArgs be
   exprSpreadsArgs (AliasExpr b _) = exprSpreadsArgs b
   exprSpreadsArgs (EWhere _ b _) = exprSpreadsArgs b
+  -- A bare spread (@(.._)@, @X..@) is the name alone given the spread type rather than applied to
+  -- a spread ('semiDesExpr'), so it is read off that type: a name admitting unlisted args.
+  exprSpreadsArgs (Value m _) = case getMetaType m of
+    UnionType Nothing leafs [] -> any (not . ptArgUb . ptArgMode) (splitUnionType leafs)
+    _                          -> False
   exprSpreadsArgs _ = False
+  exprChildren (AliasExpr b a) = [b, a]
+  exprChildren (EWhere _ b c) = [b, c]
+  exprChildren (TupleApply _ (_, b) arg) = b : case arg of
+    EAppArg ObjArr{oaObj, oaArr} -> maybeToList oaObj ++ maybe [] (maybeToList . fst) oaArr
+    EAppVar{}                    -> []
+    EAppSpread a                 -> [a]
+  exprChildren _ = []
   getExprMeta expr = case expr of
     CExpr m _        -> m
     Value m _        -> m
