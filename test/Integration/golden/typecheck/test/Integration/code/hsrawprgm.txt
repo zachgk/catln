@@ -433,19 +433,20 @@ Prgm
                             ( Value /$d4a4c0-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$d4a4c0-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$d4a4c0-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
                                     ( Value /msg -> ∀/Data/String = /Test/objArrName
                                         ( Value /oa -> /Catln/RawObjArr
@@ -467,20 +468,21 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$d4a4c0-states )( ..Value /$d4a4c0-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
                                 ( Value /$5f4b62-arg -> TVArg /v = Value /v )
+                                ( Value /$5f4b62-states -> ( /io=/Catln/IO ).. = /( ..Value /$d4a4c0-states )( ..Value /$d4a4c0-ctx ) )
                             )
                         ]
                     }
@@ -523,16 +525,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                        [ /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -549,20 +553,21 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36
                                 ( Value /$13df36-arg -> TVArg /v = Value /v )
+                                ( Value /$13df36-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -747,19 +752,20 @@ Prgm
                             ( Value /$ad3f7f-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$ad3f7f-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$ad3f7f-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
                                     ( Value /msg -> ∀/Data/String = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/resultDeclCount
@@ -776,20 +782,21 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$ad3f7f-states )( ..Value /$ad3f7f-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
                                 ( Value /$4e2f62-arg -> TVArg /v = Value /v )
+                                ( Value /$4e2f62-states -> ( /io=/Catln/IO ).. = /( ..Value /$ad3f7f-states )( ..Value /$ad3f7f-ctx ) )
                             )
                         ]
                     }
@@ -805,19 +812,20 @@ Prgm
                             ( Value /$5a9cdd-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$5a9cdd-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$5a9cdd-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -857,19 +865,26 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$5a9cdd-states )
+                                    ( ..Value /$5a9cdd-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c( Value /$e3172c-arg -> TVArg /v = Value /v )
+                                ( Value /$e3172c-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$5a9cdd-states )
+                                    ( ..Value /$5a9cdd-ctx )
+                                )
                             )
                         ]
                     }
@@ -885,36 +900,45 @@ Prgm
                             ( Value /$4ed8f8-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$4ed8f8-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$4ed8f8-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
                                     ( Value /val -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$4ed8f8-states )
+                                    ( ..Value /$4ed8f8-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
                                 ( Value /$620336-arg -> TVArg /v = Value /v )
+                                ( Value /$620336-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$4ed8f8-states )
+                                    ( ..Value /$4ed8f8-ctx )
+                                )
                             )
                         ]
                     }
@@ -1057,19 +1081,20 @@ Prgm
                             ( Value /$5f4b62-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$5f4b62-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$5f4b62-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1111,20 +1136,27 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$5f4b62-states )
+                                    ( ..Value /$5f4b62-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
                                 ( Value /$57841b-arg -> TVArg /v = Value /v )
+                                ( Value /$57841b-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$5f4b62-states )
+                                    ( ..Value /$5f4b62-ctx )
+                                )
                             )
                         ]
                     }
@@ -1138,20 +1170,22 @@ Prgm
                     , omiDefs =
                         [ /main.$13df36
                             ( Value /$13df36-arg -> /Context
-                                ( /value=TopType
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$13df36-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$13df36-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1168,20 +1202,27 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$13df36-states )
+                                    ( ..Value /$13df36-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd
                                 ( Value /$5a9cdd-arg -> TVArg /v = Value /v )
+                                ( Value /$5a9cdd-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$13df36-states )
+                                    ( ..Value /$13df36-ctx )
+                                )
                             )
                         ]
                     }
@@ -1197,19 +1238,20 @@ Prgm
                             ( Value /$d86d4b-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$d86d4b-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$d86d4b-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1244,19 +1286,20 @@ Prgm
                                             )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$d86d4b-states )( ..Value /$d86d4b-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0( Value /$d4a4c0-arg -> TVArg /v = Value /v )
+                                ( Value /$d4a4c0-states -> ( /io=/Catln/IO ).. = /( ..Value /$d86d4b-states )( ..Value /$d86d4b-ctx ) )
                             )
                         ]
                     }
@@ -1485,19 +1528,20 @@ Prgm
                             ( Value /$e3172c-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$e3172c-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$e3172c-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -1537,19 +1581,20 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$e3172c-states )( ..Value /$e3172c-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b( Value /$d86d4b-arg -> TVArg /v = Value /v )
+                                ( Value /$d86d4b-states -> ( /io=/Catln/IO ).. = /( ..Value /$e3172c-states )( ..Value /$e3172c-ctx ) )
                             )
                         ]
                     }
@@ -1588,19 +1633,20 @@ Prgm
                             ( Value /$4e2f62-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$4e2f62-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$4e2f62-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
                                     ( Value /msg -> ∀/Data/String = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
@@ -1617,20 +1663,27 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$4e2f62-states )
+                                    ( ..Value /$4e2f62-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
                                 ( Value /$4ed8f8-arg -> TVArg /v = Value /v )
+                                ( Value /$4ed8f8-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$4e2f62-states )
+                                    ( ..Value /$4e2f62-ctx )
+                                )
                             )
                         ]
                     }
@@ -1646,19 +1699,20 @@ Prgm
                             ( Value /$57841b-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$57841b-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$57841b-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
                                     ( Value /msg -> ∀/Data/String = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/declCount
@@ -1673,19 +1727,26 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$57841b-states )
+                                    ( ..Value /$57841b-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f( Value /$ad3f7f-arg -> TVArg /v = Value /v )
+                                ( Value /$ad3f7f-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$57841b-states )
+                                    ( ..Value /$57841b-ctx )
+                                )
                             )
                         ]
                     }
@@ -1701,14 +1762,20 @@ Prgm
                             ( Value /$620336-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$620336-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$620336-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$620336-states )
+                                ( ..Value /$620336-ctx )
+                            )
                         ]
                     }
                 )

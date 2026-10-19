@@ -9,9 +9,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$9af9b7
-                            ( Value $9af9b7-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $9af9b7-arg= /Context( Value value )
+                                ( Value ctx@Value $9af9b7-ctx )
+                            )
+                            ( Value $9af9b7-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $9af9b7-states )
+                                ( ..Value $9af9b7-ctx )
+                            )
                         ]
                     }
                 )
@@ -22,10 +27,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= real
@@ -38,10 +46,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= main.$9af9b7
-                                ( Value /$9af9b7-arg= Value v )
+                                ( Value $9af9b7-arg= Value v )
+                                ( Value $9af9b7-states= /( Value io= Value io ) )
                             )
                         ]
                     }

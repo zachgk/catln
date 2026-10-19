@@ -71,15 +71,26 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> () = Value / }
                             )
                             ( EAppArg
-                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -250,7 +261,10 @@ Prgm
                     , omiDefs =
                         [ /both
                             ( EAppArg { eaaArg = Value /a -> /Pt.. } )
-                            ( EAppArg { eaaArg = Value /b -> /Pt.. } ) -> /Pt.. = /Pt
+                            ( EAppArg { eaaArg = Value /b -> /Pt.. } ) -> /Pt
+                            ( /x=/Data/Primitive/Integer
+                            , /y=/Data/Primitive/Integer
+                            ).. = /Pt
                             ( EAppSpread
                                 { easExpr = ( Value /a ↦ TopType ) }
                             )

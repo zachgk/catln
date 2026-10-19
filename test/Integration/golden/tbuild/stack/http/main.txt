@@ -20,13 +20,20 @@ Prgm
                                     ( EAppArg { eaaArg = Value /body -> ∀/Data/String } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Http/HttpErr
                                 ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

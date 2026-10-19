@@ -2981,7 +2981,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow ) =
+                    ( TopType | PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) =
                     ( /Data/List/filter
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
@@ -3055,7 +3055,7 @@ Prgm
                                 )
                             }
                         ) ↦
-                        ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow )
+                        ( TopType | PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] )
                     )
                 }
             )
@@ -3066,8 +3066,39 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow ) =
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredClass /Data/List/ConsList
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ] && PredClass /Catln/Doc/DShow
+                        , fromList []
+                        , []
+                        )
+                    , /Data/List/Cons
+                        [ /T=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ]
+                        ( /head=/Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /tail=/Data/List/Cons
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /tail=/Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /tail=/Data/List/Nil
+                                )
+                            )
+                        )
+                    , []
+                    ) =
                     ( /Data/List/filter
                         ( EAppArg
                             { eaaArg = Value /lst -> /Data/List/Cons
@@ -3154,8 +3185,39 @@ Prgm
                                     ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow )
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredClass /Data/List/ConsList
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ] && PredClass /Catln/Doc/DShow
+                            , fromList []
+                            , []
+                            )
+                        , /Data/List/Cons
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /head=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /tail=/Data/List/Cons
+                                [ /T=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ]
+                                ( /head=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /tail=/Data/List/Nil
+                                    )
+                                )
+                            )
+                        , []
+                        )
                     )
                 }
             )

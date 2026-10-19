@@ -8,10 +8,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= defInt
@@ -21,9 +24,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$e7f538( Value /$e7f538-arg= Value v ) )
+                            ( fn( Value v )= main.$e7f538( Value $e7f538-arg= Value v )
+                                ( Value $e7f538-states= /( Value io= Value io ) )
+                            )
                         ]
                     }
                 )
@@ -49,9 +55,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$e7f538
-                            ( Value $e7f538-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $e7f538-arg= /Context( Value value )( Value ctx@Value $e7f538-ctx ) )( Value $e7f538-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $e7f538-states )( ..Value $e7f538-ctx ) )
                         ]
                     }
                 )

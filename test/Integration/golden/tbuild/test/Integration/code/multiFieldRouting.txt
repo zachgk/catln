@@ -48,15 +48,26 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> () = Value / }
                             )
                             ( EAppArg
-                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                    )
+                                }
                             )
                         ]
                     }

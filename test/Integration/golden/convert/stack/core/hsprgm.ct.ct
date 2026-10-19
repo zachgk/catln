@@ -24,16 +24,17 @@ class(/Catln/Constant, [/Catln/Constant/CInt(value -> /Data/Primitive/Integer..)
 class(/Catln/PartialName, [/Catln/PartialName/PTypeName(name -> /Data/String..), /Catln/PartialName/PClassName(name -> /Data/String..), /Catln/PartialName/PRelativeName(name -> /Data/String..)])
   # What a partial type is named by: a type, a class, or a suffix that could be either.
   # A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it.
-data(/Catln/PtArgMode(argLb -> /Data/Primitive/Boolean.., argUb -> /Data/Primitive/Boolean..))
+data(/Catln/PtArgMode(argLb -> /Data/Primitive/Boolean.., argUb -> /Data/Primitive/Boolean.., argOpt -> /Data/List..[$T -> /Catln/PartialKey..]))
   # How the arguments a type lists bound the arguments of what it matches.
   # [argLb] says every listed argument is required, and [argUb] says no unlisted one is allowed. Both together is exactly the listed arguments; neither is no bound at all. They are two independent answers rather than four named cases, because that is what they are: an interval in the lattice of argument sets.
-class(/Catln/TypeVarLoc, [/Catln/TypeVarLoc/TVInt, /Catln/TypeVarLoc/TVParent, /Catln/TypeVarLoc/TVExt])
-  # Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.
-  # The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it.
+  # [argOpt] lists the arguments [argLb] does not require: a value may lack one, and where it has one it is of the type listed.
 data(/Catln/PartialKey(name -> /Data/String.., vars -> /Data/List..[$T -> /Catln/PartialKey..], args -> /Data/List..[$T -> /Catln/PartialKey..]))
   # The name of an argument or a type variable, with whatever it is itself applied to.
   # A key is a [name] and two sets: the [vars] it is written with and the [args] it is written over. Both hold keys again, so a key is a small tree rather than a string — which is what lets `f(x)` and `f(x, y)` be told apart as names before anything is known about what they are.
   # The sets are handed over as lists, in order, so that two keys holding the same members are handed over the same way.
+class(/Catln/TypeVarLoc, [/Catln/TypeVarLoc/TVInt, /Catln/TypeVarLoc/TVParent, /Catln/TypeVarLoc/TVExt])
+  # Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.
+  # The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it.
 class(/Catln/Type, [/Catln/Type/UnionType(top -> /Data/Maybe..[$T -> /Catln/Triple..[$A -> /Catln/TypePredicates.., $B -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Data/List..[$T -> /Catln/PartialArgsOption..]]], $C -> /Data/List..[$T -> /Catln/Constant..]]], leafs -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Data/List..[$T -> /Catln/PartialArgsOption..]]], consts -> /Data/List..[$T -> /Catln/Constant..]), /Catln/Type/TypeVar(aux -> /Catln/TypeVarAux.., loc -> /Catln/TypeVarLoc.., inner -> /Catln/Type..)])
   # A set of types: what a value may be.
   # A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.

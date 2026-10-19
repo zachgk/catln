@@ -7,10 +7,13 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value -> /System/env( /name=∀/Data/String ) = /System/env( Value /name -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value -> /System/env( /name=∀/Data/String ) = /System/env( Value /name -> ∀/Data/String ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

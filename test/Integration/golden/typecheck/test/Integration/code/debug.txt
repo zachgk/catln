@@ -9,13 +9,23 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /main.$82294b
-                            ( Value /$82294b-arg -> /Context( /io=TopType ).. = /Context( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ( Value /$82294b-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$82294b-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$82294b-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$82294b-states )
+                                ( ..Value /$82294b-ctx )
+                            )
                         ]
                     }
                 )
@@ -26,16 +36,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                        [ /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
                                     ( Value /val -> /Data/Primitive/Integer = /inc
                                         ( Value /x -> /Data/Primitive/Integer = /operator-
@@ -44,19 +56,21 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$82294b
                                 ( Value /$82294b-arg -> TVArg /v = Value /v )
+                                ( Value /$82294b-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }

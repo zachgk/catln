@@ -451,6 +451,9 @@ Prgm
                         [ /Catln/PtArgMode
                             ( EAppArg { eaaArg = Value /argLb -> ∀/Data/Primitive/Boolean } )
                             ( EAppArg { eaaArg = Value /argUb -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg
+                                { eaaArg = Value /argOpt -> ∀/Data/List[ /T=/Catln/PartialKey.. ] }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

@@ -317,15 +317,21 @@ Prgm
                                 , /at=/Llm/AgentAt..
                                 , /tries=/Data/Primitive/Integer
                                 ) = /Llm/agentAsk( Value /at -> /Llm/AgentAt.. )( Value /tries -> /Data/Primitive/Integer )( Value /history -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         , /ContextIn
-                            ( Value /value -> /Llm/agentNext( /next=∀/Llm/AgentNext ) = /Llm/agentNext( Value /next -> ∀/Llm/AgentNext ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value -> /Llm/agentNext( /next=∀/Llm/AgentNext ) = /Llm/agentNext( Value /next -> ∀/Llm/AgentNext ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRuntimeDecls =
                         [ /ContextIn
@@ -335,10 +341,13 @@ Prgm
                                 , /page=/Catln/RawPrgm..
                                 ) = /Catln/processFile
                                 ( Value /annot -> /Llm/#agent( /input=∀/Data/String ) )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
@@ -356,11 +365,15 @@ Prgm
                                     , /result=∀/Data/String
                                     ) = /Llm/#agent( Value /input -> ∀/Data/String )( Value /result -> ∀/Data/String )
                                 )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=/Data/Result/Ok[ /T=/Catln/RawPrgm.. ]( /value=/Catln/RawPrgm.. )
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
-                            ( Value /value -> /Data/Result/Ok( /value=/Catln/RawPrgm.. ) = /Data/Result/Ok( Value /value -> TVArg /page = Value /page ) )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> /Data/Result/Ok( /value=/Catln/RawPrgm.. ) = /Data/Result/Ok( Value /value -> TVArg /page = Value /page ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                         , /ContextIn
                             ( Value /value -> /Catln/processFile
                                 ( /annot=/Llm/#agent( /input=∀/Data/String )
@@ -369,16 +382,19 @@ Prgm
                                 , /source=∀/Data/String
                                 ) = /Catln/processFile
                                 ( Value /annot -> /Llm/#agent( /input=∀/Data/String ) = /Llm/#agent( Value /input -> ∀/Data/String ) )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )( Value /source -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Llm/agentAsk
                                     ( /history=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -404,20 +420,22 @@ Prgm
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                         { csValue = "" }
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                     ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Catln/processFile.$4ef661
                                 ( Value /$4ef661-arg -> TVArg /v = Value /v )
+                                ( Value /$4ef661-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
                             ( Value /value -> /Llm/agentAsk
@@ -437,15 +455,18 @@ Prgm
                                     , /source=∀/Data/String
                                     ) = /Llm/AgentAt( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )( Value /source -> ∀/Data/String )
                                 )( Value /tries -> /Data/Primitive/Integer )( Value /history -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Llm/tlcm
                                     ( /type=UnionType
@@ -523,19 +544,21 @@ Prgm
                                         , []
                                         ) = /Catln/typeOf[ /T : ∀/Llm/AgentStep ]
                                     )( Value /source -> TVArg /source = Value /source )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
                                     ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                    , /io=/Catln/IO
+                                    , /ctx=( /io=/Catln/IO )..
                                     )
                                 ) -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Llm/agentAsk.$db8f2a( Value /annotId -> TVArg /annotId = Value /annotId )( Value /history -> TVArg /history = Value /history )( Value /page -> TVArg /page = Value /page )( Value /tries -> TVArg /tries = Value /tries )( Value /input -> TVArg /input = Value /input )( Value /source -> TVArg /source = Value /source )( Value /$db8f2a-arg -> TVArg /v = Value /v )
+                                ( Value /$db8f2a-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
                             ( Value /value -> /Llm/agentNext
@@ -546,10 +569,14 @@ Prgm
                                     ( /result=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ) = /Llm/AgentNext/Finished
                                     ( Value /result -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] )
                                 )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            ) = /Context( Value /value -> TVArg /result = Value /result )( Value /io -> TVArg /io = Value /io )
+                            , /ctx=( /io=/Catln/IO )
+                            ) = /Context( Value /value -> TVArg /result = Value /result )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                         , /ContextIn
                             ( Value /value -> /Llm/agentNext
                                 ( /next=/Llm/AgentNext/Again
@@ -564,35 +591,40 @@ Prgm
                                     , /tries=/Data/Primitive/Integer
                                     ) = /Llm/AgentNext/Again( Value /at -> /Llm/AgentAt.. )( Value /tries -> /Data/Primitive/Integer )( Value /history -> ∀/Data/String )
                                 )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Llm/agentAsk
                                     ( /history=∀/Data/String
                                     , /at=/Llm/AgentAt..
                                     , /tries=/Data/Primitive/Integer
                                     ) = /Llm/agentAsk( Value /at -> TVArg /at = Value /at )( Value /tries -> TVArg /tries = Value /tries )( Value /history -> TVArg /history = Value /history )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                     ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Llm/agentNext.$6cb4bc
                                 ( Value /$6cb4bc-arg -> TVArg /v = Value /v )
+                                ( Value /$6cb4bc-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -1007,14 +1039,16 @@ Prgm
                             ( Value /$ccb179-arg -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
-                                ( Value /value@Value /result -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] )( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                ( Value /value@Value /result -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] )
+                                ( Value /ctx@Value /$ccb179-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$ccb179-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            ) = /Context( Value /value -> TVArg /result = Value /result )( Value /io -> TVArg /io = Value /io )
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value -> TVArg /result = Value /result )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$ccb179-states )( ..Value /$ccb179-ctx ) )
                         ]
                     }
                 )
@@ -1316,14 +1350,21 @@ Prgm
                     , omiDefs =
                         [ /Llm/agentNext.$6cb4bc
                             ( Value /$6cb4bc-arg -> /Context
-                                ( /value=TopType
-                                , /io=TopType
-                                ).. = /Context( Value /value@Value /result )( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            ( /value=TopType
-                            , /io=TopType
-                            ) = /Context( Value /value -> TVArg /result = Value /result )( Value /io -> TVArg /io = Value /io )
+                                [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
+                                ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /result -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] )
+                                ( Value /ctx@Value /$6cb4bc-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$6cb4bc-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value -> TVArg /result = Value /result )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$6cb4bc-states )
+                                ( ..Value /$6cb4bc-ctx )
+                            )
                         ]
                     }
                 )
@@ -1348,14 +1389,21 @@ Prgm
                     , omiDefs =
                         [ /Catln/processFile.$4ef661
                             ( Value /$4ef661-arg -> /Context
-                                ( /value=TopType
-                                , /io=TopType
-                                ).. = /Context( Value /value@Value /result )( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            ( /value=TopType
-                            , /io=TopType
-                            ) = /Context( Value /value -> TVArg /result = Value /result )( Value /io -> TVArg /io = Value /io )
+                                [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
+                                ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /result -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] )
+                                ( Value /ctx@Value /$4ef661-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$4ef661-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value -> TVArg /result = Value /result )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$4ef661-states )
+                                ( ..Value /$4ef661-ctx )
+                            )
                         ]
                     }
                 )
@@ -1368,22 +1416,10 @@ Prgm
                     , omiDefs =
                         [ /Llm/agentAsk.$db8f2a( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /source -> ∀/Data/String )
                             ( Value /$db8f2a-arg -> /Context
-                                ( /value=UnionType
-                                    ( Just
-                                        ( PredClass /Data/Result[ /E=∀/Llm/LlmErr ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Result/Fail
-                                        ( /err=/Llm/LlmErr/NotOf
-                                            ( /reply=∀/Data/String
-                                            , /cause=∀/Catln/ParseExprErr
-                                            )
-                                        )
-                                    , []
-                                    )
-                                , /io=/Catln/IO
-                                ).. = /Context
+                                [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                                ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
                                 ( Value /value@Value /reply -> UnionType
                                     ( Just
                                         ( PredClass /Data/Result[ /E=∀/Llm/LlmErr ]
@@ -1402,17 +1438,18 @@ Prgm
                                         )
                                     , []
                                     )
-                                )( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                )
+                                ( Value /ctx@Value /$db8f2a-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$db8f2a-states -> ( /io=/Catln/IO ) ) -> /Context
                             [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Llm/agentNext( /next=∀/Llm/AgentNext ) = /Llm/agentNext
                                     ( Value /next -> ∀/Llm/AgentNext = /Llm/agentTook
@@ -1424,19 +1461,21 @@ Prgm
                                             ) = /Llm/AgentAt( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page )( Value /annotId -> TVArg /annotId = Value /annotId )( Value /source -> TVArg /source = Value /source )
                                         )( Value /tries -> TVArg /tries = Value /tries )( Value /history -> TVArg /history = Value /history )( Value /reply -> TVArg /reply = Value /reply )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$db8f2a-states )( ..Value /$db8f2a-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                     ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                    , /io=/Catln/IO
+                                    , /ctx=( /io=/Catln/IO )..
                                     )
                                 ) -> /Context
                                 [ /V=∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
                                 ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Llm/agentAsk.$db8f2a.$ccb179( Value /$ccb179-arg -> TVArg /v = Value /v )
+                                ( Value /$ccb179-states -> ( /io=/Catln/IO ).. = /( ..Value /$db8f2a-states )( ..Value /$db8f2a-ctx ) )
                             )
                         ]
                     }

@@ -56,16 +56,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                        [ /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
                                     ( Value /val -> /Data/Primitive/Integer = /operator-
                                         ( Value /l -> /Data/Primitive/Integer = /total
@@ -80,18 +82,20 @@ Prgm
                                             { ciValue = 63 }
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$dce14e( Value /$dce14e-arg -> TVArg /v = Value /v )
+                                ( Value /$dce14e-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -130,13 +134,20 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /main.$dce14e
-                            ( Value /$dce14e-arg -> /Context( /io=TopType ).. = /Context( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ( Value /$dce14e-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$dce14e-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$dce14e-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dce14e-states )( ..Value /$dce14e-ctx ) )
                         ]
                     }
                 )

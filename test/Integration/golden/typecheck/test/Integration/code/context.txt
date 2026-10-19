@@ -1,0 +1,373 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Counter"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Counter( Value /i -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /inc = Value /inc )
+                            ( Value /ctx ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
+                                ( Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter( Value /i -> /Data/Primitive/Integer )@Value /c )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                ( Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                    ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 1 }
+                                        )
+                                    )
+                                )
+                            )
+                        , /ContextIn( Value /value -> /counterValue = Value /counterValue )
+                            ( Value /ctx ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
+                                ( Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter( Value /i -> /Data/Primitive/Integer )@Value /c )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) = /Context( Value /value -> TVArg /i = Value /i )
+                            ( Value /ctx ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                ( Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter( Value /i -> TVArg /i = Value /i ) )
+                            )
+                        , /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=TopType
+                                , /io=/Catln/IO
+                                )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /ContextIn
+                                ( Value /value -> /Context
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                    ) = /Context
+                                    ( Value /value -> () = Value / )
+                                    ( Value /ctx ->
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                        ( Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( Value /i -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 0 }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=TopType
+                                    , /io=/Catln/IO
+                                    )..
+                                ) = /main.$492073
+                                ( Value /$492073-arg -> TVArg /v = Value /v )
+                                ( Value /$492073-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$492073.$af3e2f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$492073.$af3e2f
+                            ( Value /$af3e2f-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$af3e2f-ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$af3e2f-states ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                , /io=/Catln/IO
+                                )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=TopType
+                                , /io=/Catln/IO
+                                )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /ContextIn( Value /value -> /counterValue = Value /counterValue )
+                                ( Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                    , /io=/Catln/IO
+                                    ) = /( ..Value /$af3e2f-states )( ..Value /$af3e2f-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context[ /V=/Data/Primitive/Integer ]
+                                    ( /value=/Data/Primitive/Integer
+                                    , /ctx=
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=TopType
+                                    , /io=/Catln/IO
+                                    )..
+                                ) = /main.$492073.$af3e2f.$2c5861
+                                ( Value /$2c5861-arg -> TVArg /v = Value /v )
+                                ( Value /$2c5861-states ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                    , /io=/Catln/IO
+                                    ) = /( ..Value /$af3e2f-states )( ..Value /$af3e2f-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$492073"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$492073
+                            ( Value /$492073-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$492073-ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$492073-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=TopType
+                                , /io=/Catln/IO
+                                )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /ContextIn( Value /value -> /inc = Value /inc )
+                                ( Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                    , /io=/Catln/IO
+                                    ) = /
+                                    ( ..Value /$492073-states )
+                                    ( ..Value /$492073-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=TopType
+                                    , /io=/Catln/IO
+                                    )..
+                                ) = /main.$492073.$af3e2f( Value /$af3e2f-arg -> TVArg /v = Value /v )
+                                ( Value /$af3e2f-states ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                    , /io=/Catln/IO
+                                    ) = /
+                                    ( ..Value /$492073-states )
+                                    ( ..Value /$492073-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$492073.$af3e2f.$2c5861"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$492073.$af3e2f.$2c5861
+                            ( Value /$2c5861-arg -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /Context( Value /value@Value /n -> /Data/Primitive/Integer )
+                                ( Value /ctx@Value /$2c5861-ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$2c5861-states ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                , /io=/Catln/IO
+                                )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=TopType
+                                , /io=/Catln/IO
+                                )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /n = Value /n )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 1 }
+                                        )
+                                    )
+                                )
+                                ( Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                    , /io=/Catln/IO
+                                    ) = /
+                                    ( ..Value /$2c5861-states )
+                                    ( ..Value /$2c5861-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /counter=TopType
+                                    , /io=/Catln/IO
+                                    )..
+                                ) = /main.$492073.$af3e2f.$2c5861.$4efa46
+                                ( Value /$4efa46-arg -> TVArg /v = Value /v )
+                                ( Value /$4efa46-states ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                    , /io=/Catln/IO
+                                    ) = /
+                                    ( ..Value /$2c5861-states )
+                                    ( ..Value /$2c5861-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$492073.$af3e2f.$2c5861.$4efa46"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$492073.$af3e2f.$2c5861.$4efa46
+                            ( Value /$4efa46-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$4efa46-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$4efa46-states ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer )
+                                , /io=/Catln/IO
+                                )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=TopType
+                                , /io=/Catln/IO
+                                )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx ->
+                                ( /counter=TopType
+                                , /io=/Catln/IO
+                                ).. = /
+                                ( ..Value /$4efa46-states )
+                                ( ..Value /$4efa46-ctx )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "Tests a context holding more than one state. main adds a [Counter] beside its [io], [inc]
+                replaces it, and [counterValue] reads it back, so main exits with 0 only where the counter reached 1.
+                A state is found by its type: [inc] and [counterValue] name theirs [c], and find the one main added." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[inc] answers with only the state it changes. The bind calling it keeps the [io] it never named." }
+            )
+        ]
+    }

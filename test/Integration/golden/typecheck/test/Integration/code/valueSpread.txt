@@ -45,11 +45,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                         ]
                     }
                 )
@@ -161,7 +165,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /both( Value /a -> /Pt.. )( Value /b -> /Pt.. ) -> /Pt.. = /Pt( ..Value /a )( ..Value /b ) ]
+                        [ /both( Value /a -> /Pt.. )( Value /b -> /Pt.. ) -> /Pt
+                            ( /x=/Data/Primitive/Integer
+                            , /y=/Data/Primitive/Integer
+                            ).. = /Pt( ..Value /a )( ..Value /b )
+                        ]
                     }
                 )
             ]

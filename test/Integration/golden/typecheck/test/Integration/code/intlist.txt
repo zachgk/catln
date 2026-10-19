@@ -27,16 +27,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                        [ /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
                                     ( Value /val -> /Data/Primitive/Integer = /operator-
                                         ( Value /l -> /Data/Primitive/Integer = /len
@@ -64,19 +66,21 @@ Prgm
                                             { ciValue = 2 }
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /main.$395546
                                 ( Value /$395546-arg -> TVArg /v = Value /v )
+                                ( Value /$395546-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -89,13 +93,23 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /main.$395546
-                            ( Value /$395546-arg -> /Context( /io=TopType ).. = /Context( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ( Value /$395546-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$395546-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$395546-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$395546-states )
+                                ( ..Value /$395546-ctx )
+                            )
                         ]
                     }
                 )

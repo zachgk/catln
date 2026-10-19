@@ -81,68 +81,77 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value -> /say_hello( /msg=∀/Data/String ) = /say_hello( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                            ( Value /value -> /say_hello( /msg=∀/Data/String ) = /say_hello( Value /msg -> ∀/Data/String ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
                                     ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /say_hello.$dd8e51( Value /$dd8e51-arg -> TVArg /v = Value /v )
+                                ( Value /$dd8e51-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
-                            ( Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                            ( Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice( Value /msg -> ∀/Data/String ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
                                     ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
-                                [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /print_twice.$dd8e51( Value /msg -> TVArg /msg = Value /msg )( Value /$dd8e51-arg -> TVArg /v = Value /v )
+                                ( Value /$dd8e51-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
-                        , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                        , /ContextIn( Value /value -> /echo = Value /echo )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println
                                     ( /msg=/Data/String/Text
                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
@@ -154,25 +163,31 @@ Prgm
                                             { csValue = """" }
                                         )
                                     )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /echo.$698ad1
                                 ( Value /$698ad1-arg -> TVArg /v = Value /v )
+                                ( Value /$698ad1-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
-                        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
+                        , /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                         ]
                     }
                 )
@@ -276,34 +291,38 @@ Prgm
                     , omiDefs =
                         [ /print_twice.$dd8e51( Value /msg -> ∀/Data/String )
                             ( Value /$dd8e51-arg -> /Context
-                                ( /value=TopType
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            [ /V=() ]
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$dd8e51-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$dd8e51-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
                                     ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /print_twice.$dd8e51.$dd8e51( Value /$dd8e51-arg -> TVArg /v = Value /v )
+                                ( Value /$dd8e51-states -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
                             )
                         ]
                     }
@@ -316,13 +335,23 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /echo.$698ad1
-                            ( Value /$698ad1-arg -> /Context( /io=TopType ).. = /Context( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ( Value /$698ad1-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$698ad1-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$698ad1-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$698ad1-states )
+                                ( ..Value /$698ad1-ctx )
+                            )
                         ]
                     }
                 )
@@ -393,14 +422,17 @@ Prgm
                             ( Value /$dd8e51-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ).. = /Context( Value /io -> /Catln/IO )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$dd8e51-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$dd8e51-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
                         ]
                     }
                 )
@@ -556,13 +588,20 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /say_hello.$dd8e51
-                            ( Value /$dd8e51-arg -> /Context( /io=TopType ).. = /Context( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ( Value /$dd8e51-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$dd8e51-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$dd8e51-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
                         ]
                     }
                 )

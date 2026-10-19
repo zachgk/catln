@@ -9,25 +9,33 @@ Prgm
                         [ /ContextIn
                             ( Value /value= /Catln/process
                                 ( Value annot -> /Llm/#q( /input=∀/Data/String ) )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=/Llm/#q..
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
                             ( Value /value= /Catln/process
                                 ( Value annot= #q( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=/Llm/#q..
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= lcm( Value input= Value input )( Value page= Value page ) )( Value io= Value io )
+                                ( Value value= lcm( Value input= Value input )( Value page= Value page ) )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= /Catln/process.$590790( Value /input= Value /input )
-                                ( Value /$590790-arg= Value v )
+                                ( Value $590790-arg= Value v )
+                                ( Value $590790-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -75,10 +83,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/process.$590790( Value /input -> ∀/Data/String )
-                            ( Value $590790-arg= /Context( Value value@Value reply )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context
-                            ( Value /value= qAnswered( Value input= Value input )( Value reply= Value reply ) )( Value io= Value io )
+                            ( Value $590790-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $590790-ctx )
+                            )
+                            ( Value $590790-states )= /Context
+                            ( Value value= qAnswered( Value input= Value input )( Value reply= Value reply ) )
+                            ( Value ctx= /
+                                ( ..Value $590790-states )
+                                ( ..Value $590790-ctx )
+                            )
                         ]
                     }
                 )

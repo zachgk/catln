@@ -12,10 +12,17 @@ Prgm
                                     ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

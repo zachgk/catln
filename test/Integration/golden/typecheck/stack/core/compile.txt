@@ -71,22 +71,31 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit( Value /val -> /Data/Primitive/Integer ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit( Value /val -> /Data/Primitive/Integer ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         , /ContextIn
-                            ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println( Value /msg -> ∀/Data/String ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            )..
-                        , /ContextIn( Value /value -> /Catln/readLine = Value /Catln/readLine )( Value /io -> /Catln/IO ) -> /Context
+                            , /ctx=( /io=/Catln/IO )..
+                            )
+                        , /ContextIn( Value /value -> /Catln/readLine = Value /Catln/readLine )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Catln/InputErr
                                 ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

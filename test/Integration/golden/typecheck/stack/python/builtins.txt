@@ -70,10 +70,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /ContextIn( Value /value -> /Python/Builtins/input = Value /Python/Builtins/input )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value -> /Python/Builtins/input = Value /Python/Builtins/input )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/String
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

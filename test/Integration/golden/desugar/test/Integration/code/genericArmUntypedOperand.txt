@@ -9,9 +9,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$e7dc4b
-                            ( Value $e7dc4b-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $e7dc4b-arg= /Context( Value value )( Value ctx@Value $e7dc4b-ctx ) )( Value $e7dc4b-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $e7dc4b-states )( ..Value $e7dc4b-ctx ) )
                         ]
                     }
                 )
@@ -22,10 +21,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= /operator-
@@ -41,9 +43,12 @@ Prgm
                                             { ciValue = 3 }
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$e7dc4b( Value /$e7dc4b-arg= Value v ) )
+                            ( fn( Value v )= main.$e7dc4b( Value $e7dc4b-arg= Value v )
+                                ( Value $e7dc4b-states= /( Value io= Value io ) )
+                            )
                         ]
                     }
                 )

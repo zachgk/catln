@@ -11,7 +11,7 @@ Prgm
                         [ maybeBind
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value m )
                             ( fn( Value v )= maybeBind.$9471e8
-                                ( Value /$9471e8-arg= Value v )
+                                ( Value $9471e8-arg= Value v )
                             )
                         ]
                     }
@@ -23,7 +23,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io ) ]
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value value= Value / )
+                            ( Value ctx= /( Value io= Value io ) )
+                        ]
                     }
                 )
             ,

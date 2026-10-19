@@ -9,18 +9,27 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$97e860
-                            ( Value $97e860-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $97e860-arg= /Context( Value value )
+                                ( Value ctx@Value $97e860-ctx )
+                            )
+                            ( Value $97e860-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= CInt
                                         { ciValue = 0 }
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $97e860-states )
+                                    ( ..Value $97e860-ctx )
+                                )
                             )
                             ( fn( Value v )= main.$97e860.$620336
-                                ( Value /$620336-arg= Value v )
+                                ( Value $620336-arg= Value v )
+                                ( Value $620336-states= /
+                                    ( ..Value $97e860-states )
+                                    ( ..Value $97e860-ctx )
+                                )
                             )
                         ]
                     }
@@ -33,9 +42,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$97e860.$620336
-                            ( Value $620336-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $620336-arg= /Context( Value value )
+                                ( Value ctx@Value $620336-ctx )
+                            )
+                            ( Value $620336-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $620336-states )
+                                ( ..Value $620336-ctx )
+                            )
                         ]
                     }
                 )
@@ -46,10 +60,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= prompt
@@ -57,10 +74,12 @@ Prgm
                                             { csValue = "What does double do?" }
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= main.$97e860
-                                ( Value /$97e860-arg= Value v )
+                                ( Value $97e860-arg= Value v )
+                                ( Value $97e860-states= /( Value io= Value io ) )
                             )
                         ]
                     }

@@ -29,7 +29,7 @@ Prgm
                         [ bump
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value m )
                             ( fn( Value v )= bump.$9471e8
-                                ( Value /$9471e8-arg= Value v )
+                                ( Value $9471e8-arg= Value v )
                             )
                         ]
                     }
@@ -41,10 +41,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= /operator-
@@ -60,9 +63,12 @@ Prgm
                                             { ciValue = 63 }
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$dce14e( Value /$dce14e-arg= Value v ) )
+                            ( fn( Value v )= main.$dce14e( Value $dce14e-arg= Value v )
+                                ( Value $dce14e-states= /( Value io= Value io ) )
+                            )
                         ]
                     }
                 )
@@ -100,9 +106,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$dce14e
-                            ( Value $dce14e-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $dce14e-arg= /Context( Value value )( Value ctx@Value $dce14e-ctx ) )( Value $dce14e-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $dce14e-states )( ..Value $dce14e-ctx ) )
                         ]
                     }
                 )

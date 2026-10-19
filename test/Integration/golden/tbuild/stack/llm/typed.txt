@@ -117,10 +117,17 @@ Prgm
                                     ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         , /ContextIn
                             ( EAppArg
                                 { eaaArg = Value /value -> /Llm/tlcm
@@ -131,10 +138,17 @@ Prgm
                                     ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
@@ -150,10 +164,16 @@ Prgm
                                     ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
-                            [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) =
                             ( /Data/bindap
                                 ( EAppArg
@@ -167,8 +187,8 @@ Prgm
                                             [ /T=∀/Data/String
                                             , /E=∀/Llm/LlmErr
                                             ]
-                                        , /io=/Catln/IO
-                                        ).. =
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
                                         ( /ContextIn
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Llm/llm( /input=∀/Data/String ) = /Llm/llm
@@ -187,7 +207,11 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
                                             ) ↦ /Context
                                             [ /V=∀/Data/Result
                                                 [ /T=∀/Data/String
@@ -198,8 +222,8 @@ Prgm
                                                 [ /T=∀/Data/String
                                                 , /E=∀/Llm/LlmErr
                                                 ]
-                                            , /io=/Catln/IO
-                                            )..
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
                                         )
                                     }
                                 )
@@ -216,12 +240,12 @@ Prgm
                                                     [ /T=∀/Data/String
                                                     , /E=∀/Llm/LlmErr
                                                     ]
-                                                , /io=/Catln/IO
-                                                )..
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
                                             }
                                         ) -> /Context
                                         ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                        , /io=/Catln/IO
+                                        , /ctx=( /io=/Catln/IO )..
                                         ) =
                                         ( /Llm/tllm.$404341
                                             ( EAppArg
@@ -232,16 +256,22 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /$404341-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$404341-states -> ( /io=/Catln/IO ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
                                             ) ↦ /Context
                                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                            , /io=/Catln/IO
+                                            , /ctx=( /io=/Catln/IO )..
                                             )
                                         )
                                     }
                                 ) ↦ /Context
-                                [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 )
                             )
                         , /ContextIn
@@ -256,10 +286,16 @@ Prgm
                                     ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
-                            [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) =
                             ( /Data/bindap
                                 ( EAppArg
@@ -273,7 +309,7 @@ Prgm
                                             [ /T=∀/Data/String
                                             , /E=∀/Llm/LlmErr
                                             ]
-                                        , /io=/Catln/IO
+                                        , /ctx=( /io=/Catln/IO )..
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
@@ -305,7 +341,11 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
                                             ) ↦ /Context
                                             [ /V=∀/Data/Result
                                                 [ /T=∀/Data/String
@@ -316,7 +356,7 @@ Prgm
                                                 [ /T=∀/Data/String
                                                 , /E=∀/Llm/LlmErr
                                                 ]
-                                            , /io=/Catln/IO
+                                            , /ctx=( /io=/Catln/IO )..
                                             )
                                         )
                                     }
@@ -334,12 +374,12 @@ Prgm
                                                     [ /T=∀/Data/String
                                                     , /E=∀/Llm/LlmErr
                                                     ]
-                                                , /io=/Catln/IO
+                                                , /ctx=( /io=/Catln/IO )..
                                                 )
                                             }
                                         ) -> /Context
                                         ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                        , /io=/Catln/IO
+                                        , /ctx=( /io=/Catln/IO )..
                                         ) =
                                         ( /Llm/tlcm.$6d0af4
                                             ( EAppArg
@@ -350,16 +390,22 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /$6d0af4-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$6d0af4-states -> ( /io=/Catln/IO ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
                                             ) ↦ /Context
                                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                            , /io=/Catln/IO
+                                            , /ctx=( /io=/Catln/IO )..
                                             )
                                         )
                                     }
                                 ) ↦ /Context
-                                [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 )
                             )
                         ]
@@ -453,12 +499,17 @@ Prgm
                             ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /$6d0af4-arg -> /Context
+                                    [ /V=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    ]
                                     ( /value=∀/Data/Result
                                         [ /T=∀/Data/String
                                         , /E=∀/Llm/LlmErr
                                         ]
-                                    , /io=TopType
-                                    ).. = /Context
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
                                     ( EAppArg
                                         { eaaArg = Value /value@Value /reply -> ∀/Data/Result
                                             [ /T=∀/Data/String
@@ -466,14 +517,16 @@ Prgm
                                             ]
                                         }
                                     )
-                                    ( EAppArg { eaaArg = Value /io } )
-                                    ( EAppSpread
-                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$6d0af4-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$6d0af4-states -> ( /io=/Catln/IO ) }
                             ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] =
@@ -491,7 +544,18 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$6d0af4-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$6d0af4-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -632,12 +696,17 @@ Prgm
                             ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /$404341-arg -> /Context
+                                    [ /V=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    ]
                                     ( /value=∀/Data/Result
                                         [ /T=∀/Data/String
                                         , /E=∀/Llm/LlmErr
                                         ]
-                                    , /io=TopType
-                                    ).. = /Context
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
                                     ( EAppArg
                                         { eaaArg = Value /value@Value /reply -> ∀/Data/Result
                                             [ /T=∀/Data/String
@@ -645,14 +714,16 @@ Prgm
                                             ]
                                         }
                                     )
-                                    ( EAppArg { eaaArg = Value /io } )
-                                    ( EAppSpread
-                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$404341-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$404341-states -> ( /io=/Catln/IO ) }
                             ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] =
@@ -670,7 +741,18 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$404341-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$404341-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -813,6 +895,7 @@ Prgm
                                             ( /head = TupleVal /Catln/PartialArgsOption
                                                 ( /argMode = TupleVal /Catln/PtArgMode
                                                     ( /argLb = TupleVal /Data/Primitive/True
+                                                    , /argOpt = TupleVal /Data/List/Nil
                                                     , /argUb = TupleVal /Data/Primitive/False
                                                     )
                                                 , /args = TupleVal /Data/List/Nil
@@ -887,6 +970,7 @@ Prgm
                                                                     ( /head = TupleVal /Catln/PartialArgsOption
                                                                         ( /argMode = TupleVal /Catln/PtArgMode
                                                                             ( /argLb = TupleVal /Data/Primitive/True
+                                                                            , /argOpt = TupleVal /Data/List/Nil
                                                                             , /argUb = TupleVal /Data/Primitive/False
                                                                             )
                                                                         , /args = TupleVal /Data/List/Nil
@@ -975,6 +1059,7 @@ Prgm
                                                                     ( /head = TupleVal /Catln/PartialArgsOption
                                                                         ( /argMode = TupleVal /Catln/PtArgMode
                                                                             ( /argLb = TupleVal /Data/Primitive/True
+                                                                            , /argOpt = TupleVal /Data/List/Nil
                                                                             , /argUb = TupleVal /Data/Primitive/False
                                                                             )
                                                                         , /args = TupleVal /Data/List/Nil
@@ -1075,6 +1160,7 @@ Prgm
                                                         ( /head = TupleVal /Catln/PartialArgsOption
                                                             ( /argMode = TupleVal /Catln/PtArgMode
                                                                 ( /argLb = TupleVal /Data/Primitive/True
+                                                                , /argOpt = TupleVal /Data/List/Nil
                                                                 , /argUb = TupleVal /Data/Primitive/False
                                                                 )
                                                             , /args = TupleVal /Data/List/Nil

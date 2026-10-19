@@ -13,13 +13,16 @@ Prgm
                                 , /url=∀/Data/String
                                 ) = /Http/httpPost( Value /url -> ∀/Data/String )
                                 ( Value /headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value /body -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Http/HttpErr
                                 ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

@@ -10,10 +10,13 @@ Prgm
                             ( Value /value -> /Catln/process
                                 ( /annot=/Llm/#q( /input=∀/Data/String ) ) = /Catln/process
                                 ( Value /annot -> /Llm/#q( /input=∀/Data/String ) )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=/Llm/#q..
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
@@ -23,17 +26,10 @@ Prgm
                                 , /page=/Catln/RawPrgm..
                                 ) = /Catln/process
                                 ( Value /annot -> /Llm/#q( /input=∀/Data/String ) = /Llm/#q( Value /input -> ∀/Data/String ) )( Value /page -> /Catln/RawPrgm.. )
-                            )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=
-                                ( /Llm/#q
-                                    ( /input=∀/Data/String
-                                    , /result=∀/Data/String
-                                    ) + /Llm/#q
-                                    ( /input=∀/Data/String
-                                    , /failure=∀/Data/String
-                                    )
-                                )
-                            ]
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=
                                 ( /Llm/#q
                                     ( /input=∀/Data/String
@@ -43,7 +39,7 @@ Prgm
                                     , /failure=∀/Data/String
                                     )
                                 )
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result
@@ -55,13 +51,14 @@ Prgm
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Llm/lcm
                                     ( /page=/Catln/RawPrgm..
                                     , /input=∀/Data/String
                                     ) = /Llm/lcm( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
@@ -74,7 +71,7 @@ Prgm
                                         [ /T=∀/Data/String
                                         , /E=∀/Llm/LlmErr
                                         ]
-                                    , /io=/Catln/IO
+                                    , /ctx=( /io=/Catln/IO )..
                                     )
                                 ) -> /Context
                                 ( /value=
@@ -86,9 +83,10 @@ Prgm
                                         , /failure=∀/Data/String
                                         )
                                     )
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Catln/process.$590790( Value /input -> TVArg /input = Value /input )
                                 ( Value /$590790-arg -> TVArg /v = Value /v )
+                                ( Value /$590790-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -143,12 +141,17 @@ Prgm
                     , omiDefs =
                         [ /Catln/process.$590790( Value /input -> ∀/Data/String )
                             ( Value /$590790-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
                                 ( /value=∀/Data/Result
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=TopType
-                                ).. = /Context
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
                                 ( Value /value@Value /reply -> UnionType
                                     ( Just
                                         ( PredClass /Data/Result
@@ -162,9 +165,10 @@ Prgm
                                         ( /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) )
                                     , []
                                     )
-                                )( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                )
+                                ( Value /ctx@Value /$590790-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$590790-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=
                                 ( /Llm/#q
                                     ( /input=∀/Data/String
@@ -174,7 +178,7 @@ Prgm
                                     , /failure=∀/Data/String
                                     )
                                 )
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
                             ( Value /value ->
                                 ( /Llm/#q
@@ -185,7 +189,11 @@ Prgm
                                     , /failure=∀/Data/String
                                     )
                                 ) = /Llm/qAnswered( Value /input -> TVArg /input = Value /input )( Value /reply -> TVArg /reply = Value /reply )
-                            )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$590790-states )
+                                ( ..Value /$590790-ctx )
+                            )
                         ]
                     }
                 )

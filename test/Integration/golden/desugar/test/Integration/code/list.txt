@@ -26,10 +26,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= /operator-
@@ -49,10 +52,12 @@ Prgm
                                             { ciValue = 2 }
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= main.$4734c8
-                                ( Value /$4734c8-arg= Value v )
+                                ( Value $4734c8-arg= Value v )
+                                ( Value $4734c8-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -65,9 +70,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$4734c8
-                            ( Value $4734c8-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $4734c8-arg= /Context( Value value )
+                                ( Value ctx@Value $4734c8-ctx )
+                            )
+                            ( Value $4734c8-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $4734c8-states )
+                                ( ..Value $4734c8-ctx )
+                            )
                         ]
                     }
                 )

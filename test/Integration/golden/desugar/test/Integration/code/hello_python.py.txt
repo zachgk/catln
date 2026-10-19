@@ -81,31 +81,46 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value= say_hello( Value msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= say_hello( Value msg -> ∀/Data/String ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value /msg= toString( Value /this= Value msg ) )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= say_hello.$dd8e51( Value /$dd8e51-arg= Value v ) )
+                            ( fn( Value v )= say_hello.$dd8e51( Value $dd8e51-arg= Value v )
+                                ( Value $dd8e51-states= /( Value io= Value io ) )
+                            )
                         , /ContextIn
-                            ( Value /value= print_twice( Value msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= print_twice( Value msg -> ∀/Data/String ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value /msg= toString( Value /this= Value msg ) )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= print_twice.$dd8e51( Value /msg= Value /msg )( Value /$dd8e51-arg= Value v ) )
-                        , /ContextIn( Value /value= Value echo )( Value /io -> /Catln/IO ) -> /Context
+                            ( fn( Value v )= print_twice.$dd8e51( Value /msg= Value /msg )( Value $dd8e51-arg= Value v )
+                                ( Value $dd8e51-states= /( Value io= Value io ) )
+                            )
+                        , /ContextIn( Value /value= Value echo )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value /msg= toString
@@ -113,12 +128,18 @@ Prgm
                                             { csValue = """" }
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= echo.$698ad1
-                                ( Value /$698ad1-arg= Value v )
+                                ( Value $698ad1-arg= Value v )
+                                ( Value $698ad1-states= /( Value io= Value io ) )
                             )
-                        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io )
+                        , /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value value= Value / )
+                            ( Value ctx= /( Value io= Value io ) )
                         ]
                     }
                 )
@@ -212,15 +233,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ print_twice.$dd8e51( Value /msg -> ∀/Data/String )
-                            ( Value $dd8e51-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $dd8e51-arg= /Context( Value value )( Value ctx@Value $dd8e51-ctx ) )( Value $dd8e51-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value /msg= toString( Value /this= Value msg ) )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( ..Value $dd8e51-states )( ..Value $dd8e51-ctx ) )
                             )
-                            ( fn( Value v )= print_twice.$dd8e51.$dd8e51( Value /$dd8e51-arg= Value v ) )
+                            ( fn( Value v )= print_twice.$dd8e51.$dd8e51( Value $dd8e51-arg= Value v )
+                                ( Value $dd8e51-states= /( ..Value $dd8e51-states )( ..Value $dd8e51-ctx ) )
+                            )
                         ]
                     }
                 )
@@ -232,9 +254,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ echo.$698ad1
-                            ( Value $698ad1-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $698ad1-arg= /Context( Value value )
+                                ( Value ctx@Value $698ad1-ctx )
+                            )
+                            ( Value $698ad1-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $698ad1-states )
+                                ( ..Value $698ad1-ctx )
+                            )
                         ]
                     }
                 )
@@ -302,9 +329,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ print_twice.$dd8e51.$dd8e51
-                            ( Value $dd8e51-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $dd8e51-arg= /Context( Value value )( Value ctx@Value $dd8e51-ctx ) )( Value $dd8e51-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $dd8e51-states )( ..Value $dd8e51-ctx ) )
                         ]
                     }
                 )
@@ -460,9 +486,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ say_hello.$dd8e51
-                            ( Value $dd8e51-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $dd8e51-arg= /Context( Value value )( Value ctx@Value $dd8e51-ctx ) )( Value $dd8e51-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $dd8e51-states )( ..Value $dd8e51-ctx ) )
                         ]
                     }
                 )

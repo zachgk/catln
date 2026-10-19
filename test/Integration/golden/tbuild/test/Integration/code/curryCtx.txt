@@ -10,15 +10,26 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> () = Value / }
                             )
                             ( EAppArg
-                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -85,23 +96,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /main.innerVar -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /operator==
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal
-                                    ( /this=/Data/Primitive/Integer
-                                    , /other=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
-                            ) =
+                        [ Value /main.innerVar -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg
                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
@@ -117,18 +112,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Algebra/equal
-                                    ( /this=/Data/Primitive/Integer
-                                    , /other=/Data/Primitive/Integer
-                                    )
-                                , []
-                                )
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }

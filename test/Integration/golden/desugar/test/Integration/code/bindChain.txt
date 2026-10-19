@@ -39,7 +39,7 @@ Prgm
                     , omiDefs =
                         [ mmapMmap.$f24651
                             ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= mmapMmap.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                            ( fn( Value v )= mmapMmap.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
                         ]
                     }
                 )
@@ -53,7 +53,7 @@ Prgm
                         [ apFmap
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= apFmap.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                            ( fn( Value v )= apFmap.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
                         ]
                     }
                 )
@@ -66,7 +66,7 @@ Prgm
                     , omiDefs =
                         [ fmapAp.$f24651
                             ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= fmapAp.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                            ( fn( Value v )= fmapAp.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
                         ]
                     }
                 )
@@ -80,7 +80,7 @@ Prgm
                         [ fmapAp
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= fmapAp.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                            ( fn( Value v )= fmapAp.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
                         ]
                     }
                 )
@@ -93,7 +93,7 @@ Prgm
                     , omiDefs =
                         [ apFmap.$f24651
                             ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= apFmap.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                            ( fn( Value v )= apFmap.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
                         ]
                     }
                 )
@@ -106,7 +106,7 @@ Prgm
                     , omiDefs =
                         [ mmapFmap.$f24651
                             ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= mmapFmap.$f24651.$b671cb( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                            ( fn( Value v )= mmapFmap.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
                         ]
                     }
                 )
@@ -117,7 +117,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io ) ]
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value value= Value / )
+                            ( Value ctx= /( Value io= Value io ) )
+                        ]
                     }
                 )
             ,
@@ -141,7 +146,7 @@ Prgm
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= mmapApFmap.$f24651( Value /c= Value /c )( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                            ( fn( Value v )= mmapApFmap.$f24651( Value /c= Value /c )( Value /b= Value /b )( Value $f24651-arg= Value v ) )
                         ]
                     }
                 )
@@ -167,7 +172,7 @@ Prgm
                         [ mmapMmap
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= mmapMmap.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                            ( fn( Value v )= mmapMmap.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
                         ]
                     }
                 )
@@ -217,7 +222,7 @@ Prgm
                         [ mmapFmap
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= mmapFmap.$f24651( Value /b= Value /b )( Value /$f24651-arg= Value v ) )
+                            ( fn( Value v )= mmapFmap.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
                         ]
                     }
                 )
@@ -230,7 +235,7 @@ Prgm
                     , omiDefs =
                         [ mmapApFmap.$f24651.$b671cb
                             ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )( Value $b671cb-arg@Value y )= /Data/bindap( Value m= Value c )
-                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb.$a33c13( Value /x= Value /x )( Value /y= Value /y )( Value /$a33c13-arg= Value v ) )
+                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb.$a33c13( Value /x= Value /x )( Value /y= Value /y )( Value $a33c13-arg= Value v ) )
                         ]
                     }
                 )
@@ -244,7 +249,7 @@ Prgm
                         [ mmapApFmap.$f24651
                             ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb( Value /c= Value /c )( Value /x= Value /x )( Value /$b671cb-arg= Value v ) )
+                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb( Value /c= Value /c )( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
                         ]
                     }
                 )

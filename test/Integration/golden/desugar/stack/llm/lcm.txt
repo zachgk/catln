@@ -28,9 +28,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/lcm.$acf11b
-                            ( Value $acf11b-arg= /Context( Value value@Value reply )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value reply )( Value io= Value io )
+                            ( Value $acf11b-arg= /Context( Value value@Value reply )( Value ctx@Value $acf11b-ctx ) )( Value $acf11b-states )= /Context( Value value= Value reply )
+                            ( Value ctx= /( ..Value $acf11b-states )( ..Value $acf11b-ctx ) )
                         ]
                     }
                 )
@@ -40,30 +39,39 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value= /Llm/lcm( Value input -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/lcm( Value input -> ∀/Data/String ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value= /Llm/lcm( Value input -> ∀/Data/String )( Value page -> /Catln/RawPrgm.. ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/lcm( Value input -> ∀/Data/String )( Value page -> /Catln/RawPrgm.. ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llm
                                     ( Value input= lcmPrompt( Value input= Value input )( Value page= Value page ) )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/lcm.$acf11b( Value /$acf11b-arg= Value v ) )
+                            ( fn( Value v )= /Llm/lcm.$acf11b( Value $acf11b-arg= Value v )
+                                ( Value $acf11b-states= /( Value io= Value io ) )
+                            )
                         ]
                     }
                 )

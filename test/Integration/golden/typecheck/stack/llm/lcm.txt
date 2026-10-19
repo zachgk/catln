@@ -41,14 +41,32 @@ Prgm
                     , omiDefs =
                         [ /Llm/lcm.$acf11b
                             ( Value /$acf11b-arg -> /Context
-                                ( /value=TopType
-                                , /io=TopType
-                                ).. = /Context( Value /value@Value /reply )( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
-                            ( /value=TopType
-                            , /io=TopType
-                            ) = /Context( Value /value -> TVArg /reply = Value /reply )( Value /io -> TVArg /io = Value /io )
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /reply -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                )
+                                ( Value /ctx@Value /$acf11b-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$acf11b-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value -> TVArg /reply = Value /reply )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$acf11b-states )( ..Value /$acf11b-ctx ) )
                         ]
                     }
                 )
@@ -58,13 +76,16 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value -> /Llm/lcm( /input=∀/Data/String ) = /Llm/lcm( Value /input -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value -> /Llm/lcm( /input=∀/Data/String ) = /Llm/lcm( Value /input -> ∀/Data/String ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
@@ -73,7 +94,10 @@ Prgm
                                 ( /page=/Catln/RawPrgm..
                                 , /input=∀/Data/String
                                 ) = /Llm/lcm( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             [ /V=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
@@ -83,7 +107,7 @@ Prgm
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result
@@ -95,11 +119,12 @@ Prgm
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Llm/llm( /input=∀/Data/String ) = /Llm/llm
                                     ( Value /input -> ∀/Data/String = /Llm/lcmPrompt( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page ) )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
@@ -112,8 +137,8 @@ Prgm
                                         [ /T=∀/Data/String
                                         , /E=∀/Llm/LlmErr
                                         ]
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 [ /V=∀/Data/Result
                                     [ /T=∀/Data/String
@@ -124,8 +149,9 @@ Prgm
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Llm/lcm.$acf11b( Value /$acf11b-arg -> TVArg /v = Value /v )
+                                ( Value /$acf11b-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }

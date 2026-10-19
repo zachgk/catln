@@ -9,18 +9,27 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$3f8b58
-                            ( Value $3f8b58-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $3f8b58-arg= /Context( Value value )
+                                ( Value ctx@Value $3f8b58-ctx )
+                            )
+                            ( Value $3f8b58-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= CInt
                                         { ciValue = 0 }
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $3f8b58-states )
+                                    ( ..Value $3f8b58-ctx )
+                                )
                             )
                             ( fn( Value v )= main.$3f8b58.$620336
-                                ( Value /$620336-arg= Value v )
+                                ( Value $620336-arg= Value v )
+                                ( Value $620336-states= /
+                                    ( ..Value $3f8b58-states )
+                                    ( ..Value $3f8b58-ctx )
+                                )
                             )
                         ]
                     }
@@ -33,9 +42,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$3f8b58.$620336
-                            ( Value $620336-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $620336-arg= /Context( Value value )
+                                ( Value ctx@Value $620336-ctx )
+                            )
+                            ( Value $620336-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $620336-states )
+                                ( ..Value $620336-ctx )
+                            )
                         ]
                     }
                 )
@@ -92,10 +106,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= showD
@@ -120,10 +137,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= main.$3f8b58
-                                ( Value /$3f8b58-arg= Value v )
+                                ( Value $3f8b58-arg= Value v )
+                                ( Value $3f8b58-states= /( Value io= Value io ) )
                             )
                         ]
                     }

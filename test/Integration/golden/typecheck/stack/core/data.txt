@@ -9,7 +9,36 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Monad/pure
-                            [ /M : /Context[ /V=TopType ]( /value=$/V ).. ]( Value /v ) -> /Context( /value=TopType ) = /Context( Value /value -> TVArg /v = Value /v )
+                            [ /M : /Context[ /V=TopType ]
+                                ( /value=$/V
+                                , /ctx=()..
+                                )..
+                            ]( Value /v ) -> /Context
+                            ( /value=TopType
+                            , /ctx=()
+                            ) = /Context( Value /value -> TVArg /v = Value /v )
+                            ( Value /ctx -> () = Value / )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Context/within"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Context/within( Value /states )
+                            ( Value /c -> /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                ) = /Context( Value /value )
+                                ( Value /ctx -> ().. )
+                            ) -> /Context
+                            ( /value=TopType
+                            , /ctx=()..
+                            ) = /Context( Value /value -> TVArg /value = Value /value )
+                            ( Value /ctx -> ().. = /( ..Value /states )( ..Value /ctx ) )
                         ]
                     }
                 )
@@ -32,11 +61,21 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value@Value /c -> /Context.. )( Value /ctx ) -> TVArg /c = Value /c ]
+                    }
+                )
+            ,
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Context[ /V : TopType ]( Value /value -> $/V )
-                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /ctx -> ().. )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -51,11 +90,22 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Monad/mmap
-                            ( Value /m -> /Context( /value=TopType ).. = /Context( Value /value )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            ( Value /m -> /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                ) = /Context( Value /value )
+                                ( Value /ctx -> ().. )
                             )
-                            ( /fn( Value /v ) )= /Context( ..Value /c )
-                            ( ../fn( Value /v -> TVArg /value = Value /value ) )
+                            ( /fn( Value /v ) ) ->
+                            ( /Data/Context/within
+                                ( /states=()..
+                                , /c=$_/M
+                                ) + /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                )
+                            ) = /Data/Context/within( Value /states -> TVArg /ctx = Value /ctx )
+                            ( Value /c -> $_/M = /fn( Value /v -> TVArg /value = Value /value ) )
                         ]
                     }
                 )
@@ -67,11 +117,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Functor/fmap
-                            ( Value /lst -> /Context( /value=TopType ).. = /Context( Value /value )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )@Value /c
+                            ( Value /lst -> /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                ) = /Context( Value /value )
+                                ( Value /ctx -> ().. )
                             )
-                            ( /fn( Value /v ) ) -> /Context( /value=$_/B ).. = /Context( ..Value /c )
-                            ( Value /value -> $_/B = /fn( Value /v -> TVArg /value = Value /value ) )
+                            ( /fn( Value /v ) ) -> /Context
+                            ( /value=$_/B
+                            , /ctx=()..
+                            ) = /Context
+                            ( Value /value -> $_/B = /fn( Value /v -> TVArg /value = Value /value ) )( Value /ctx -> TVArg /ctx = Value /ctx )
                         ]
                     }
                 )
@@ -95,8 +151,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Context/unwrap
-                            ( Value /this -> /Context( /value=TopType ).. = /Context( Value /value )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /this -> /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                ) = /Context( Value /value )
+                                ( Value /ctx -> ().. )
                             ) -> TVArg /value = Value /value
                         ]
                     }
@@ -109,13 +168,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/pureContextInt( Value /v -> /Data/Primitive/Integer ) -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v ) ]
+                        [ /Data/pureContextInt( Value /v -> /Data/Primitive/Integer ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=()
+                            ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v )
+                        ]
                     }
                 )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -275,19 +340,64 @@ Prgm
             ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
                 ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]
                     ( /value=/Data/Primitive/Integer
-                    , /n=/Data/Primitive/Integer
+                    , /ctx=( /n=/Data/Primitive/Integer )
                     ) = /Context
                     ( Value /value -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
-                    ( Value /n -> /Data/Primitive/Integer = CInt
-                        { ciValue = 7 }
+                    ( Value /ctx -> ( /n=/Data/Primitive/Integer ) = /
+                        ( Value /n -> /Data/Primitive/Integer = CInt
+                            { ciValue = 7 }
+                        )
                     )
                 )
             )
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "1" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Running a context in states
+                A bind in a context runs what it binds in the body's states ([/ContextIn]). What it binds may
+                already be a [Context] — [_<- (){Counter(0)}] adds a state — and running one in states is the
+                context itself: the bind then lays its states over the body's, as it does a function's answer." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
+                ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                    ( /value=/Data/Primitive/Integer
+                    , /ctx=( /n=/Data/Primitive/Integer )
+                    ) = /ContextIn
+                    ( Value /value -> /Context
+                        ( /value=/Data/Primitive/Integer
+                        , /ctx=( /n=/Data/Primitive/Integer )
+                        ) = /Context
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /ctx -> ( /n=/Data/Primitive/Integer ) = /
+                            ( Value /n -> /Data/Primitive/Integer = CInt
+                                { ciValue = 7 }
+                            )
+                        )
+                    )
+                    ( Value /ctx -> ( /m=/Data/Primitive/Integer ) = /
+                        ( Value /m -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "1" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[within] lays a context's states over [states], keeping every one it does not hold." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
@@ -302,16 +412,21 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
-                ( Value /this -> /Context( /value=/Data/Primitive/Integer ).. = /Data/Functor/fmap
+                ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                    ( /value=/Data/Primitive/Integer
+                    , /ctx=( /n=/Data/Primitive/Integer )
+                    ) = /Data/Functor/fmap
                     ( Value /lst -> /Context[ /V=/Data/Primitive/Integer ]
                         ( /value=/Data/Primitive/Integer
-                        , /n=/Data/Primitive/Integer
+                        , /ctx=( /n=/Data/Primitive/Integer )
                         ) = /Context
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
                         )
-                        ( Value /n -> /Data/Primitive/Integer = CInt
-                            { ciValue = 7 }
+                        ( Value /ctx -> ( /n=/Data/Primitive/Integer ) = /
+                            ( Value /n -> /Data/Primitive/Integer = CInt
+                                { ciValue = 7 }
+                            )
                         )
                     )
                     ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
@@ -343,7 +458,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
-                { csValue = "> /Data/Monad/mmap(m= /Context(value= 1, n= 7), fn(v)= /Context(value= v + 1, n= 8)).unwrap" }
+                { csValue = "> /Data/Monad/mmap(m= /Context(value= 1, ctx= (n= 7)), fn(v)= /Context(value= v + 1, ctx= (n= 8))).unwrap" }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text
@@ -357,7 +472,10 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/Context/unwrap
-                ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. = /Data/pureContextInt
+                ( Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                    ( /value=/Data/Primitive/Integer
+                    , /ctx=()..
+                    ) = /Data/pureContextInt
                     ( Value /v -> /Data/Primitive/Integer = CInt
                         { ciValue = 5 }
                     )

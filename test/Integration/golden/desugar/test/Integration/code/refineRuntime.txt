@@ -9,9 +9,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$1ff46a
-                            ( Value $1ff46a-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $1ff46a-arg= /Context( Value value )
+                                ( Value ctx@Value $1ff46a-ctx )
+                            )
+                            ( Value $1ff46a-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $1ff46a-states )
+                                ( ..Value $1ff46a-ctx )
+                            )
                         ]
                     }
                 )
@@ -22,10 +27,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= /operator+
@@ -61,10 +69,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= main.$1ff46a
-                                ( Value /$1ff46a-arg= Value v )
+                                ( Value $1ff46a-arg= Value v )
+                                ( Value $1ff46a-states= /( Value io= Value io ) )
                             )
                         ]
                     }

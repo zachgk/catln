@@ -135,9 +135,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0
-                            ( Value $d4a4c0-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $d4a4c0-arg= /Context( Value value )( Value ctx@Value $d4a4c0-ctx ) )( Value $d4a4c0-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= objArrName
@@ -147,10 +145,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( ..Value $d4a4c0-states )( ..Value $d4a4c0-ctx ) )
                             )
                             ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
-                                ( Value /$5f4b62-arg= Value v )
+                                ( Value $5f4b62-arg= Value v )
+                                ( Value $5f4b62-states= /( ..Value $d4a4c0-states )( ..Value $d4a4c0-ctx ) )
                             )
                         ]
                     }
@@ -177,10 +177,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= pathOf
@@ -190,10 +193,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= main.$13df36
-                                ( Value /$13df36-arg= Value v )
+                                ( Value $13df36-arg= Value v )
+                                ( Value $13df36-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -265,9 +270,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f
-                            ( Value $ad3f7f-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $ad3f7f-arg= /Context( Value value )( Value ctx@Value $ad3f7f-ctx ) )( Value $ad3f7f-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= toString
@@ -279,10 +282,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( ..Value $ad3f7f-states )( ..Value $ad3f7f-ctx ) )
                             )
                             ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
-                                ( Value /$4e2f62-arg= Value v )
+                                ( Value $4e2f62-arg= Value v )
+                                ( Value $4e2f62-states= /( ..Value $ad3f7f-states )( ..Value $ad3f7f-ctx ) )
                             )
                         ]
                     }
@@ -295,9 +300,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd
-                            ( Value $5a9cdd-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $5a9cdd-arg= /Context( Value value )
+                                ( Value ctx@Value $5a9cdd-ctx )
+                            )
+                            ( Value $5a9cdd-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= exprKind
@@ -307,9 +313,18 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $5a9cdd-states )
+                                    ( ..Value $5a9cdd-ctx )
+                                )
                             )
-                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c( Value /$e3172c-arg= Value v ) )
+                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c( Value $e3172c-arg= Value v )
+                                ( Value $e3172c-states= /
+                                    ( ..Value $5a9cdd-states )
+                                    ( ..Value $5a9cdd-ctx )
+                                )
+                            )
                         ]
                     }
                 )
@@ -321,18 +336,27 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
-                            ( Value $4ed8f8-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $4ed8f8-arg= /Context( Value value )
+                                ( Value ctx@Value $4ed8f8-ctx )
+                            )
+                            ( Value $4ed8f8-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= CInt
                                         { ciValue = 0 }
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $4ed8f8-states )
+                                    ( ..Value $4ed8f8-ctx )
+                                )
                             )
                             ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
-                                ( Value /$620336-arg= Value v )
+                                ( Value $620336-arg= Value v )
+                                ( Value $620336-states= /
+                                    ( ..Value $4ed8f8-states )
+                                    ( ..Value $4ed8f8-ctx )
+                                )
                             )
                         ]
                     }
@@ -382,9 +406,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
-                            ( Value $5f4b62-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $5f4b62-arg= /Context( Value value )
+                                ( Value ctx@Value $5f4b62-ctx )
+                            )
+                            ( Value $5f4b62-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= statementKind
@@ -396,10 +421,18 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $5f4b62-states )
+                                    ( ..Value $5f4b62-ctx )
+                                )
                             )
                             ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
-                                ( Value /$57841b-arg= Value v )
+                                ( Value $57841b-arg= Value v )
+                                ( Value $57841b-states= /
+                                    ( ..Value $5f4b62-states )
+                                    ( ..Value $5f4b62-ctx )
+                                )
                             )
                         ]
                     }
@@ -412,9 +445,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36
-                            ( Value $13df36-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $13df36-arg= /Context( Value value )
+                                ( Value ctx@Value $13df36-ctx )
+                            )
+                            ( Value $13df36-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= readKind
@@ -424,10 +458,18 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $13df36-states )
+                                    ( ..Value $13df36-ctx )
+                                )
                             )
                             ( fn( Value v )= main.$13df36.$5a9cdd
-                                ( Value /$5a9cdd-arg= Value v )
+                                ( Value $5a9cdd-arg= Value v )
+                                ( Value $5a9cdd-states= /
+                                    ( ..Value $13df36-states )
+                                    ( ..Value $13df36-ctx )
+                                )
                             )
                         ]
                     }
@@ -440,17 +482,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b
-                            ( Value $d86d4b-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $d86d4b-arg= /Context( Value value )( Value ctx@Value $d86d4b-ctx ) )( Value $d86d4b-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= exprKind
                                         ( Value e= /Catln/RawExpr/RawList( Value meta= Value noMeta )( Value values= Value /Data/List/Nil ) )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( ..Value $d86d4b-states )( ..Value $d86d4b-ctx ) )
                             )
-                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0( Value /$d4a4c0-arg= Value v ) )
+                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0( Value $d4a4c0-arg= Value v )
+                                ( Value $d4a4c0-states= /( ..Value $d86d4b-states )( ..Value $d86d4b-ctx ) )
+                            )
                         ]
                     }
                 )
@@ -562,9 +605,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c
-                            ( Value $e3172c-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $e3172c-arg= /Context( Value value )( Value ctx@Value $e3172c-ctx ) )( Value $e3172c-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= rawValueName
@@ -574,9 +615,12 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( ..Value $e3172c-states )( ..Value $e3172c-ctx ) )
                             )
-                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b( Value /$d86d4b-arg= Value v ) )
+                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b( Value $d86d4b-arg= Value v )
+                                ( Value $d86d4b-states= /( ..Value $e3172c-states )( ..Value $e3172c-ctx ) )
+                            )
                         ]
                     }
                 )
@@ -608,9 +652,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
-                            ( Value $4e2f62-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $4e2f62-arg= /Context( Value value )
+                                ( Value ctx@Value $4e2f62-ctx )
+                            )
+                            ( Value $4e2f62-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= toString
@@ -622,10 +667,18 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $4e2f62-states )
+                                    ( ..Value $4e2f62-ctx )
+                                )
                             )
                             ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
-                                ( Value /$4ed8f8-arg= Value v )
+                                ( Value $4ed8f8-arg= Value v )
+                                ( Value $4ed8f8-states= /
+                                    ( ..Value $4e2f62-states )
+                                    ( ..Value $4e2f62-ctx )
+                                )
                             )
                         ]
                     }
@@ -638,9 +691,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
-                            ( Value $57841b-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $57841b-arg= /Context( Value value )
+                                ( Value ctx@Value $57841b-ctx )
+                            )
+                            ( Value $57841b-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= toString
@@ -652,9 +706,18 @@ Prgm
                                             )
                                         )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $57841b-states )
+                                    ( ..Value $57841b-ctx )
+                                )
                             )
-                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f( Value /$ad3f7f-arg= Value v ) )
+                            ( fn( Value v )= main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f( Value $ad3f7f-arg= Value v )
+                                ( Value $ad3f7f-states= /
+                                    ( ..Value $57841b-states )
+                                    ( ..Value $57841b-ctx )
+                                )
+                            )
                         ]
                     }
                 )
@@ -666,9 +729,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
-                            ( Value $620336-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $620336-arg= /Context( Value value )
+                                ( Value ctx@Value $620336-ctx )
+                            )
+                            ( Value $620336-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $620336-states )
+                                ( ..Value $620336-ctx )
+                            )
                         ]
                     }
                 )

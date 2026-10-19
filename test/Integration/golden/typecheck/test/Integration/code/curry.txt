@@ -9,13 +9,23 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /main.$47d595
-                            ( Value /$47d595-arg -> /Context( /io=TopType ).. = /Context( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ( Value /$47d595-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$47d595-ctx -> ( /io=/Catln/IO ) )
+                            )
+                            ( Value /$47d595-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /
+                                ( ..Value /$47d595-states )
+                                ( ..Value /$47d595-ctx )
+                            )
                         ]
                     }
                 )
@@ -26,33 +36,41 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /f = Value /f )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value -> /f = Value /f )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Context
-                            ( Value /value -> () = Value / )( Value /io -> TVArg /io = Value /io )
-                        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=() ]
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                        , /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=() ]
                                 ( /value=()
-                                , /io=/Catln/IO
-                                ) = /ContextIn( Value /value -> /f = Value /f )( Value /io -> TVArg /io = Value /io )
+                                , /ctx=( /io=/Catln/IO )
+                                ) = /ContextIn( Value /value -> /f = Value /f )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
                                     [ /V=() ]
                                     ( /value=()
-                                    , /io=/Catln/IO
+                                    , /ctx=( /io=/Catln/IO )
                                     )
                                 ) -> /Context
                                 ( /value=()
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )
                                 ) = /main.$47d595
                                 ( Value /$47d595-arg -> TVArg /v = Value /v )
+                                ( Value /$47d595-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -102,23 +120,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /f.innerVar -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /operator==
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal
-                                    ( /this=/Data/Primitive/Integer
-                                    , /other=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
-                            ) = /operator==
+                        [ Value /f.innerVar -> ∀/Data/Primitive/Boolean = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }

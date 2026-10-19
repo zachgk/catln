@@ -73,19 +73,25 @@ Prgm
                                 ( /type=∀/Catln/Type
                                 , /input=∀/Data/String
                                 ) = /Llm/tllm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         , /ContextIn
                             ( Value /value -> /Llm/tlcm
                                 ( /type=∀/Catln/Type
                                 , /input=∀/Data/String
                                 ) = /Llm/tlcm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
@@ -95,10 +101,12 @@ Prgm
                                 , /input=∀/Data/String
                                 , /source=∀/Data/String
                                 ) = /Llm/tllm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result
@@ -110,11 +118,12 @@ Prgm
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=/Catln/IO
-                                ).. = /ContextIn
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
                                 ( Value /value -> /Llm/llm( /input=∀/Data/String ) = /Llm/llm
                                     ( Value /input -> ∀/Data/String = /Llm/typedPrompt( Value /input -> TVArg /input = Value /input )( Value /type -> TVArg /type = Value /type ) )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
@@ -127,13 +136,14 @@ Prgm
                                         [ /T=∀/Data/String
                                         , /E=∀/Llm/LlmErr
                                         ]
-                                    , /io=/Catln/IO
-                                    )..
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
                                 ) -> /Context
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Llm/tllm.$404341( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
                                 ( Value /$404341-arg -> TVArg /v = Value /v )
+                                ( Value /$404341-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
                             ( Value /value -> /Llm/tlcm
@@ -141,10 +151,12 @@ Prgm
                                 , /input=∀/Data/String
                                 , /source=∀/Data/String
                                 ) = /Llm/tlcm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
-                            [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
                                 [ /V=∀/Data/Result
@@ -156,7 +168,7 @@ Prgm
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Llm/lcm
                                     ( /page=/Catln/RawPrgm..
@@ -164,7 +176,8 @@ Prgm
                                     ) = /Llm/lcm
                                     ( Value /input -> ∀/Data/String = /Llm/typedPrompt( Value /input -> TVArg /input = Value /input )( Value /type -> TVArg /type = Value /type ) )
                                     ( Value /page -> /Catln/RawPrgm.. = /Catln/pageAt( Value /source -> TVArg /source = Value /source ) )
-                                )( Value /io -> TVArg /io = Value /io )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
@@ -177,13 +190,14 @@ Prgm
                                         [ /T=∀/Data/String
                                         , /E=∀/Llm/LlmErr
                                         ]
-                                    , /io=/Catln/IO
+                                    , /ctx=( /io=/Catln/IO )..
                                     )
                                 ) -> /Context
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                , /io=/Catln/IO
+                                , /ctx=( /io=/Catln/IO )..
                                 ) = /Llm/tlcm.$6d0af4( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
                                 ( Value /$6d0af4-arg -> TVArg /v = Value /v )
+                                ( Value /$6d0af4-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -229,23 +243,33 @@ Prgm
                     , omiDefs =
                         [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
                             ( Value /$6d0af4-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
                                 ( /value=∀/Data/Result
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=TopType
-                                ).. = /Context
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
                                 ( Value /value@Value /reply -> ∀/Data/Result
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                )( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                )
+                                ( Value /ctx@Value /$6d0af4-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$6d0af4-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$6d0af4-states )
+                                ( ..Value /$6d0af4-ctx )
+                            )
                         ]
                     }
                 )
@@ -314,23 +338,33 @@ Prgm
                     , omiDefs =
                         [ /Llm/tllm.$404341( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
                             ( Value /$404341-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
                                 ( /value=∀/Data/Result
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , /io=TopType
-                                ).. = /Context
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
                                 ( Value /value@Value /reply -> ∀/Data/Result
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                )( Value /io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                                )
+                                ( Value /ctx@Value /$404341-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$404341-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=TopType
+                            , /ctx=( /io=/Catln/IO )..
                             ) = /Context
-                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )( Value /io -> TVArg /io = Value /io )
+                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$404341-states )
+                                ( ..Value /$404341-ctx )
+                            )
                         ]
                     }
                 )

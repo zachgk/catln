@@ -53,44 +53,60 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value= /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         , /ContextIn
-                            ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value= /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llm
                                     ( Value input= typedPrompt( Value input= Value input )( Value type= Value type ) )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= /Llm/tllm.$404341( Value /type= Value /type )( Value /source= Value /source )
-                                ( Value /$404341-arg= Value v )
+                                ( Value $404341-arg= Value v )
+                                ( Value $404341-states= /( Value io= Value io ) )
                             )
                         , /ContextIn
-                            ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= lcm
                                     ( Value input= typedPrompt( Value input= Value input )( Value type= Value type ) )
                                     ( Value page= /Catln/pageAt( Value source= Value source ) )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= /Llm/tlcm.$6d0af4( Value /type= Value /type )( Value /source= Value /source )
-                                ( Value /$6d0af4-arg= Value v )
+                                ( Value $6d0af4-arg= Value v )
+                                ( Value $6d0af4-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -133,10 +149,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            ( Value $6d0af4-arg= /Context( Value value@Value reply )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context
-                            ( Value /value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )( Value io= Value io )
+                            ( Value $6d0af4-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $6d0af4-ctx )
+                            )
+                            ( Value $6d0af4-states )= /Context
+                            ( Value value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )
+                            ( Value ctx= /
+                                ( ..Value $6d0af4-states )
+                                ( ..Value $6d0af4-ctx )
+                            )
                         ]
                     }
                 )
@@ -187,10 +208,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/tllm.$404341( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            ( Value $404341-arg= /Context( Value value@Value reply )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context
-                            ( Value /value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )( Value io= Value io )
+                            ( Value $404341-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $404341-ctx )
+                            )
+                            ( Value $404341-states )= /Context
+                            ( Value value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )
+                            ( Value ctx= /
+                                ( ..Value $404341-states )
+                                ( ..Value $404341-ctx )
+                            )
                         ]
                     }
                 )

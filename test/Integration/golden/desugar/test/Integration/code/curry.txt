@@ -9,9 +9,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ main.$47d595
-                            ( Value $47d595-arg= /Context( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value / )( Value io= Value io )
+                            ( Value $47d595-arg= /Context( Value value )
+                                ( Value ctx@Value $47d595-ctx )
+                            )
+                            ( Value $47d595-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $47d595-states )
+                                ( ..Value $47d595-ctx )
+                            )
                         ]
                     }
                 )
@@ -22,14 +27,24 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value f )( Value /io -> /Catln/IO )= /Context( Value /value= Value / )( Value io= Value io )
-                        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO ) -> /Context
+                        [ /ContextIn( Value /value= Value f )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value value= Value / )
+                            ( Value ctx= /( Value io= Value io ) )
+                        , /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=()
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
-                            ( Value m= /ContextIn( Value value= Value f )( Value io= Value io ) )
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value f )
+                                ( Value ctx= /( Value io= Value io ) )
+                            )
                             ( fn( Value v )= main.$47d595
-                                ( Value /$47d595-arg= Value v )
+                                ( Value $47d595-arg= Value v )
+                                ( Value $47d595-states= /( Value io= Value io ) )
                             )
                         ]
                     }

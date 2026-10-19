@@ -11,12 +11,60 @@ Prgm
                         [ /Data/Monad/pure
                             ( EAppVar
                                 { eavName = /M
-                                , eavMeta = /Context[ /V=TopType ]( /value=$/V )..
+                                , eavMeta = /Context[ /V=TopType ]
+                                    ( /value=$/V
+                                    , /ctx=()..
+                                    )..
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /v } ) -> /Context( /value=TopType ) = /Context
+                            ( EAppArg { eaaArg = Value /v } ) -> /Context
+                            ( /value=TopType
+                            , /ctx=()
+                            ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> () = Value / }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Context/within"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Context/within
+                            ( EAppArg { eaaArg = Value /states } )
+                            ( EAppArg
+                                { eaaArg = Value /c -> /Context
+                                    ( /value=TopType
+                                    , /ctx=()..
+                                    ) = /Context
+                                    ( EAppArg { eaaArg = Value /value } )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx -> ().. }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=TopType
+                            , /ctx=()..
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ().. = /
+                                    ( EAppSpread
+                                        { easExpr = ( Value /states ↦ TopType ) }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = ( Value /ctx ↦ TopType ) }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -65,6 +113,19 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value@Value /c -> /Context.. } )
+                            ( EAppArg { eaaArg = Value /ctx } ) -> TVArg /c = ( Value /c ↦ TVArg /c )
+                        ]
+                    }
+                )
+            ,
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
@@ -75,8 +136,8 @@ Prgm
                                 }
                             )
                             ( EAppArg { eaaArg = Value /value -> $/V } )
-                            ( EAppSpread
-                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ().. }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -93,29 +154,45 @@ Prgm
                     , omiDefs =
                         [ /Data/Monad/mmap
                             ( EAppArg
-                                { eaaArg = Value /m -> /Context( /value=TopType ).. = /Context
+                                { eaaArg = Value /m -> /Context
+                                    ( /value=TopType
+                                    , /ctx=()..
+                                    ) = /Context
                                     ( EAppArg { eaaArg = Value /value } )
-                                    ( EAppSpread
-                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
-                                    )@Value /c
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx -> ().. }
+                                    )
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            )= /Context
-                            ( EAppSpread
-                                { easExpr = ( Value /c ↦ TopType ) }
-                            )
-                            ( EAppSpread
-                                { easExpr =
-                                    ( /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                        ) ↦ TopType
-                                    )
-                                }
+                            ) ->
+                            ( /Data/Context/within
+                                ( /states=()..
+                                , /c=$_/M
+                                ) + /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                )
+                            ) =
+                            ( /Data/Context/within
+                                ( EAppArg
+                                    { eaaArg = Value /states -> TVArg /ctx = ( Value /ctx ↦ TVArg /ctx ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /c -> $_/M =
+                                        ( /fn
+                                            ( EAppArg
+                                                { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                            ) ↦ $_/M
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=TopType
+                                , /ctx=()..
+                                )
                             )
                         ]
                     }
@@ -129,21 +206,24 @@ Prgm
                     , omiDefs =
                         [ /Data/Functor/fmap
                             ( EAppArg
-                                { eaaArg = Value /lst -> /Context( /value=TopType ).. = /Context
+                                { eaaArg = Value /lst -> /Context
+                                    ( /value=TopType
+                                    , /ctx=()..
+                                    ) = /Context
                                     ( EAppArg { eaaArg = Value /value } )
-                                    ( EAppSpread
-                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
-                                    )@Value /c
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx -> ().. }
+                                    )
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) -> /Context( /value=$_/B ).. = /Context
-                            ( EAppSpread
-                                { easExpr = ( Value /c ↦ TopType ) }
-                            )
+                            ) -> /Context
+                            ( /value=$_/B
+                            , /ctx=()..
+                            ) = /Context
                             ( EAppArg
                                 { eaaArg = Value /value -> $_/B =
                                     ( /fn
@@ -152,6 +232,9 @@ Prgm
                                         ) ↦ $_/B
                                     )
                                 }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> TVArg /ctx = ( Value /ctx ↦ TVArg /ctx ) }
                             )
                         ]
                     }
@@ -184,10 +267,13 @@ Prgm
                     , omiDefs =
                         [ /Data/Context/unwrap
                             ( EAppArg
-                                { eaaArg = Value /this -> /Context( /value=TopType ).. = /Context
+                                { eaaArg = Value /this -> /Context
+                                    ( /value=TopType
+                                    , /ctx=()..
+                                    ) = /Context
                                     ( EAppArg { eaaArg = Value /value } )
-                                    ( EAppSpread
-                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx -> ().. }
                                     )
                                 }
                             ) -> TVArg /value = ( Value /value ↦ TVArg /value )
@@ -205,11 +291,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/pureContextInt
-                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=()
+                            ) =
                             ( /Data/Monad/pure
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                ) ↦ /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=()
+                                )
                             )
                         ]
                     }
@@ -218,6 +310,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -409,13 +503,17 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]
                                 ( /value=/Data/Primitive/Integer
-                                , /n=/Data/Primitive/Integer
+                                , /ctx=( /n=/Data/Primitive/Integer )
                                 ) = /Context
                                 ( EAppArg
                                     { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                    { eaaArg = Value /ctx -> ( /n=/Data/Primitive/Integer ) = /
+                                        ( EAppArg
+                                            { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                        )
+                                    }
                                 )
                             }
                         ) ↦ /Data/Primitive/Integer
@@ -425,6 +523,69 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /result -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Running a context in states
+                  A bind in a context runs what it binds in the body's states ([/ContextIn]). What it binds may
+                  already be a [Context] — [_<- (){Counter(0)}] adds a state — and running one in states is the
+                  context itself: the bind then lays its states over the body's, as it does a function's answer."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /Data/Context/unwrap
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=( /n=/Data/Primitive/Integer )
+                                ) =
+                                ( /ContextIn
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Context
+                                            ( /value=/Data/Primitive/Integer
+                                            , /ctx=( /n=/Data/Primitive/Integer )
+                                            ) = /Context
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /n=/Data/Primitive/Integer ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx -> ( /m=/Data/Primitive/Integer ) = /
+                                            ( EAppArg
+                                                { eaaArg = Value /m -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                    ( /value=/Data/Primitive/Integer
+                                    , /ctx=( /n=/Data/Primitive/Integer )
+                                    )
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[within] lays a context's states over [states], keeping every one it does not hold."
                 }
             )
         , /Catln/#md
@@ -444,18 +605,25 @@ Prgm
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Data/Context/unwrap
                         ( EAppArg
-                            { eaaArg = Value /this -> /Context( /value=/Data/Primitive/Integer ).. =
+                            { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=( /n=/Data/Primitive/Integer )
+                                ) =
                                 ( /Data/Functor/fmap
                                     ( EAppArg
                                         { eaaArg = Value /lst -> /Context[ /V=/Data/Primitive/Integer ]
                                             ( /value=/Data/Primitive/Integer
-                                            , /n=/Data/Primitive/Integer
+                                            , /ctx=( /n=/Data/Primitive/Integer )
                                             ) = /Context
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                                { eaaArg = Value /ctx -> ( /n=/Data/Primitive/Integer ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /n -> /Data/Primitive/Integer = 7 }
+                                                    )
+                                                }
                                             )
                                         }
                                     )
@@ -471,7 +639,10 @@ Prgm
                                                 ) ↦ /Data/Primitive/Integer
                                             )
                                         }
-                                    ) ↦ /Context( /value=/Data/Primitive/Integer )..
+                                    ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                    ( /value=/Data/Primitive/Integer
+                                    , /ctx=( /n=/Data/Primitive/Integer )
+                                    )
                                 )
                             }
                         ) ↦ /Data/Primitive/Integer
@@ -504,7 +675,7 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "> /Data/Monad/mmap(m= /Context(value= 1, n= 7), fn(v)= /Context(value= v + 1, n= 8)).unwrap"
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "> /Data/Monad/mmap(m= /Context(value= 1, ctx= (n= 7)), fn(v)= /Context(value= v + 1, ctx= (n= 8))).unwrap"
                 }
             )
         , /Catln/#md
@@ -524,11 +695,17 @@ Prgm
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Data/Context/unwrap
                         ( EAppArg
-                            { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ).. =
+                            { eaaArg = Value /this -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=()..
+                                ) =
                                 ( /Data/pureContextInt
                                     ( EAppArg
                                         { eaaArg = Value /v -> /Data/Primitive/Integer = 5 }
-                                    ) ↦ /Context[ /V=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )..
+                                    ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                    ( /value=/Data/Primitive/Integer
+                                    , /ctx=()..
+                                    )
                                 )
                             }
                         ) ↦ /Data/Primitive/Integer

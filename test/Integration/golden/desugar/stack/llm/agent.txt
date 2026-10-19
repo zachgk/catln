@@ -191,42 +191,58 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ContextIn
-                            ( Value /value= /Llm/agentAsk( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/agentAsk( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         , /ContextIn
-                            ( Value /value= /Llm/agentNext( Value next -> ∀/Llm/AgentNext ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( Value /value= /Llm/agentNext( Value next -> ∀/Llm/AgentNext ) )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRuntimeDecls =
                         [ /ContextIn
                             ( Value /value= /Catln/processFile
                                 ( Value annot -> /Llm/#agent( /input=∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            )..
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
                             ( Value /value= /Catln/processFile
                                 ( Value annot= #agent( Value input -> ∀/Data/String )( Value result -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            ).. = /Context
-                            ( Value /value= /Data/Result/Ok( Value value= Value page ) )( Value io= Value io )
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value= /Data/Result/Ok( Value value= Value page ) )
+                            ( Value /ctx= /( Value io= Value io ) )
                         , /ContextIn
                             ( Value /value= /Catln/processFile
                                 ( Value annot= #agent( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )( Value source -> ∀/Data/String )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= agentAsk
                                     ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )
@@ -236,15 +252,20 @@ Prgm
                                     ( Value history= CStr
                                         { csValue = "" }
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= /Catln/processFile.$4ef661
-                                ( Value /$4ef661-arg= Value v )
+                                ( Value $4ef661-arg= Value v )
+                                ( Value $4ef661-states= /( Value io= Value io ) )
                             )
                         , /ContextIn
                             ( Value /value= /Llm/agentAsk
                                 ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=
                                 ( TopType | !
                                     ( !
@@ -256,19 +277,25 @@ Prgm
                                         ( PredClass /Data/Result[ /T=/Catln/RawPrgm.. ] )
                                     )
                                 )
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= tlcm
                                     ( Value input= agentPrompt( Value input= Value input )( Value history= Value history ) )
                                     ( Value type= /Catln/typeOf[ /T : ∀/Llm/AgentStep ] )( Value source= Value source )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/agentAsk.$db8f2a( Value /annotId= Value /annotId )( Value /history= Value /history )( Value /page= Value /page )( Value /tries= Value /tries )( Value /input= Value /input )( Value /source= Value /source )( Value /$db8f2a-arg= Value v ) )
+                            ( fn( Value v )= /Llm/agentAsk.$db8f2a( Value /annotId= Value /annotId )( Value /history= Value /history )( Value /page= Value /page )( Value /tries= Value /tries )( Value /input= Value /input )( Value /source= Value /source )( Value $db8f2a-arg= Value v )
+                                ( Value $db8f2a-states= /( Value io= Value io ) )
+                            )
                         , /ContextIn
                             ( Value /value= /Llm/agentNext
                                 ( Value next= AgentNext/Finished( Value result ) )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=
                                 ( TopType | !
                                     ( !
@@ -280,12 +307,16 @@ Prgm
                                         ( PredClass /Data/Result[ /T=/Catln/RawPrgm.. ] )
                                     )
                                 )
-                            , /io=/Catln/IO
-                            ).. = /Context( Value /value= Value result )( Value io= Value io )
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value= Value result )
+                            ( Value /ctx= /( Value io= Value io ) )
                         , /ContextIn
                             ( Value /value= /Llm/agentNext
                                 ( Value next= AgentNext/Again( Value at )( Value tries )( Value history ) )
-                            )( Value /io -> /Catln/IO ) -> /Context
+                            )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
                             ( /value=
                                 ( TopType | !
                                     ( !
@@ -297,13 +328,15 @@ Prgm
                                         ( PredClass /Data/Result[ /T=/Catln/RawPrgm.. ] )
                                     )
                                 )
-                            , /io=/Catln/IO
-                            ).. = /Data/bindap
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= agentAsk( Value at= Value at )( Value tries= Value tries )( Value history= Value history ) )( Value io= Value io )
+                                ( Value value= agentAsk( Value at= Value at )( Value tries= Value tries )( Value history= Value history ) )
+                                ( Value ctx= /( Value io= Value io ) )
                             )
                             ( fn( Value v )= /Llm/agentNext.$6cb4bc
-                                ( Value /$6cb4bc-arg= Value v )
+                                ( Value $6cb4bc-arg= Value v )
+                                ( Value $6cb4bc-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -600,9 +633,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/agentAsk.$db8f2a.$ccb179
-                            ( Value $ccb179-arg= /Context( Value value@Value result )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value result )( Value io= Value io )
+                            ( Value $ccb179-arg= /Context( Value value@Value result )( Value ctx@Value $ccb179-ctx ) )( Value $ccb179-states )= /Context( Value value= Value result )
+                            ( Value ctx= /( ..Value $ccb179-states )( ..Value $ccb179-ctx ) )
                         ]
                     }
                 )
@@ -787,9 +819,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/agentNext.$6cb4bc
-                            ( Value $6cb4bc-arg= /Context( Value value@Value result )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value result )( Value io= Value io )
+                            ( Value $6cb4bc-arg= /Context( Value value@Value result )
+                                ( Value ctx@Value $6cb4bc-ctx )
+                            )
+                            ( Value $6cb4bc-states )= /Context( Value value= Value result )
+                            ( Value ctx= /
+                                ( ..Value $6cb4bc-states )
+                                ( ..Value $6cb4bc-ctx )
+                            )
                         ]
                     }
                 )
@@ -813,9 +850,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/processFile.$4ef661
-                            ( Value $4ef661-arg= /Context( Value value@Value result )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Context( Value /value= Value result )( Value io= Value io )
+                            ( Value $4ef661-arg= /Context( Value value@Value result )
+                                ( Value ctx@Value $4ef661-ctx )
+                            )
+                            ( Value $4ef661-states )= /Context( Value value= Value result )
+                            ( Value ctx= /
+                                ( ..Value $4ef661-states )
+                                ( ..Value $4ef661-ctx )
+                            )
                         ]
                     }
                 )
@@ -827,17 +869,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/agentAsk.$db8f2a( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /source -> ∀/Data/String )
-                            ( Value $db8f2a-arg= /Context( Value value@Value reply )( Value io )
-                                ( ..Hole TopType HoleActive { haName = Nothing } )
-                            )= /Data/bindap
+                            ( Value $db8f2a-arg= /Context( Value value@Value reply )( Value ctx@Value $db8f2a-ctx ) )( Value $db8f2a-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= agentNext
                                     ( Value next= agentTook
                                         ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )( Value reply= Value reply )
                                     )
-                                )( Value io= Value io )
+                                )
+                                ( Value ctx= /( ..Value $db8f2a-states )( ..Value $db8f2a-ctx ) )
                             )
-                            ( fn( Value v )= /Llm/agentAsk.$db8f2a.$ccb179( Value /$ccb179-arg= Value v ) )
+                            ( fn( Value v )= /Llm/agentAsk.$db8f2a.$ccb179( Value $ccb179-arg= Value v )
+                                ( Value $ccb179-states= /( ..Value $db8f2a-states )( ..Value $db8f2a-ctx ) )
+                            )
                         ]
                     }
                 )

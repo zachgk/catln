@@ -355,7 +355,9 @@ Prgm
                 ( "/Catln/PtArgMode"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PtArgMode( Value /argLb -> ∀/Data/Primitive/Boolean )( Value /argUb -> ∀/Data/Primitive/Boolean ) ]
+                        [ /Catln/PtArgMode( Value /argLb -> ∀/Data/Primitive/Boolean )( Value /argUb -> ∀/Data/Primitive/Boolean )
+                            ( Value /argOpt -> ∀/Data/List[ /T=/Catln/PartialKey.. ] )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
