@@ -14,6 +14,7 @@ module Syntax.Ct.Builder where
 import           CtConstants
 import           Data.Bifunctor          (first)
 import           Data.Char               (toLower)
+import           Data.Maybe              (fromMaybe)
 import           Data.UUID               (nil)
 import           MapMeta                 (DerivedMeta, derivedMetaID)
 import           Semantics
@@ -192,15 +193,33 @@ classWithObjs cls objs extends = RawDeclStatement $ rawOutObjArr (rawVal classSt
 dataSt :: PExpr -> PStatement
 dataSt tp = RawDeclStatement $ rawOutObjArr (rawVal dataStr `applyRawEIArgs` [(tp, IArgNothing)])
 
--- | The name a state written in a context's braces is keyed by. One given by its name (@{io -> IO}@,
--- @{io}@) is keyed by that name, and one given only by its type (@{IO}@) by the type's own name
--- lowercased (@io@).
-contextStateName :: PObjArr -> Maybe String
-contextStateName RawObjArr{roaObj=Just (RawValue _ n), roaArr}
-  | Just (_, Just _) <- roaArr = Just (nameStr n)
+-- | The key a state is kept under in a context: the name of its type, lowercased (@IO@ and
+-- @/Catln/IO@ are @io@, @Counter(i)@ is @counter@). A state is found by its type, so a function
+-- reading a @Counter@ finds the one another function added, whatever either called it. 'Nothing'
+-- where no type is written (@{io}@, @{c= x}@).
+contextTypeKey :: PExpr -> Maybe String
+contextTypeKey (RawValue _ n)
   | isTypeName = Just $ map toLower base
-  | otherwise = Just (nameStr n)
+  | otherwise = Nothing
   where
     base = last $ npathPath $ getPath $ nameStr n
     isTypeName = take 1 base /= map toLower (take 1 base)
-contextStateName _ = Nothing
+contextTypeKey (RawTupleApply _ (_, b) _) = contextTypeKey b
+contextTypeKey (RawVarsApply _ b _) = contextTypeKey b
+contextTypeKey (RawAliasExpr b _) = contextTypeKey b
+contextTypeKey (RawParen e) = contextTypeKey e
+contextTypeKey _ = Nothing
+
+-- | A state written in a context's braces: the key it is kept under ('contextTypeKey') and the name
+-- the body binds it to. @{c= Counter(i)}@ is the @counter@ state bound as @c@, @{io -> IO}@ the
+-- @io@ state bound as @io@, and @{IO}@ the @io@ state under its own key. A state given no type
+-- (@{io}@) is keyed by the name it is written with.
+contextState :: PObjArr -> Maybe (String, String)
+contextState RawObjArr{roaObj=Just v@(RawValue _ n), roaArr} = case roaArr of
+  Just (Just pat, _) -> Just (keyOr pat, name)
+  Just (_, Just t)   -> Just (keyOr t, name)
+  _                  -> Just (keyOr v, keyOr v)
+  where
+    name = nameStr n
+    keyOr e = fromMaybe name (contextTypeKey e)
+contextState _ = Nothing

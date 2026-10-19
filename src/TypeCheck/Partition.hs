@@ -97,8 +97,18 @@ objArrRefNames oa = objArrExprRefNames oa ++ metaNames
 -- ('Syntax.Ct.Desugarf.Nested.nestedSubName' — @/Data/List/sorted.insert@ is nested in
 -- @/Data/List/sorted@). The innermost when several do, as a sub function of a sub function
 -- extends both.
-nestedParentOf :: S.HashSet Name -> Name -> Maybe Name
-nestedParentOf keys k = listToMaybe [ p | i <- reverse (L.elemIndices '.' (nameStr k)), let p = mkName (take i (nameStr k)), S.member p keys ]
+nestedParentOf :: H.HashMap Name Name -> Name -> Maybe Name
+nestedParentOf names k = listToMaybe [ item | i <- reverse (L.elemIndices '.' (nameStr k)), let p = mkName (take i (nameStr k)), Just item <- [H.lookup p names] ]
+
+-- | Each name the items of a map define, to the item it is kept under ('nestedParentOf'): an item's
+-- own key, and the function each definition in a context defines ('oaDefinedName'). Every
+-- definition in a context is kept under the context's key (@/main{io -> IO}@ in @/ContextIn@), so
+-- by keys alone the sub functions of one (@/main.$47d595@, a bind's continuation) had no parent,
+-- and were never typed by their callers.
+definedNameItems :: (MetaDat m, Show m) => ObjectMap Expr m -> H.HashMap Name Name
+definedNameItems (ObjectMap omap) = H.fromList $
+  [ (oaDefinedName oa, k) | (k, item) <- H.toList omap, oa <- flatObjectMapItem item, oaDefinedName oa /= k ]
+  ++ [ (k, k) | k <- H.keys omap ]
 
 -- | Dependency-first solve groups of object-map item keys.
 --
@@ -121,7 +131,8 @@ itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
     isDataItem item = all (isNothing . oaArr) (flatObjectMapItem item)
     (dataKeys, funcKeys) = partition (\k -> isDataItem (H.lookupDefault (error "itemSccGroups: missing key") k omap)) keys
     funcKeySet = S.fromList funcKeys
-    itemEdges k = sortOn nameStr $ filter (/= k) $ filter (`S.member` funcKeySet) $ nub $ maybeToList (nestedParentOf funcKeySet k) ++ concatMap resolveRef refs
+    funcNames = definedNameItems (ObjectMap (H.filterWithKey (\k _ -> S.member k funcKeySet) omap))
+    itemEdges k = sortOn nameStr $ filter (/= k) $ filter (`S.member` funcKeySet) $ nub $ maybeToList (nestedParentOf funcNames k) ++ concatMap resolveRef refs
       where
         refs = nub $ concatMap objArrRefNames $ flatObjectMapItem $ H.lookupDefault (error "itemSccGroups: missing key") k omap
         -- A relative reference resolves to EVERY matching item (the

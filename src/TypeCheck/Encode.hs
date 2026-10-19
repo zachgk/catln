@@ -34,7 +34,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
-import           TypeCheck.Partition (nestedParentOf)
+import           TypeCheck.Partition (definedNameItems, nestedParentOf)
 import           TypeCheck.TypeUtils (addUnionObjToEnv,
                                       recursiveObjsWithPrecedence)
 import           Utils
@@ -726,8 +726,9 @@ fromPrgmsFragment :: [PPrgm] -> (TObjectMap, H.HashMap TypeName [Int]) -> StateT
 fromPrgmsFragment pprgms (tobjMapRec, tPrecedenceMap) = do
   accumCons <- gets feCons
   let fragKeys = S.fromList $ concat [ H.keys om | Prgm{prgmObjMap=ObjectMap om} <- pprgms ]
+  let fragNames = definedNameItems (mconcat (map prgmObjMap pprgms))
   modify $ \e -> e{ feCons=[], feBatchDeclVars = H.unionWith (H.unionWith joinDeclVarBounds) (declVarsOf pprgms) (feBatchDeclVars e)
-                  , feNestedNames = S.filter (isJust . nestedParentOf fragKeys) fragKeys, feNestedRefs = H.empty, feNestedCalls = H.empty }
+                  , feNestedNames = S.filter (isJust . nestedParentOf fragNames) fragKeys, feNestedRefs = H.empty, feNestedCalls = H.empty }
   vprgms <- mapM fromPrgm pprgms
   nestedCallerConstraints (mconcat $ map fst3 vprgms)
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tobjMapRec tPrecedenceMap

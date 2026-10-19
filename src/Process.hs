@@ -63,7 +63,7 @@ data ProcessKind = LineProcess | FileProcess
 -- @envArgs@: the page a file processor is given is one, as it is too large a value to build an
 -- expression of.
 processCall :: String -> EExpr -> [String] -> [(String, EExpr)] -> EExpr
-processCall fun annot envArgs args = positioned $ (eVal ContextInStr `eApply` (contextValStr, positioned inner)) `eApplyM` processFunIO $ ioM
+processCall fun annot envArgs args = positioned $ (eVal ContextInStr `eApply` (contextValStr, positioned inner)) `eApply` (contextStatesStr, eApplyM (eVal anonStr) processFunIO ioM)
   where
     inner = foldl eApply (foldl (\e a -> eApplyM e a pageM) (eVal fun `eApply` (processFunAnnot, annot)) envArgs) args
     positioned e = exprWithMeta (getExprMeta e){getMetaPos = getMetaPos (getExprMeta annot)} e

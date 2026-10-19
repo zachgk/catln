@@ -932,7 +932,13 @@ queueLeaf = partialVal "llvmQueue"
 
 -- | What a function run in an io answers with: its value in the io it leaves ('ContextStr').
 ioContextVal :: Val -> Val -> Val
-ioContextVal v io = TupleVal ContextStr (H.fromList [(contextValStr, v), (ioStr, io)])
+ioContextVal v io = TupleVal ContextStr (H.fromList [(contextValStr, v), (contextStatesStr, TupleVal anonStr (H.singleton ioStr io))])
+
+-- | A state of a context's value, from its states ('contextStatesStr').
+contextStateVal :: String -> H.HashMap String Val -> Maybe Val
+contextStateVal k args = case H.lookup contextStatesStr args of
+  Just (TupleVal _ states) -> H.lookup k states
+  _                        -> Nothing
 
 -- | The unit value @()@.
 unitVal :: Val
@@ -940,12 +946,16 @@ unitVal = TupleVal anonStr H.empty
 
 -- | The arguments a primitive is given from the value it is called on. A primitive declared in a
 -- context (@println{io -> IO}(msg -> String)@) is called on the call in its states
--- (@ContextIn(value= println(msg= ..), io= ..)@), and is given the call's arguments beside the
+-- (@ContextIn(value= println(msg= ..), ctx= (io= ..))@), and is given the call's arguments beside the
 -- states.
 primInputArgs :: Val -> Maybe (H.HashMap String Val)
 primInputArgs (TupleVal n args)
-  | n == ContextInStr, Just (TupleVal _ callArgs) <- H.lookup contextValStr args = Just $ H.union callArgs (H.delete contextValStr args)
-  | otherwise = Just args
+  | n == ContextInStr, Just (TupleVal _ callArgs) <- H.lookup contextValStr args = Just $ H.union callArgs states
+  where
+    states = case H.lookup contextStatesStr args of
+      Just (TupleVal _ st) -> st
+      _                    -> H.empty
+primInputArgs (TupleVal _ args) = Just args
 primInputArgs _ = Nothing
 
 resultType :: Type

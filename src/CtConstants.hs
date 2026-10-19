@@ -55,9 +55,12 @@ pattern ContextStr :: String
 pattern ContextStr = "/Context"
 pattern ContextInStr :: String
 pattern ContextInStr = "/ContextIn"
-contextOutStr, contextValStr, ioStr :: String
-contextOutStr = "/ContextOut"
+contextValStr, contextStatesStr, ioStr :: String
 contextValStr = "/value"
+-- | The argument of a 'ContextStr' and a 'ContextInStr' holding its states: an anonymous tuple,
+-- each state an argument of it (@/Context(value= x, ctx= (io= io))@). Kept apart from the value, a
+-- context's states spread into another context's without carrying the value along.
+contextStatesStr = "/ctx"
 ioStr = "/io"
 
 assertStr, assertTestStr, assertMsgStr :: String

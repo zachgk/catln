@@ -79,7 +79,7 @@ evalPrgmTargetMode function prgm =
     Nothing -> NoEval (reachesPartials reachEnv [partialVal (mkName function)]) (reachesPartials reachEnv [partialVal (mkName function)])
     Just f ->
       let function' = ptName f
-          funCtxTp = (partialVal (mkName ContextInStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), typeVal function'), (partialKey (mkName ioStr), ioType)], ptArgMode=PtArgAny}
+          funCtxTp = (partialVal (mkName ContextInStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), typeVal function'), (partialKey (mkName contextStatesStr), ioStatesType)], ptArgMode=PtArgAny}
           funTp = partialVal function'
           funCtxReaches = reachesPartials reachEnv [funCtxTp]
           funReaches = reachesPartials reachEnv [funTp]
@@ -96,11 +96,15 @@ evalPrgmTargetMode function prgm =
 -- | What a function run in an io answers with: a 'ContextStr' holding its value, of the type given,
 -- in the io it ends in. A run's is any value (@(){IO}@) and a build's a result (@CatlnResult{IO}@).
 ioContextType :: Type -> Type
-ioContextType valT = singletonType $ (partialVal (mkName ContextStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), valT), (partialKey (mkName ioStr), ioType)], ptArgMode=PtArgAny}
+ioContextType valT = singletonType $ (partialVal (mkName ContextStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), valT), (partialKey (mkName contextStatesStr), ioStatesType)], ptArgMode=PtArgAny}
+
+-- | The states of a context holding an io, and any others ('contextStatesStr').
+ioStatesType :: Type
+ioStatesType = singletonType (partialVal (mkName anonStr)){ptArgs=H.singleton (partialKey (mkName ioStr)) ioType, ptArgMode=PtArgAny}
 
 -- | The input a run or build of a function in an io starts from: the function in an io.
 ioContextInput :: String -> EExpr
-ioContextInput function' = eApplyM (eVal ContextInStr `eApply` (contextValStr, eVal function')) ioStr ioM
+ioContextInput function' = (eVal ContextInStr `eApply` (contextValStr, eVal function')) `eApply` (contextStatesStr, eApplyM (eVal anonStr) ioStr ioM)
 
 evalTargetMode :: String -> FileImport -> EPrgmGraphData -> CRes EvalMode
 evalTargetMode function prgmName prgmGraphData = do
@@ -1273,7 +1277,7 @@ evalRunPrgm pages ioVal function prgm = do
   case res of
     (IOVal r _) -> return (r, evalResult env')
     -- A run in an io answers with the io it ended in, in the context it returns.
-    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- H.lookup ioStr args -> return (r, evalResult env')
+    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- contextStateVal ioStr args -> return (r, evalResult env')
     _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
 evalRun :: EvalPages -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)

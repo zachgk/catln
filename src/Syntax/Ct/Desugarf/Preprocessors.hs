@@ -21,7 +21,7 @@ import           Data.Either
 import           Data.Hashable
 import qualified Data.HashMap.Strict     as H
 import           Data.List               (intercalate)
-import           Data.Maybe              (fromJust, mapMaybe)
+import           Data.Maybe              (fromJust, listToMaybe, mapMaybe)
 import           Data.String.Builder     (build)
 import           MapMeta                 (DerivedMeta (..))
 import           Semantics               (emptyMetaE)
@@ -283,15 +283,16 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
     -- all: they are read as a body, and something reporting on them one at a time reports on them
     -- in that order. A @#debug@ of each step of a computation is the clearest case — read back to
     -- front it is not a trace of the computation but a list of the same values.
-    -- The states of the context the body runs in ('declContextNames'): those of a definition written
-    -- with a context (@main{io -> IO}@), or those a bind's continuation is given back.
-    ctxNames = declContextNames (roaObj oa)
-    -- What a body running in a context returns is its value in the states it ends in, which are the
-    -- ones last bound under these names. A body writing out the context it returns (@(){io}@) has
-    -- already said so.
+    -- The states of the context the body runs in ('declContextStates'): those a definition written
+    -- with a context names (@main{io -> IO}@), or, in a bind's continuation, the ones the bind ran in
+    -- with the ones the bound expression answered with laid over them.
+    ctxStates = declContextStates (roaObj oa)
+    -- What a body running in a context returns is its value in the states it ends in. A body writing
+    -- out the context it returns (@(){io}@) has already said so.
     inContext e@RawContextApply{} = e
-    inContext e | null ctxNames = e
-                | otherwise     = RawContextApply (emptyMetaE e) (emptyMetaE e, e) [RawObjArr (Just (rawVal n)) ArgObj Nothing [] Nothing Nothing | n <- ctxNames]
+    inContext e = case ctxStates of
+      Nothing     -> e
+      Just states -> contextOf e (statesTuple states)
     aux :: [PStatementTree] -> [PStatementTree] -> CRes [PStatementTree]
     aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just (inContext e), Nothing)}) (reverse accStmts)] -- expr statement
     aux accStmts (s@(RawStatementTree RawDeclStatement{} _) : restStmt) = aux (s:accStmts) restStmt
@@ -313,44 +314,84 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
         -- bind's pattern is aliased onto the parameter (as the working inline form does) rather than
         -- destructured in the parameter position, which would match it as a type and leave it 'TopType'.
         --
-        -- In a context, the bound expression runs in the body's states (@ContextIn(value= m, io= io)@)
-        -- and answers with the context it ends in, which the continuation is given whole ('bindap''s
-        -- ap arm). The continuation takes the value back under the bind's pattern and each state under
-        -- its own name, so what follows runs in the states the bound expression left.
+        -- In a context, the bound expression runs in the body's states (@ContextIn(value= m, ctx=
+        -- (io= io))@) and answers with a context of the states it changed. The continuation is given
+        -- that context whole ('bindap''s ap arm), and the states the bind ran in beside it
+        -- (@cont(arg= /Context(value\@x, ctx\@r), states)@): what follows runs in those states with
+        -- the answered ones laid over them (@(..states, ..r)@), so a state the bound expression did
+        -- not name is kept and one it added is there.
         contHead = rawValDerived DerivedBindCont (getExprMeta objExpr) contName
-        contObjExpr
-          | null ctxNames = applyRawBareParams contHead [RawAliasExpr (rawVal contArgName) objExpr]
-          | otherwise = applyRawEIArgs contHead [(rawVal contArgName, IArgE boundContext)]
-        boundContext = RawTupleApply (emptyMetaE objExpr) (emptyMetaE objExpr, rawVal ContextStr) (boundValue ++ [(False, RawObjArr (Just (rawVal n)) ArgObj Nothing [] Nothing Nothing) | n <- ctxNames] ++ [(True, RawObjArr (Just (RawHoleExpr (emptyMetaE objExpr) (HoleActive Nothing))) ArgObj Nothing [] Nothing Nothing)])
+        contObjExpr = case ctxStates of
+          Nothing -> applyRawBareParams contHead [RawAliasExpr (rawVal contArgName) objExpr]
+          Just _  -> applyRawEIArgs contHead [(rawVal contArgName, IArgE boundContext), (rawVal (bindContStatesName contName), IArgNothing)]
+        boundContext = RawTupleApply (emptyMetaE objExpr) (emptyMetaE objExpr, rawVal ContextStr) [(False, RawObjArr (Just e) ArgObj Nothing [] Nothing Nothing) | e <- [boundValue, RawAliasExpr (rawVal contextStatesKey) (rawVal (bindContCtxName contName))]]
         boundValue = case objExpr of
-          RawHoleExpr{} -> []
-          _             -> [(False, RawObjArr (Just (RawAliasExpr (rawVal contextValKey) objExpr)) ArgObj Nothing [] Nothing Nothing)]
-        boundExpr
-          | null ctxNames = arrExpr
-          | otherwise = rawVal ContextInStr `applyRawEArgs` ((Just (rawVal contextValKey), arrExpr) : [(Just (rawVal n), rawVal n) | n <- ctxNames])
-        -- Written as the source would write it, relative: the desugar is writing what the program
-        -- would have said.
-        contextValKey = drop 1 contextValStr
+          RawHoleExpr{} -> rawVal contextValKey
+          _             -> RawAliasExpr (rawVal contextValKey) objExpr
+        boundExpr = case ctxStates of
+          Nothing     -> arrExpr
+          Just states -> rawVal ContextInStr `applyRawEArgs` [(Just (rawVal contextValKey), arrExpr), (Just (rawVal contextStatesKey), statesTuple states)]
         contDef = RawStatementTree (RawDeclStatement (RawObjArr (Just contObjExpr) TypeObj Nothing [] (Just (Just $ rawVal nestedDeclaration, Nothing)) Nothing)) restStmt
         -- @bindap(m= arrExpr, fn(v)= cont(contArg= v))@.
-        contCall = rawVal contName `applyRawArgs` [(Just $ partialKey (mkName contArgName), rawVal bindApV)]
+        contCall = rawVal contName `applyRawEArgs` ((Just (rawVal contArgName), rawVal bindApV) : [(Just (rawVal (bindContStatesName contName)), statesTuple states) | Just states <- [ctxStates]])
         fnHead = applyRawBareParams (rawVal bindApFn) [rawVal bindApV]
         bindapCall = rawVal bindApName `applyRawEArgs` [(Just (rawVal bindApM), boundExpr), (Just fnHead, contCall)]
     aux _ s = fail $ printf "Unsupported subDeclStatemnt type: %s" (show s)
 
--- | The names of the states a declaration's body runs in. A definition written with a context
--- (@main{io -> IO}@) runs in the states it names. A bind's continuation, which takes the context the
--- bound expression answered with (@cont(arg= /Context(value\@x, io, .._))@), runs in the states it
--- takes back from it.
-declContextNames :: Maybe PExpr -> [String]
-declContextNames (Just (RawContextApply _ _ ctxs)) = mapMaybe contextStateName ctxs
-declContextNames (Just (RawTupleApply _ (_, RawContextApply _ _ ctxs) _)) = mapMaybe contextStateName ctxs
-declContextNames (Just (RawTupleApply _ (_, RawValue _ base) args)) | isBindCont base = concat [contextArgNames a | (False, RawObjArr{roaArr=Just (Just a, _)}) <- args]
+-- | The states a body running in a context runs in, as the arguments of the anonymous tuple
+-- holding them ('contextStatesStr'): each state a definition names under its key
+-- (@(io= io)@), or the states a bind's continuation was given and the ones it took back spread in
+-- that order (@(..states, ..r)@, the later winning).
+newtype BodyStates = BodyStates [(Bool, PObjArr)]
+
+-- | The states a declaration's body runs in, where it runs in a context. A definition written with
+-- a context (@main{io -> IO}@) runs in the states it names. A bind's continuation
+-- (@cont(arg= /Context(value\@x, ctx\@r), states)@) runs in the states it was given with the
+-- ones it took back laid over them.
+declContextStates :: Maybe PExpr -> Maybe BodyStates
+declContextStates (Just (RawContextApply _ _ ctxs)) = Just $ namedStates $ mapMaybe contextState ctxs
+declContextStates (Just (RawTupleApply _ (_, RawContextApply _ _ ctxs) _)) = Just $ namedStates $ mapMaybe contextState ctxs
+declContextStates (Just (RawTupleApply _ (_, RawValue _ base) args)) | isBindCont base = do
+  r <- listToMaybe [r | (False, RawObjArr{roaArr=Just (Just a, _)}) <- args, Just r <- [takenStates a]]
+  let given = [rawVal (bindContStatesName (nameStr base))]
+  return $ BodyStates (map spreadArg (given ++ [r]))
   where
     isBindCont b = take 1 (nameStr b) == "$"
-    contextArgNames (RawTupleApply _ (_, RawValue _ ctx) ctxArgs) | nameStr ctx == ContextStr = [nameStr n | (False, RawObjArr{roaObj=Just (RawValue _ n)}) <- ctxArgs]
-    contextArgNames _ = []
-declContextNames _ = []
+    -- The name the continuation's pattern takes the answered states under (@ctx\@r@).
+    takenStates (RawTupleApply _ (_, RawValue _ ctx) ctxArgs) | nameStr ctx == ContextStr =
+      listToMaybe [r | (False, RawObjArr{roaObj=Just (RawAliasExpr (RawValue _ k) r@RawValue{})}) <- ctxArgs, nameStr k == contextStatesKey]
+    takenStates _ = Nothing
+declContextStates _ = Nothing
+
+namedStates :: [(String, String)] -> BodyStates
+namedStates named = BodyStates [(False, RawObjArr (Just (rawVal k)) ArgObj Nothing [] (Just (Just (rawVal l), Nothing)) Nothing) | (k, l) <- named]
+
+-- | The anonymous tuple holding a body's states.
+statesTuple :: BodyStates -> PExpr
+statesTuple (BodyStates args) = RawTupleApply (emptyMetaE rawAnon) (emptyMetaE rawAnon, rawAnon) args
+
+-- | A context ('ContextStr') holding a value in these states.
+contextOf :: PExpr -> PExpr -> PExpr
+contextOf e states = rawVal ContextStr `applyRawEArgs` [(Just (rawVal contextValKey), e), (Just (rawVal contextStatesKey), states)]
+
+-- | A value spread into a call (@..c@).
+spreadArg :: PExpr -> (Bool, PObjArr)
+spreadArg e = (True, RawObjArr (Just e) ArgObj Nothing [] Nothing Nothing)
+
+-- | The keys a context's value and states are kept under, written as the source would write them,
+-- relative: the desugar is writing what the program would have said.
+contextValKey, contextStatesKey :: String
+contextValKey = drop 1 contextValStr
+contextStatesKey = drop 1 contextStatesStr
+
+-- | The name a bind's continuation takes the states the bound expression answered with under
+-- ('bindContArgName').
+bindContCtxName :: String -> String
+bindContCtxName contName = contName ++ "-ctx"
+
+-- | The name a bind's continuation is given the states its bind ran in under.
+bindContStatesName :: String -> String
+bindContStatesName contName = contName ++ "-states"
 
 -- | The bodies a declaration is written as a choice between the statements under it: each of those
 -- is an arm, which desugar makes an arrow of its own ('MapMeta.DerivedBranchArm'). They are the

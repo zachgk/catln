@@ -45,8 +45,10 @@ module(Data)
   > 1.5
     >>> 1.5
   # ## Context
-  data(/Context[$V](value -> $V, .._))
-    # The context is used to represent state.
+  data(/Context[$V](value -> $V, ctx -> (.._)))
+    # The context is used to represent state. It holds a [value] and its states, the anonymous
+      tuple [ctx], each state an argument of it under the name of its type ([(io= io)]). Kept
+      apart from the value, one context's states spread into another's without the value.
 
   # TODO A [Context] holding a call ran the call in its states, through the runtime's [context]
   #   macro. As every [Context] is a value, that arrow from every one of them kept any from staying
@@ -61,10 +63,22 @@ module(Data/Context)
   unwrap[$V](this -> /Context..[$V -> $_V]) -> $V
     # [unwrap] reads the [value] out of a [Context], leaving its states behind. That a value can be
       read out like this is what makes state a [Context] rather than a [Monad] to be run.
-  :/Context(value, .._).unwrap= value
+  :/Context(value, ctx).unwrap= value
 
-  > /Context(value= 1, n= 7).unwrap
+  > /Context(value= 1, ctx= (n= 7)).unwrap
     >>> 1
+
+# # Running a context in states
+  A bind in a context runs what it binds in the body's states ([/ContextIn]). What it binds may
+  already be a [Context] — [_<- (){Counter(0)}] adds a state — and running one in states is the
+  context itself: the bind then lays its states over the body's, as it does a function's answer.
+module(Data/Context)
+  /ContextIn(value@c -> /Context.., ctx)= c
+
+  > /Data/Context/unwrap(this= /ContextIn(value= /Context(value= 1, ctx= (n= 7)), ctx= (m= 3)))
+    >>> 1
+  # [within] lays a context's states over [states], keeping every one it does not hold.
+  within(states, c= /Context(value, ctx))= /Context(value= value, ctx= (..states, ..ctx))
 
 # # Context Functor and Monad instances
   A [Context] is a [Functor] over its [value]: [fmap] applies a function to the value and keeps every
@@ -77,18 +91,18 @@ module(Data)
   every(/Context..[$V -> $_V], isa= [/Data/Functor[$T -> $_V]])
   every(/Context..[$V -> $_V], isa= [/Data/Monad[$T -> $_V]])
 
-  /Data/Functor/fmap(lst= /Context(value, ..c), fn(v))= /Context(..c, value= fn(v= value))
+  /Data/Functor/fmap(lst= /Context(value, ctx), fn(v))= /Context(value= fn(v= value), ctx= ctx)
 
-  > /Data/Functor/fmap(lst= /Context(value= 1, n= 7), fn(v)= v + 1).unwrap
+  > /Data/Functor/fmap(lst= /Context(value= 1, ctx= (n= 7)), fn(v)= v + 1).unwrap
     >>> 2
-  /Data/Monad/mmap(m= /Context(value, ..c), fn(v))= /Context(..c, ..fn(v= value))
+  /Data/Monad/mmap(m= /Context(value, ctx), fn(v))= /Data/Context/within(states= ctx, c= fn(v= value))
 
   # TODO The arm above is given one result, read from its own patterns (@Context(value=⊤)..@), with no
   #   link to what a call passes or to [fn]'s declared result, so [unwrap] of it has no type to show:
   #   "Failed to build arrow tree from /Data/Context/unwrap(/this=/Context(/value=TopType)..)".
-  # > /Data/Monad/mmap(m= /Context(value= 1, n= 7), fn(v)= /Context(value= v + 1, n= 8)).unwrap
+  # > /Data/Monad/mmap(m= /Context(value= 1, ctx= (n= 7)), fn(v)= /Context(value= v + 1, ctx= (n= 8))).unwrap
   #   >>> 2
-  /Data/Monad/pure[$M -> /Context..[$V -> $_V]](v)= /Context(value= v)
+  /Data/Monad/pure[$M -> /Context..[$V -> $_V]](v)= /Context(value= v, ctx= ())
 
   # [pure] is chosen by the expected result type, as for [Maybe] (see [pure] in [Data/monad]).
   pureContextInt(v -> Integer) -> /Context..[$V -> Integer]
