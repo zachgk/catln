@@ -16,149 +16,6 @@ Prgm
                     }
                 )
             ,
-                ( "/digitsValue./Data/$e16d3b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /digitsValue./Data/$e16d3b
-                            ( EAppArg { eaaArg = Value /head } )
-                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            )
-                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /$e16d3b-arg -> /Data/Maybe/Some
-                                    ( /value=( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) ) = /Data/Maybe/Some
-                                    ( EAppArg
-                                        { eaaArg = Value /value@Value /d -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) }
-                                    )
-                                }
-                            ) | /operator<
-                            ( EAppArg
-                                { eaaArg = Value /l -> TVArg /d = ( Value /d ↦ TVArg /d ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                            ) ->
-                            ( /Data/Result/Fail
-                                [ /E=/Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    )
-                                ]
-                                ( /err=/Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    )
-                                ) + /digitsValue./Data/$e16d3b
-                                ( /head=/Data/Char
-                                , /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /acc=/Data/Primitive/Integer
-                                , /$e16d3b-arg=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                , /sign=/Data/Primitive/Integer
-                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/digitsValue
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /acc=/Data/Primitive/Integer
-                                , /cs=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                , /sign=/Data/Primitive/Integer
-                                )
-                            ) = /Data/digitsValue
-                            ( EAppArg
-                                { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /sign -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /operator*
-                                                    ( EAppArg
-                                                        { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                                                    )
-                                                    ( EAppArg
-                                                        { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                                    ) ↦ /Data/Primitive/Integer
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) =
-                                                ( /operator*
-                                                    ( EAppArg
-                                                        { eaaArg = Value /l -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
-                                                    )
-                                                    ( EAppArg
-                                                        { eaaArg = Value /r -> TVArg /d = ( Value /d ↦ TVArg /d ) }
-                                                    ) ↦ ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord )
-                                                )
-                                            }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /at -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> TVArg /at = ( Value /at ↦ TVArg /at ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                        , /digitsValue./Data/$e16d3b
-                            ( EAppArg { eaaArg = Value /head -> /Data/Char } )
-                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /tail } )
-                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /$e16d3b-arg@Value /m } ) -> /Data/Result/Fail
-                            ( /err=/Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                )
-                            ) = /Data/Result/Fail
-                            ( EAppArg
-                                { eaaArg = Value /err -> /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) = /Data/IntegerParseErr/NotADigit
-                                    ( EAppArg
-                                        { eaaArg = Value /c -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /at -> TVArg /at = ( Value /at ↦ TVArg /at ) }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                    )
-                                }
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/IntegerParseErr/BadBase"
                 , ObjectMapItem
                     { omiDecls =
@@ -829,7 +686,7 @@ Prgm
                                     )
                                 ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                             ) =
-                            ( /$e16d3b
+                            ( /Data/digitsValue.$e16d3b
                                 ( EAppArg
                                     { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
                                 )
@@ -871,6 +728,158 @@ Prgm
                                         )
                                     ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/digitsValue.$e16d3b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsValue.$e16d3b
+                            ( EAppArg { eaaArg = Value /head -> /Data/Char.. } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /$e16d3b-arg -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value@Value /d -> /Data/Primitive/Integer } )
+                                }
+                            ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /d = ( Value /d ↦ TVArg /d ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                            ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /Data/digitsValue
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /sign -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /acc -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /sign = ( Value /sign ↦ TVArg /sign ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /d = ( Value /d ↦ TVArg /d ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /at -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ]
+                                    ( /err=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
+                            )
+                        , /Data/digitsValue.$e16d3b
+                            ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                            ( EAppArg { eaaArg = Value /at -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /sign -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /$e16d3b-arg@Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            ) -> /Data/Result/Fail
+                            [ /E=/Data/IntegerParseErr/NotADigit
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /c=/Data/Char
+                                )
+                            ]
+                            ( /err=/Data/IntegerParseErr/NotADigit
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /c=/Data/Char
+                                )
+                            ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> /Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    ) = /Data/IntegerParseErr/NotADigit
+                                    ( EAppArg
+                                        { eaaArg = Value /c -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /at -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                    )
+                                }
                             )
                         ]
                     }

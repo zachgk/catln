@@ -30,20 +30,20 @@ Prgm
                             ) | /operator&&
                             ( Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                                 ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
-                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /h = Value /h ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /h = Value /h ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
                                     )
                                 )
                                 ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /h = Value /h ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /h = Value /h ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 2 }
                                     )
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator==
-                                ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /m = Value /m ) )
+                                ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /m = Value /m ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 2 }
                                 )
@@ -51,15 +51,45 @@ Prgm
                             [ /T=/Data/Time/TimeOfDay..
                             , /E=∀/Data/Time/TimeParseErr
                             ] = /Data/Time/minutesOf
-                            ( Value /hour -> ∀/Data/Result
-                                [ /T=/Data/Primitive/Integer
-                                , /E=∀/Data/IntegerParseErr
-                                ] = /Data/Time/natural( Value /s -> TVArg /h = Value /h )
+                            ( Value /hour ->
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) = /Data/Time/natural( Value /s -> TVArg /h = Value /h )
                             )
-                            ( Value /minute -> ∀/Data/Result
-                                [ /T=/Data/Primitive/Integer
-                                , /E=∀/Data/IntegerParseErr
-                                ] = /Data/Time/natural( Value /s -> TVArg /m = Value /m )
+                            ( Value /minute ->
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) = /Data/Time/natural( Value /s -> TVArg /m = Value /m )
                             )
                         , /Data/Time/partsOf( Value /clock -> ∀/Data/String )
                             ( Value /parts -> /Data/List/Cons[ /T=∀/Data/String ]
@@ -513,57 +543,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/fromMarch"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/fromMarch( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromEra
-                            ( Value /era -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /y = Value /y )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 400 }
-                                )
-                            )
-                            ( Value /yoe -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /y = Value /y )
-                                ( Value /r -> /Data/Primitive/Integer = /operator*
-                                    ( Value /l -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /y = Value /y )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 400 }
-                                        )
-                                    )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 400 }
-                                    )
-                                )
-                            )
-                            ( Value /doy -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /operator+
-                                    ( Value /l -> /Data/Primitive/Integer = /operator//
-                                        ( Value /l -> /Data/Primitive/Integer = /operator+
-                                            ( Value /l -> /Data/Primitive/Integer = /operator*
-                                                ( Value /l -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 153 }
-                                                )( Value /r -> TVArg /mp = Value /mp )
-                                            )
-                                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 2 }
-                                            )
-                                        )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 5 }
-                                        )
-                                    )( Value /r -> TVArg /day = Value /day )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/clockParts"
                 , ObjectMapItem
                     { omiDecls =
@@ -575,7 +554,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Time/clockParts( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /contains
+                        [ /Data/Time/clockParts( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /Data/String/contains
                             ( Value /sub -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = ":" }
@@ -597,6 +576,89 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofMonth"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofMonth( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofMonth( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) | /operator<( Value /l -> TVArg /mp = Value /mp )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 10 }
+                            ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ) = /Data/Time/Date( Value /year -> TVArg /y = Value /y )
+                            ( Value /month -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /mp = Value /mp )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 3 }
+                                )
+                            )
+                            ( Value /day -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doy = Value /doy )
+                                    ( Value /r -> /Data/Primitive/Integer = /operator//
+                                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                                            ( Value /l -> /Data/Primitive/Integer = /operator*
+                                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 153 }
+                                                )( Value /r -> TVArg /mp = Value /mp )
+                                            )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 5 }
+                                        )
+                                    )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , /Data/Time/fromDaysSinceEpoch.ofMonth( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ) = /Data/Time/Date
+                            ( Value /year -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /y = Value /y )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value /month -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /mp = Value /mp )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 9 }
+                                )
+                            )
+                            ( Value /day -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doy = Value /doy )
+                                    ( Value /r -> /Data/Primitive/Integer = /operator//
+                                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                                            ( Value /l -> /Data/Primitive/Integer = /operator*
+                                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 153 }
+                                                )( Value /r -> TVArg /mp = Value /mp )
+                                            )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 5 }
+                                        )
+                                    )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/fromDaysSinceEpoch"
                 , ObjectMapItem
                     { omiDecls =
@@ -608,7 +670,7 @@ Prgm
                             ( /year=/Data/Primitive/Integer
                             , /month=/Data/Primitive/Integer
                             , /day=/Data/Primitive/Integer
-                            ) = /fromDaysSinceEpoch./Data/Time/ofEra
+                            ).. = /Data/Time/fromDaysSinceEpoch.ofEra
                             ( Value /era -> /Data/Primitive/Integer = /operator//
                                 ( Value /l -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /days = Value /days )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
@@ -646,7 +708,7 @@ Prgm
                                 , /month=/Data/Primitive/Integer
                                 , /day=/Data/Primitive/Integer
                                 ) = /Date( Value /year -> /Data/Primitive/Integer )( Value /month -> /Data/Primitive/Integer )( Value /day -> /Data/Primitive/Integer )
-                            ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/startOfYear( Value /day -> TVArg /day = Value /day )( Value /y -> TVArg /year = Value /year )( Value /m -> TVArg /month = Value /month )
+                            ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.startOfYear( Value /day -> TVArg /day = Value /day )( Value /y -> TVArg /year = Value /year )( Value /m -> TVArg /month = Value /month )
                         ]
                     }
                 )
@@ -665,7 +727,7 @@ Prgm
                         [ /Data/Time/parseDate( Value /s -> ∀/Data/String ) | /operator&&
                             ( Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                                 ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
-                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /s = Value /s ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /s = Value /s ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 10 }
                                     )
@@ -698,20 +760,50 @@ Prgm
                             [ /T=/Data/Time/Date..
                             , /E=∀/Data/Time/DateParseErr
                             ] = /Data/Time/dateOf
-                            ( Value /y -> ∀/Data/Result
-                                [ /T=/Data/Primitive/Integer
-                                , /E=∀/Data/IntegerParseErr
-                                ] = /Data/Time/natural
+                            ( Value /y ->
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) = /Data/Time/natural
                                 ( Value /s -> ∀/Data/String = /Data/String/take
                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                         { ciValue = 4 }
                                     )( Value /this -> TVArg /s = Value /s )
                                 )
                             )
-                            ( Value /m -> ∀/Data/Result
-                                [ /T=/Data/Primitive/Integer
-                                , /E=∀/Data/IntegerParseErr
-                                ] = /Data/Time/natural
+                            ( Value /m ->
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) = /Data/Time/natural
                                 ( Value /s -> ∀/Data/String = /Data/String/slice
                                     ( Value /start -> /Data/Primitive/Integer = CInt
                                         { ciValue = 5 }
@@ -721,10 +813,25 @@ Prgm
                                     )( Value /this -> TVArg /s = Value /s )
                                 )
                             )
-                            ( Value /d -> ∀/Data/Result
-                                [ /T=/Data/Primitive/Integer
-                                , /E=∀/Data/IntegerParseErr
-                                ] = /Data/Time/natural
+                            ( Value /d ->
+                                ( /Data/Result/Fail
+                                    [ /E=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ]
+                                    ( /err=
+                                        ( /Data/IntegerParseErr/NotADigit
+                                            ( /at=/Data/Primitive/Integer
+                                            , /base=/Data/Primitive/Integer
+                                            , /c=/Data/Char
+                                            ) + /Data/IntegerParseErr/NoText
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) = /Data/Time/natural
                                 ( Value /s -> ∀/Data/String = /Data/String/drop
                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                         { ciValue = 8 }
@@ -805,7 +912,7 @@ Prgm
                                 ( Value /clock -> ∀/Data/String = /Data/String/trimEnd
                                     ( Value /this -> ∀/Data/String = /Data/String/take
                                         ( Value /n -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /t = Value /t ) )
+                                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /t = Value /t ) )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 2 }
                                             )
@@ -828,7 +935,7 @@ Prgm
                                 ( Value /clock -> ∀/Data/String = /Data/String/trimEnd
                                     ( Value /this -> ∀/Data/String = /Data/String/take
                                         ( Value /n -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /t = Value /t ) )
+                                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /t = Value /t ) )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 2 }
                                             )
@@ -844,6 +951,49 @@ Prgm
                                 [ /T=/Data/Time/TimeOfDay..
                                 , /E=∀/Data/Time/TimeParseErr
                                 ] = /Data/Time/clockParts( Value /clock -> TVArg /t = Value /t )( Value /bare -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Time/daysSinceEpoch.fromEra"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/daysSinceEpoch.fromEra( Value /era -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/daysSinceEpoch.fromEra( Value /era -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator-
+                            ( Value /l -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /operator-
+                                    ( Value /l -> /Data/Primitive/Integer = /operator+
+                                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                                            ( Value /l -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /era = Value /era )
+                                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 146097 }
+                                                )
+                                            )
+                                            ( Value /r -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /yoe = Value /yoe )
+                                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 365 }
+                                                )
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 4 }
+                                            )
+                                        )
+                                    )
+                                    ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 100 }
+                                        )
+                                    )
+                                )( Value /r -> TVArg /doy = Value /doy )
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 719468 }
                             )
                         ]
                     }
@@ -875,10 +1025,21 @@ Prgm
                                     ) = /Data/List/Cons( Value /head -> /Data/Char )
                                     ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 )
-                            ) -> ∀/Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] = /Data/digitsValue
+                            ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) = /Data/digitsValue
                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                 ( /head=/Data/Char
                                 , /tail=∀/Data/List/ConsList[ /T=$_/T ]
@@ -979,6 +1140,37 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofDay( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofDay( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ) = /Data/Time/fromDaysSinceEpoch.ofMonth( Value /y -> TVArg /y = Value /y )( Value /doy -> TVArg /doy = Value /doy )
+                            ( Value /mp -> /Data/Primitive/Integer = /operator//
+                                ( Value /l -> /Data/Primitive/Integer = /operator+
+                                    ( Value /l -> /Data/Primitive/Integer = /operator*
+                                        ( Value /l -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 5 }
+                                        )( Value /r -> TVArg /doy = Value /doy )
+                                    )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 2 }
+                                    )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 153 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/weekday"
                 , ObjectMapItem
                     { omiDecls =
@@ -1026,7 +1218,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/padded( Value /n -> /Data/Primitive/Integer )( Value /width -> /Data/Primitive/Integer ) | /operator<
-                            ( Value /l -> /Data/Primitive/Integer = /length
+                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length
                                 ( Value /this -> ∀/Data/String = /toString( Value /this -> TVArg /n = Value /n ) )
                             )( Value /r -> TVArg /width = Value /width ) -> ∀/Data/String = /operator++
                             ( Value /l -> /Data/String/Text
@@ -1045,42 +1237,31 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofEra"
+                ( "/Data/Time/daysSinceEpoch.startOfYear"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofEra( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                        [ /Data/Time/daysSinceEpoch.startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofEra( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) = /fromDaysSinceEpoch./Data/Time/ofYear( Value /era -> TVArg /era = Value /era )( Value /doe -> TVArg /doe = Value /doe )
-                            ( Value /yoe -> /Data/Primitive/Integer = /operator//
-                                ( Value /l -> /Data/Primitive/Integer = /operator-
-                                    ( Value /l -> /Data/Primitive/Integer = /operator+
-                                        ( Value /l -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doe = Value /doe )
-                                            ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /doe = Value /doe )
-                                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 1460 }
-                                                )
-                                            )
-                                        )
-                                        ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /doe = Value /doe )
-                                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 36524 }
-                                            )
-                                        )
-                                    )
-                                    ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /doe = Value /doe )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 146096 }
-                                        )
-                                    )
-                                )
+                        [ /Data/Time/daysSinceEpoch.startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) | /operator<=( Value /l -> TVArg /m = Value /m )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.fromMarch( Value /day -> TVArg /day = Value /day )
+                            ( Value /y -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /y = Value /y )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 365 }
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value /mp -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /m = Value /m )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 9 }
+                                )
+                            )
+                        , /Data/Time/daysSinceEpoch.startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.fromMarch( Value /day -> TVArg /day = Value /day )( Value /y -> TVArg /y = Value /y )
+                            ( Value /mp -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /m = Value /m )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 3 }
                                 )
                             )
                         ]
@@ -1193,49 +1374,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/fromEra"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/fromEra( Value /era -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/fromEra( Value /era -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator-
-                            ( Value /l -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /operator-
-                                    ( Value /l -> /Data/Primitive/Integer = /operator+
-                                        ( Value /l -> /Data/Primitive/Integer = /operator+
-                                            ( Value /l -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /era = Value /era )
-                                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 146097 }
-                                                )
-                                            )
-                                            ( Value /r -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /yoe = Value /yoe )
-                                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 365 }
-                                                )
-                                            )
-                                        )
-                                        ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
-                                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 4 }
-                                            )
-                                        )
-                                    )
-                                    ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 100 }
-                                        )
-                                    )
-                                )( Value /r -> TVArg /doy = Value /doy )
-                            )
-                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                { ciValue = 719468 }
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls = []
@@ -1309,37 +1447,6 @@ Prgm
                             { ciValue = 30 }
                         , /Data/Time/daysInMonth( Value /year -> /Data/Primitive/Integer )( Value /month -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 31 }
-                        ]
-                    }
-                )
-            ,
-                ( "/daysSinceEpoch./Data/Time/startOfYear"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) | /operator<=( Value /l -> TVArg /m = Value /m )
-                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                { ciValue = 2 }
-                            ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromMarch( Value /day -> TVArg /day = Value /day )
-                            ( Value /y -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /y = Value /y )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                            ( Value /mp -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /m = Value /m )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                        , /daysSinceEpoch./Data/Time/startOfYear( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /m -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /daysSinceEpoch./Data/Time/fromMarch( Value /day -> TVArg /day = Value /day )( Value /y -> TVArg /y = Value /y )
-                            ( Value /mp -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /m = Value /m )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 3 }
-                                )
-                            )
                         ]
                     }
                 )
@@ -1631,37 +1738,6 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofDay( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofDay( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) = /fromDaysSinceEpoch./Data/Time/ofMonth( Value /y -> TVArg /y = Value /y )( Value /doy -> TVArg /doy = Value /doy )
-                            ( Value /mp -> /Data/Primitive/Integer = /operator//
-                                ( Value /l -> /Data/Primitive/Integer = /operator+
-                                    ( Value /l -> /Data/Primitive/Integer = /operator*
-                                        ( Value /l -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 5 }
-                                        )( Value /r -> TVArg /doy = Value /doy )
-                                    )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 2 }
-                                    )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 153 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/addMinutes"
                 , ObjectMapItem
                     { omiDecls =
@@ -1717,44 +1793,42 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofYear"
+                ( "/Data/Time/fromDaysSinceEpoch.ofEra"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofYear( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                        [ /Data/Time/fromDaysSinceEpoch.ofEra( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofYear( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer ) -> /Data/Time/Date
+                        [ /Data/Time/fromDaysSinceEpoch.ofEra( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer ) -> /Data/Time/Date
                             ( /year=/Data/Primitive/Integer
                             , /month=/Data/Primitive/Integer
                             , /day=/Data/Primitive/Integer
-                            ) = /fromDaysSinceEpoch./Data/Time/ofDay
-                            ( Value /y -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /yoe = Value /yoe )
-                                ( Value /r -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /era = Value /era )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 400 }
-                                    )
-                                )
-                            )
-                            ( Value /doy -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doe = Value /doe )
-                                ( Value /r -> /Data/Primitive/Integer = /operator-
+                            ).. = /Data/Time/fromDaysSinceEpoch.ofYear( Value /era -> TVArg /era = Value /era )( Value /doe -> TVArg /doe = Value /doe )
+                            ( Value /yoe -> /Data/Primitive/Integer = /operator//
+                                ( Value /l -> /Data/Primitive/Integer = /operator-
                                     ( Value /l -> /Data/Primitive/Integer = /operator+
-                                        ( Value /l -> /Data/Primitive/Integer = /operator*
-                                            ( Value /l -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 365 }
-                                            )( Value /r -> TVArg /yoe = Value /yoe )
+                                        ( Value /l -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doe = Value /doe )
+                                            ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /doe = Value /doe )
+                                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 1460 }
+                                                )
+                                            )
                                         )
-                                        ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
+                                        ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /doe = Value /doe )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 4 }
+                                                { ciValue = 36524 }
                                             )
                                         )
                                     )
-                                    ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
+                                    ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /doe = Value /doe )
                                         ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 100 }
+                                            { ciValue = 146096 }
                                         )
                                     )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 365 }
                                 )
                             )
                         ]
@@ -1812,6 +1886,50 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofYear"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofYear( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofYear( Value /era -> /Data/Primitive/Integer )( Value /doe -> /Data/Primitive/Integer )( Value /yoe -> /Data/Primitive/Integer ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ).. = /Data/Time/fromDaysSinceEpoch.ofDay
+                            ( Value /y -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /yoe = Value /yoe )
+                                ( Value /r -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /era = Value /era )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 400 }
+                                    )
+                                )
+                            )
+                            ( Value /doy -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doe = Value /doe )
+                                ( Value /r -> /Data/Primitive/Integer = /operator-
+                                    ( Value /l -> /Data/Primitive/Integer = /operator+
+                                        ( Value /l -> /Data/Primitive/Integer = /operator*
+                                            ( Value /l -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 365 }
+                                            )( Value /r -> TVArg /yoe = Value /yoe )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 4 }
+                                            )
+                                        )
+                                    )
+                                    ( Value /r -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /yoe = Value /yoe )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 100 }
+                                        )
+                                    )
+                                )
+                            )
+                        ]
                     }
                 )
             ,
@@ -1916,89 +2034,6 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofMonth"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofMonth( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Time/Date.. ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofMonth( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) | /operator<( Value /l -> TVArg /mp = Value /mp )
-                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                { ciValue = 10 }
-                            ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) = /Data/Time/Date( Value /year -> TVArg /y = Value /y )
-                            ( Value /month -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /mp = Value /mp )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 3 }
-                                )
-                            )
-                            ( Value /day -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doy = Value /doy )
-                                    ( Value /r -> /Data/Primitive/Integer = /operator//
-                                        ( Value /l -> /Data/Primitive/Integer = /operator+
-                                            ( Value /l -> /Data/Primitive/Integer = /operator*
-                                                ( Value /l -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 153 }
-                                                )( Value /r -> TVArg /mp = Value /mp )
-                                            )
-                                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 2 }
-                                            )
-                                        )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 5 }
-                                        )
-                                    )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        , /fromDaysSinceEpoch./Data/Time/ofMonth( Value /y -> /Data/Primitive/Integer )( Value /doy -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) = /Data/Time/Date
-                            ( Value /year -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /y = Value /y )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                            ( Value /month -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /mp = Value /mp )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 9 }
-                                )
-                            )
-                            ( Value /day -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /doy = Value /doy )
-                                    ( Value /r -> /Data/Primitive/Integer = /operator//
-                                        ( Value /l -> /Data/Primitive/Integer = /operator+
-                                            ( Value /l -> /Data/Primitive/Integer = /operator*
-                                                ( Value /l -> /Data/Primitive/Integer = CInt
-                                                    { ciValue = 153 }
-                                                )( Value /r -> TVArg /mp = Value /mp )
-                                            )
-                                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                                { ciValue = 2 }
-                                            )
-                                        )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt
-                                            { ciValue = 5 }
-                                        )
-                                    )
-                                )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/DateParseErr/BadPart"
                 , ObjectMapItem
                     { omiDecls =
@@ -2020,7 +2055,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Time/dottedOrBare( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /contains
+                        [ /Data/Time/dottedOrBare( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /Data/String/contains
                             ( Value /sub -> /Data/String/Text
                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "." }
@@ -2037,14 +2072,14 @@ Prgm
                         , /Data/Time/dottedOrBare( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /bare = Value /bare )
                                 ( Value /r -> ∀/Data/Primitive/Boolean = /operator>=
-                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 3 }
                                     )
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
+                                ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 4 }
                                 )
@@ -2061,7 +2096,7 @@ Prgm
                                 ) = /Data/List/Cons
                                 ( Value /head -> ∀/Data/String = /Data/String/take
                                     ( Value /n -> /Data/Primitive/Integer = /operator-
-                                        ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
+                                        ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
                                         ( Value /r -> /Data/Primitive/Integer = CInt
                                             { ciValue = 2 }
                                         )
@@ -2073,7 +2108,7 @@ Prgm
                                     ) = /Data/List/Cons
                                     ( Value /head -> ∀/Data/String = /Data/String/drop
                                         ( Value /n -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
+                                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 2 }
                                             )
@@ -2199,6 +2234,57 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Time/daysSinceEpoch.fromMarch"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/daysSinceEpoch.fromMarch( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/daysSinceEpoch.fromMarch( Value /day -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )( Value /mp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /Data/Time/daysSinceEpoch.fromEra
+                            ( Value /era -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /y = Value /y )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 400 }
+                                )
+                            )
+                            ( Value /yoe -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /y = Value /y )
+                                ( Value /r -> /Data/Primitive/Integer = /operator*
+                                    ( Value /l -> /Data/Primitive/Integer = /operator//( Value /l -> TVArg /y = Value /y )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 400 }
+                                        )
+                                    )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 400 }
+                                    )
+                                )
+                            )
+                            ( Value /doy -> /Data/Primitive/Integer = /operator-
+                                ( Value /l -> /Data/Primitive/Integer = /operator+
+                                    ( Value /l -> /Data/Primitive/Integer = /operator//
+                                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                                            ( Value /l -> /Data/Primitive/Integer = /operator*
+                                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 153 }
+                                                )( Value /r -> TVArg /mp = Value /mp )
+                                            )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 2 }
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 5 }
+                                        )
+                                    )( Value /r -> TVArg /day = Value /day )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
                     }
                 )
             ,

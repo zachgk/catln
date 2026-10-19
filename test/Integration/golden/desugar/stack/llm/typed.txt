@@ -38,22 +38,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/tlcm"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String )( Value /this -> /Catln/IO.. )= typedReply
-                            ( Value reply= lcm
-                                ( Value input= typedPrompt( Value input= Value input )( Value type= Value type ) )
-                                ( Value page= /Catln/pageAt( Value source= Value source ) )( Value /this= Value this )
-                            )( Value type= Value type )( Value source= Value source )
-                        ]
-                    }
-                )
-            ,
                 ( "/Llm/TypedExample/Answer"
                 , ObjectMapItem
                     { omiDecls =
@@ -64,17 +48,50 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/tllm"
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
+                        [ /ContextIn
+                            ( Value /value= /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn
+                            ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String )( Value /this -> /Catln/IO.. )= typedReply
-                            ( Value reply= llm
-                                ( Value input= typedPrompt( Value input= Value input )( Value type= Value type ) )( Value /this= Value this )
-                            )( Value type= Value type )( Value source= Value source )
+                        [ /ContextIn
+                            ( Value /value= /Llm/tllm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llm
+                                    ( Value input= typedPrompt( Value input= Value input )( Value type= Value type ) )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/tllm.$404341( Value /type= Value /type )( Value /source= Value /source )
+                                ( Value /$404341-arg= Value v )
+                            )
+                        , /ContextIn
+                            ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= lcm
+                                    ( Value input= typedPrompt( Value input= Value input )( Value type= Value type ) )
+                                    ( Value page= /Catln/pageAt( Value source= Value source ) )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/tlcm.$6d0af4( Value /type= Value /type )( Value /source= Value /source )
+                                ( Value /$6d0af4-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -105,6 +122,21 @@ Prgm
                             ( Value /r= typedDecls
                                 ( Value decls= /Catln/typeDecls( Value type= Value type ) )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/tlcm.$6d0af4"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                            ( Value $6d0af4-arg= /Context( Value value@Value reply )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context
+                            ( Value /value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )( Value io= Value io )
                         ]
                     }
                 )
@@ -148,6 +180,21 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/tllm.$404341"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tllm.$404341( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                            ( Value $404341-arg= /Context( Value value@Value reply )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context
+                            ( Value /value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/TypedExample/answerShown"
                 , ObjectMapItem
                     { omiDecls =
@@ -186,6 +233,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -198,7 +246,7 @@ Prgm
                 types means what the page means by them. A reply that is not an expression, or not one of the
                 type, is answered with why ([LlmErr/NotOf]) rather than with the text.
                 The type is a value, written as [/Catln/typeOf] of the type:
-                `io.tllm(input= "...", type= /Catln/typeOf[$T -> Point..])`." }
+                `tllm(input= "...", type= /Catln/typeOf[$T -> Point..])`." }
             )
         , /Catln/#md
             ( Value /text= CStr

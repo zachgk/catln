@@ -294,6 +294,528 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Llm/llm( /input=∀/Data/String ) = /Llm/llm
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Llm/llmWith
+                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /base=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /input=∀/Data/String
+                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    ) = /Llm/llmWith
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Llm/llm( /input=∀/Data/String ) = /Llm/llm
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            [ /V=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                        ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                        , /io=/Catln/IO
+                                        ).. =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /System/env
+                                                    ( /name=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) = /System/env
+                                                    ( EAppArg
+                                                        { eaaArg = Value /name -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_BASE_URL"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                            ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /io=/Catln/IO
+                                            )..
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /io=/Catln/IO
+                                                )..
+                                            }
+                                        ) -> /Context
+                                        [ /V=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ]
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /Llm/llm.$ad0f0c
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$ad0f0c-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            ]
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                )
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Llm/llmWith
+                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /base=/Data/Maybe/Nothing
+                                    , /input=∀/Data/String
+                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    ) = /Llm/llmWith
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /base -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                    ( EAppArg
+                                        { eaaArg = Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=/Data/Result/Fail
+                                [ /E=/Llm/LlmErr/Unset
+                                    ( /variable=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
+                                ( /err=/Llm/LlmErr/Unset
+                                    ( /variable=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                )
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Result/Fail
+                                    ( /err=/Llm/LlmErr/Unset
+                                        ( /variable=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ) = /Data/Result/Fail
+                                    ( EAppArg
+                                        { eaaArg = Value /err -> /Llm/LlmErr/Unset
+                                            ( /variable=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Llm/LlmErr/Unset
+                                            ( EAppArg
+                                                { eaaArg = Value /variable -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_BASE_URL"
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Llm/llmWith
+                                    ( /model=/Data/Maybe/Nothing
+                                    , /base=/Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    , /input=∀/Data/String
+                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    ) = /Llm/llmWith
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some
+                                            ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /model -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                    ( EAppArg
+                                        { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            ( /value=/Data/Result/Fail
+                                [ /E=/Llm/LlmErr/Unset
+                                    ( /variable=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                ]
+                                ( /err=/Llm/LlmErr/Unset
+                                    ( /variable=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    )
+                                )
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Result/Fail
+                                    ( /err=/Llm/LlmErr/Unset
+                                        ( /variable=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        )
+                                    ) = /Data/Result/Fail
+                                    ( EAppArg
+                                        { eaaArg = Value /err -> /Llm/LlmErr/Unset
+                                            ( /variable=/Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) = /Llm/LlmErr/Unset
+                                            ( EAppArg
+                                                { eaaArg = Value /variable -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_MODEL"
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Llm/llmWith
+                                    ( /model=/Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    , /base=/Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                    , /input=∀/Data/String
+                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    ) = /Llm/llmWith
+                                    ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some
+                                            ( EAppArg { eaaArg = Value /value@Value /b -> ∀/Data/String } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /model -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=$/T ) = /Data/Maybe/Some
+                                            ( EAppArg { eaaArg = Value /value@Value /m -> ∀/Data/String } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /key -> UnionType
+                                            ( Just
+                                                ( PredClass /Data/Maybe[ /T=∀/Data/String ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
+                                            , []
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> /Context
+                            [ /V=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Http/HttpErr
+                                            ]
+                                        ]
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Http/HttpErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ).. =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Http/httpPost
+                                                    ( /body=∀/Data/String
+                                                    , /headers=/Data/List/Cons
+                                                        [ /T=/Http/Header
+                                                            ( /name=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /value=∀/Data/String
+                                                            )
+                                                        ]
+                                                        ( /head=/Http/Header
+                                                            ( /name=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /value=/Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            )
+                                                        , /tail=
+                                                            ( /Data/List/Nil + /Data/List/Cons
+                                                                [ /T=/Http/Header
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /value=∀/Data/String
+                                                                    )
+                                                                ]
+                                                                ( /head=/Http/Header
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /value=∀/Data/String
+                                                                    )
+                                                                , /tail=/Data/List/Nil
+                                                                )
+                                                            )
+                                                        )
+                                                    , /url=∀/Data/String
+                                                    ) = /Http/httpPost
+                                                    ( EAppArg
+                                                        { eaaArg = Value /url -> ∀/Data/String =
+                                                            ( /operator++
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/chat/completions"
+                                                                    }
+                                                                ) ↦ ∀/Data/String
+                                                            )
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /headers -> /Data/List/Cons
+                                                            [ /T=/Http/Header
+                                                                ( /name=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                , /value=∀/Data/String
+                                                                )
+                                                            ]
+                                                            ( /head=/Http/Header
+                                                                ( /name=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                , /value=/Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                )
+                                                            , /tail=
+                                                                ( /Data/List/Nil + /Data/List/Cons
+                                                                    [ /T=/Http/Header
+                                                                        ( /name=/Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                        , /value=∀/Data/String
+                                                                        )
+                                                                    ]
+                                                                    ( /head=/Http/Header
+                                                                        ( /name=/Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                        , /value=∀/Data/String
+                                                                        )
+                                                                    , /tail=/Data/List/Nil
+                                                                    )
+                                                                )
+                                                            ) =
+                                                            ( /Llm/llmHeaders
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                                                ) ↦ /Data/List/Cons
+                                                                [ /T=/Http/Header
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /value=∀/Data/String
+                                                                    )
+                                                                ]
+                                                                ( /head=/Http/Header
+                                                                    ( /name=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /value=/Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    )
+                                                                , /tail=
+                                                                    ( /Data/List/Nil + /Data/List/Cons
+                                                                        [ /T=/Http/Header
+                                                                            ( /name=/Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                            , /value=∀/Data/String
+                                                                            )
+                                                                        ]
+                                                                        ( /head=/Http/Header
+                                                                            ( /name=/Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                            , /value=∀/Data/String
+                                                                            )
+                                                                        , /tail=/Data/List/Nil
+                                                                        )
+                                                                    )
+                                                                )
+                                                            )
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /body -> ∀/Data/String =
+                                                            ( /Llm/llmRequest
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /model -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                                                ) ↦ ∀/Data/String
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Http/HttpErr
+                                                ]
+                                            ]
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Http/HttpErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )..
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=∀/Data/Result
+                                                    [ /T=∀/Data/String
+                                                    , /E=∀/Http/HttpErr
+                                                    ]
+                                                ]
+                                                ( /value=∀/Data/Result
+                                                    [ /T=∀/Data/String
+                                                    , /E=∀/Http/HttpErr
+                                                    ]
+                                                , /io=/Catln/IO
+                                                )..
+                                            }
+                                        ) -> /Context
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /Llm/llmWith.$a45a5a
+                                            ( EAppArg
+                                                { eaaArg = Value /$a45a5a-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/llmReply"
                 , ObjectMapItem
                     { omiDecls =
@@ -368,11 +890,78 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llmWith"
+                ( "/Llm/llmWith.$a45a5a"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /Llm/llmWith
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llmWith.$a45a5a
+                            ( EAppArg
+                                { eaaArg = Value /$a45a5a-arg -> /Context
+                                    ( /value=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Http/HttpErr
+                                        ]
+                                    , /io=TopType
+                                    ).. = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /response -> UnionType
+                                            ( Just
+                                                ( PredClass /Data/Result
+                                                    [ /T=∀/Data/String
+                                                    , /E=∀/Http/HttpErr
+                                                    ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            ,
+                                                ( /Data/Result/Fail[ /E=∀/Http/HttpErr ]( /err=∀/Http/HttpErr ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) )
+                                            , []
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /io } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=TopType
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ] =
+                                    ( /Llm/llmSent
+                                        ( EAppArg
+                                            { eaaArg = Value /response -> TVArg /response = ( Value /response ↦ TVArg /response ) }
+                                        ) ↦ ∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534
                             ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] }
@@ -381,221 +970,140 @@ Prgm
                                 { eaaArg = Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                            ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llmWith
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
-                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /base -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            ( EAppArg
-                                { eaaArg = Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                            ) -> /Data/Result/Fail
-                            [ /E=/Llm/LlmErr/Unset
-                                ( /variable=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Llm/LlmErr/Unset
-                                ( /variable=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
-                            ( EAppArg
-                                { eaaArg = Value /err -> /Llm/LlmErr/Unset
-                                    ( /variable=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Llm/LlmErr/Unset
+                                { eaaArg = Value /$e5c534-arg -> /Context
+                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /io=/Catln/IO
+                                    ).. = /Context
                                     ( EAppArg
-                                        { eaaArg = Value /variable -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_BASE_URL"
-                                        }
+                                        { eaaArg = Value /value@Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
                                     )
                                 }
-                            )
-                        , /Llm/llmWith
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
-                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
-                            ( EAppArg
-                                { eaaArg = Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /model -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            ( EAppArg
-                                { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] }
-                            ) -> /Data/Result/Fail
-                            [ /E=/Llm/LlmErr/Unset
-                                ( /variable=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Llm/LlmErr/Unset
-                                ( /variable=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
-                            ( EAppArg
-                                { eaaArg = Value /err -> /Llm/LlmErr/Unset
-                                    ( /variable=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Llm/LlmErr/Unset
-                                    ( EAppArg
-                                        { eaaArg = Value /variable -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_MODEL"
-                                        }
-                                    )
-                                }
-                            )
-                        , /Llm/llmWith
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO.. } )
-                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
-                            ( EAppArg
-                                { eaaArg = Value /base -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /b -> ∀/Data/String } )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /model -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /m -> ∀/Data/String } )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /key -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String )
-                                    , []
-                                    )
-                                }
-                            ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ] =
-                            ( /Llm/llmSent
-                                ( EAppArg
-                                    { eaaArg = Value /response -> ∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Http/HttpErr
-                                        ] =
-                                        ( /Http/httpPost
-                                            ( EAppArg
-                                                { eaaArg = Value /url -> ∀/Data/String =
-                                                    ( /operator++
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/chat/completions"
-                                                            }
-                                                        ) ↦ ∀/Data/String
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /headers -> /Data/List/Cons
-                                                    [ /T=/Http/Header
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /value=∀/Data/String
-                                                        )
-                                                    ]
-                                                    ( /head=/Http/Header
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /value=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    , /tail=
-                                                        ( /Data/List/Nil + /Data/List/Cons
-                                                            [ /T=/Http/Header
-                                                                ( /name=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                , /value=∀/Data/String
-                                                                )
-                                                            ]
-                                                            ( /head=/Http/Header
-                                                                ( /name=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                , /value=∀/Data/String
-                                                                )
-                                                            , /tail=/Data/List/Nil
-                                                            )
-                                                        )
-                                                    ) =
-                                                    ( /Llm/llmHeaders
-                                                        ( EAppArg
-                                                            { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
-                                                        ) ↦ /Data/List/Cons
-                                                        [ /T=/Http/Header
-                                                            ( /name=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            , /value=∀/Data/String
-                                                            )
-                                                        ]
-                                                        ( /head=/Http/Header
-                                                            ( /name=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            , /value=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        , /tail=
-                                                            ( /Data/List/Nil + /Data/List/Cons
-                                                                [ /T=/Http/Header
-                                                                    ( /name=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                    , /value=∀/Data/String
-                                                                    )
-                                                                ]
-                                                                ( /head=/Http/Header
-                                                                    ( /name=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                    , /value=∀/Data/String
-                                                                    )
-                                                                , /tail=/Data/List/Nil
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /body -> ∀/Data/String =
-                                                    ( /Llm/llmRequest
-                                                        ( EAppArg
-                                                            { eaaArg = Value /model -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
-                                                        ) ↦ ∀/Data/String
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
-                                            ) ↦ ∀/Data/Result
-                                            [ /T=∀/Data/String
-                                            , /E=∀/Http/HttpErr
-                                            ]
-                                        )
-                                    }
-                                ) ↦ ∀/Data/Result
+                            ) -> /Context
+                            [ /V=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ]
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Llm/llmWith
+                                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                    , /base=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                    , /input=∀/Data/String
+                                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                    ) = /Llm/llmWith
+                                                    ( EAppArg
+                                                        { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /model -> TVArg /model = ( Value /model ↦ TVArg /model ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            ]
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=∀/Data/Result
+                                                    [ /T=∀/Data/String
+                                                    , /E=∀/Llm/LlmErr
+                                                    ]
+                                                ]
+                                                ( /value=∀/Data/Result
+                                                    [ /T=∀/Data/String
+                                                    , /E=∀/Llm/LlmErr
+                                                    ]
+                                                , /io=/Catln/IO
+                                                )
+                                            }
+                                        ) -> /Context
+                                        [ /V=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ]
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74
+                                            ( EAppArg
+                                                { eaaArg = Value /$d20a74-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            ]
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                )
                             )
                         ]
                     }
@@ -1062,6 +1570,55 @@ Prgm
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74
+                            ( EAppArg
+                                { eaaArg = Value /$d20a74-arg -> /Context
+                                    [ /V=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    ]
+                                    ( /value=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    , /io=/Catln/IO
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /reply -> ∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /reply = ( Value /reply ↦ TVArg /reply ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                             )
                         ]
                     }
@@ -1787,77 +2344,256 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llm"
+                ( "/Llm/llm.$ad0f0c.$a07c6b"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /Llm/llm
-                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ]
-                        ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llm
+                        [ /Llm/llm.$ad0f0c.$a07c6b
                             ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ] =
-                            ( /Llm/llmWith
-                                ( EAppArg
-                                    { eaaArg = Value /io -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] =
-                                        ( /System/env
-                                            ( EAppArg
-                                                { eaaArg = Value /name -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_BASE_URL"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Maybe[ /T=∀/Data/String ]
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] =
-                                        ( /System/env
-                                            ( EAppArg
-                                                { eaaArg = Value /name -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_MODEL"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Maybe[ /T=∀/Data/String ]
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] =
-                                        ( /System/env
-                                            ( EAppArg
-                                                { eaaArg = Value /name -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_API_KEY"
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Maybe[ /T=∀/Data/String ]
-                                        )
-                                    }
-                                ) ↦ ∀/Data/Result
+                            ( EAppArg
+                                { eaaArg = Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$a07c6b-arg -> /Context
+                                    [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /io=/Catln/IO
+                                    ).. = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            [ /V=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                        ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                        , /io=/Catln/IO
+                                        ).. =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /System/env
+                                                    ( /name=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) = /System/env
+                                                    ( EAppArg
+                                                        { eaaArg = Value /name -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_API_KEY"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                            ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /io=/Catln/IO
+                                            )..
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /io=/Catln/IO
+                                                )..
+                                            }
+                                        ) -> /Context
+                                        [ /V=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ]
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /Llm/llm.$ad0f0c.$a07c6b.$e5c534
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /model -> TVArg /model = ( Value /model ↦ TVArg /model ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$e5c534-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            ]
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$ad0f0c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$ad0f0c
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /$ad0f0c-arg -> /Context
+                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /io=/Catln/IO
+                                    ).. = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] }
+                                    )
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            [ /V=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                        ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                        , /io=/Catln/IO
+                                        ).. =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /System/env
+                                                    ( /name=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ) = /System/env
+                                                    ( EAppArg
+                                                        { eaaArg = Value /name -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_MODEL"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                            ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /io=/Catln/IO
+                                            )..
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /io=/Catln/IO
+                                                )..
+                                            }
+                                        ) -> /Context
+                                        [ /V=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ]
+                                        ( /value=∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        , /io=/Catln/IO
+                                        ) =
+                                        ( /Llm/llm.$ad0f0c.$a07c6b
+                                            ( EAppArg
+                                                { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$a07c6b-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Context
+                                            [ /V=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            ]
+                                            ( /value=∀/Data/Result
+                                                [ /T=∀/Data/String
+                                                , /E=∀/Llm/LlmErr
+                                                ]
+                                            , /io=/Catln/IO
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                )
                             )
                         ]
                     }
@@ -1866,6 +2602,10 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

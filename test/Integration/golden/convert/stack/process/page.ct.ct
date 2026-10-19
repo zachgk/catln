@@ -1,0 +1,50 @@
+import "core"
+import hsrawprgm()
+
+
+module(Process)
+  # ## The page a file processor rewrites
+    A file processor is given the page it is written on as a [/Catln/RawPrgm], the page as it was
+    written, and answers with the page it is to become. These are what it is rewritten with: in
+    place, by the annotation it is written as ([setAnnot], [removeAnnot]), or as text
+    ([formatPage], [parsePage]).
+  formatPage(page -> /Catln/RawPrgm..) -> String
+    # [formatPage] is the text of [page], as `catln process` writes it to its file.
+    #runtime("formatPage")
+
+  class(ParsePageErr, [ParsePageErr/Syntax(message -> String)], isa= [/Data/Err])
+    # [ParsePageErr] is why text is not a page: the [message] the parser said of it.
+
+  parsePage(text -> String) -> /Data/Result[$T -> /Catln/RawPrgm.., $E -> ParsePageErr]
+    # [parsePage] is the page [text] is, read as a `.ct` file is, or the [ParsePageErr] saying why
+      it is not one.
+    #runtime("parsePage")
+
+  removeAnnot(page -> /Catln/RawPrgm.., annotId -> String) -> /Catln/RawPrgm..
+    # [removeAnnot] is [page] without the annotation [annotId] names, nor what is written under it.
+    #runtime("removeAnnot")
+
+  setAnnot(page -> /Catln/RawPrgm.., annotId -> String, annot) -> /Catln/RawPrgm..
+    # [setAnnot] is [page] with the annotation [annotId] names written as [annot], as a line
+      processor's annotation is written back.
+    #runtime("setAnnot")
+
+  parsedText(r -> /Data/Result[$T -> /Catln/RawPrgm.., $E -> ParsePageErr]) -> String
+    # [parsedText] is the text of the page [r] read, or why there is none, without the line break
+      either ends with.
+  parsedText(r= /Data/Result/Ok(value))= formatPage(page= value).trimEnd
+  parsedText(r= /Data/Result/Fail(err))= err.msg.trimEnd
+
+  # A page read from text is written back as the formatter writes it, and text which is not a page
+    is answered with what the parser says of it.
+  > parsedText(r= parsePage(text= "x=1\n"))
+    >>> x= 1
+  > parsedText(r= parsePage(text= "x= (\n"))
+    >>> the text is not a page: <parsePage>:1:5:
+    >>>   |
+    >>> 1 | x= (
+    >>>   |     ^
+    >>> unexpected newline
+    >>> expecting "${", "->", "..", '"', '$', ''', '(', ')', ',', '-', ':', '[', '_', '~', digit, or integer
+module(Data)
+  :/Process/ParsePageErr/Syntax(message).msg= "the text is not a page: " ++ message

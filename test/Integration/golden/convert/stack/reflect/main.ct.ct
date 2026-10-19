@@ -1,0 +1,99 @@
+import "core"
+import hsprgm()
+
+
+module(Catln)
+  # # Reading values from text
+    A program can be handed a value as text: written by a person, or by a language model asked for
+    one. [parseExpr] reads such text as a Catln expression, by the parser a page is read with, and
+    answers with its value when it is a value of the type it was asked for. The expression is
+    compiled as though it were written on the page the call is written on, so the names in it mean
+    what they mean there, and evaluated with nothing else in scope: it is a value, never an effect.
+    The type it must be is a value too, a [/Catln/Type], written as [typeOf] of the type.
+    This is not part of the standard library. It reads the compiler's own types (`import hsprgm()`),
+    which a program that reads no values from text has no use for, and one that does writes
+    `import "reflect"`.
+  typeOf[$T] -> /Catln/Type
+    # [typeOf] is the type written as its [$T], as a value: `typeOf[$T -> Integer]`. The type must be
+      written out where it is asked for. A [$T] standing for a variable of an enclosing definition
+      is a different type at each call, so it is reported rather than answered.
+    #runtime("typeOf")
+
+  typeText(type -> /Catln/Type) -> String
+    # [typeText] is [type] written as a reader of Catln would write it, for telling a reader what to
+      write. A type of several shapes is written as the list of them, since a class is the only way
+      to write a union and [type] need not be one.
+    #runtime("typeText")
+
+  typeDecls(type -> /Catln/Type) -> String
+    # [typeDecls] are the statements declaring what [type] is made of, as they were written and with
+      their comments: each shape of it, each member of each class of it, and in turn what their
+      arguments are declared as. The standard library's own declarations are left out, as the
+      language a reader of Catln already reads.
+    #runtime("typeDecls")
+
+  class(ParseExprErr, [ParseExprErr/Syntax(message -> String), ParseExprErr/Type(message -> String), ParseExprErr/NotOf(found), ParseExprErr/Eval(message -> String)], isa= [/Data/Err])
+    # [ParseExprErr] is why text is not a value of a type: it is not an expression ([Syntax]), it
+      does not typecheck as a value of the type ([Type]), its value is [found] and that is not one
+      of the type ([NotOf]), or it failed while it was being evaluated ([Eval]). Each [message] is
+      what the compiler said.
+
+  parseExpr(input -> String, type -> /Catln/Type) -> /Data/Result[$E -> ParseExprErr]
+    # [parseExpr] is the value of the Catln expression [input], when it is a value of [type], and the
+      [ParseExprErr] saying why not otherwise. The names in [input] mean what they mean on the page
+      the call is written on.
+    #runtime("callerSource")
+  parseExpr(input -> String, type -> /Catln/Type, source -> String)= parseExprIn(input= input, type= type, source= source)
+
+  parseExprIn(input -> String, type -> /Catln/Type, source -> String) -> /Data/Result[$E -> ParseExprErr]
+    # [parseExprIn] is [parseExpr] of text written on the page read from [source].
+    #runtime("parseExpr")
+module(Catln/ReflectExample)
+  # ## Reading a value
+    The value [parseExpr] answers with is of no one type the program can see: the type it was asked
+    for is a value, known only once the call is made. So it is read the way any value of unknown
+    shape is, by the arms that take each shape it may be, with an `else` for the rest. Here [Point]
+    is a type of this page, which the text names as this page does.
+  data(Point(x -> Integer, y -> Integer))
+
+  parsedShown(r -> /Data/Result[$E -> /Catln/ParseExprErr]) -> String
+    # [parsedShown] is what [r] read: the value, or why there is none.
+  parsedShown(r= /Data/Result/Ok(value))= parsedShownValue(v= value)
+  parsedShown(r= /Data/Result/Fail(err))= parsedErrShown(e= err)
+
+  parsedErrShown(e -> /Catln/ParseExprErr) -> String
+    # [parsedErrShown] is why there is no value. What the typecheck says is long, and says how the
+      compiler reached its answer rather than what the answer is, so it is left out here.
+  parsedErrShown(e= /Catln/ParseExprErr/Type(message))= "the expression is not of the type asked for"
+  parsedErrShown(e) else = e.msg
+
+  parsedShownValue(v -> Integer)= v.toString
+  parsedShownValue(v= Point(x, y))= "Point at " ++ x.toString ++ ", " ++ y.toString
+  parsedShownValue(v) else = "something else"
+
+  > parsedShown(r= /Catln/parseExpr(input= "3", type= /Catln/typeOf[$T -> Integer]))
+    >>> 3
+  > parsedShown(r= /Catln/parseExpr(input= "Point(x= 1 + 2, y= 4)", type= /Catln/typeOf[$T -> Point..]))
+    >>> Point at 3, 4
+  # Text that is not an expression is answered with what the parser says of it, and an expression
+    of some other type with what the typecheck says.
+  > parsedShown(r= /Catln/parseExpr(input= "Point(x= ", type= /Catln/typeOf[$T -> Point..]))
+    >>> the text is not a Catln expression: <parseExpr>:1:10:
+    >>>   |
+    >>> 1 | Point(x= 
+    >>>   |          ^
+    >>> unexpected end of input
+    >>> expecting "${", "->", '"', '$', ''', '(', '-', ':', '[', '_', '~', digit, integer, newline, or space
+  > parsedShown(r= /Catln/parseExpr(input= "\"a\"", type= /Catln/typeOf[$T -> Integer]))
+    >>> the expression is not of the type asked for
+  # A model told to write a value of a type is told it as [/Catln/typeText] writes it, with what
+    [/Catln/typeDecls] says it is made of.
+  > /Catln/typeText(type= /Catln/typeOf[$T -> Point..])
+    >>> /Catln/ReflectExample/Point
+  > /Catln/typeDecls(type= /Catln/typeOf[$T -> Point..])
+    >>> data(Point(x -> Integer, y -> Integer))
+module(Data)
+  :/Catln/ParseExprErr/Syntax(message).msg= "the text is not a Catln expression: " ++ message
+  :/Catln/ParseExprErr/Type(message).msg= "the expression is not of the type asked for: " ++ message
+  :/Catln/ParseExprErr/NotOf(found).msg= "the expression's value is not of the type asked for"
+  :/Catln/ParseExprErr/Eval(message).msg= "the expression failed to evaluate: " ++ message

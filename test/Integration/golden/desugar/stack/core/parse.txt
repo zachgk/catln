@@ -12,29 +12,6 @@ Prgm
                     }
                 )
             ,
-                ( "/digitsValue./Data/$e16d3b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ digitsValue./Data/$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
-                            ( Value /$e16d3b-arg= /Data/Maybe/Some( Value value@Value d ) ) | /operator<( Value /l= Value d )( Value /r= Value base )= digitsValue( Value cs= Value tail )( Value base= Value base )( Value sign= Value sign )
-                            ( Value acc= /operator+
-                                ( Value /l= /operator*( Value /l= Value acc )( Value /r= Value base ) )
-                                ( Value /r= /operator*( Value /l= Value sign )( Value /r= Value d ) )
-                            )
-                            ( Value at= /operator+( Value /l= Value at )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        , digitsValue./Data/$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )( Value /$e16d3b-arg@Value m )= /Data/Result/Fail
-                            ( Value err= /Data/IntegerParseErr/NotADigit( Value c= Value head )( Value at= Value at )( Value base= Value base ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/IntegerParseErr/BadBase"
                 , ObjectMapItem
                     { omiDecls =
@@ -278,8 +255,31 @@ Prgm
                             ( Value cs= /Data/List/Cons( Value head )( Value tail ) )( Value base )( Value sign )( Value acc )( Value at ) -> ∀/Data/Result
                             [ /T=/Data/Primitive/Integer
                             , /E=∀/Data/IntegerParseErr
-                            ] = $e16d3b( Value /head= Value /head )( Value /at= Value /at )( Value /base= Value /base )( Value /acc= Value /acc )( Value /tail= Value /tail )( Value /sign= Value /sign )
+                            ] = /Data/digitsValue.$e16d3b( Value /head= Value /head )( Value /at= Value /at )( Value /base= Value /base )( Value /acc= Value /acc )( Value /tail= Value /tail )( Value /sign= Value /sign )
                             ( Value /$e16d3b-arg= digitValue( Value /this= Value head ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/digitsValue.$e16d3b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsValue.$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )
+                            ( Value /$e16d3b-arg= /Data/Maybe/Some( Value value@Value d ) ) | /operator<( Value /l= Value d )( Value /r= Value base )= digitsValue( Value cs= Value tail )( Value base= Value base )( Value sign= Value sign )
+                            ( Value acc= /operator+
+                                ( Value /l= /operator*( Value /l= Value acc )( Value /r= Value base ) )
+                                ( Value /r= /operator*( Value /l= Value sign )( Value /r= Value d ) )
+                            )
+                            ( Value at= /operator+( Value /l= Value at )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , /Data/digitsValue.$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )( Value /$e16d3b-arg@Value m )= /Data/Result/Fail
+                            ( Value err= /Data/IntegerParseErr/NotADigit( Value c= Value head )( Value at= Value at )( Value base= Value base ) )
                         ]
                     }
                 )

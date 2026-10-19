@@ -21,19 +21,49 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/lcm"
+                ( "/Llm/lcm.$acf11b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/lcm.$acf11b
+                            ( Value $acf11b-arg= /Context( Value value@Value reply )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value reply )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Llm/lcm( Value input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ]
+                        [ /ContextIn
+                            ( Value /value= /Llm/lcm( Value input -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/lcm( Value input -> ∀/Data/String )( Value page -> /Catln/RawPrgm.. )( Value /this -> /Catln/IO.. )= llm
-                            ( Value input= lcmPrompt( Value input= Value input )( Value page= Value page ) )( Value /this= Value this )
+                        [ /ContextIn
+                            ( Value /value= /Llm/lcm( Value input -> ∀/Data/String )( Value page -> /Catln/RawPrgm.. ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llm
+                                    ( Value input= lcmPrompt( Value input= Value input )( Value page= Value page ) )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/lcm.$acf11b( Value /$acf11b-arg= Value v ) )
                         ]
                     }
                 )
@@ -41,6 +71,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =
@@ -53,8 +84,8 @@ Prgm
                 can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
                 page says it computes, and not only what it says.
                 The page is the one the program was compiled from, handed to the call by the compiler rather
-                than read again from the file: a call written as `io.lcm(input= ...)` is completed to
-                `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])." }
+                than read again from the file: a call written as `lcm(input= ...)` is completed to
+                `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])." }
             )
         , /Catln/#md
             ( Value /text= CStr

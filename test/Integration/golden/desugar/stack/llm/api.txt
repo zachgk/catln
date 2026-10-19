@@ -136,6 +136,108 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn
+                            ( Value /value= /Llm/llm( Value input -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn
+                            ( Value /value= /Llm/llmWith( Value input -> ∀/Data/String )
+                                ( Value base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                                ( Value model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                                ( Value key -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( Value /value= /Llm/llm( Value input ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /System/env
+                                    ( Value name= CStr
+                                        { csValue = "OPENAI_BASE_URL" }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/llm.$ad0f0c( Value /input= Value /input )( Value /$ad0f0c-arg= Value v ) )
+                        , /ContextIn
+                            ( Value /value= /Llm/llmWith( Value input )( Value base= Value /Data/Maybe/Nothing )( Value model )( Value key ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ).. = /Context
+                            ( Value /value= /Data/Result/Fail
+                                ( Value err= LlmErr/Unset
+                                    ( Value variable= CStr
+                                        { csValue = "OPENAI_BASE_URL" }
+                                    )
+                                )
+                            )( Value io= Value io )
+                        , /ContextIn
+                            ( Value /value= /Llm/llmWith( Value input )
+                                ( Value base= /Data/Maybe/Some( Value value ) )( Value model= Value /Data/Maybe/Nothing )( Value key )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ).. = /Context
+                            ( Value /value= /Data/Result/Fail
+                                ( Value err= LlmErr/Unset
+                                    ( Value variable= CStr
+                                        { csValue = "OPENAI_MODEL" }
+                                    )
+                                )
+                            )( Value io= Value io )
+                        , /ContextIn
+                            ( Value /value= /Llm/llmWith( Value input )
+                                ( Value base= /Data/Maybe/Some( Value value@Value b ) )
+                                ( Value model= /Data/Maybe/Some( Value value@Value m ) )( Value key )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /Http/httpPost
+                                    ( Value url= /operator++( Value /l= Value b )
+                                        ( Value /r= CStr
+                                            { csValue = "/chat/completions" }
+                                        )
+                                    )
+                                    ( Value headers= llmHeaders( Value key= Value key ) )
+                                    ( Value body= llmRequest( Value model= Value m )( Value input= Value input ) )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/llmWith.$a45a5a( Value /$a45a5a-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/llmReply"
                 , ObjectMapItem
                     { omiDecls =
@@ -172,54 +274,35 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llmWith"
+                ( "/Llm/llmWith.$a45a5a"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /Llm/llmWith( Value io -> /Catln/IO )( Value input -> ∀/Data/String )
-                            ( Value base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value key -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ]
-                        ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmWith( Value io )( Value input )( Value base= Value /Data/Maybe/Nothing )( Value model )( Value key ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ] = /Data/Result/Fail
-                            ( Value err= LlmErr/Unset
-                                ( Value variable= CStr
-                                    { csValue = "OPENAI_BASE_URL" }
-                                )
+                        [ /Llm/llmWith.$a45a5a
+                            ( Value $a45a5a-arg= /Context( Value value@Value response )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context
+                            ( Value /value= llmSent( Value response= Value response ) )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534( Value /input -> ∀/Data/String )( Value /base )( Value /model )
+                            ( Value $e5c534-arg= /Context( Value value@Value key )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llmWith( Value input= Value input )( Value base= Value base )( Value model= Value model )( Value key= Value key ) )( Value io= Value io )
                             )
-                        , /Llm/llmWith( Value io )( Value input )
-                            ( Value base= /Data/Maybe/Some( Value value ) )( Value model= Value /Data/Maybe/Nothing )( Value key ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ] = /Data/Result/Fail
-                            ( Value err= LlmErr/Unset
-                                ( Value variable= CStr
-                                    { csValue = "OPENAI_MODEL" }
-                                )
-                            )
-                        , /Llm/llmWith( Value io )( Value input )
-                            ( Value base= /Data/Maybe/Some( Value value@Value b ) )
-                            ( Value model= /Data/Maybe/Some( Value value@Value m ) )( Value key ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ] = llmSent
-                            ( Value response= httpPost
-                                ( Value url= /operator++( Value /l= Value b )
-                                    ( Value /r= CStr
-                                        { csValue = "/chat/completions" }
-                                    )
-                                )
-                                ( Value headers= llmHeaders( Value key= Value key ) )
-                                ( Value body= llmRequest( Value model= Value m )( Value input= Value input ) )( Value /this= Value io )
-                            )
+                            ( fn( Value v )= /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74( Value /$d20a74-arg= Value v ) )
                         ]
                     }
                 )
@@ -425,6 +508,20 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74
+                            ( Value $d20a74-arg= /Context( Value value@Value reply )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value reply )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/llmRequest"
                 , ObjectMapItem
                     { omiDecls =
@@ -480,36 +577,46 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llm"
+                ( "/Llm/llm.$ad0f0c.$a07c6b"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /Llm/llm( Value input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ]
-                        ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llm( Value input )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ] = llmWith( Value io= Value this )( Value input= Value input )
-                            ( Value base= env
-                                ( Value name= CStr
-                                    { csValue = "OPENAI_BASE_URL" }
-                                )( Value /this= Value this )
+                        [ /Llm/llm.$ad0f0c.$a07c6b( Value /input -> ∀/Data/String )( Value /base )
+                            ( Value $a07c6b-arg= /Context( Value value@Value model )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /System/env
+                                    ( Value name= CStr
+                                        { csValue = "OPENAI_API_KEY" }
+                                    )
+                                )( Value io= Value io )
                             )
-                            ( Value model= env
-                                ( Value name= CStr
-                                    { csValue = "OPENAI_MODEL" }
-                                )( Value /this= Value this )
+                            ( fn( Value v )= /Llm/llm.$ad0f0c.$a07c6b.$e5c534( Value /input= Value /input )( Value /base= Value /base )( Value /model= Value /model )( Value /$e5c534-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$ad0f0c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$ad0f0c( Value /input -> ∀/Data/String )
+                            ( Value $ad0f0c-arg= /Context( Value value@Value base )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /System/env
+                                    ( Value name= CStr
+                                        { csValue = "OPENAI_MODEL" }
+                                    )
+                                )( Value io= Value io )
                             )
-                            ( Value key= env
-                                ( Value name= CStr
-                                    { csValue = "OPENAI_API_KEY" }
-                                )( Value /this= Value this )
-                            )
+                            ( fn( Value v )= /Llm/llm.$ad0f0c.$a07c6b( Value /input= Value /input )( Value /base= Value /base )( Value /$a07c6b-arg= Value v ) )
                         ]
                     }
                 )
@@ -517,6 +624,10 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

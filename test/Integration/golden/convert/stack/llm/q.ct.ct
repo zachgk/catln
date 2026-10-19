@@ -1,0 +1,34 @@
+import "core"
+import hsrawprgm()
+import "llm/err.ct"
+import "llm/lcm.ct"
+
+
+module(Llm)
+  # ## Asking about a page from the page
+    A question about a page can be written on the page itself, as `q> ` and then the question. It
+    is a [#q], and is asked by `catln process`, which writes the reply under the question as the
+    `>>>` lines of its [result], the way `catln test --update` writes what a `> expr` prints. A
+    question with a reply is not asked again; its `>>>` lines are removed to ask it again.
+  annot(#q(input -> String))
+    # [#q] is a question for a model about the page it is written on, asked by [lcm].
+  annot(#q(input -> String, result -> String))
+    # The [#q] can also hold the [result] the model replied with.
+  annot(#q(input -> String, failure -> String))
+    # A [#q] the model gave no reply to holds the [failure] saying why, for `catln process` to
+      report. It is not written back: the question is left unanswered, to be asked again.
+
+  /Catln/process{io -> /Catln/IO}(annot -> #q(input -> String)) -> #q..{IO}
+    # A [#q] is processed by asking it with the page it is written on, and is updated to hold the
+      reply as its [result]. Where there is no reply it holds the [failure] saying why.
+    #runtime("callerPage")
+  /Catln/process{io -> /Catln/IO}(annot= #q(input -> String), page -> /Catln/RawPrgm..) -> #q..{IO} =
+    reply<- lcm(input= input, page= page)
+
+    qAnswered(input= input, reply= reply)
+
+  qAnswered(input -> String, reply -> /Data/Result[$T -> String, $E -> LlmErr]) -> #q..
+    # [qAnswered] is the [#q] asking [input], holding the [reply] where there is one, and why there
+      is none where there is not.
+  qAnswered(input, reply= /Data/Result/Fail(err))= #q(input= input, failure= err.msg)
+  qAnswered(input, reply= /Data/Result/Ok(value))= #q(input= input, result= value)

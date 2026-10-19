@@ -14,8 +14,8 @@ Prgm
                 - `OPENAI_MODEL` is the model to ask.
                 - `OPENAI_API_KEY` is the key to ask with, sent as a bearer token. It may be left unset, for a
                   server that asks for none.
-                It is a method of [/Catln/IO] because everything it does reaches outside the program: it reads
-                the environment and it sends a request.
+                It runs in an [/Catln/IO] context because everything it does reaches outside the program: it
+                reads the environment and it sends a request.
                 This is not part of the standard library. A program which asks no model has no use for it, and
                 one that does writes `import "llm"`.
                 It is written in parts, each a page of this directory:

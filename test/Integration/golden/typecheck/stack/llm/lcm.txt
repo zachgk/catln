@@ -33,92 +33,100 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/lcm"
+                ( "/Llm/lcm.$acf11b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/lcm.$acf11b
+                            ( Value /$acf11b-arg -> /Context
+                                ( /value=TopType
+                                , /io=TopType
+                                ).. = /Context( Value /value@Value /reply )( Value /io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=TopType
+                            , /io=TopType
+                            ) = /Context( Value /value -> TVArg /reply = Value /reply )( Value /io -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Llm/lcm( Value /input -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Llm/LlmErr
-                            ]
+                        [ /ContextIn
+                            ( Value /value -> /Llm/lcm( /input=∀/Data/String ) = /Llm/lcm( Value /input -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/lcm( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /this -> /Catln/IO.. ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Result
+                        [ /ContextIn
+                            ( Value /value -> /Llm/lcm
+                                ( /page=/Catln/RawPrgm..
+                                , /input=∀/Data/String
+                                ) = /Llm/lcm( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            [ /V=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /io=/Catln/IO
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=∀/Data/Result
                                     [ /T=∀/Data/String
                                     , /E=∀/Llm/LlmErr
                                     ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Result/Fail
-                                    ( /err=
-                                        ( /Llm/LlmErr/ApiError( /message=∀/Data/String ) + /Llm/LlmErr/NoReply
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /cause=∀/Data/JsonAccessErr
-                                            ) + /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) + /Llm/LlmErr/NotText
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /found=∀/Data/Json
-                                            ) + /Llm/LlmErr/Unset
-                                            ( /variable=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            ) + /Llm/LlmErr/Request( /cause=∀/Http/HttpErr )
-                                        )
-                                    ) + /Llm/llmMessage
-                                    ( /choice=∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=∀/Data/JsonAccessErr
-                                        ]
-                                    ) + /Llm/llmContent
-                                    ( /message=∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=∀/Data/JsonAccessErr
-                                        ]
-                                    ) + /Llm/llmSent
-                                    ( /response=∀/Data/Result
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                ).. = /ContextIn
+                                ( Value /value -> /Llm/llm( /input=∀/Data/String ) = /Llm/llm
+                                    ( Value /input -> ∀/Data/String = /Llm/lcmPrompt( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page ) )
+                                )( Value /io -> TVArg /io = Value /io )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=∀/Data/Result
                                         [ /T=∀/Data/String
-                                        , /E=∀/Http/HttpErr
+                                        , /E=∀/Llm/LlmErr
                                         ]
-                                    ) + /Llm/llmReply
-                                    ( /response=∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=/Data/JsonParseErr..
+                                    ]
+                                    ( /value=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
                                         ]
-                                    ) + /Llm/llmWith
-                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /base=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /input=∀/Data/String
-                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /io=/Catln/IO
-                                    ) + /Llm/llmChoice
-                                    ( /choices=∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=∀/Data/JsonAccessErr
-                                        ]
-                                    ) + /Llm/llmText
-                                    ( /content=∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=∀/Data/JsonAccessErr
-                                        ]
-                                    ) + /Llm/llmAnswer
-                                    ( /error=∀/Data/Result
-                                        [ /T=∀/Data/Json
-                                        , /E=∀/Data/JsonAccessErr
-                                        ]
-                                    , /response=∀/Data/Json
-                                    ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) + /Llm/llm
-                                    ( /this=/Catln/IO..
-                                    , /input=∀/Data/String
-                                    )
-                                )
-                            , []
-                            ) = /Llm/llm
-                            ( Value /input -> ∀/Data/String = /Llm/lcmPrompt( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page ) )( Value /this -> TVArg /this = Value /this )
+                                    )..
+                                ) -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /io=/Catln/IO
+                                ) = /Llm/lcm.$acf11b( Value /$acf11b-arg -> TVArg /v = Value /v )
+                            )
                         ]
                     }
                 )
@@ -126,6 +134,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =
@@ -139,8 +148,8 @@ Prgm
                 can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
                 page says it computes, and not only what it says.
                 The page is the one the program was compiled from, handed to the call by the compiler rather
-                than read again from the file: a call written as `io.lcm(input= ...)` is completed to
-                `io.lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])." }
+                than read again from the file: a call written as `lcm(input= ...)` is completed to
+                `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String/Text

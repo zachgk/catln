@@ -1,0 +1,104 @@
+import "core"
+import "env"
+import "http"
+import "json/json.ct"
+import "json/encode.ct"
+import "json/decode.ct"
+import "llm/err.ct"
+
+
+module(Llm)
+  llm{io -> IO}(input -> String) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
+    # [llm] is the reply of the configured model to the prompt [input], or the [LlmErr] saying why
+      there is none.
+  llm{io -> IO}(input) =
+    base<- /System/env(name= "OPENAI_BASE_URL")
+
+    model<- /System/env(name= "OPENAI_MODEL")
+
+    key<- /System/env(name= "OPENAI_API_KEY")
+
+    reply<- llmWith(input= input, base= base, model= model, key= key)
+    reply
+
+  llmWith{io -> IO}(input -> String, base -> /Data/Maybe[$T -> String], model -> /Data/Maybe[$T -> String], key -> /Data/Maybe[$T -> String]) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
+    # [llmWith] asks the model [model] at [base] about [input], where both are configured.
+  llmWith{io -> IO}(input, base= /Data/Maybe/Nothing, model, key)= /Data/Result/Fail(err= LlmErr/Unset(variable= "OPENAI_BASE_URL")){io}
+  llmWith{io -> IO}(input, base= /Data/Maybe/Some(value), model= /Data/Maybe/Nothing, key)= /Data/Result/Fail(err= LlmErr/Unset(variable= "OPENAI_MODEL")){io}
+  llmWith{io -> IO}(input, base= /Data/Maybe/Some(value@b), model= /Data/Maybe/Some(value@m), key) =
+    response<- /Http/httpPost(url= b ++ "/chat/completions", headers= llmHeaders(key= key), body= llmRequest(model= m, input= input))
+
+    llmSent(response= response)
+
+  llmSent(response -> /Data/Result[$T -> String, $E -> /Http/HttpErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+    # [llmSent] is the reply in the body of the [response], or why the request has none.
+  llmSent(response= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/Request(cause= err))
+  llmSent(response= /Data/Result/Ok(value))= llmReply(response= /Data/jsonParse(text= value))
+
+  # ## The request
+  llmRequest(model -> String, input -> String) -> String
+    # [llmRequest] is the body asking [model] about [input]: one message, from the user.
+  llmRequest(model, input)= /Data/jsonEncode(value= /Data/Json/Object(entries= [/Data/Json/Member(key= "model", value= /Data/Json/Str(value= model)), /Data/Json/Member(key= "messages", value= /Data/Json/Array(entries= [/Data/Json/Object(entries= [/Data/Json/Member(key= "role", value= /Data/Json/Str(value= "user")), /Data/Json/Member(key= "content", value= /Data/Json/Str(value= input))])]))]))
+
+  > llmRequest(model= "m", input= "Say \"hi\"")
+    >>> {"model":"m","messages":[{"role":"user","content":"Say \"hi\""}]}
+  llmHeaders(key -> /Data/Maybe[$T -> String]) -> /Data/List/ConsList[$T -> /Http/Header(name -> String, value -> String)]
+    # [llmHeaders] are the headers the request is sent with: that its body is JSON, and the key to
+      ask with where there is one.
+  llmHeaders(key= /Data/Maybe/Nothing)= [/Http/Header(name= "Content-Type", value= "application/json")]
+  llmHeaders(key= /Data/Maybe/Some(value@k))= [/Http/Header(name= "Content-Type", value= "application/json"), /Http/Header(name= "Authorization", value= "Bearer " ++ k)]
+
+  # ## The reply
+    The reply is the text at `choices[0].message.content` of the response, read one step at a
+    time. A step which finds nothing where it reads fails with the path read so far, and the steps
+    after it pass that on. A response holding an `error` is the API saying what was wrong, and is
+    answered with that rather than with the reply it does not hold.
+  llmReply(response -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonParseErr..]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmReply(response= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NotJson(cause= err))
+  llmReply(response= /Data/Result/Ok(value))= llmAnswer(error= /Data/jsonMember(value= value, key= "error"), response= value)
+
+  llmAnswer(error -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr], response -> /Data/Json) -> /Data/Result[$T -> String, $E -> LlmErr]
+    # [llmAnswer] is the reply in [response], or the [error] it holds instead.
+  llmAnswer(error= /Data/Result/Ok(value), response)= /Data/Result/Fail(err= LlmErr/ApiError(message= llmErrorText(e= value)))
+  llmAnswer(error= /Data/Result/Fail(err), response)= llmChoice(choices= /Data/jsonMember(value= response, key= "choices"))
+
+  llmErrorText(e -> /Data/Json) -> String
+    # [llmErrorText] is what an API's error [e] says: its `message` where it has one, as the
+      OpenAI API writes one, and the error written out as JSON where it does not.
+  llmErrorText(e)= llmErrorMessage(message= /Data/jsonMember(value= e, key= "message"), e= e)
+
+  llmErrorMessage(message -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr], e -> /Data/Json) -> String
+  llmErrorMessage(message= /Data/Result/Ok(value= /Data/Json/Str(value@m)), e)= m
+  llmErrorMessage(message, e) else = /Data/jsonEncode(value= e)
+
+  llmChoice(choices -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmChoice(choices= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices", cause= err))
+  llmChoice(choices= /Data/Result/Ok(value))= llmMessage(choice= /Data/jsonIndex(value= value, i= 0))
+
+  llmMessage(choice -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmMessage(choice= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices[0]", cause= err))
+  llmMessage(choice= /Data/Result/Ok(value))= llmContent(message= /Data/jsonMember(value= value, key= "message"))
+
+  llmContent(message -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmContent(message= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices[0].message", cause= err))
+  llmContent(message= /Data/Result/Ok(value))= llmText(content= /Data/jsonMember(value= value, key= "content"))
+
+  llmText(content -> /Data/Result[$T -> /Data/Json, $E -> /Data/JsonAccessErr]) -> /Data/Result[$T -> String, $E -> LlmErr]
+  llmText(content= /Data/Result/Fail(err))= /Data/Result/Fail(err= LlmErr/NoReply(path= "choices[0].message.content", cause= err))
+  llmText(content= /Data/Result/Ok(value= /Data/Json/Str(value@s)))= /Data/Result/Ok(value= s)
+  llmText(content= /Data/Result/Ok(value@v)) else = /Data/Result/Fail(err= LlmErr/NotText(path= "choices[0].message.content", found= v))
+
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": [{\"message\": {\"role\": \"assistant\", \"content\": \"Hello!\"}}]}"))
+    >>> Hello!
+  > llmReply(response= /Data/jsonParse(text= "{\"error\": {\"message\": \"Incorrect API key\"}}"))
+    >>> error: the model's API answered with an error: Incorrect API key
+  > llmReply(response= /Data/jsonParse(text= "{\"error\": \"no\"}"))
+    >>> error: the model's API answered with an error: "no"
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": []}"))
+    >>> error: the model's response has no reply at choices[0]: there is no entry 0 of an array of 0
+  > llmReply(response= /Data/jsonParse(text= "{\"choices\": [{\"message\": {\"content\": 3}}]}"))
+    >>> error: the model's reply at choices[0].message.content is a number, not text
+  > llmReply(response= /Data/jsonParse(text= "<html>"))
+    >>> error: the model's response is not JSON: '<' is where a value was expected, at character 0
+  > llmSent(response= /Data/Result/Fail(err= /Http/HttpErr/Status(url= "http://model.test/v1/chat/completions", code= 401, body= "no key")))
+    >>> error: the model could not be asked: the request to http://model.test/v1/chat/completions answered with status 401: no key

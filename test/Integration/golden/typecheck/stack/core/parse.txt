@@ -12,72 +12,6 @@ Prgm
                     }
                 )
             ,
-                ( "/digitsValue./Data/$e16d3b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /digitsValue./Data/$e16d3b( Value /head )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value /sign -> /Data/Primitive/Integer )
-                            ( Value /$e16d3b-arg -> /Data/Maybe/Some
-                                ( /value=( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) ) = /Data/Maybe/Some
-                                ( Value /value@Value /d -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) )
-                            ) | /operator<( Value /l -> TVArg /d = Value /d )( Value /r -> TVArg /base = Value /base ) ->
-                            ( /Data/Result/Fail
-                                [ /E=/Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    )
-                                ]
-                                ( /err=/Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    )
-                                ) + /digitsValue./Data/$e16d3b
-                                ( /head=/Data/Char
-                                , /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /acc=/Data/Primitive/Integer
-                                , /$e16d3b-arg=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                , /sign=/Data/Primitive/Integer
-                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/digitsValue
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /acc=/Data/Primitive/Integer
-                                , /cs=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                , /sign=/Data/Primitive/Integer
-                                )
-                            ) = /Data/digitsValue( Value /cs -> TVArg /tail = Value /tail )( Value /base -> TVArg /base = Value /base )( Value /sign -> TVArg /sign = Value /sign )
-                            ( Value /acc -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /base = Value /base ) )
-                                ( Value /r -> ( TopType | PredClass /Data/Algebra/Ring && PredClass /Data/Algebra/Ord ) = /operator*( Value /l -> TVArg /sign = Value /sign )( Value /r -> TVArg /d = Value /d ) )
-                            )
-                            ( Value /at -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /at = Value /at )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        , /digitsValue./Data/$e16d3b( Value /head -> /Data/Char )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )( Value /tail )( Value /sign -> /Data/Primitive/Integer )( Value /$e16d3b-arg@Value /m ) -> /Data/Result/Fail
-                            ( /err=/Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                )
-                            ) = /Data/Result/Fail
-                            ( Value /err -> /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) = /Data/IntegerParseErr/NotADigit( Value /c -> TVArg /head = Value /head )( Value /at -> TVArg /at = Value /at )( Value /base -> TVArg /base = Value /base )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/IntegerParseErr/BadBase"
                 , ObjectMapItem
                     { omiDecls =
@@ -433,8 +367,65 @@ Prgm
                                     , /c=/Data/Char
                                     )
                                 ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                            ) = /$e16d3b( Value /head -> TVArg /head = Value /head )( Value /at -> TVArg /at = Value /at )( Value /base -> TVArg /base = Value /base )( Value /acc -> TVArg /acc = Value /acc )( Value /tail -> TVArg /tail = Value /tail )( Value /sign -> TVArg /sign = Value /sign )
+                            ) = /Data/digitsValue.$e16d3b( Value /head -> TVArg /head = Value /head )( Value /at -> TVArg /at = Value /at )( Value /base -> TVArg /base = Value /base )( Value /acc -> TVArg /acc = Value /acc )( Value /tail -> TVArg /tail = Value /tail )( Value /sign -> TVArg /sign = Value /sign )
                             ( Value /$e16d3b-arg -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/Char/digitValue( Value /this -> TVArg /head = Value /head ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/digitsValue.$e16d3b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/digitsValue.$e16d3b( Value /head -> /Data/Char.. )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value /sign -> /Data/Primitive/Integer )
+                            ( Value /$e16d3b-arg -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some( Value /value@Value /d -> /Data/Primitive/Integer ) ) | /operator<( Value /l -> TVArg /d = Value /d )( Value /r -> TVArg /base = Value /base ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) = /Data/digitsValue( Value /cs -> TVArg /tail = Value /tail )( Value /base -> TVArg /base = Value /base )( Value /sign -> TVArg /sign = Value /sign )
+                            ( Value /acc -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /base = Value /base ) )
+                                ( Value /r -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /sign = Value /sign )( Value /r -> TVArg /d = Value /d ) )
+                            )
+                            ( Value /at -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /at = Value /at )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        , /Data/digitsValue.$e16d3b( Value /head -> /Data/Char )( Value /at -> /Data/Primitive/Integer )( Value /base -> /Data/Primitive/Integer )( Value /acc -> /Data/Primitive/Integer )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )( Value /sign -> /Data/Primitive/Integer )
+                            ( Value /$e16d3b-arg@Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Result/Fail
+                            [ /E=/Data/IntegerParseErr/NotADigit
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /c=/Data/Char
+                                )
+                            ]
+                            ( /err=/Data/IntegerParseErr/NotADigit
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /c=/Data/Char
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Data/IntegerParseErr/NotADigit
+                                ( /at=/Data/Primitive/Integer
+                                , /base=/Data/Primitive/Integer
+                                , /c=/Data/Char
+                                ) = /Data/IntegerParseErr/NotADigit( Value /c -> TVArg /head = Value /head )( Value /at -> TVArg /at = Value /at )( Value /base -> TVArg /base = Value /base )
+                            )
                         ]
                     }
                 )

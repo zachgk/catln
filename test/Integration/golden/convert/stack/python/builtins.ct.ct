@@ -5,6 +5,9 @@ import "core/data.ct"
 module(Python/Builtins)
   # ## IO built-ins
   input{io -> IO} -> String{IO}
+    # [input] is the next line of input, as Python's `input()` is. Where there is none the
+      evaluation fails, as Python's raises `EOFError`; a Catln program asks [/Catln/readLine],
+      which answers with why.
     #runtime("ioInput")
 
   # ## Python built-in abs and pow mapped to methods

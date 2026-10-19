@@ -1,5 +1,6 @@
 import "core/primitives.ct"
 import "core/data.ct"
+import "core/error.ct"
 import "core/webdoc.ct"
 
 
@@ -21,6 +22,18 @@ module(Catln)
     # [println] will print the [msg] to the standard output along with a newline character.
     #runtime("println")
 
+  class(InputErr, [InputErr/EndOfInput, InputErr/NoInput], isa= [/Data/Err])
+    # [InputErr] is why there is no line of input to read: the input has ended ([EndOfInput]), or
+      the run has no input to read at all, as a debugger's has not ([NoInput]).
+
+  readLine{io -> IO} -> /Data/Result[$T -> String, $E -> InputErr]{IO}
+    # [readLine] is the next line of the standard input, without its line break, or the [InputErr]
+      saying why there is none.
+    #runtime("ioReadLine")
+module(Data)
+  :/Catln/InputErr/EndOfInput.msg= "the input has ended"
+  :/Catln/InputErr/NoInput.msg= "this run has no input to read"
+module(Catln)
   # ## Core Annotations
     The core annotations are all of the annotations used by the compiler and the web docs program.
   annot(#md(text -> String))

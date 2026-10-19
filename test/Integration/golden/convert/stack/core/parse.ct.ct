@@ -1,0 +1,66 @@
+import "core/string.ct"
+import "core/error.ct"
+
+
+module(Data)
+  # # Reading numbers
+    A number is read from a [String] as a [Result]: the number written there, or the
+    [IntegerParseErr] saying why there is none.
+  class(IntegerParseErr, [IntegerParseErr/NoText, IntegerParseErr/NoDigits, IntegerParseErr/NotADigit(c -> Char, at -> /Data/Primitive/Integer, base -> /Data/Primitive/Integer), IntegerParseErr/BadBase(base -> /Data/Primitive/Integer)], isa= [/Data/Err])
+    # [IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
+      sign with no digits after it ([NoDigits]), the character [c] at position [at] (counting from
+      0) is no digit of [base] ([NotADigit]), or [base] is no base a number can be written in, 2
+      to 36 ([BadBase]).
+
+  :/Data/IntegerParseErr/NoText.msg= "there is no number in an empty string"
+  :/Data/IntegerParseErr/NoDigits.msg= "a sign has no digits after it"
+  :/Data/IntegerParseErr/NotADigit(c, at, base).msg= "'" ++ c.toString ++ "' at " ++ at.toString ++ " is not a digit of base " ++ base.toString
+  :/Data/IntegerParseErr/BadBase(base).msg= base.toString ++ " is not a base from 2 to 36"
+
+  digitsValue(cs -> /Data/List/ConsList[$T -> /Data/Char], base -> /Data/Primitive/Integer, sign -> /Data/Primitive/Integer, acc -> /Data/Primitive/Integer, at -> /Data/Primitive/Integer) -> /Data/Result[$T -> /Data/Primitive/Integer, $E -> IntegerParseErr]
+    # [digitsValue] reads the digits [cs] in [base] onto the number [acc] read so far, each counted
+      with [sign], or fails at the first character that is no digit of [base], which is at
+      position [at].
+  digitsValue(cs= /Data/List/Nil, base, sign, acc, at)= /Data/Result/Ok(value= acc)
+  digitsValue(cs= /Data/List/Cons(head, tail), base, sign, acc, at)= match(head.digitValue)
+    /Data/Maybe/Some(value@d) | d < base= digitsValue(cs= tail, base= base, sign= sign, acc= acc * base + sign * d, at= at + 1)
+
+    m else = /Data/Result/Fail(err= /Data/IntegerParseErr/NotADigit(c= head, at= at, base= base))
+
+  unsignedValue(cs -> /Data/List/ConsList[$T -> /Data/Char], base -> /Data/Primitive/Integer, sign -> /Data/Primitive/Integer, at -> /Data/Primitive/Integer) -> /Data/Result[$T -> /Data/Primitive/Integer, $E -> IntegerParseErr]
+    # [unsignedValue] reads the digits after any sign, which start at position [at] and of which
+      there must be at least one.
+  unsignedValue(cs= /Data/List/Nil, base, sign, at)= /Data/Result/Fail(err= /Data/IntegerParseErr/NoDigits)
+  unsignedValue(cs= /Data/List/Cons(head, tail), base, sign, at)= digitsValue(cs= /Data/List/Cons(head= head, tail= tail), base= base, sign= sign, acc= 0, at= at)
+
+  signedValue(cs -> /Data/List/ConsList[$T -> /Data/Char], base -> /Data/Primitive/Integer) -> /Data/Result[$T -> /Data/Primitive/Integer, $E -> IntegerParseErr]
+    # [signedValue] reads an optional sign and then the digits after it.
+  signedValue(cs= /Data/List/Nil, base)= /Data/Result/Fail(err= /Data/IntegerParseErr/NoText)
+  signedValue(cs= /Data/List/Cons(head, tail), base) | head == '-'= unsignedValue(cs= tail, base= base, sign= 0 - 1, at= 1)
+  signedValue(cs= /Data/List/Cons(head, tail), base) | head == '+'= unsignedValue(cs= tail, base= base, sign= 1, at= 1)
+  signedValue(cs= /Data/List/Cons(head, tail), base) else = unsignedValue(cs= /Data/List/Cons(head= head, tail= tail), base= base, sign= 1, at= 0)
+
+  :/Data/String.parseIntegerBase(base -> /Data/Primitive/Integer) -> /Data/Result[$T -> /Data/Primitive/Integer, $E -> IntegerParseErr]
+    # [parseIntegerBase] reads the string as a whole number in [base] (2 to 36): an optional `-`
+      or `+`, then one or more digits of [base], and nothing else.
+  :/Data/String/Text(chars).parseIntegerBase(base) | base >= 2 && base <= 36= signedValue(cs= chars, base= base)
+  :/Data/String/Text(chars).parseIntegerBase(base) else = /Data/Result/Fail(err= /Data/IntegerParseErr/BadBase(base= base))
+
+  :/Data/String.parseInteger -> /Data/Result[$T -> /Data/Primitive/Integer, $E -> IntegerParseErr]
+    # [parseInteger] reads the string as a decimal whole number, as [parseIntegerBase] does.
+  :/Data/String/Text(chars).parseInteger= signedValue(cs= chars, base= 10)
+
+  > "42".parseInteger
+    >>> 42
+  > "-17".parseInteger
+    >>> -17
+  > "ff".parseIntegerBase(base= 16)
+    >>> 255
+  > "12a".parseInteger
+    >>> error: 'a' at 2 is not a digit of base 10
+  > "-".parseInteger
+    >>> error: a sign has no digits after it
+  > "".parseInteger
+    >>> error: there is no number in an empty string
+  > "12".parseIntegerBase(base= 1)
+    >>> error: 1 is not a base from 2 to 36

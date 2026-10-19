@@ -21,20 +21,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/readLine"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/readLine( Value /this -> /Catln/IO.. ) -> ∀/Data/Result
-                            [ /T=∀/Data/String
-                            , /E=∀/Catln/InputErr
-                            ]
-                        ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/Else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Else ]
@@ -80,6 +66,33 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /ContextIn
+                            ( Value /value= /Catln/exit( Value val -> /Data/Primitive/Integer ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn
+                            ( Value /value= /Catln/println( Value msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=()
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn( Value /value= Value /Catln/readLine )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Catln/InputErr
+                                ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/#test"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#test ]
@@ -94,16 +107,6 @@ Prgm
                     { omiDecls =
                         [ /Catln/#name( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Catln/exit"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/exit( Value val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO.. ) -> /Catln/IO ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -268,16 +271,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/println"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/println( Value msg -> ∀/Data/String )( Value /this -> /Catln/IO.. ) -> /Catln/IO ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/#exist"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#exist ]
@@ -308,8 +301,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType

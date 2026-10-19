@@ -2,68 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/compareChars./Data/$ba75a7"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /compareChars./Data/$ba75a7
-                            ( EAppArg
-                                { eaaArg = Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /bt ->
-                                    ( /Data/List/Nil + /Data/List/Cons
-                                        ( /head=/Data/Char
-                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                        )
-                                    )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /$ba75a7-arg@Value /c -> /Data/Algebra/Equal } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Comparison
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /compareChars./Data/$ba75a7
-                                    ( /$ba75a7-arg=∀/Data/Algebra/Comparison
-                                    , /at=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                    , /bt=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                    ) + /Data/compareChars
-                                    ( /a=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                    , /b=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=/Data/Char ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons
-                                            ( /head=/Data/Char
-                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                            )
-                                        , []
-                                        )
-                                    )
-                                )
-                            , []
-                            ) = /Data/compareChars
-                            ( EAppArg
-                                { eaaArg = Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) }
-                            )
-                        , /compareChars./Data/$ba75a7
-                            ( EAppArg { eaaArg = Value /at } )
-                            ( EAppArg { eaaArg = Value /bt } )
-                            ( EAppArg { eaaArg = Value /$ba75a7-arg@Value /c } ) -> TVArg /c = ( Value /c ↦ TVArg /c )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/String/words"
                 , ObjectMapItem
                     { omiDecls =
@@ -435,55 +373,6 @@ Prgm
                                     )
                                 }
                             ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        ]
-                    }
-                )
-            ,
-                ( "/length./Data/String/countChars"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /length./Data/String/countChars
-                            ( EAppArg
-                                { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /length./Data/String/countChars
-                            ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = ( Value /n ↦ /Data/Primitive/Integer )
-                        , /length./Data/String/countChars
-                            ( EAppArg
-                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
-                                    ( /head=/Data/Char
-                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                    ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
-                                    ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                                    )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                            ( /length./Data/String/countChars
-                                ( EAppArg
-                                    { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
-                                        ( /operator+
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                ) ↦ /Data/Primitive/Integer
-                            )
                         ]
                     }
                 )
@@ -1731,7 +1620,7 @@ Prgm
                                     )
                                 }
                             ) -> ∀/Data/Algebra/Comparison =
-                            ( /$ba75a7
+                            ( /Data/compareChars.$ba75a7
                                 ( EAppArg
                                     { eaaArg = Value /at -> TVArg /at = ( Value /at ↦ TVArg /at ) }
                                 )
@@ -1750,6 +1639,55 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/Algebra/Comparison
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/String/length.countChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/String/length.countChars
+                            ( EAppArg
+                                { eaaArg = Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/String/length.countChars
+                            ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = ( Value /n ↦ /Data/Primitive/Integer )
+                        , /Data/String/length.countChars
+                            ( EAppArg
+                                { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /Data/String/length.countChars
+                                ( EAppArg
+                                    { eaaArg = Value /cs -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -1840,7 +1778,7 @@ Prgm
                             ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
                             ( EAppArg
                                 { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
-                                    ( /toStringBase./Data/digitsOnto
+                                    ( /Data/toStringBase.digitsOnto
                                         ( EAppArg
                                             { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
                                         )
@@ -2022,6 +1960,40 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/compareChars.$ba75a7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/compareChars.$ba75a7
+                            ( EAppArg
+                                { eaaArg = Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /$ba75a7-arg@Value /c -> /Data/Algebra/Equal } ) -> ∀/Data/Algebra/Comparison =
+                            ( /Data/compareChars
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) }
+                                ) ↦ ∀/Data/Algebra/Comparison
+                            )
+                        , /Data/compareChars.$ba75a7
+                            ( EAppArg
+                                { eaaArg = Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg { eaaArg = Value /$ba75a7-arg@Value /c -> ∀/Data/Algebra/Comparison } ) -> TVArg /c = ( Value /c ↦ TVArg /c )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/StrOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/StrOrdering ]
@@ -2170,101 +2142,6 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/toStringBase./Data/digitsOnto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /toStringBase./Data/digitsOnto
-                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /toStringBase./Data/digitsOnto
-                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            ) | /operator<
-                            ( EAppArg
-                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                            ) -> /Data/List/Cons[ /T=/Data/Char ]
-                            ( /head=/Data/Char
-                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                            ) = /Data/List/Cons
-                            ( EAppArg
-                                { eaaArg = Value /head -> /Data/Char =
-                                    ( /Data/digitChar
-                                        ( EAppArg
-                                            { eaaArg = Value /digit -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                        ) ↦ /Data/Char
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                            )
-                        , /toStringBase./Data/digitsOnto
-                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
-                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
-                            ( /toStringBase./Data/digitsOnto
-                                ( EAppArg
-                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
-                                        ( /operator//
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /acc -> /Data/List/Cons[ /T=/Data/Char ]
-                                        ( /head=/Data/Char
-                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
-                                        ) = /Data/List/Cons
-                                        ( EAppArg
-                                            { eaaArg = Value /head -> /Data/Char =
-                                                ( /Data/digitChar
-                                                    ( EAppArg
-                                                        { eaaArg = Value /digit -> /Data/Primitive/Integer =
-                                                            ( /operator%
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                                                )
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
-                                                                ) ↦ /Data/Primitive/Integer
-                                                            )
-                                                        }
-                                                    ) ↦ /Data/Char
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                                        )
-                                    }
-                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                             )
                         ]
                     }
@@ -2423,7 +2300,7 @@ Prgm
                                     )
                                 }
                             ) -> /Data/Primitive/Integer =
-                            ( /length./Data/String/countChars
+                            ( /Data/String/length.countChars
                                 ( EAppArg
                                     { eaaArg = Value /cs -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
                                 )
@@ -3005,6 +2882,101 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/toStringBase.digitsOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/toStringBase.digitsOnto
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/toStringBase.digitsOnto
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/Char =
+                                    ( /Data/digitChar
+                                        ( EAppArg
+                                            { eaaArg = Value /digit -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                        ) ↦ /Data/Char
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                            )
+                        , /Data/toStringBase.digitsOnto
+                            ( EAppArg { eaaArg = Value /base -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( /Data/toStringBase.digitsOnto
+                                ( EAppArg
+                                    { eaaArg = Value /base -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> /Data/Primitive/Integer =
+                                        ( /operator//
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /acc -> /Data/List/Cons[ /T=/Data/Char ]
+                                        ( /head=/Data/Char
+                                        , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Char =
+                                                ( /Data/digitChar
+                                                    ( EAppArg
+                                                        { eaaArg = Value /digit -> /Data/Primitive/Integer =
+                                                            ( /operator%
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> TVArg /base = ( Value /base ↦ TVArg /base ) }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    ) ↦ /Data/Char
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                                        )
+                                    }
+                                ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
                             )
                         ]
                     }

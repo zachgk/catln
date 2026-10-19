@@ -1,0 +1,23 @@
+import "core"
+import "http"
+import "json/json.ct"
+import "json/decode.ct"
+import "reflect"
+
+
+module(Llm)
+  class(LlmErr, [LlmErr/Unset(variable -> String), LlmErr/Request(cause -> /Http/HttpErr), LlmErr/NotJson(cause -> /Data/JsonParseErr..), LlmErr/ApiError(message -> String), LlmErr/NoReply(path -> String, cause -> /Data/JsonAccessErr), LlmErr/NotText(path -> String, found -> /Data/Json), LlmErr/NotOf(reply -> String, cause -> /Catln/ParseExprErr)], isa= [/Data/Err])
+    # [LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+      ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
+      response is not JSON ([NotJson]); the API answered with an error saying
+      [message] ([ApiError]); or the response has nothing at [path], where the reply is
+      ([NoReply]), or something other than text there ([NotText]); or, asked for a value of a type, the
+      [reply] is not one, for the [cause] given ([NotOf]).
+module(Data)
+  :/Llm/LlmErr/Unset(variable).msg= variable ++ " is not set, so there is no model to ask"
+  :/Llm/LlmErr/Request(cause).msg= "the model could not be asked: " ++ cause.msg
+  :/Llm/LlmErr/NotJson(cause).msg= "the model's response is " ++ cause.msg
+  :/Llm/LlmErr/ApiError(message).msg= "the model's API answered with an error: " ++ message
+  :/Llm/LlmErr/NoReply(path, cause).msg= "the model's response has no reply at " ++ path ++ ": " ++ cause.msg
+  :/Llm/LlmErr/NotText(path, found).msg= "the model's reply at " ++ path ++ " is " ++ /Data/jsonKind(j= found) ++ ", not text"
+  :/Llm/LlmErr/NotOf(reply, cause).msg= "the model's reply is not a value of the type asked for: " ++ cause.msg ++ "\nThe reply was: " ++ reply

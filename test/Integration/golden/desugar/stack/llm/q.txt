@@ -2,18 +2,33 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/Catln/process"
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/process( Value io -> /Catln/IO )
-                            ( Value annot -> /Llm/#q( /input=∀/Data/String ) ) -> /Llm/#q..
+                        [ /ContextIn
+                            ( Value /value= /Catln/process
+                                ( Value annot -> /Llm/#q( /input=∀/Data/String ) )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=/Llm/#q..
+                            , /io=/Catln/IO
+                            )..
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/process( Value io -> /Catln/IO )
-                            ( Value annot= #q( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )= qAnswered( Value input= Value input )
-                            ( Value reply= lcm( Value input= Value input )( Value page= Value page )( Value /this= Value io ) )
+                        [ /ContextIn
+                            ( Value /value= /Catln/process
+                                ( Value annot= #q( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=/Llm/#q..
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= lcm( Value input= Value input )( Value page= Value page ) )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Catln/process.$590790( Value /input= Value /input )
+                                ( Value /$590790-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -52,10 +67,26 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Catln/process.$590790"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/process.$590790( Value /input -> ∀/Data/String )
+                            ( Value $590790-arg= /Context( Value value@Value reply )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context
+                            ( Value /value= qAnswered( Value input= Value input )( Value reply= Value reply ) )( Value io= Value io )
+                        ]
+                    }
+                )
             ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         ]

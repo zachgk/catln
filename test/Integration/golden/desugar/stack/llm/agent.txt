@@ -5,35 +5,38 @@ Prgm
                 ( "/Llm/agentTook"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Llm/agentTook( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
-                            ( Value reply -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                        [ /Llm/agentTook( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
+                            ( Value reply -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> ∀/Llm/AgentNext
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/agentTook( Value io )
+                        [ /Llm/agentTook
                             ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history )
                             ( Value reply= /Data/Result/Ok
                                 ( Value value= AgentStep/Respond( Value text ) )
-                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Ok
-                            ( Value value= agentDone
-                                ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value text= Value text )
+                            ) -> ∀/Llm/AgentNext = AgentNext/Finished
+                            ( Value result= /Data/Result/Ok
+                                ( Value value= agentDone
+                                    ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value text= Value text )
+                                )
                             )
-                        , /Llm/agentTook( Value io )
+                        , /Llm/agentTook
                             ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history )
                             ( Value reply= /Data/Result/Ok
                                 ( Value value= AgentStep/Edit( Value edits ) )
-                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentEdited( Value io= Value io )
+                            ) -> ∀/Llm/AgentNext = agentEdited
                             ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )( Value edits= Value edits )
                             ( Value edited= applyEdits
                                 ( Value text= /Process/formatPage( Value page= Value page ) )( Value edits= Value edits )
                             )
-                        , /Llm/agentTook( Value io )( Value at )( Value tries )( Value history )
+                        , /Llm/agentTook( Value at )( Value tries )( Value history )
                             ( Value reply= /Data/Result/Fail
                                 ( Value err= LlmErr/NotOf( Value reply@Value replyText )( Value cause ) )
-                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentRetry( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )( Value attempt= Value replyText )
+                            ) -> ∀/Llm/AgentNext = agentRetry( Value at= Value at )( Value tries= Value tries )( Value history= Value history )( Value attempt= Value replyText )
                             ( Value why= msg( Value /this= Value cause ) )
-                        , /Llm/agentTook( Value io )( Value at )( Value tries )( Value history )( Value reply ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentFailed( Value reply= Value reply )
+                        , /Llm/agentTook( Value at )( Value tries )( Value history )( Value reply ) -> ∀/Llm/AgentNext = AgentNext/Finished
+                            ( Value result= agentFailed( Value reply= Value reply ) )
                         ]
                     }
                 )
@@ -181,6 +184,128 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn
+                            ( Value /value= /Llm/agentAsk( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /io=/Catln/IO
+                            )..
+                        , /ContextIn
+                            ( Value /value= /Llm/agentNext( Value next -> ∀/Llm/AgentNext ) )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRuntimeDecls =
+                        [ /ContextIn
+                            ( Value /value= /Catln/processFile
+                                ( Value annot -> /Llm/#agent( /input=∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /io=/Catln/IO
+                            )..
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( Value /value= /Catln/processFile
+                                ( Value annot= #agent( Value input -> ∀/Data/String )( Value result -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /io=/Catln/IO
+                            ).. = /Context
+                            ( Value /value= /Data/Result/Ok( Value value= Value page ) )( Value io= Value io )
+                        , /ContextIn
+                            ( Value /value= /Catln/processFile
+                                ( Value annot= #agent( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )( Value source -> ∀/Data/String )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= agentAsk
+                                    ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )
+                                    ( Value tries= CInt
+                                        { ciValue = 0 }
+                                    )
+                                    ( Value history= CStr
+                                        { csValue = "" }
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Catln/processFile.$4ef661
+                                ( Value /$4ef661-arg= Value v )
+                            )
+                        , /ContextIn
+                            ( Value /value= /Llm/agentAsk
+                                ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=
+                                ( TopType | !
+                                    ( !
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ) && !
+                                        ( PredClass /Data/Result[ /T=/Catln/RawPrgm.. ] )
+                                    )
+                                )
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= tlcm
+                                    ( Value input= agentPrompt( Value input= Value input )( Value history= Value history ) )
+                                    ( Value type= /Catln/typeOf[ /T : ∀/Llm/AgentStep ] )( Value source= Value source )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/agentAsk.$db8f2a( Value /annotId= Value /annotId )( Value /history= Value /history )( Value /page= Value /page )( Value /tries= Value /tries )( Value /input= Value /input )( Value /source= Value /source )( Value /$db8f2a-arg= Value v ) )
+                        , /ContextIn
+                            ( Value /value= /Llm/agentNext
+                                ( Value next= AgentNext/Finished( Value result ) )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=
+                                ( TopType | !
+                                    ( !
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ) && !
+                                        ( PredClass /Data/Result[ /T=/Catln/RawPrgm.. ] )
+                                    )
+                                )
+                            , /io=/Catln/IO
+                            ).. = /Context( Value /value= Value result )( Value io= Value io )
+                        , /ContextIn
+                            ( Value /value= /Llm/agentNext
+                                ( Value next= AgentNext/Again( Value at )( Value tries )( Value history ) )
+                            )( Value /io -> /Catln/IO ) -> /Context
+                            ( /value=
+                                ( TopType | !
+                                    ( !
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        ) && !
+                                        ( PredClass /Data/Result[ /T=/Catln/RawPrgm.. ] )
+                                    )
+                                )
+                            , /io=/Catln/IO
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= agentAsk( Value at= Value at )( Value tries= Value tries )( Value history= Value history ) )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/agentNext.$6cb4bc
+                                ( Value /$6cb4bc-arg= Value v )
+                            )
+                        ]
                     }
                 )
             ,
@@ -408,21 +533,22 @@ Prgm
                 ( "/Llm/agentParsed"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Llm/agentParsed( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
+                        [ /Llm/agentParsed( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
                             ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] )
                             ( Value parsed -> ∀/Data/Result
                                 [ /T=/Catln/RawPrgm..
                                 , /E=∀/Process/ParsePageErr
                                 ]
-                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            ) -> ∀/Llm/AgentNext
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/agentParsed( Value io )( Value at )( Value tries )( Value history )( Value edits )
-                            ( Value parsed= /Data/Result/Ok( Value value ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Ok( Value value= Value value )
-                        , /Llm/agentParsed( Value io )( Value at )( Value tries )( Value history )( Value edits )
-                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentRetry( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )
+                        [ /Llm/agentParsed( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value parsed= /Data/Result/Ok( Value value ) ) -> ∀/Llm/AgentNext = AgentNext/Finished
+                            ( Value result= /Data/Result/Ok( Value value= Value value ) )
+                        , /Llm/agentParsed( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Llm/AgentNext = agentRetry( Value at= Value at )( Value tries= Value tries )( Value history= Value history )
                             ( Value attempt= editsShown( Value edits= Value edits ) )
                             ( Value why= msg( Value /this= Value err ) )
                         ]
@@ -467,6 +593,20 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/agentAsk.$db8f2a.$ccb179"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentAsk.$db8f2a.$ccb179
+                            ( Value $ccb179-arg= /Context( Value value@Value result )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value result )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/editsJoined"
                 , ObjectMapItem
                     { omiDecls =
@@ -492,24 +632,6 @@ Prgm
                             )
                             ( Value /r= editsJoined
                                 ( Value edits= /Data/List/Cons( Value head= Value next )( Value tail= Value rest ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/agentAsk"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Llm/agentAsk( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/agentAsk( Value io )
-                            ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentTook( Value io= Value io )
-                            ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )
-                            ( Value reply= tlcm
-                                ( Value input= agentPrompt( Value input= Value input )( Value history= Value history ) )
-                                ( Value type= /Catln/typeOf[ /T : ∀/Llm/AgentStep ] )( Value source= Value source )( Value /this= Value io )
                             )
                         ]
                     }
@@ -550,22 +672,24 @@ Prgm
                 ( "/Llm/agentRetry"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Llm/agentRetry( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )( Value attempt -> ∀/Data/String )( Value why -> ∀/Data/String ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
+                        [ /Llm/agentRetry( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )( Value attempt -> ∀/Data/String )( Value why -> ∀/Data/String ) -> ∀/Llm/AgentNext ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/agentRetry( Value io )( Value at )( Value tries )( Value history )( Value attempt )( Value why ) | /operator>=( Value /l= Value tries )
+                        [ /Llm/agentRetry( Value at )( Value tries )( Value history )( Value attempt )( Value why ) | /operator>=( Value /l= Value tries )
                             ( Value /r= CInt
                                 { ciValue = 3 }
-                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Ok
-                            ( Value value= agentDone( Value at= Value at )
-                                ( Value text= /operator++
-                                    ( Value /l= CStr
-                                        { csValue = "The agent stopped, as its step could not be taken: " }
-                                    )( Value /r= Value why )
+                            ) -> ∀/Llm/AgentNext = AgentNext/Finished
+                            ( Value result= /Data/Result/Ok
+                                ( Value value= agentDone( Value at= Value at )
+                                    ( Value text= /operator++
+                                        ( Value /l= CStr
+                                            { csValue = "The agent stopped, as its step could not be taken: " }
+                                        )( Value /r= Value why )
+                                    )
                                 )
                             )
-                        , /Llm/agentRetry( Value io )( Value at )( Value tries )( Value history )( Value attempt )( Value why ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentAsk( Value io= Value io )( Value at= Value at )
+                        , /Llm/agentRetry( Value at )( Value tries )( Value history )( Value attempt )( Value why ) -> ∀/Llm/AgentNext = AgentNext/Again( Value at= Value at )
                             ( Value tries= /operator+( Value /l= Value tries )
                                 ( Value /r= CInt
                                     { ciValue = 1 }
@@ -656,6 +780,20 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/agentNext.$6cb4bc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentNext.$6cb4bc
+                            ( Value $6cb4bc-arg= /Context( Value value@Value result )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value result )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/#agent"
                 , ObjectMapItem
                     { omiDecls =
@@ -665,6 +803,42 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/processFile.$4ef661"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/processFile.$4ef661
+                            ( Value $4ef661-arg= /Context( Value value@Value result )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value result )( Value io= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentAsk.$db8f2a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentAsk.$db8f2a( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /source -> ∀/Data/String )
+                            ( Value $db8f2a-arg= /Context( Value value@Value reply )( Value io )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= agentNext
+                                    ( Value next= agentTook
+                                        ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )( Value reply= Value reply )
+                                    )
+                                )( Value io= Value io )
+                            )
+                            ( fn( Value v )= /Llm/agentAsk.$db8f2a.$ccb179( Value /$ccb179-arg= Value v ) )
+                        ]
                     }
                 )
             ,
@@ -740,6 +914,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/AgentNext/Finished"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/AgentNext/Finished
+                            ( Value /result -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Llm/findEdits"
                 , ObjectMapItem
                     { omiDecls =
@@ -770,49 +956,35 @@ Prgm
                 ( "/Llm/agentEdited"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Llm/agentEdited( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
+                        [ /Llm/agentEdited( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
                             ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] )
                             ( Value edited -> ∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Data/Err
                                 ]
-                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                            ) -> ∀/Llm/AgentNext
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/agentEdited( Value io )( Value at )( Value tries )( Value history )( Value edits )
-                            ( Value edited= /Data/Result/Ok( Value value ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentParsed( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )( Value edits= Value edits )
+                        [ /Llm/agentEdited( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value edited= /Data/Result/Ok( Value value ) ) -> ∀/Llm/AgentNext = agentParsed( Value at= Value at )( Value tries= Value tries )( Value history= Value history )( Value edits= Value edits )
                             ( Value parsed= /Process/parsePage( Value text= Value value ) )
-                        , /Llm/agentEdited( Value io )( Value at )( Value tries )( Value history )( Value edits )
-                            ( Value edited= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentRetry( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )
+                        , /Llm/agentEdited( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value edited= /Data/Result/Fail( Value err ) ) -> ∀/Llm/AgentNext = agentRetry( Value at= Value at )( Value tries= Value tries )( Value history= Value history )
                             ( Value attempt= editsShown( Value edits= Value edits ) )
                             ( Value why= msg( Value /this= Value err ) )
                         ]
                     }
                 )
             ,
-                ( "/Catln/processFile"
+                ( "/Llm/AgentNext/Again"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/processFile( Value io -> /Catln/IO )
-                            ( Value annot -> /Llm/#agent( /input=∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
-                        ]
+                    { omiDecls =
+                        [ /Llm/AgentNext/Again( Value /at -> /Llm/AgentAt.. )( Value /tries -> /Data/Primitive/Integer )( Value /history -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Catln/processFile( Value io -> /Catln/IO )
-                            ( Value annot= #agent( Value input -> ∀/Data/String )( Value result -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )= /Data/Result/Ok( Value value= Value page )
-                        , /Catln/processFile( Value io -> /Catln/IO )
-                            ( Value annot= #agent( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )( Value source -> ∀/Data/String )= agentAsk( Value io= Value io )
-                            ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )
-                            ( Value tries= CInt
-                                { ciValue = 0 }
-                            )
-                            ( Value history= CStr
-                                { csValue = "" }
-                            )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -864,6 +1036,27 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Llm/AgentNext
+            , cgcExtends =
+                [ /Llm/AgentNext/Finished
+                    ( /result=∀/Data/Result[ /T=/Catln/RawPrgm.. ] )
+                , /Llm/AgentNext/Again
+                    ( /history=∀/Data/String
+                    , /at=/Llm/AgentAt..
+                    , /tries=/Data/Primitive/Integer
+                    )
+                ]
+            , cgcDoc = Just "[AgentNext] is what is next once a step is taken: the agent has [Finished] its turn with the
+              [result] the page is to become, or it is to be asked [Again], having been asked [tries] times
+              before with the [history] of what went wrong with those."
+            }
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Llm/AgentStep
@@ -901,6 +1094,19 @@ Prgm
                 - [Edit] edits the page the request is written on with [edits], and continues the work: the
                   agent is asked again with the page as edited. The page is working memory as well as the
                   result, so notes and plans may be written on it too." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "### The steps of a turn
+                Asking the model reaches outside the program, and so runs in the io ([agentAsk], [agentNext]).
+                What is made of each reply does not, and is worked out apart from it: the step taken leaves an
+                [AgentNext], which is either what the agent is done with, or that it is to be asked again." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[AgentNext] is what is next once a step is taken: the agent has [Finished] its turn with the
+                [result] the page is to become, or it is to be asked [Again], having been asked [tries] times
+                before with the [history] of what went wrong with those." }
             )
         , /Catln/#md
             ( Value /text= CStr

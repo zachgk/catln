@@ -47,7 +47,7 @@ Prgm
                                                 ( /operator>=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -65,7 +65,7 @@ Prgm
                                                 ( /operator<=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -86,7 +86,7 @@ Prgm
                                     ( /operator==
                                         ( EAppArg
                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /length
+                                                ( /Data/String/length
                                                     ( EAppArg
                                                         { eaaArg = Value /this -> TVArg /m = ( Value /m ↦ TVArg /m ) }
                                                     ) ↦ /Data/Primitive/Integer
@@ -104,32 +104,92 @@ Prgm
                             ] =
                             ( /Data/Time/minutesOf
                                 ( EAppArg
-                                    { eaaArg = Value /hour -> ∀/Data/Result
-                                        [ /T=/Data/Primitive/Integer
-                                        , /E=∀/Data/IntegerParseErr
-                                        ] =
+                                    { eaaArg = Value /hour ->
+                                        ( /Data/Result/Fail
+                                            [ /E=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ]
+                                            ( /err=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        ) =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                            ) ↦ ∀/Data/Result
-                                            [ /T=/Data/Primitive/Integer
-                                            , /E=∀/Data/IntegerParseErr
-                                            ]
+                                            ) ↦
+                                            ( /Data/Result/Fail
+                                                [ /E=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ]
+                                                ( /err=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                            )
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /minute -> ∀/Data/Result
-                                        [ /T=/Data/Primitive/Integer
-                                        , /E=∀/Data/IntegerParseErr
-                                        ] =
+                                    { eaaArg = Value /minute ->
+                                        ( /Data/Result/Fail
+                                            [ /E=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ]
+                                            ( /err=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        ) =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                                            ) ↦ ∀/Data/Result
-                                            [ /T=/Data/Primitive/Integer
-                                            , /E=∀/Data/IntegerParseErr
-                                            ]
+                                            ) ↦
+                                            ( /Data/Result/Fail
+                                                [ /E=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ]
+                                                ( /err=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                            )
                                         )
                                     }
                                 ) ↦ ∀/Data/Result
@@ -1005,117 +1065,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/fromMarch"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/fromMarch
-                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/fromMarch
-                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                            ( /daysSinceEpoch./Data/Time/fromEra
-                                ( EAppArg
-                                    { eaaArg = Value /era -> /Data/Primitive/Integer =
-                                        ( /operator//
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /yoe -> /Data/Primitive/Integer =
-                                        ( /operator-
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                    ( /operator*
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                ( /operator//
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
-                                                        ) ↦ /Data/Primitive/Integer
-                                                    )
-                                                }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /doy -> /Data/Primitive/Integer =
-                                        ( /operator-
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                    ( /operator+
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                ( /operator//
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                            ( /operator+
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /operator*
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 153 }
-                                                                                            )
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /r -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
-                                                                                            ) ↦ /Data/Primitive/Integer
-                                                                                        )
-                                                                                    }
-                                                                                )
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                                                                                ) ↦ /Data/Primitive/Integer
-                                                                            )
-                                                                        }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 5 }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> TVArg /day = ( Value /day ↦ TVArg /day ) }
-                                                        ) ↦ /Data/Primitive/Integer
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                ) ↦ /Data/Primitive/Integer
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/clockParts"
                 , ObjectMapItem
                     { omiDecls =
@@ -1131,7 +1080,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Time/clockParts
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /contains
+                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
                                 { eaaArg = Value /sub -> /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ":"
@@ -1186,6 +1135,178 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofMonth"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofMonth
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofMonth
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) | /operator<
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                            ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ) = /Data/Time/Date
+                            ( EAppArg
+                                { eaaArg = Value /year -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /month -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /day -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator-
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                            ( /operator//
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                        ( /operator+
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                                    ( /operator*
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 153 }
+                                                                                        )
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /r -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
+                                                                                        ) ↦ /Data/Primitive/Integer
+                                                                                    )
+                                                                                }
+                                                                            )
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                                            ) ↦ /Data/Primitive/Integer
+                                                                        )
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 5 }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                        , /Data/Time/fromDaysSinceEpoch.ofMonth
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ) = /Data/Time/Date
+                            ( EAppArg
+                                { eaaArg = Value /year -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /month -> /Data/Primitive/Integer =
+                                    ( /operator-
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 9 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /day -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                ( /operator-
+                                                    ( EAppArg
+                                                        { eaaArg = Value /l -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                            ( /operator//
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                        ( /operator+
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                                    ( /operator*
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 153 }
+                                                                                        )
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /r -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
+                                                                                        ) ↦ /Data/Primitive/Integer
+                                                                                    )
+                                                                                }
+                                                                            )
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                                            ) ↦ /Data/Primitive/Integer
+                                                                        )
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 5 }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    ) ↦ /Data/Primitive/Integer
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/fromDaysSinceEpoch"
                 , ObjectMapItem
                     { omiDecls =
@@ -1200,8 +1321,8 @@ Prgm
                             ( /year=/Data/Primitive/Integer
                             , /month=/Data/Primitive/Integer
                             , /day=/Data/Primitive/Integer
-                            ) =
-                            ( /fromDaysSinceEpoch./Data/Time/ofEra
+                            ).. =
+                            ( /Data/Time/fromDaysSinceEpoch.ofEra
                                 ( EAppArg
                                     { eaaArg = Value /era -> /Data/Primitive/Integer =
                                         ( /operator//
@@ -1247,7 +1368,7 @@ Prgm
                                 ( /year=/Data/Primitive/Integer
                                 , /month=/Data/Primitive/Integer
                                 , /day=/Data/Primitive/Integer
-                                )
+                                )..
                             )
                         ]
                     }
@@ -1274,7 +1395,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
                                 }
                             ) -> /Data/Primitive/Integer =
-                            ( /daysSinceEpoch./Data/Time/startOfYear
+                            ( /Data/Time/daysSinceEpoch.startOfYear
                                 ( EAppArg
                                     { eaaArg = Value /day -> TVArg /day = ( Value /day ↦ TVArg /day ) }
                                 )
@@ -1311,7 +1432,7 @@ Prgm
                                                 ( /operator==
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -1382,10 +1503,25 @@ Prgm
                             ] =
                             ( /Data/Time/dateOf
                                 ( EAppArg
-                                    { eaaArg = Value /y -> ∀/Data/Result
-                                        [ /T=/Data/Primitive/Integer
-                                        , /E=∀/Data/IntegerParseErr
-                                        ] =
+                                    { eaaArg = Value /y ->
+                                        ( /Data/Result/Fail
+                                            [ /E=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ]
+                                            ( /err=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        ) =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> ∀/Data/String =
@@ -1398,18 +1534,48 @@ Prgm
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Result
-                                            [ /T=/Data/Primitive/Integer
-                                            , /E=∀/Data/IntegerParseErr
-                                            ]
+                                            ) ↦
+                                            ( /Data/Result/Fail
+                                                [ /E=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ]
+                                                ( /err=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                            )
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /m -> ∀/Data/Result
-                                        [ /T=/Data/Primitive/Integer
-                                        , /E=∀/Data/IntegerParseErr
-                                        ] =
+                                    { eaaArg = Value /m ->
+                                        ( /Data/Result/Fail
+                                            [ /E=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ]
+                                            ( /err=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        ) =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> ∀/Data/String =
@@ -1425,18 +1591,48 @@ Prgm
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Result
-                                            [ /T=/Data/Primitive/Integer
-                                            , /E=∀/Data/IntegerParseErr
-                                            ]
+                                            ) ↦
+                                            ( /Data/Result/Fail
+                                                [ /E=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ]
+                                                ( /err=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                            )
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /d -> ∀/Data/Result
-                                        [ /T=/Data/Primitive/Integer
-                                        , /E=∀/Data/IntegerParseErr
-                                        ] =
+                                    { eaaArg = Value /d ->
+                                        ( /Data/Result/Fail
+                                            [ /E=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ]
+                                            ( /err=
+                                                ( /Data/IntegerParseErr/NotADigit
+                                                    ( /at=/Data/Primitive/Integer
+                                                    , /base=/Data/Primitive/Integer
+                                                    , /c=/Data/Char
+                                                    ) + /Data/IntegerParseErr/NoText
+                                                )
+                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        ) =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> ∀/Data/String =
@@ -1449,10 +1645,25 @@ Prgm
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Result
-                                            [ /T=/Data/Primitive/Integer
-                                            , /E=∀/Data/IntegerParseErr
-                                            ]
+                                            ) ↦
+                                            ( /Data/Result/Fail
+                                                [ /E=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ]
+                                                ( /err=
+                                                    ( /Data/IntegerParseErr/NotADigit
+                                                        ( /at=/Data/Primitive/Integer
+                                                        , /base=/Data/Primitive/Integer
+                                                        , /c=/Data/Char
+                                                        ) + /Data/IntegerParseErr/NoText
+                                                    )
+                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                            )
                                         )
                                     }
                                 ) ↦ ∀/Data/Result
@@ -1567,7 +1778,7 @@ Prgm
                                                                             ( /operator-
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /length
+                                                                                        ( /Data/String/length
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                                                             ) ↦ /Data/Primitive/Integer
@@ -1632,7 +1843,7 @@ Prgm
                                                                             ( /operator-
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /length
+                                                                                        ( /Data/String/length
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                                                             ) ↦ /Data/Primitive/Integer
@@ -1696,6 +1907,105 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/daysSinceEpoch.fromEra"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/daysSinceEpoch.fromEra
+                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/daysSinceEpoch.fromEra
+                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator-
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                ( /operator+
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                            ( /operator+
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                                        ( /operator*
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /l -> TVArg /era = ( Value /era ↦ TVArg /era ) }
+                                                                                            )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 146097 }
+                                                                                            ) ↦ /Data/Primitive/Integer
+                                                                                        )
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                                        ( /operator*
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                                            )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 365 }
+                                                                                            ) ↦ /Data/Primitive/Integer
+                                                                                        )
+                                                                                    }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                            ( /operator//
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 4 }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /operator//
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 100 }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 719468 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/natural"
                 , ObjectMapItem
                     { omiDecls =
@@ -1735,10 +2045,21 @@ Prgm
                                         }
                                     )
                                 }
-                            ) -> ∀/Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] =
+                            ) ->
+                            ( /Data/Result/Fail
+                                [ /E=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ]
+                                ( /err=/Data/IntegerParseErr/NotADigit
+                                    ( /at=/Data/Primitive/Integer
+                                    , /base=/Data/Primitive/Integer
+                                    , /c=/Data/Char
+                                    )
+                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
                             ( /Data/digitsValue
                                 ( EAppArg
                                     { eaaArg = Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
@@ -1764,10 +2085,21 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /at -> /Data/Primitive/Integer = 0 }
-                                ) ↦ ∀/Data/Result
-                                [ /T=/Data/Primitive/Integer
-                                , /E=∀/Data/IntegerParseErr
-                                ]
+                                ) ↦
+                                ( /Data/Result/Fail
+                                    [ /E=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ]
+                                    ( /err=/Data/IntegerParseErr/NotADigit
+                                        ( /at=/Data/Primitive/Integer
+                                        , /base=/Data/Primitive/Integer
+                                        , /c=/Data/Char
+                                        )
+                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                )
                             )
                         ]
                     }
@@ -1892,6 +2224,69 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofDay
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofDay
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ) =
+                            ( /Data/Time/fromDaysSinceEpoch.ofMonth
+                                ( EAppArg
+                                    { eaaArg = Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /doy -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mp -> /Data/Primitive/Integer =
+                                        ( /operator//
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator+
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                ( /operator*
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer = 5 }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 153 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Time/weekday"
                 , ObjectMapItem
                     { omiDecls =
@@ -1978,7 +2373,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /width -> /Data/Primitive/Integer } ) | /operator<
                             ( EAppArg
                                 { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /length
+                                    ( /Data/String/length
                                         ( EAppArg
                                             { eaaArg = Value /this -> ∀/Data/String =
                                                 ( /toString
@@ -2034,100 +2429,79 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofEra"
+                ( "/Data/Time/daysSinceEpoch.startOfYear"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofEra
-                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
+                        [ /Data/Time/daysSinceEpoch.startOfYear
+                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /m -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofEra
-                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) =
-                            ( /fromDaysSinceEpoch./Data/Time/ofYear
+                        [ /Data/Time/daysSinceEpoch.startOfYear
+                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /m -> /Data/Primitive/Integer } ) | /operator<=
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Data/Time/daysSinceEpoch.fromMarch
                                 ( EAppArg
-                                    { eaaArg = Value /era -> TVArg /era = ( Value /era ↦ TVArg /era ) }
+                                    { eaaArg = Value /day -> TVArg /day = ( Value /day ↦ TVArg /day ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /doe -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /yoe -> /Data/Primitive/Integer =
-                                        ( /operator//
+                                    { eaaArg = Value /y -> /Data/Primitive/Integer =
+                                        ( /operator-
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                    ( /operator-
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                ( /operator+
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                            ( /operator-
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
-                                                                                )
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                                                        ( /operator//
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
-                                                                                            )
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1460 }
-                                                                                            ) ↦ /Data/Primitive/Integer
-                                                                                        )
-                                                                                    }
-                                                                                ) ↦ /Data/Primitive/Integer
-                                                                            )
-                                                                        }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                                            ( /operator//
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
-                                                                                )
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 36524 }
-                                                                                ) ↦ /Data/Primitive/Integer
-                                                                            )
-                                                                        }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                                ( /operator//
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 146096 }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        ) ↦ /Data/Primitive/Integer
-                                                    )
-                                                }
+                                                { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 365 }
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦ /Data/Time/Date
-                                ( /year=/Data/Primitive/Integer
-                                , /month=/Data/Primitive/Integer
-                                , /day=/Data/Primitive/Integer
                                 )
+                                ( EAppArg
+                                    { eaaArg = Value /mp -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 9 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        , /Data/Time/daysSinceEpoch.startOfYear
+                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /m -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /Data/Time/daysSinceEpoch.fromMarch
+                                ( EAppArg
+                                    { eaaArg = Value /day -> TVArg /day = ( Value /day ↦ TVArg /day ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /mp -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -2302,105 +2676,6 @@ Prgm
                     }
                 )
             ,
-                ( "/daysSinceEpoch./Data/Time/fromEra"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/fromEra
-                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/fromEra
-                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                            ( /operator-
-                                ( EAppArg
-                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                        ( /operator+
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                    ( /operator-
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                ( /operator+
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                            ( /operator+
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /operator*
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /l -> TVArg /era = ( Value /era ↦ TVArg /era ) }
-                                                                                            )
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 146097 }
-                                                                                            ) ↦ /Data/Primitive/Integer
-                                                                                        )
-                                                                                    }
-                                                                                )
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                                                        ( /operator*
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
-                                                                                            )
-                                                                                            ( EAppArg
-                                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 365 }
-                                                                                            ) ↦ /Data/Primitive/Integer
-                                                                                        )
-                                                                                    }
-                                                                                ) ↦ /Data/Primitive/Integer
-                                                                            )
-                                                                        }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                                            ( /operator//
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
-                                                                                )
-                                                                                ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 4 }
-                                                                                ) ↦ /Data/Primitive/Integer
-                                                                            )
-                                                                        }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                                ( /operator//
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 100 }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        ) ↦ /Data/Primitive/Integer
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 719468 }
-                                ) ↦ /Data/Primitive/Integer
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls = []
@@ -2542,84 +2817,6 @@ Prgm
                         , /Data/Time/daysInMonth
                             ( EAppArg { eaaArg = Value /year -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /month -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = 31
-                        ]
-                    }
-                )
-            ,
-                ( "/daysSinceEpoch./Data/Time/startOfYear"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /daysSinceEpoch./Data/Time/startOfYear
-                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /m -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /daysSinceEpoch./Data/Time/startOfYear
-                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /m -> /Data/Primitive/Integer } ) | /operator<=
-                            ( EAppArg
-                                { eaaArg = Value /l -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                            ) -> /Data/Primitive/Integer =
-                            ( /daysSinceEpoch./Data/Time/fromMarch
-                                ( EAppArg
-                                    { eaaArg = Value /day -> TVArg /day = ( Value /day ↦ TVArg /day ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /y -> /Data/Primitive/Integer =
-                                        ( /operator-
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /mp -> /Data/Primitive/Integer =
-                                        ( /operator+
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 9 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                ) ↦ /Data/Primitive/Integer
-                            )
-                        , /daysSinceEpoch./Data/Time/startOfYear
-                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /m -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
-                            ( /daysSinceEpoch./Data/Time/fromMarch
-                                ( EAppArg
-                                    { eaaArg = Value /day -> TVArg /day = ( Value /day ↦ TVArg /day ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /mp -> /Data/Primitive/Integer =
-                                        ( /operator-
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                ) ↦ /Data/Primitive/Integer
-                            )
                         ]
                     }
                 )
@@ -3217,69 +3414,6 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofDay"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofDay
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofDay
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) =
-                            ( /fromDaysSinceEpoch./Data/Time/ofMonth
-                                ( EAppArg
-                                    { eaaArg = Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /doy -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /mp -> /Data/Primitive/Integer =
-                                        ( /operator//
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                    ( /operator+
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                ( /operator*
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer = 5 }
-                                                                    )
-                                                                    ( EAppArg
-                                                                        { eaaArg = Value /r -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
-                                                                    ) ↦ /Data/Primitive/Integer
-                                                                )
-                                                            }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                                                        ) ↦ /Data/Primitive/Integer
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 153 }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
-                                ) ↦ /Data/Time/Date
-                                ( /year=/Data/Primitive/Integer
-                                , /month=/Data/Primitive/Integer
-                                , /day=/Data/Primitive/Integer
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/addMinutes"
                 , ObjectMapItem
                     { omiDecls =
@@ -3414,67 +3548,56 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofYear"
+                ( "/Data/Time/fromDaysSinceEpoch.ofEra"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofYear
+                        [ /Data/Time/fromDaysSinceEpoch.ofEra
                             ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
+                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofYear
+                        [ /Data/Time/fromDaysSinceEpoch.ofEra
                             ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } ) -> /Data/Time/Date
+                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } ) -> /Data/Time/Date
                             ( /year=/Data/Primitive/Integer
                             , /month=/Data/Primitive/Integer
                             , /day=/Data/Primitive/Integer
-                            ) =
-                            ( /fromDaysSinceEpoch./Data/Time/ofDay
+                            ).. =
+                            ( /Data/Time/fromDaysSinceEpoch.ofYear
                                 ( EAppArg
-                                    { eaaArg = Value /y -> /Data/Primitive/Integer =
-                                        ( /operator+
-                                            ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                    ( /operator*
-                                                        ( EAppArg
-                                                            { eaaArg = Value /l -> TVArg /era = ( Value /era ↦ TVArg /era ) }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
-                                                        ) ↦ /Data/Primitive/Integer
-                                                    )
-                                                }
-                                            ) ↦ /Data/Primitive/Integer
-                                        )
-                                    }
+                                    { eaaArg = Value /era -> TVArg /era = ( Value /era ↦ TVArg /era ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /doy -> /Data/Primitive/Integer =
-                                        ( /operator-
+                                    { eaaArg = Value /doe -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /yoe -> /Data/Primitive/Integer =
+                                        ( /operator//
                                             ( EAppArg
-                                                { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
                                                     ( /operator-
                                                         ( EAppArg
                                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
                                                                 ( /operator+
                                                                     ( EAppArg
                                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                            ( /operator*
+                                                                            ( /operator-
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 365 }
+                                                                                    { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
                                                                                 )
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /r -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                                        ( /operator//
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
+                                                                                            )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1460 }
+                                                                                            ) ↦ /Data/Primitive/Integer
+                                                                                        )
+                                                                                    }
                                                                                 ) ↦ /Data/Primitive/Integer
                                                                             )
                                                                         }
@@ -3483,10 +3606,10 @@ Prgm
                                                                         { eaaArg = Value /r -> /Data/Primitive/Integer =
                                                                             ( /operator//
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                                    { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
                                                                                 )
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 4 }
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 36524 }
                                                                                 ) ↦ /Data/Primitive/Integer
                                                                             )
                                                                         }
@@ -3498,16 +3621,19 @@ Prgm
                                                             { eaaArg = Value /r -> /Data/Primitive/Integer =
                                                                 ( /operator//
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                        { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 100 }
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 146096 }
                                                                     ) ↦ /Data/Primitive/Integer
                                                                 )
                                                             }
                                                         ) ↦ /Data/Primitive/Integer
                                                     )
                                                 }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 365 }
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
@@ -3515,7 +3641,7 @@ Prgm
                                 ( /year=/Data/Primitive/Integer
                                 , /month=/Data/Primitive/Integer
                                 , /day=/Data/Primitive/Integer
-                                )
+                                )..
                             )
                         ]
                     }
@@ -3616,6 +3742,113 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Time/fromDaysSinceEpoch.ofYear"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/fromDaysSinceEpoch.ofYear
+                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/fromDaysSinceEpoch.ofYear
+                            ( EAppArg { eaaArg = Value /era -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /doe -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /yoe -> /Data/Primitive/Integer } ) -> /Data/Time/Date
+                            ( /year=/Data/Primitive/Integer
+                            , /month=/Data/Primitive/Integer
+                            , /day=/Data/Primitive/Integer
+                            ).. =
+                            ( /Data/Time/fromDaysSinceEpoch.ofDay
+                                ( EAppArg
+                                    { eaaArg = Value /y -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /era = ( Value /era ↦ TVArg /era ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /doy -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /doe = ( Value /doe ↦ TVArg /doe ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                ( /operator+
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                            ( /operator*
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer = 365 }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                            ( /operator//
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 4 }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                                ( /operator//
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> TVArg /yoe = ( Value /yoe ↦ TVArg /yoe ) }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 100 }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Time/Date
+                                ( /year=/Data/Primitive/Integer
+                                , /month=/Data/Primitive/Integer
+                                , /day=/Data/Primitive/Integer
+                                )..
+                            )
+                        ]
                     }
                 )
             ,
@@ -3800,178 +4033,6 @@ Prgm
                     }
                 )
             ,
-                ( "/fromDaysSinceEpoch./Data/Time/ofMonth"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /fromDaysSinceEpoch./Data/Time/ofMonth
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Time/Date..
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /fromDaysSinceEpoch./Data/Time/ofMonth
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) | /operator<
-                            ( EAppArg
-                                { eaaArg = Value /l -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
-                            ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) = /Data/Time/Date
-                            ( EAppArg
-                                { eaaArg = Value /year -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /month -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 3 }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /day -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /operator-
-                                                    ( EAppArg
-                                                        { eaaArg = Value /l -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
-                                                    )
-                                                    ( EAppArg
-                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                            ( /operator//
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                        ( /operator+
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                    ( /operator*
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 153 }
-                                                                                        )
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /r -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
-                                                                                        ) ↦ /Data/Primitive/Integer
-                                                                                    )
-                                                                                }
-                                                                            )
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                                                                            ) ↦ /Data/Primitive/Integer
-                                                                        )
-                                                                    }
-                                                                )
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 5 }
-                                                                ) ↦ /Data/Primitive/Integer
-                                                            )
-                                                        }
-                                                    ) ↦ /Data/Primitive/Integer
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                        , /fromDaysSinceEpoch./Data/Time/ofMonth
-                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /doy -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Time/Date
-                            ( /year=/Data/Primitive/Integer
-                            , /month=/Data/Primitive/Integer
-                            , /day=/Data/Primitive/Integer
-                            ) = /Data/Time/Date
-                            ( EAppArg
-                                { eaaArg = Value /year -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /month -> /Data/Primitive/Integer =
-                                    ( /operator-
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 9 }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /day -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg
-                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /operator-
-                                                    ( EAppArg
-                                                        { eaaArg = Value /l -> TVArg /doy = ( Value /doy ↦ TVArg /doy ) }
-                                                    )
-                                                    ( EAppArg
-                                                        { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                                            ( /operator//
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                        ( /operator+
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                    ( /operator*
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 153 }
-                                                                                        )
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /r -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
-                                                                                        ) ↦ /Data/Primitive/Integer
-                                                                                    )
-                                                                                }
-                                                                            )
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
-                                                                            ) ↦ /Data/Primitive/Integer
-                                                                        )
-                                                                    }
-                                                                )
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 5 }
-                                                                ) ↦ /Data/Primitive/Integer
-                                                            )
-                                                        }
-                                                    ) ↦ /Data/Primitive/Integer
-                                                )
-                                            }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
-                                }
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Time/DateParseErr/BadPart"
                 , ObjectMapItem
                     { omiDecls =
@@ -4000,7 +4061,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Time/dottedOrBare
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /contains
+                            ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
                                 { eaaArg = Value /sub -> /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "."
@@ -4048,7 +4109,7 @@ Prgm
                                                 ( /operator>=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /length
+                                                            ( /Data/String/length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -4069,7 +4130,7 @@ Prgm
                                     ( /operator<=
                                         ( EAppArg
                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /length
+                                                ( /Data/String/length
                                                     ( EAppArg
                                                         { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                     ) ↦ /Data/Primitive/Integer
@@ -4105,7 +4166,7 @@ Prgm
                                                             ( /operator-
                                                                 ( EAppArg
                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                        ( /length
+                                                                        ( /Data/String/length
                                                                             ( EAppArg
                                                                                 { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                             ) ↦ /Data/Primitive/Integer
@@ -4137,7 +4198,7 @@ Prgm
                                                                     ( /operator-
                                                                         ( EAppArg
                                                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                ( /length
+                                                                                ( /Data/String/length
                                                                                     ( EAppArg
                                                                                         { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                                     ) ↦ /Data/Primitive/Integer
@@ -4366,6 +4427,117 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Time/daysSinceEpoch.fromMarch"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Time/daysSinceEpoch.fromMarch
+                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Time/daysSinceEpoch.fromMarch
+                            ( EAppArg { eaaArg = Value /day -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /mp -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /Data/Time/daysSinceEpoch.fromEra
+                                ( EAppArg
+                                    { eaaArg = Value /era -> /Data/Primitive/Integer =
+                                        ( /operator//
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /yoe -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /operator*
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                ( /operator//
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 400 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /doy -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /operator+
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                ( /operator//
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                            ( /operator+
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                                        ( /operator*
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 153 }
+                                                                                            )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /r -> TVArg /mp = ( Value /mp ↦ TVArg /mp ) }
+                                                                                            ) ↦ /Data/Primitive/Integer
+                                                                                        )
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 5 }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /day = ( Value /day ↦ TVArg /day ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
                     }
                 )
             ,

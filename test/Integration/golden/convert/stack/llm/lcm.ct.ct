@@ -1,0 +1,37 @@
+import "core"
+import hsrawprgm()
+import "llm/err.ct"
+import "llm/api.ct"
+import "llm/show.ct"
+
+
+module(Llm)
+  # ## Asking about the program it is asked from
+    [lcm], a large code model, asks [llm] with the program it is written in. The page the call is
+    written on is put before what it asks, as it was written and with each of its annotations shown
+    with what it evaluates to: a `> expr` with its `>>>` result, and any other annotation a model
+    can be shown ([LlmShow]) as a print of itself. So a model asked about a page reads what the
+    page says it computes, and not only what it says.
+    The page is the one the program was compiled from, handed to the call by the compiler rather
+    than read again from the file: a call written as `lcm(input= ...)` is completed to
+    `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt]).
+  lcm{io -> IO}(input -> String) -> /Data/Result[$T -> String, $E -> LlmErr]{IO}
+    # [lcm] is the reply of the configured model to the prompt [input], asked with the page the call
+      is written in. It answers as [llm] does.
+    #runtime("callerPage")
+  lcm{io -> IO}(input -> String, page -> /Catln/RawPrgm..) -> /Data/Result[$T -> String, $E -> LlmErr]{IO} =
+    reply<- llm(input= lcmPrompt(input= input, page= page))
+    reply
+
+  lcmPrompt(input -> String) -> String
+    # [lcmPrompt] is what [lcm] asks the model: the page the call is written in, and then [input].
+      Asking a model reaches outside the program, while this does not, so it is what is checked of
+      [lcm] without asking anything.
+    #runtime("callerPage")
+  lcmPrompt(input -> String, page -> /Catln/RawPrgm..)= showPage(page= page) ++ "\n" ++ input
+
+  # [lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
+    it is shown as nothing, so what is asked is the question alone.
+  > lcmPrompt(input= "What is on this page?", page= /Catln/RawPrgm(imports= [], statements= []))
+    >>>
+    >>> What is on this page?
