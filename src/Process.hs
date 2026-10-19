@@ -28,8 +28,7 @@ import           Data.Maybe          (listToMaybe)
 import           Data.UUID           (UUID)
 import qualified Data.UUID           as UUID
 import           Eval                (evalBaseEnvWith, evalExpr, ioContextType,
-                                      pageAnnots,
-                                      rawPrgmAnnotIds)
+                                      pageAnnots, rawPrgmAnnotIds)
 import           Eval.Common
 import           Eval.Env            (evalSetArgs)
 import           Eval.ExprBuilder
