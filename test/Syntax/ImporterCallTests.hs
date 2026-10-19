@@ -20,10 +20,9 @@ import           CompileExpr          (prgmFromGraphData)
 import           CRes                 (CRes (..), asCResT, prettyCNotes,
                                        runCResT)
 import           CtConstants          (runtimeArgKey)
-import           CtService            (CTSS, ctssBaseFiles, ctssBuildFrom,
-                                       ctssCached, ctssEvaluableFrom,
-                                       ctssImporterEnv, ctssKeys, ctssLoad,
-                                       getSource)
+import           CtService            (CTSS, ctssBuildFrom, ctssCached,
+                                       ctssEvaluableFrom, ctssImporterEnv,
+                                       ctssKeys, ctssLoad, getSource)
 import qualified Data.HashMap.Strict  as H
 import           Data.List            (isInfixOf)
 import           Eval                 (evalBaseEnv, evalCallTo)
@@ -40,6 +39,7 @@ import           Syntax.Native.Parser (isNativeImport)
 import           Syntax.Parsers       (mkDesCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           TestService          (MkService)
 
 -- | The fixture page, which declares one importer and does nothing with the file it is given.
 importerPage :: FilePath
@@ -47,9 +47,9 @@ importerPage = "test/Integration/code/artifacts/native/importer.ct"
 
 
 -- | Build the fixture and call the declaration on it, toward the destination given.
-callWith :: Type -> String -> IO (CRes Val)
-callWith dest path = do
-  ctss <- ctssBaseFiles testCtssConfig [importerPage] :: IO CTSS
+callWith :: MkService -> Type -> String -> IO (CRes Val)
+callWith mk dest path = do
+  ctss <- mk [importerPage] :: IO CTSS
   name <- mkDesCanonicalImportStr testCtssConfig importerPage
   ctssBuildFrom ctss name
   runCResT $ do
@@ -64,9 +64,9 @@ callWith dest path = do
 -- asserted rather than merely printed so that the answer is pinned — a later change to the tree
 -- builder which made the other case true would be a change to what an importer's call must be
 -- written as, and this is where that would be noticed.
-testCallTowardDeclaredType :: TestTree
-testCallTowardDeclaredType = testCase "calling toward the declared return type" $ do
-  res <- callWith importResultType "spike.py"
+testCallTowardDeclaredType :: MkService -> TestTree
+testCallTowardDeclaredType mk = testCase "calling toward the declared return type" $ do
+  res <- callWith mk importResultType "spike.py"
   case res of
     CErr notes -> assertFailure $ "the call did not build: " ++ show notes
     CRes _ v -> case v of
@@ -87,10 +87,10 @@ testCallTowardDeclaredType = testCase "calling toward the declared return type" 
 -- what it waits on. 'ctssLoadOf' sees that, builds the importer OUTSIDE the read, and asks for the
 -- page again. The second read runs the importer and the page is read. If any of those is missing the
 -- page stays unread and this fails.
-testDeferredPageIsEventuallyRead :: TestTree
-testDeferredPageIsEventuallyRead = testCase "a page waits for its importer, which is then built" $ do
+testDeferredPageIsEventuallyRead :: MkService -> TestTree
+testDeferredPageIsEventuallyRead mk = testCase "a page waits for its importer, which is then built" $ do
   let imp = concat ["native(\"read-me.py\", importer= \"", importerPage, "\", fn= \"mkResult\")"]
-  ctss <- ctssBaseFiles testCtssConfig [imp] :: IO CTSS
+  ctss <- mk [imp] :: IO CTSS
   name <- mkDesCanonicalImportStr testCtssConfig imp
 
   -- Asking for the page's program is what drives the loop; nothing before this has run an importer.
@@ -115,9 +115,9 @@ testDeferredPageIsEventuallyRead = testCase "a page waits for its importer, whic
 -- importer reads a file has to be decided while a page's imports are being resolved, which is before
 -- anything has been desugared — so the case asks for the declaration from a service that has read
 -- the page and has NOT been told to build anything.
-testImporterIsFoundByReadingAlone :: TestTree
-testImporterIsFoundByReadingAlone = testCase "an importer is found without compiling its page" $ do
-  ctss <- ctssBaseFiles testCtssConfig [importerPage] :: IO CTSS
+testImporterIsFoundByReadingAlone :: MkService -> TestTree
+testImporterIsFoundByReadingAlone mk = testCase "an importer is found without compiling its page" $ do
+  ctss <- mk [importerPage] :: IO CTSS
   name <- mkDesCanonicalImportStr testCtssConfig importerPage
 
   found <- ieDeclared (ctssImporterEnv ctss) [name]
@@ -151,20 +151,21 @@ testPyImportReportsAMissingFile = testCase "a Python file that is not there is r
 --
 -- This is the thing the whole change is for. The compiler does not know what @python@ means when it
 -- reads the second line: it looks for it among the importers declared by the pages imported above,
--- finds the declaration in @stack\/python\/importer.ct@, and rewrites the import to run it. Then it
--- has to build that page before it can read the Python file, which is the deferral loop, and run it,
--- which is the primitive.
+-- finds the declaration in @stack\/python\/importer.ct@, and rewrites the import to run it, which is
+-- the primitive. That page is the library's, so the service is handed it already built
+-- ('TestService.seededService') and the Python file is read on the first pass; a page whose importer
+-- still has to be built first, the deferral loop, is 'testDeferredPageIsEventuallyRead'.
 --
 -- Asserted on the program the Python file was read AS, rather than on the read merely succeeding.
 -- @simple.py@ declares functions, so the page holding no statements would mean the importer ran and
 -- read nothing — which a check for "was it read" would pass.
-testImporterDeclaredInCatlnIsUsed :: TestTree
-testImporterDeclaredInCatlnIsUsed = testCase "an importer declared in Catln reads a file" $ do
+testImporterDeclaredInCatlnIsUsed :: MkService -> TestTree
+testImporterDeclaredInCatlnIsUsed mk = testCase "an importer declared in Catln reads a file" $ do
   let page = "test/Integration/code/artifacts/native/usesPython.ct"
-  ctss <- ctssBaseFiles testCtssConfig [page] :: IO CTSS
+  ctss <- mk [page] :: IO CTSS
   name <- mkDesCanonicalImportStr testCtssConfig page
   -- Asking for what the page REACHES, and not only for the page. The page itself reads fine on the
-  -- first pass; it is the file it imports that has to wait for an importer to be built, and asking
+  -- first pass; it is the file it imports that waits for an importer where one is not built, and asking
   -- only for the page would leave that one sitting in the graph unread with nothing driving the loop.
   ctssBuildFrom ctss name
 
@@ -190,11 +191,11 @@ orElse :: a -> CRes a -> a
 orElse _ (CRes _ v) = v
 orElse d _          = d
 
-importerCallTests :: TestTree
-importerCallTests = testGroup "ImporterCall" [
-  testImporterIsFoundByReadingAlone,
+importerCallTests :: MkService -> TestTree
+importerCallTests mk = testGroup "ImporterCall" [
+  testImporterIsFoundByReadingAlone mk,
   testPyImportReportsAMissingFile,
-  testImporterDeclaredInCatlnIsUsed,
-  testCallTowardDeclaredType,
-  testDeferredPageIsEventuallyRead
+  testImporterDeclaredInCatlnIsUsed mk,
+  testCallTowardDeclaredType mk,
+  testDeferredPageIsEventuallyRead mk
                                              ]

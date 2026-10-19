@@ -16,9 +16,10 @@ import           Semantics        (testCtssConfig)
 import           Syntax.Parsers   (mkDesCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           TestService      (MkService)
 
-refinementRuntimeTests :: TestTree
-refinementRuntimeTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "RefinementRuntime"
+refinementRuntimeTests :: MkService -> TestTree
+refinementRuntimeTests mk = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "RefinementRuntime"
   [ failsWith getCtss "an argument outside its refinement fails the refined arm's dispatch" "argOutside.ct" "is outside the refinement"
   , failsWith getCtss "a result outside its declared refinement fails as it is returned" "resultOutside.ct" "is outside the refinement"
   , failsWith getCtss "a value not satisfying its condition fails where the condition is written" "whereOutside.ct" "does not satisfy its condition"
@@ -26,7 +27,7 @@ refinementRuntimeTests = withResource fixtures (const $ return ()) $ \getCtss ->
   ]
   where
     -- One service for every fixture, so the library they import is built once.
-    fixtures = ctssBaseFiles testCtssConfig (map fixture ["argOutside.ct", "resultOutside.ct", "whereOutside.ct", "outOutside.ct"]) :: IO CTSS
+    fixtures = mk (map fixture ["argOutside.ct", "resultOutside.ct", "whereOutside.ct", "outOutside.ct"]) :: IO CTSS
     fixture name = "test/Integration/code/artifacts/refineRuntime/" ++ name
     failsWith getCtss title page needle = testCase title $ do
       ctss <- getCtss

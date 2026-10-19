@@ -30,6 +30,7 @@ import qualified Test.Tasty.Hedgehog   as THG
 import           Test.Tasty.HUnit      (Assertion, assertBool, assertEqual,
                                         assertFailure, testCase)
 import           Testing.Generation    (genPrgms)
+import           TestService           (MkService)
 import           Text.Printf
 import           TypeCheck             (typecheckPrgm)
 import           TypeCheck.Common      (feCons, tcreToMaybe)
@@ -86,10 +87,10 @@ propTypeChecks = property $ do
 
 -- | A page written to fail ('findErrCt') fails to type-check. What it fails with is not printed
 -- ('Semantics.ctssQuietPage'), so a test asserting which errors those are is the place to read them.
-testErrPage :: FilePath -> TestTree
-testErrPage page = testCase page $ do
+testErrPage :: MkService -> FilePath -> TestTree
+testErrPage mk page = testCase page $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgm ctss
   case res of
     CErr _   -> return ()
@@ -101,10 +102,10 @@ testErrPage page = testCase page $ do
 -- needs a @Shows@. Both type-check; only the type checker's stronger question — is every form the
 -- value may take guaranteed within the declaration — tells them from @unwrapOk@ and @showOk@.
 -- Fixture: unit/resultNotGuaranteed.err.ct.
-testResultNotGuaranteed :: TestTree
-testResultNotGuaranteed = testCase "unsound arms are reported, their sound twins are not" $ do
+testResultNotGuaranteed :: MkService -> TestTree
+testResultNotGuaranteed mk = testCase "unsound arms are reported, their sound twins are not" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/resultNotGuaranteed.err.ct"]
+    ctss <- lift $ mk ["test/Typecheck/unit/resultNotGuaranteed.err.ct"]
     getTPrgm ctss
   let notes = case res of
         CRes ns _ -> ns
@@ -117,10 +118,10 @@ testResultNotGuaranteed = testCase "unsound arms are reported, their sound twins
 -- its arguments, and a refinement for a class in the parameter's bound is within it too. Both are
 -- read from the declaration's spelled input, which the checks find in the solved type graph.
 -- Fixture: unit/refineArgsParam.ct.
-testRefineArgsParam :: TestTree
-testRefineArgsParam = testCase "an arm and a refinement within an args-tied declaration" $ do
+testRefineArgsParam :: MkService -> TestTree
+testRefineArgsParam mk = testCase "an arm and a refinement within an args-tied declaration" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/refineArgsParam.ct"]
+    ctss <- lift $ mk ["test/Typecheck/unit/refineArgsParam.ct"]
     getTPrgm ctss
   let notes = case res of
         CRes ns _ -> ns
@@ -132,10 +133,10 @@ testRefineArgsParam = testCase "an arm and a refinement within an args-tied decl
 -- passes @textNeg(..)@ to @++@, and inferred from the arms alone that argument is only a
 -- @Semigroup@ (the arm's own @++@ is what it reaches), so the arm was reported as not guaranteed
 -- to return the @String@ it is declared to. Fixture: unit/recursiveDeclaredArg.ct.
-testRecursiveDeclaredArg :: TestTree
-testRecursiveDeclaredArg = testCase "a recursive call argument is within its declared result" $ do
+testRecursiveDeclaredArg :: MkService -> TestTree
+testRecursiveDeclaredArg mk = testCase "a recursive call argument is within its declared result" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/recursiveDeclaredArg.ct"]
+    ctss <- lift $ mk ["test/Typecheck/unit/recursiveDeclaredArg.ct"]
     getTPrgm ctss
   let notes = case res of
         CRes ns _ -> ns
@@ -146,55 +147,55 @@ testRecursiveDeclaredArg = testCase "a recursive call argument is within its dec
 -- | A fold's result is within the declared result of the definition it is the body of: @total@
 -- folds with @foldr@ into an @Integer@, and the lambda's parameters are typed from the call.
 -- Fixture: unit/foldDeclaredResult.ct.
-testFoldDeclaredResult :: TestTree
-testFoldDeclaredResult = testCase "a fold into its declared result is guaranteed" $
-  assertResultGuaranteed "test/Typecheck/unit/foldDeclaredResult.ct" "total"
+testFoldDeclaredResult :: MkService -> TestTree
+testFoldDeclaredResult mk = testCase "a fold into its declared result is guaranteed" $
+  assertResultGuaranteed mk "test/Typecheck/unit/foldDeclaredResult.ct" "total"
 
 -- | A fold into a declared CLASS result: the call's accumulator variable is chosen as the class.
-testFoldClassResult :: TestTree
-testFoldClassResult = testCase "a fold into its declared class result is guaranteed" $
-  assertResultGuaranteed "test/Typecheck/unit/foldClassResult.ct" "anyNeg"
+testFoldClassResult :: MkService -> TestTree
+testFoldClassResult mk = testCase "a fold into its declared class result is guaranteed" $
+  assertResultGuaranteed mk "test/Typecheck/unit/foldClassResult.ct" "anyNeg"
 
 -- | A recursive call inside a @match@ arm: the generated arm's raw call is read with the values
 -- its call site binds to the arm's inputs.
-testMatchRecursiveCall :: TestTree
-testMatchRecursiveCall = testCase "a recursive call in a match arm is guaranteed" $
-  assertResultGuaranteed "test/Typecheck/unit/matchRecursiveCall.ct" "lookup"
+testMatchRecursiveCall :: MkService -> TestTree
+testMatchRecursiveCall mk = testCase "a recursive call in a match arm is guaranteed" $
+  assertResultGuaranteed mk "test/Typecheck/unit/matchRecursiveCall.ct" "lookup"
 
 -- | A higher-order argument's result spelled by a declaration variable the definition does not
 -- apply: the variable ranges over the declaration's bound.
-testDeclVarBound :: TestTree
-testDeclVarBound = testCase "a declaration variable a definition does not apply keeps its bound" $
-  assertResultGuaranteed "test/Typecheck/unit/declVarBound.ct" "walk"
+testDeclVarBound :: MkService -> TestTree
+testDeclVarBound mk = testCase "a declaration variable a definition does not apply keeps its bound" $
+  assertResultGuaranteed mk "test/Typecheck/unit/declVarBound.ct" "walk"
 
 -- | An instance written under a declaration's absolute name on another page, then called by a
 -- later fragment: the call is still read with the declaration that shares the instance's key.
-testSharedKeyDeclaration :: TestTree
-testSharedKeyDeclaration = testCase "a declaration shared with a page's instance arms still bounds later calls" $
-  assertResultGuaranteed "test/Typecheck/unit/sharedKey/use.ct" "filt"
+testSharedKeyDeclaration :: MkService -> TestTree
+testSharedKeyDeclaration mk = testCase "a declaration shared with a page's instance arms still bounds later calls" $
+  assertResultGuaranteed mk "test/Typecheck/unit/sharedKey/use.ct" "filt"
 
 -- | A type variable bounded by an intersection (@$F -> Box && Eq@) is within each part.
-testIntersectionBound :: TestTree
-testIntersectionBound = testCase "a type variable bounded by an intersection is within each part" $
-  assertResultGuaranteed "test/Typecheck/unit/intersectionBound.ct" "f"
+testIntersectionBound :: MkService -> TestTree
+testIntersectionBound mk = testCase "a type variable bounded by an intersection is within each part" $
+  assertResultGuaranteed mk "test/Typecheck/unit/intersectionBound.ct" "f"
 
 -- | A definition's argument shadows a like-named function in another module: the check reads the
 -- argument, not the function's arrows.
-testParamShadowsFunction :: TestTree
-testParamShadowsFunction = testCase "an argument shadows a like-named function" $
-  assertResultGuaranteed "test/Typecheck/unit/paramShadowsFunction.ct" "step"
+testParamShadowsFunction :: MkService -> TestTree
+testParamShadowsFunction mk = testCase "an argument shadows a like-named function" $
+  assertResultGuaranteed mk "test/Typecheck/unit/paramShadowsFunction.ct" "step"
 
 -- | An arm whose body is a hole produces no value, so it is within its declaration.
-testHoleArm :: TestTree
-testHoleArm = testCase "an arm ending in a hole is within its declaration" $
-  assertResultGuaranteed "test/Typecheck/unit/holeArm.ct" "f"
+testHoleArm :: MkService -> TestTree
+testHoleArm mk = testCase "an arm ending in a hole is within its declaration" $
+  assertResultGuaranteed mk "test/Typecheck/unit/holeArm.ct" "f"
 
 -- | A fold whose step is an operator declared on its class (@+@ on @Add@) returns what the call
 -- chose its accumulator to be, an empty list's fold included. Fixture: unit/foldClassOp.ct.
-testFoldClassOp :: TestTree
-testFoldClassOp = testCase "a fold through a class-declared operator is within its declaration" $ do
-  assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sum"
-  assertResultGuaranteed "test/Typecheck/unit/foldClassOp.ct" "/Fx/sumNil"
+testFoldClassOp :: MkService -> TestTree
+testFoldClassOp mk = testCase "a fold through a class-declared operator is within its declaration" $ do
+  assertResultGuaranteed mk "test/Typecheck/unit/foldClassOp.ct" "/Fx/sum"
+  assertResultGuaranteed mk "test/Typecheck/unit/foldClassOp.ct" "/Fx/sumNil"
 
 -- | A call is read at the intersection of every refinement covering it, and a refinement covering
 -- only part of a call says nothing about it. @tri@ is a primitive, so only its declaration and
@@ -202,10 +203,10 @@ testFoldClassOp = testCase "a fold through a class-declared operator is within i
 -- and @-> BC@), so what it settles to is within the @B@ they share; @onNat@ calls @tri@ on every
 -- @Nat@, which neither covers, so it keeps the declared @Tri@, @A@ and @C@ included.
 -- Fixture: unit/refineNarrowsCall.ct.
-testRefineNarrowsCall :: TestTree
-testRefineNarrowsCall = testCase "a call is within every refinement covering it" $ do
+testRefineNarrowsCall :: MkService -> TestTree
+testRefineNarrowsCall mk = testCase "a call is within every refinement covering it" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/refineNarrowsCall.ct"]
+    ctss <- lift $ mk ["test/Typecheck/unit/refineNarrowsCall.ct"]
     getTPrgmJoined ctss
   prgm <- case res of
     CRes _ p -> return p
@@ -229,12 +230,12 @@ testRefineNarrowsCall = testCase "a call is within every refinement covering it"
 -- declared @Nat_isZ@ and @okZ@'s @f(a= Z)@ settles to the @Z@ it passes; on every @Nat@ it reaches
 -- both, so @onNat@'s argument keeps the predicate. The twin error page passes an @S@, on which it
 -- reaches only @False@. Fixtures: unit/refineDecide.ct, unit/refineDecideFails.err.ct.
-testRefineDecide :: TestTree
-testRefineDecide = testCase "a value predicate is decided on a known value" $ do
+testRefineDecide :: MkService -> TestTree
+testRefineDecide mk = testCase "a value predicate is decided on a known value" $ do
   let page = "test/Typecheck/unit/refineDecide.ct"
-  assertResultGuaranteed page "/h"
+  assertResultGuaranteed mk page "/h"
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgmJoined ctss
   prgm <- case res of
     CRes _ p -> return p
@@ -267,11 +268,11 @@ testRefineDecide = testCase "a value predicate is decided on a known value" $ do
 -- where a @Nat_isZ@ is declared, and neither is reported as not guaranteed. A result the predicate
 -- is decided false on is still refused statically (the twin error page). Fixtures:
 -- unit/refineRuntime.ct, unit/refineRuntimeFails.err.ct.
-testRefineRuntime :: TestTree
-testRefineRuntime = testCase "an undecided value predicate is left to the runtime" $ do
+testRefineRuntime :: MkService -> TestTree
+testRefineRuntime mk = testCase "an undecided value predicate is left to the runtime" $ do
   let page = "test/Typecheck/unit/refineRuntime.ct"
-  assertResultGuaranteed page "/onNat"
-  assertResultGuaranteed page "/h"
+  assertResultGuaranteed mk page "/onNat"
+  assertResultGuaranteed mk page "/h"
 
 -- | The value a condition refining a type is written over is named @$this@, or @$out@ as what the
 -- arrow produces. Both desugar to the one name the value is bound under where a predicate is
@@ -280,12 +281,12 @@ testRefineRuntime = testCase "an undecided value predicate is left to the runtim
 -- the runtime. A condition applying an argument by position cannot name it in the predicate and is
 -- refused as written. Fixtures: unit/refineOut.ct, unit/refineOut{,Fn,This}Fails.err.ct,
 -- unit/refineOutPositional.err.ct.
-testRefineOut :: TestTree
-testRefineOut = testCase "$out and $this in a type's condition name the refined value" $ do
+testRefineOut :: MkService -> TestTree
+testRefineOut mk = testCase "$out and $this in a type's condition name the refined value" $ do
   let page = "test/Typecheck/unit/refineOut.ct"
-  assertResultGuaranteed page "/hRt"
+  assertResultGuaranteed mk page "/hRt"
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgmJoined ctss
   prgm <- case res of
     CRes _ p -> return p
@@ -298,7 +299,7 @@ testRefineOut = testCase "$out and $this in a type's condition name the refined 
           assertBool (name ++ " leaves no written macro name unbound: " ++ show r) (not (any (`elem` names) [thisMacro, outMacro]))
         rs  -> assertFailure ("one result for " ++ name ++ ", found " ++ show rs)
   mapM_ checkResult (["/h", "/hFn", "/hThis", "/hRt"] :: [String])
-  assertPageErrorSays "test/Typecheck/unit/refineOutPositional.err.ct" "by position"
+  assertPageErrorSays mk "test/Typecheck/unit/refineOutPositional.err.ct" "by position"
 
 -- | A body's condition refines its value by the condition's FORM ('TypeCheck.Encode.condPredForm'):
 -- @k@'s @a | a.isZ == True@ types as @a@ within @$this.isZ == True@, the predicate @Nat_isZ@
@@ -309,12 +310,12 @@ testRefineOut = testCase "$out and $this in a type's condition name the refined 
 -- ('Semantics.Types.mergeSameFormPredExprs'), not two spellings of it. The
 -- twin error pages pass an @S@, on which the predicate is decided false. Fixtures:
 -- unit/whereRefine.ct, unit/whereRefineFails.err.ct, unit/whereRefineFnFails.err.ct.
-testWhereRefine :: TestTree
-testWhereRefine = testCase "a body's condition refines its value by the condition's form" $ do
+testWhereRefine :: MkService -> TestTree
+testWhereRefine mk = testCase "a body's condition refines its value by the condition's form" $ do
   let page = "test/Typecheck/unit/whereRefine.ct"
-  assertResultGuaranteed page "/kDecl"
+  assertResultGuaranteed mk page "/kDecl"
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgmJoined ctss
   prgm <- case res of
     CRes _ p -> return p
@@ -359,11 +360,11 @@ testWhereRefine = testCase "a body's condition refines its value by the conditio
 -- @fn(v)= fn(v= v)@ returns @bf@'s own @$_B@, still unbound, and was read as ⊤, so the definition
 -- returned @$_F[/T=⊤]@ where @fm@ declares @$F[$T -> $_B]@. bindap's fmap arm is this shape, and
 -- read at ⊤ its result could not rule the arm out where a call needs a flat monad.
-testPassedOnLink :: TestTree
-testPassedOnLink = testCase "a definition passing a call's result on keeps its link" $ do
+testPassedOnLink :: MkService -> TestTree
+testPassedOnLink mk = testCase "a definition passing a call's result on keeps its link" $ do
   let page = "test/Typecheck/unit/passedOnLink.ct"
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgmJoined ctss
   prgm <- case res of
     CRes _ p -> return p
@@ -373,12 +374,12 @@ testPassedOnLink = testCase "a definition passing a call's result on keeps its l
     [r] -> assertBool ("bf's definition returns fm's result with the continuation's $_B: " ++ show r) ("$_/B" `isInfixOf` show r)
     rs  -> assertFailure ("one definition of bf, found " ++ show rs)
 
-testDeclResult :: TestTree
-testDeclResult = testCase "a declared result refines every call of the definition" $ do
+testDeclResult :: MkService -> TestTree
+testDeclResult mk = testCase "a declared result refines every call of the definition" $ do
   let page = "test/Typecheck/unit/declResult.ct"
-  assertResultGuaranteed page "/hGen"
+  assertResultGuaranteed mk page "/hGen"
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgmJoined ctss
   prgm <- case res of
     CRes _ p -> return p
@@ -401,16 +402,16 @@ testDeclResult = testCase "a declared result refines every call of the definitio
 -- | A class member written as a bare name that is also another module's type is refused as
 -- ambiguous, naming both and the fix, rather than crashing the desugarer. Fixture:
 -- unit/ambiguousMember.err.ct.
-testAmbiguousMember :: TestTree
-testAmbiguousMember = testCase "an ambiguous class member names what it could be" $ do
+testAmbiguousMember :: MkService -> TestTree
+testAmbiguousMember mk = testCase "an ambiguous class member names what it could be" $ do
   let page = "test/Typecheck/unit/ambiguousMember.err.ct"
-  assertPageErrorSays page "The name Empty in the members of the class /Mine/Choice is ambiguous"
-  assertPageErrorSays page "/Mine/Empty or /Other/Empty"
+  assertPageErrorSays mk page "The name Empty in the members of the class /Mine/Choice is ambiguous"
+  assertPageErrorSays mk page "/Mine/Empty or /Other/Empty"
 
-assertPageErrorSays :: String -> String -> Assertion
-assertPageErrorSays page needle = do
+assertPageErrorSays :: MkService -> String -> String -> Assertion
+assertPageErrorSays mk page needle = do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgm ctss
   case res of
     CRes _ _  -> assertFailure "the page is written to fail, and it type-checked"
@@ -418,16 +419,16 @@ assertPageErrorSays page needle = do
 -- | A call of a function's longer shape, where its shorter shape is a call with a class result,
 -- is read both as the shorter call given the extra argument and as its result given it; the
 -- second is refuted rather than losing both. Fixture: unit/longerShapeCall.ct.
-testLongerShapeCall :: TestTree
-testLongerShapeCall = testCase "a call of a longer shape is within its declaration" $
-  assertResultGuaranteed "test/Typecheck/unit/longerShapeCall.ct" "outer"
+testLongerShapeCall :: MkService -> TestTree
+testLongerShapeCall mk = testCase "a call of a longer shape is within its declaration" $
+  assertResultGuaranteed mk "test/Typecheck/unit/longerShapeCall.ct" "outer"
 
 -- | An import written after another statement (@annot(#noCore)@ first) is read as an import, and
 -- the page it names is imported. Fixture: unit/importAfterAnnot.
-testImportAfterAnnot :: TestTree
-testImportAfterAnnot = testCase "an import written after another statement imports its page" $ do
+testImportAfterAnnot :: MkService -> TestTree
+testImportAfterAnnot mk = testCase "an import written after another statement imports its page" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/importAfterAnnot/page.ct"]
+    ctss <- lift $ mk ["test/Typecheck/unit/importAfterAnnot/page.ct"]
     getTPrgm ctss
   case res of
     CRes _ _ -> return ()
@@ -435,20 +436,20 @@ testImportAfterAnnot = testCase "an import written after another statement impor
 
 -- | A sub function capturing a field its parent destructures declares the field's type for it, so
 -- a body that narrows the field still fulfils the declaration. Fixture: unit/capturedField.ct.
-testCapturedField :: TestTree
-testCapturedField = testCase "a captured destructured field is declared as the field's type" $ do
+testCapturedField :: MkService -> TestTree
+testCapturedField mk = testCase "a captured destructured field is declared as the field's type" $ do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig ["test/Typecheck/unit/capturedField.ct"]
+    ctss <- lift $ mk ["test/Typecheck/unit/capturedField.ct"]
     getTPrgm ctss
   case res of
     CRes _ _ -> return ()
     CErr ns  -> assertFailure (prettyCNotes ns)
 
 -- | No 'ResultNotGuaranteed' is reported for the definition @name@ in the page.
-assertResultGuaranteed :: String -> String -> Assertion
-assertResultGuaranteed page name = do
+assertResultGuaranteed :: MkService -> String -> String -> Assertion
+assertResultGuaranteed mk page name = do
   res <- runCResT $ do
-    ctss <- lift $ ctssBaseFiles testCtssConfig [page]
+    ctss <- lift $ mk [page]
     getTPrgm ctss
   let notes = case res of
         CRes ns _ -> ns
@@ -456,42 +457,42 @@ assertResultGuaranteed page name = do
   let reported = [ n | n <- [show note | note <- notes], "Result Not Guaranteed" `isInfixOf` n, show name `isInfixOf` n ]
   assertEqual (unlines reported) [] reported
 
-typecheckTests :: IO TestTree
-typecheckTests = do
+typecheckTests :: MkService -> IO TestTree
+typecheckTests mk = do
   errPages <- findErrCt "test/Typecheck/unit/"
   return $ testGroup "TypeCheckTests" [
     -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
     THG.testProperty "propConstraint" (p propConstraint)
     , THG.testProperty "propConstraints" (p propConstraints)
     , THG.testProperty "propTypeChecks" (p propTypeChecks)
-    , testResultNotGuaranteed
-    , testRefineArgsParam
-    , testRecursiveDeclaredArg
-    , testFoldDeclaredResult
-    , testFoldClassResult
-    , testMatchRecursiveCall
-    , testDeclVarBound
-    , testSharedKeyDeclaration
-    , testIntersectionBound
-    , testParamShadowsFunction
-    , testHoleArm
-    , testFoldClassOp
-    , testRefineNarrowsCall
-    , testRefineDecide
-    , testRefineRuntime
-    , testRefineOut
-    , testWhereRefine
-    , testDeclResult
-    , testPassedOnLink
-    , testLongerShapeCall
-    , testImportAfterAnnot
-    , testCapturedField
-    , testAmbiguousMember
-    , testGroup "Error pages" (map testErrPage errPages)
+    , testResultNotGuaranteed mk
+    , testRefineArgsParam mk
+    , testRecursiveDeclaredArg mk
+    , testFoldDeclaredResult mk
+    , testFoldClassResult mk
+    , testMatchRecursiveCall mk
+    , testDeclVarBound mk
+    , testSharedKeyDeclaration mk
+    , testIntersectionBound mk
+    , testParamShadowsFunction mk
+    , testHoleArm mk
+    , testFoldClassOp mk
+    , testRefineNarrowsCall mk
+    , testRefineDecide mk
+    , testRefineRuntime mk
+    , testRefineOut mk
+    , testWhereRefine mk
+    , testDeclResult mk
+    , testPassedOnLink mk
+    , testLongerShapeCall mk
+    , testImportAfterAnnot mk
+    , testCapturedField mk
+    , testAmbiguousMember mk
+    , testGroup "Error pages" (map (testErrPage mk) errPages)
     ]
   where
     p prop = prop
     -- p prop = withTests 10000 prop
 
 main :: IO ()
-main = defaultMain =<< typecheckTests
+main = defaultMain =<< typecheckTests (ctssBaseFiles testCtssConfig)

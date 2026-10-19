@@ -48,11 +48,12 @@ import           System.Directory          (copyFile, createDirectoryIfMissing,
 import           System.FilePath           ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           TestService               (MkService)
 import           Web.Scotty                (body, header, post, raw, scotty,
                                             status)
 
-systemTests :: TestTree
-systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "SystemTests"
+systemTests :: MkService -> TestTree
+systemTests mk = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "SystemTests"
   [ testEnvReadsTheMockEnvironment getCtss
   , testHttpPostSendsThroughTheHandle getCtss
   , testMockRefusesTheNetwork getCtss
@@ -62,13 +63,13 @@ systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup 
   , testLlmWithoutAModelAsksNothing getCtss
   , testProcessAnswersQueries getCtss
   , testProcessWithoutAModelAnswersNothing getCtss
-  , fileProcessorTests
+  , fileProcessorTests mk
   , testRealHttpPost
   ]
   where
     -- One service for every fixture, so the library they import is built once rather than once
     -- per test.
-    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct", fixture "readline.ct", fixture "llm.ct", fixture "query.ct"] :: IO CTSS
+    fixtures = mk [fixture "env.ct", fixture "http.ct", fixture "readline.ct", fixture "llm.ct", fixture "query.ct"] :: IO CTSS
 
 fixture :: String -> FilePath
 fixture name = "test/Integration/code/artifacts/system/" ++ name
@@ -226,8 +227,8 @@ testProcessWithoutAModelAnswersNothing getCtss = testCase "processing a page wit
 
 -- | File processors rewrite the file they are written in, so each is run on a copy of its fixture in
 -- a directory of its own rather than on the fixture.
-fileProcessorTests :: TestTree
-fileProcessorTests = withResource copies (const $ return ()) $ \getCopies -> testGroup "file processors"
+fileProcessorTests :: MkService -> TestTree
+fileProcessorTests mk = withResource copies (const $ return ()) $ \getCopies -> testGroup "file processors"
   [ testFindReplaceRenames getCopies
   , testFindReplaceIsDoneOnceRun getCopies
   , testFindReplaceWithNothingToReplace getCopies
@@ -248,7 +249,7 @@ fileProcessorTests = withResource copies (const $ return ()) $ \getCopies -> tes
       removePathForcibly dir
       createDirectoryIfMissing True dir
       forM_ pages $ \page -> copyFile (fixture page) (dir </> page)
-      ctss <- ctssBaseFiles testCtssConfig (map (dir </>) pages)
+      ctss <- mk (map (dir </>) pages)
       return (ctss, dir)
 
 -- | Processes a copied fixture ('processWith'), and reads back the file it was written to.

@@ -4,26 +4,30 @@ import           Control.Concurrent.MVar (readMVar)
 import           Control.Monad           (unless)
 import           CRes
 import           CtService
+import qualified Data.HashSet            as S
 import           Data.Maybe              (fromMaybe, isJust)
 import           Eval.Common             (SSF (..), TestResult (..))
 import           Eval.Testing            (TestDesc (..), runTestDesc)
 import           Semantics               (testCtssConfig)
 import           Syntax.Ct.Prgm          (ReadPage (..))
+import           Syntax.Parsers          (mkDesCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           TypeCheck.Instruments   (epochInstruments)
 import           Utils                   (graphToNodes, snd3)
 
-stackTests :: IO TestTree
-stackTests = do
-  ctss <- ctssBaseFiles testCtssConfig ["stack"]
-  res <- runCResT $ getTestResults ctss
-  rereadTest <- testReread ctss
+-- | The library's own tests, run in the library's service ('TestService.libraryService').
+stackTests :: CTSS -> IO TestTree
+stackTests lib = do
+  res <- runCResT $ getTestResults lib
+  rereadTest <- testReread lib
+  seededTest <- testSeeded lib
   case res of
     CErr notes ->
       return $ testCase "load stack library" $
         assertFailure $ "Failed to load stack library:\n" ++ prettyCNotes notes
     CRes _ testDescs ->
-      return $ testGroup "Stack" $ rereadTest : map makeTest testDescs
+      return $ testGroup "Stack" $ rereadTest : seededTest : map makeTest testDescs
   where
     -- Reading files which have not changed must read no page again, and so must leave every
     -- already-built page built. A read compares the program it read against the one the page holds,
@@ -49,6 +53,30 @@ stackTests = do
         assertBool "no page was timed to begin with, so a re-read could not be told from a page given back"
           (all (\(_, _, times) -> isJust times) beforeRead)
         assertEqual "a read of unchanged files did not leave the pages as they were" beforeRead afterRead
+
+    -- A service started from the library ('ctssBaseFilesFrom') builds none of the library again: a
+    -- page importing core reaches all of it, so this is what lets every test's service start from it
+    -- rather than spend most of its time building it. Watched by the epoch count, which records one
+    -- entry for each component a build typechecks, so a library page built again would be named in
+    -- it. The pages being built already before the build is the other half: what the read handed
+    -- back is the library's pages, not ones read afresh under another name.
+    --
+    -- Run here for the reason the reread is: it reads the library service, which tasty's cases share.
+    testSeeded ctss@(CTSS ssmv _) = do
+      let page = "test/Typecheck/unit/foldDeclaredResult.ct"
+      seeded@(CTSS seededv _) <- ctssBaseFilesFrom ctss testCtssConfig [page]
+      CTSSDat{ctssData=libData} <- readMVar ssmv
+      CTSSDat{ctssData=seededData} <- readMVar seededv
+      let library = S.fromList [name | (_, name, _) <- graphToNodes libData]
+      let reachedLibrary = [ssfBuilt ssf | (ssf, name, _) <- graphToNodes seededData, name `S.member` library]
+      ctssSetInstrument seeded (const epochInstruments)
+      name <- mkDesCanonicalImportStr testCtssConfig page
+      ctssBuildFrom seeded name
+      built <- map fst <$> ctssEpochCounts seeded
+      return $ testCase "a service started from the library builds none of it again" $ do
+        assertBool "the page reaches none of the library, so this proves nothing" (not $ null reachedLibrary)
+        assertBool "a library page was handed over unbuilt" (and reachedLibrary)
+        assertEqual "the components typechecked" [name] built
 
     -- The tests are run one tasty case at a time rather than all at once up front, so each keeps its
     -- own name, runs under tasty's parallelism, and is skipped outright by @--pattern@.

@@ -6,7 +6,7 @@
 module Eval.PrintGoldenTests (printGoldenTests) where
 
 import           CRes
-import           CtService        (CTSS, ctssBaseFiles, getTestResultsOf)
+import           CtService        (CTSS, getTestResultsOf)
 import           Data.List        (isInfixOf, sortOn)
 import           Data.Maybe       (fromMaybe)
 import           Eval.Common      (TestKind (..), TestResult (..))
@@ -15,9 +15,10 @@ import           Semantics        (testCtssConfig)
 import           Syntax.Parsers   (mkDesCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           TestService      (MkService)
 
-printGoldenTests :: TestTree
-printGoldenTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "PrintGolden"
+printGoldenTests :: MkService -> TestTree
+printGoldenTests mk = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "PrintGolden"
   [ testCase "a print is checked against its golden, and told when it has none" $ do
       results <- testResultsOf getCtss printGoldenPage
       -- In the order the prints were written, which their names carry as the source range.
@@ -39,7 +40,7 @@ printGoldenTests = withResource fixtures (const $ return ()) $ \getCtss -> testG
     ifPage = "test/Integration/code/ifNonAgreeingBranches.ct"
     -- One service for both pages, so the library they import is built once rather than once per
     -- case.
-    fixtures = ctssBaseFiles testCtssConfig [printGoldenPage, ifPage] :: IO CTSS
+    fixtures = mk [printGoldenPage, ifPage] :: IO CTSS
     -- The tests of the page alone, as the integration runner derives them.
     testResultsOf getCtss file = do
       ctss <- getCtss

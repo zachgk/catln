@@ -30,6 +30,7 @@ import           System.Directory        (createDirectoryIfMissing,
                                           doesFileExist, getCurrentDirectory)
 import           System.Environment      (lookupEnv)
 import           System.FilePath         (replaceExtension, takeDirectory)
+import           TestService             (MkService)
 import           Text.Pretty.Simple      (pShowNoColor)
 import           Utils
 import           WebDocs                 (docApi, docServe)
@@ -248,13 +249,13 @@ pageTests = map (\note -> "obsidian(\"test/Integration/code/artifacts/" ++ note 
   , "catln-tasks/Queries/Order.md"
   ]
 
-integrationTests :: IO TestTree
-integrationTests = do
+integrationTests :: MkService -> IO TestTree
+integrationTests mk = do
   ctFiles <- standardTests
   pyFiles <- findPy testDir
   jsonFiles <- findJson testDir
   let allFiles = ctFiles ++ pyFiles ++ jsonFiles ++ pageTests
-  return $ withResource (ctssBaseFiles testCtssConfig allFiles) (const $ return ()) $ \getCtss ->
+  return $ withResource (mk allFiles) (const $ return ()) $ \getCtss ->
     testGroup "Integration" [
       testGroup "Tests" $ map (runTest True getCtss) ctFiles,
       testGroup "Python" $ map (runPyTest True getCtss) pyFiles,

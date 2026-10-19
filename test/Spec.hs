@@ -24,14 +24,18 @@ import           Syntax.RereadTests          (rereadTests)
 import           Syntax.RssCacheTests        (rssCacheTests)
 import           Syntax.SyntaxTests          (syntaxTests)
 import           Test.Tasty
+import           TestService                 (libraryService, seededService)
 import           Typecheck.PartitionTests    (partitionTests)
 import           Typecheck.TypeCheckTests    (typecheckTests)
 
 main :: IO ()
 main = do
-  integrationTests' <- integrationTests
+  -- Built before anything else, so every test's service starts from it rather than building it.
+  lib <- libraryService
+  let mk = seededService lib
+  integrationTests' <- integrationTests mk
   syntaxTests' <- syntaxTests
-  stackTests' <- stackTests
-  typecheckTests' <- typecheckTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, inFlightTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianPlannerTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, hsBuiltinsTests, evalCommonTests, printGoldenTests, refinementProofTests, refinementRuntimeTests, quantificationTests, systemTests, nativeTests, importerCallTests, dirListingTests]
+  stackTests' <- stackTests lib
+  typecheckTests' <- typecheckTests mk
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, inFlightTests, typecheckTests', partitionTests, syntaxTests', stackTests', obsidianTests, obsidianPlannerTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, hsBuiltinsTests, evalCommonTests, printGoldenTests mk, refinementProofTests, refinementRuntimeTests mk, quantificationTests, systemTests mk, nativeTests, importerCallTests mk, dirListingTests]
   defaultMain catlnTests
