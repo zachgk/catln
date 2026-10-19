@@ -40,10 +40,12 @@ webdocs-test:
 webdocs-test-integ:
 	cd webdocs && npm run test:integration:full
 
-# test/Integration/code is excluded until the CtService dep-scoping bug is fixed.
-# buildSCCPipeline passes ALL pages as external deps rather than the transitive
-# ones, so merging those 38 standalone programs collides on names they never
-# import from each other: abs, Nothing, and main (defined by 37 of the 38).
+# test/Integration/code is not served. It was left out (8162d29d) because a
+# component was built against every page the service held, so the standalone
+# fixtures collided on names they never import from each other (abs, Nothing,
+# main). Since adb73260 a component is built against only what it reaches, and
+# the integration suite builds every fixture in one service, but serving them
+# from the doc server has not been tried again since.
 .PHONY: webdocs-serve
 webdocs-serve:
 	cd webdocs && npm run build
