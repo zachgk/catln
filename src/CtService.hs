@@ -68,7 +68,8 @@ import           FileWatch               (Watch, Watcher, allCovered,
 import           GHC.Generics            (Generic)
 import           Process                 (ProcessStep (..), evalProcessPage)
 import           Semantics               (CTSSConfig, ctssCachePath,
-                                          ctssQuietPage, ctssToday)
+                                          ctssQuietPage, ctssStackPath,
+                                          ctssToday)
 import           Semantics.CtType        (fromCt)
 import           Semantics.Prgm
 import           Semantics.Types         (Name, mkName, nameStr, partialKey)
@@ -383,6 +384,37 @@ ctssBaseFiles config baseFileNames = do
   ctss <- CTSS v <$> newWorking
   ctssRead ctss
   return ctss
+
+-- | 'ctssBaseFiles', starting out with what another service has already built.
+--
+-- For many services over one library: a page which imports @core@ reaches all of it, and building
+-- that is most of what a build costs, so a service of each page made from nothing builds the library
+-- once per page. This one is handed every page the other has built, and its first read gives back
+-- each of those it reaches whose files have not changed ('mergePage'), with what was built from it.
+-- The rest it drops, as a read drops any page it did not reach. Its own pages it reads afresh, so
+-- what it does with them is what a service made from nothing would do.
+--
+-- Sound because a page is built from what it reaches and nothing else ('ctssBuildSCC'), so a page
+-- built in another service is the page this one would build — given that the two build alike, which
+-- is what their configurations are compared for.
+--
+-- A page's tests and annotations are not handed over. Those are decided over the whole program the
+-- service holds ('ctssClearInvalidations'), which this one's is not. Nor is the other service's
+-- choice of instruments: a page handed over is built already, so it is never watched here.
+ctssBaseFilesFrom :: CTSS -> CTSSConfig -> [String] -> IO CTSS
+ctssBaseFilesFrom (CTSS fromv _) config baseFileNames = do
+  from <- readMVar fromv
+  let fromConfig = ctssConfig from
+  unless (buildsAlike fromConfig config) $
+    fail "A service can only start from the pages of one with the same stack path, cache path and day"
+  let handed = H.map fresh $ H.filter ssfBuilt $ ctssPages from
+  v <- newMVar . ctssWithPages handed =<< newCTSSDat config baseFileNames
+  ctss <- CTSS v <$> newWorking
+  ctssRead ctss
+  return ctss
+  where
+    buildsAlike a b = ctssStackPath a == ctssStackPath b && ctssCachePath a == ctssCachePath b && ctssToday a == ctssToday b
+    fresh ssf = ssf{ssfAnnots = Nothing, ssfAnnotAsks = mempty, ssfTests = Nothing}
 
 -- | Watch the files the service is read from, so that later reads read only what has changed.
 --
