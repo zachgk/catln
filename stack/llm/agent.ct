@@ -1,0 +1,228 @@
+import "core"
+import hsrawprgm()
+import "reflect"
+import "process/page.ct"
+import "llm/err.ct"
+import "llm/lcm.ct"
+import "llm/typed.ct"
+
+
+module(Llm)
+  # ## Agents working on a page
+    A request for a model to work on the page it is written on can be written on the page itself, as
+    `a> ` and then the request. It is an [#agent], and is run by `catln process`. Where an agent
+    built on a conversation appends to it without end, this one works by editing the page: the page
+    is both what it remembers and what it makes. Each time it is run it is asked, with the page as
+    it now is ([tlcm]), for its next [AgentStep]: to edit the page, or to respond. An edit changes
+    the page, which `catln process` writes, compiles and processes again, so the agent is run again
+    on what it wrote. A response is written under the request as its `>>>` lines, as the reply to a
+    [#q] is, and an agent with a response is done: it is not run again.
+  annot(#agent(input -> String))
+    # [#agent] is a request for a model to work on the page it is written on, asked by [tlcm].
+  annot(#agent(input -> String, result -> String))
+    # The [#agent] can also hold the [result] it responded with, once it is done.
+
+  class(AgentStep, [AgentStep/Respond(text -> String), AgentStep/Edit(edits -> /Data/List[$T -> AgentEdit..])])
+    # [AgentStep] is what an agent does next. It is one of two steps:
+      - [Respond] ends the work, answering the request with [text]. Respond once the request is done,
+        or when it cannot be done, saying why.
+      - [Edit] edits the page the request is written on with [edits], and continues the work: the
+        agent is asked again with the page as edited. The page is working memory as well as the
+        result, so notes and plans may be written on it too.
+
+  data(AgentEdit(oldText -> String, newText -> String))
+    # [AgentEdit] replaces the [oldText] written on the page with [newText]. Each [oldText] must be
+      written exactly as it is on the page, and only once there. The edits of one step must not
+      overlap, and are each matched against the page as it was before the step rather than as the
+      edits before them leave it: two changes close together are one edit. A step edits with at
+      least one.
+
+  /Catln/processFile{io -> /Catln/IO}(annot= #agent(input -> String, result -> String), page -> /Catln/RawPrgm.., annotId -> String) -> /Data/Result[$T -> /Catln/RawPrgm..]{IO}= (/Data/Result/Ok(value= page)){io}
+    # An [#agent] which has responded is done, and leaves the page as it is.
+
+  /Catln/processFile{io -> /Catln/IO}(annot -> #agent(input -> String), page -> /Catln/RawPrgm.., annotId -> String) -> /Data/Result[$T -> /Catln/RawPrgm..]{IO}
+    # An [#agent] which has not responded is asked for its next step ([agentAsk]).
+    #runtime("callerSource")
+  /Catln/processFile{io -> /Catln/IO}(annot= #agent(input -> String), page -> /Catln/RawPrgm.., annotId -> String, source -> String) -> /Data/Result[$T -> /Catln/RawPrgm..]{IO} =
+    result<- agentAsk(at= AgentAt(input= input, page= page, annotId= annotId, source= source), tries= 0, history= "")
+    result
+
+  data(AgentAt(input -> String, page -> /Catln/RawPrgm.., annotId -> String, source -> String))
+    # [AgentAt] is where an agent is at work: the request [input] it was given, the [page] it is
+      written on and the [annotId] of it there, and the [source] the page was read from.
+
+  # ### The steps of a turn
+    Asking the model reaches outside the program, and so runs in the io ([agentAsk], [agentNext]).
+    What is made of each reply does not, and is worked out apart from it: the step taken leaves an
+    [AgentNext], which is either what the agent is done with, or that it is to be asked again.
+  class(AgentNext, [AgentNext/Finished(result -> /Data/Result[$T -> /Catln/RawPrgm..]), AgentNext/Again(at -> AgentAt.., tries -> Integer, history -> String)])
+    # [AgentNext] is what is next once a step is taken: the agent has [Finished] its turn with the
+      [result] the page is to become, or it is to be asked [Again], having been asked [tries] times
+      before with the [history] of what went wrong with those.
+
+  agentAsk{io -> IO}(at -> AgentAt.., tries -> Integer, history -> String) -> /Data/Result[$T -> /Catln/RawPrgm..]{IO}
+    # [agentAsk] asks the model for the agent's next step, and takes it ([agentTook]). The [history]
+      is what went wrong with the steps it was asked for before, and [tries] how many there were.
+  agentAsk{io -> IO}(at= AgentAt(input, page, annotId, source), tries, history) =
+    reply<- tlcm(input= agentPrompt(input= input, history= history), type= /Catln/typeOf[$T -> AgentStep], source= source)
+
+    result<- agentNext(next= agentTook(at= AgentAt(input= input, page= page, annotId= annotId, source= source), tries= tries, history= history, reply= reply))
+    result
+
+  agentNext{io -> IO}(next -> AgentNext) -> /Data/Result[$T -> /Catln/RawPrgm..]{IO}
+    # [agentNext] is the page the agent's turn ends with: the [result] it [AgentNext/Finished] with,
+      or what it ends with once asked [AgentNext/Again].
+  agentNext{io -> IO}(next= AgentNext/Finished(result))= result{io}
+  agentNext{io -> IO}(next= AgentNext/Again(at, tries, history)) =
+    result<- agentAsk(at= at, tries= tries, history= history)
+    result
+
+  agentTook(at -> AgentAt.., tries -> Integer, history -> String, reply -> /Data/Result[$E -> LlmErr]) -> AgentNext
+    # [agentTook] is what is next once the step [reply] is taken. A response is written as the
+      agent's result. An edit is applied to the page ([agentEdited]). A reply that is not a step is
+      asked for again ([agentRetry]), and no reply at all is reported, as for a [#q].
+  agentTook(at= AgentAt(input, page, annotId, source), tries, history, reply= /Data/Result/Ok(value= AgentStep/Respond(text)))= AgentNext/Finished(result= /Data/Result/Ok(value= agentDone(at= AgentAt(input= input, page= page, annotId= annotId, source= source), text= text)))
+  agentTook(at= AgentAt(input, page, annotId, source), tries, history, reply= /Data/Result/Ok(value= AgentStep/Edit(edits)))= agentEdited(at= AgentAt(input= input, page= page, annotId= annotId, source= source), tries= tries, history= history, edits= edits, edited= applyEdits(text= /Process/formatPage(page= page), edits= edits))
+  agentTook(at, tries, history, reply= /Data/Result/Fail(err= LlmErr/NotOf(reply@replyText, cause)))= agentRetry(at= at, tries= tries, history= history, attempt= replyText, why= cause.msg)
+  agentTook(at, tries, history, reply) else = AgentNext/Finished(result= agentFailed(reply= reply))
+
+  agentFailed(reply -> /Data/Result[$E -> LlmErr]) -> /Data/Result[$T -> /Catln/RawPrgm..]
+    # [agentFailed] is why there is no step where the model gave no reply.
+  agentFailed(reply= /Data/Result/Fail(err))= /Data/Result/Fail(err= err)
+  agentFailed(reply) else = /Data/Result/Fail(err= /Data/Failure(reason= "the model replied with something other than a step"))
+
+  agentEdited(at -> AgentAt.., tries -> Integer, history -> String, edits -> /Data/List[$T -> AgentEdit..], edited -> /Data/Result[$T -> String, $E -> /Data/Err]) -> AgentNext
+    # [agentEdited] is what is next once the [edits] are made: the page they leave, where they
+      leave one. Edits that can not be made, or that leave text that is not a page, are asked for
+      again.
+  agentEdited(at, tries, history, edits, edited= /Data/Result/Ok(value))= agentParsed(at= at, tries= tries, history= history, edits= edits, parsed= /Process/parsePage(text= value))
+  agentEdited(at, tries, history, edits, edited= /Data/Result/Fail(err))= agentRetry(at= at, tries= tries, history= history, attempt= editsShown(edits= edits), why= err.msg)
+
+  agentParsed(at -> AgentAt.., tries -> Integer, history -> String, edits -> /Data/List[$T -> AgentEdit..], parsed -> /Data/Result[$T -> /Catln/RawPrgm.., $E -> /Process/ParsePageErr]) -> AgentNext
+  agentParsed(at, tries, history, edits, parsed= /Data/Result/Ok(value))= AgentNext/Finished(result= /Data/Result/Ok(value= value))
+  agentParsed(at, tries, history, edits, parsed= /Data/Result/Fail(err))= agentRetry(at= at, tries= tries, history= history, attempt= editsShown(edits= edits), why= err.msg)
+
+  agentRetry(at -> AgentAt.., tries -> Integer, history -> String, attempt -> String, why -> String) -> AgentNext
+    # [agentRetry] asks again for a step, after the step [attempt] could not be taken for the reason
+      [why]. The model is told both. It is asked again three times, and after that the agent is done,
+      responding with why it stopped.
+  agentRetry(at, tries, history, attempt, why) | tries >= 3= AgentNext/Finished(result= /Data/Result/Ok(value= agentDone(at= at, text= "The agent stopped, as its step could not be taken: " ++ why)))
+  agentRetry(at, tries, history, attempt, why) else = AgentNext/Again(at= at, tries= tries + 1, history= history ++ "\n\nYour step was:\n" ++ attempt ++ "\nIt could not be taken: " ++ why)
+
+  agentDone(at -> AgentAt.., text -> String) -> /Catln/RawPrgm..
+    # [agentDone] is the page with the agent responding with [text], which is the end of its work.
+  agentDone(at= AgentAt(input, page, annotId, source), text)= /Process/setAnnot(page= page, annotId= annotId, annot= #agent(input= input, result= text))
+
+  agentPrompt(input -> String, history -> String) -> String
+    # [agentPrompt] is what an agent asks the model, after the page: the request [input], how it is
+      to be worked on, and the [history] of the steps of this turn which could not be taken.
+  agentPrompt(input, history)= "You are an agent working on the page above, where this request is written as `a> " ++ input ++ "`. The request is:\n" ++ input ++ "\n\nYou work by editing the page, which is both your working memory and your result. Each time you are asked, take one step: edit the page, after which you are asked again with the page as you left it, or respond, which ends your work. Edits are made to the text of the page as it is written, which is the page above without the `>>>` lines of what its examples evaluate to." ++ history
+
+  editsShown(edits -> /Data/List[$T -> AgentEdit..]) -> String
+    # [editsShown] is the [edits] of a step, written as a step would be.
+  editsShown(edits)= "/Llm/AgentStep/Edit(edits= [" ++ editsJoined(edits= edits) ++ "])"
+
+  editsJoined(edits -> /Data/List[$T -> AgentEdit..]) -> String
+    # [editsJoined] is each of [edits] written as an edit, separated by commas.
+  editsJoined(edits= /Data/List/Nil)= ""
+  editsJoined(edits= /Data/List/Cons(head, tail= /Data/List/Nil))= agentEditShown(e= head)
+  editsJoined(edits= /Data/List/Cons(head, tail= /Data/List/Cons(head@next, tail@rest)))= agentEditShown(e= head) ++ ", " ++ editsJoined(edits= /Data/List/Cons(head= next, tail= rest))
+
+  agentEditShown(e -> AgentEdit..) -> String
+  agentEditShown(e= AgentEdit(oldText, newText))= "/Llm/AgentEdit(oldText= " ++ quoted(s= oldText) ++ ", newText= " ++ quoted(s= newText) ++ ")"
+
+  quoted(s -> String) -> String
+    # [quoted] is [s] written as a Catln string.
+  quoted(s)= "\"" ++ s.replace(old= "\\", new= "\\\\").replace(old= "\"", new= "\\\"").replace(old= "\n", new= "\\n") ++ "\""
+
+  # ### Editing text
+    The edits of a step are made as pi's `edit` tool makes them: each is found once in the text as
+    it was before the step, none overlaps another, and each is replaced there.
+  data(EditAt(start -> Integer, stop -> Integer, newText -> String))
+    # [EditAt] is an edit found in the text: it replaces from [start] up to [stop] with [newText].
+
+  applyEdits(text -> String, edits -> /Data/List[$T -> AgentEdit..]) -> /Data/Result[$T -> String, $E -> /Data/Err]
+    # [applyEdits] is [text] with each of [edits] made, or why they can not all be made.
+  applyEdits(text, edits= /Data/List/Nil)= /Data/Result/Fail(err= /Data/Failure(reason= "the step has no edits"))
+  applyEdits(text, edits= /Data/List/Cons(head, tail))= editsFound(text= text, found= findEdits(text= text, edits= /Data/List/Cons(head= head, tail= tail)))
+
+  findEdits(text -> String, edits -> /Data/List[$T -> AgentEdit..]) -> /Data/Result[$T -> /Data/List[$T -> EditAt..], $E -> /Data/Err]
+    # [findEdits] is where each of [edits] is in [text], or why one is not there once.
+  findEdits(text, edits= /Data/List/Nil)= /Data/Result/Ok(value= /Data/List/Nil)
+  findEdits(text, edits= /Data/List/Cons(head, tail))= findEditsThen(first= findEdit(text= text, e= head), rest= findEdits(text= text, edits= tail))
+
+  findEditsThen(first -> /Data/Result[$T -> EditAt.., $E -> /Data/Err], rest -> /Data/Result[$T -> /Data/List[$T -> EditAt..], $E -> /Data/Err]) -> /Data/Result[$T -> /Data/List[$T -> EditAt..], $E -> /Data/Err]
+  findEditsThen(first= /Data/Result/Fail(err), rest)= /Data/Result/Fail(err= err)
+  findEditsThen(first= /Data/Result/Ok(value@f), rest= /Data/Result/Fail(err))= /Data/Result/Fail(err= err)
+  findEditsThen(first= /Data/Result/Ok(value@f), rest= /Data/Result/Ok(value@r))= /Data/Result/Ok(value= /Data/List/Cons(head= f, tail= r))
+
+  findEdit(text -> String, e -> AgentEdit..) -> /Data/Result[$T -> EditAt.., $E -> /Data/Err]
+    # [findEdit] is where the [oldText] of [e] is in [text], where it is there exactly once.
+  findEdit(text, e= AgentEdit(oldText, newText)) | oldText.isEmpty= /Data/Result/Fail(err= /Data/Failure(reason= "an edit has an empty oldText"))
+  findEdit(text, e= AgentEdit(oldText, newText)) else = foundEdit(oldText= oldText, newText= newText, count= text.split(sep= oldText).length - 1, at= text.indexOf(sub= oldText))
+
+  foundEdit(oldText -> String, newText -> String, count -> Integer, at -> /Data/Maybe[$T -> Integer]) -> /Data/Result[$T -> EditAt.., $E -> /Data/Err]
+  foundEdit(oldText, newText, count, at= /Data/Maybe/Some(value@start)) | count == 1= /Data/Result/Ok(value= EditAt(start= start, stop= start + oldText.length, newText= newText))
+  foundEdit(oldText, newText, count, at= /Data/Maybe/Some(value@start)) else = /Data/Result/Fail(err= /Data/Failure(reason= "the oldText " ++ quoted(s= oldText) ++ " is written " ++ count.toString ++ " times on the page, not once"))
+  foundEdit(oldText, newText, count, at= /Data/Maybe/Nothing)= /Data/Result/Fail(err= /Data/Failure(reason= "the oldText " ++ quoted(s= oldText) ++ " is not written on the page"))
+
+  editsFound(text -> String, found -> /Data/Result[$T -> /Data/List[$T -> EditAt..], $E -> /Data/Err]) -> /Data/Result[$T -> String, $E -> /Data/Err]
+  editsFound(text, found= /Data/Result/Fail(err))= /Data/Result/Fail(err= err)
+  editsFound(text, found= /Data/Result/Ok(value@ats)) | editsOverlap(ats= ats)= /Data/Result/Fail(err= /Data/Failure(reason= "two of the edits overlap; edits close together are to be one edit"))
+  editsFound(text, found= /Data/Result/Ok(value@ats)) else = /Data/Result/Ok(value= spliceAll(body= text, ats= ats))
+
+  editsOverlap(ats -> /Data/List[$T -> EditAt..]) -> Boolean
+    # [editsOverlap] is whether any two of [ats] replace some of the same text.
+  editsOverlap(ats= /Data/List/Nil)= /Data/Primitive/False
+  editsOverlap(ats= /Data/List/Cons(head, tail))= overlapsAny(e= head, ats= tail) || editsOverlap(ats= tail)
+
+  overlapsAny(e -> EditAt.., ats -> /Data/List[$T -> EditAt..]) -> Boolean
+    # [overlapsAny] is whether [e] replaces some of the same text as any of [ats].
+  overlapsAny(e, ats= /Data/List/Nil)= /Data/Primitive/False
+  overlapsAny(e, ats= /Data/List/Cons(head, tail))= overlaps(a= e, b= head) || overlapsAny(e= e, ats= tail)
+
+  overlaps(a -> EditAt.., b -> EditAt..) -> Boolean
+  overlaps(a= EditAt(start@aStart, stop@aStop, newText@aNew), b= EditAt(start@bStart, stop@bStop, newText@bNew))= aStart < bStop && bStart < aStop
+
+  spliceAll(body -> String, ats -> /Data/List[$T -> EditAt..]) -> String
+    # [spliceAll] makes each of the edits [ats], which do not overlap, in the text [body]. Each is made
+      where it was found, so once one is made the edits after it are moved by as much as it grew
+      ([shiftPast]).
+  spliceAll(body, ats= /Data/List/Nil)= body
+  spliceAll(body, ats= /Data/List/Cons(head, tail))= spliceAll(body= spliceAt(body= body, at= head), ats= /Data/Functor/fmap(lst= tail, fn(v)= shiftPast(e= v, past= head)))
+
+  spliceAt(body -> String, at -> EditAt..) -> String
+    # [spliceAt] makes the edit [at] in the text [body].
+  spliceAt(body, at= EditAt(start, stop, newText))= body.take(n= start) ++ newText ++ body.drop(n= stop)
+
+  shiftPast(e -> EditAt.., past -> EditAt..) -> EditAt..
+    # [shiftPast] is where [e] is once the edit [past] is made: moved by as much as [past] grew, where
+      it is after it.
+  shiftPast(e= EditAt(start, stop, newText), past= EditAt(start@pStart, stop@pStop, newText@pNew)) | start >= pStop= EditAt(start= start + pNew.length - (pStop - pStart), stop= stop + pNew.length - (pStop - pStart), newText= newText)
+  shiftPast(e, past) else = e
+module(Llm/AgentExample)
+  # ## Editing, without asking
+    How the edits of a step are made is checked here without asking a model.
+  editedShown(r -> /Data/Result[$T -> String, $E -> /Data/Err]) -> String
+    # [editedShown] is the text [r] edited to, or why it could not be.
+  editedShown(r= /Data/Result/Ok(value))= value
+  editedShown(r= /Data/Result/Fail(err))= "error: " ++ err.msg
+
+  # Each edit is matched against the text as it was before the step, so the edits of a step may be
+    given in any order.
+  > editedShown(r= /Llm/applyEdits(text= "one two three", edits= [/Llm/AgentEdit(oldText= "one", newText= "1"), /Llm/AgentEdit(oldText= "three", newText= "3")]))
+    >>> 1 two 3
+  > editedShown(r= /Llm/applyEdits(text= "one two three", edits= [/Llm/AgentEdit(oldText= "three", newText= "3"), /Llm/AgentEdit(oldText= "one", newText= "a longer one")]))
+    >>> a longer one two 3
+  # An edit of text that is not there once, or two edits of the same text, are not made.
+  > editedShown(r= /Llm/applyEdits(text= "one two three", edits= [/Llm/AgentEdit(oldText= "four", newText= "4")]))
+    >>> error: the oldText "four" is not written on the page
+  > editedShown(r= /Llm/applyEdits(text= "one two three", edits= [/Llm/AgentEdit(oldText= "o", newText= "0")]))
+    >>> error: the oldText "o" is written 2 times on the page, not once
+  > editedShown(r= /Llm/applyEdits(text= "one two three", edits= [/Llm/AgentEdit(oldText= "one two", newText= "1 2"), /Llm/AgentEdit(oldText= "two three", newText= "2 3")]))
+    >>> error: two of the edits overlap; edits close together are to be one edit
+  > editedShown(r= /Llm/applyEdits(text= "one two three", edits= []))
+    >>> error: the step has no edits
+  # What the model is told of a step it gave that could not be taken is the step, written as a step.
+  > /Llm/editsShown(edits= [/Llm/AgentEdit(oldText= "say \"hi\"", newText= "line\nbreak")])
+    >>> /Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= "say \"hi\"", newText= "line\nbreak")])

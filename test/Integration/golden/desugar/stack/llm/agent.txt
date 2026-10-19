@@ -1,0 +1,1093 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Llm/agentTook"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentTook( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
+                            ( Value reply -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentTook( Value io )
+                            ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history )
+                            ( Value reply= /Data/Result/Ok
+                                ( Value value= AgentStep/Respond( Value text ) )
+                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Ok
+                            ( Value value= agentDone
+                                ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value text= Value text )
+                            )
+                        , /Llm/agentTook( Value io )
+                            ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history )
+                            ( Value reply= /Data/Result/Ok
+                                ( Value value= AgentStep/Edit( Value edits ) )
+                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentEdited( Value io= Value io )
+                            ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )( Value edits= Value edits )
+                            ( Value edited= applyEdits
+                                ( Value text= /Process/formatPage( Value page= Value page ) )( Value edits= Value edits )
+                            )
+                        , /Llm/agentTook( Value io )( Value at )( Value tries )( Value history )
+                            ( Value reply= /Data/Result/Fail
+                                ( Value err= LlmErr/NotOf( Value reply@Value replyText )( Value cause ) )
+                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentRetry( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )( Value attempt= Value replyText )
+                            ( Value why= msg( Value /this= Value cause ) )
+                        , /Llm/agentTook( Value io )( Value at )( Value tries )( Value history )( Value reply ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentFailed( Value reply= Value reply )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/shiftPast"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/shiftPast( Value e -> /Llm/EditAt.. )( Value past -> /Llm/EditAt.. ) -> /Llm/EditAt.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/shiftPast
+                            ( Value e= EditAt( Value start )( Value stop )( Value newText ) )
+                            ( Value past= EditAt( Value start@Value pStart )( Value stop@Value pStop )( Value newText@Value pNew ) ) | /operator>=( Value /l= Value start )( Value /r= Value pStop ) -> /Llm/EditAt.. = EditAt
+                            ( Value start= /operator-
+                                ( Value /l= /operator+( Value /l= Value start )
+                                    ( Value /r= length( Value /this= Value pNew ) )
+                                )
+                                ( Value /r= /operator-( Value /l= Value pStop )( Value /r= Value pStart ) )
+                            )
+                            ( Value stop= /operator-
+                                ( Value /l= /operator+( Value /l= Value stop )
+                                    ( Value /r= length( Value /this= Value pNew ) )
+                                )
+                                ( Value /r= /operator-( Value /l= Value pStop )( Value /r= Value pStart ) )
+                            )( Value newText= Value newText )
+                        , /Llm/shiftPast( Value e )( Value past ) -> /Llm/EditAt.. = Value e
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/AgentEdit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/AgentEdit( Value /oldText -> ∀/Data/String )( Value /newText -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/AgentStep/Edit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/AgentStep/Edit
+                            ( Value /edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/agentEditShown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentEditShown( Value e -> /Llm/AgentEdit.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentEditShown
+                            ( Value e= AgentEdit( Value oldText )( Value newText ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= CStr
+                                            { csValue = "/Llm/AgentEdit(oldText= " }
+                                        )
+                                        ( Value /r= quoted( Value s= Value oldText ) )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = ", newText= " }
+                                    )
+                                )
+                                ( Value /r= quoted( Value s= Value newText ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = ")" }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/editsShown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/editsShown
+                            ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/editsShown( Value edits ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "/Llm/AgentStep/Edit(edits= [" }
+                                )
+                                ( Value /r= editsJoined( Value edits= Value edits ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "])" }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/editsOverlap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/editsOverlap
+                            ( Value ats -> ∀/Data/List[ /T=/Llm/EditAt.. ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/editsOverlap( Value ats= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
+                        , /Llm/editsOverlap
+                            ( Value ats= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator||
+                            ( Value /l= overlapsAny( Value e= Value head )( Value ats= Value tail ) )
+                            ( Value /r= editsOverlap( Value ats= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/overlaps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/overlaps( Value a -> /Llm/EditAt.. )( Value b -> /Llm/EditAt.. ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/overlaps
+                            ( Value a= EditAt( Value start@Value aStart )( Value stop@Value aStop )( Value newText@Value aNew ) )
+                            ( Value b= EditAt( Value start@Value bStart )( Value stop@Value bStop )( Value newText@Value bNew ) ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l= /operator<( Value /l= Value aStart )( Value /r= Value bStop ) )
+                            ( Value /r= /operator<( Value /l= Value bStart )( Value /r= Value aStop ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/AgentAt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/AgentAt( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )( Value /source -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/EditAt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/EditAt( Value /start -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer )( Value /newText -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/AgentStep/Respond"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/AgentStep/Respond( Value /text -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/AgentExample/editedShown"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/AgentExample/editedShown
+                            ( Value r -> ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Data/Err
+                                ]
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/AgentExample/editedShown
+                            ( Value r= /Data/Result/Ok( Value value ) ) -> ∀/Data/String = Value value
+                        , /Llm/AgentExample/editedShown
+                            ( Value r= /Data/Result/Fail( Value err ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "error: " }
+                            )
+                            ( Value /r= msg( Value /this= Value err ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/applyEdits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/applyEdits( Value text -> ∀/Data/String )
+                            ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/applyEdits( Value text )( Value edits= Value /Data/List/Nil ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail
+                            ( Value err= /Data/Failure
+                                ( Value reason= CStr
+                                    { csValue = "the step has no edits" }
+                                )
+                            )
+                        , /Llm/applyEdits( Value text )
+                            ( Value edits= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ] = editsFound( Value text= Value text )
+                            ( Value found= findEdits( Value text= Value text )
+                                ( Value edits= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/findEdit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/findEdit( Value text -> ∀/Data/String )( Value e -> /Llm/AgentEdit.. ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/findEdit( Value text )
+                            ( Value e= AgentEdit( Value oldText )( Value newText ) ) | isEmpty( Value /this= Value oldText ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail
+                            ( Value err= /Data/Failure
+                                ( Value reason= CStr
+                                    { csValue = "an edit has an empty oldText" }
+                                )
+                            )
+                        , /Llm/findEdit( Value text )
+                            ( Value e= AgentEdit( Value oldText )( Value newText ) ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ] = foundEdit( Value oldText= Value oldText )( Value newText= Value newText )
+                            ( Value count= /operator-
+                                ( Value /l= length
+                                    ( Value /this= split( Value sep= Value oldText )( Value /this= Value text ) )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value at= indexOf( Value sub= Value oldText )( Value /this= Value text ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/quoted"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/quoted( Value s -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/quoted( Value s ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr
+                                    { csValue = """ }
+                                )
+                                ( Value /r= replace
+                                    ( Value old= CStr
+                                        { csValue = "
+                                        " }
+                                    )
+                                    ( Value new= CStr
+                                        { csValue = "\n" }
+                                    )
+                                    ( Value /this= replace
+                                        ( Value old= CStr
+                                            { csValue = """ }
+                                        )
+                                        ( Value new= CStr
+                                            { csValue = "\"" }
+                                        )
+                                        ( Value /this= replace
+                                            ( Value old= CStr
+                                                { csValue = "\" }
+                                            )
+                                            ( Value new= CStr
+                                                { csValue = "\\" }
+                                            )( Value /this= Value s )
+                                        )
+                                    )
+                                )
+                            )
+                            ( Value /r= CStr
+                                { csValue = """ }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/overlapsAny"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/overlapsAny( Value e -> /Llm/EditAt.. )
+                            ( Value ats -> ∀/Data/List[ /T=/Llm/EditAt.. ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/overlapsAny( Value e )( Value ats= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
+                        , /Llm/overlapsAny( Value e )
+                            ( Value ats= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator||
+                            ( Value /l= overlaps( Value a= Value e )( Value b= Value head ) )
+                            ( Value /r= overlapsAny( Value e= Value e )( Value ats= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/editsFound"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/editsFound( Value text -> ∀/Data/String )
+                            ( Value found -> ∀/Data/Result
+                                [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                                , /E=∀/Data/Err
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/editsFound( Value text )
+                            ( Value found= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail( Value err= Value err )
+                        , /Llm/editsFound( Value text )
+                            ( Value found= /Data/Result/Ok( Value value@Value ats ) ) | editsOverlap( Value ats= Value ats ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail
+                            ( Value err= /Data/Failure
+                                ( Value reason= CStr
+                                    { csValue = "two of the edits overlap; edits close together are to be one edit" }
+                                )
+                            )
+                        , /Llm/editsFound( Value text )
+                            ( Value found= /Data/Result/Ok( Value value@Value ats ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/String
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Ok
+                            ( Value value= spliceAll( Value body= Value text )( Value ats= Value ats ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentParsed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentParsed( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
+                            ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] )
+                            ( Value parsed -> ∀/Data/Result
+                                [ /T=/Catln/RawPrgm..
+                                , /E=∀/Process/ParsePageErr
+                                ]
+                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentParsed( Value io )( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value parsed= /Data/Result/Ok( Value value ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Ok( Value value= Value value )
+                        , /Llm/agentParsed( Value io )( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value parsed= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentRetry( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )
+                            ( Value attempt= editsShown( Value edits= Value edits ) )
+                            ( Value why= msg( Value /this= Value err ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/spliceAt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/spliceAt( Value body -> ∀/Data/String )( Value at -> /Llm/EditAt.. ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/spliceAt( Value body )
+                            ( Value at= EditAt( Value start )( Value stop )( Value newText ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= take( Value n= Value start )( Value /this= Value body ) )( Value /r= Value newText )
+                            )
+                            ( Value /r= drop( Value n= Value stop )( Value /this= Value body ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentFailed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentFailed
+                            ( Value reply -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentFailed
+                            ( Value reply= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Fail( Value err= Value err )
+                        , /Llm/agentFailed( Value reply ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Fail
+                            ( Value err= /Data/Failure
+                                ( Value reason= CStr
+                                    { csValue = "the model replied with something other than a step" }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/editsJoined"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/editsJoined
+                            ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/editsJoined( Value edits= Value /Data/List/Nil ) -> ∀/Data/String = CStr
+                            { csValue = "" }
+                        , /Llm/editsJoined
+                            ( Value edits= /Data/List/Cons( Value head )( Value tail= Value /Data/List/Nil ) ) -> ∀/Data/String = agentEditShown( Value e= Value head )
+                        , /Llm/editsJoined
+                            ( Value edits= /Data/List/Cons( Value head )
+                                ( Value tail= /Data/List/Cons( Value head@Value next )( Value tail@Value rest ) )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= agentEditShown( Value e= Value head ) )
+                                ( Value /r= CStr
+                                    { csValue = ", " }
+                                )
+                            )
+                            ( Value /r= editsJoined
+                                ( Value edits= /Data/List/Cons( Value head= Value next )( Value tail= Value rest ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentAsk"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentAsk( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentAsk( Value io )
+                            ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value tries )( Value history ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentTook( Value io= Value io )
+                            ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )
+                            ( Value reply= tlcm
+                                ( Value input= agentPrompt( Value input= Value input )( Value history= Value history ) )
+                                ( Value type= /Catln/typeOf[ /T : ∀/Llm/AgentStep ] )( Value source= Value source )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentPrompt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentPrompt( Value input -> ∀/Data/String )( Value history -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentPrompt( Value input )( Value history ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= CStr
+                                                { csValue = "You are an agent working on the page above, where this request is written as `a> " }
+                                            )( Value /r= Value input )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = "`. The request is:
+                                            " }
+                                        )
+                                    )( Value /r= Value input )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = "
+
+                                    You work by editing the page, which is both your working memory and your result. Each time you are asked, take one step: edit the page, after which you are asked again with the page as you left it, or respond, which ends your work. Edits are made to the text of the page as it is written, which is the page above without the `>>>` lines of what its examples evaluate to." }
+                                )
+                            )( Value /r= Value history )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentRetry"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentRetry( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )( Value attempt -> ∀/Data/String )( Value why -> ∀/Data/String ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentRetry( Value io )( Value at )( Value tries )( Value history )( Value attempt )( Value why ) | /operator>=( Value /l= Value tries )
+                            ( Value /r= CInt
+                                { ciValue = 3 }
+                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = /Data/Result/Ok
+                            ( Value value= agentDone( Value at= Value at )
+                                ( Value text= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "The agent stopped, as its step could not be taken: " }
+                                    )( Value /r= Value why )
+                                )
+                            )
+                        , /Llm/agentRetry( Value io )( Value at )( Value tries )( Value history )( Value attempt )( Value why ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentAsk( Value io= Value io )( Value at= Value at )
+                            ( Value tries= /operator+( Value /l= Value tries )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                            ( Value history= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++( Value /l= Value history )
+                                            ( Value /r= CStr
+                                                { csValue = "
+
+                                                Your step was:
+                                                " }
+                                            )
+                                        )( Value /r= Value attempt )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = "
+                                        It could not be taken: " }
+                                    )
+                                )( Value /r= Value why )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/spliceAll"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/spliceAll( Value body -> ∀/Data/String )
+                            ( Value ats -> ∀/Data/List[ /T=/Llm/EditAt.. ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/spliceAll( Value body )( Value ats= Value /Data/List/Nil ) -> ∀/Data/String = Value body
+                        , /Llm/spliceAll( Value body )
+                            ( Value ats= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/String = spliceAll
+                            ( Value body= spliceAt( Value body= Value body )( Value at= Value head ) )
+                            ( Value ats= /Data/Functor/fmap( Value lst= Value tail )
+                                ( fn( Value v )= shiftPast( Value e= Value v )( Value past= Value head ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/findEditsThen"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/findEditsThen
+                            ( Value first -> ∀/Data/Result
+                                [ /T=/Llm/EditAt..
+                                , /E=∀/Data/Err
+                                ]
+                            )
+                            ( Value rest -> ∀/Data/Result
+                                [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                                , /E=∀/Data/Err
+                                ]
+                            ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/findEditsThen
+                            ( Value first= /Data/Result/Fail( Value err ) )( Value rest ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail( Value err= Value err )
+                        , /Llm/findEditsThen
+                            ( Value first= /Data/Result/Ok( Value value@Value f ) )
+                            ( Value rest= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail( Value err= Value err )
+                        , /Llm/findEditsThen
+                            ( Value first= /Data/Result/Ok( Value value@Value f ) )
+                            ( Value rest= /Data/Result/Ok( Value value@Value r ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Ok
+                            ( Value value= /Data/List/Cons( Value head= Value f )( Value tail= Value r ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/#agent"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/#agent( Value /input -> ∀/Data/String )
+                        , /Llm/#agent( Value /input -> ∀/Data/String )( Value /result -> ∀/Data/String )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Llm/foundEdit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/foundEdit( Value oldText -> ∀/Data/String )( Value newText -> ∀/Data/String )( Value count -> /Data/Primitive/Integer )
+                            ( Value at -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/foundEdit( Value oldText )( Value newText )( Value count )
+                            ( Value at= /Data/Maybe/Some( Value value@Value start ) ) | /operator==( Value /l= Value count )
+                            ( Value /r= CInt
+                                { ciValue = 1 }
+                            ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Ok
+                            ( Value value= EditAt( Value start= Value start )
+                                ( Value stop= /operator+( Value /l= Value start )
+                                    ( Value /r= length( Value /this= Value oldText ) )
+                                )( Value newText= Value newText )
+                            )
+                        , /Llm/foundEdit( Value oldText )( Value newText )( Value count )
+                            ( Value at= /Data/Maybe/Some( Value value@Value start ) ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail
+                            ( Value err= /Data/Failure
+                                ( Value reason= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= /operator++
+                                                ( Value /l= CStr
+                                                    { csValue = "the oldText " }
+                                                )
+                                                ( Value /r= quoted( Value s= Value oldText ) )
+                                            )
+                                            ( Value /r= CStr
+                                                { csValue = " is written " }
+                                            )
+                                        )
+                                        ( Value /r= toString( Value /this= Value count ) )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = " times on the page, not once" }
+                                    )
+                                )
+                            )
+                        , /Llm/foundEdit( Value oldText )( Value newText )( Value count )( Value at= Value /Data/Maybe/Nothing ) -> ∀/Data/Result
+                            [ /T=/Llm/EditAt..
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Fail
+                            ( Value err= /Data/Failure
+                                ( Value reason= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= CStr
+                                            { csValue = "the oldText " }
+                                        )
+                                        ( Value /r= quoted( Value s= Value oldText ) )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = " is not written on the page" }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/findEdits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/findEdits( Value text -> ∀/Data/String )
+                            ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/findEdits( Value text )( Value edits= Value /Data/List/Nil ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ] = /Data/Result/Ok( Value value= Value /Data/List/Nil )
+                        , /Llm/findEdits( Value text )
+                            ( Value edits= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Result
+                            [ /T=∀/Data/List[ /T=/Llm/EditAt.. ]
+                            , /E=∀/Data/Err
+                            ] = findEditsThen
+                            ( Value first= findEdit( Value text= Value text )( Value e= Value head ) )
+                            ( Value rest= findEdits( Value text= Value text )( Value edits= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentEdited"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentEdited( Value io -> /Catln/IO )( Value at -> /Llm/AgentAt.. )( Value tries -> /Data/Primitive/Integer )( Value history -> ∀/Data/String )
+                            ( Value edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] )
+                            ( Value edited -> ∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Data/Err
+                                ]
+                            ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentEdited( Value io )( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value edited= /Data/Result/Ok( Value value ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentParsed( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )( Value edits= Value edits )
+                            ( Value parsed= /Process/parsePage( Value text= Value value ) )
+                        , /Llm/agentEdited( Value io )( Value at )( Value tries )( Value history )( Value edits )
+                            ( Value edited= /Data/Result/Fail( Value err ) ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ] = agentRetry( Value io= Value io )( Value at= Value at )( Value tries= Value tries )( Value history= Value history )
+                            ( Value attempt= editsShown( Value edits= Value edits ) )
+                            ( Value why= msg( Value /this= Value err ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/processFile"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/processFile( Value io -> /Catln/IO )
+                            ( Value annot -> /Llm/#agent( /input=∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String ) -> ∀/Data/Result[ /T=/Catln/RawPrgm.. ]
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/processFile( Value io -> /Catln/IO )
+                            ( Value annot= #agent( Value input -> ∀/Data/String )( Value result -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )= /Data/Result/Ok( Value value= Value page )
+                        , /Catln/processFile( Value io -> /Catln/IO )
+                            ( Value annot= #agent( Value input -> ∀/Data/String ) )( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )( Value source -> ∀/Data/String )= agentAsk( Value io= Value io )
+                            ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )
+                            ( Value tries= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value history= CStr
+                                { csValue = "" }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentDone"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Llm/agentDone( Value at -> /Llm/AgentAt.. )( Value text -> ∀/Data/String ) -> /Catln/RawPrgm.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentDone
+                            ( Value at= AgentAt( Value input )( Value page )( Value annotId )( Value source ) )( Value text ) -> /Catln/RawPrgm.. = /Process/setAnnot( Value page= Value page )( Value annotId= Value annotId )
+                            ( Value annot= #agent( Value input= Value input )( Value result= Value text ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Llm/AgentStep
+            , cgcExtends =
+                [ /Llm/AgentStep/Respond( /text=∀/Data/String )
+                , /Llm/AgentStep/Edit
+                    ( /edits=∀/Data/List[ /T=/Llm/AgentEdit.. ] )
+                ]
+            , cgcDoc = Just "[AgentStep] is what an agent does next. It is one of two steps:
+              - [Respond] ends the work, answering the request with [text]. Respond once the request is done,
+                or when it cannot be done, saying why.
+              - [Edit] edits the page the request is written on with [edits], and continues the work: the
+                agent is asked again with the page as edited. The page is working memory as well as the
+                result, so notes and plans may be written on it too."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Agents working on a page
+                A request for a model to work on the page it is written on can be written on the page itself, as
+                `a> ` and then the request. It is an [#agent], and is run by `catln process`. Where an agent
+                built on a conversation appends to it without end, this one works by editing the page: the page
+                is both what it remembers and what it makes. Each time it is run it is asked, with the page as
+                it now is ([tlcm]), for its next [AgentStep]: to edit the page, or to respond. An edit changes
+                the page, which `catln process` writes, compiles and processes again, so the agent is run again
+                on what it wrote. A response is written under the request as its `>>>` lines, as the reply to a
+                [#q] is, and an agent with a response is done: it is not run again." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[AgentStep] is what an agent does next. It is one of two steps:
+                - [Respond] ends the work, answering the request with [text]. Respond once the request is done,
+                  or when it cannot be done, saying why.
+                - [Edit] edits the page the request is written on with [edits], and continues the work: the
+                  agent is asked again with the page as edited. The page is working memory as well as the
+                  result, so notes and plans may be written on it too." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "### Editing text
+                The edits of a step are made as pi's `edit` tool makes them: each is found once in the text as
+                it was before the step, none overlaps another, and each is replaced there." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Editing, without asking
+                How the edits of a step are made is checked here without asking a model." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Each edit is matched against the text as it was before the step, so the edits of a step may be
+                given in any order." }
+            )
+        , /Catln/#print
+            ( Value /p= editedShown
+                ( Value r= /Llm/applyEdits
+                    ( Value text= CStr
+                        { csValue = "one two three" }
+                    )
+                    ( Value edits= /Data/List/Cons
+                        ( Value /head= /Llm/AgentEdit
+                            ( Value oldText= CStr
+                                { csValue = "one" }
+                            )
+                            ( Value newText= CStr
+                                { csValue = "1" }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Llm/AgentEdit
+                                ( Value oldText= CStr
+                                    { csValue = "three" }
+                                )
+                                ( Value newText= CStr
+                                    { csValue = "3" }
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1 two 3" }
+            )
+        , /Catln/#print
+            ( Value /p= editedShown
+                ( Value r= /Llm/applyEdits
+                    ( Value text= CStr
+                        { csValue = "one two three" }
+                    )
+                    ( Value edits= /Data/List/Cons
+                        ( Value /head= /Llm/AgentEdit
+                            ( Value oldText= CStr
+                                { csValue = "three" }
+                            )
+                            ( Value newText= CStr
+                                { csValue = "3" }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Llm/AgentEdit
+                                ( Value oldText= CStr
+                                    { csValue = "one" }
+                                )
+                                ( Value newText= CStr
+                                    { csValue = "a longer one" }
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a longer one two 3" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An edit of text that is not there once, or two edits of the same text, are not made." }
+            )
+        , /Catln/#print
+            ( Value /p= editedShown
+                ( Value r= /Llm/applyEdits
+                    ( Value text= CStr
+                        { csValue = "one two three" }
+                    )
+                    ( Value edits= /Data/List/Cons
+                        ( Value /head= /Llm/AgentEdit
+                            ( Value oldText= CStr
+                                { csValue = "four" }
+                            )
+                            ( Value newText= CStr
+                                { csValue = "4" }
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: the oldText "four" is not written on the page" }
+            )
+        , /Catln/#print
+            ( Value /p= editedShown
+                ( Value r= /Llm/applyEdits
+                    ( Value text= CStr
+                        { csValue = "one two three" }
+                    )
+                    ( Value edits= /Data/List/Cons
+                        ( Value /head= /Llm/AgentEdit
+                            ( Value oldText= CStr
+                                { csValue = "o" }
+                            )
+                            ( Value newText= CStr
+                                { csValue = "0" }
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: the oldText "o" is written 2 times on the page, not once" }
+            )
+        , /Catln/#print
+            ( Value /p= editedShown
+                ( Value r= /Llm/applyEdits
+                    ( Value text= CStr
+                        { csValue = "one two three" }
+                    )
+                    ( Value edits= /Data/List/Cons
+                        ( Value /head= /Llm/AgentEdit
+                            ( Value oldText= CStr
+                                { csValue = "one two" }
+                            )
+                            ( Value newText= CStr
+                                { csValue = "1 2" }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Llm/AgentEdit
+                                ( Value oldText= CStr
+                                    { csValue = "two three" }
+                                )
+                                ( Value newText= CStr
+                                    { csValue = "2 3" }
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: two of the edits overlap; edits close together are to be one edit" }
+            )
+        , /Catln/#print
+            ( Value /p= editedShown
+                ( Value r= /Llm/applyEdits
+                    ( Value text= CStr
+                        { csValue = "one two three" }
+                    )( Value edits= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "error: the step has no edits" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "What the model is told of a step it gave that could not be taken is the step, written as a step." }
+            )
+        , /Catln/#print
+            ( Value /p= /Llm/editsShown
+                ( Value edits= /Data/List/Cons
+                    ( Value /head= /Llm/AgentEdit
+                        ( Value oldText= CStr
+                            { csValue = "say "hi"" }
+                        )
+                        ( Value newText= CStr
+                            { csValue = "line
+                            break" }
+                        )
+                    )( Value /tail= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= "say \"hi\"", newText= "line\nbreak")])" }
+            )
+        ]
+    }

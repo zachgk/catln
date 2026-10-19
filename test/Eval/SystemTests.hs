@@ -28,6 +28,7 @@ import           Control.Exception         (bracket)
 import           Control.Monad             (forM_)
 import           CRes
 import           CtService
+import           Data.Aeson                (encode, object, (.=))
 import qualified Data.ByteString.Lazy.UTF8 as LBU
 import qualified Data.HashMap.Strict       as H
 import           Data.IORef
@@ -231,9 +232,14 @@ fileProcessorTests = withResource copies (const $ return ()) $ \getCopies -> tes
   , testFindReplaceIsDoneOnceRun getCopies
   , testFindReplaceWithNothingToReplace getCopies
   , testFileProcessorAfterLineProcessor getCopies
+  , testAgentEditsThenResponds getCopies
+  , testAgentRetriesAFailedEdit getCopies
+  , testAgentGivesUp getCopies
+  , testAgentWhichRespondedIsDone getCopies
+  , testAgentWithoutAModel getCopies
   ]
   where
-    pages = ["findReplace.ct", "findReplaceGrows.ct", "findReplaceAbsent.ct", "findReplaceAfterQuery.ct"]
+    pages = ["findReplace.ct", "findReplaceGrows.ct", "findReplaceAbsent.ct", "findReplaceAfterQuery.ct", "agentEdits.ct", "agentRetries.ct", "agentGivesUp.ct", "agentDone.ct", "agentNoModel.ct"]
     -- One service for every copy, so the library they import is built once rather than once per
     -- test.
     copies = do
@@ -315,6 +321,110 @@ testFileProcessorAfterLineProcessor getCopies = testCase "a file processor rewri
       assertEqual "the file is changed once" 1 rounds
       assertBool ("the answer is kept by the rewrite:\n" ++ file) ("q> What does twice do?\n  >>> Twice x.\n" `isInfixOf` file)
       assertBool ("the page is rewritten:\n" ++ file) ("twice(x)= x + x" `isInfixOf` file)
+
+-- | A mock model answering each request with the next of @replies@, as a chat completion, and the
+-- requests it was sent, last first. Asked once more than it has replies for, it fails the test.
+scriptedModel :: [String] -> IO (MockIO, IORef [String])
+scriptedModel replies = do
+  sent <- newIORef []
+  left <- newIORef replies
+  let answer :: HttpPost
+      answer _ _ reqBody = do
+        modifyIORef sent (reqBody:)
+        next <- readIORef left
+        case next of
+          reply : rest -> do
+            writeIORef left rest
+            return $ Right $ LBU.toString $ encode $ object ["choices" .= [object ["message" .= object ["content" .= reply]]]]
+          [] -> assertFailure "the model was asked more times than it has replies for"
+  let env = H.fromList [("OPENAI_BASE_URL", "http://model.test/v1"), ("OPENAI_MODEL", "m-1")]
+  mockIO <- newMockIOWith env answer
+  return (mockIO, sent)
+
+-- | An @a>@ agent edits its page, is run again on the page as it edited it, and responds: the
+-- response is written under it, and the page keeps the edit.
+testAgentEditsThenResponds :: IO (CTSS, FilePath) -> TestTree
+testAgentEditsThenResponds getCopies = testCase "an agent edits its page until it responds" $ do
+  (mockIO, sent) <- scriptedModel
+    [ "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= \"x + 1\", newText= \"x + 2\")])"
+    , "/Llm/AgentStep/Respond(text= \"count adds two.\")" ]
+  (res, file) <- processCopy getCopies "agentEdits.ct" mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (_, _, _, rounds) -> do
+      assertEqual "the model is asked twice" 2 (length requests)
+      assertBool "it is asked with the request" (all ("Make count add two" `isInfixOf`) requests)
+      assertBool "and asked again with the page as it edited it" (all ("x + 2" `isInfixOf`) (take 1 requests))
+      assertEqual "the file is changed by the edit and by the response" 2 rounds
+      assertBool ("the edit is kept:\n" ++ file) ("count(x -> Integer)= x + 2" `isInfixOf` file)
+      assertBool ("the response is written under the request:\n" ++ file) ("a> Make count add two\n  >>> count adds two.\n" `isInfixOf` file)
+
+-- | An edit which can not be made is not made: the model is told the step it gave and why, and
+-- asked again.
+testAgentRetriesAFailedEdit :: IO (CTSS, FilePath) -> TestTree
+testAgentRetriesAFailedEdit getCopies = testCase "an agent is asked again after an edit that can not be made" $ do
+  (mockIO, sent) <- scriptedModel
+    [ "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= \"x + 3\", newText= \"x + 2\")])"
+    , "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= \"x + 1\", newText= \"x + 2\")])"
+    , "/Llm/AgentStep/Respond(text= \"Done.\")" ]
+  (res, file) <- processCopy getCopies "agentRetries.ct" mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (_, _, _, rounds) -> do
+      assertEqual "the model is asked three times" 3 (length requests)
+      case reverse requests of
+        _ : retry : _ -> do
+          assertBool ("the retry is told the step it gave:\n" ++ retry) ("x + 3" `isInfixOf` retry)
+          assertBool ("and why it could not be taken:\n" ++ retry) ("is not written on the page" `isInfixOf` retry)
+        _ -> assertFailure "the model was not asked again"
+      assertEqual "the file is changed by the edit and by the response" 2 rounds
+      assertBool ("the edit is made:\n" ++ file) ("count(x -> Integer)= x + 2" `isInfixOf` file)
+      assertBool ("the response is written:\n" ++ file) ("a> Make count add two\n  >>> Done.\n" `isInfixOf` file)
+
+-- | A model which never replies with a step is asked again three times, and then the agent stops,
+-- responding with why.
+testAgentGivesUp :: IO (CTSS, FilePath) -> TestTree
+testAgentGivesUp getCopies = testCase "an agent stops once it has been asked again three times" $ do
+  (mockIO, sent) <- scriptedModel (replicate 4 "I am not a step")
+  (res, file) <- processCopy getCopies "agentGivesUp.ct" mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (_, _, _, rounds) -> do
+      assertEqual "the model is asked four times" 4 (length requests)
+      assertEqual "the file is changed once, by the response" 1 rounds
+      assertBool ("the agent responds with why it stopped:\n" ++ file) ("a> Say something\n  >>> The agent stopped, as its step could not be taken: " `isInfixOf` file)
+
+-- | An agent which has responded is done: it asks nothing and leaves its page, its response
+-- written as @>>>@ lines under @a>@, as it was.
+testAgentWhichRespondedIsDone :: IO (CTSS, FilePath) -> TestTree
+testAgentWhichRespondedIsDone getCopies = testCase "an agent which has responded is not run again" $ do
+  (mockIO, sent) <- scriptedModel []
+  before <- (\(_, dir) -> readFile (dir </> "agentDone.ct")) =<< getCopies
+  length before `seq` return ()
+  (res, file) <- processCopy getCopies "agentDone.ct" mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes _ (page, _, _, rounds) -> do
+      assertEqual "nothing is asked" 0 (length requests)
+      assertEqual "the file is not changed" 0 rounds
+      assertEqual "the page is written as it was read" before page
+      assertEqual "the file is as it was" before file
+
+-- | Without a model to ask, the agent is reported and its page left as it was.
+testAgentWithoutAModel :: IO (CTSS, FilePath) -> TestTree
+testAgentWithoutAModel getCopies = testCase "an agent without a model to ask is reported and leaves its page" $ do
+  mockIO <- newMockIOWith H.empty (\_ _ _ -> return $ Left HttpNotSent)
+  (res, file) <- processCopy getCopies "agentNoModel.ct" mockIO
+  case res of
+    CErr notes -> assertFailure $ "processing failed: " ++ prettyCNotes notes
+    CRes notes (_, _, _, rounds) -> do
+      assertEqual "the file is not changed" 0 rounds
+      assertBool ("the request is left unanswered:\n" ++ file) ("a> Say something\n" `isInfixOf` file && not (">>>" `isInfixOf` file))
+      assertBool ("the unset variable is reported: " ++ prettyCNotes notes) ("OPENAI_BASE_URL is not set" `isInfixOf` prettyCNotes notes)
 
 -- | The transport, against a server answering on a port of this machine: the header and the UTF-8
 -- body arrive as sent, and a status that is not a success is reported with the body it came with.

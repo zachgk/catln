@@ -193,6 +193,13 @@ q> What does double do?
   >>> It doubles its argument.
 ```
 
+A line starting with `a> ` is a request for an agent, short for `#agent(input= "the rest of the line")`, also from the `llm` library. Rather than answering once, the agent works by editing the page it is written on, which is both its working memory and its result. Each time `catln process` runs it, the model is asked for its next step: an edit, given as replacements of exact text on the page (each found once, none overlapping), or a response. An edit changes the page, so the page is processed again and the agent asked again with the page as it edited it. An edit that cannot be made is given back to the model with why, and asked again up to three times, after which the agent stops and responds with why. A response is written under the request as `>>>` lines, and an agent with a response is done:
+
+```
+a> Make double add a third copy
+  >>> double now returns x + x + x.
+```
+
 `>>>` lines may be written under any annotation that declares a `result -> String` argument, and are that argument.
 
 `catln process` runs the processor of every annotation that has one, from the top of the page to the bottom. There are two kinds of processor:
