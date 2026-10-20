@@ -70,16 +70,17 @@ pattern StrVal s <- (valString -> Just s)
 
 -- | The characters of a string value, where it is one.
 valString :: Val r -> Maybe String
-valString (TupleVal name args) | name == ctStringText = charsOf =<< H.lookup (runtimeArgKey ctStringChars) args
+valString (TupleVal name args) | name == ctStringText = charsOf [] =<< H.lookup (runtimeArgKey ctStringChars) args
   where
-    charsOf (TupleVal n _) | n == ctListNil = Just []
-    charsOf (TupleVal n as) | n == ctListCons = do
-      h <- H.lookup (runtimeArgKey ctListConsHead) as
-      t <- H.lookup (runtimeArgKey ctListConsTail) as
-      case h of
-        CharVal c -> (c:) <$> charsOf t
-        _         -> Nothing
-    charsOf _ = Nothing
+    -- A loop over the characters seen so far rather than a recursion, since whether the value is a
+    -- string at all is only known at its end: a recursion would hold a frame per character until
+    -- then, which for a long string is a stack as large as the string.
+    charsOf seen (TupleVal n _) | n == ctListNil = Just (reverse seen)
+    charsOf seen (TupleVal n as) | n == ctListCons =
+      case (H.lookup (runtimeArgKey ctListConsHead) as, H.lookup (runtimeArgKey ctListConsTail) as) of
+        (Just (CharVal c), Just t) -> charsOf (c : seen) t
+        _                          -> Nothing
+    charsOf _ _ = Nothing
 valString _ = Nothing
 
 -- | What a runtime must say about its own values for a 'Val' to be shown, compared, hashed or
