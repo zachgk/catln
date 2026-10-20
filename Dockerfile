@@ -51,10 +51,9 @@ COPY --from=backend /usr/local/bin/catln /usr/local/bin/catln
 COPY --from=frontend /home/webdocs/dist /home/webdocs/dist
 COPY stack /root/.catln/stack
 
-# test/Integration/code is excluded until the CtService dep-scoping bug is fixed.
-# buildSCCPipeline passes ALL pages as external deps rather than the transitive
-# ones, so merging those 38 standalone programs collides on names they never
-# import from each other: abs, Nothing, and main (defined by 37 of the 38).
+# Serves the library and its docs. Other pages can be served beside them by
+# adding them as roots, since the service builds each page against only the
+# pages it imports (see webdocs-serve in the Makefile).
 # --readonly disables the editor's save endpoint so the shared docs site is immutable.
 CMD ["catln", "doc", "--readonly", "/root/.catln/stack", "docs"]
 EXPOSE 8080

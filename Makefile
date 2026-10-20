@@ -40,12 +40,11 @@ webdocs-test:
 webdocs-test-integ:
 	cd webdocs && npm run test:integration:full
 
-# test/Integration/code is not served. It was left out (8162d29d) because a
-# component was built against every page the service held, so the standalone
-# fixtures collided on names they never import from each other (abs, Nothing,
-# main). Since adb73260 a component is built against only what it reaches, and
-# the integration suite builds every fixture in one service, but serving them
-# from the doc server has not been tried again since.
+# Serves the library and its docs. Any other pages can be served beside them by
+# adding them as roots: the service builds each page against only the pages it
+# imports, so standalone programs that define the same names without importing
+# each other, such as test/Integration/code (main, abs, Nothing), serve side by
+# side.
 .PHONY: webdocs-serve
 webdocs-serve:
 	cd webdocs && npm run build
