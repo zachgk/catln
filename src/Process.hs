@@ -13,7 +13,7 @@
 --
 -- It is above the evaluator, as each processor is an evaluation of the program the page was
 -- compiled into, and beneath the compilation service, which writes and compiles the page again
--- each time a file processor changes it ('CtService.getProcessedWith').
+-- each time a file processor changes it ('CtService.getProcessed').
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 
@@ -27,8 +27,9 @@ import           Data.List           (sortOn)
 import           Data.Maybe          (listToMaybe)
 import           Data.UUID           (UUID)
 import qualified Data.UUID           as UUID
-import           Eval                (evalBaseEnvWith, evalExpr, ioContextType,
-                                      pageAnnots, rawPrgmAnnotIds)
+import           Eval                (evalEnv, evalExpr, ioContextType,
+                                      pageAnnots, rawPrgmAnnotIds,
+                                      sessionRequireIO)
 import           Eval.Common
 import           Eval.Env            (evalSetArgs)
 import           Eval.ExprBuilder
@@ -152,7 +153,8 @@ data ProcessStep
   | ProcessFileChanged String
 
 -- | One pass of processing over the page at @file@: each annotation written on it which can be
--- processed ('processKindOf'), in the order it is written, top to bottom.
+-- processed ('processKindOf'), in the order it is written, top to bottom, performing what processing
+-- does through the session's io.
 --
 -- An annotation updated by a line processor is held to be written back. An annotation holding a
 -- result has been processed by its line processor, and is left as it is: processing it again would
@@ -167,19 +169,20 @@ data ProcessStep
 -- 'processFailureText' was processed without failing but could not be answered, such as a question
 -- asked of a model that is not configured: it is noted with why, and left as it was rather than
 -- written back holding it.
-evalProcessPage :: EvalPages -> Val -> FilePath -> EPrgm -> CResT IO ProcessStep
-evalProcessPage pages ioVal file prgm = do
-  EvalPage{epRaw=page} <- case H.lookup file pages of
+evalProcessPage :: EvalSession -> FilePath -> EPrgm -> CResT IO ProcessStep
+evalProcessPage session file prgm = do
+  ioVal <- asCResT $ sessionRequireIO "Processing" session
+  EvalPage{epRaw=page} <- case H.lookup file (sesPages session) of
     Just p  -> return p
     Nothing -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "There is no page %s to process" file]
-  let env = evalBaseEnvWith pages Nothing prgm
+  let env = evalEnv session prgm
   let order = H.fromList $ zip (rawPrgmAnnotIds page) [(0 :: Int)..]
   let annots = sortOn (\(_, a) -> H.lookup (annotId a) order) $ pageAnnots page prgm
-  go env page H.empty annots
+  go ioVal env page H.empty annots
   where
     annotId = getMetaId . getExprMeta
-    go _ _ updated [] = return $ ProcessDone updated
-    go env page updated ((os, a):rest) = do
+    go _ _ _ updated [] = return $ ProcessDone updated
+    go ioVal env page updated ((os, a):rest) = do
       kind <- noted $ asCResT $ processKindOf env a
       case kind of
         Just (Just LineProcess) | not (H.member (partialKey $ mkName resultAnnotText) (exprAppliedArgsMap a)) -> do
@@ -190,16 +193,16 @@ evalProcessPage pages ioVal file prgm = do
               e <- case valToRawExpr val'' of
                 Right e  -> return e
                 Left err -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta a) $ printf "An annotation was processed to %s, which can not be written: %s" (show val'') err]
-              go env page (H.insert (annotId a) e updated) rest
-            Nothing -> go env page updated rest
+              go ioVal env page (H.insert (annotId a) e updated) rest
+            Nothing -> go ioVal env page updated rest
         Just (Just FileProcess) -> do
           let page' = setAnnotsById updated page
           let source = formatRootPrgm page'
           page'' <- noted $ evalProcessFile env ioVal os a page'
           case formatRootPrgm <$> page'' of
             Just text' | text' /= source -> return $ ProcessFileChanged text'
-            _                            -> go env page updated rest
-        _ -> go env page updated rest
+            _                            -> go ioVal env page updated rest
+        _ -> go ioVal env page updated rest
 
     -- What a processor gave, or 'Nothing' with why noted where it failed.
     noted :: CResT IO a -> CResT IO (Maybe a)

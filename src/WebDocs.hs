@@ -48,7 +48,9 @@ import           Data.Graph
 import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots)
-import           Eval.Common                   (EvalMode, SSF (..), Val,
+import           Eval.Common                   (EvalMode, EvalSession (..),
+                                                SSF (..), Val,
+                                                defaultEvalSession,
                                                 newEvalService)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
@@ -356,8 +358,8 @@ annotResp ctss scope' annot = do
     -- the annotation route take, which on a doc server that has just started is the slowest thing a
     -- reader waits at.
     lift $ ctssReport ctss StepEvaluating 0 0 (impDisp =<< scope')
-    pages <- lift $ ctssPagesOf ctss scope'
-    maybeAnnots <- evalAnnots pages (Just svc) annotPrgmName joinedTprgms
+    session <- lift $ ctssSessionOf ctss scope' defaultEvalSession
+    maybeAnnots <- evalAnnots session{sesService = Just svc} annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaId . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 

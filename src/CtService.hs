@@ -42,26 +42,25 @@ import           Data.Maybe
 import           Data.Time.Calendar      (Day)
 import           Data.Time.Clock         (getCurrentTime, utctDay)
 import           Data.UUID               (UUID)
-import           Eval                    (evalAnnots, evalBaseEnv,
-                                          evalBaseEnvService, evalBuild,
-                                          evalBuildAllOf, evalCallTo,
-                                          evalDShowCall, evalDebugExprPrgm,
-                                          evalDebugPrgm, evalPageAsk,
-                                          evalPageValues, evalRun, evalRunMock)
+import           Eval                    (evalAnnots, evalBuild, evalBuildAllOf,
+                                          evalCallTo, evalDShowCall,
+                                          evalDebugExprPrgm, evalDebugPrgm,
+                                          evalEnv, evalPageAsk, evalPageValues,
+                                          evalRun)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
-                                          DebugRun, EExpr, EPrgm, EvalMetaDat,
-                                          EvalPage (..), EvalPages, MockIO,
-                                          SSF (..), TExpr,
+                                          DebugRun, EExpr, EPrgm,
+                                          EvalInstrumentResults, EvalMetaDat,
+                                          EvalPage (..), EvalPages,
+                                          EvalSession (..), SSF (..), TExpr,
                                           TestKind (TestRefinementProof),
-                                          TestResult, Val, esAsks, joinedStage,
-                                          mockIOHandle, newEvalService,
-                                          oaTestId, pattern IOVal,
-                                          withRunSources)
-import           Eval.Runtime.System     (realIOHandle)
+                                          TestResult, Val, defaultEvalSession,
+                                          esAsks, joinedStage, newEvalService,
+                                          oaTestId, withRunSources)
+import           Eval.Instruments        (debuggerInstruments)
 import           Eval.SyntaxTree         (withRunSyntax)
 import           Eval.Testing            (TestCheck (StaticCheck),
                                           TestDesc (..), evalPrints, evalTest,
-                                          evalTestOf, runTestDesc)
+                                          runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
                                           awaitSettled, covered, startWatcher,
                                           watchReads, withPending)
@@ -1371,19 +1370,16 @@ getRawPrgmFrom prgmName ctss@(CTSS ssmv _) = do
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph (requireComputed . ssfRaw) (graphFilterReaches prgmName ctssData)
 
-getEvaluated :: CTSS -> FileImport -> String -> CResT IO Integer
-getEvaluated ctss prgmName fun = do
+-- | Runs a function of a page in the session given, handed the pages of the page's scope: its exit
+-- code, and what the session's instruments made of the run.
+getEvaluated :: EvalSession -> CTSS -> FileImport -> String -> CResT IO (Integer, EvalInstrumentResults)
+getEvaluated session ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
-  pages <- lift $ ctssPagesOf ctss (Just prgmName)
-  fst <$> evalRun pages fun prgmName base
+  session' <- lift $ ctssSessionOf ctss (Just prgmName) session
+  prgm <- asCResT $ prgmFromGraphData prgmName base
+  evalRun session' fun prgm
 
-getEvaluatedMock :: CTSS -> MockIO -> FileImport -> String -> CResT IO Integer
-getEvaluatedMock ctss mockIO prgmName fun = do
-  base <- ctssGetFrom ssfTPrgm prgmName ctss
-  pages <- lift $ ctssPagesOf ctss (Just prgmName)
-  fst <$> evalRunMock pages mockIO fun prgmName base
-
--- | What @catln process@ made of a page ('getProcessedWith').
+-- | What @catln process@ made of a page ('getProcessed').
 data ProcessReport = ProcessReport {
   prPage           :: RawPrgm (), -- ^ The page with each annotation its line processor updated
   prLines          :: Int, -- ^ How many annotations line processors updated
@@ -1392,7 +1388,7 @@ data ProcessReport = ProcessReport {
   }
 
 -- | The page of a file processed ('Process.evalProcessPage'), performing what processing does through
--- @ioVal@.
+-- the io of the session given.
 --
 -- Processing runs over the page top to bottom. Where a file processor changes the page, the file is
 -- written as it now is, compiled again, and processed again from the top; it is done once a pass
@@ -1403,8 +1399,8 @@ data ProcessReport = ProcessReport {
 -- What the line processors of the last pass updated is given back rather than written: each updated
 -- annotation is set on the page as the expression of its value ('Syntax.Ct.Results.valToRawExpr'),
 -- so the page is the one the file was compiled from, and can be formatted back into it.
-getProcessedWith :: Val -> CTSS -> FileImport -> CResT IO ProcessReport
-getProcessedWith ioVal ctss prgmName = do
+getProcessed :: EvalSession -> CTSS -> FileImport -> CResT IO ProcessReport
+getProcessed session0 ctss prgmName = do
   file <- case importPath prgmName of
     Just f  -> return f
     Nothing -> fail $ printf "%s is not a file to process" (show prgmName)
@@ -1412,15 +1408,15 @@ getProcessedWith ioVal ctss prgmName = do
   where
     go file rounds = do
       base <- ctssGetFrom ssfTPrgm prgmName ctss
-      pages <- lift $ ctssPagesOf ctss (Just prgmName)
+      session <- lift $ ctssSessionOf ctss (Just prgmName) session0
       prgm <- asCResT $ prgmFromGraphData prgmName base
-      step <- evalProcessPage pages ioVal file prgm
+      step <- evalProcessPage session file prgm
       case step of
         ProcessFileChanged text -> do
           setSource ctss prgmName text
           go file (rounds + 1)
         ProcessDone updated -> do
-          page <- case H.lookup file pages of
+          page <- case H.lookup file (sesPages session) of
             Just EvalPage{epRaw} -> return epRaw
             Nothing              -> fail $ printf "There is no page %s to process" file
           let unchanged = length [() | (i, e) <- H.toList updated, Just e0 <- [H.lookup i (pageAnnotsById page)], formatExpr e == formatExpr e0]
@@ -1428,18 +1424,14 @@ getProcessedWith ioVal ctss prgmName = do
     pageAnnotsById (RawPrgm _ trees) = H.fromList $ concatMap treeAnnots trees
     treeAnnots (RawStatementTree st subs) = [(getMetaId $ getExprMeta a, a) | RawAnnot a <- [st]] ++ concatMap treeAnnots subs
 
--- | 'getProcessedWith' performing its effects for real.
-getProcessed :: CTSS -> FileImport -> CResT IO ProcessReport
-getProcessed = getProcessedWith (IOVal 0 realIOHandle)
-
--- | 'getProcessedWith' performing its effects on a 'MockIO'.
-getProcessedMock :: CTSS -> MockIO -> FileImport -> CResT IO ProcessReport
-getProcessedMock ctss mockIO = getProcessedWith (IOVal 0 (mockIOHandle mockIO)) ctss
-
-getEvalBuild :: CTSS -> FileImport -> String -> CResT IO Val
-getEvalBuild ctss prgmName fun = do
+-- | Builds a function of a page in the session given, handed the pages of the page's scope: the
+-- result it built, and what the session's instruments made of the build.
+getEvalBuild :: EvalSession -> CTSS -> FileImport -> String -> CResT IO (Val, EvalInstrumentResults)
+getEvalBuild session ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
-  fst <$> evalBuild fun prgmName base
+  session' <- lift $ ctssSessionOf ctss (Just prgmName) session
+  prgm <- asCResT $ prgmFromGraphData prgmName base
+  evalBuild session' fun prgm
 
 getTestResults :: CTSS -> CResT IO [TestDesc]
 getTestResults ctss = do
@@ -1447,7 +1439,7 @@ getTestResults ctss = do
   ctssDeriveTests ctss base
 
 -- | The tests one page wrote, derived from that page alone and decided in the program it reaches
--- ('Eval.Testing.evalTestOf'). What a test of a single page asks for, where 'getTestResults' is
+-- ('Eval.Testing.evalTest'). What a test of a single page asks for, where 'getTestResults' is
 -- what a run of every test of the program asks for.
 getTestResultsOf :: FileImport -> CTSS -> CResT IO [TestDesc]
 getTestResultsOf prgmName ctss = do
@@ -1464,13 +1456,13 @@ ctssDeriveTests :: CTSS -> GraphData TPrgm FileImport -> CResT IO [TestDesc]
 ctssDeriveTests = ctssDeriveTestsOf Nothing
 
 -- | 'ctssDeriveTests', or with a page named the tests that page wrote: derived from it alone and
--- decided in the whole program given, as 'Eval.Testing.evalTestOf' derives them. A proof is the
+-- decided in the whole program given, as 'Eval.Testing.evalTest' derives them. A proof is the
 -- page's when the definition it is placed with is. The evaluation is handed every page the service
 -- holds either way, since which tests exist is decided over the whole program.
 ctssDeriveTestsOf :: Maybe FileImport -> CTSS -> GraphData TPrgm FileImport -> CResT IO [TestDesc]
 ctssDeriveTestsOf scope ctss@(CTSS ssmv _) tprgms = do
-  pages <- lift $ ctssPagesOf ctss Nothing
-  evaluated <- maybe (evalTest pages) (evalTestOf pages) scope tprgms
+  session <- lift $ ctssSessionOf ctss Nothing defaultEvalSession
+  evaluated <- evalTest session scope tprgms
   let ownIds = case scope of
         Nothing   -> Nothing
         Just name -> S.fromList . map oaTestId . flatObjectMap . prgmObjMap <$> graphLookup name tprgms
@@ -1567,8 +1559,8 @@ pageOwners tprgms = H.fromList
 getPrintGoldens :: CTSS -> CResT IO [(CodeRangeDat, String)]
 getPrintGoldens ctss = do
   base <- ctssGet ssfTPrgm ctss
-  pages <- lift $ ctssPagesOf ctss Nothing
-  evalPrints pages $ mconcat $ map fst3 $ graphToNodes base
+  session <- lift $ ctssSessionOf ctss Nothing defaultEvalSession
+  evalPrints session $ mconcat $ map fst3 $ graphToNodes base
 
 -- | The annotations a page writes, evaluated to the values they display as.
 --
@@ -1594,8 +1586,8 @@ getEvalAnnots ctss prgmName = do
       lift $ ctssReport ctss StepEvaluating 0 0 (impDisp prgmName)
       -- Evaluated here rather than left for whoever displays it, because what it asked the service
       -- about is only known once it has asked, and that record is kept with it.
-      pages <- lift $ ctssPagesOf ctss (Just prgmName)
-      annots <- lift $ runCResT $ evalAnnots pages (Just svc) prgmName tprgms
+      session <- lift $ ctssSessionOf ctss (Just prgmName) defaultEvalSession
+      annots <- lift $ runCResT $ evalAnnots session{sesService = Just svc} prgmName tprgms
       asks <- lift $ esAsks svc
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots, ssfAnnotAsks = asks}) ctss
       asCResT annots
@@ -1623,7 +1615,7 @@ ctssCallDShow ctss scope fun args = do
   -- Nothing keeps what this answers, so nothing reads what it asked: a call is answered and
   -- forgotten, and there is no kept value to be dropped when the answer changes.
   svc <- lift $ newEvalService ctss scope =<< serviceToday ctss
-  evalDShowCall (evalBaseEnvService (Just svc) prgm) fun args
+  evalDShowCall (evalEnv defaultEvalSession{sesService = Just svc} prgm) fun args
 
 -- | The service, as a read asks it about importers written in Catln.
 --
@@ -1717,7 +1709,7 @@ ctssImporterEnv (CTSS ssmv _) = noImporters{ieDeclared, ieExtensions, ieReady, i
                 -- No 'EvalService'. An importer must not be able to ask the service anything: every
                 -- way of asking reaches 'ctssBuildAll' and so 'ctssReadOf', which is the deadlock
                 -- above. It is the same reason 'Eval.evalPageValues' takes none.
-                val <- evalCallTo (evalBaseEnv prgm) importResultType fun (("path", StrVal readPath) : [(k, StrVal v) | (k, v) <- args])
+                val <- evalCallTo (evalEnv defaultEvalSession prgm) importResultType fun (("path", StrVal readPath) : [(k, StrVal v) | (k, v) <- args])
                 either fail return (fromCt val)
           -- Forced before this returns. 'Eval.Common.CtServiceApi' states the rule: a lazy value
           -- carrying an unforced ask is forced by whoever reads it, which here would be
@@ -1863,7 +1855,7 @@ instance CtServiceApi CTSS where
     ssfs <- scopeSSFs ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm (rawPagesByPath scopeNodes) fun =<< asCResT (joinedStage ssfTPrgm ssfs))
+    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm defaultEvalSession{sesInstruments = debuggerInstruments, sesPages = rawPagesByPath scopeNodes} fun =<< asCResT (joinedStage ssfTPrgm ssfs))
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
@@ -1899,7 +1891,7 @@ scopeSources nodes = [(file, src) | (SSF{ssfSource=Just src}, imp, _) <- nodes, 
 scopeRaws :: [(SSF, FileImport, a)] -> [(String, RawPrgm ())]
 scopeRaws nodes = [(file, raw) | (SSF{ssfRaw=Just (CRes _ raw)}, imp, _) <- nodes, Just file <- [importPath imp]]
 
--- | The parsed pages of a scope, as an evaluation is handed them ('Eval.Common.evPages'), each with
+-- | The parsed pages of a scope, as an evaluation is handed them ('Eval.Common.sesPages'), each with
 -- what its stages said about it.
 --
 -- A stage's notes are of everything it was run over — a typecheck's are of its whole SCC — so a
@@ -1921,12 +1913,16 @@ rawPagesByPath nodes = H.fromList [(file, EvalPage raw (notesOf file ssf) (scope
       Just (start, _) -> sourceName start == file
       Nothing         -> True
 
--- | The parsed pages the service holds, of a scope — a page and what it imports — or every page for
--- a scope of 'Nothing', as an evaluation over that scope is handed them.
-ctssPagesOf :: CTSS -> Maybe FileImport -> IO EvalPages
-ctssPagesOf (CTSS ssmv _) scope = do
+-- | The session given, for an evaluation over a scope — a page and what it imports, or every page for
+-- a scope of 'Nothing' — handed the parsed pages the service holds of the scope.
+--
+-- What the service's own evaluations run in is this of the 'defaultEvalSession': what it keeps of
+-- an evaluation, a page's annotations and tests, is kept as an evaluation watched by nothing would
+-- make it, and a caller wanting one watched evaluates it itself.
+ctssSessionOf :: CTSS -> Maybe FileImport -> EvalSession -> IO EvalSession
+ctssSessionOf (CTSS ssmv _) scope session = do
   CTSSDat{ctssData} <- readMVar ssmv
-  return $ rawPagesByPath $ graphToNodes $ maybe ctssData (`graphFilterReaches` ctssData) scope
+  return session{sesPages = rawPagesByPath $ graphToNodes $ maybe ctssData (`graphFilterReaches` ctssData) scope}
 
 -- | The name a debugged expression is parsed under, which its positions carry in place of a page's.
 debugExprFile :: String
@@ -1952,7 +1948,7 @@ scopeSSFs ctss@(CTSS ssmv _) prgmName = do
 debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CResT IO DebugRun
 debugExprRun prgmName scopeNodes src = do
   (expr, prgm) <- asCResT $ debugExprCompile prgmName scopeNodes src
-  evalDebugExprPrgm (rawPagesByPath scopeNodes) expr prgm
+  evalDebugExprPrgm defaultEvalSession{sesInstruments = debuggerInstruments, sesPages = rawPagesByPath scopeNodes} expr prgm
 
 -- | The expression a debugger was asked to run, compiled against a page, with the program it is run
 -- in.

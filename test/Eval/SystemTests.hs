@@ -34,9 +34,10 @@ import qualified Data.HashMap.Strict       as H
 import           Data.IORef
 import           Data.List                 (isInfixOf)
 import qualified Data.Text.Lazy            as TL
-import           Eval.Common               (HttpFailure (..), HttpPost, MockIO,
-                                            getMockIOOutput, newMockIO,
-                                            newMockIOWith)
+import           Eval.Common               (EvalIO (..), EvalSession (..),
+                                            HttpFailure (..), HttpPost, MockIO,
+                                            defaultEvalSession, getMockIOOutput,
+                                            newMockIO, newMockIOWith)
 import           Eval.Runtime.System       (realHttpPost)
 import           Network.HTTP.Types        (status500)
 import           Semantics                 (testCtssConfig)
@@ -81,7 +82,7 @@ runWith getCtss page mockIO = do
   ctss <- getCtss
   name <- mkDesCanonicalImportStr testCtssConfig page
   ctssBuildFrom ctss name
-  res <- runCResT $ getEvaluatedMock ctss mockIO name "main"
+  res <- runCResT $ fst <$> getEvaluated defaultEvalSession{sesIO = EvalMockIO mockIO} ctss name "main"
   out <- getMockIOOutput mockIO
   return (res, out)
 
@@ -178,7 +179,7 @@ testLlmWithoutAModelAsksNothing getCtss = testCase "IO.llm without OPENAI_MODEL 
     CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
     CRes _ _   -> assertEqual "the unset variable is named" "error: OPENAI_MODEL is not set, so there is no model to ask\n" out
 
--- | Processes a fixture's annotations against the mock given ('getProcessedMock'): the page as it is
+-- | Processes a fixture's annotations against the mock given ('getProcessed'): the page as it is
 -- written back, how many annotations line processors updated and how many of those came back
 -- unchanged, and how many times file processors changed the file.
 processWith :: IO CTSS -> FilePath -> MockIO -> IO (CRes (String, Int, Int, Int))
@@ -186,7 +187,7 @@ processWith getCtss page mockIO = do
   ctss <- getCtss
   name <- mkDesCanonicalImportStr testCtssConfig page
   ctssBuildFrom ctss name
-  res <- runCResT $ getProcessedMock ctss mockIO name
+  res <- runCResT $ getProcessed defaultEvalSession{sesIO = EvalMockIO mockIO} ctss name
   return $ fmap (\ProcessReport{prPage, prLines, prLinesUnchanged, prFileRounds} -> (formatRootPrgm prPage, prLines, prLinesUnchanged, prFileRounds)) res
 
 -- | @catln process@ end to end: each unanswered @q>@ is asked of the model with the page it is

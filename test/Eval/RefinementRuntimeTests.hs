@@ -11,7 +11,8 @@ module Eval.RefinementRuntimeTests where
 import           CRes
 import           CtService
 import           Data.List        (isInfixOf)
-import           Eval.Common      (newMockIO)
+import           Eval.Common      (EvalIO (..), EvalSession (..),
+                                   defaultEvalSession, newMockIO)
 import           Semantics        (testCtssConfig)
 import           Syntax.Parsers   (mkDesCanonicalImportStr)
 import           Test.Tasty
@@ -34,7 +35,7 @@ refinementRuntimeTests mk = withResource fixtures (const $ return ()) $ \getCtss
       name <- mkDesCanonicalImportStr testCtssConfig (fixture page)
       ctssBuildFrom ctss name
       mockIO <- newMockIO
-      res <- runCResT $ getEvaluatedMock ctss mockIO name "main"
+      res <- runCResT $ fst <$> getEvaluated defaultEvalSession{sesIO = EvalMockIO mockIO} ctss name "main"
       case res of
         CRes _ code -> assertFailure $ "the run was expected to fail its refinement, but exited " ++ show code
         CErr notes  -> assertBool ("the failure names the refinement: expected " ++ show needle ++ " in\n" ++ prettyCNotes notes) (needle `isInfixOf` prettyCNotes notes)

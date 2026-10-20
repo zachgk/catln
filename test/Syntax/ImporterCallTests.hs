@@ -25,8 +25,9 @@ import           CtService            (CTSS, ctssBuildFrom, ctssCached,
                                        ctssKeys, ctssLoad, getSource)
 import qualified Data.HashMap.Strict  as H
 import           Data.List            (isInfixOf)
-import           Eval                 (evalBaseEnv, evalCallTo)
-import           Eval.Common          (EPrim (..), SSF (..), Val)
+import           Eval                 (evalCallTo, evalEnv)
+import           Eval.Common          (EPrim (..), SSF (..), Val,
+                                       defaultEvalSession)
 import           Eval.Runtime.Import  (importPathArg, pyImport)
 import           Semantics            (testCtssConfig)
 import           Semantics.Prgm       (impRaw)
@@ -55,7 +56,7 @@ callWith mk dest path = do
   runCResT $ do
     graph <- ctssEvaluableFrom ssfTPrgm (Just name) ctss
     prgm <- asCResT $ prgmFromGraphData name graph
-    evalCallTo (evalBaseEnv prgm) dest "/Spike/mkResult" [("path", StrVal path)]
+    evalCallTo (evalEnv defaultEvalSession prgm) dest "/Spike/mkResult" [("path", StrVal path)]
 
 -- | Building toward the declared return type is what a caller would reach for first.
 --

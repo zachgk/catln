@@ -37,7 +37,6 @@ import           Data.UUID               (UUID)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
-import           Eval.Instruments
 import           Eval.Runtime
 import           Eval.Runtime.System     (realIOHandle)
 import           Semantics
@@ -550,41 +549,23 @@ evalExpr (TCalls m b callTree) = do
   modify $ evalEndExpr (getMetaPos m <|> getMetaPos (getExprMeta b)) ids v
   return v
 
--- | An 'Env' with nothing of the pipeline around it: no other stage of the program, and no service
--- to ask for one.
---
--- This is also what every evaluation the service starts on a primitive's behalf is built with, which
--- is what keeps such an evaluation from asking the service for another
--- ('Eval.Common.evService'). So it is not only the environment of a caller that has no service to
--- give, it is the environment that says an evaluation is already inside one.
-evalBaseEnv :: EPrgm -> Env
-evalBaseEnv = evalBaseEnvService Nothing
-
--- | An 'Env' that can also report on the program beyond what the evaluation itself holds: the
--- compilation service it was evaluated by, and the other pipeline stages of its program. Callers
--- that have them pass them here; 'evalBaseEnv' is the same thing for callers that do not, and
--- reports them as unavailable rather than substituting what the evaluation does hold.
-evalBaseEnvService :: Maybe EvalService -> EPrgm -> Env
-evalBaseEnvService = evalBaseEnvWith H.empty
-
--- | An 'Env' that can also answer for the pages its program was read from, as they were written
--- ('evPages'), which is what a call asking for the page it is written in is answered from.
-evalBaseEnvWith :: EvalPages -> Maybe EvalService -> EPrgm -> Env
-evalBaseEnvWith pages service prgm@Prgm{prgmObjMap} = Env {
+-- | The 'Env' an evaluation of a program starts in, running with what its caller asked for
+-- ('EvalSession'): what watches it, what its IO reaches, and what it may ask about beyond the program.
+evalEnv :: EvalSession -> EPrgm -> Env
+evalEnv session prgm@Prgm{prgmObjMap} = Env {
         evObjMap = prgmObjMap,
         evTypeEnv = (mkTypeEnv prgm){teArgModeProjection=True},
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv (primEnv <> evalPrims) prgm,
         evClosureEnvs = H.empty,
-        evService = service,
+        evSession = session,
         evAnnotObj = Nothing,
-        evPages = pages,
         evShowingPages = S.empty,
         evCallStack = [],
         evCallIds = [],
         evNextCallId = 0,
-        evInstruments = []
+        evInstruments = sesInstruments session
                 }
 
 -- | The primitives an evaluation supplies itself, because answering them evaluates more of the
@@ -618,14 +599,14 @@ llmShowPage = EEvalPrim "llmShowPage" prim
 
     showPage :: RawPrgm () -> EvalM Val
     showPage page = do
-      env@Env{evTbEnv=TBEnv{tbPrgm}, evShowingPages, evPages} <- get
+      env@Env{evTbEnv=TBEnv{tbPrgm}, evShowingPages} <- get
       let pageHash = hash page
       when (S.member pageHash evShowingPages) $
         evalError "llmShowPage was asked to show a page while showing it, which only the page being shown can be answered by"
       let env' = env{evArgs = H.empty, evCallStack = [], evShowingPages = S.insert pageHash evShowingPages}
       let annotId = getMetaId . getExprMeta
       shown <- forM (pageAnnots page tbPrgm) $ \(os, a) -> fmap (annotId a,) <$> liftIO (showAnnot env' os a)
-      let notes = case pageFile page >>= (`H.lookup` evPages) of
+      let notes = case pageFile page >>= (`H.lookup` evPages env) of
             Just EvalPage{epNotes} -> epNotes
             Nothing                -> []
       return $ StrVal $ formatRootPrgm $ notePage notes $ showAnnotResults (H.fromList $ catMaybes shown) page
@@ -676,8 +657,8 @@ parseExprPrim = EEvalPrim "parseExpr" prim
 
     parseAs :: String -> Type -> String -> EvalM Val
     parseAs input tp source = do
-      Env{evPages} <- get
-      scope <- case H.lookup source evPages of
+      pages <- gets evPages
+      scope <- case H.lookup source pages of
         Just EvalPage{epScope} -> asCResT' epScope
         Nothing -> evalError $ printf "parseExpr was asked to read text as written on %s, which is not a page the program was read from" source
       case parseExprSource "<parseExpr>" input of
@@ -712,7 +693,7 @@ parseExprPrim = EEvalPrim "parseExpr" prim
         declOf oa = oa
 
     evalParsed prgm tp = do
-      let env@Env{evTbEnv} = evalBaseEnvWith H.empty Nothing prgm
+      let env@Env{evTbEnv} = evalEnv defaultEvalSession prgm
       tree <- asCResT $ toTExprDest evTbEnv [] (eVal ('/' : parsedName)) (emptyMetaT tp)
       evalStateT (do
         val <- evalExpr tree
@@ -741,11 +722,8 @@ pageAnnots page (Prgm objMap _ globalAnnots) =
     written = S.fromList $ rawPrgmAnnotIds page
     annotId = getMetaId . getExprMeta
 
--- | Tries to TreeBuild all ObjArrs, returning all built successfully
-evalBuildAll :: EPrgmGraphData -> GraphData (CRes (Prgm TExpr EvalMetaDat)) FileImport
-evalBuildAll = evalBuildAllOf (const True)
-
--- | 'evalBuildAll' restricted to the pages a caller is actually going to read back.
+-- | Tree builds every object of the pages a caller is actually going to read back, returning all
+-- built successfully.
 --
 -- A page the selector rejects keeps its place in the graph — the selected pages' eval environments
 -- are assembled from the whole reachable set ('prgmFromGraphData') — but its own object map is
@@ -765,7 +743,7 @@ evalBuildAllOf selected prgmGraphData = graphFromEdges $ map buildPage $ graphTo
         then return $ Prgm (objectMapFromList []) cg []
         else do
           evalPrgm <- prgmFromGraphData prgmName prgmGraphData
-          let Env{evTbEnv} = evalBaseEnv evalPrgm
+          let Env{evTbEnv} = evalEnv defaultEvalSession evalPrgm
           objMap' <- buildReporting (printf "The definition %s" . show . oaObjPath) (getMetaPos . getExprMeta . oaObjExpr) (buildRootOA evTbEnv) (flatObjectMap objMap)
           annots' <- buildReporting (printf "The annotation %s" . maybe "" show . maybeExprPath) (getMetaPos . getExprMeta) (toTExpr evTbEnv []) annots
           return $ Prgm (objectMapFromList objMap') cg annots'
@@ -783,9 +761,9 @@ buildReporting name pos build = fmap catMaybes . mapM buildOne
       CErr errs -> CRes [MkCNote $ GenCNote (pos x) $ printf "%s could not be built, so it is left out of the built program:%s" (name x) (prettyCNotes errs)] Nothing
       res -> Just <$> res
 
-evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
-evalBuildPrgm input srcType destType prgm = do
-  let env@Env{evTbEnv} = evalBaseEnv prgm
+evalBuildPrgm :: EvalSession -> EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
+evalBuildPrgm session input srcType destType prgm = do
+  let env@Env{evTbEnv} = evalEnv session prgm
   initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
 
@@ -1059,7 +1037,7 @@ attachCallShows prgm nodes
   | otherwise = mapM (go Nothing) nodes
   where
     funs = callShowFuns prgm
-    env@Env{evTbEnv} = evalBaseEnv prgm
+    env@Env{evTbEnv} = evalEnv defaultEvalSession prgm
 
     go parentFun (EvalTreebugClosed oa input val children nodeId _) = do
       let fun = either oaObjPath oaObjPath oa
@@ -1144,13 +1122,13 @@ evalCallTo env@Env{evTbEnv} dest fun args = do
 -- read. Evaluating the imports' annotations too would compute a whole library's worth of values for
 -- every page, and then discard them — @WebDocs.docApiBase@ keys the results back onto the page's own
 -- source by meta ID, which no imported annotation can match.
-evalAnnots :: EvalPages -> Maybe EvalService -> FileImport -> EPrgmGraphData -> CResT IO [(EExpr, Val)]
-evalAnnots pages service prgmName prgmGraphData = do
+evalAnnots :: EvalSession -> FileImport -> EPrgmGraphData -> CResT IO [(EExpr, Val)]
+evalAnnots session prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
   Prgm objMap _ globalAnnots <- asCResT $ case graphLookup prgmName prgmGraphData of
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the annotations of" (show $ impRaw prgmName)]
-  let env = evalBaseEnvWith pages service prgm
+  let env = evalEnv session prgm
   globalAnnots' <- buildDisplays env [] "annotation" globalAnnots
   objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
     let os = [(getExprPartialType $ oaObjExpr oa, oa)]
@@ -1213,7 +1191,7 @@ evalPageValues names prgmName prgmGraphData = do
       -- on no other stage of the program. That is also what keeps an annotation which gathers such
       -- values from re-entering the gathering — this evaluation is one the service started, and an
       -- evaluation the service started has no service to ask.
-      let env = evalBaseEnv prgm
+      let env = evalEnv defaultEvalSession prgm
       concat <$> forM oas (\oa -> buildDisplays env [(getExprPartialType $ oaObjExpr oa, oa)] "declaration" [oaObjExpr oa])
   where
     declaresOne oa = isValueObjArr oa && oaObjPath oa `elem` names
@@ -1244,21 +1222,49 @@ evalPageAsk method prgmName prgmGraphData = do
   prgm <- prgmFromGraphData prgmName prgmGraphData
   -- No service, as 'evalPageValues' takes none and for its reason: this evaluation is one the
   -- service started, and an evaluation the service started has no service to ask.
-  let env@Env{evTbEnv} = evalBaseEnv prgm
+  let env@Env{evTbEnv} = evalEnv defaultEvalSession prgm
   return $ \val -> do
     let e = eVal (nameStr method) `eApply` ("/this", valToEExpr val)
     tree <- asCResT $ buildRoot evTbEnv e (getExprPartialType e) dshowDestType
     evalStateT (evalExpr tree) env
 
--- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
--- That handle is the only difference between a real run and a mocked one: its 'IOHandle' says
+-- | The @\/io@ an evaluation in a session is handed, by what its IO reaches ('sesIO'), or 'Nothing'
+-- for a session with no IO.
+--
+-- The handle is the only difference between a real run and a mocked one: its 'IOHandle' says
 -- whether the run's effects reach the process's stdin and stdout or a buffer.
+sessionIOVal :: EvalSession -> Maybe Val
+sessionIOVal EvalSession{sesIO} = case sesIO of
+  EvalNoIO          -> Nothing
+  EvalRealIO        -> Just $ IOVal 0 realIOHandle
+  EvalMockIO mockIO -> Just $ IOVal 0 (mockIOHandle mockIO)
+
+-- | The @\/io@ a session hands an evaluation that has to have one, such as a run, which is reported
+-- as what it is where the session has none.
+sessionRequireIO :: String -> EvalSession -> CRes Val
+sessionRequireIO what session = case sessionIOVal session of
+  Just ioVal -> return ioVal
+  Nothing -> CErr [MkCNote $ GenCErr Nothing $ printf "%s needs an io to run in, and was evaluated with none" what]
+
+-- | Builds an expression of a program toward a destination and evaluates it in a session: watched by
+-- the session's instruments, and handed its @\/io@ where it has one. What a run and a build share,
+-- which differ only in what they build and what they make of the value it comes to.
+evalTarget :: EvalSession -> EExpr -> Type -> EPrgm -> CResT IO (Val, EvalInstrumentResults)
+evalTarget session input dest prgm = do
+  (expr, env) <- asCResT $ evalBuildPrgm session input (getExprPartialType input) dest prgm
+  let env' = evalSetArgs (maybe H.empty (H.singleton ioStr) (sessionIOVal session)) env
+  (res, env'') <- runStateT (evalExpr expr) env'
+  return (res, evalEnvResults env'')
+
+-- | Builds a function of a program as a run and evaluates it, in the io of the session given.
 --
 -- The run's effects happen as it is evaluated, each when the IO method asking for it is reached, so
--- what comes back is only the exit code the run ended with.
-evalRunPrgm :: [AnyEvalInstrument] -> EvalPages -> Val -> String -> EPrgm -> CResT IO (Integer, EvalInstrumentResults)
-evalRunPrgm instruments pages ioVal function prgm = do
-  input <- asCResT $ case evalPrgmTargetMode function prgm of
+-- what comes back is only the exit code the run ended with, beside what the session's instruments
+-- made of it.
+evalRun :: EvalSession -> String -> EPrgm -> CResT IO (Integer, EvalInstrumentResults)
+evalRun session function prgm = do
+  _ <- asCResT $ sessionRequireIO (printf "The run of %s" function) session
+  (input, dest) <- asCResT $ case evalPrgmTargetMode function prgm of
         EvalRunWithContext function' ->
           -- Case for eval ContextIn(value=main, io=IO)
           return (ioContextInput function', ioContextType PTopType)
@@ -1266,50 +1272,33 @@ evalRunPrgm instruments pages ioVal function prgm = do
           -- Case for eval main
           return (eVal function', ioType)
         _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
-  let (inputE, dest) = input
-  let src = getExprPartialType inputE
-  (expr, env) <- asCResT $ evalBuildPrgm inputE src dest prgm
-  let env2 = evalSetArgs (H.singleton ioStr ioVal) env{evPages = pages, evInstruments = instruments}
-  (res, env') <- runStateT (evalExpr expr) env2
+  (res, results) <- evalTarget session input dest prgm
   case res of
-    (IOVal r _) -> return (r, evalEnvResults env')
+    (IOVal r _) -> return (r, results)
     -- A run in an io answers with the io it ended in, in the context it returns.
-    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- contextStateVal ioStr args -> return (r, evalEnvResults env')
-    _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
-
-evalRun :: EvalPages -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalInstrumentResults)
-evalRun pages function prgmName prgmGraphData = do
-  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  evalRunPrgm [] pages (IOVal 0 realIOHandle) function prgm
-
--- | Like 'evalRun' but captures the program's output into the given 'MockIO' buffer instead of
--- writing it to real stdout.
-evalRunMock :: EvalPages -> MockIO -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalInstrumentResults)
-evalRunMock pages mockIO function prgmName prgmGraphData = do
-  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  evalRunPrgm [] pages (IOVal 0 (mockIOHandle mockIO)) function prgm
+    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- contextStateVal ioStr args -> return (r, results)
+    _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t Running %s" (show res) function]
 
 -- | Runs a function of a program for a debugger reporting on it: its exit code, its captured output,
--- and the tree of what it evaluated.
+-- and what the session's instruments made of what it evaluated.
 --
--- The run is given a mock handle ('mockIOHandle'), so its effects are captured rather than
--- performed: every write is to a buffer created in this call and dropped when it returns, and a
--- read finds no input rather than waiting on the enclosing process's stdin. A debugger reporting on
--- a run from inside the doc server must not write to the server's stdout or block it on a line
--- nobody will type.
-evalDebugPrgm :: EvalPages -> String -> EPrgm -> CResT IO DebugRun
-evalDebugPrgm pages function prgm = do
+-- The run is given a mock handle ('mockIOHandle') whatever the session's IO, so its effects are
+-- captured rather than performed: every write is to a buffer created in this call and dropped when it
+-- returns, and a read finds no input rather than waiting on the enclosing process's stdin. A debugger
+-- reporting on a run from inside the doc server must not write to the server's stdout or block it on
+-- a line nobody will type.
+evalDebugPrgm :: EvalSession -> String -> EPrgm -> CResT IO DebugRun
+evalDebugPrgm session function prgm = do
   mockIO <- lift newMockIO
-  (code, res) <- evalRunPrgm debuggerInstruments pages (IOVal 0 (mockIOHandle mockIO)) function prgm
+  (code, res) <- evalRun session{sesIO = EvalMockIO mockIO} function prgm
   out <- lift $ getMockIOOutput mockIO
-  res' <- withCallShows prgm res
-  lift $ showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty emptySyntaxRun
+  debugRunOf prgm (Just code) out Nothing res
 
 -- | Runs one expression of a program for a debugger reporting on it: the value it evaluated to, and
--- the tree of what it evaluated on the way.
+-- what the session's instruments made of what it evaluated on the way.
 --
 -- Unlike 'evalDebugPrgm' there is no mock, because there is nothing here to capture. An expression is
--- not given an @\/io@ handle the way 'evalRunPrgm' gives one to a program, and an effect can only be
+-- not given an @\/io@ handle the way 'evalRun' gives one to a program, and an effect can only be
 -- performed through one, so an expression cannot print or read: running a page's effects because a
 -- reader opened a debugger on one of its expressions is not what was asked for.
 --
@@ -1324,17 +1313,24 @@ evalDebugPrgm pages function prgm = do
 -- annotation is evaluated in, which is what this is. Building it this way is also why no source
 -- partial is needed, and so why 'getExprPartialType' — which raises on a type that is not exactly one,
 -- as a bare string literal's is not — is not on this path at all.
-evalDebugExprPrgm :: EvalPages -> EExpr -> EPrgm -> CResT IO DebugRun
-evalDebugExprPrgm pages input prgm = do
-  let env@Env{evTbEnv} = (evalBaseEnvWith pages Nothing prgm){evInstruments = debuggerInstruments}
+evalDebugExprPrgm :: EvalSession -> EExpr -> EPrgm -> CResT IO DebugRun
+evalDebugExprPrgm session input prgm = do
+  let env@Env{evTbEnv} = evalEnv session prgm
   tree <- asCResT $ toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
-  res <- withCallShows prgm (evalEnvResults env')
-  lift $ showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty emptySyntaxRun
+  debugRunOf prgm Nothing "" (Just val) (evalEnvResults env')
 
--- | An evaluation's result with the display filled in for each call that has one
--- ('attachCallShows'). Both debugger entry points go through this, since which of them ran a
+-- | A debugger's run, out of what it ended with and what its instruments made of it: with the
+-- display filled in for each call that has one ('attachCallShows'), and every value shown as its
+-- display ('showRunValues'). Both debugger entry points go through this, since which of them ran a
 -- program is not something a display of one of its calls depends on.
+debugRunOf :: EPrgm -> Maybe Integer -> String -> Maybe Val -> EvalInstrumentResults -> CResT IO DebugRun
+debugRunOf prgm code out val res = do
+  res' <- withCallShows prgm res
+  lift $ showRunValues prgm $ DebugRun code out val res' H.empty emptySyntaxRun
+
+-- | An evaluation's results with the display filled in for each call of its tree that has one
+-- ('attachCallShows'). The results of other instruments are left as they are.
 withCallShows :: EPrgm -> EvalInstrumentResults -> CResT IO EvalInstrumentResults
 withCallShows prgm = mapM $ \case
   (name, TreebugResult tb@EvalTreebug{tbCalls}) -> do
@@ -1362,7 +1358,7 @@ withCallShows prgm = mapM $ \case
 showRunValues :: EPrgm -> DebugRun -> IO DebugRun
 showRunValues prgm run@DebugRun{drValue, drResults} = evalStateT go (H.empty, evExEnv env)
   where
-    env = evalBaseEnv prgm
+    env = evalEnv defaultEvalSession prgm
     go = do
       results' <- forM drResults $ \(name, res) -> (name,) <$> showResult res
       value' <- mapM showVal drValue
@@ -1404,10 +1400,11 @@ showRunValues prgm run@DebugRun{drValue, drResults} = evalStateT go (H.empty, ev
     holdsIO (TupleVal _ as) = any holdsIO (H.elems as)
     holdsIO _               = False
 
-evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalInstrumentResults)
-evalBuild function prgmName prgmGraphData = do
-  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  targetMode <- asCResT $ evalTargetMode function prgmName prgmGraphData
+-- | Builds a function of a program as a build and evaluates it in the session given, to the result
+-- it builds, beside what the session's instruments made of it.
+evalBuild :: EvalSession -> String -> EPrgm -> CResT IO (Val, EvalInstrumentResults)
+evalBuild session function prgm = do
+  let targetMode = evalPrgmTargetMode function prgm
   input <-  case targetMode of
         EvalRunWithContext function' ->
           -- Case for eval llvm(c=Context(value=main, io=IO))
@@ -1419,12 +1416,10 @@ evalBuild function prgmName prgmGraphData = do
           -- Case for buildable main
           return $ eVal function'
         unexpectedEvalMode -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build with unexpected eval mode %s" (show function) (show unexpectedEvalMode)]
-  let src = getExprPartialType input
   let dest = case targetMode of
         EvalBuildWithContext{} -> ioContextType resultType
         _                      -> resultType
-  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
-  (res0, env') <- runStateT (evalExpr expr) env
+  (res0, results) <- evalTarget session input dest prgm
   -- A build in an io answers with its result in the context it returns.
   let res = case res0 of
         TupleVal n args | n == ContextStr, Just v <- H.lookup contextValStr args -> v
@@ -1433,9 +1428,9 @@ evalBuild function prgmName prgmGraphData = do
     (LLVMVal _) -> do
       -- llvmStr <- codegenExInit toCodegen
       let llvmStr = "LLVM Placeholder result"
-      return (oneFileResult "out.ll" llvmStr, evalEnvResults env')
+      return (oneFileResult "out.ll" llvmStr, results)
     -- Checked here rather than merely returned, so that a value which is not a result is reported
     -- as the compilation failure it is instead of reaching whoever asked for the build.
     val -> case valResultFiles val of
-      Right _ -> return (val, evalEnvResults env')
+      Right _ -> return (val, results)
       Left err -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not build a %s: %s" function catlnResultPath err]

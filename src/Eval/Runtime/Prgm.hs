@@ -88,10 +88,10 @@ pageAtSourceArg = "/source"
 pageAt :: EPrim
 pageAt = EEnvPrim "pageAt" prim
   where
-    prim Env{evPages} args = case H.lookup pageAtSourceArg args of
-      Just (StrVal source) -> case H.lookup source evPages of
+    prim env args = case H.lookup pageAtSourceArg args of
+      Just (StrVal source) -> case H.lookup source (evPages env) of
         Just EvalPage{epRaw} -> Right $ toCt epRaw
-        Nothing -> Left $ printf "pageAt was asked for %s, which is not a page this evaluation was handed (it holds %s)" source (show $ H.keys evPages)
+        Nothing -> Left $ printf "pageAt was asked for %s, which is not a page this evaluation was handed (it holds %s)" source (show $ H.keys $ evPages env)
       Just v -> Left $ printf "pageAt was given %s, which is not a source" (show v)
       Nothing -> Left $ printf "pageAt has no %s argument, only %s" pageAtSourceArg (show $ H.keys args)
 
@@ -212,7 +212,7 @@ typeDeclsSourceArg = "/source"
 typeDecls :: EPrim
 typeDecls = EEnvPrim "typeDecls" prim
   where
-    prim Env{evTbEnv=TBEnv{tbPrgm=Prgm{prgmObjMap=ObjectMap objMap, prgmCg=ClassGraph cg}}, evPages} args = do
+    prim env@Env{evTbEnv=TBEnv{tbPrgm=Prgm{prgmObjMap=ObjectMap objMap, prgmCg=ClassGraph cg}}} args = do
       tp <- typeArgOf "typeDecls" args
       let names = reachedNames S.empty (typeNames tp)
       let places = nub [start | name <- names, Just item <- [H.lookup name objMap], oa <- objItemArrs item, Just (start, _) <- [oaObj oa >>= getMetaPos . getExprMeta]]
@@ -243,7 +243,7 @@ typeDecls = EEnvPrim "typeDecls" prim
         statementAt at
           | isCorePath (sourceName at) = Nothing
           | otherwise = do
-              EvalPage{epRaw=RawPrgm _ trees} <- H.lookup (sourceName at) evPages
+              EvalPage{epRaw=RawPrgm _ trees} <- H.lookup (sourceName at) (evPages env)
               innermost at trees
 
         innermost at trees = listToMaybe [fromMaybe tree (innermost at subs) | tree@(RawStatementTree _ subs) <- trees, Just (start, end) <- [treeSpan tree], posKey start <= posKey at, posKey at <= posKey end]

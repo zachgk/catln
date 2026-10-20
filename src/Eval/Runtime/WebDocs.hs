@@ -260,10 +260,11 @@ data SidebarNode
 sidebar :: EPrim
 sidebar = EEnvPrim "sidebar" prim
   where
-    prim Env{evService = Nothing} _ = Left noService
-    prim Env{evService = Just svc} _ = askService $ do
-      pages <- esPages svc
-      return $ encodeJsonText <$> sidebarNodes pages
+    prim env _ = case evService env of
+      Nothing -> Left noService
+      Just svc -> askService $ do
+        pages <- esPages svc
+        return $ encodeJsonText <$> sidebarNodes pages
 
 -- | The pages as the tree of directories they sit in, which is the shape a navigation of them is
 -- walked in.
@@ -528,12 +529,13 @@ data PrgmGraphNode = PrgmGraphNode {
 prgmGraph :: EPrim
 prgmGraph = EEnvPrim "prgmGraph" prim
   where
-    prim Env{evService = Nothing} _ = Left noService
-    prim Env{evService = Just svc} _ = askService $ do
-      let scope = esScope svc
-      graph <- esBuilt svc scope
-      let pages = maybe graph (`graphFilterReaches` graph) scope
-      return $ encodeJsonText <$> traverse (graphNode scope) (graphToNodes pages)
+    prim env _ = case evService env of
+      Nothing -> Left noService
+      Just svc -> askService $ do
+        let scope = esScope svc
+        graph <- esBuilt svc scope
+        let pages = maybe graph (`graphFilterReaches` graph) scope
+        return $ encodeJsonText <$> traverse (graphNode scope) (graphToNodes pages)
     -- As in 'sidebar', a page with no display path can be neither identified nor opened, so it is
     -- reported rather than dropped from the graph, where it would read as a page nothing imports.
     graphNode scope (_, imp, imports) = do
@@ -573,8 +575,8 @@ traverseUntilLeft f (x:xs) = do
 --
 -- Said rather than answered around: an evaluation with nothing to report on cannot answer, and
 -- reporting something else would be worse than failing. Every evaluation the service itself starts
--- is one of these ('Eval.evalBaseEnv'), so a display reached by way of another display says this
--- rather than recurring.
+-- is one of these ('Eval.Common.defaultEvalSession'), so a display reached by way of another display
+-- says this rather than recurring.
 noService :: String
 noService = "This evaluation was not given the compilation service its program was compiled by"
 

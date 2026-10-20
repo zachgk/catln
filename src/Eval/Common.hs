@@ -80,7 +80,7 @@ type EPrgmGraphData = GraphData EPrgm FileImport
 -- 'CtService.ctssLoad' for the program and 'CtService.ctssBuildFrom' for the stages below it, which
 -- every reader of this goes through. A stage is also left unforced once computed, so holding a page
 -- costs nothing until something reads the stage it wants — merely inspecting 'ssfTBPrgm' runs an
--- 'Eval.evalBuildAll' over the page.
+-- 'Eval.evalBuildAllOf' over the page.
 data SSF = SSF {
   ssfSource    :: Maybe String,
   -- | The page's program, or 'Nothing' for a page whose imports are known and whose program has not
@@ -128,7 +128,7 @@ data SSF = SSF {
 -- | Joins one stage over a set of pages, left unforced.
 --
 -- It must stay a thunk: a caller that never reads the stage must not pay for it, and merely
--- inspecting 'ssfTBPrgm' runs an 'Eval.evalBuildAll' over every page joined.
+-- inspecting 'ssfTBPrgm' runs an 'Eval.evalBuildAllOf' over every page joined.
 --
 -- A page which was never built has nothing to contribute and is passed over rather than failing the
 -- join — a @ctx@ page is marked built while deliberately skipping the pipeline. A page which failed
@@ -170,7 +170,7 @@ class CtServiceApi s where
   -- A caller wanting the scope alone filters what comes back by the same scope.
   --
   -- The stages on the pages that come back are unforced, so this costs the build and no more.
-  -- Reading 'ssfTBPrgm' off one of them is what runs an 'Eval.evalBuildAll' over it.
+  -- Reading 'ssfTBPrgm' off one of them is what runs an 'Eval.evalBuildAllOf' over it.
   csBuilt :: s -> Maybe FileImport -> IO (GraphData SSF FileImport)
 
   -- | The tests a page wrote, run.
@@ -366,7 +366,7 @@ data EPrim
   -- | A primitive that also reads the evaluation 'Env'. This is what a primitive reporting on the
   -- program itself needs (the webdocs pages), since the program is only reachable through
   -- @evTbEnv@. It must be a primitive rather than a 'MacroFunction' because a macro runs during
-  -- TreeBuild, which would bake the program into every built arm ('evalBuildAll') instead of
+  -- TreeBuild, which would bake the program into every built arm ('evalBuildAllOf') instead of
   -- computing it per evaluation.
   | EEnvPrim String (Env -> H.HashMap String Val -> Either String Val)
   -- | A primitive that performs an effect: a method of the Catln @IO@ object. It is handed the
@@ -404,7 +404,7 @@ instance ToJSON EPrim where
 -- | A page a program was read from: as it was written, and what the compiler said about it.
 --
 -- The notes are lazy and stay so. They include what building the page's trees reported, and reading
--- that builds them ('CtService.ctssPagesOf'), so only an evaluation that shows the page to a reader
+-- that builds them ('CtService.ctssSessionOf'), so only an evaluation that shows the page to a reader
 -- ('Eval.llmShowPage') pays for it.
 --
 -- The scope is lazy for the same reason: the typechecked pages the page reaches, itself among them,
@@ -431,6 +431,63 @@ type EvalPages = H.HashMap String EvalPage
 data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String (Maybe Val)
   deriving (Eq, Generic, Hashable, ToJSON)
 
+-- | What an evaluation's IO performs its effects through, as its caller chose it.
+data EvalIO
+  -- | No IO at all: the evaluation is not handed an @\/io@, so it can perform no effect. What every
+  -- evaluation of something other than a program's run is: an annotation, a test, an expression.
+  = EvalNoIO
+  -- | The process's own stdin, stdout, environment and network ('Eval.Runtime.System.realIOHandle').
+  | EvalRealIO
+  -- | A buffer the caller reads back ('mockIOHandle'): a test, or a debugger reporting on a run from
+  -- inside the doc server.
+  | EvalMockIO MockIO
+
+-- | What a caller asks an evaluation to run with: what is watching it, what its IO reaches, and what
+-- it can ask about beyond the program it evaluates.
+--
+-- One value handed to every way of evaluating rather than an argument of each, so that a run and a
+-- build, a real run and a mocked one, are each one entry point told which they are rather than two
+-- written alongside each other. 'defaultEvalSession' is an evaluation with none of them, and a
+-- caller sets what it has.
+data EvalSession = EvalSession {
+  -- | What is watching the evaluation ('EvalInstrument'), which is read back once it is over.
+    sesInstruments :: [AnyEvalInstrument]
+  , sesIO          :: EvalIO
+  -- | The pages the program was read from, as written, under the names the positions of what was
+  -- parsed from them carry ('CtService.rawPagesByPath'). What a call asking for the page it is
+  -- written in is answered from ('Eval.Runtime.Prgm.pageAt'). Empty for an evaluation whose caller
+  -- holds no pages, where such a call is reported.
+  , sesPages       :: EvalPages
+  -- | The compilation service this evaluation may ask about the pages there are, and about the stages
+  -- of them it cannot reach on its own.
+  --
+  -- 'Nothing' for an evaluation whose caller gave it none, which a primitive reports rather than
+  -- answering around. Notably that is every evaluation the service itself starts on a primitive's
+  -- behalf ('defaultEvalSession'): a gathering of what pages declare, a debugger's run, a page's
+  -- tests. That is what bounds re-entry to one level — an annotation may ask the service to
+  -- evaluate something, and what it evaluates cannot ask again — and it falls out of those paths
+  -- building their environments with no service rather than out of anything tracking how deep a
+  -- call is.
+  , sesService     :: Maybe EvalService
+  }
+
+-- | An evaluation watched by nothing, with no IO, no pages, and no service to ask.
+--
+-- This is also what every evaluation the service starts on a primitive's behalf is built with, which
+-- is what keeps such an evaluation from asking the service for another ('sesService'). So it is not
+-- only the session of a caller that has nothing to give, it is the session that says an evaluation
+-- is already inside one.
+defaultEvalSession :: EvalSession
+defaultEvalSession = EvalSession [] EvalNoIO H.empty Nothing
+
+-- | The pages an evaluation was handed ('sesPages').
+evPages :: Env -> EvalPages
+evPages = sesPages . evSession
+
+-- | The compilation service an evaluation was handed, if any ('sesService').
+evService :: Env -> Maybe EvalService
+evService = sesService . evSession
+
 data Env = Env { evObjMap       :: EObjectMap
                , evTypeEnv      :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
                , evArgs         :: Args
@@ -442,17 +499,9 @@ data Env = Env { evObjMap       :: EObjectMap
                -- own; made afresh for every arm built it would start every build with that cache
                -- cold.
                , evClosureEnvs  :: H.HashMap [(Type, Type)] TBEnv
-               -- | The compilation service this evaluation may ask about the pages there are, and
-               -- about the stages of them it cannot reach on its own.
-               --
-               -- 'Nothing' for an evaluation whose caller gave it none, which a primitive reports
-               -- rather than answering around. Notably that is every evaluation the service itself
-               -- starts on a primitive's behalf ('evalBaseEnv'): a gathering of what pages declare,
-               -- a debugger's run, a page's tests. That is what bounds re-entry to one level — an
-               -- annotation may ask the service to evaluate something, and what it evaluates cannot
-               -- ask again — and it falls out of those paths building their environments with no
-               -- service rather than out of anything tracking how deep a call is.
-               , evService      :: Maybe EvalService
+               -- | What the caller of the evaluation asked it to run with ('EvalSession'): what is
+               -- watching it, what its IO reaches, and what it may ask about beyond its program.
+               , evSession      :: EvalSession
                -- | The definition an annotation being evaluated is written on, for a primitive
                -- reporting on that definition. An annotation is local to the program it is written
                -- in and to whatever it is written on, and only the second is otherwise lost: the
@@ -460,11 +509,6 @@ data Env = Env { evObjMap       :: EObjectMap
                -- annotates. Nothing for a program's own annotation, which is written on the program
                -- rather than on any definition of it.
                , evAnnotObj     :: Maybe EObjArr
-               -- | The pages the program was read from, as written, under the names the positions
-               -- of what was parsed from them carry ('CtService.rawPagesByPath'). What a call asking
-               -- for the page it is written in is answered from ('Eval.Runtime.Prgm.pageAt'). Empty
-               -- for an evaluation whose caller holds no pages, where such a call is reported.
-               , evPages        :: EvalPages
                -- | The pages being shown, by hash, while their annotations are evaluated
                -- ('Eval.llmShowPage'). An annotation of a page being shown that asks for the page to
                -- be shown again could only ever be answered by itself, so it is refused instead.
@@ -911,7 +955,7 @@ resultVal (Right v) = TupleVal ctResultOk (H.singleton (runtimeArgKey ctResultOk
 resultVal (Left e)  = TupleVal ctResultFail (H.singleton (runtimeArgKey ctResultFailErr) e)
 
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
--- stdout. Create with 'newMockIO' or 'newMockIOWith', pass to 'Eval.evalRunMock', then read
+-- stdout. Create with 'newMockIO' or 'newMockIOWith', run with it as an 'EvalMockIO', then read
 -- captured output with 'getMockIOOutput'.
 data MockIO = MockIO
   { mockOut  :: IORef [String]

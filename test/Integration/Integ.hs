@@ -15,8 +15,10 @@ import           Data.List               (intercalate, isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy          as T
 import           Eval
-import           Eval.Common             (EvalMetaDat, SSF (..),
-                                          TestResult (..), Val, getMockIOOutput,
+import           Eval.Common             (EvalIO (..), EvalMetaDat,
+                                          EvalSession (..), SSF (..),
+                                          TestResult (..), Val,
+                                          defaultEvalSession, getMockIOOutput,
                                           newMockIO)
 import           Eval.SyntaxTreeTests    (syntaxTreeTests)
 import           Eval.Testing            (runTestDesc)
@@ -167,11 +169,11 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
       tbprgm <- ctssGetFrom ssfTBPrgm fileName ctss
       lift $ runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
 
-    evalTarget <- asCResT $ evalTargetMode "main" fileName tprgm
-    when (evalRunnable evalTarget) $ do
+    targetMode <- asCResT $ evalTargetMode "main" fileName tprgm
+    when (evalRunnable targetMode) $ do
       lift $ step "Eval Run..."
       mockIO <- lift newMockIO
-      returnValue <- getEvaluatedMock ctss mockIO fileName "main"
+      (returnValue, _) <- getEvaluated defaultEvalSession{sesIO = EvalMockIO mockIO} ctss fileName "main"
       case returnValue of
         0 -> return ()
         v -> lift $ assertFailure $ "Bad result for:\n \t " ++ show v
@@ -187,9 +189,9 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
     -- `main` has nothing to build, and asking for one anyway is an error note rather than an empty
     -- answer -- which every `.ct` and `.py` fixture hid by defining one. A page a JSON file is read
     -- as holds a value and no functions, so it is the first fixture that cannot.
-    when (evalBuildable evalTarget) $ do
+    when (evalBuildable targetMode) $ do
       lift $ step "Eval Build..."
-      _ <- getEvalBuild ctss fileName "main"
+      _ <- getEvalBuild defaultEvalSession ctss fileName "main"
       return ()
 
     lift $ step "Eval Annots..."

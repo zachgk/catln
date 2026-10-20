@@ -54,7 +54,7 @@ await_backend() {
 }
 
 # Answering /api/config does not mean the backend is warm. Starting up runs the typecheck
-# pipeline, but buildSCCPipeline leaves evalBuildAll (step 7) and evalAnnots (step 8) as
+# pipeline, but buildSCCPipeline leaves evalBuildAllOf (step 7) and evalAnnots (step 8) as
 # thunks, so the FIRST /api/page pays the tree building and annotation evaluation for that
 # page. Measured on a dev machine: 25s for the first load, 0s for every one after. Without
 # this the test that happens to make that first call eats the cost and blows the 15s default

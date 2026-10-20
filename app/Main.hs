@@ -24,8 +24,9 @@ import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.List               (isInfixOf, nub, sortOn)
 import           Data.Maybe
-import           Eval.Common             (SSF (..), TestKind (TestPrintGolden),
-                                          TestResult (..))
+import           Eval.Common             (EvalIO (..), EvalSession (..),
+                                          SSF (..), TestKind (TestPrintGolden),
+                                          TestResult (..), defaultEvalSession)
 import           Eval.Testing            (TestDesc (..), runTestDesc)
 import           LSP                     (lspRun)
 import           Syntax.HsBuiltins.Types (BuiltFile (..), valResultFiles)
@@ -49,7 +50,7 @@ xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
-  returnValue <- getEvaluated ctss prgmName' function
+  (returnValue, _) <- getEvaluated defaultEvalSession{sesIO = EvalRealIO} ctss prgmName' function
   case returnValue of
     0 -> return ()
     i -> fail $ "error code " ++ show i
@@ -61,7 +62,7 @@ xProcess :: String -> CResT IO ()
 xProcess prgmName = do
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
-  ProcessReport{prPage, prLines, prLinesUnchanged, prFileRounds} <- getProcessed ctss prgmName'
+  ProcessReport{prPage, prLines, prLinesUnchanged, prFileRounds} <- getProcessed defaultEvalSession{sesIO = EvalRealIO} ctss prgmName'
   path <- case importPath prgmName' of
     Just path -> return path
     Nothing   -> fail $ printf "Could not find a file to write the processed %s back to" prgmName
@@ -74,7 +75,7 @@ xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
-  returnValue <- getEvalBuild ctss prgmName' function
+  (returnValue, _) <- getEvalBuild defaultEvalSession ctss prgmName' function
   files <- either fail return $ valResultFiles returnValue
   let buildDir = "build"
   lift $ removePathForcibly buildDir

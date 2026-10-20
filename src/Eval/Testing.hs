@@ -36,9 +36,8 @@ import           Data.List                  (intercalate, nub, nubBy, sortOn,
                                              tails)
 import           Data.Maybe
 import           Data.UUID                  (UUID)
-import           Eval                       (checkPrintGolden, evalBaseEnv,
-                                             evalBaseEnvWith, evalBuildPrgm,
-                                             evalDShowAnnot, evalExpr,
+import           Eval                       (checkPrintGolden, evalBuildPrgm,
+                                             evalDShowAnnot, evalEnv, evalExpr,
                                              evalValEq, printPArg, printRange,
                                              printResultArg, valWithinType)
 import           Eval.Common
@@ -235,7 +234,7 @@ evaluableClause oa = case oaArr oa of
 -- among the rest — which is how one clause of several is evaluated in isolation. Removing (rather
 -- than keeping only one) preserves a runtime-primitive sibling, which has no body to keep.
 envWithoutClauses :: EPrgm -> TypeName -> [EObjArr] -> Env
-envWithoutClauses prgm@(Prgm (ObjectMap om) _ _) name dropOas = evalBaseEnv prgm{prgmObjMap = ObjectMap (H.adjust without name om)}
+envWithoutClauses prgm@(Prgm (ObjectMap om) _ _) name dropOas = evalEnv defaultEvalSession prgm{prgmObjMap = ObjectMap (H.adjust without name om)}
   where
     without o = o{ omiDefs = filter (`notElem` dropOas) (omiDefs o)
                  , omiRuntimeDecls = filter (`notElem` dropOas) (omiRuntimeDecls o) }
@@ -427,7 +426,7 @@ deriveRefinementTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _
     TypeEnv{teNames} = typeEnv
     typeEnv = mkTypeEnv prgm
     runEnv = runTypeEnv prgm
-    env = evalBaseEnv prgm
+    env = evalEnv defaultEvalSession prgm
     clauseDom oa = getExprType (oaObjExpr oa)
 
     -- Build a definition's call against the function's NOMINAL declared return (predicates cleared),
@@ -510,32 +509,35 @@ deriveRefinementTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _
             then Hedgehog.success
             else Hedgehog.footnote (printf "Refinement violated: no arm of %s on %s produced a result matching the claimed return %s. The arms produced:\n  %s" testName (show input) (show refRet) (intercalate "\n  " (map showArm results))) >> Hedgehog.failure
 
--- | Every test of a program, derived from the whole of it, evaluated with the pages it was read from.
-evalTest :: EvalPages -> EPrgmGraphData -> CResT IO [TestDesc]
-evalTest pages prgmGraphData = evalTestWith pages prgm prgm
-  where prgm = mconcat $ map fst3 $ graphToNodes prgmGraphData
-
--- | The tests one page of a program wrote: derived from what that page declares, and decided in the
--- whole program the graph holds. The same tests 'evalTest' would attribute to the page, at the cost
--- of that page alone — deriving over the whole program evaluates every print of every page it
--- reaches, which for a page importing the standard library is the library's own tests again.
+-- | The tests of a program, evaluated in the session given: every test of it, derived from the
+-- whole of it, or with a page named the tests that page wrote. Those are derived from what that page
+-- declares, and decided in the whole program the graph holds: the same tests the whole program would
+-- attribute to the page, at the cost of that page alone — deriving over the whole program evaluates
+-- every print of every page it reaches, which for a page importing the standard library is the
+-- library's own tests again.
 --
 -- The whole program is still the environment, so a law the page states over a class is checked
 -- against the instances other pages define, and an agreement test pairs the page's arm with an arm
 -- of the same function written elsewhere; such a test belongs to the page whose arm was written
 -- first, as 'deriveOverlapTests' places it.
-evalTestOf :: EvalPages -> FileImport -> EPrgmGraphData -> CResT IO [TestDesc]
-evalTestOf pages name prgmGraphData = case graphLookup name prgmGraphData of
+evalTest :: EvalSession -> Maybe FileImport -> EPrgmGraphData -> CResT IO [TestDesc]
+evalTest session Nothing prgmGraphData = evalTestWith session prgm prgm
+  where prgm = mconcat $ map fst3 $ graphToNodes prgmGraphData
+evalTest session (Just name) prgmGraphData = case graphLookup name prgmGraphData of
   Nothing  -> CResT $ return $ CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to derive the tests of" (show $ impRaw name)]
-  Just own -> evalTestWith pages own (mconcat $ map fst3 $ graphToNodes prgmGraphData)
+  Just own -> evalTestWith session own (mconcat $ map fst3 $ graphToNodes prgmGraphData)
 
 -- | The tests derived from the definitions and prints of @own@, evaluated in @prgm@, which holds
--- @own@ and everything it is decided against, with @pages@ the pages the program was read from.
-evalTestWith :: EvalPages -> EPrgm -> EPrgm -> CResT IO [TestDesc]
-evalTestWith pages own@(Prgm ownMap _ ownAnnots) prgm = do
+-- @own@ and everything it is decided against, in the session given: the pages the program was read
+-- from, and what the tests it writes run with.
+--
+-- The tests derived from the program's own arms -- agreement and refinement tests -- evaluate an arm
+-- in isolation ('envWithoutClauses') rather than as the program wrote it, and are not run in it.
+evalTestWith :: EvalSession -> EPrgm -> EPrgm -> CResT IO [TestDesc]
+evalTestWith session own@(Prgm ownMap _ ownAnnots) prgm = do
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap ownMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  printTests <- lift $ derivePrintTests pages own prgm
+  printTests <- lift $ derivePrintTests session own prgm
   return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ filter owned (deriveOverlapTests own prgm ++ deriveRefinementTests own prgm) ++ printTests
   where
     -- A derived test is the page's when the definition it is placed with is. Arms of the page's
@@ -553,7 +555,7 @@ evalTestWith pages own@(Prgm ownMap _ ownAnnots) prgm = do
           action = do
             let input = eVal testName
             let src = getExprPartialType input
-            (expr, env) <- asCResT $ evalBuildPrgm input src intType p
+            (expr, env) <- asCResT $ evalBuildPrgm session input src intType p
             fst <$> runStateT (evalExpr expr) env
       in TestDesc testName testName (oaTestId oa) TestSimple (EvalCheck action)
 
@@ -645,7 +647,7 @@ evalTestWith pages own@(Prgm ownMap _ ownAnnots) prgm = do
             -- After the last generator, so that a case the generators discard records nothing.
             record (showCase chosenTypes argNames argVals)
 
-            case evalBuildPrgm input src intType p of
+            case evalBuildPrgm session input src intType p of
               CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
               CRes _ (expr, env) -> do
                 res <- liftIO $ runCResT $ runStateT (evalExpr expr) env
@@ -681,9 +683,9 @@ printGolden _          = Nothing
 -- | Build and evaluate every @#print@ reachable in the program to its rendered value, keeping
 -- only the string-serializable ones, paired with the source range of the print's @p@ argument
 -- (used by @catln test --update@ to locate and write goldens back).
-evalPrints :: EvalPages -> EPrgm -> CResT IO [(CodeRangeDat, String)]
-evalPrints pages prgm = do
-  let env = evalBaseEnvWith pages Nothing prgm
+evalPrints :: EvalSession -> EPrgm -> CResT IO [(CodeRangeDat, String)]
+evalPrints session prgm = do
+  let env = evalEnv session prgm
   results <- forM (collectPrintAnnots prgm) $ \(os, annot) -> do
     mval <- evalDShowAnnot env os annot
     return $ (,) <$> printRange annot <*> (mval >>= printGolden)
@@ -697,11 +699,11 @@ evalPrints pages prgm = do
 -- Each print is evaluated here, as the tests are derived, rather than when its test is run: whether
 -- a print has a test at all is decided by what it evaluates to.
 --
--- The prints are those of @own@, evaluated in @prgm@ with the @pages@ it was read from.
-derivePrintTests :: EvalPages -> EPrgm -> EPrgm -> IO [TestDesc]
-derivePrintTests pages own prgm = catMaybes <$> mapM mkTest (collectPrintAnnots own)
+-- The prints are those of @own@, evaluated in @prgm@ in the session given.
+derivePrintTests :: EvalSession -> EPrgm -> EPrgm -> IO [TestDesc]
+derivePrintTests session own prgm = catMaybes <$> mapM mkTest (collectPrintAnnots own)
   where
-    env = evalBaseEnvWith pages Nothing prgm
+    env = evalEnv session prgm
     mkTest (os, annot) = do
       shown <- runCResT $ evalDShowAnnot env os annot
       return $ case shown of

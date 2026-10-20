@@ -138,20 +138,21 @@ data TimeAsk = TimeAsked String | SpanAsked String | TimeNotAsked
 -- back is in the order the page wrote it, and two gatherings joined would be two runs of that order
 -- rather than one.
 gatherPrim :: [Reading] -> Env -> H.HashMap String Val -> Either String Val
-gatherPrim _ Env{evService = Nothing} _ = Left noService
-gatherPrim readings Env{evService = Just svc, evTypeEnv} _ = askService $ do
-  today <- esToday svc
-  let scope = esScope svc
-  graph <- esBuilt svc scope
-  -- One gatherer and one asker for every page, not one per page: each holds the scope's
-  -- typechecked programs, so taking one per page would pay for the scope once per page — over a
-  -- vault of notes, quadratic in the notes.
-  gather <- esValues svc scope
-  ask <- esAsk svc scope
-  -- Each reading with the types that joined its class, which a gathered value is checked against.
-  let members = [(r, classMembers evTypeEnv (rdClass r)) | r <- readings]
-  let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
-  fmap (answered today) <$> traverseUntilLeft (pageEntries members gather ask) (sortOn impDisp pages)
+gatherPrim readings env@Env{evTypeEnv} _ = case evService env of
+  Nothing -> Left noService
+  Just svc -> askService $ do
+    today <- esToday svc
+    let scope = esScope svc
+    graph <- esBuilt svc scope
+    -- One gatherer and one asker for every page, not one per page: each holds the scope's
+    -- typechecked programs, so taking one per page would pay for the scope once per page — over a
+    -- vault of notes, quadratic in the notes.
+    gather <- esValues svc scope
+    ask <- esAsk svc scope
+    -- Each reading with the types that joined its class, which a gathered value is checked against.
+    let members = [(r, classMembers evTypeEnv (rdClass r)) | r <- readings]
+    let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
+    fmap (answered today) <$> traverseUntilLeft (pageEntries members gather ask) (sortOn impDisp pages)
   where
     answered today found = encodeJsonText $ CalendarResult Nothing today (concat found)
 
