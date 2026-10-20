@@ -19,6 +19,7 @@ import {rawExprMeta, statementBody} from '../../Common/RawPrgm'
 import {dateText, someValue} from '../../Common/Values/time'
 import {valueSource} from '../../Common/Values/source'
 import {createOps, placedValue} from '../../Common/Values/plannerEdits'
+import {instrumentResult} from '../../Common/Values/DebugSyntax'
 
 const API_BASE = 'http://localhost:31204'
 const READONLY_API_BASE = 'http://localhost:8080'
@@ -494,10 +495,10 @@ describe('Backend API contract', () => {
     const run = JSON.parse(val.args['/run'].contents)
     expect(run.drExit).toBe(0)
     expect(run.drOutput).toBe('')
-    expect(run.drResult.erTreebug.length).toBeGreaterThan(0)
+    expect(instrumentResult(run.drResults, 'treebug').tbCalls.length).toBeGreaterThan(0)
     // id.ct writes no #debug, so the run recorded none. An empty list rather than a missing one:
     // the page shows the records of every run, and one that recorded nothing says so.
-    expect(run.drResult.erDebugs).toEqual([])
+    expect(instrumentResult(run.drResults, 'debug')).toEqual([])
   })
 
   // A run's #debug records, which is what the annotation exists for: nothing reads them within the
@@ -511,19 +512,19 @@ describe('Backend API contract', () => {
     // debug.ct writes `#debug(d= x)` then `#debug(d= x + 1)` on `inc`, which main calls with -1.
     // They come back in the order they were written, which is what makes the list a trace of the
     // run rather than a set of the values it happened to record.
-    expect(run.drResult.erDebugs.map(d => d.edValue)).toEqual([
+    expect(instrumentResult(run.drResults, 'debug').map(d => d.edValue)).toEqual([
       {tag: 'IntVal', contents: -1},
       {tag: 'IntVal', contents: 0},
     ])
-    expect(run.drResult.erDebugs.map(d => d.edPos[0].line)).toEqual([11, 12])
-    expect(run.drResult.erDebugs.every(d => d.edPos[0].name.endsWith('/debug.ct'))).toBe(true)
+    expect(instrumentResult(run.drResults, 'debug').map(d => d.edPos[0].line)).toEqual([11, 12])
+    expect(instrumentResult(run.drResults, 'debug').every(d => d.edPos[0].name.endsWith('/debug.ct'))).toBe(true)
 
     // Each names the call it was recorded in, which is a node of the tree beside it -- a definition
     // called twice records twice, and a record has to say which of the two it came from.
     const nodes = new Set()
     const collect = ([, , , children, id]) => { nodes.add(id); children.forEach(collect) }
-    run.drResult.erTreebug.forEach(collect)
-    expect(run.drResult.erDebugs.every(d => nodes.has(d.edNode))).toBe(true)
+    instrumentResult(run.drResults, 'treebug').tbCalls.forEach(collect)
+    expect(instrumentResult(run.drResults, 'debug').every(d => nodes.has(d.edNode))).toBe(true)
   })
 
   // The same run read by the functions the page writes, which is what the debugger's tree is of. The
@@ -595,7 +596,7 @@ describe('Backend API contract', () => {
       const run = JSON.parse(val.args['/run'].contents)
       expect(run.drExit).toBeNull()
       expect(run.drValue).toEqual({tag: 'IntVal', contents: 3})
-      expect(run.drResult.erTreebug.length).toBeGreaterThan(0)
+      expect(instrumentResult(run.drResults, 'treebug').tbCalls.length).toBeGreaterThan(0)
     })
 
     it('runs a bare literal, which names no definition at all', async () => {
@@ -615,7 +616,7 @@ describe('Backend API contract', () => {
       const val = await annotValue('#debugExpr(expr= "id(x= [1, 2])")', page)
       const run = JSON.parse(val.args['/run'].contents)
       expect(run.drValue).toEqual({tag: 'StrVal', contents: '[1, 2]'})
-      const [root] = run.drResult.erTreebug
+      const [root] = instrumentResult(run.drResults, 'treebug').tbCalls
       const [, input, output] = root
       expect(input).toEqual({tag: 'TupleVal', name: '/id', args: {'/x': {tag: 'StrVal', contents: '[1, 2]'}}})
       expect(output).toEqual({tag: 'StrVal', contents: '[1, 2]'})
@@ -627,7 +628,7 @@ describe('Backend API contract', () => {
       const page = await idPageName()
       const val = await annotValue('#debugExpr(expr= "[/Data/Note/Page(title= \\"Hi\\")].length")', page)
       const run = JSON.parse(val.args['/run'].contents)
-      const [root] = run.drResult.erTreebug
+      const [root] = instrumentResult(run.drResults, 'treebug').tbCalls
       const list = root[1].args['/this']
       expect(list.name).toBe('/Data/List/Cons')
       expect(list.args['/head']).toEqual({

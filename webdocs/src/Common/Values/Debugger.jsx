@@ -11,7 +11,7 @@ import {NameLinkContext, PTypeName} from '../Common';
 import {InlineValue, Value} from '../Value';
 import {CallStepIdsContext, CallStepsContext} from './Steps';
 import {SourceButton, SourceContext, SourcePanel} from './DebugSource';
-import {LineNumber, RunValues, StatementText, buildTree, debugTargetOf, isComment, nodeFun, statementLine, stmtItemId, syntaxIndex} from './DebugSyntax';
+import {LineNumber, RunValues, StatementText, buildTree, debugTargetOf, instrumentResult, isComment, nodeFun, statementLine, stmtItemId, syntaxIndex} from './DebugSyntax';
 
 // How an item of the tree reaches the rest of it: what each node's expression came to, the items by
 // the node they stand for, and how to go to another item.
@@ -29,7 +29,7 @@ function Debugger(props) {
 
   // The run rides on the compiled value, so nothing is fetched. It was made under a mock IO handle,
   // which is why the output below is here to show rather than on the doc server's own stdout.
-  const {drExit, drOutput, drValue, drResult, drSources, drSyntax} = useMemo(() => JSON.parse(run.contents), [run]);
+  const {drExit, drOutput, drValue, drResults, drSources, drSyntax} = useMemo(() => JSON.parse(run.contents), [run]);
 
   // An empty tree means the run never entered an arrow, which a program that failed before its first
   // call can do. Say so rather than rendering an undefined node.
@@ -37,16 +37,20 @@ function Debugger(props) {
   // All of them and not the first: a run can enter more than one arrow at the top, which is what an
   // expression built as a sequence of calls does. Showing only the first showed the whole of a run
   // whose top was one call and a misleading fraction of one whose top was several.
-  const roots = drResult.erTreebug;
-  const debugs = drResult.erDebugs;
+  //
+  // Read from the instruments the run was watched with, which are the ones the stdlib's #debugger asks
+  // for (`stack/core/webdoc.ct`). A run not watched with one shows as having recorded nothing of it.
+  const treebug = useMemo(() => instrumentResult(drResults, 'treebug'), [drResults]);
+  const roots = useMemo(() => treebug?.tbCalls ?? [], [treebug]);
+  const debugs = useMemo(() => instrumentResult(drResults, 'debug') ?? [], [drResults]);
 
   // One tree for the run: each call of a function shown as the function is written, each line opening
   // onto the steps it was evaluated through, and each call of a function among those steps shown the
   // same way in its place (see DebugSyntax). A run the syntax does not cover is its evaluation tree.
   const tree = useMemo(() => {
-    const syntax = {...syntaxIndex(drSyntax, drResult), nodes: indexNodes(roots)};
+    const syntax = {...syntaxIndex(drSyntax, treebug), nodes: indexNodes(roots)};
     return {...buildTree(roots, syntax), resolved: syntax.resolved, stops: syntax.stops};
-  }, [drSyntax, drResult, roots]);
+  }, [drSyntax, treebug, roots]);
 
   // The tree is controlled so that a link can reveal what it leads to: a #debug record names a node,
   // and a step names a line of a function, and either can be inside a collapsed item. Expansion and

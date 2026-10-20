@@ -12,6 +12,7 @@
 -- for the program.
 --------------------------------------------------------------------
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase       #-}
 {-# LANGUAGE NamedFieldPuns   #-}
 
 module Eval where
@@ -36,6 +37,7 @@ import           Data.UUID               (UUID)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
+import           Eval.Instruments
 import           Eval.Runtime
 import           Eval.Runtime.System     (realIOHandle)
 import           Semantics
@@ -168,9 +170,9 @@ evalObjArrCaptured captured input oa = do
   let srcP = getValDispatchPartial evTypeEnv [armT] (1 + typePatternDepth armT) input
   (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow srcP closures oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
-            mark <- gets evalTreebugMark
+            modify evalStartAnnot
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
-            modify $ evalRecordAnnot mark (getExprMeta compAnnot) compAnnot'
+            modify $ evalEndAnnot (getExprMeta compAnnot) compAnnot'
             evalCompAnnot compAnnot compAnnot'
   res <- withEvalPush (printf "ResEArrow %s" (show oa)) $ evalExpr resArrowTree
   modify $ evalEndEArrow input res oldArgs
@@ -541,11 +543,11 @@ evalExpr (TCalls m b callTree) = do
   b' <- evalExpr b
   -- Marked after the base, whose own expressions are recorded as themselves, so the steps are the
   -- calls this expression's own call tree made (see 'EvalExprRun').
-  mark <- gets evalTreebugMark
+  modify evalStartExpr
   v <- evalCallTree b' callTree
   -- By what the expression was written as: the tree's own meta is the destination's.
   let ids = getMetaId (getExprMeta b) : maybe [] (pure . getMetaId . snd) (maybeExprPathM b)
-  modify $ evalRecordExpr mark (getMetaPos m <|> getMetaPos (getExprMeta b)) ids v
+  modify $ evalEndExpr (getMetaPos m <|> getMetaPos (getExprMeta b)) ids v
   return v
 
 -- | An 'Env' with nothing of the pipeline around it: no other stage of the program, and no service
@@ -580,14 +582,9 @@ evalBaseEnvWith pages service prgm@Prgm{prgmObjMap} = Env {
         evPages = pages,
         evShowingPages = S.empty,
         evCallStack = [],
-        evCoverage = H.empty,
-        evTreebugOpen = [],
-        evTreebugClaimed = S.empty,
-        evTreebugClosed = [],
-        evTreebugNextId = 0,
-        evDebugs = [],
-        evExprRuns = [],
-        evAnnotRuns = []
+        evCallIds = [],
+        evNextCallId = 0,
+        evInstruments = []
                 }
 
 -- | The primitives an evaluation supplies itself, because answering them evaluates more of the
@@ -1259,8 +1256,8 @@ evalPageAsk method prgmName prgmGraphData = do
 --
 -- The run's effects happen as it is evaluated, each when the IO method asking for it is reached, so
 -- what comes back is only the exit code the run ended with.
-evalRunPrgm :: EvalPages -> Val -> String -> EPrgm -> CResT IO (Integer, EvalResult)
-evalRunPrgm pages ioVal function prgm = do
+evalRunPrgm :: [AnyEvalInstrument] -> EvalPages -> Val -> String -> EPrgm -> CResT IO (Integer, EvalInstrumentResults)
+evalRunPrgm instruments pages ioVal function prgm = do
   input <- asCResT $ case evalPrgmTargetMode function prgm of
         EvalRunWithContext function' ->
           -- Case for eval ContextIn(value=main, io=IO)
@@ -1272,25 +1269,25 @@ evalRunPrgm pages ioVal function prgm = do
   let (inputE, dest) = input
   let src = getExprPartialType inputE
   (expr, env) <- asCResT $ evalBuildPrgm inputE src dest prgm
-  let env2 = evalSetArgs (H.singleton ioStr ioVal) env{evPages = pages}
+  let env2 = evalSetArgs (H.singleton ioStr ioVal) env{evPages = pages, evInstruments = instruments}
   (res, env') <- runStateT (evalExpr expr) env2
   case res of
-    (IOVal r _) -> return (r, evalResult env')
+    (IOVal r _) -> return (r, evalEnvResults env')
     -- A run in an io answers with the io it ended in, in the context it returns.
-    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- contextStateVal ioStr args -> return (r, evalResult env')
+    (TupleVal n args) | n == ContextStr, Just (IOVal r _) <- contextStateVal ioStr args -> return (r, evalEnvResults env')
     _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
-evalRun :: EvalPages -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
+evalRun :: EvalPages -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalInstrumentResults)
 evalRun pages function prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  evalRunPrgm pages (IOVal 0 realIOHandle) function prgm
+  evalRunPrgm [] pages (IOVal 0 realIOHandle) function prgm
 
 -- | Like 'evalRun' but captures the program's output into the given 'MockIO' buffer instead of
 -- writing it to real stdout.
-evalRunMock :: EvalPages -> MockIO -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
+evalRunMock :: EvalPages -> MockIO -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalInstrumentResults)
 evalRunMock pages mockIO function prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  evalRunPrgm pages (IOVal 0 (mockIOHandle mockIO)) function prgm
+  evalRunPrgm [] pages (IOVal 0 (mockIOHandle mockIO)) function prgm
 
 -- | Runs a function of a program for a debugger reporting on it: its exit code, its captured output,
 -- and the tree of what it evaluated.
@@ -1303,7 +1300,7 @@ evalRunMock pages mockIO function prgmName prgmGraphData = do
 evalDebugPrgm :: EvalPages -> String -> EPrgm -> CResT IO DebugRun
 evalDebugPrgm pages function prgm = do
   mockIO <- lift newMockIO
-  (code, res) <- evalRunPrgm pages (IOVal 0 (mockIOHandle mockIO)) function prgm
+  (code, res) <- evalRunPrgm debuggerInstruments pages (IOVal 0 (mockIOHandle mockIO)) function prgm
   out <- lift $ getMockIOOutput mockIO
   res' <- withCallShows prgm res
   lift $ showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty emptySyntaxRun
@@ -1329,19 +1326,21 @@ evalDebugPrgm pages function prgm = do
 -- as a bare string literal's is not — is not on this path at all.
 evalDebugExprPrgm :: EvalPages -> EExpr -> EPrgm -> CResT IO DebugRun
 evalDebugExprPrgm pages input prgm = do
-  let env@Env{evTbEnv} = evalBaseEnvWith pages Nothing prgm
+  let env@Env{evTbEnv} = (evalBaseEnvWith pages Nothing prgm){evInstruments = debuggerInstruments}
   tree <- asCResT $ toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
-  res <- withCallShows prgm (evalResult env')
+  res <- withCallShows prgm (evalEnvResults env')
   lift $ showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty emptySyntaxRun
 
 -- | An evaluation's result with the display filled in for each call that has one
 -- ('attachCallShows'). Both debugger entry points go through this, since which of them ran a
 -- program is not something a display of one of its calls depends on.
-withCallShows :: EPrgm -> EvalResult -> CResT IO EvalResult
-withCallShows prgm res@EvalResult{erTreebug} = do
-  treebug' <- attachCallShows prgm erTreebug
-  return res{erTreebug = treebug'}
+withCallShows :: EPrgm -> EvalInstrumentResults -> CResT IO EvalInstrumentResults
+withCallShows prgm = mapM $ \case
+  (name, TreebugResult tb@EvalTreebug{tbCalls}) -> do
+    calls' <- attachCallShows prgm tbCalls
+    return (name, TreebugResult tb{tbCalls = calls'})
+  res -> return res
 
 -- | A run with every value in it shown as its display ('dshowVal'): a list as @[1, 2, 3]@ rather
 -- than as the conses it is built from, and a value whose library displays it as something other than
@@ -1361,16 +1360,21 @@ withCallShows prgm res@EvalResult{erTreebug} = do
 -- passes the same lists down a recursion many times over, and the arrows one rendering builds are
 -- kept for the next (see 'dshowVal').
 showRunValues :: EPrgm -> DebugRun -> IO DebugRun
-showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs, erExprs, erAnnots}} = evalStateT go (H.empty, evExEnv env)
+showRunValues prgm run@DebugRun{drValue, drResults} = evalStateT go (H.empty, evExEnv env)
   where
     env = evalBaseEnv prgm
     go = do
-      treebug' <- mapM showNode erTreebug
-      debugs' <- forM erDebugs $ \d@EvalDebug{edValue} -> (\v -> d{edValue = v}) <$> showVal edValue
-      exprs' <- forM erExprs $ \e@EvalExprRun{exValue} -> (\v -> e{exValue = v}) <$> showVal exValue
-      annots' <- forM erAnnots $ \a@EvalAnnotRun{eaValue} -> (\v -> a{eaValue = v}) <$> showVal eaValue
+      results' <- forM drResults $ \(name, res) -> (name,) <$> showResult res
       value' <- mapM showVal drValue
-      return run{drValue = value', drResult = res{erTreebug = treebug', erDebugs = debugs', erExprs = exprs', erAnnots = annots'}}
+      return run{drValue = value', drResults = results'}
+    -- Each result the run was watched with that holds values; the rest are left as they are.
+    showResult (TreebugResult (EvalTreebug calls exprs annots)) = do
+      calls' <- mapM showNode calls
+      exprs' <- forM exprs $ \e@EvalExprRun{exValue} -> (\v -> e{exValue = v}) <$> showVal exValue
+      annots' <- forM annots $ \a@EvalAnnotRun{eaValue} -> (\v -> a{eaValue = v}) <$> showVal eaValue
+      return $ TreebugResult $ EvalTreebug calls' exprs' annots'
+    showResult (DebugResult debugs) = DebugResult <$> forM debugs (\d@EvalDebug{edValue} -> (\v -> d{edValue = v}) <$> showVal edValue)
+    showResult res = return res
     showNode (EvalTreebugClosed oa input val children nodeId callShow) = do
       input' <- showParts input
       val' <- showVal val
@@ -1400,7 +1404,7 @@ showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDe
     holdsIO (TupleVal _ as) = any holdsIO (H.elems as)
     holdsIO _               = False
 
-evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
+evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalInstrumentResults)
 evalBuild function prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
   targetMode <- asCResT $ evalTargetMode function prgmName prgmGraphData
@@ -1429,9 +1433,9 @@ evalBuild function prgmName prgmGraphData = do
     (LLVMVal _) -> do
       -- llvmStr <- codegenExInit toCodegen
       let llvmStr = "LLVM Placeholder result"
-      return (oneFileResult "out.ll" llvmStr, evalResult env')
+      return (oneFileResult "out.ll" llvmStr, evalEnvResults env')
     -- Checked here rather than merely returned, so that a value which is not a result is reported
     -- as the compilation failure it is instead of reaching whoever asked for the build.
     val -> case valResultFiles val of
-      Right _ -> return (val, evalResult env')
+      Right _ -> return (val, evalEnvResults env')
       Left err -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not build a %s: %s" function catlnResultPath err]

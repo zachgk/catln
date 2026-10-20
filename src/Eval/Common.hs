@@ -11,6 +11,7 @@
 -- "Eval".
 --------------------------------------------------------------------
 
+{-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DerivingStrategies         #-}
@@ -29,7 +30,7 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
 import qualified Data.Map                   as Map
-import           Data.Maybe                 (mapMaybe)
+import           Data.Maybe                 (fromMaybe, listToMaybe, mapMaybe)
 import           GHC.Generics               (Generic)
 
 import           Control.Monad.State
@@ -419,21 +420,6 @@ data EvalPage = EvalPage {
 -- | The pages a program was read from, under the path each was parsed as.
 type EvalPages = H.HashMap String EvalPage
 
--- | An arrow the evaluation is inside: the id of the node it will close as, the arrow itself, and
--- the calls the ENCLOSING arrow had already finished when this one was entered.
---
--- The id is assigned when the arrow is ENTERED rather than derived when it closes, because what wants
--- to name a node is inside it at the time: a @#debug@ recorded partway through a call has to say
--- which call it came from, and the state a closing node is identified from does not exist yet.
---
--- The third is what makes the result a tree of calls rather than a chain of them. 'evTreebugClosed'
--- holds the calls finished so far at ONE level, so entering an arrow has to put the enclosing level's
--- aside and start an empty one; closing takes it back out and adds the call that just finished to it.
--- Without it a closing arrow adopts whatever closed before it, whether or not that call happened
--- inside it — so an arrow calling two others in sequence reads as the second one calling the first,
--- and a run reads as a single spine however it branched.
-type EvalTreebugOpen = (String, AnyObjArr, [EvalTreebugClosed], S.HashSet String)
-
 -- | One call the evaluation made: the arrow it entered, what it was given, what it returned, the
 -- calls made inside it, the id it was entered under, and the display the call has of its own.
 --
@@ -445,17 +431,17 @@ type EvalTreebugOpen = (String, AnyObjArr, [EvalTreebugClosed], S.HashSet String
 data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String (Maybe Val)
   deriving (Eq, Generic, Hashable, ToJSON)
 
-data Env = Env { evObjMap         :: EObjectMap
-               , evTypeEnv        :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
-               , evArgs           :: Args
-               , evExEnv          :: ResExEnv
-               , evTbEnv          :: TBEnv
+data Env = Env { evObjMap       :: EObjectMap
+               , evTypeEnv      :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
+               , evArgs         :: Args
+               , evExEnv        :: ResExEnv
+               , evTbEnv        :: TBEnv
                -- | 'evTbEnv' extended with the arrows of a set of closures ('valClosureArrows'),
                -- keyed by those arrows' objects and results. An arm entered with closures is built
                -- where they are arrows, and each extension is a type environment with a cache of its
                -- own; made afresh for every arm built it would start every build with that cache
                -- cold.
-               , evClosureEnvs    :: H.HashMap [(Type, Type)] TBEnv
+               , evClosureEnvs  :: H.HashMap [(Type, Type)] TBEnv
                -- | The compilation service this evaluation may ask about the pages there are, and
                -- about the stages of them it cannot reach on its own.
                --
@@ -466,47 +452,38 @@ data Env = Env { evObjMap         :: EObjectMap
                -- annotation may ask the service to evaluate something, and what it evaluates cannot
                -- ask again — and it falls out of those paths building their environments with no
                -- service rather than out of anything tracking how deep a call is.
-               , evService        :: Maybe EvalService
+               , evService      :: Maybe EvalService
                -- | The definition an annotation being evaluated is written on, for a primitive
                -- reporting on that definition. An annotation is local to the program it is written
                -- in and to whatever it is written on, and only the second is otherwise lost: the
                -- annotation is built as an expression of its own, with nothing left of what it
                -- annotates. Nothing for a program's own annotation, which is written on the program
                -- rather than on any definition of it.
-               , evAnnotObj       :: Maybe EObjArr
+               , evAnnotObj     :: Maybe EObjArr
                -- | The pages the program was read from, as written, under the names the positions
                -- of what was parsed from them carry ('CtService.rawPagesByPath'). What a call asking
                -- for the page it is written in is answered from ('Eval.Runtime.Prgm.pageAt'). Empty
                -- for an evaluation whose caller holds no pages, where such a call is reported.
-               , evPages          :: EvalPages
+               , evPages        :: EvalPages
                -- | The pages being shown, by hash, while their annotations are evaluated
                -- ('Eval.llmShowPage'). An annotation of a page being shown that asks for the page to
                -- be shown again could only ever be answered by itself, so it is refused instead.
-               , evShowingPages   :: S.HashSet Int
-               , evCallStack      :: [String]
-               , evCoverage       :: H.HashMap EObjArr Int
-               , evTreebugOpen    :: [EvalTreebugOpen]
-               , evTreebugClosed  :: [EvalTreebugClosed]
-               -- | The calls of 'evTreebugClosed' already recorded as the steps of an expression
-               -- ('EvalExprRun'). An expression is evaluated inside another -- the condition of the
-               -- arm a call is dispatched to is evaluated while the call is -- and the calls the inner
-               -- one made close at the same level as the outer one's, so without this the outer one
-               -- would count them as its own steps. Put aside and restored with 'evTreebugClosed'.
-               , evTreebugClaimed :: S.HashSet String
-               -- | The next id to give an arrow being entered. A counter rather than something
-               -- derived from the arrow, since the same definition is entered as many times as it is
-               -- called and each of those is a different node of the tree.
-               , evTreebugNextId  :: Int
-               -- | Every @#debug@ the run has recorded so far, most recent first. Unlike
-               -- 'evTreebugClosed', which is replaced by each arrow that closes over it, this only
-               -- ever grows: what a reader of a run wants is every value it recorded, in the order
-               -- it recorded them, however many calls of however many definitions they came from.
-               , evDebugs         :: [EvalDebug]
-               -- | Every expression the run rewrote through calls, most recent first ('EvalExprRun').
-               , evExprRuns       :: [EvalExprRun]
-               -- | Every annotation of a definition the run evaluated, most recent first
-               -- ('EvalAnnotRun').
-               , evAnnotRuns      :: [EvalAnnotRun]
+               , evShowingPages :: S.HashSet Int
+               , evCallStack    :: [String]
+               -- | The ids of the calls the evaluation is inside, innermost first: the id each was
+               -- given as it was entered ('evNextCallId'). What an instrument is told a call by, so
+               -- that a record made partway through one -- a @#debug@ -- can say which call it came
+               -- from without the evaluation reading anything back from the instrument keeping calls.
+               , evCallIds      :: [String]
+               -- | The next id to give a call being entered. A counter rather than something derived
+               -- from the arrow, since the same definition is entered as many times as it is called
+               -- and each of those is a different call.
+               , evNextCallId   :: Int
+               -- | What is watching this evaluation ('EvalInstrument'), told each event as it is
+               -- reached. Empty for an evaluation nothing is watching, which is what almost every
+               -- one is: a run's tree of calls holds every value the run passed, and is only worth
+               -- keeping for a caller who is going to read it.
+               , evInstruments  :: [AnyEvalInstrument]
                }
 
 -- | One expression of a run that was rewritten through calls: where it is written, the call it was
@@ -582,15 +559,139 @@ data EvalDebug = EvalDebug { edPos   :: CodeRange
                            , edNode  :: String
                            } deriving (Eq, Generic, ToJSON)
 
-data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
-                             , erTreebug  :: [EvalTreebugClosed]
-                             -- | The run's @#debug@ records, in the order they were recorded.
-                             , erDebugs   :: [EvalDebug]
-                             -- | The expressions it rewrote through calls, in the order they finished.
-                             , erExprs    :: [EvalExprRun]
-                             -- | The annotations of definitions it evaluated, in the order evaluated.
-                             , erAnnots   :: [EvalAnnotRun]
-                             } deriving (Eq, Generic, ToJSON)
+-- | Something watching an evaluation, told each event the evaluator reaches.
+--
+-- An instrument takes no part in the evaluation, as a typecheck's does not take part in its solve
+-- ('TypeCheck.Common.Instrument'). Every handler is a function of the instrument alone, the
+-- evaluator reads nothing back from one while it runs, and an evaluation with none attached takes
+-- exactly the path one with all of them takes. So what an evaluation costs to WATCH is the caller's
+-- choice: a run's tree of calls holds every value the run passed, and is kept only for a caller who
+-- is going to read it.
+--
+-- Every handler has a default of keeping the instrument as it was, so an instrument implements the
+-- events it is about and says nothing about the rest. The concrete ones are in "Eval.Instruments";
+-- this is only what they have in common, and it lives here because the events are spoken in the
+-- types this module defines.
+--
+-- A call is told by the id it was entered under ('evCallIds'), which the evaluation keeps itself
+-- rather than reading back from an instrument keeping calls: a @#debug@ says which call it was
+-- recorded in whether or not anything is keeping the calls.
+class EvalInstrument i where
+  -- | What this instrument is called, which is how its result is found among the others, and how a
+  -- caller outside Haskell asks for it ('Eval.Instruments.evalInstrumentByName').
+  evalInstrumentName :: i -> String
+
+  -- | A call is being entered: the id it was given, and the arrow entered for it.
+  onArrowEnter :: String -> AnyObjArr -> i -> i
+  onArrowEnter _ _ = id
+
+  -- | The innermost call has finished: its id, what it was given, and what it returned.
+  onArrowExit :: String -> Val -> Val -> i -> i
+  onArrowExit _ _ _ = id
+
+  -- | A @#debug@ was reached: the call it was reached in, where it is written, and its value.
+  onDebug :: String -> CodeRange -> Val -> i -> i
+  onDebug _ _ _ = id
+
+  -- | An expression is about to run its call tree, its base already evaluated.
+  onExprStart :: i -> i
+  onExprStart = id
+
+  -- | The expression of the innermost 'onExprStart' has run: where it is written, the ids it is
+  -- written with, and the value it came to ('EvalExprRun').
+  onExprEnd :: CodeRange -> [UUID] -> Val -> i -> i
+  onExprEnd _ _ _ = id
+
+  -- | An annotation of the call being evaluated is about to be evaluated.
+  onAnnotStart :: i -> i
+  onAnnotStart = id
+
+  -- | The annotation of the innermost 'onAnnotStart' has been evaluated: its id, where it is
+  -- written, and its value ('EvalAnnotRun').
+  onAnnotEnd :: UUID -> CodeRange -> Val -> i -> i
+  onAnnotEnd _ _ _ = id
+
+  -- | What this instrument made of the evaluation, read once it is over.
+  evalInstrumentResult :: i -> EvalInstrumentResult
+  evalInstrumentResult _ = NoEvalResult
+
+-- | An instrument, whatever it is. The evaluation holds a list of these and knows nothing else
+-- about them; a caller picks which to attach and reads its own back out by name.
+data AnyEvalInstrument = forall i. EvalInstrument i => AnyEvalInstrument !i
+
+-- | By name. An instrument's own state is its business and is not part of showing a session.
+instance Show AnyEvalInstrument where
+  show (AnyEvalInstrument i) = evalInstrumentName i
+
+-- | The calls a run made, as the tree they were made in, with the expressions and annotations it
+-- evaluated beside them ('Eval.Instruments.treebugInstrument').
+data EvalTreebug = EvalTreebug { tbCalls  :: [EvalTreebugClosed]
+                               -- | The expressions it rewrote through calls, in the order they finished.
+                               , tbExprs  :: [EvalExprRun]
+                               -- | The annotations of definitions it evaluated, in the order evaluated.
+                               , tbAnnots :: [EvalAnnotRun]
+                               } deriving (Eq, Generic, ToJSON)
+
+-- | What an instrument made of an evaluation.
+--
+-- A closed set rather than each instrument's own type, because a caller asks for instruments by
+-- value and reads the answers back out of one list: an existential result could not be opened
+-- again.
+data EvalInstrumentResult
+  -- | How many times each arrow of the program was entered.
+  = CoverageResult (H.HashMap EObjArr Int)
+  | TreebugResult EvalTreebug
+  -- | The run's @#debug@ records, in the order they were recorded.
+  | DebugResult [EvalDebug]
+  | NoEvalResult
+  deriving (Eq, Generic, ToJSON)
+
+-- | What the instruments of an evaluation made of it, by name.
+type EvalInstrumentResults = [(String, EvalInstrumentResult)]
+
+-- | Apply an event to each instrument, forcing as it goes, for the reason
+-- 'TypeCheck.Common.instMap' gives: left lazy, a run's worth of events would retain every
+-- intermediate state of every instrument.
+evalInstMap :: (AnyEvalInstrument -> AnyEvalInstrument) -> [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstMap _ []     = []
+evalInstMap f (i:is) = let !i' = f i; !is' = evalInstMap f is in i' : is'
+
+evalInstArrowEnter :: String -> AnyObjArr -> [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstArrowEnter callId oa = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onArrowEnter callId oa i))
+
+evalInstArrowExit :: String -> Val -> Val -> [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstArrowExit callId input val = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onArrowExit callId input val i))
+
+evalInstDebug :: String -> CodeRange -> Val -> [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstDebug callId pos val = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onDebug callId pos val i))
+
+evalInstExprStart :: [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstExprStart = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onExprStart i))
+
+evalInstExprEnd :: CodeRange -> [UUID] -> Val -> [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstExprEnd pos ids val = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onExprEnd pos ids val i))
+
+evalInstAnnotStart :: [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstAnnotStart = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onAnnotStart i))
+
+evalInstAnnotEnd :: UUID -> CodeRange -> Val -> [AnyEvalInstrument] -> [AnyEvalInstrument]
+evalInstAnnotEnd annotId pos val = evalInstMap (\(AnyEvalInstrument i) -> AnyEvalInstrument (onAnnotEnd annotId pos val i))
+
+-- | What the instruments attached to a finished evaluation made of it.
+evalInstrumentResults :: [AnyEvalInstrument] -> EvalInstrumentResults
+evalInstrumentResults = map (\(AnyEvalInstrument i) -> (evalInstrumentName i, evalInstrumentResult i))
+
+-- | How many times each arrow was entered, for a caller that asked to be told.
+lookupCoverageResult :: EvalInstrumentResults -> Maybe (H.HashMap EObjArr Int)
+lookupCoverageResult results = listToMaybe [c | (_, CoverageResult c) <- results]
+
+-- | The tree of calls a run made, for a caller that asked for it.
+lookupTreebugResult :: EvalInstrumentResults -> Maybe EvalTreebug
+lookupTreebugResult results = listToMaybe [t | (_, TreebugResult t) <- results]
+
+-- | The @#debug@ records of a run, for a caller that asked for them.
+lookupDebugResult :: EvalInstrumentResults -> Maybe [EvalDebug]
+lookupDebugResult results = listToMaybe [d | (_, DebugResult d) <- results]
 
 -- | One debugger run, and the tree of what it evaluated. The output is captured through a 'MockIO'
 -- rather than written, so running a program to report on it does not print that program's output to
@@ -611,7 +712,8 @@ data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
 data DebugRun = DebugRun { drExit    :: Maybe Integer
                          , drOutput  :: String
                          , drValue   :: Maybe Val
-                         , drResult  :: EvalResult
+                         -- | What the instruments the run was asked for made of it, and only those.
+                         , drResults :: EvalInstrumentResults
                          , drSources :: H.HashMap String String
                          -- | The run read by the page that was written rather than by the arrows it
                          -- was compiled to ('Eval.SyntaxTree.withRunSyntax'). Filled by whoever holds
@@ -622,7 +724,7 @@ data DebugRun = DebugRun { drExit    :: Maybe Integer
 -- | A run read by the functions its pages write: a tree of the calls of each function as written,
 -- each holding what each of that function's lines came to in it.
 --
--- The evaluation tree ('erTreebug') is of arrows, and desugar writes a function as several: each
+-- The evaluation tree ('tbCalls') is of arrows, and desugar writes a function as several: each
 -- intermediate line of a definition is an arrow of its own, called wherever the line is used, and a
 -- bind or a branch is continued in an arrow of its own. This regroups those back into the function
 -- they were written as. The arrows' nodes are still what a line is broken down by, so a line points
@@ -690,9 +792,11 @@ emptySyntaxRun = SyntaxRun [] []
 -- | The files a run's positions name: those of every arrow it entered and of every @#debug@ it
 -- recorded.
 runSourceNames :: DebugRun -> S.HashSet String
-runSourceNames DebugRun{drResult=EvalResult{erTreebug, erDebugs}} =
-  S.fromList $ concatMap nodeNames erTreebug ++ concatMap (rangeNames . edPos) erDebugs
+runSourceNames DebugRun{drResults} =
+  S.fromList $ concatMap nodeNames calls ++ concatMap (rangeNames . edPos) debugs
   where
+    calls = maybe [] tbCalls $ lookupTreebugResult drResults
+    debugs = fromMaybe [] $ lookupDebugResult drResults
     nodeNames (EvalTreebugClosed oa _ _ children _ _) = arrowNames oa ++ concatMap nodeNames children
     arrowNames (Left oa)  = execWriter $ mapMetaObjArrM tellNames Nothing oa
     arrowNames (Right oa) = execWriter $ mapMetaObjArrM tellNames Nothing oa

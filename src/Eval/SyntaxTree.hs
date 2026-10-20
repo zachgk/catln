@@ -176,13 +176,21 @@ data Acc = Acc { acCalls     :: H.HashMap String CallAcc
                }
 
 -- | A run read by the functions the given pages write ('SyntaxRun').
+--
+-- Read from the tree of calls the run was watched with ('Eval.Instruments.treebugInstrument'). A
+-- run watched without one has no calls to regroup, and is read as having called nothing.
 runSyntax :: [(String, RawPrgm ())] -> DebugRun -> SyntaxRun
-runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = SyntaxRun calls statements
+runSyntax prgms DebugRun{drResults} = case lookupTreebugResult drResults of
+  Just treebug -> treebugSyntax prgms treebug
+  Nothing      -> emptySyntaxRun
+
+treebugSyntax :: [(String, RawPrgm ())] -> EvalTreebug -> SyntaxRun
+treebugSyntax prgms EvalTreebug{tbCalls, tbExprs, tbAnnots} = SyntaxRun calls statements
   where
     ix@Index{ixStmts} = indexPrgms prgms
 
     -- The expression each node was a step of rewriting, and so what the call it made came to.
-    exprOf = H.fromList [(step, e) | e@EvalExprRun{exSteps} <- erExprs, step <- exSteps]
+    exprOf = H.fromList [(step, e) | e@EvalExprRun{exSteps} <- tbExprs, step <- exSteps]
     resolved nid = exValue <$> H.lookup nid exprOf
     -- The call an expression was written as, for a node that only continued its rewriting: a
     -- function returns a call of one of its own arms, which the caller then makes.
@@ -202,11 +210,11 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
       Just ArrowFallthrough{} -> True
       _                       -> False
     arrowKeyOfNode (EvalTreebugClosed oa _ _ _ _ _) = arrowKey oa
-    nodesById = H.fromList $ concatMap nodeEntries erTreebug
+    nodesById = H.fromList $ concatMap nodeEntries tbCalls
     nodeEntries n@(EvalTreebugClosed _ _ _ children nid _) = (nid, n) : concatMap nodeEntries children
-    annotsOf = H.fromListWith (flip (++)) [(eaNode a, [a]) | a <- erAnnots]
+    annotsOf = H.fromListWith (flip (++)) [(eaNode a, [a]) | a <- tbAnnots]
 
-    Acc{acCalls=finalCalls, acRoots=finalRoots} = execState (mapM_ (visit ix []) erTreebug) (Acc H.empty [] H.empty)
+    Acc{acCalls=finalCalls, acRoots=finalRoots} = execState (mapM_ (visit ix []) tbCalls) (Acc H.empty [] H.empty)
 
     calls = map buildCall (reverse finalRoots)
     buildCall nid = SyntaxCall caStmt nid (groupRuns $ reverse caRuns) (map buildCall $ reverse caCalls)

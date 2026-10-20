@@ -22,7 +22,7 @@ const theme = createTheme()
 const GENERIC_LABEL = '[role=group] .catln-debug-source'
 
 // The real payload the compiler produced for a page whose main prints "Hello, world" and exits 0,
-// narrowed to the fields the page reads: erCoverage is real but unread, and was half the bytes.
+// watched with the instruments the page reads.
 const FUN = '/main'
 
 // The args of a compiled Show/Debugger: the run, as a JSON string, and the function it ran.
@@ -74,7 +74,7 @@ describe('Debugger', () => {
   })
 
   it('says so when the run printed nothing and entered no arrow', () => {
-    const empty = { drExit: 1, drOutput: '', drValue: null, drResult: { erCoverage: {}, erTreebug: [], erDebugs: [] } }
+    const empty = { drExit: 1, drOutput: '', drValue: null, drResults: [] }
     render(<Providers><Debugger {...debug(empty)} /></Providers>)
 
     expect(screen.getByText(/Evaluated no arrows/)).toBeInTheDocument()
@@ -229,7 +229,7 @@ describe('Debugger', () => {
       drExit: null,
       drOutput: '',
       drValue: { tag: 'IntVal', contents: 3 },
-      drResult: { erCoverage: {}, erTreebug: [], erDebugs: [] },
+      drResults: [],
     }
     render(<Providers><Debugger {...debug(expr)} /></Providers>)
 

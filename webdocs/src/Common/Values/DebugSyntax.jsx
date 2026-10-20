@@ -10,7 +10,7 @@ import {rawExprMeta, statementBody} from '../RawPrgm';
 //
 // Every call of a function is shown as the function is written, a statement per line with what the
 // line came to in the call. A line opens onto the steps it was evaluated through -- the evaluation
-// tree (`erTreebug`) below it -- and where one of those steps is a call of a function, that function
+// tree (`tbCalls`) below it -- and where one of those steps is a call of a function, that function
 // is shown there in the same way, so the tree reads from the function called down through the lines
 // of each function it reached. A step that is a line of a function already shown leads back to that
 // line rather than being shown twice.
@@ -19,8 +19,17 @@ import {rawExprMeta, statementBody} from '../RawPrgm';
 // nowhere and is not shown (`CtConstants.nestedDeclaration`).
 const NESTED_DECLARATION = "/Catln/nestedDeclaration";
 
-// What a run's syntax says about each node and statement, gathered once for the whole run.
-function syntaxIndex(drSyntax, drResult) {
+// The result of one of the instruments a run was watched with, by its name (`evalInstrumentName`), or
+// undefined for one it was not watched with. A run carries only the results it was asked for, as
+// [name, result] pairs, each result tagged with what kind of result it is.
+function instrumentResult(drResults, name) {
+  const found = (drResults ?? []).find(([n]) => n === name);
+  return found?.[1]?.contents;
+}
+
+// What a run's syntax says about each node and statement, gathered once for the whole run, from the
+// tree of calls it was watched with (`EvalTreebug`).
+function syntaxIndex(drSyntax, treebug) {
   const calls = {};       // call node -> SyntaxCall
   const stops = {};       // node -> {call} for a call, {call, stmt} for a line of one
   const statements = {};  // statement id -> SyntaxStatement
@@ -46,7 +55,7 @@ function syntaxIndex(drSyntax, drResult) {
   // parts are found among what its run evaluated (`breakdownOf`).
   const resolved = {};
   const exprsAt = {};
-  (drResult.erExprs ?? []).forEach(e => {
+  (treebug?.tbExprs ?? []).forEach(e => {
     if (e.exSteps.length) {
       resolved[e.exSteps[0]] = e.exValue;
     }
@@ -499,4 +508,4 @@ function levelSteps(node, fun) {
   ];
 }
 
-export {LineNumber, RunValues, StatementText, buildTree, chainSteps, debugTargetOf, isComment, nodeFun, statementLine, stmtItemId, syntaxIndex};
+export {LineNumber, RunValues, StatementText, buildTree, chainSteps, debugTargetOf, instrumentResult, isComment, nodeFun, statementLine, stmtItemId, syntaxIndex};

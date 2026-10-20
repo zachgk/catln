@@ -59,15 +59,16 @@ syntaxTreeTests getCtss = testCase "a run is read by the functions its page writ
   ctss <- getCtss
   page <- mkDesCanonicalImportStr testCtssConfig "test/Integration/code/debugNested.ct"
   res <- csRunFun ctss page "/main"
-  DebugRun{drSyntax=syntax@SyntaxRun{srCalls}, drResult=EvalResult{erExprs}} <- case res of
+  DebugRun{drSyntax=syntax@SyntaxRun{srCalls}, drResults} <- case res of
     CRes _ r    -> return r
     CErr notes' -> assertFailure $ prettyCNotes notes'
+  EvalTreebug{tbExprs} <- maybe (assertFailure "The run was not watched with the treebug") return $ lookupTreebugResult drResults
   let names = stmtNames syntax
 
   -- A call is a step of the one expression it rewrote. The == main's exit checks while dispatching its
   -- operator- is an expression of its own, evaluated inside the operator-'s, and closes at the same
   -- level; counted by both, the operator- read as having come from a call of ==.
-  let steps = concatMap exSteps erExprs
+  let steps = concatMap exSteps tbExprs
   length steps @?= length (nub steps)
 
   -- main is the call the run makes, declared with a context and found through it.

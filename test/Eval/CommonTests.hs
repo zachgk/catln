@@ -9,7 +9,8 @@ module Eval.CommonTests where
 
 import qualified Data.HashMap.Strict as H
 import           Eval.Common         (DebugRun (..), EvalDebug (..),
-                                      EvalResult (..), EvalTreebugClosed (..),
+                                      EvalInstrumentResult (..),
+                                      EvalTreebug (..), EvalTreebugClosed (..),
                                       TExpr (..), Val, emptySyntaxRun,
                                       withRunSources)
 import           Semantics.Prgm
@@ -36,9 +37,10 @@ metaIn file m = m{getMetaPos = Just (initialPos file, initialPos file)}
 -- | A run that entered one arrow of the program, written in @prog.ct@, and within it one arrow built
 -- for the call, written in the debugged expression; and that recorded one @#debug@ in @lib.ct@.
 sampleRun :: DebugRun
-sampleRun = DebugRun Nothing "" (Just NoVal) result H.empty emptySyntaxRun
+sampleRun = DebugRun Nothing "" (Just NoVal) results H.empty emptySyntaxRun
   where
-    result = EvalResult H.empty [node (Left progArrow) [node (Right builtArrow) []]] [EvalDebug (getMetaPos (metaIn "lib.ct" emptyMetaN :: Meta ())) NoVal "1"] [] []
+    results = [ ("treebug", TreebugResult $ EvalTreebug [node (Left progArrow) [node (Right builtArrow) []]] [] [])
+              , ("debug", DebugResult [EvalDebug (getMetaPos (metaIn "lib.ct" emptyMetaN :: Meta ())) NoVal "1"])]
     node oa children = EvalTreebugClosed oa NoVal NoVal children "0" Nothing
     progArrow = ObjArr (Just (Value (metaIn "prog.ct" emptyMetaN) "/f")) FunctionObj Nothing [] Nothing
     builtArrow = ObjArr (Just (TValue (metaIn "<debug>" emptyMetaN) "/g")) FunctionObj Nothing [] Nothing
