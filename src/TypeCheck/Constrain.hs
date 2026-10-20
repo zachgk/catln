@@ -16,22 +16,25 @@
 
 module TypeCheck.Constrain where
 
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import qualified Data.IntMap.Strict  as IM
-import           Data.List           (intercalate, partition)
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import qualified Data.IntMap.Strict         as IM
+import           Data.List                  (intercalate, partition)
 import           Data.Maybe
-import qualified Data.Zip            as Z
+import qualified Data.Zip                   as Z
 
-import           Control.Monad.State
-import           CtConstants         (macroThisKey)
-import           Semantics           (ObjArrTypeGraph (..), stampQueryToken)
-import           Semantics.Prgm      (Meta (..), ObjArr (..),
-                                      ObjectBasis (ArgObj), ObjectMap (..),
-                                      ObjectMapItem (..), exprAppliedArgs,
-                                      exprVarArgs, getExprMeta, inExprSingleton,
-                                      oaObjExpr)
-import           Semantics.TypeGraph (ReachesEnv (..), typeGuaranteedWithin)
+import           Control.Monad.State.Strict
+import           CtConstants                (macroThisKey)
+import           Semantics                  (ObjArrTypeGraph (..),
+                                             stampQueryToken)
+import           Semantics.Prgm             (Meta (..), ObjArr (..),
+                                             ObjectBasis (ArgObj),
+                                             ObjectMap (..), ObjectMapItem (..),
+                                             exprAppliedArgs, exprVarArgs,
+                                             getExprMeta, inExprSingleton,
+                                             oaObjExpr)
+import           Semantics.TypeGraph        (ReachesEnv (..),
+                                             typeGuaranteedWithin)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common

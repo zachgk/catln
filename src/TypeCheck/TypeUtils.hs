@@ -20,15 +20,17 @@
 module TypeCheck.TypeUtils where
 
 import           CtConstants
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
 
 import           Control.Monad
-import           Control.Monad.State
-import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (foldl', intercalate, nub, partition)
-import           Data.Maybe          (fromMaybe, isJust, isNothing, mapMaybe)
-import           Data.UUID           (nil)
+import           Control.Monad.State.Strict
+import           Data.Bifunctor             (Bifunctor (bimap))
+import           Data.List                  (foldl', intercalate, nub,
+                                             partition)
+import           Data.Maybe                 (fromMaybe, isJust, isNothing,
+                                             mapMaybe)
+import           Data.UUID                  (nil)
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm

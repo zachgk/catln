@@ -28,7 +28,7 @@ import           Data.List
 import           Data.UUID                  (nil)
 import           GHC.Generics               (Generic)
 
-import           Control.Monad.State
+import           Control.Monad.State.Strict
 import           Control.Monad.Trans.Writer (execWriter, tell)
 import           CRes
 import           Data.Aeson                 (ToJSON, toJSON)

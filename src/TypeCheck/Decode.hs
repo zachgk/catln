@@ -14,21 +14,21 @@
 
 module TypeCheck.Decode where
 
-import           Control.Monad.State
-import           CtConstants         (existAnnot, proofAnnot, thisKey)
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import qualified Data.List           as L
-import           Data.Maybe          (isJust, mapMaybe)
-import           MapMeta             (MetaType (ArrMeta), clearMetaDat,
-                                      mapMetaObjectMap, mapMetaPrgm)
+import           Control.Monad.State.Strict
+import           CtConstants                (existAnnot, proofAnnot, thisKey)
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import qualified Data.List                  as L
+import           Data.Maybe                 (isJust, mapMaybe)
+import           MapMeta                    (MetaType (ArrMeta), clearMetaDat,
+                                             mapMetaObjectMap, mapMetaPrgm)
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.TypeGraph (reachesTo)
+import           Semantics.TypeGraph        (reachesTo)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
-import           Utils               (graphToNodes)
+import           Utils                      (graphToNodes)
 
 toMeta :: VarMeta -> StateT FEnv TypeCheckResult TypedMeta
 toMeta  m@(Meta pt pos mid _) = do
@@ -108,7 +108,10 @@ toMeta  m@(Meta pt pos mid _) = do
             UnionType mTop leafs consts | req /= PTopType, not (isTypeVar req) ->
               UnionType mTop (joinUnionType (map refineLeafByReq (splitUnionType leafs))) consts
             _ -> ubMet
-      lift $ TypeCheckResult notes' $ Meta ubMetReq pos mid rt
+      -- Forced before it is stored. Left lazy, the type is a computation over @env@, so every meta of
+      -- a typechecked program would keep the state it was decoded under alive for as long as the
+      -- program is kept — which in a service is for as long as the page is.
+      forceType ubMetReq `seq` lift (TypeCheckResult notes' $ Meta ubMetReq pos mid rt)
     TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos mid Nothing)
 
 member :: Name -> [Name] -> Bool

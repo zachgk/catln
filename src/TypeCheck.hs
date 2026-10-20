@@ -20,22 +20,23 @@
 
 module TypeCheck where
 
-import           Control.Monad.State
+import           Control.Monad.State.Strict
 import           CRes
-import qualified Data.HashMap.Strict   as H
-import qualified Data.HashSet          as S
-import           Data.List             (transpose)
-import           Data.Maybe            (mapMaybe)
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import           Data.List                  (transpose)
+import           Data.Maybe                 (mapMaybe)
 import           MapMeta
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
-import           TypeCheck.Constrain   (runConstraints, verifyGuaranteedResults)
+import           TypeCheck.Constrain        (runConstraints,
+                                             verifyGuaranteedResults)
 import           TypeCheck.Decode
 import           TypeCheck.Encode
-import           TypeCheck.Instruments (defaultInstruments)
+import           TypeCheck.Instruments      (defaultInstruments)
 import           TypeCheck.Partition
-import           TypeCheck.TypeUtils   (buildPrecedenceMap)
+import           TypeCheck.TypeUtils        (buildPrecedenceMap)
 import           Utils
 
 -- | What a typecheck of one page produced: its typed program, the encoded program the solve was

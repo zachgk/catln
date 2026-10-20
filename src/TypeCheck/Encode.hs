@@ -19,24 +19,24 @@
 module TypeCheck.Encode where
 
 import           Control.Monad
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import qualified Data.IntMap.Lazy    as IM
-import           Prelude             hiding (unzip)
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import qualified Data.IntMap.Lazy           as IM
+import           Prelude                    hiding (unzip)
 
-import           Control.Monad.State
-import           CtConstants         (contextValStr)
-import           Data.Bifunctor      (Bifunctor (first))
+import           Control.Monad.State.Strict
+import           CtConstants                (contextValStr)
+import           Data.Bifunctor             (Bifunctor (first))
 import           Data.Maybe
-import           Data.UUID           (nil)
+import           Data.UUID                  (nil)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
-import           TypeCheck.Partition (definedNameItems, nestedParentOf)
-import           TypeCheck.TypeUtils (addUnionObjToEnv,
-                                      recursiveObjsWithPrecedence)
+import           TypeCheck.Partition        (definedNameItems, nestedParentOf)
+import           TypeCheck.TypeUtils        (addUnionObjToEnv,
+                                             recursiveObjsWithPrecedence)
 import           Utils
 
 -- represents how a specified variables corresponds to the known types.

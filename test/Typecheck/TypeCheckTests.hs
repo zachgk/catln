@@ -10,34 +10,36 @@
 -- This is the module for testing typechecking.
 --------------------------------------------------------------------
 module Typecheck.TypeCheckTests where
-import           Common.TestCommon     (findErrCt)
-import           Control.Monad.State   (evalStateT, execStateT, lift, runStateT)
+import           Common.TestCommon          (findErrCt)
+import           Control.Monad.State.Strict (evalStateT, execStateT, lift,
+                                             runStateT)
 import           CRes
-import           CtConstants           (macroThisKey, outMacro, thisMacro)
-import           CtService             (ctssBaseFiles, getTPrgm, getTPrgmJoined)
-import           Data.Graph            (graphFromEdges)
-import qualified Data.HashMap.Strict   as H
-import qualified Data.HashSet          as S
-import           Data.List             (isInfixOf, sort)
+import           CtConstants                (macroThisKey, outMacro, thisMacro)
+import           CtService                  (ctssBaseFiles, getTPrgm,
+                                             getTPrgmJoined)
+import           Data.Graph                 (graphFromEdges)
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import           Data.List                  (isInfixOf, sort)
 import           Hedgehog
-import qualified Hedgehog.Gen          as HG
+import qualified Hedgehog.Gen               as HG
 import           MapMeta
-import           Semantics             (mkTypeEnv, testCtssConfig)
+import           Semantics                  (mkTypeEnv, testCtssConfig)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Test.Tasty
-import qualified Test.Tasty.Hedgehog   as THG
-import           Test.Tasty.HUnit      (Assertion, assertBool, assertEqual,
-                                        assertFailure, testCase)
-import           Testing.Generation    (genPrgms)
-import           TestService           (MkService)
+import qualified Test.Tasty.Hedgehog        as THG
+import           Test.Tasty.HUnit           (Assertion, assertBool, assertEqual,
+                                             assertFailure, testCase)
+import           Testing.Generation         (genPrgms)
+import           TestService                (MkService)
 import           Text.Printf
-import           TypeCheck             (typecheckPrgm)
-import           TypeCheck.Common      (feCons, tcreToMaybe)
-import           TypeCheck.Constrain   (executeConstraint)
-import           TypeCheck.Decode      (toPrgms)
-import           TypeCheck.Encode      (fromPrgms, makeBaseFEnv)
-import           TypeCheck.Instruments (defaultInstruments)
+import           TypeCheck                  (typecheckPrgm)
+import           TypeCheck.Common           (feCons, tcreToMaybe)
+import           TypeCheck.Constrain        (executeConstraint)
+import           TypeCheck.Decode           (toPrgms)
+import           TypeCheck.Encode           (fromPrgms, makeBaseFEnv)
+import           TypeCheck.Instruments      (defaultInstruments)
 import           Utils
 
 propExprEncodeDecode :: Property
