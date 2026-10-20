@@ -48,10 +48,32 @@ Prgm
                             ( Value run= /Catln/Doc/dshow.testRun( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #debugger( Value fun ) )= Show/Debugger
-                            ( Value run= /Catln/Doc/dshow.debugger( Value /fun= Value /fun )( Value annot= Value s ) )( Value fun= Value fun )
+                            ( Value run= /Catln/Doc/dshow.debugger( Value /fun= Value /fun )( Value annot= Value s )
+                                ( Value instruments= /Data/List/Cons
+                                    ( Value /head= CStr
+                                        { csValue = "treebug" }
+                                    )
+                                    ( Value /tail= /Data/List/Cons
+                                        ( Value /head= CStr
+                                            { csValue = "debug" }
+                                        )( Value /tail= Value /Data/List/Nil )
+                                    )
+                                )
+                            )( Value fun= Value fun )
                         , /Catln/Doc/dshow
                             ( Value s= #debugExpr( Value expr ) )= Show/Debugger
-                            ( Value run= /Catln/Doc/dshow.debugExpr( Value /expr= Value /expr )( Value annot= Value s ) )( Value fun= Value expr )
+                            ( Value run= /Catln/Doc/dshow.debugExpr( Value /expr= Value /expr )( Value annot= Value s )
+                                ( Value instruments= /Data/List/Cons
+                                    ( Value /head= CStr
+                                        { csValue = "treebug" }
+                                    )
+                                    ( Value /tail= /Data/List/Cons
+                                        ( Value /head= CStr
+                                            { csValue = "debug" }
+                                        )( Value /tail= Value /Data/List/Nil )
+                                    )
+                                )
+                            )( Value fun= Value expr )
                         ]
                     }
                 )
@@ -137,7 +159,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow.debugger( Value /fun )( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.debugger( Value /fun )( Value annot )
+                            ( Value instruments -> ∀/Data/List[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -356,7 +380,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow.debugExpr( Value /expr )( Value annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.debugExpr( Value /expr )( Value annot )
+                            ( Value instruments -> ∀/Data/List[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

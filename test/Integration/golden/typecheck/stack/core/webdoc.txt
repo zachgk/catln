@@ -66,13 +66,81 @@ Prgm
                             ( /fun=∀/Data/String
                             , /run=∀/Data/String
                             ) = /Catln/Doc/Show/Debugger
-                            ( Value /run -> ∀/Data/String = /Catln/Doc/dshow.debugger( Value /fun -> TVArg /fun = Value /fun )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /fun = Value /fun )
+                            ( Value /run -> ∀/Data/String = /Catln/Doc/dshow.debugger( Value /fun -> TVArg /fun = Value /fun )( Value /annot -> /s = Value /s )
+                                ( Value /instruments -> /Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( Value /head -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = "treebug" }
+                                    )
+                                    ( Value /tail -> /Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            { csValue = "debug" }
+                                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                    )
+                                )
+                            )( Value /fun -> TVArg /fun = Value /fun )
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/Doc/#debugExpr( /expr=∀/Data/String ) = /Catln/Doc/#debugExpr( Value /expr -> ∀/Data/String ) ) -> /Catln/Doc/Show/Debugger
                             ( /fun=∀/Data/String
                             , /run=∀/Data/String
                             ) = /Catln/Doc/Show/Debugger
-                            ( Value /run -> ∀/Data/String = /Catln/Doc/dshow.debugExpr( Value /expr -> TVArg /expr = Value /expr )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /expr = Value /expr )
+                            ( Value /run -> ∀/Data/String = /Catln/Doc/dshow.debugExpr( Value /expr -> TVArg /expr = Value /expr )( Value /annot -> /s = Value /s )
+                                ( Value /instruments -> /Data/List/Cons
+                                    [ /T=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ]
+                                    ( /head=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( Value /head -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        { csValue = "treebug" }
+                                    )
+                                    ( Value /tail -> /Data/List/Cons
+                                        [ /T=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ]
+                                        ( /head=/Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( Value /head -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            { csValue = "debug" }
+                                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                    )
+                                )
+                            )( Value /fun -> TVArg /expr = Value /expr )
                         ]
                     }
                 )
@@ -158,7 +226,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow.debugger( Value /fun )( Value /annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.debugger( Value /fun )( Value /annot )
+                            ( Value /instruments -> ∀/Data/List[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -377,7 +447,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow.debugExpr( Value /expr )( Value /annot ) -> ∀/Data/String ]
+                        [ /Catln/Doc/dshow.debugExpr( Value /expr )( Value /annot )
+                            ( Value /instruments -> ∀/Data/List[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

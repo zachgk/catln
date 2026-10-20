@@ -177,7 +177,47 @@ Prgm
                                         ( EAppArg
                                             { eaaArg = Value /fun -> TVArg /fun = ( Value /fun ↦ TVArg /fun ) }
                                         )
-                                        ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ ∀/Data/String
+                                        ( EAppArg { eaaArg = Value /annot -> /s = Value /s } )
+                                        ( EAppArg
+                                            { eaaArg = Value /instruments -> /Data/List/Cons
+                                                [ /T=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ]
+                                                ( /head=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /tail=/Data/List/Cons
+                                                    [ /T=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ]
+                                                    ( /head=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /tail=/Data/List/Nil
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "treebug"
+                                                    }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /tail -> /Data/List/Cons
+                                                        [ /T=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ]
+                                                        ( /head=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "debug"
+                                                            }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/String
                                     )
                                 }
                             )
@@ -199,7 +239,47 @@ Prgm
                                         ( EAppArg
                                             { eaaArg = Value /expr -> TVArg /expr = ( Value /expr ↦ TVArg /expr ) }
                                         )
-                                        ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ ∀/Data/String
+                                        ( EAppArg { eaaArg = Value /annot -> /s = Value /s } )
+                                        ( EAppArg
+                                            { eaaArg = Value /instruments -> /Data/List/Cons
+                                                [ /T=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ]
+                                                ( /head=/Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /tail=/Data/List/Cons
+                                                    [ /T=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ]
+                                                    ( /head=/Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /tail=/Data/List/Nil
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( EAppArg
+                                                    { eaaArg = Value /head -> /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "treebug"
+                                                    }
+                                                )
+                                                ( EAppArg
+                                                    { eaaArg = Value /tail -> /Data/List/Cons
+                                                        [ /T=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ]
+                                                        ( /head=/Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg
+                                                            { eaaArg = Value /head -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "debug"
+                                                            }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                    }
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/String
                                     )
                                 }
                             )
@@ -307,7 +387,10 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Catln/Doc/dshow.debugger
                             ( EAppArg { eaaArg = Value /fun } )
-                            ( EAppArg { eaaArg = Value /annot } ) -> ∀/Data/String
+                            ( EAppArg { eaaArg = Value /annot } )
+                            ( EAppArg
+                                { eaaArg = Value /instruments -> ∀/Data/List[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -575,7 +658,10 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Catln/Doc/dshow.debugExpr
                             ( EAppArg { eaaArg = Value /expr } )
-                            ( EAppArg { eaaArg = Value /annot } ) -> ∀/Data/String
+                            ( EAppArg { eaaArg = Value /annot } )
+                            ( EAppArg
+                                { eaaArg = Value /instruments -> ∀/Data/List[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

@@ -168,10 +168,6 @@ instance EvalInstrument Debugs where
 defaultEvalInstruments :: [AnyEvalInstrument]
 defaultEvalInstruments = []
 
--- | What a debugger shows a run with: the tree of its calls, and its @#debug@ records.
-debuggerInstruments :: [AnyEvalInstrument]
-debuggerInstruments = [treebugInstrument, debugInstrument]
-
 -- | Every instrument there is, which is what a caller outside Haskell can ask for by name.
 allEvalInstruments :: [AnyEvalInstrument]
 allEvalInstruments = [coverageInstrument, treebugInstrument, debugInstrument]

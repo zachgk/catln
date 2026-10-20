@@ -56,7 +56,7 @@ import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           TestResult, Val, defaultEvalSession,
                                           esAsks, joinedStage, newEvalService,
                                           oaTestId, withRunSources)
-import           Eval.Instruments        (debuggerInstruments)
+import           Eval.Instruments        (evalInstrumentByName)
 import           Eval.SyntaxTree         (withRunSyntax)
 import           Eval.Testing            (TestCheck (StaticCheck),
                                           TestDesc (..), evalPrints, evalTest,
@@ -1851,22 +1851,27 @@ instance CtServiceApi CTSS where
 
   -- Against the page's own typecheck program rather than the caller's, which for an annotation is
   -- that program joined with the synthetic one holding the annotation itself.
-  csRunFun ctss@(CTSS ssmv _) prgmName fun = do
+  csRunFun ctss@(CTSS ssmv _) prgmName fun instruments = do
     ssfs <- scopeSSFs ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> (evalDebugPrgm defaultEvalSession{sesInstruments = debuggerInstruments, sesPages = rawPagesByPath scopeNodes} fun =<< asCResT (joinedStage ssfTPrgm ssfs))
+    runCResT $ do
+      session <- asCResT $ debugSession instruments scopeNodes
+      prgm <- asCResT $ joinedStage ssfTPrgm ssfs
+      withRunSyntax (scopeRaws scopeNodes) . withRunSources (scopeSources scopeNodes) <$> evalDebugPrgm session fun prgm
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
   --
   -- The expression is written in no page, so its own text is offered under the name it was parsed
   -- as, beside the pages'.
-  csRunExpr ctss@(CTSS ssmv _) prgmName src = do
+  csRunExpr ctss@(CTSS ssmv _) prgmName src instruments = do
     ctssBuildFrom ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
-    runCResT $ withRunSyntax (scopeRaws scopeNodes) . withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun prgmName scopeNodes src
+    runCResT $ do
+      session <- asCResT $ debugSession instruments scopeNodes
+      withRunSyntax (scopeRaws scopeNodes) . withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun session prgmName scopeNodes src
 
   -- 'pageValues' partially applied, which is what shares the scope's typechecked programs across
   -- every page the gatherer is then asked about. Applying it per page instead is the quadratic
@@ -1945,10 +1950,19 @@ scopeSSFs ctss@(CTSS ssmv _) prgmName = do
 -- the call that ran. So the expression is compiled against the page the same way the page's own
 -- statements were, which is also what makes the names in it mean what they mean on that page.
 --
-debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CResT IO DebugRun
-debugExprRun prgmName scopeNodes src = do
+debugExprRun :: EvalSession -> FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CResT IO DebugRun
+debugExprRun session prgmName scopeNodes src = do
   (expr, prgm) <- asCResT $ debugExprCompile prgmName scopeNodes src
-  evalDebugExprPrgm defaultEvalSession{sesInstruments = debuggerInstruments, sesPages = rawPagesByPath scopeNodes} expr prgm
+  evalDebugExprPrgm session expr prgm
+
+-- | The session a debugger's run of a scope is evaluated in: watched by the instruments it named
+-- ('evalInstrumentByName'), and handed the scope's pages. A name that is no instrument is reported
+-- rather than left out, since a run missing what was asked of it would read as one that recorded
+-- nothing of it.
+debugSession :: [String] -> [(SSF, FileImport, [FileImport])] -> CRes EvalSession
+debugSession instruments scopeNodes = case mapM evalInstrumentByName instruments of
+  Right instruments' -> return defaultEvalSession{sesInstruments = instruments', sesPages = rawPagesByPath scopeNodes}
+  Left err -> CErr [MkCNote $ GenCErr Nothing err]
 
 -- | The expression a debugger was asked to run, compiled against a page, with the program it is run
 -- in.

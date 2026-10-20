@@ -367,18 +367,21 @@ module(Catln/Doc)
   every(Show/Debugger.., isa= [/Catln/Doc/DShow])
 
   dshow(s= #debugger(fun)) =
-    debugger(annot) -> String
+    debugger(annot, instruments -> /Data/List[$T -> String]) -> String
       # [debugger] runs [fun] in the program being evaluated and renders the run as JSON. The
         program's output is captured rather than printed, so showing a run inside a doc server does
         not write the run's output to the server's own stdout.
+        The run is watched by the [instruments] named, and carries what each of them made of it and
+        nothing else: the tree of the calls it made, and the values its [/Catln/#debug]s recorded,
+        are what a [Show/Debugger] page shows.
       #runtime("debugger")
 
-    Show/Debugger(run= debugger(annot= s), fun= fun)
+    Show/Debugger(run= debugger(annot= s, instruments= ["treebug", "debug"]), fun= fun)
 
   annot(#debugExpr(expr -> String))
 
   dshow(s= #debugExpr(expr)) =
-    debugExpr(annot) -> String
+    debugExpr(annot, instruments -> /Data/List[$T -> String]) -> String
       # [debugExpr] compiles [expr] as though it were written in the page being evaluated, runs it,
         and renders the run as JSON. An expression rather than a function name, which is what
         [#debugger] takes: what a reader wants to debug is often something that no definition names
@@ -387,6 +390,7 @@ module(Catln/Doc)
         Its own annotation rather than a second form of [#debugger] because the two run different
         things in different ways, and an annotation whose meaning turns on which argument was given
         reads as one thing that sometimes does another.
+        It is watched by the [instruments] named, as [debugger] is.
       #runtime("debugExpr")
 
-    Show/Debugger(run= debugExpr(annot= s), fun= expr)
+    Show/Debugger(run= debugExpr(annot= s, instruments= ["treebug", "debug"]), fun= expr)

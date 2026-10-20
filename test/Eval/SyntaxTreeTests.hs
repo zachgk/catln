@@ -4,12 +4,12 @@
 -- checked is that the arrows desugar writes for a function — a line, a helper, a branch arm, a bind's
 -- continuation — are found again as the statements they were written as, and that only holds for the
 -- arrows desugar actually writes.
-module Eval.SyntaxTreeTests (syntaxTreeTests) where
+module Eval.SyntaxTreeTests (syntaxTreeTests, runInstrumentsTests) where
 
 import           CRes
 import           CtService           (CTSS)
 import qualified Data.HashMap.Strict as H
-import           Data.List           (isSuffixOf, nub)
+import           Data.List           (isInfixOf, isSuffixOf, nub)
 import           Data.Maybe          (mapMaybe)
 import           Data.UUID           (UUID)
 import           Eval.Common
@@ -58,7 +58,7 @@ syntaxTreeTests :: IO CTSS -> TestTree
 syntaxTreeTests getCtss = testCase "a run is read by the functions its page writes" $ do
   ctss <- getCtss
   page <- mkDesCanonicalImportStr testCtssConfig "test/Integration/code/debugNested.ct"
-  res <- csRunFun ctss page "/main"
+  res <- csRunFun ctss page "/main" ["treebug"]
   DebugRun{drSyntax=syntax@SyntaxRun{srCalls}, drResults} <- case res of
     CRes _ r    -> return r
     CErr notes' -> assertFailure $ prettyCNotes notes'
@@ -116,3 +116,28 @@ syntaxTreeTests getCtss = testCase "a run is read by the functions its page writ
   bump <- callOf names "bump" (scCalls mainCall)
   lineValues names "x" bump @?= [Just (IntVal 5)]
   lineValues names "doubled" bump @?= [Just (IntVal 10)]
+
+-- | A debugger's run carries what the instruments it named made of it, and only those: a run of
+-- the same page watched with less carries less, and is read as having called nothing it was not
+-- watched calling. A name that is no instrument is reported rather than left out.
+runInstrumentsTests :: IO CTSS -> TestTree
+runInstrumentsTests getCtss = testGroup "a run carries the instruments it was watched with" [
+    testCase "only those it named" $ do
+      ctss <- getCtss
+      page <- mkDesCanonicalImportStr testCtssConfig "test/Integration/code/debugNested.ct"
+      res <- csRunFun ctss page "/main" ["debug"]
+      DebugRun{drResults, drSyntax=SyntaxRun{srCalls}} <- case res of
+        CRes _ r    -> return r
+        CErr notes' -> assertFailure $ prettyCNotes notes'
+      map fst drResults @?= ["debug"]
+      -- The #debug of total, evaluated once per call of it: once in main, and twice under the fmap.
+      fmap length (lookupDebugResult drResults) @?= Just 3
+      assertBool "a run not watched with the treebug is read as having called nothing" (null srCalls)
+  , testCase "a name that is no instrument is reported" $ do
+      ctss <- getCtss
+      page <- mkDesCanonicalImportStr testCtssConfig "test/Integration/code/debugNested.ct"
+      res <- csRunFun ctss page "/main" ["treebug", "nothing"]
+      case res of
+        CRes _ _    -> assertFailure "a run watched by an instrument that does not exist was run"
+        CErr notes' -> assertBool (prettyCNotes notes') ("nothing" `isInfixOf` prettyCNotes notes')
+  ]

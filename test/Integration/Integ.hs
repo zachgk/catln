@@ -20,7 +20,7 @@ import           Eval.Common             (EvalIO (..), EvalMetaDat,
                                           TestResult (..), Val,
                                           defaultEvalSession, getMockIOOutput,
                                           newMockIO)
-import           Eval.SyntaxTreeTests    (syntaxTreeTests)
+import           Eval.SyntaxTreeTests    (runInstrumentsTests, syntaxTreeTests)
 import           Eval.Testing            (runTestDesc)
 import           Semantics
 import           Semantics.Prgm
@@ -263,7 +263,7 @@ integrationTests mk = do
       testGroup "Python" $ map (runPyTest True getCtss) pyFiles,
       testGroup "Json" $ map (runTest True getCtss) jsonFiles,
       testGroup "Pages" $ map (runTest True getCtss) pageTests,
-      testGroup "Debugger" [syntaxTreeTests getCtss]
+      testGroup "Debugger" [syntaxTreeTests getCtss, runInstrumentsTests getCtss]
     ]
 
 mtFileName :: String -> IO String

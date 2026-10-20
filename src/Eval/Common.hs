@@ -191,11 +191,13 @@ class CtServiceApi s where
   -- inference reads it a point at a time and would otherwise pay for the solve at every point.
   csTypeInfo :: s -> FileImport -> IO (CRes (VPrgm, InstrumentResults))
 
-  -- | Runs a named function of a page's program, for a debugger reporting on what it evaluated.
+  -- | Runs a named function of a page's program, for a debugger reporting on what it evaluated:
+  -- watched by the instruments named ('Eval.Instruments.evalInstrumentByName'), whose results are
+  -- all the run carries of what it evaluated.
   --
   -- A page rather than a scope: a run needs one program with one entry point, and the join of every
   -- page has as many @main@s as it has pages.
-  csRunFun :: s -> FileImport -> String -> IO (CRes DebugRun)
+  csRunFun :: s -> FileImport -> String -> [String] -> IO (CRes DebugRun)
 
   -- | Compiles one expression, written as Catln source, as though it were a statement of a page, and
   -- runs it.
@@ -204,7 +206,9 @@ class CtServiceApi s where
   -- names: the computation a @#print@ shows, or the one generated input a test case ran on. A
   -- generated input in particular exists nowhere in the program, so the text of the call that ran is
   -- the only handle on that case there is.
-  csRunExpr :: s -> FileImport -> String -> IO (CRes DebugRun)
+  --
+  -- Watched by the instruments named, as 'csRunFun' is.
+  csRunExpr :: s -> FileImport -> String -> [String] -> IO (CRes DebugRun)
 
   -- | Gathers the values pages declare of some types, evaluated to the values they display as, in
   -- the order each page writes them.
@@ -332,13 +336,13 @@ esTypeInfo svc@(EvalService s _ _ _) prgmName = recordAsk svc (Just prgmName) >>
 
 -- | 'CtServiceApi.csRunFun' of a page, recorded as an ask about that page's scope: a run is of that
 -- page's program, which is the page and what it imports.
-esRunFun :: EvalService -> FileImport -> String -> IO (CRes DebugRun)
-esRunFun svc@(EvalService s _ _ _) prgmName fun = recordAsk svc (Just prgmName) >> csRunFun s prgmName fun
+esRunFun :: EvalService -> FileImport -> String -> [String] -> IO (CRes DebugRun)
+esRunFun svc@(EvalService s _ _ _) prgmName fun instruments = recordAsk svc (Just prgmName) >> csRunFun s prgmName fun instruments
 
 -- | 'CtServiceApi.csRunExpr' of a page, recorded as 'esRunFun' is: the expression is compiled against
 -- that page and means what that page makes it mean.
-esRunExpr :: EvalService -> FileImport -> String -> IO (CRes DebugRun)
-esRunExpr svc@(EvalService s _ _ _) prgmName src = recordAsk svc (Just prgmName) >> csRunExpr s prgmName src
+esRunExpr :: EvalService -> FileImport -> String -> [String] -> IO (CRes DebugRun)
+esRunExpr svc@(EvalService s _ _ _) prgmName src instruments = recordAsk svc (Just prgmName) >> csRunExpr s prgmName src instruments
 
 -- | 'CtServiceApi.csValues' over a scope, recorded as asked about. The gatherer that comes back can
 -- only be asked about pages of that scope, so recording the scope covers every page it will gather

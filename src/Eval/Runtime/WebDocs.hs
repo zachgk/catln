@@ -35,6 +35,7 @@ import           Data.Maybe          (fromMaybe, mapMaybe)
 import qualified Data.Text.Lazy      as TL
 import           Eval.Common
 import           GHC.Generics        (Generic)
+import           Semantics.CtType    (fromCt)
 import           Semantics.Prgm
 import           Semantics.Types     (ArgName, ClassGraph (..),
                                       ClassSatInfo (..), PartialType (..),
@@ -190,9 +191,21 @@ typeInferPnt = EEnvPrim "typeInferPnt" prim
 debuggerFunArg :: String
 debuggerFunArg = "/fun"
 
+-- | The argument of @/Catln/Doc/debugger@ and @/Catln/Doc/debugExpr@ naming the instruments to watch
+-- the run with ('Eval.Instruments.evalInstrumentByName'), which are what the run carries of what it
+-- evaluated: the stdlib names the ones its @Show/Debugger@ page reads.
+debuggerInstrumentsArg :: String
+debuggerInstrumentsArg = "/instruments"
+
+-- | The instruments a debugger prim was asked to watch its run with, by name.
+debuggerInstruments :: String -> H.HashMap String Val -> Either String [String]
+debuggerInstruments prim args = case H.lookup debuggerInstrumentsArg args of
+  Just v -> either (Left . printf "%s was given %s, which is not a List of String instrument names: %s" prim (show v)) Right (fromCt v)
+  Nothing -> Left $ printf "%s has no %s argument, only %s" prim debuggerInstrumentsArg (show $ sort $ H.keys args)
+
 -- | Backs @/Catln/Doc/debugger@, the data carried by a @Show/Debugger@ page. It runs a function of
 -- the program being evaluated and renders that run as JSON: what it exited with, what it printed,
--- and the tree of what it evaluated.
+-- and what the instruments it was asked for made of what it evaluated.
 --
 -- Unlike the prims above this one does not read an artifact, it asks for one to be produced. It
 -- cannot produce it itself: the evaluator is downstream of this module (@Eval@ imports
@@ -202,7 +215,9 @@ debugger :: EPrim
 debugger = EEnvPrim "debugger" prim
   where
     prim env args = case H.lookup debuggerFunArg args of
-      Just (StrVal fun) -> askRun env "program to run" (\svc prgmName -> esRunFun svc prgmName fun)
+      Just (StrVal fun) -> do
+        instruments <- debuggerInstruments "debugger" args
+        askRun env "program to run" (\svc prgmName -> esRunFun svc prgmName fun instruments)
       Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
       Nothing -> Left $ printf "debugger has no %s argument, only %s" debuggerFunArg (show $ sort $ H.keys args)
 
@@ -233,7 +248,9 @@ debugExpr :: EPrim
 debugExpr = EEnvPrim "debugExpr" prim
   where
     prim env args = case H.lookup debugExprArg args of
-      Just (StrVal expr) -> askRun env "expression to run" (\svc prgmName -> esRunExpr svc prgmName expr)
+      Just (StrVal expr) -> do
+        instruments <- debuggerInstruments "debugExpr" args
+        askRun env "expression to run" (\svc prgmName -> esRunExpr svc prgmName expr instruments)
       Just v -> Left $ printf "debugExpr was given %s, which is not a String expression" (show v)
       Nothing -> Left $ printf "debugExpr has no %s argument, only %s" debugExprArg (show $ sort $ H.keys args)
 
