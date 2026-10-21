@@ -86,14 +86,14 @@ argModes = [PtArgExact, PtArgAny, PtArgMode False True S.empty, PtArgUnbounded]
 
 -- | A partial re-moded to one of the 'argModes'. A lower-bounded one makes some of its listed
 -- args optional ('ptArgOpt'), as a meet or difference does, kept canonical as they keep it.
-remodePartial :: PartialType -> Gen PartialType
-remodePartial p = do
+remodePartial :: TypeGraph tg => TypeEnv tg -> PartialType -> Gen PartialType
+remodePartial typeEnv p = do
   mode <- HG.element argModes
   -- the lower bound is vacuous with no args, so keep it set then (avoids producing a
   -- representation set-equivalent to a different one)
   let mode' = if H.null (ptArgs p) then mode{ptArgLb=True} else mode
   opt <- if ptArgLb mode' then S.fromList <$> HG.subsequence (H.keys (ptArgs p)) else return S.empty
-  return $ withOptionalArgs opt p{ptArgMode = mode'}
+  return $ withOptionalArgs typeEnv opt p{ptArgMode = mode'}
 
 -- | A constant drawn from the constant kinds a type can hold.
 --
@@ -656,7 +656,7 @@ genUnionTypeWith spec prgm@(Prgm objMap _ _) = HG.frequency $ concat
     -- DECLARATION has and 'recLeafs' the one 'expandClassPartial' produced; overwriting those
     -- makes a leaf the program does not have (declaration-boundedness, as in 'genWithTVExtOn').
     genLeaf :: Gen PartialType
-    genLeaf = genPartialTypeWith spec prgm >>= remodePartial
+    genLeaf = genPartialTypeWith spec prgm >>= remodePartial typeEnv
 
     -- A union of one to three source groups. Drawing more than one is the only way a leaf slot
     -- holds two DIFFERENTLY-SOURCED leafs — for example a bare data name beside a fully-slotted
@@ -773,8 +773,9 @@ genRelatedType prgm a = case a of
     return $ singletonType p'
   _ -> genType prgm
   where
+    typeEnv = mkTypeEnv prgm
     mutate p = HG.choice $
-      [ remodePartial p ] ++ [ mutateArg p | not (H.null (ptArgs p)) ]
+      [ remodePartial typeEnv p ] ++ [ mutateArg p | not (H.null (ptArgs p)) ]
     mutateArg p = do
       k       <- HG.element (H.keys (ptArgs p))
       newVal  <- HG.choice [return PTopType, singletonType <$> genPartialType prgm]

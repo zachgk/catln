@@ -275,7 +275,7 @@ spreadArgsToType FEnv{feTypeEnv} vaenv (UnionType Nothing basePartials []) (Unio
     -- unlisted ones) is either. An argument either side requires is required, and every other is
     -- optional ('PtArgMode').
     spreadInto b@PartialType{ptArgs=bArgs, ptArgMode=PtArgMode _ bUb _} s@PartialType{ptArgs=sArgs, ptArgMode=PtArgMode _ sUb _} =
-      canonicalArgOpt b{ptArgs=args, ptArgMode=PtArgMode True (bUb && sUb) (H.keysSet args `S.difference` req)}
+      canonicalArgOpt feTypeEnv b{ptArgs=args, ptArgMode=PtArgMode True (bUb && sUb) (H.keysSet args `S.difference` req)}
       where
         sReq = ptRequiredArgs s
         req = ptRequiredArgs b `S.union` sReq

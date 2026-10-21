@@ -3425,34 +3425,58 @@ ptOptionalArgs p = H.keysSet (ptArgs p) `S.difference` ptRequiredArgs p
 
 -- | A partial's mode with these args optional, kept canonical ('PtArgMode'): only listed args,
 -- and none without a lower bound.
-withOptionalArgs :: S.HashSet ArgName -> PartialType -> PartialType
-withOptionalArgs opt p = canonicalArgOpt p{ptArgMode=(ptArgMode p){ptArgOpt=opt}}
+withOptionalArgs :: TypeGraph tg => TypeEnv tg -> S.HashSet ArgName -> PartialType -> PartialType
+withOptionalArgs typeEnv opt p = canonicalArgOpt typeEnv p{ptArgMode=(ptArgMode p){ptArgOpt=opt}}
 
 -- | A partial with this listed arg required: its other listed args keep whether they are.
-requireArg :: ArgName -> PartialType -> PartialType
-requireArg k p@PartialType{ptArgMode=PtArgMode lb ub opt}
-  | lb = canonicalArgOpt p{ptArgMode=PtArgMode True ub (S.delete k opt)}
-  | otherwise = canonicalArgOpt p{ptArgMode=PtArgMode True ub (S.delete k (H.keysSet (ptArgs p)))}
+--
+-- A partial with no lower bound is an interval of arg-sets, so it is lower-bounded here on the arg
+-- alone ('intervalLowerBound'): the declared fields it does not list stay free, rather than being
+-- read in as the floor a spread of the type requires.
+requireArg :: TypeGraph tg => TypeEnv tg -> ArgName -> PartialType -> PartialType
+requireArg typeEnv k p@PartialType{ptArgMode=PtArgMode lb ub opt}
+  | lb = canonicalArgOpt typeEnv p{ptArgMode=PtArgMode True ub (S.delete k opt)}
+  | otherwise = canonicalArgOpt typeEnv $ intervalLowerBound typeEnv p{ptArgMode=PtArgMode True ub (S.delete k (H.keysSet (ptArgs p)))}
+
+-- | A partial an operation on arg-set INTERVALS has just given a lower bound: requiring some args of
+-- an interval that had no floor, as a difference's piece does (@F(x=X)..??@ less the @F@ lacking
+-- @x@) or a meet with a lower-bounded side does.
+--
+-- Lower-bounded and upper-unbounded is also how a spread is spelled, which reads the declared fields
+-- it does not list in as required ('spreadFloor'). Those fields were free in the interval, so they
+-- are listed here as optional and typed ⊤ — present or not, with any value — which is what keeps
+-- the floor from being read in. A field already listed keeps what it says, and a partial with an
+-- upper bound has no floor to read in.
+intervalLowerBound :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
+intervalLowerBound typeEnv p@PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub opt}
+  | lb && not ub && not (H.null free) = p{ptArgs = H.union ptArgs free, ptArgMode = PtArgMode lb ub (opt `S.union` H.keysSet free)}
+  | otherwise = p
+  where free = PTopType <$ (declaredFloorArgs typeEnv ptName `H.difference` ptArgs)
 
 -- | Keeps a partial's optional args canonical without changing its value set ('PtArgMode'):
 --
 --   * an optional arg is a listed one;
 --   * without an upper bound, an optional arg typed ⊤ says nothing an unlisted one does not, so
---     it is unlisted;
+--     it is unlisted — unless it is one of the declared fields a spread reads in as required
+--     ('declaredFloorArgs'), where listing it optional is what says the partial does not
+--     require it;
 --   * with an upper bound, an optional arg typed ∅ is one no instance has, and an unlisted one is
 --     no more allowed, so it is unlisted;
 --   * a lower bound requiring none of the listed args is no lower bound: every listed arg is
---     optional already, so the set is empty.
-canonicalArgOpt :: PartialType -> PartialType
-canonicalArgOpt p@PartialType{ptArgs, ptArgMode=PtArgMode lb ub opt0}
+--     optional already, so the set is empty — unless it is a spread's, whose unlisted declared
+--     fields it still requires.
+canonicalArgOpt :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
+canonicalArgOpt typeEnv p@PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub opt0}
   | S.null opt0 = p
   | not lb = p{ptArgMode=PtArgMode lb ub S.empty}
-  | S.null (H.keysSet args' `S.difference` opt) = p{ptArgs=args', ptArgMode=PtArgMode False ub S.empty}
+  | S.null (H.keysSet args' `S.difference` opt), ub || floorListed = p{ptArgs=args', ptArgMode=PtArgMode False ub S.empty}
   | otherwise = p{ptArgs=args', ptArgMode=PtArgMode lb ub opt}
   where
+    floorArgs = declaredFloorArgs typeEnv ptName
+    floorListed = all (`H.member` args') (H.keys floorArgs)
     listedOpt = opt0 `S.intersection` H.keysSet ptArgs
     vacuous k = case H.lookup k ptArgs of
-      Just t | not ub -> t == PTopType
+      Just t | not ub -> t == PTopType && not (H.member k floorArgs)
              | otherwise -> isBottomType t
       Nothing -> True
     dropped = S.filter vacuous listedOpt
@@ -3515,7 +3539,7 @@ declaredArgKeys typeEnv name = case typeGraphArgKeys typeEnv name of
 normalizePtArgMode :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
 normalizePtArgMode typeEnv p0@PartialType{ptName, ptArgMode=PtArgMode lb ub opt}
   | lb' && ub' && S.null opt = if ptArgMode p == PtArgExact then p else p{ptArgMode=PtArgExact}
-  | otherwise = canonicalArgOpt p{ptArgMode=PtArgMode lb' ub' opt}
+  | otherwise = canonicalArgOpt typeEnv p{ptArgMode=PtArgMode lb' ub' opt}
   where
     p@PartialType{ptArgs} = spreadFloor typeEnv p0
     -- Read against the CLOSED ceiling: an unbounded @X..??@ of a name declaring no args is closed
@@ -3541,9 +3565,15 @@ spreadFloor typeEnv p@PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub _}
   where
     -- Only the fields the partial does not list: one it lists as optional ('ptArgOpt') is a
     -- partial application's, which a value may lack (@Cons(head=X)@ before its @tail@).
-    floorArgs = case [dArgs | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
-      []   -> H.empty
-      d:ds -> foldl (H.intersectionWith const) d ds `H.difference` ptArgs
+    floorArgs = declaredFloorArgs typeEnv ptName `H.difference` ptArgs
+
+-- | The declared fields a spread of a name reads in as its floor ('spreadFloor'): a field every
+-- data definition of the name declares, with the type the first definition gives it. None for a
+-- name that declares no data.
+declaredFloorArgs :: TypeGraph tg => TypeEnv tg -> TypeName -> H.HashMap ArgName Type
+declaredFloorArgs typeEnv name = case [dArgs | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv name, not (H.null dArgs)] of
+  []   -> H.empty
+  d:ds -> foldl (H.intersectionWith const) d ds
 
 -- | The finite list of arg-keysets a partial's arg-mode interval admits, when enumerable:
 -- an upper-bounded interval enumerates the subsets of its listed args directly; an
@@ -5907,8 +5937,8 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
         -- 'coveredByArgSets' already enumerates.
         coveredByOptionalSplit = case [ k | k <- S.toList (ptArgOpt (ptArgMode sub)), not (isBottomType (H.lookupDefault PTopType k (ptArgs sub))) ] of
           k:_ -> let supT = UnionType Nothing (joinUnionType sup) []
-                     absent = canonicalArgOpt (withOptionalArgs (S.insert k (ptArgOpt (ptArgMode sub))) sub{ptArgs=H.insert k BottomType (ptArgs sub)})
-                 in all (\piece -> isSubtypeOfWithEnv typeEnv vaenv (singletonType piece) supT) [absent, requireArg k sub]
+                     absent = withOptionalArgs typeEnv (S.insert k (ptArgOpt (ptArgMode sub))) sub{ptArgs=H.insert k BottomType (ptArgs sub)}
+                 in all (\piece -> isSubtypeOfWithEnv typeEnv vaenv (singletonType piece) supT) [absent, requireArg typeEnv k sub]
           []  -> False
         -- A leaf refined by a DISJUNCTION is the union of the leaf refined by each disjunct:
         -- @l|¬(q₁ ∧ … ∧ qₙ) = ⋃ᵢ l|¬qᵢ@ (De Morgan, exact), so it is covered when every such leaf
@@ -8263,7 +8293,7 @@ intersectPartialsBaseN typeEnv vaenv aP@(PartialType name' aVars aArgs aPreds (P
         let absent = bindingOptArgs `S.difference` present
             typed = H.union (H.fromList [(k, BottomType) | k <- S.toList (bottomKeys `S.union` absent)]) (restrict okKeys)
             req = reqKeys `S.union` present
-        in canonicalArgOpt $ PartialType name' (venvsFor (req `S.union` (okKeys `S.difference` bindingOptArgs))) typed preds' (PtArgMode (not (S.null req)) False (H.keysSet typed `S.difference` req))
+        in canonicalArgOpt typeEnv $ intervalLowerBound typeEnv $ PartialType name' (venvsFor (req `S.union` (okKeys `S.difference` bindingOptArgs))) typed preds' (PtArgMode (not (S.null req)) False (H.keysSet typed `S.difference` req))
   let partials'
         | not (S.null (reqKeys `S.intersection` bottomKeys)) = [] -- a required arg is uninhabited
         | ub' = if reqKeys `S.isSubsetOf` capKeys -- bounded interval [reqKeys, capKeys]
@@ -9059,9 +9089,9 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         absentEscapes p1 p2 = traverse absentAt (S.toList (ptRequiredArgs p2 `S.difference` ptRequiredArgs p1))
           where
             absentAt k
-              | H.member k (ptArgs p1) = Just $ canonicalArgOpt p1{ptArgs=H.insert k BottomType (ptArgs p1)}
+              | H.member k (ptArgs p1) = Just $ canonicalArgOpt typeEnv p1{ptArgs=H.insert k BottomType (ptArgs p1)}
               | ptArgUb (ptArgMode p1) = Nothing
-              | otherwise = Just $ withOptionalArgs (S.insert k (ptArgOpt (ptArgMode p1))) p1{ptArgs=H.insert k BottomType (ptArgs p1)}
+              | otherwise = Just $ withOptionalArgs typeEnv (S.insert k (ptArgOpt (ptArgMode p1))) p1{ptArgs=H.insert k BottomType (ptArgs p1)}
 
 -- | The pos instances escaping neg on some per-arg\/var type — @p1 − p2@ as a union of pieces, one
 -- per position of @p2@ that a value of @p1@ can leave (see 'differencePartialLeafs', which spells the
@@ -9070,7 +9100,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
 -- element excludes nothing; a neg arg that pos does not constrain is skipped.
 partialEscapes :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> [PartialType]
 partialEscapes typeEnv vaenv p1 p2Spelled@PartialType{ptVars=negVars} =
-  mapMaybe (\a@(k, _) -> requireArg k <$> subtractArg a) (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
+  mapMaybe (\a@(k, _) -> requireArg typeEnv k <$> subtractArg a) (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
   where
     -- A parameter tied to several positions ('paramSharedByPositions') subtracts through
     -- those positions, not as a coordinate: the neg excludes the values whose every position

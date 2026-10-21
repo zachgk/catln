@@ -1935,6 +1935,34 @@ unitFunctionParamFromArgs = do
       note $ printf "%s world: %s -> %s" (world :: String) n (show ok)
     assertTimed (world ++ " world: every check") $ all snd checks
 
+-- | An interval of a data type's arg-sets lower-bounded by a set operation keeps the declared
+-- fields it does not list free: @Cons(head=⊤)..??@ less @Cons(head=K)..??@ is the @Cons@ values with
+-- a @head@ outside @K@, the partial application @Cons(head=Integer)@ among them. Spelled
+-- @Cons(head=⊤−K)..@ it read as a spread, whose floor requires the declared @tail@, and so lost
+-- every partial application ('intervalLowerBound') — @a ∩ b@ and @a − (a − b)@ then differed
+-- ('propIntersectByDifference', seed @99:cA9fGa Seed 18243602495265778535 13151702580100233171@).
+unitIntervalLowerBoundKeepsFloorFree :: IO Prgms -> Unit ()
+unitIntervalLowerBoundKeepsFloorFree ioPrgms = do
+  prgms <- liftIO ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "recursiveClassBounds.ct program not found"
+  let typeEnv = mkTypeEnv prgm
+      v n = singletonType (partialVal n)
+      cons args mode = singletonType (partialVal "/Cons"){ptArgs = H.fromList [(partialKey k, t) | (k, t) <- args], ptArgMode = mode}
+      noCore = v "/#noCore"
+      a = cons [("/head", PTopType)] PtArgUnbounded
+      b = cons [("/head", noCore)] PtArgUnbounded
+      ab = intersectTypes typeEnv a b
+      aLessB = differenceTypeEnv typeEnv a b
+      headOutside = cons [("/head", v "/Integer")] PtArgExact
+      headInside = cons [("/head", noCore)] PtArgExact
+  note $ printf "a ∩ b = %s" (show ab)
+  note $ printf "a − b = %s" (show aLessB)
+  assertTimed "Cons(head=Integer) ⊆ a − b" $ isSubtypeOf typeEnv headOutside aLessB
+  assertTimed "Cons(head=K) ⊆ a ∩ b" $ isSubtypeOf typeEnv headInside ab
+  assertTimed "a ∩ b = a − (a − b)" $ isEqType typeEnv ab (differenceTypeEnv typeEnv a aLessB)
+
 -- | A lower-bounded partial meets one typing an arg it need not have, and the meet keeps the
 -- lower bound with that arg optional ('PtArgMode'): @F(value=V, io=IO)..@ meeting
 -- @F(value=⊤, counter=Counter, io=⊤)..??@ is @F(value=V, counter?=Counter, io=IO)..@. Without an
@@ -2010,6 +2038,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , unitCase "unitOuterVarNotCaptured" unitOuterVarNotCaptured
       , unitCase "unitCoverDerivedParam" unitCoverDerivedParam
       , unitCase "unitOptionalArgMeet" unitOptionalArgMeet
+      , unitCase "unitIntervalLowerBoundKeepsFloorFree" (unitIntervalLowerBoundKeepsFloorFree ioPrgms)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (p $ propOwnVarBindingRespected ioPrgms)
