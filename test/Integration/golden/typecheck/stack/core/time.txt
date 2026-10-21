@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Data/Time/partsOf"
@@ -2359,6 +2359,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg =
         [ CGType

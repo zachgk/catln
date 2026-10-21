@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/ContextIn"
@@ -29,6 +29,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg =
         [ CGType

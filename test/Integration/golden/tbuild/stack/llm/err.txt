@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Llm/LlmErr/ApiError"
@@ -327,6 +327,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg =
         [ CGType

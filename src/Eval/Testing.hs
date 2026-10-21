@@ -234,7 +234,7 @@ evaluableClause oa = case oaArr oa of
 -- among the rest — which is how one clause of several is evaluated in isolation. Removing (rather
 -- than keeping only one) preserves a runtime-primitive sibling, which has no body to keep.
 envWithoutClauses :: EPrgm -> TypeName -> [EObjArr] -> Env
-envWithoutClauses prgm@(Prgm (ObjectMap om) _ _) name dropOas = evalEnv defaultEvalSession prgm{prgmObjMap = ObjectMap (H.adjust without name om)}
+envWithoutClauses prgm@(Prgm objMap@(ObjectMap om) _ _) name dropOas = evalEnv defaultEvalSession prgm{prgmObjMap = objMap{omItems = H.adjust without name om}}
   where
     without o = o{ omiDefs = filter (`notElem` dropOas) (omiDefs o)
                  , omiRuntimeDecls = filter (`notElem` dropOas) (omiRuntimeDecls o) }

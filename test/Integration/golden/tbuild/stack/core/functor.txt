@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Data/Functor/testFunctorComposition"
@@ -70,6 +70,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg =
         [ CGType

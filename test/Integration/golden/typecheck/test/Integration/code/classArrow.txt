@@ -1,0 +1,208 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/P"
+                , ObjectMapItem
+                    { omiDecls = [ Value /P ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /P -> /T( /v=/Yes ) = /T( Value /v -> /Yes = Value /Yes ) ]
+                    }
+                )
+            ,
+                ( "/No"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /No
+                        , Value /No
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/T"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /T( Value /v -> /Yes ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /pick( Value /b -> ∀/YN ) -> ∀/S ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /pick( Value /b -> /Yes = Value /Yes ) ->
+                            ( /P + /T( /v=/Yes ) ) = Value /P
+                        , /pick( Value /b -> /No = Value /No ) -> /T( /v=/Yes ) = /T( Value /v -> /Yes = Value /Yes )
+                        ]
+                    }
+                )
+            ,
+                ( "/g"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /g( Value /s -> ∀/S ) -> /Yes ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /g( Value /s -> ∀/S ) -> /Yes = /f( Value /x -> TVArg /s = Value /s ) ]
+                    }
+                )
+            ,
+                ( "/Yes"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Yes
+                        , Value /Yes
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/checkPick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /checkPick( Value /b -> ∀/YN ) -> /Yes ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /checkPick( Value /b -> ∀/YN ) -> /Yes = /f
+                            ( Value /x -> /T( /v=/Yes ) = /pick( Value /b -> TVArg /b = Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/checkP"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkP ->
+                            ( /Yes + /f
+                                ( /x=/T( /v=/Yes ) )
+                            ) = /f
+                            ( Value /x -> /T( /v=/Yes ) = Value /P )
+                        ]
+                    }
+                )
+            ,
+                ( "/checkG"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkG ->
+                            ( /g
+                                ( /s=/T( /v=/Yes ) ) + /Yes + /f
+                                ( /x=/T( /v=/Yes ) )
+                            ) = /g
+                            ( Value /s -> /T( /v=/Yes ) = Value /P )
+                        ]
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /f( Value /x -> ∀/S ) -> /Yes ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f
+                            ( Value /x -> /T( /v=/Yes ) = /T( Value /v -> /Yes ) ) -> /Yes = Value /v
+                        ]
+                    }
+                )
+            ,
+                ( "/checkT"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkT ->
+                            ( /Yes + /f
+                                ( /x=/T( /v=/Yes ) )
+                            ) = /f
+                            ( Value /x -> /T( /v=/Yes ) = /T( Value /v -> /Yes = Value /Yes ) )
+                        ]
+                    }
+                )
+            ]
+        , omDecls =
+            [ Hole ∀/S HoleActive { haName = Nothing } -> /T.. ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /S
+            , cgcExtends =
+                [ /T..
+                , /P
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /YN
+            , cgcExtends =
+                [ /Yes
+                , /No
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "An arrow written from a class.
+                `(_ -> S) -> T..` says every member of the open class [S] converts to a [T]: [T] is in [S] already, and
+                [P] converts by its own arrow. So a function over [S] may be written for a [T] alone, and a [P]
+                given to it converts first. That is what lets a class hold several representations of one thing
+                and define what it does on one of them.
+                [checkP] is the conversion at a call, [g] a definition passing on what it was given, and
+                [checkPick] a value only known to be an [S] until it is computed. Written without the core
+                library, so that when a compiler change breaks it there are a few lines to read rather than a
+                standard library. `classArrowRun.ct` runs the same shapes." }
+            )
+        ]
+    }

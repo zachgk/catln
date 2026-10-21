@@ -1,0 +1,37 @@
+import "core"
+
+
+# `classArrow.ct` run, rather than only built.
+  A built conversion shows as its source and its destination, so a golden cannot tell a conversion
+  that fires from one that never does. Each value here is read by an arm that only takes a
+  [ReprT], and the field it answers with says which value arrived: a [ReprP] arriving unconverted
+  finds no arm, and one converted answers 1.
+class(ReprS)
+
+data(ReprT(v -> /Data/Primitive/Integer))
+data(ReprP)
+
+every(ReprT.., isa= [/ReprS])
+every(ReprP, isa= [/ReprS])
+
+(_ -> ReprS) -> ReprT..
+
+ReprP= ReprT(v= 1)
+
+field(x -> ReprS) -> /Data/Primitive/Integer
+field(x= ReprT(v))= v
+
+passOn(s -> ReprS) -> /Data/Primitive/Integer
+passOn(s)= field(x= s)
+
+pick(b -> /Data/Primitive/Boolean) -> ReprS
+pick(b= True)= ReprP
+pick(b= False)= ReprT(v= 2)
+
+main{io -> IO} -> (){IO} =
+  #assert(test= field(x= ReprT(v= 3)) == 3)
+  #assert(test= field(x= ReprP) == 1)
+  #assert(test= passOn(s= ReprP) == 1)
+  #assert(test= field(x= pick(b= True)) == 1)
+  #assert(test= field(x= pick(b= False)) == 2)
+  ()

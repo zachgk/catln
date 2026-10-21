@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  CtRef
@@ -21,9 +22,9 @@ import qualified Data.HashMap.Strict     as H
 import           Data.List               (groupBy, sortOn)
 import           Data.Maybe              (catMaybes, mapMaybe)
 import           MapMeta                 (mapMetaObjArrM)
-import           Semantics.Prgm          (ObjectMap (ObjectMap), exprPath,
-                                          flatObjectMapItem, getMetaPos,
-                                          getOaAnnots, oaBasis, prgmObjMap,
+import           Semantics.Prgm          (exprPath, flatObjectMapItem,
+                                          getMetaPos, getOaAnnots, oaBasis,
+                                          pattern ObjectMap, prgmObjMap,
                                           showCodeRange)
 import           Semantics.Types         (NPath (npathPath), getPath, mkName,
                                           nameStr, relativeNameMatches)

@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Catln/BuildFile"
@@ -15,6 +15,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg = [ CGType ]
     , prgmAnnots =

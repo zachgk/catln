@@ -1,0 +1,156 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/passOn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /passOn
+                            ( EAppArg { eaaArg = Value /s -> ∀/ReprS } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /passOn
+                            ( EAppArg { eaaArg = Value /s -> ∀/ReprS } ) -> /Data/Primitive/Integer =
+                            ( /field
+                                ( EAppArg
+                                    { eaaArg = Value /x -> TVArg /s = ( Value /s ↦ TVArg /s ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/field"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /field
+                            ( EAppArg { eaaArg = Value /x -> ∀/ReprS } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /field
+                            ( EAppArg
+                                { eaaArg = Value /x -> /ReprT( /v=/Data/Primitive/Integer ) = /ReprT
+                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /v ↦ /Data/Primitive/Integer )
+                        ]
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /pick
+                            ( EAppArg { eaaArg = Value /b -> ∀/Data/Primitive/Boolean } ) -> ∀/ReprS
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /pick
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/True = Value /Data/Primitive/True } ) ->
+                            ( /ReprP + /ReprT( /v=/Data/Primitive/Integer ) ) = Value /ReprP
+                        , /pick
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/False = Value /Data/Primitive/False } ) -> /ReprT( /v=/Data/Primitive/Integer ) = /ReprT
+                            ( EAppArg
+                                { eaaArg = Value /v -> /Data/Primitive/Integer = 2 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ReprP"
+                , ObjectMapItem
+                    { omiDecls = [ Value /ReprP ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /ReprP -> /ReprT( /v=/Data/Primitive/Integer ) = /ReprT
+                            ( EAppArg
+                                { eaaArg = Value /v -> /Data/Primitive/Integer = 1 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ReprT"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ReprT
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        , omDecls =
+            [ Hole ∀/ReprS HoleActive { haName = Nothing } -> /ReprT.. ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /ReprS
+            , cgcExtends =
+                [ /ReprT..
+                , /ReprP
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "`classArrow.ct` run, rather than only built.
+                  A built conversion shows as its source and its destination, so a golden cannot tell a conversion
+                  that fires from one that never does. Each value here is read by an arm that only takes a
+                  [ReprT], and the field it answers with says which value arrived: a [ReprP] arriving unconverted
+                  finds no arm, and one converted answers 1."
+                }
+            )
+        ]
+    }

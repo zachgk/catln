@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Data/RSS/Item"
@@ -116,6 +116,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg = [ CGType ]
     , prgmAnnots =

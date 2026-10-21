@@ -114,8 +114,10 @@ module(Test)
       and [annots] is what is written on the program itself.
   declCount(p= /Catln/Prgm(objMap, cg, annots))= mapSize(m= objMap)
 
-  mapSize(m -> /Catln/ObjectMap(items)) -> Integer
-  mapSize(m= /Catln/ObjectMap(items))= items.length
+  mapSize(m -> /Catln/ObjectMap(items, decls)) -> Integer
+    # [mapSize] counts the names in [items]. The [decls] written from a set of objects are under no
+      name, so they are not among them.
+  mapSize(m= /Catln/ObjectMap(items, decls))= items.length
 
   # ## Being given a real program
     Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
@@ -148,7 +150,7 @@ main{io -> IO} -> (){IO} =
   _<- println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString)
   _<- println(msg= exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo")))
   _<- println(msg= valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo")))
-  _<- println(msg= declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= [])).toString)
+  _<- println(msg= declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= [], decls= []), cg= [], annots= [])).toString)
   _<- println(msg= ownDeclCount(name= "/Test/intOf").toString)
   _<- exit(val= 0)
   ()

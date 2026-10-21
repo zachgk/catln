@@ -258,15 +258,42 @@ data ObjectMapItem e m = ObjectMapItem {
   omiDefs         :: [ObjArr e m]
                             }
   deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
-newtype ObjectMap e m = ObjectMap { omItems :: H.HashMap TypeName (ObjectMapItem e m) }
+-- | Everything a program declares and defines.
+--
+-- 'omItems' holds the arrows whose input can be represented by a 'PartialType': an object, which is
+-- a name and the arguments it takes. That representation is what the rest of the compiler is built
+-- around, and keeping them in a map by the type name of their input is what lets a call find the
+-- arrows it may take by looking up its own name rather than asking every arrow of the program.
+--
+-- 'omDecls' holds the declarations whose input can not: one written from every object matching a
+-- predicate rather than from an object. An arrow from a class (@(_ -> String) -> String\/Text..@)
+-- is written from every member of the class, which is no one name to keep it under, and it is not an
+-- object of its own that a value could be. It holds declarations only for now; definitions written
+-- the same way will likely need to be kept here too.
+data ObjectMap e m = ObjectMapWith {
+  omItems :: H.HashMap TypeName (ObjectMapItem e m),
+  omDecls :: [ObjArr e m]
+  }
   deriving (Eq, Show, Generic, ToJSON, ToJSONKey)
+
+-- | An object map read as its items alone. Only a match: building one from items alone would leave
+-- out its 'omDecls', which a map rebuilt from another's items must not lose without saying so, so a
+-- map is built with 'ObjectMapWith' or 'objectMapItems'.
+pattern ObjectMap :: H.HashMap TypeName (ObjectMapItem e m) -> ObjectMap e m
+pattern ObjectMap items <- ObjectMapWith items _
+{-# COMPLETE ObjectMap #-}
+
+-- | An object map of items alone, with no declaration written from a set of objects.
+objectMapItems :: H.HashMap TypeName (ObjectMapItem e m) -> ObjectMap e m
+objectMapItems items = ObjectMapWith items []
 
 -- | Everything a program declares and defines, read as a Catln type: each name, and what is written
 -- under it.
 instance CtType (ObjectMap Expr ()) where
   ctDoc _ = [
     "Everything a program declares and defines, by the name each is written under.",
-    "Handed over as a list of pairs, in order of name, so that two programs holding the same definitions are handed over the same way however they were built."
+    "Handed over as a list of pairs, in order of name, so that two programs holding the same definitions are handed over the same way however they were built.",
+    "[items] are what is written from an object, under the object's name. [decls] are the declarations written from a set of objects instead, such as an arrow from a class, which no one name stands for."
             ]
 
 -- | What is written under one name, read as a Catln type.
@@ -384,12 +411,12 @@ instance Monoid (ObjectMapItem e m) where
   mempty = ObjectMapItem [] [] [] []
 
 instance Semigroup (ObjectMap e m) where
-  (ObjectMap map1) <> (ObjectMap map2) = ObjectMap $ H.unionWith merge map1 map2
+  (ObjectMapWith map1 decls1) <> (ObjectMapWith map2 decls2) = ObjectMapWith (H.unionWith merge map1 map2) (decls1 ++ decls2)
     where
       merge (ObjectMapItem decl1 runtimeDecl1 refineDecl1 def1) (ObjectMapItem decl2 runtimeDecl2 refineDecl2 def2) = ObjectMapItem (decl1 ++ decl2) (runtimeDecl1 ++ runtimeDecl2) (refineDecl1 ++ refineDecl2) (def1 ++ def2)
 
 instance Monoid (ObjectMap e m) where
-  mempty = ObjectMap H.empty
+  mempty = ObjectMapWith H.empty []
 
 instance Semigroup (Prgm e m) where
   (<>) :: Prgm e m -> Prgm e m -> Prgm e m
@@ -909,13 +936,20 @@ varNamesWithPrefix :: Name -> [Name]
 varNamesWithPrefix n = [n, makeAbsoluteName (mkName ('$' : tail (nameStr n)))]
 
 nullObjectMap :: ObjectMap e m -> Bool
-nullObjectMap (ObjectMap objMap) = H.null objMap
+nullObjectMap (ObjectMapWith objMap decls) = H.null objMap && Prelude.null decls
 
 flatObjectMapItem :: ObjectMapItem e m -> [ObjArr e m]
 flatObjectMapItem (ObjectMapItem decls runtimeDecls refineDecls defs) = decls ++ runtimeDecls ++ refineDecls ++ defs
 
+-- | The arrows of a map's items: everything written from an object. The declarations written from
+-- a set of objects ('omDecls') are not among them; 'allObjArrs' is both.
 flatObjectMap :: ObjectMap e m -> [ObjArr e m]
 flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
+
+-- | Every arrow of a map: its items' ('flatObjectMap') and its declarations written from a set of
+-- objects ('omDecls').
+allObjArrs :: ObjectMap e m -> [ObjArr e m]
+allObjArrs om = flatObjectMap om ++ omDecls om
 
 -- | The arrows of an item that say which objects exist: all of them but its refinement
 -- declarations. A refinement claims a narrower result for inputs its declarations already admit
@@ -990,7 +1024,8 @@ oaPrecedenceName oa
   | otherwise = makeAbsoluteName (oaObjPath oa)
 
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
-singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
+singletonObjectMap oa@ObjArr{oaObj=Just obj} | isNothing (maybeExprPath obj) = ObjectMapWith H.empty [oa] -- written from a set of objects ('omDecls')
+singletonObjectMap oa = objectMapItems $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where
     isRefine = oaHasAnnotRel refineAnnot oa
     isRuntime = oaHasAnnotRel runtimeAnnot oa
@@ -1006,7 +1041,7 @@ objectMapFromList :: (ExprClass e, MetaDat m, Show (e m), Show m) => [ObjArr e m
 objectMapFromList objMap = mconcat $ map singletonObjectMap objMap
 
 mapMObjectMap :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMap e meta1 -> m (ObjectMap e meta2)
-mapMObjectMap f (ObjectMap objMap) = ObjectMap <$> mapM (mapMOMI f) objMap
+mapMObjectMap f (ObjectMapWith objMap setDecls) = ObjectMapWith <$> mapM (mapMOMI f) objMap <*> mapM f setDecls
   where
     mapMOMI :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMapItem e meta1 -> m (ObjectMapItem e meta2)
     mapMOMI f2 (ObjectMapItem decls runtimeDecls refineDecls defs) = do
@@ -1018,7 +1053,7 @@ mapMObjectMap f (ObjectMap objMap) = ObjectMap <$> mapM (mapMOMI f) objMap
 
 
 filterObjectMap :: (ObjArr e m -> Bool) -> ObjectMap e m -> ObjectMap e m
-filterObjectMap f (ObjectMap objMap) = ObjectMap $ H.mapMaybe f' objMap
+filterObjectMap f (ObjectMapWith objMap setDecls) = ObjectMapWith (H.mapMaybe f' objMap) (filter f setDecls)
   where
     f' (ObjectMapItem decls runtimeDecls refineDecls defs) = case (filter f decls, filter f runtimeDecls, filter f refineDecls, filter f defs) of
       ([], [], [], [])                                -> Nothing

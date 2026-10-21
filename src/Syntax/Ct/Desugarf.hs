@@ -97,9 +97,12 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just objE} = oa{oaObj=J
 
     -- Inherit the path in main object name. If main is a context, instead inherit in the context function as well
     updateExprPath = mapExprPath (\(eM, eN) -> Value eM (mkName (show $ relPathAddPrefix inheritPath (getPath (nameStr eN)))))
-    objExpr4 = case nameStr (oaObjPath oa) of
-      ContextInStr -> mapExprAppliedArg updateExprPath (partialKey (mkName contextValStr)) objExpr3
-      _          -> updateExprPath objExpr3
+    -- An object written from a set of objects has no name to place ('setDeclObject').
+    objExpr4 = case maybeExprPath objExpr3 of
+      Nothing -> objExpr3
+      Just _ -> case nameStr (oaObjPath oa) of
+        ContextInStr -> mapExprAppliedArg updateExprPath (partialKey (mkName contextValStr)) objExpr3
+        _          -> updateExprPath objExpr3
 desObj _ _ _ oa = error $ printf "Unexpected desObj with no input exrpression: %s" (show oa)
 
 semiDesObjArr :: PObjArr -> PSObjArr
@@ -129,11 +132,18 @@ declToObjArrow (inheritPath, inheritAnnots) oa@ObjArr{oaAnnots, oaArr} = oa3
       }
 
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
--- A declaration declares something named. A statement that is only a constant (a string written
+-- A declaration written from every value of a type rather than from an object, as
+-- @(_ -> String) -> String\/Text..@ is: the anonymous tuple of one unnamed argument of the type, read
+-- as the argument it holds. Its object is then the type's values ('setDeclObject'), which no name
+-- stands for, and it is kept among the declarations written from a set of objects ('omDecls').
+desDecl statementEnv decl@RawObjArr{roaObj=Just obj, roaArr=Just (Nothing, _)} subStatements
+  | Just setObj <- setDeclObject obj = desDecl statementEnv decl{roaObj=Just setObj} subStatements
+-- A declaration declares something named. A declaration written from a set of objects is the one
+-- exception, and is read above. A statement that is only a constant (a string written
 -- alone on a line) names nothing, so it is refused as written rather than carried on until a later
 -- pass asks it for the name it does not have.
 desDecl _ RawObjArr{roaObj=Just obj} _
-  | isNothing (maybeExprPath obj) =
+  | isNothing (maybeExprPath obj), not (isSetDeclObject obj) =
       CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta obj) "A statement must declare or define something named. It is only a value, so it says nothing about any name."]
 desDecl statementEnv decl subStatements = do
   -- A condition refining a type names its arguments ('rawTypeCondPositional'); one that does not
@@ -161,6 +171,20 @@ desDecl statementEnv decl subStatements = do
         RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements'
         RawApplyStatement{} -> error "Not yet implemented"
         RawModule name -> desInheritingSubstatements statementEnv (getPath $ nameStr $ makeAbsoluteName (mkName name)) subStatements'
+
+-- | The object of a declaration written from every value of a type: @(_ -> String)@, the anonymous
+-- tuple of one unnamed argument, read as the argument it holds — a hole whose type is the type
+-- written. Anything else is not one.
+setDeclObject :: PExpr -> Maybe PExpr
+setDeclObject (RawTupleApply _ (_, RawValue _ n) [(False, RawObjArr{roaObj=Just (RawHoleExpr _ h), roaArr=Just (Nothing, Just setExpr)})])
+  | nameStr n == anonStr = Just $ RawHoleExpr (exprToTypeMeta H.empty setExpr) h
+setDeclObject _ = Nothing
+
+-- | Whether an object is what 'setDeclObject' reads one as: a hole, standing for the values of its
+-- type.
+isSetDeclObject :: PExpr -> Bool
+isSetDeclObject RawHoleExpr{} = True
+isSetDeclObject _             = False
 
 -- | Desugars statements that inherit a path from a main statement
 desInheritingSubstatements :: StatementEnv -> NPath -> [PStatementTree] -> CRes DesPrgm

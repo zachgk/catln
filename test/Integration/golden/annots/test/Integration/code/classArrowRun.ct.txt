@@ -1,0 +1,10 @@
+[
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "`classArrow.ct` run, rather than only built.
+        A built conversion shows as its source and its destination, so a golden cannot tell a conversion
+        that fires from one that never does. Each value here is read by an arm that only takes a
+        [ReprT], and the field it answers with says which value arrived: a [ReprP] arriving unconverted
+        finds no arm, and one converted answers 1." )
+    )
+]

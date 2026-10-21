@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/double"
@@ -25,6 +25,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg = [ CGType ]
     , prgmAnnots =

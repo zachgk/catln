@@ -75,9 +75,10 @@ data(/Catln/Unit)
 data(/Catln/Prgm(objMap -> /Catln/ObjectMap.., cg -> /Data/List..[$T -> /Catln/Triple..[$A -> /Catln/CGNode.., $B -> /Catln/PartialName.., $C -> /Data/List..[$T -> /Catln/PartialName..]]], annots -> /Data/List..[$T -> /Catln/Expr..]))
   # A whole program: everything it declares and defines ([objMap]), how its classes and types relate ([cg]), and the annotations written on the program itself ([annots]).
   # This is what a program reading a program is given. It is the program at whichever stage it was asked for, narrowed to the metadata every stage shares, so what is read is the same shape whichever stage it came from.
-data(/Catln/ObjectMap(items -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Catln/ObjectMapItem..]]))
+data(/Catln/ObjectMap(items -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Catln/ObjectMapItem..]], decls -> /Data/List..[$T -> /Catln/ObjArr..]))
   # Everything a program declares and defines, by the name each is written under.
   # Handed over as a list of pairs, in order of name, so that two programs holding the same definitions are handed over the same way however they were built.
+  # [items] are what is written from an object, under the object's name. [decls] are the declarations written from a set of objects instead, such as an arrow from a class, which no one name stands for.
 data(/Catln/ObjectMapItem(decls -> /Data/List..[$T -> /Catln/ObjArr..], runtimeDecls -> /Data/List..[$T -> /Catln/ObjArr..], refineDecls -> /Data/List..[$T -> /Catln/ObjArr..], defs -> /Data/List..[$T -> /Catln/ObjArr..]))
   # Everything written under one name: its [decls], the [runtimeDecls] the compiler supplies rather than the program, the [refineDecls] narrowing what a definition returns, and the [defs] themselves.
   # A declaration says what may be called and a definition says what happens when it is. A name may have several of each, which is how one operation is written once and implemented per type.

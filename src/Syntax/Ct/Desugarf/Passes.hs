@@ -41,7 +41,9 @@ removeClassInstanceObjects fullPrgm (Prgm objMap (ClassGraph cg) annots) = Prgm 
     notMatchesClassName n = null $ relativeNameFilter n classNames
 
     classGraph' = ClassGraph $ graphFromEdges $ filter classEntryMatches $ graphToNodes cg
-    objMap' = objectMapFromList $ filter (notMatchesClassName . oaObjPath) $ flatObjectMap objMap
+    -- Only the items are objects matching a class: the declarations written from a set of objects
+    -- ('omDecls') are kept as they are.
+    objMap' = (objectMapFromList $ filter (notMatchesClassName . oaObjPath) $ flatObjectMap objMap){omDecls = omDecls objMap}
 
     classEntryMatches (CGType, PRelativeName n, _) = notMatchesClassName n
     classEntryMatches _                            = True
@@ -219,7 +221,7 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
 -- which the algebra cannot read (propDifferenceByIntersection, 6415: Seed 6239727124165917557
 -- 9825796995401062037). Such a receiver keeps the bare class, whose parameter is unconstrained.
 linkClassMethodReceivers :: DesPrgm -> DesPrgm -> DesPrgm
-linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap) classGraph annots) = Prgm (ObjectMap objMap') classGraph annots
+linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm om@(ObjectMap objMap) classGraph annots) = Prgm om{omItems = objMap'} classGraph annots
   where
     -- Map each ObjArr in place, preserving the decl/def categorization of the object map.
     objMap' = H.map enrichItem objMap
@@ -274,8 +276,8 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
 -- A definition with its own authored return annotation is left untouched, and multiple
 -- declarations contribute the union of their returns (the body's own arrow narrows it further).
 seedDefResultTypes :: DesPrgm -> DesPrgm -> DesPrgm
-seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
-    Prgm (ObjectMap objMap') classGraph annots
+seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm om@(ObjectMap objMap) classGraph annots) =
+    Prgm om{omItems = objMap'} classGraph annots
   where
     typeEnv = mkTypeEnv fullPrgm
     objMap' = H.mapWithKey seedItem objMap
@@ -313,8 +315,8 @@ seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap o
 -- check holds the definitions to it: without this pass core fails with "Unfulfilled Declaration
 -- for /Data/toStringBase.digitsOnto" (declared @base=⊤@, defined @base=Integer@).
 seedCapturedArgTypes :: DesPrgm -> DesPrgm -> DesPrgm
-seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
-    Prgm (ObjectMap objMap') classGraph annots
+seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm om@(ObjectMap objMap) classGraph annots) =
+    Prgm om{omItems = objMap'} classGraph annots
   where
     typeEnv = mkTypeEnv fullPrgm
     declArg name k = case [ t
@@ -400,8 +402,8 @@ seedCapturedArgTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap
 -- operators defined in a foreign module (e.g. @mempty -> Integer@, @_ ++ _@) keep their existing
 -- names, since they do not require per-receiver coverage and are dispatched by other means.
 reassignImportedMethodDefs :: DesPrgm -> DesPrgm -> DesPrgm
-reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
-    Prgm (ObjectMap objMap') classGraph annots
+reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm om@(ObjectMap objMap) classGraph annots) =
+    Prgm om{omItems = objMap'} classGraph annots
   where
     -- Names that carry a declaration (or runtime declaration) somewhere in the full program.
     declaredNames = [k | (k, ObjectMapItem ds rs _ _) <- H.toList fullObjMap, not (null ds) || not (null rs)]
@@ -471,8 +473,8 @@ reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap ob
 -- epochs ('dropOutOfScopeTVExt' documents it), and the reason the ambient scope rules had to keep
 -- rescuing an untagged reference by name.
 classifyParentVarRefs :: DesPrgm -> DesPrgm
-classifyParentVarRefs (Prgm (ObjectMap objMap) (ClassGraph classGraph) annots) =
-  Prgm (ObjectMap objMap') (ClassGraph (fmapGraph classifyNode classGraph)) annots
+classifyParentVarRefs (Prgm om@(ObjectMap objMap) (ClassGraph classGraph) annots) =
+  Prgm om{omItems = objMap'} (ClassGraph (fmapGraph classifyNode classGraph)) annots
   where
     objMap' = H.map classifyItem objMap
     classifyItem (ObjectMapItem ds rs rfs defs) =

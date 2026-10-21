@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  TypeCheck.Constrain
@@ -12,7 +13,7 @@
 -- the variables converge. It tries to execute each constraint
 -- and then determines if it is changing the variable.
 --------------------------------------------------------------------
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns  #-}
 
 module TypeCheck.Constrain where
 
@@ -29,10 +30,10 @@ import           Semantics                  (ObjArrTypeGraph (..),
                                              stampQueryToken)
 import           Semantics.Prgm             (Meta (..), ObjArr (..),
                                              ObjectBasis (ArgObj),
-                                             ObjectMap (..), ObjectMapItem (..),
+                                             ObjectMapItem (..),
                                              exprAppliedArgs, exprVarArgs,
                                              getExprMeta, inExprSingleton,
-                                             oaObjExpr)
+                                             oaObjExpr, pattern ObjectMap)
 import           Semantics.TypeGraph        (ReachesEnv (..),
                                              typeGuaranteedWithin)
 import           Semantics.Types

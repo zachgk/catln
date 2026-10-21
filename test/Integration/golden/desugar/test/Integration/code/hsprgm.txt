@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Test/valueName"
@@ -146,7 +146,7 @@ Prgm
                                     ( Value msg= toString
                                         ( Value /this= declCount
                                             ( Value p= /Catln/Prgm
-                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
+                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil )( Value decls= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
                                             )
                                         )
                                     )
@@ -156,9 +156,8 @@ Prgm
                                     ( ..Value $40b2f3-ctx )
                                 )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81
-                                ( Value $11ae81-arg= Value v )
-                                ( Value $11ae81-states= /
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a( Value $ad597a-arg= Value v )
+                                ( Value $ad597a-states= /
                                     ( ..Value $40b2f3-states )
                                     ( ..Value $40b2f3-ctx )
                                 )
@@ -362,25 +361,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d.$620336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d.$620336
-                            ( Value $620336-arg= /Context( Value value )
-                                ( Value ctx@Value $620336-ctx )
-                            )
-                            ( Value $620336-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $620336-states )
-                                ( ..Value $620336-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/exprKind"
                 , ObjectMapItem
                     { omiDecls =
@@ -455,6 +435,25 @@ Prgm
                                     ( ..Value $974bb3-states )
                                     ( ..Value $974bb3-ctx )
                                 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d.$620336"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d.$620336
+                            ( Value $620336-arg= /Context( Value value )
+                                ( Value ctx@Value $620336-ctx )
+                            )
+                            ( Value $620336-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $620336-states )
+                                ( ..Value $620336-ctx )
                             )
                         ]
                     }
@@ -677,13 +676,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Test/mapSize
-                            ( Value m -> /Catln/ObjectMap( /items=TopType ) ) -> /Data/Primitive/Integer
+                            ( Value m -> /Catln/ObjectMap
+                                ( /items=TopType
+                                , /decls=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/mapSize
-                            ( Value m= /Catln/ObjectMap( Value items ) ) -> /Data/Primitive/Integer = length( Value /this= Value items )
+                            ( Value m= /Catln/ObjectMap( Value items )( Value decls ) ) -> /Data/Primitive/Integer = length( Value /this= Value items )
                         ]
                     }
                 )
@@ -707,34 +710,29 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d"
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d
-                            ( Value $83078d-arg= /Context( Value value )
-                                ( Value ctx@Value $83078d-ctx )
-                            )
-                            ( Value $83078d-states )= /Data/bindap
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a
+                            ( Value $ad597a-arg= /Context( Value value )( Value ctx@Value $ad597a-ctx ) )( Value $ad597a-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= exit
-                                    ( Value val= CInt
-                                        { ciValue = 0 }
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= ownDeclCount
+                                            ( Value name= CStr
+                                                { csValue = "/Test/intOf" }
+                                            )
+                                        )
                                     )
                                 )
-                                ( Value ctx= /
-                                    ( ..Value $83078d-states )
-                                    ( ..Value $83078d-ctx )
-                                )
+                                ( Value ctx= /( ..Value $ad597a-states )( ..Value $ad597a-ctx ) )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d.$620336
-                                ( Value $620336-arg= Value v )
-                                ( Value $620336-states= /
-                                    ( ..Value $83078d-states )
-                                    ( ..Value $83078d-ctx )
-                                )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d
+                                ( Value $83078d-arg= Value v )
+                                ( Value $83078d-states= /( ..Value $ad597a-states )( ..Value $ad597a-ctx ) )
                             )
                         ]
                     }
@@ -762,37 +760,33 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81"
+                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81
-                            ( Value $11ae81-arg= /Context( Value value )
-                                ( Value ctx@Value $11ae81-ctx )
+                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d
+                            ( Value $83078d-arg= /Context( Value value )
+                                ( Value ctx@Value $83078d-ctx )
                             )
-                            ( Value $11ae81-states )= /Data/bindap
+                            ( Value $83078d-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= ownDeclCount
-                                            ( Value name= CStr
-                                                { csValue = "/Test/intOf" }
-                                            )
-                                        )
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
                                     )
                                 )
                                 ( Value ctx= /
-                                    ( ..Value $11ae81-states )
-                                    ( ..Value $11ae81-ctx )
+                                    ( ..Value $83078d-states )
+                                    ( ..Value $83078d-ctx )
                                 )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$11ae81.$83078d
-                                ( Value $83078d-arg= Value v )
-                                ( Value $83078d-states= /
-                                    ( ..Value $11ae81-states )
-                                    ( ..Value $11ae81-ctx )
+                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d.$620336
+                                ( Value $620336-arg= Value v )
+                                ( Value $620336-states= /
+                                    ( ..Value $83078d-states )
+                                    ( ..Value $83078d-ctx )
                                 )
                             )
                         ]
@@ -841,6 +835,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg =
         [ CGType

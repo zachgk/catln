@@ -41,6 +41,29 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
   deriving (Eq, Show)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
+
+-- | The arrows written from classes (@(_ -> String) -> String\/Text..@) a type graph holds, among its
+-- declarations written from a set of objects ('omDecls'): each as the class, which is the type of
+-- every member of it, and what every member converts to.
+classArrowsOf :: (ExprClass e) => TypeEnv (ObjArrTypeGraph e m) -> [(Type, Type)]
+classArrowsOf TypeEnv{teTypeGraph=ObjArrTypeGraph om} =
+  [ (getMetaType (getExprMeta obj), getMetaType m)
+  | ObjArr{oaObj=Just obj, oaArr=Just (_, m)} <- omDecls om ]
+
+-- | A definition's input as what it takes once the class arrows have converted what they convert.
+--
+-- An argument slot accepting the whole of what an arrow written from a class converts to accepts the
+-- whole class: every member converts there first, which the class arrow promises
+-- ('TypeCheck.Decode.verifyClassArrows'). So @f(x= String\/Text(chars))@ takes every @String@ by
+-- @(_ -> String) -> String\/Text..@. Only the definition's own arguments widen, as only an argument is
+-- converted on the way into a call; a value held in one of their fields is taken as it is.
+widenByClassArrows :: (TypeGraph tg) => TypeEnv tg -> [(Type, Type)] -> Type -> Type
+widenByClassArrows _ [] t = t
+widenByClassArrows typeEnv arrows (UnionType mTop leafs consts) = UnionType mTop (joinUnionType (map widenLeaf (splitUnionType leafs))) consts
+  where
+    widenLeaf p@PartialType{ptArgs} = p{ptArgs = fmap widenSlot ptArgs}
+    widenSlot t = foldl' (\acc (cls, res) -> if isSubtypeOf typeEnv res acc then unionTypes typeEnv acc cls else acc) t arrows
+widenByClassArrows _ _ t = t
 -- | THE REACH-QUERY MEMO. Profiling a near-empty program against core put 48.5% of all
 -- time in 'objArrGraphQuery' — 121,525 calls at ~9ms each — while the reaches graph they
 -- query changes at most once per epoch. The query is called from PURE set-algebra
@@ -278,12 +301,12 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- shadows them: inside the call, the name is this lambda. The env reads one level less fuel
   -- ('teRederiveFuel'): it is the scope of a body being read again.
   typeGraphWithArgArrows typeEnv [] = typeEnv
-  typeGraphWithArgArrows typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap baseTg)} arrows = merged{teRederiveFuel = teRederiveFuel typeEnv - 1}
+  typeGraphWithArgArrows typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph baseOm@(ObjectMap baseTg)} arrows = merged{teRederiveFuel = teRederiveFuel typeEnv - 1}
     where
       lamArrows = [ ObjArr (Just (setExprMeta (mkValue (ptName p)) (emptyMetaT inT))) ArgObj Nothing [] (Just (Nothing, emptyMetaT outT))
                   | (inT, outT) <- arrows, Just p <- [maybeGetSingleton inT] ]
       objMap@(ObjectMap lamTg) = objectMapFromList lamArrows
-      unshadowed = ObjectMap $ H.mapWithKey (\n item -> if H.member n lamTg then item{omiDecls = notArg (omiDecls item), omiDefs = notArg (omiDefs item)} else item) baseTg
+      unshadowed = baseOm{omItems = H.mapWithKey (\n item -> if H.member n lamTg then item{omiDecls = notArg (omiDecls item), omiDefs = notArg (omiDefs item)} else item) baseTg}
       notArg = filter ((/= ArgObj) . oaBasis)
       base = typeEnv{teTypeGraph = ObjArrTypeGraph unshadowed}
       merged = withLocalArrowsOf (ObjArrTypeGraph objMap) base (mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> base)

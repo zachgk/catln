@@ -77,7 +77,7 @@ type DepPiece = (TObjectMap, H.HashMap TypeName [Int], TTypeGraph, ObjectMap Exp
 depPieceOf :: TypeName -> ObjectMapItem Expr TypedMetaDat -> DepPiece
 depPieceOf k item = (recPiece, buildPrecedenceMap recPiece, graphPiece, mapMetaObjectMap clearMetaDat graphPiece)
   where
-    graphPiece = ObjectMap (H.singleton k item)
+    graphPiece = objectMapItems (H.singleton k item)
     recPiece = mconcat $ map getRecursiveObjs $ universeObjectMapItem item
 
 typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], InstrumentResults)
@@ -99,10 +99,17 @@ typecheckPrgmsSt pprgms typechecked = do
   let allKeys = objMapKeys pageObjMap ++ objMapKeys depObjMap
   let edgeMap = resolveRefEdges allKeys (H.unionWith (++) (itemRawRefs pageObjMap) (itemRawRefsShallow depObjMap))
   let depPieces0 = H.mapWithKey depPieceOf (unObjectMap depObjMap)
+  -- The declarations written from a set of objects ('omDecls', @(_ -> String) -> String\/Text..@)
+  -- are kept under no item, so they enter every fragment whole rather than as a piece of its
+  -- closure: the earlier solves' as they were typed, and this solve's as they are written. Nothing
+  -- of one is inferred — desugar has resolved the set it is written from and the result it states
+  -- — so they are not solved either, only carried to the typed programs.
+  let pageSetDecls = map (typedAsWritten . omDecls . prgmObjMap) pprgms
+  let setDeclGraph = ObjectMapWith H.empty (omDecls depObjMap ++ concat pageSetDecls)
   -- Data items (page and dependency side) belong to every fragment's closure: class
   -- expansions materialize their objects from the static class graph with no name edge.
   let allDataKeys = dataItemKeys pageObjMap ++ dataItemKeys depObjMap
-  (tfragsRev, vfragsRev, _, _) <- foldM (solveFragment edgeMap allDataKeys) ([], [], depPieces0, True) fragments
+  (tfragsRev, vfragsRev, _, _) <- foldM (solveFragment edgeMap allDataKeys setDeclGraph) ([], [], depPieces0, True) fragments
   -- Invariant: after convergence the union of all objects (the "TopTop") must be
   -- determined. If it remained 'TopType', some object failed to resolve (e.g. an
   -- untyped destructured pattern binding poisoned the union), which would otherwise
@@ -112,19 +119,23 @@ typecheckPrgmsSt pprgms typechecked = do
     TypeCheckResult _ PTopType -> lift $ TypeCheckResult [GenTypeCheckError Nothing "Type checking converged but unionAllObjs (the TopTop) remained TopType; an object failed to resolve"] ()
     _                          -> return ()
   results <- gets (instrumentResults . feInstruments)
-  let tprgms = map mconcat $ transpose $ reverse tfragsRev
+  let tprgms = zipWith withSetDecls pageSetDecls $ map mconcat $ transpose $ reverse tfragsRev
   -- The members these pages add to classes, against the declarations earlier pages made over them.
   verifyAddedMembers (prgmCg (mconcat pprgms)) typechecked tprgms
+  -- The arrows written from classes, against the members of the classes.
+  verifyClassArrows (prgmCg (mconcat pprgms)) typechecked tprgms
   let vprgms = map mconcat $ transpose $ reverse vfragsRev
   return (tprgms, vprgms, results)
   where
     unObjectMap (ObjectMap m) = m
+    typedAsWritten decls = omDecls $ mapMetaObjectMap (\_ (Meta t pos mid _) -> return (Meta t pos mid Nothing)) (ObjectMapWith H.empty decls)
+    withSetDecls decls p@Prgm{prgmObjMap} = p{prgmObjMap = prgmObjMap{omDecls = decls}}
     objMapKeys = H.keys . unObjectMap
     joinPieces (r1, p1, g1, c1) (r2, p2, g2, c2) = (r1 <> r2, H.unionWith min p1 p2, g1 <> g2, c1 <> c2)
     -- A fragment that fails to converge stops the loop: its dependents would solve against a
     -- half-settled fragment ('addUnionObjToEnv' rejects undetermined dependency objects
     -- outright), and the failure's own notes already say why the page failed.
-    solveFragment edgeMap allDataKeys acc@(taccs, vaccs, pieces, ok) frag
+    solveFragment edgeMap allDataKeys setDeclGraph acc@(taccs, vaccs, pieces, ok) frag
       | not ok = return acc
       | otherwise = do
           let fragKeys = concatMap (objMapKeys . prgmObjMap) frag
@@ -149,7 +160,7 @@ typecheckPrgmsSt pprgms typechecked = do
           let tPrec = foldr (H.unionWith min) H.empty [p | (_, p, _, _) <- cPieces]
           let tGraph = mconcat [g | (_, _, g, _) <- cPieces]
           let tCleared = mconcat [c | (_, _, _, c) <- cPieces]
-          modify $ \e -> e{feVTypeGraph = mempty, feTTypeGraph = tGraph, feTTypeGraphCleared = tCleared}
+          modify $ \e -> e{feVTypeGraph = mempty, feTTypeGraph = tGraph <> setDeclGraph, feTTypeGraphCleared = tCleared <> mapMetaObjectMap clearMetaDat setDeclGraph}
           (vprgms', cons) <- fromPrgmsFragment frag (tRec, tPrec)
           converged <- runConstraints (fragmentEpochLimit frag) cons
           when converged $ verifyGuaranteedResults cons

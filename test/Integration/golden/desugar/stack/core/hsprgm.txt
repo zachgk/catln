@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/Catln/CGNode/CGType"
@@ -510,6 +510,7 @@ Prgm
                                     ]..
                                 ]
                             )
+                            ( Value /decls -> ∀/Data/List[ /T=/Catln/ObjArr.. ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -660,6 +661,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg =
         [ CGType

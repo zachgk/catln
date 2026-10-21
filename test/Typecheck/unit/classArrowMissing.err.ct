@@ -1,0 +1,13 @@
+annot(#noCore)
+
+# The twin of `classArrow.ct` with [P]'s arrow left out: `(_ -> S) -> T..` says every member of [S]
+  converts to a [T], and [P] has no arrow to one, so the page is refused at the class arrow.
+#noCore
+class(S)
+data(T(v -> Yes))
+data(P)
+data(Yes)
+every(T.., isa= [/S])
+every(P, isa= [/S])
+
+(_ -> S) -> T..

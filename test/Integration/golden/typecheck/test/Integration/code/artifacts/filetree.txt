@@ -1,5 +1,5 @@
 Prgm
-    { prgmObjMap = ObjectMap
+    { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
                 ( "/FileDir/repo/dir/test/Integration/code/artifacts/filetree"
@@ -124,6 +124,7 @@ Prgm
                     }
                 )
             ]
+        , omDecls = []
         }
     , prgmCg = [ CGType ]
     , prgmAnnots =

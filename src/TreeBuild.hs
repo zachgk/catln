@@ -962,6 +962,13 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just expr, am)} = do
                                        toTExpr annotEnv [objSrc] annot
   return $ Just (oa, (resArrowTree, compAnnots'))
 
+-- | A declaration written from a set of objects ('omDecls'), such as an arrow from a class
+-- (@(_ -> String) -> String\/Text..@). Its object is the set and not one type, and it has no body of its own
+-- to build: a member converts by its own arrows, which a call's argument is built through toward
+-- what the called arm takes. So only what is written is built.
+buildSetDeclOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
+buildSetDeclOA env = toTEObjArr env{tbName = "root"} [] False
+
 buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 buildRootOA env oa = do
   let env' = env{tbName = printf "root"}
@@ -984,4 +991,3 @@ buildRoot env input src dest = do
   let emptyObj = ObjArr (Just input) FunctionObj Nothing [] Nothing
   let objSrc = (src, emptyObj)
   toTExprDest env' [objSrc] input  (emptyMetaT dest)
-

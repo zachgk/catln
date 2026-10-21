@@ -1,6 +1,8 @@
 Prgm
-    { prgmObjMap = ObjectMap
-        { omItems = fromList [] }
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList []
+        , omDecls = []
+        }
     , prgmCg = []
     , prgmAnnots = []
     }

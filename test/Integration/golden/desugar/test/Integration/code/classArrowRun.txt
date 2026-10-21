@@ -1,0 +1,114 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value value= Value / )
+                            ( Value ctx= /( Value io= Value io ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/passOn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ passOn( Value s -> ∀/ReprS ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ passOn( Value s ) -> /Data/Primitive/Integer = field( Value x= Value s ) ]
+                    }
+                )
+            ,
+                ( "/field"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ field( Value x -> ∀/ReprS ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ field
+                            ( Value x= ReprT( Value v ) ) -> /Data/Primitive/Integer = Value v
+                        ]
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ pick( Value b -> ∀/Data/Primitive/Boolean ) -> ∀/ReprS ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ pick( Value b= Value True ) -> ∀/ReprS = Value ReprP
+                        , pick( Value b= Value False ) -> ∀/ReprS = ReprT
+                            ( Value v= CInt
+                                { ciValue = 2 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ReprP"
+                , ObjectMapItem
+                    { omiDecls = [ Value ReprP ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value ReprP= ReprT
+                            ( Value v= CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ReprT"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ ReprT( Value /v -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        , omDecls =
+            [ Hole ∀/ReprS HoleActive { haName = Nothing } -> /ReprT.. ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /ReprS
+            , cgcExtends =
+                [ /ReprT..
+                , /ReprP
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "`classArrow.ct` run, rather than only built.
+                A built conversion shows as its source and its destination, so a golden cannot tell a conversion
+                that fires from one that never does. Each value here is read by an arm that only takes a
+                [ReprT], and the field it answers with says which value arrived: a [ReprP] arriving unconverted
+                finds no arm, and one converted answers 1." }
+            )
+        ]
+    }

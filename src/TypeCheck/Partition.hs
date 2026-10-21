@@ -131,7 +131,7 @@ itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
     isDataItem item = all (isNothing . oaArr) (flatObjectMapItem item)
     (dataKeys, funcKeys) = partition (\k -> isDataItem (H.lookupDefault (error "itemSccGroups: missing key") k omap)) keys
     funcKeySet = S.fromList funcKeys
-    funcNames = definedNameItems (ObjectMap (H.filterWithKey (\k _ -> S.member k funcKeySet) omap))
+    funcNames = definedNameItems (objectMapItems (H.filterWithKey (\k _ -> S.member k funcKeySet) omap))
     itemEdges k = sortOn nameStr $ filter (/= k) $ filter (`S.member` funcKeySet) $ nub $ maybeToList (nestedParentOf funcNames k) ++ concatMap resolveRef refs
       where
         refs = nub $ concatMap objArrRefNames $ flatObjectMapItem $ H.lookupDefault (error "itemSccGroups: missing key") k omap
@@ -199,21 +199,22 @@ closureFrom edges seeds = S.difference (go S.empty seeds) (S.fromList seeds)
 -- statement annotations (they get their own fragments). The result keeps the
 -- source-program list shape so encode\/decode results stay aligned with the
 -- original programs; a program with no items in the group keeps an empty
--- object map.
+-- object map. A fragment is items alone: the declarations written from a set of objects
+-- ('omDecls') are in no group, and are carried past the fragments ('TypeCheck.typecheckPrgmsSt').
 fragmentPrgms :: [[Name]] -> [Prgm Expr m] -> [[Prgm Expr m]]
 fragmentPrgms groups pprgms = map fragment groups
   where
     fragment group = map (restrict (S.fromList group)) pprgms
     restrict keySet p@Prgm{prgmObjMap=ObjectMap omap} =
-      p{prgmObjMap = ObjectMap $ H.filterWithKey (\k _ -> S.member k keySet) omap, prgmAnnots = []}
+      p{prgmObjMap = objectMapItems $ H.filterWithKey (\k _ -> S.member k keySet) omap, prgmAnnots = []}
 
 -- | One fragment per source program that has statement annotations: the
 -- annotations with an empty object map (they are consumers only — nothing
 -- reads their points). Solved last, after every function group.
 annotFragmentPrgms :: [Prgm Expr m] -> [[Prgm Expr m]]
 annotFragmentPrgms pprgms =
-  [ [ if j == i then p{prgmObjMap = ObjectMap H.empty} else emptied p
+  [ [ if j == i then p{prgmObjMap = mempty} else emptied p
     | (j, p) <- zip [(0 :: Int)..] pprgms ]
   | (i, pi') <- zip [(0 :: Int)..] pprgms, not (null (prgmAnnots pi')) ]
   where
-    emptied p = p{prgmObjMap = ObjectMap H.empty, prgmAnnots = []}
+    emptied p = p{prgmObjMap = mempty, prgmAnnots = []}

@@ -376,7 +376,9 @@ verifyObjMapItem solvedTypeEnv name importedDecls (ObjectMapItem decls runtimeDe
       -- the definition-within-declaration check, which needs the precise (non-widened) type.
       let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph feTypeEnv
       let definedNames = (S.map makeAbsoluteName $ H.keysSet objTg) <> feLocalDefNames
-      let defInputTypesU = map (universalizeBindingArgs definedNames) defInputTypes
+      -- An argument a class arrow converts on the way in is taken as the whole class
+      -- ('widenByClassArrows'), for coverage only as well.
+      let defInputTypesU = map (widenByClassArrows prgmTypeEnv (classArrowsOf solvedTypeEnv) . universalizeBindingArgs definedNames) defInputTypes
       let defUnionU = unionAllTypes feTypeEnv defInputTypesU
 
       -- Check each definition (including runtime declarations) against declUnion
@@ -419,11 +421,11 @@ toPrgms vprgms = do
   -- maps unioned per name). This lets a declaration in one module bound runtime definitions of
   -- the same name in another module (e.g. the generic Eq @operator==@ declaration in algebra.ct
   -- bounds the @#runtime@ Integer/Float implementations in primitives.ct).
-  let ObjectMap mergedObjMap = mconcat (map prgmObjMap tprgms)
+  let mergedPrgmObjMap@(ObjectMap mergedObjMap) = mconcat (map prgmObjMap tprgms)
   -- The solved dependencies this solve was given hold the declarations made in earlier solves.
   FEnv{feTTypeGraph = ObjectMap depObjMap} <- get
   let importedDecls name = maybe [] omiDecls (H.lookup name depObjMap)
-  solvedTypeEnv <- gets (solvedVerifyTypeEnv (ObjectMap mergedObjMap))
+  solvedTypeEnv <- gets (solvedVerifyTypeEnv mergedPrgmObjMap)
   -- Each function is verified on its own ('oaDefinedName'): every definition in a context is kept
   -- under the context's name, and checked together one function's definitions read as outside
   -- another's declaration.
@@ -434,6 +436,61 @@ toPrgms vprgms = do
          in verifyObjMapItem solvedTypeEnv reported (filter ((== f) . oaDefinedName) (importedDecls name)) fItem) mergedObjMap
 
   return tprgms
+
+-- | Checks the arrows written from classes (@(_ -> String) -> String\/Text..@, among a
+-- map's 'omDecls') against the members of the classes.
+--
+-- An arrow written from a class says every member converts to its result, which is a promise each
+-- member keeps by its own arrows. So it is checked over the whole page, once every fragment of it is
+-- solved, against the arrows of the page and of the earlier solves it depends on: a member and its
+-- arrow are rarely in the fragment of the class arrow, which names neither. An arrow this page
+-- writes is held to every member; an arrow an earlier solve wrote is held to the members this page
+-- adds to its class, as 'verifyAddedMembers' holds a declaration over a class.
+verifyClassArrows :: ClassGraph -> [TPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ()
+verifyClassArrows (ClassGraph pageCg) deps solved = do
+  FEnv{feTypeEnv} <- get
+  let ObjectMap depItems = prgmObjMap (mconcat deps)
+  let ObjectMap solvedItems = prgmObjMap (mconcat solved)
+  let items = H.unionWith (<>) solvedItems depItems
+  let env = feTypeEnv{tePrgmEnv = True}
+  let addedMembers = S.fromList [ ptName m | (CGClass{cgcExtends}, PClassName{}, _) <- graphToNodes pageCg, t <- cgcExtends, UnionType _ ls _ <- [t], m <- splitUnionType ls ]
+  let classArrows = omDecls . prgmObjMap . mconcat
+  let checked = [ (oa, const True) | oa <- classArrows solved ] ++ [ (oa, (`S.member` addedMembers) . ptName) | oa <- classArrows deps ]
+  forM_ checked $ \(oa, reported) ->
+    forM_ (filter reported $ classArrowUnfollowed env items oa) $ \memberType ->
+      lift $ TypeCheckResult [UnfulfilledClassArrow (getMetaType $ getExprMeta $ oaObjExpr oa) (classArrowResult oa) memberType (getMetaPos $ getExprMeta $ oaObjExpr oa)] ()
+
+-- | What an arrow written from a class says every member of the class converts to.
+classArrowResult :: ObjArr Expr TypedMetaDat -> Type
+classArrowResult ObjArr{oaArr=Just (_, m)} = getMetaType m
+classArrowResult _                         = PTopType
+
+-- | The members of a class an arrow written from it (@(_ -> String) -> String\/Text..@) does not
+-- hold of.
+--
+-- The arrow says every member converts to its result, so a member holds it when it is within the
+-- result already (@String\/Text@ is a @String\/Text@) or when its own arrows convert all of it there:
+-- the definitions and runtime declarations written from the member, whose results are within the
+-- result, taking together every value of the member. A member reached by expanding the class is
+-- expanded in turn where it is a class itself, so the members asked about are the data ones.
+classArrowUnfollowed :: FEnvTypeEnv -> H.HashMap TypeName (ObjectMapItem Expr TypedMetaDat) -> ObjArr Expr TypedMetaDat -> [PartialType]
+classArrowUnfollowed typeEnv items oa = filter (not . follows) (dataMembers (10 :: Int) (getMetaType $ getExprMeta $ oaObjExpr oa))
+  where
+    res = classArrowResult oa
+    inputType = getMetaType . getExprMeta . oaObjExpr
+    dataMembers fuel t@(UnionType mTop leafs _) = concatMap (dataMembers (fuel - 1)) expanded ++ splitUnionType leafs
+      where
+        expanded = case mTop of
+          Just (preds, _, _) | fuel > 0, let e = expandPredicates typeEnv H.empty preds, e /= t -> [e]
+          _                                                                                    -> []
+    dataMembers _ _ = []
+    follows p = isSubtypeOf typeEnv (singletonType p) res || coveredByArrows p
+    coveredByArrows p = case [ a
+                                  | item <- maybe [] pure (H.lookup (ptName p) items)
+                                  , a@ObjArr{oaArr=Just (_, am)} <- omiDefs item ++ omiRuntimeDecls item
+                                  , isSubtypeOf typeEnv (getMetaType am) res ] of
+      []     -> False
+      arrows -> isSubtypeOf typeEnv (singletonType p) (unionAllTypes typeEnv (map inputType arrows))
 
 -- | The environment a solve's declarations and definitions are checked in: its type graph is the
 -- solved objects of this solve and of the earlier solves it depends on.
@@ -471,7 +528,7 @@ verifyAddedMembers (ClassGraph pageCg) deps solved = do
   let envNow = feTypeEnv{tePrgmEnv = True}
   let envBefore = (mkTypeEnv (mconcat (map (mapMetaPrgm clearMetaDat) deps))){tePrgmEnv = True}
   let inputType = getMetaType . getExprMeta . oaObjExpr
-  let universalized env defined oas = let ts = map (universalizeBindingArgs defined . inputType) oas in (ts, unionAllTypes env ts)
+  let universalized env defined oas = let ts = map (widenByClassArrows env (classArrowsOf env) . universalizeBindingArgs defined . inputType) oas in (ts, unionAllTypes env ts)
   let definedIn env extra = let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph env in S.map makeAbsoluteName (H.keysSet objTg) <> extra
   unless (S.null addedTo) $
     forM_ (H.toList depItems) $ \(name, ObjectMapItem decls depRuntime _ depDefs) -> do

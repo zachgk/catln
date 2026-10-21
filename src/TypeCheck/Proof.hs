@@ -209,7 +209,7 @@ proofSubject name _ _ = CErr [MkCNote $ GenCErr Nothing $ printf "Could not prov
 -- TODO(termination): the induction needs the recursion to be well founded. Nothing checks that
 -- yet, so a definition such as @loop(n)= loop(n= n)@ is proven of any claim.
 opaqueDeps :: TypeName -> TObjArr -> TPrgm -> TPrgm
-opaqueDeps name refine prgm@(Prgm (ObjectMap om) cg annots) = Prgm (ObjectMap $ H.adjust opaque name om) cg annots
+opaqueDeps name refine prgm@(Prgm objMap@(ObjectMap om) cg annots) = Prgm objMap{omItems = H.adjust opaque name om} cg annots
   where
     typeEnv = mkTypeEnv prgm
     disjoint oa = isBottomType $ intersectTypes typeEnv (inputType refine) (inputType oa)

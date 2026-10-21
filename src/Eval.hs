@@ -698,7 +698,7 @@ parseExprPrim = EEvalPrim "parseExpr" prim
     -- The declaration is what the typecheck holds the definition to: a definition answering more
     -- than its declaration is an error ('ResultNotGuaranteed'), and that is the text not being a
     -- value of the type.
-    declaredAs tp prgm@Prgm{prgmObjMap=ObjectMap items} = prgm{prgmObjMap=ObjectMap $ H.mapWithKey declareItem items}
+    declaredAs tp prgm@Prgm{prgmObjMap=objMap@(ObjectMap items)} = prgm{prgmObjMap=objMap{omItems = H.mapWithKey declareItem items}}
       where
         declareItem name item@ObjectMapItem{omiDefs}
           | nameStr name == '/' : parsedName = item{omiDecls=[declOf oa | oa@ObjArr{oaArr=Just _} <- omiDefs]}
@@ -759,8 +759,9 @@ evalBuildAllOf selected prgmGraphData = graphFromEdges $ map buildPage $ graphTo
           evalPrgm <- prgmFromGraphData prgmName prgmGraphData
           let Env{evTbEnv} = evalEnv defaultEvalSession evalPrgm
           objMap' <- buildReporting (printf "The definition %s" . show . oaObjPath) (getMetaPos . getExprMeta . oaObjExpr) (buildRootOA evTbEnv) (flatObjectMap objMap)
+          setDecls' <- buildReporting (printf "The declaration from %s" . show . getMetaType . getExprMeta . oaObjExpr) (getMetaPos . getExprMeta . oaObjExpr) (buildSetDeclOA evTbEnv) (omDecls objMap)
           annots' <- buildReporting (printf "The annotation %s" . maybe "" show . maybeExprPath) (getMetaPos . getExprMeta) (toTExpr evTbEnv []) annots
-          return $ Prgm (objectMapFromList objMap') cg annots'
+          return $ Prgm ((objectMapFromList objMap'){omDecls = setDecls'}) cg annots'
 
 -- | Builds each of a page's items, leaving out the ones that cannot be built and saying so.
 --
