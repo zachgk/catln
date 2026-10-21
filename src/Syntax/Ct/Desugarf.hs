@@ -29,11 +29,12 @@ import           MapMeta
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Builder                (rawOutObjArr)
 import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Desugarf.Nested
 import           Syntax.Ct.Desugarf.Passes
 import           Syntax.Ct.Desugarf.Preprocessors
-import           Syntax.Ct.Formatter              (formatExpr)
+import           Syntax.Ct.Formatter              (formatExpr, formatObjArr)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Utils
@@ -140,6 +141,7 @@ desDecl statementEnv decl subStatements = do
   case rawTypeCondPositional decl of
     Just cond -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta cond) $ printf "The condition %s refining a type applies an argument by position, and which argument it fills cannot be inferred for a condition on a type: name the argument" (formatExpr cond)]
     Nothing   -> return ()
+  refuseContextErrors decl
   preprocessed <- declPreprocessors (decl, subStatements)
   case preprocessed of
     [] -> do
@@ -273,7 +275,16 @@ desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatemen
         onRef v = v
 
 desGlobalAnnot :: PCompAnnot -> CRes DesCompAnnot
-desGlobalAnnot = return . desExpr . semiDesExpr SDOutput Nothing
+desGlobalAnnot a = do
+  refuseContextErrors (rawOutObjArr a)
+  return $ desExpr $ semiDesExpr SDOutput Nothing a
+
+-- | A state written in a context's braces is found by its type ('contextState'); one that is not
+-- a state is refused where it is written, before anything reads the context.
+refuseContextErrors :: PObjArr -> CRes ()
+refuseContextErrors oa = case rawContextErrors oa of
+  [] -> return ()
+  errs -> CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "%s is not a state of the context: %s" (formatObjArr ctx) reason | (ctx, m, reason) <- errs]
 
 desStatement :: StatementEnv -> PStatementTree -> CRes DesPrgm
 desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of

@@ -249,17 +249,29 @@ pVarsSuffix = do
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
+-- | A state written in a context's braces: a pattern of its type (@Counter(i)@, @Counter(i)\@c@)
+-- or a variable, optionally typed (@io@, @io -> IO@). A state is found by its type rather than
+-- named, so there is no @=@ here, and @{c= Counter(i)}@ does not parse
+-- ('Syntax.Ct.Builder.contextState').
+pContextEntry :: Parser PObjArr
+pContextEntry = do
+  e <- pExpr
+  arrM <- optional $ do
+    _ <- symbol "->" <|> symbol ":"
+    pTypeTerm
+  return $ RawObjArr (Just e) ArgObj Nothing [] ((Nothing,) . Just <$> arrM) Nothing
+
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
   pos1 <- getSourcePos
   ctxsRW <- curlyBraces $ do
-    rw <- sepBy (pArrowFullOA ArgObj) (symbol ",")
+    rw <- sepBy pContextEntry (symbol ",")
     ctxsRO <- optional $ do
       _ <- symbol ";"
-      curlyBraces $ sepBy (pArrowFullOA ArgObj) (symbol ",")
+      curlyBraces $ sepBy pContextEntry (symbol ",")
     ctxsCover <- optional $ do
       _ <- symbol ";"
-      curlyBraces $ sepBy (pArrowFullOA ArgObj) (symbol ",")
+      curlyBraces $ sepBy pContextEntry (symbol ",")
     case (ctxsRO, ctxsCover) of
       (Nothing, Nothing) -> return rw
       _ -> fail "Context with read-only or covered components are not yet supported"

@@ -408,6 +408,13 @@ testAmbiguousMember mk = testCase "an ambiguous class member names what it could
   assertPageErrorSays mk page "The name Empty in the members of the class /Mine/Choice is ambiguous"
   assertPageErrorSays mk page "/Mine/Empty or /Other/Empty"
 
+-- | A state in a context is found by the type it is written with ('Syntax.Ct.Builder.contextState'),
+-- so one naming no type is refused with an error where it is written rather than crashing the
+-- desugarer. Fixture: unit/contextStateNoType.err.ct.
+testContextStateNoType :: MkService -> TestTree
+testContextStateNoType mk = testCase "a state naming no type is refused where it is written" $
+  assertPageErrorSays mk "test/Typecheck/unit/contextStateNoType.err.ct" "i@c is not a state of the context"
+
 assertPageErrorSays :: MkService -> String -> String -> Assertion
 assertPageErrorSays mk page needle = do
   res <- runCResT $ do
@@ -488,6 +495,7 @@ typecheckTests mk = do
     , testImportAfterAnnot mk
     , testCapturedField mk
     , testAmbiguousMember mk
+    , testContextStateNoType mk
     , testGroup "Error pages" (map (testErrPage mk) errPages)
     ]
   where

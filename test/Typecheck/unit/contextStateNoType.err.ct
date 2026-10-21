@@ -1,0 +1,9 @@
+annot(#noCore)
+
+# A state in a context is found by the type it is written with. [i@c] names no type, so it is not a
+  state, and the page is refused where the state is written rather than crashing the desugarer
+  (testContextStateNoType in TypeCheckTests reads the error).
+#noCore
+data(Counter(i))
+
+inc{i@c}= i

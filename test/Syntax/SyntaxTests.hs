@@ -8,7 +8,7 @@ import qualified Data.HashMap.Strict as H
 import           Hedgehog
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.Types     (Constant (CStr), mkName)
+import           Semantics.Types     (Constant (CStr), mkName, nameStr)
 import           Syntax.Ct.Builder   (rawStr)
 import           Syntax.Ct.Formatter (formatRootPrgm)
 import           Syntax.Ct.Parser    (contents, pPrgm)
@@ -170,6 +170,27 @@ testMethodCallPosition = testCase "a method call is positioned where it is writt
     span' (start, end) = (at start, at end)
     at p = (unPos (sourceLine p), unPos (sourceColumn p))
 
+-- | A state in a context's braces is a pattern of its type, aliased to bind the whole state
+-- (@inc{Counter(i)\@c}@) or not (@inc{Counter(i)}@). A state is found by its type rather than
+-- named, so the braces read no @=@, and @inc{c= Counter(i)}@ does not parse.
+testContextStates :: TestTree
+testContextStates = testGroup "ContextStateTests" [
+    testCase "a state is a pattern of its type" $ case entry "inc{Counter(i)}= i\n" of
+      Right RawObjArr{roaObj=Just (RawTupleApply _ (_, RawValue _ n) _), roaArr=Nothing} -> assertEqual "the type the state is found by" "Counter" (nameStr n)
+      other -> assertFailure $ printf "the state was not read as a pattern: %s" (show other)
+  , testCase "a state's pattern is aliased to bind the whole state" $ case entry "inc{Counter(i)@c}= i\n" of
+      Right RawObjArr{roaObj=Just (RawAliasExpr RawTupleApply{} (RawValue _ a)), roaArr=Nothing} -> assertEqual "the name the state is bound to" "c" (nameStr a)
+      other -> assertFailure $ printf "the state was not read as an aliased pattern: %s" (show other)
+  , testCase "a state is not named with =" $ case entry "inc{c= Counter(i)}= i\n" of
+      Left _  -> return ()
+      Right e -> assertFailure $ printf "a state named with = was read, as: %s" (show e)
+  ]
+  where
+    entry src = case runParser (contents pPrgm) "<context>" src of
+      Left err -> Left (show err)
+      Right (RawPrgm _ [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just (RawContextApply _ _ [ctx])}) _]) -> Right ctx
+      Right prgm -> Left $ printf "the page was not read as one declaration in a context: %s" (show prgm)
+
 syntaxTests :: IO TestTree
 syntaxTests = do
   -- TODO: Add hs prgmDirs
@@ -189,6 +210,7 @@ syntaxTests = do
     , testImportPlacement
     , testCommentIndent
     , testMethodCallPosition
+    , testContextStates
     ]
 
 main :: IO ()

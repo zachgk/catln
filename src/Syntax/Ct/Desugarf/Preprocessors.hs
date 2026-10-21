@@ -21,7 +21,7 @@ import           Data.Either
 import           Data.Hashable
 import qualified Data.HashMap.Strict     as H
 import           Data.List               (intercalate)
-import           Data.Maybe              (fromJust, listToMaybe, mapMaybe)
+import           Data.Maybe              (fromJust, listToMaybe)
 import           Data.String.Builder     (build)
 import           MapMeta                 (DerivedMeta (..))
 import           Semantics               (emptyMetaE)
@@ -349,8 +349,8 @@ newtype BodyStates = BodyStates [(Bool, PObjArr)]
 -- (@cont(arg= /Context(value\@x, ctx\@r), states)@) runs in the states it was given with the
 -- ones it took back laid over them.
 declContextStates :: Maybe PExpr -> Maybe BodyStates
-declContextStates (Just (RawContextApply _ _ ctxs)) = Just $ namedStates $ mapMaybe contextState ctxs
-declContextStates (Just (RawTupleApply _ (_, RawContextApply _ _ ctxs) _)) = Just $ namedStates $ mapMaybe contextState ctxs
+declContextStates (Just (RawContextApply _ _ ctxs)) = Just $ namedStates $ map checkedContextState ctxs
+declContextStates (Just (RawTupleApply _ (_, RawContextApply _ _ ctxs) _)) = Just $ namedStates $ map checkedContextState ctxs
 declContextStates (Just (RawTupleApply _ (_, RawValue _ base) args)) | isBindCont base = do
   r <- listToMaybe [r | (False, RawObjArr{roaArr=Just (Just a, _)}) <- args, Just r <- [takenStates a]]
   let given = [rawVal (bindContStatesName (nameStr base))]

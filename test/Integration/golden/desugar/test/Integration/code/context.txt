@@ -20,7 +20,7 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( Value /value= Value inc )
                             ( Value /ctx= /
-                                ( Value counter= Counter( Value i )@Value c )
+                                ( Value counter= Counter( Value i )@Value counter )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             )= /Context( Value /value= Value / )
                             ( Value /ctx= /
@@ -181,7 +181,8 @@ Prgm
             ( Value /text= CStr
                 { csValue = "Tests a context holding more than one state. main adds a [Counter] beside its [io], [inc]
                 replaces it, and [counterValue] reads it back, so main exits with 0 only where the counter reached 1.
-                A state is found by its type: [inc] and [counterValue] name theirs [c], and find the one main added." }
+                A state is found by the type it is written with: [inc] writes only the pattern, [counterValue]
+                aliases it as [c], and both find the one main added." }
             )
         , /Catln/#md
             ( Value /text= CStr

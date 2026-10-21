@@ -196,7 +196,7 @@ dataSt tp = RawDeclStatement $ rawOutObjArr (rawVal dataStr `applyRawEIArgs` [(t
 -- | The key a state is kept under in a context: the name of its type, lowercased (@IO@ and
 -- @/Catln/IO@ are @io@, @Counter(i)@ is @counter@). A state is found by its type, so a function
 -- reading a @Counter@ finds the one another function added, whatever either called it. 'Nothing'
--- where no type is written (@{io}@, @{c= x}@).
+-- where no type is written (@{io}@).
 contextTypeKey :: PExpr -> Maybe String
 contextTypeKey (RawValue _ n)
   | isTypeName = Just $ map toLower base
@@ -211,15 +211,32 @@ contextTypeKey (RawParen e) = contextTypeKey e
 contextTypeKey _ = Nothing
 
 -- | A state written in a context's braces: the key it is kept under ('contextTypeKey') and the name
--- the body binds it to. @{c= Counter(i)}@ is the @counter@ state bound as @c@, @{io -> IO}@ the
--- @io@ state bound as @io@, and @{IO}@ the @io@ state under its own key. A state given no type
--- (@{io}@) is keyed by the name it is written with.
-contextState :: PObjArr -> Maybe (String, String)
+-- the body binds the whole state to. @{io -> IO}@ is the @io@ state bound as @io@, and @{IO}@ the
+-- @io@ state under its own key. A state given no type (@{io}@) is keyed by the name it is written
+-- with. A pattern is found by the type it is written with: @{Counter(i)\@c}@ is the @counter@ state
+-- bound as @c@, and @{Counter(i)}@, given no alias, is bound under its key as @{IO}@ is. A state
+-- is never named with @=@ (@{c= Counter(i)}@), as the name plays no part in finding it.
+--
+-- What is not a state is refused with the reason, which
+-- 'Syntax.Ct.Desugarf.Expr.rawContextErrors' reports where it is written.
+contextState :: PObjArr -> Either String (String, String)
+contextState RawObjArr{roaArr=Just (Just _, _)} = Left "A state in a context is found by its type, not named with =: write the pattern alone (Counter(i)), or alias it to bind the whole state (Counter(i)@c)"
 contextState RawObjArr{roaObj=Just v@(RawValue _ n), roaArr} = case roaArr of
-  Just (Just pat, _) -> Just (keyOr pat, name)
-  Just (_, Just t)   -> Just (keyOr t, name)
-  _                  -> Just (keyOr v, keyOr v)
+  Just (_, Just t) -> Right (keyOr t, name)
+  _                -> Right (keyOr v, keyOr v)
   where
     name = nameStr n
     keyOr e = fromMaybe name (contextTypeKey e)
-contextState _ = Nothing
+contextState RawObjArr{roaObj=Just pat, roaArr} = case (contextTypeKey pat, roaArr) of
+  (Nothing, _) -> Left "A state in a context must name the type it is found by (Counter(i)), or be a variable (io)"
+  (Just _, Just (_, Just _)) -> Left "A pattern in a context is found by the type it is written with, so it is not given another"
+  (Just k, _) -> case pat of
+    RawAliasExpr _ (RawValue _ a) -> Right (k, nameStr a)
+    RawAliasExpr{}                -> Left "A state in a context is bound by an alias that is a name (Counter(i)@c)"
+    _                             -> Right (k, k)
+contextState RawObjArr{roaObj=Nothing} = Left "A state in a context must be written"
+
+-- | The 'contextState' of a state already checked by 'Syntax.Ct.Desugarf.Expr.rawContextErrors',
+-- which refuses each one that is not, before the declaration it is in is desugared.
+checkedContextState :: PObjArr -> (String, String)
+checkedContextState = either (error . ("A context state was not checked before desugaring: " ++)) id . contextState

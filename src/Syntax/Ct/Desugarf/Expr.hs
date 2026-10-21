@@ -188,16 +188,13 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = (`setExprMeta` m) $ foldr aux be' v
         varVal = maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv obj)) (roaArr >>= snd)
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
 -- A value given a context (@(){Counter(0)}@) is the 'ContextStr' holding it, its states the
--- anonymous tuple under 'contextStatesStr', each kept under the key of its type ('contextTypeKey').
+-- anonymous tuple under 'contextStatesStr', each kept under the key of its type ('contextState').
 -- A state given as a variable (@(){io}@), whose type is not written, is kept under the variable's
--- name, and one written with its key (@(){counter= c}@) under that key.
+-- name, and one given as a typed variable (@(){c -> Counter}@) under its type's.
 semiDesExpr sdm@SDOutput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN (mkName ContextStr)) [(Just $ rawVal contextValStr, be), (Just $ rawVal contextStatesStr, rawAnon `applyRawEArgs` map mapCtx ctxs)]
   where
-    mapCtx RawObjArr{roaObj=Just k, roaArr=Just (Just v, _)} = (Just k, v)
-    mapCtx RawObjArr{roaObj=Just v} = (Just $ rawVal $ fromMaybe (varKey v) (contextTypeKey v), v)
-    mapCtx ctx = error $ printf "Invalid context value: %s" (show ctx)
-    varKey (RawValue _ n) = nameStr n
-    varKey v = error $ printf "A state given to a context has no type or name to keep it under: %s" (show v)
+    mapCtx ctx@RawObjArr{roaObj=Just v} = (Just $ rawVal $ fst $ checkedContextState ctx, v)
+    mapCtx ctx = (Just $ rawVal $ fst $ checkedContextState ctx, rawAnon)
 -- A context written as a type (@(){IO}@) is every 'ContextStr' whose value is of the type it is
 -- given, holding a state of each type in the braces and any others besides. A state is kept under
 -- the key of its type ('contextState'): @{IO}@ and @{out -> IO}@ are both the @io@ state.
@@ -205,10 +202,12 @@ semiDesExpr SDType obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ se
   where
     states = RawTupleApply m (emptyMetaN, rawAnon) (map mapCtx ctxs ++ [(True, rawInObjArr True (RawHoleExpr emptyMetaN (HoleActive Nothing)))])
     stateArg k t = (False, RawObjArr (Just k) ArgObj Nothing [] (Just (Nothing, Just t)) Nothing)
-    mapCtx ctx@RawObjArr{roaObj=Just o, roaArr} | Just (k, _) <- contextState ctx = stateArg (rawVal k) (fromMaybe o (roaArr >>= snd))
-    mapCtx ctx = error $ printf "Invalid context type: %s" (show ctx)
+    mapCtx ctx@RawObjArr{roaObj=Just o, roaArr} = stateArg (rawVal $ fst $ checkedContextState ctx) (fromMaybe (unaliased o) (roaArr >>= snd))
+    mapCtx ctx = stateArg (rawVal $ fst $ checkedContextState ctx) rawAnon
+    unaliased (RawAliasExpr b _) = b
+    unaliased e                  = e
 
--- A function taking states (@inc{c= Counter(i)}@) is the call in a context holding them
+-- A function taking states (@inc{Counter(i)\@c}@) is the call in a context holding them
 -- (@ContextIn(value= inc, ctx= (counter= Counter(i)\@c, .._))@): each state is found by the key of
 -- its type and bound under the name it is written with ('contextState'). The context may hold states
 -- the function does not name. It answers with only its own, and the bind that called it keeps the rest.
@@ -216,14 +215,18 @@ semiDesExpr sdm@SDInput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` 
   where
     states = RawTupleApply m (emptyMetaN, rawAnon) (map mapCtx ctxs ++ [(True, rawInObjArr True (RawHoleExpr emptyMetaN (HoleActive Nothing)))])
     stateArg k arr = (False, RawObjArr (Just k) ArgObj Nothing [] arr Nothing)
-    mapCtx ctx@RawObjArr{roaObj=Just o, roaArr} | Just (k, l) <- contextState ctx = case roaArr of
-      -- @{c= Counter(i)}@: the pattern, naming the whole state where its key is not the name.
-      Just (Just pat, _) -> stateArg (rawVal k) (Just (Just $ if k == l then pat else RawAliasExpr pat (rawVal l), Nothing))
+    mapCtx ctx@RawObjArr{roaObj=Just o, roaArr} = case (o, roaArr) of
       -- @{io -> IO}@, @{out -> IO}@: the argument, renamed where its key is not the name.
-      Just (Nothing, mt) -> stateArg (if k == l then rawVal k else RawAliasExpr (rawVal k) (rawVal l)) (Just (Nothing, mt))
+      (RawValue{}, Just (_, mt)) -> stateArg (if k == l then rawVal k else RawAliasExpr (rawVal k) (rawVal l)) (Just (Nothing, mt))
       -- @{IO}@ is a state of that type; @{io}@ one of any.
-      Nothing -> stateArg (rawVal k) (Just (Nothing, o <$ contextTypeKey o))
-    mapCtx ctx = error $ printf "Invalid input context: %s" (show ctx)
+      (RawValue{}, Nothing) -> stateArg (rawVal k) (Just (Nothing, o <$ contextTypeKey o))
+      -- @{Counter(i)\@c}@: the pattern, binding the whole state by its alias.
+      (RawAliasExpr{}, _) -> stateArg (rawVal k) (Just (Just o, Nothing))
+      -- @{Counter(i)}@: the pattern, binding the whole state under its key.
+      _ -> stateArg (rawVal k) (Just (Just $ RawAliasExpr o (rawVal l), Nothing))
+      where
+        (k, l) = checkedContextState ctx
+    mapCtx ctx = stateArg (rawVal $ fst $ checkedContextState ctx) Nothing
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
 semiDesExpr sdm obj (RawMethod m (RawTheExpr n) method) = (`setExprMeta` m) $ semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n'))]) -- Parse type methods like :Integer.toString, Only for input expressions
   where
@@ -265,6 +268,38 @@ mapExprValues f = go
     goApp (EAppArg oa)   = EAppArg oa{oaArr=fmap (first (fmap go)) (oaArr oa)}
     goApp (EAppSpread e) = EAppSpread (go e)
     goApp a@EAppVar{}    = a
+
+-- | The states written in a context's braces anywhere in the arrow that are not states
+-- ('contextState'), each with the reason it is refused. A raw program reaches the desugarer from
+-- the parser and from importers building one, so these are refused here
+-- ('Syntax.Ct.Desugarf.desDecl') rather than only by the parser, which reads no @=@ in braces.
+rawContextErrors :: PObjArr -> [(PObjArr, ParseMeta, String)]
+rawContextErrors = objArrErrs
+  where
+    objArrErrs RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = concatMap exprErrs (maybeToList roaObj ++ roaAnnots ++ maybe [] (\(e, t) -> maybeToList e ++ maybeToList t) roaArr ++ maybeToList roaDef)
+    exprErrs (RawContextApply m (_, b) ctxs) = exprErrs b ++ concatMap (stateErrs m) ctxs
+    exprErrs (RawApplyExpr _ (RawApply terms)) = concatMap (exprErrs . termExpr) terms
+    exprErrs (RawTheExpr e) = exprErrs e
+    exprErrs (RawAliasExpr b a) = exprErrs b ++ exprErrs a
+    exprErrs (RawTupleApply _ (_, b) args) = exprErrs b ++ concatMap (objArrErrs . snd) args
+    exprErrs (RawVarsApply _ b vs) = exprErrs b ++ concatMap objArrErrs vs
+    exprErrs (RawWhere _ b c) = exprErrs b ++ exprErrs c
+    exprErrs (RawParen e) = exprErrs e
+    exprErrs (RawMethod _ b e) = exprErrs b ++ exprErrs e
+    exprErrs (RawList _ ls) = concatMap exprErrs ls
+    exprErrs (RawTypeProp _ b p) = exprErrs b ++ exprErrs (propExpr p)
+    exprErrs RawCExpr{} = []
+    exprErrs RawValue{} = []
+    exprErrs RawHoleExpr{} = []
+    exprErrs RawMacroValue{} = []
+    exprErrs RawFmtStrExpr{} = []
+    stateErrs m ctx = case contextState ctx of
+      Left reason -> [(ctx, maybe m getExprMeta (roaObj ctx), reason)]
+      Right _     -> objArrErrs ctx
+    termExpr (RATermDeep e)  = e
+    termExpr (RATermChild e) = e
+    propExpr (TypePropProj _ e) = e
+    propExpr (TypePropRel _ e)  = e
 
 -- | A condition in a type position of the arrow that applies an argument by position
 -- (@Nat | isZero($out)@), if there is one: in the result type or an argument's type, read

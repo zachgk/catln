@@ -27,7 +27,7 @@ Prgm
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
                                     ( EAppArg
                                         { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
-                                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )@Value /c
+                                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )@Value /counter
                                         }
                                     )
                                     ( EAppSpread
@@ -665,7 +665,8 @@ Prgm
                 { eaaArg = Value /text -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a context holding more than one state. main adds a [Counter] beside its [io], [inc]
                   replaces it, and [counterValue] reads it back, so main exits with 0 only where the counter reached 1.
-                  A state is found by its type: [inc] and [counterValue] name theirs [c], and find the one main added."
+                  A state is found by the type it is written with: [inc] writes only the pattern, [counterValue]
+                  aliases it as [c], and both find the one main added."
                 }
             )
         , /Catln/#md
