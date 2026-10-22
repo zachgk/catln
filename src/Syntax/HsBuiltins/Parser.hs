@@ -159,7 +159,7 @@ hsPrgmForStatement = RawStatementTree (RawDeclStatement decl) (map commentSt [
                                                                             ])
   where
     decl = RawObjArr (Just obj) FunctionObj Nothing [runtimeAnnotOf "prgmFor"] (Just (Nothing, Just returns)) Nothing
-    obj = rawVal (ctBuiltinNamespace ++ "prgmFor") `applyRawIArgs` [(partialKey (mkName "name"), IArgM (Just (rawVal strPrim)))]
+    obj = rawVal (ctBuiltinNamespace ++ "prgmFor") `applyRawIArgs` [(partialKey (mkName "name"), IArgM (Just (rawVal ctCStr)))]
     -- Every value of the type, which is what a return annotation says and what the spread is for
     -- ('Syntax.Ct.Builder.rawSpreadVal'): a bare name is the argument-less partial application, and
     -- a program answered with carries its three fields.
@@ -228,5 +228,5 @@ hsPageAtStatement = RawStatementTree (RawDeclStatement decl) (map commentSt [
                                                                           ])
   where
     decl = RawObjArr (Just obj) FunctionObj Nothing [runtimeAnnotOf "pageAt"] (Just (Nothing, Just returns)) Nothing
-    obj = rawVal (ctBuiltinNamespace ++ "pageAt") `applyRawIArgs` [(partialKey (mkName "source"), IArgM (Just (rawVal strPrim)))]
+    obj = rawVal (ctBuiltinNamespace ++ "pageAt") `applyRawIArgs` [(partialKey (mkName "source"), IArgM (Just (rawVal ctCStr)))]
     returns = rawSpreadVal (ctBuiltinNamespace ++ "RawPrgm")

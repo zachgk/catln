@@ -111,16 +111,20 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Equivalence and Equality
                 This file defines equivalence relations ([Eqv]), the [Eq] class of types that have a canonical
                 equality, and the [operator==] / [operator!=] built on top of them. It is the foundation that
                 ordering ([Ord], in [Data/Algebra/ord]) builds upon." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Equivalence Relations
                 An [Eqv] is the class of equivalence relations. Each object in the class is a single
                 equivalence relation over some type, and supplies the [rel] that decides whether two values of
@@ -135,8 +139,10 @@ Prgm
                 ```" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## The Eq class
                 The [Eq] class is used to define values which can be compared for equality. While naive tuple
                 equality often works, some types have equality that behaves differently and must be defined.
@@ -145,28 +151,38 @@ Prgm
                 [operator==] and [operator!=] follow." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  through which [operator==] dispatches." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[operator==] is the equality operator; [operator!=] is its negation. Creating an instance of" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  [Eq] only requires defining [eq]; [equal], [operator==] and [operator!=] then follow." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Example and law objects
                 The example and law tests reference named [Eqv] objects, since the class is defined by its
                 members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
@@ -174,8 +190,10 @@ Prgm
                 distinct values)." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Example
                 The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
                 [AllEqv] relates every pair." }
@@ -189,8 +207,10 @@ Prgm
                     { ciValue = 2 }
                 )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -202,8 +222,10 @@ Prgm
                     { ciValue = 3 }
                 )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -215,13 +237,17 @@ Prgm
                     { ciValue = 3 }
                 )( Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Laws of equivalence
                 Reflexivity, symmetry and transitivity are properties of the [Eqv] class itself: every
                 equivalence relation must satisfy them, so each is a property test checked against every [Eqv]
@@ -248,18 +274,24 @@ Prgm
                 ```" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  [equal] live alongside their types in [Data/bool], [Data/num], [Data/char] and [Data/string]; this file" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  defines only the abstract [Eqv]/[Eq] classes and the [operator==] / [operator!=] built on them." }
             )
         ]

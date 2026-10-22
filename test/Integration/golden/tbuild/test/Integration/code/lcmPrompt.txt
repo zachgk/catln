@@ -186,15 +186,17 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /prompt
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /input -> /Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What does double do?"
+                                                                    { eaaArg = Value /input ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = "What does double do?"
                                                                     }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -262,8 +264,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What [/Llm/lcm] asks a model, built without asking one: a page as it was written, with its
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "What [/Llm/lcm] asks a model, built without asking one: a page as it was written, with its
                   annotations shown, what is wrong with it noted where it is wrong, and then the question.
                   The page is @artifacts/lcm/page.ct@, written to be wrong in each way a prompt notes: a print
                   with no golden, a print whose golden is stale, an annotation that fails, and a definition the

@@ -138,8 +138,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "An operator declared once on its class (here [operator+] on [/Data/Algebra/Add]) is reached
                 through that generic declaration wherever its operands are untyped. [sumOf]'s arguments carry no
                 type, so its [a + d] is built as the fully generic call, and the tree build then considers every
@@ -149,8 +151,10 @@ Prgm
                 [Integer] too, and the build refused the call." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Exits 0 only when the untyped sum built and evaluated to 3." }
             )
         ]

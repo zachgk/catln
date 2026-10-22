@@ -293,7 +293,7 @@ module(Catln/Doc)
       call it as the reader types, over @/api/call@, passing what they have typed — an annotation is
       written into a program and so can only carry what was written there.
       An empty [query] matches every page, which is what a box that has not been typed into shows.
-    searchPagesFor(query -> String) -> String
+    searchPagesFor(query -> /Catln/CStr) -> String
       # [searchPagesFor] renders the pages the evaluation covers whose path holds [query] as a JSON
         list of those paths. They are the pages [sidebar] renders as a tree; a search box wants the
         flat list it offers rather than a navigation to walk.
@@ -323,7 +323,7 @@ module(Catln/Doc)
       An empty [query] matches every one, which is what a box that has not been typed into offers.
       That is a handful of entries rather than every page there is, which is why a box asks this
       before anything is typed and asks [searchWebdocs] only once something has been.
-    docPagesFor(query -> String) -> String
+    docPagesFor(query -> /Catln/CStr) -> String
       # [docPagesFor] renders the annotations marked [DocPage] whose source or label holds [query] as
         a JSON list of what to run and what to call it. An annotation taking no arguments is one
         entry; one taking only arguments whose values a sealed class names is an entry per

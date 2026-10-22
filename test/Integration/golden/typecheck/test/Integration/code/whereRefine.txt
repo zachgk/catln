@@ -213,8 +213,7 @@ Prgm
     , prgmAnnots =
         [ Value /#noCore
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "A body's condition refines its value by the condition's form: [a | a.isZ == True] is [a] within
                 [$this.isZ == True], the predicate [Nat_isZ] desugars to, so [kDecl] is within its declared
                 [Nat_isZ] by the predicate itself, and [kZ] settles to the [Z] it passes, on which the predicate

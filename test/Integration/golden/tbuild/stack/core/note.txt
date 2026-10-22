@@ -30,8 +30,10 @@ Prgm
                                             { eaaArg = Value /l -> ∀/Data/String =
                                                 ( /operator++
                                                     ( EAppArg
-                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<h1>"
+                                                        { eaaArg = Value /l ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "<h1>"
                                                         }
                                                     )
                                                     ( EAppArg
@@ -41,8 +43,10 @@ Prgm
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /r -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</h1>"
+                                            { eaaArg = Value /r ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = "</h1>"
                                             }
                                         ) ↦ ∀/Data/String
                                     )
@@ -59,15 +63,26 @@ Prgm
                             )
                         , /Catln/Doc/dshow
                             ( EAppArg
-                                { eaaArg = Value /s -> /Data/Note/#tasks( /query=∀/Data/String ) = /Data/Note/#tasks
-                                    ( EAppArg { eaaArg = Value /query -> ∀/Data/String } )
+                                { eaaArg = Value /s -> /Data/Note/#tasks
+                                    ( /query=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    ) = /Data/Note/#tasks
+                                    ( EAppArg
+                                        { eaaArg = Value /query ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                            )
+                                        }
+                                    )
                                 }
                             ) -> /Data/Note/Show/TaskQuery( /result=∀/Data/String ) = /Data/Note/Show/TaskQuery
                             ( EAppArg
                                 { eaaArg = Value /result -> ∀/Data/String =
                                     ( /Catln/Doc/dshow.tasksQuery
                                         ( EAppArg
-                                            { eaaArg = Value /query -> TVArg /query = ( Value /query ↦ TVArg /query ) }
+                                            { eaaArg = Value /query -> /Catln/CStr = ( Value /query ↦ /Catln/CStr ) }
                                         ) ↦ ∀/Data/String
                                     )
                                 }
@@ -543,7 +558,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/Doc/dshow.tasksQuery
-                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> ∀/Data/String
+                            ( EAppArg { eaaArg = Value /query -> /Catln/CStr } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -1004,8 +1019,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Notes
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Notes
                   A note is a piece of writing that names itself and links to other notes. Each note is a page of
                   its own and each link between two notes is an import between their pages, so the graph a set of
                   notes forms is the import graph of the program they are read as.
@@ -1016,8 +1033,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
                   the writing of the note holding it: the comment ends where the checkbox was written, the task
                   is declared in its place, and the writing goes on after it as another comment. So the tasks of
                   a note are declared in the order and the place they were written, and whatever is written
@@ -1040,8 +1059,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
                   into: a box to check and the writing beside it. It is the value itself that is shown, with no
                   display type standing in for it, which is what lets checking the box in a doc server write the
                   change back to the note the task was read from."
@@ -1049,8 +1070,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
                   of them. Which character is which kind is the vault's to say and not markdown's: a vault may
                   write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
                   so. So a box is read as the character it was written with and the kind that character is, and
@@ -1059,16 +1082,20 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
                   medium and low rather than at either end, because that is where a task nobody gave a priority
                   to sorts among ones somebody did."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
                   of each of its two readings, because it is true of a checkbox however the vault it was written
                   in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
                   [/Data/Algebra/Eq] as a class and answers per arm.
@@ -1080,8 +1107,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox read as a checkbox, which a Day Planner plans for a day, sits on that day."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A checkbox read as a checkbox, which a Day Planner plans for a day, sits on that day."
                 }
             )
         , /Catln/#print
@@ -1141,13 +1170,14 @@ Prgm
                                                     , /day=/Data/Primitive/Integer
                                                     )
                                                 )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                                             , /state=/Data/Primitive/False
                                             ) = /Data/Note/Task/Simple
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "11:00 Stand up"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "11:00 Stand up"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
@@ -1303,14 +1333,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task planned for a day sits on that day rather than on the day it is due."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task planned for a day sits on that day rather than on the day it is due."
                 }
             )
         , /Catln/#print
@@ -1366,29 +1400,31 @@ Prgm
                                                     , /day=/Data/Primitive/Integer
                                                     )
                                                 )
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /description=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
+                                            , /symbol=( /Data/String/Text.. + /Catln/CStr )
+                                            , /rest=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Note/Task/Obsidian
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Ship it"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                                { eaaArg = Value /symbol ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " "
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                                             ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it"
+                                                { eaaArg = Value /description ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Ship it"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -1429,8 +1465,10 @@ Prgm
                                             )
                                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
+                                                { eaaArg = Value /rest ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "{}"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -1521,20 +1559,26 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox read as a checkbox which nothing plans sits on no day, whichever way its box is"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A checkbox read as a checkbox which nothing plans sits on no day, whichever way its box is"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  written."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  written."
                 }
             )
         , /Catln/#print
@@ -1548,13 +1592,14 @@ Prgm
                                         { eaaArg = Value /this -> /Data/Note/Task/Simple
                                             ( /time=/Data/Maybe/Nothing
                                             , /plannedDay=/Data/Maybe/Nothing
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                                             , /state=/Data/Primitive/False
                                             ) = /Data/Note/Task/Simple
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "read it"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "read it"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
@@ -1570,20 +1615,26 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task naming a day it may be begun and a day it is due sits on the sooner of them, which is the"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  day it may be begun."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  day it may be begun."
                 }
             )
         , /Catln/#print
@@ -1627,29 +1678,31 @@ Prgm
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
                                             , /plannedDay=/Data/Maybe/Nothing
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /description=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
+                                            , /symbol=( /Data/String/Text.. + /Catln/CStr )
+                                            , /rest=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Note/Task/Obsidian
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Water the plants"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Water the plants"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                                { eaaArg = Value /symbol ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " "
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                                             ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Water the plants"
+                                                { eaaArg = Value /description ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Water the plants"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -1722,8 +1775,10 @@ Prgm
                                             )
                                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
+                                                { eaaArg = Value /rest ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "{}"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -1770,20 +1825,26 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task written with a day it may be begun after the day it is due sits on the due day, which is"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task written with a day it may be begun after the day it is due sits on the due day, which is"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the sooner."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  the sooner."
                 }
             )
         , /Catln/#print
@@ -1827,29 +1888,31 @@ Prgm
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
                                             , /plannedDay=/Data/Maybe/Nothing
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /description=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
+                                            , /symbol=( /Data/String/Text.. + /Catln/CStr )
+                                            , /rest=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Note/Task/Obsidian
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Late start"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Late start"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                                { eaaArg = Value /symbol ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " "
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                                             ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Late start"
+                                                { eaaArg = Value /description ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Late start"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -1922,8 +1985,10 @@ Prgm
                                             )
                                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
+                                                { eaaArg = Value /rest ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "{}"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -1970,14 +2035,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task naming only the day it is due sits on that day, the two before it being absent."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task naming only the day it is due sits on that day, the two before it being absent."
                 }
             )
         , /Catln/#print
@@ -2009,29 +2078,31 @@ Prgm
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
                                             , /plannedDay=/Data/Maybe/Nothing
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /description=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
+                                            , /symbol=( /Data/String/Text.. + /Catln/CStr )
+                                            , /rest=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Note/Task/Obsidian
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Ship it"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                                { eaaArg = Value /symbol ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " "
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                                             ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it"
+                                                { eaaArg = Value /description ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Ship it"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -2072,8 +2143,10 @@ Prgm
                                             )
                                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
+                                                { eaaArg = Value /rest ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "{}"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -2120,14 +2193,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task naming none of the three sits on no day, which is an answer and not a task left out."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task naming none of the three sits on no day, which is an answer and not a task left out."
                 }
             )
         , /Catln/#print
@@ -2147,29 +2224,31 @@ Prgm
                                             , /scheduled=/Data/Maybe/Nothing
                                             , /statusType=/Data/Note/StatusType/Todo
                                             , /plannedDay=/Data/Maybe/Nothing
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /description=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
+                                            , /symbol=( /Data/String/Text.. + /Catln/CStr )
+                                            , /rest=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Note/Task/Obsidian
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Book"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Book"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                                { eaaArg = Value /symbol ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " "
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                                             ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Book"
+                                                { eaaArg = Value /description ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "Book"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -2178,8 +2257,10 @@ Prgm
                                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
+                                                { eaaArg = Value /rest ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "{}"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -2194,21 +2275,27 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "An event is shown in the webdocs as itself, as a task is, so that a day planner moving it can
                   write the change back to the note it was read from."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A task is an event where it has a block of the day, and only there. Said of the tasks whose
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A task is an event where it has a block of the day, and only there. Said of the tasks whose
                   [time] is a [/Data/Maybe/Some] rather than of [Task], because a task with no time has no span
                   to be drawn over: it is still an entry of a calendar, and a day planner draws it apart from
                   its blocks.
@@ -2219,8 +2306,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A bullet the Day Planner reads is an event taking up the block it writes."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A bullet the Day Planner reads is an event taking up the block it writes."
                 }
             )
         , /Catln/#print
@@ -2249,12 +2338,13 @@ Prgm
                                         )
                                     )
                                 , /plannedDay=/Data/Maybe/Nothing
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                 ) = /Data/Note/Event
                                 ( EAppArg
-                                    { eaaArg = Value /contents -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:00 - 13:00 Lunch"
+                                    { eaaArg = Value /contents ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "12:00 - 13:00 Lunch"
                                     }
                                 )
                                 ( EAppArg
@@ -2312,14 +2402,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:00 - 13:00"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "12:00 - 13:00"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox given a time is an event too, taking up the block its time says."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A checkbox given a time is an event too, taking up the block its time says."
                 }
             )
         , /Catln/#print
@@ -2361,13 +2455,14 @@ Prgm
                                         )
                                     )
                                 , /plannedDay=/Data/Maybe/Nothing
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                 , /state=/Data/Primitive/False
                                 ) = /Data/Note/Task/Simple
                                 ( EAppArg
-                                    { eaaArg = Value /contents -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30 Write"
+                                    { eaaArg = Value /contents ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "09:00 - 10:30 Write"
                                     }
                                 )
                                 ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
@@ -2452,14 +2547,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "09:00 - 10:30"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "And so is a task the Tasks plugin manages, on the day it is planned for."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "And so is a task the Tasks plugin manages, on the day it is planned for."
                 }
             )
         , /Catln/#print
@@ -2537,29 +2636,31 @@ Prgm
                                                     , /day=/Data/Primitive/Integer
                                                     )
                                                 )
-                                            , /description=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /symbol=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /rest=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /description=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
+                                            , /symbol=( /Data/String/Text.. + /Catln/CStr )
+                                            , /rest=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Note/Task/Obsidian
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16:00 Call"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "16:00 Call"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /symbol -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
+                                                { eaaArg = Value /symbol ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " "
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                                             ( EAppArg
-                                                { eaaArg = Value /description -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16:00 Call"
+                                                { eaaArg = Value /description ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "16:00 Call"
                                                 }
                                             )
                                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -2600,8 +2701,10 @@ Prgm
                                             )
                                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                             ( EAppArg
-                                                { eaaArg = Value /rest -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{}"
+                                                { eaaArg = Value /rest ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "{}"
                                                 }
                                             )
                                             ( EAppArg
@@ -2756,8 +2859,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         ]

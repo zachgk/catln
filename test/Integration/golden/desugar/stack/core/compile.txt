@@ -79,7 +79,7 @@ Prgm
                             , /ctx=( /io=/Catln/IO )..
                             )
                         , /ContextIn
-                            ( Value /value= /Catln/println( Value msg -> ∀/Data/String ) )
+                            ( Value /value= /Catln/println( Value msg -> /Catln/CStr ) )
                             ( Value /ctx= /( Value io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context

@@ -76,8 +76,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /title -> /Catln/CStr = CStr
                                 { csValue = "A page written rather than read" }
                             )
                         ]
@@ -96,8 +95,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
                 depth, and the vault's own .obsidian configuration is not read as notes.
                 The notes are named here as well as the vault, and that is what gives them goldens. A vault does
@@ -113,8 +114,10 @@ Prgm
                 writing its comments carry, which the desugared one does not." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A page written rather than read, which is compiled and typechecked here and NOT displayed.
                 It was written to hold the display of a note's page down: the annotations and values of a page are
                 evaluated for the file a test names and not for the pages it reaches, so the pages of the vault

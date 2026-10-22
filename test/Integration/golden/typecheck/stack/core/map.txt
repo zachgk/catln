@@ -1263,8 +1263,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Maps
                 A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
                 its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
@@ -1274,8 +1276,10 @@ Prgm
                 reuses those declarations just by being a [Map]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## An unbalanced binary search tree
                 A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
                 pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
@@ -1285,14 +1289,18 @@ Prgm
                 keys were inserted, but the map it represents (the set of key/value entries) does not." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
                 empty map is written [Leaf]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Size" }
             )
         , /Catln/#print
@@ -1374,8 +1382,10 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "30" }
             )
         , /Catln/#print
@@ -1385,8 +1395,10 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
@@ -1464,19 +1476,25 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Lookup" }
             )
         , /Catln/#print
@@ -1564,8 +1582,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -1592,18 +1612,24 @@ Prgm
                     )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Each branch of the [match] is taken: the lookups below descend left, find the root, and descend" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  right." }
             )
         , /Catln/#print
@@ -1702,8 +1728,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -1802,8 +1830,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -1902,13 +1932,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Membership" }
             )
         , /Catln/#print
@@ -1933,8 +1967,10 @@ Prgm
                     { ciValue = 1 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -1959,13 +1995,17 @@ Prgm
                     { ciValue = 3 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Insertion" }
             )
         , /Catln/#print
@@ -2053,18 +2093,24 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Removal" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Removing a present key drops it (the other entries stay); removing an absent key is a no-op." }
             )
         , /Catln/#print
@@ -2153,8 +2199,10 @@ Prgm
                     { ciValue = 1 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -2243,8 +2291,10 @@ Prgm
                     { ciValue = 2 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -2274,13 +2324,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "1" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Removing a node with two children merges its subtrees; the remaining keys are intact." }
             )
         , /Catln/#print
@@ -2402,8 +2456,10 @@ Prgm
                     { ciValue = 2 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -2554,13 +2610,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Keys and values
                 [keys] and [values] are the same in-order traversal as [size], differing only in what each entry
                 contributes, so all three are [foldEntries] with a different step. Because a node sits BETWEEN
@@ -2674,8 +2734,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -2785,13 +2847,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# BinTree Eq membership (order-independent)
                 Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
                 [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
@@ -2803,13 +2869,17 @@ Prgm
                 [Some] result through the [Maybe] [Eq] instance." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Two maps with the same entries are equal even when built in different orders (different tree" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  shapes); maps differing in a value are not." }
             )
         , /Catln/#print
@@ -2959,8 +3029,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -2983,8 +3055,10 @@ Prgm
                 )
                 ( Value /this -> /Data/Map/MapEqv = /Data/Algebra/eq( Value /this -> /Data/Map/Leaf = Value /Data/Map/Leaf ) )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -3022,13 +3096,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Functor: mapping over values
                 A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
                 preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
@@ -3039,13 +3117,17 @@ Prgm
                 instance awaits two-parameter [Functor] support. The operation itself works generically.)" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  looking the mapped value back up with [get])." }
             )
         , /Catln/#print
@@ -3102,8 +3184,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -3213,8 +3297,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         ]

@@ -102,8 +102,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /f
                                             ( Value /x -> /Data/Primitive/Integer = /operator-
                                                 ( Value /a -> /Data/Primitive/Integer = CInt
@@ -192,8 +192,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A method and a record field that share a name, called from a local binding.
                 `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
                 An [Integer] has no field `foo`, so only the method applies. The same call written directly in a

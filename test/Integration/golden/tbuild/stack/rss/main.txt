@@ -35,8 +35,10 @@ Prgm
                                                                     { eaaArg = Value /l -> ∀/Data/String =
                                                                         ( /operator++
                                                                             ( EAppArg
-                                                                                { eaaArg = Value /l -> /Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<p>"
+                                                                                { eaaArg = Value /l ->
+                                                                                    ( /Data/String/Text
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                    ) = "<p>"
                                                                                 }
                                                                             )
                                                                             ( EAppArg
@@ -67,8 +69,10 @@ Prgm
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</p>"
+                                                        { eaaArg = Value /r ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "</p>"
                                                         }
                                                     ) ↦ ∀/Data/String
                                                 )
@@ -99,11 +103,12 @@ Prgm
                                 { eaaArg = Value /l -> TVArg /published = ( Value /published ↦ TVArg /published ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                { eaaArg = Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = ""
                                 }
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = ""
                         , /Catln/Doc/dshow.publishedOf
                             ( EAppArg { eaaArg = Value /published -> ∀/Data/String } ) -> ∀/Data/String =
                             ( /operator++
@@ -111,8 +116,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " <small>"
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " <small>"
                                                 }
                                             )
                                             ( EAppArg
@@ -122,8 +129,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</small>"
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "</small>"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -164,8 +173,10 @@ Prgm
                                 { eaaArg = Value /l -> TVArg /link = ( Value /link ↦ TVArg /link ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                { eaaArg = Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = ""
                                 }
                             ) -> ∀/Data/String =
                             ( /operator++
@@ -173,8 +184,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<strong>"
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "<strong>"
                                                 }
                                             )
                                             ( EAppArg
@@ -184,8 +197,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</strong>"
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "</strong>"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -203,8 +218,10 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<strong><a href=""
+                                                                        { eaaArg = Value /l ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "<strong><a href=""
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -214,8 +231,10 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "">"
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "">"
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -228,8 +247,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</a></strong>"
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "</a></strong>"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -248,8 +269,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# RSS
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# RSS
                   An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
                   is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
                   page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per

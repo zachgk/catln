@@ -71,8 +71,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "`dataArrow.ct` run, rather than only built.
                 The core-less file next to this one is the diagnostic: eleven lines, no standard library, and it
                 says whether the chain type-checks and builds a tree. What it cannot say is whether the tree

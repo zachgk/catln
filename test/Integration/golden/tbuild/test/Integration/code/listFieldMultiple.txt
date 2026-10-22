@@ -98,38 +98,26 @@ Prgm
                             )
                         , /Tagged
                             ( EAppArg
-                                { eaaArg = Value /name -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "two of the same"
-                                }
+                                { eaaArg = Value /name -> /Catln/CStr = "two of the same" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /tags -> /Data/List/Cons
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=/Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /head=/Catln/CStr
+                                    , /tail=/Data/List/Cons[ /T=/Catln/CStr ]
+                                        ( /head=/Catln/CStr
                                         , /tail=/Data/List/Nil
                                         )
                                     ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                        }
+                                        { eaaArg = Value /head -> /Catln/CStr = "x" }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /tail -> /Data/List/Cons
-                                            ( /head=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /head=/Catln/CStr
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
-                                                { eaaArg = Value /head -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                                }
+                                                { eaaArg = Value /head -> /Catln/CStr = "x" }
                                             )
                                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                         }
@@ -138,38 +126,26 @@ Prgm
                             )
                         , /Tagged
                             ( EAppArg
-                                { eaaArg = Value /name -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "two different"
-                                }
+                                { eaaArg = Value /name -> /Catln/CStr = "two different" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /tags -> /Data/List/Cons
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /tail=/Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /head=/Catln/CStr
+                                    , /tail=/Data/List/Cons[ /T=/Catln/CStr ]
+                                        ( /head=/Catln/CStr
                                         , /tail=/Data/List/Nil
                                         )
                                     ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                        }
+                                        { eaaArg = Value /head -> /Catln/CStr = "x" }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /tail -> /Data/List/Cons
-                                            ( /head=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /head=/Catln/CStr
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
-                                                { eaaArg = Value /head -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "y"
-                                                }
+                                                { eaaArg = Value /head -> /Catln/CStr = "y" }
                                             )
                                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                         }
@@ -248,8 +224,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A list literal of two or more elements written into a field of a data type.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A list literal of two or more elements written into a field of a data type.
                   The companion to @listField.ct@, which checks the same field holding nothing and holding one
                   thing: the second cell is what this adds, and for a long time it was what a list field could not
                   reach. Written for two of the SAME string as well as two different ones, because the two are not

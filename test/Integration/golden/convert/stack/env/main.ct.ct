@@ -9,7 +9,7 @@ module(System)
     an io.
     This is not part of the standard library. A program which reads no variable has no use for it,
     and one that does writes `import "env"`.
-  env{io -> IO}(name -> String) -> /Data/Maybe[$T -> String]{IO}
+  env{io -> IO}(name -> /Catln/CStr) -> /Data/Maybe[$T -> String]{IO}
     # [env] is the value of the environment variable called [name], or [/Data/Maybe/Nothing] where
       no variable of that name is set. A variable set to the empty string is set, and is answered
       with the empty string rather than with nothing.

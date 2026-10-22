@@ -192,8 +192,7 @@ Prgm
     , prgmAnnots =
         [ Value /#noCore
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "An arrow written from a class.
                 `(_ -> S) -> T..` says every member of the open class [S] converts to a [T]: [T] is in [S] already, and
                 [P] converts by its own arrow. So a function over [S] may be written for a [T] alone, and a [P]

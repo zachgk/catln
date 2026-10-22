@@ -47,8 +47,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Showing a model
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Showing a model
                   What a model is shown of a value is its own question, as what a person is shown of one is
                   [/Catln/Doc/dshow]'s. A type may be displayed in the webdocs as markup, or as a chart, and be
                   written for a model as something else again. The two share the text of a [/Data/ToString],
@@ -57,34 +59,43 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Represents values which can be shown to a language model."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Represents values which can be shown to a language model."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Every [/Data/ToString] value is shown to a model as its text, the same text the webdocs show a
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Every [/Data/ToString] value is shown to a model as its text, the same text the webdocs show a
                   person ([/Catln/Doc/DShow])."
                 }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) =
                     ( /Llm/llmshow
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "text"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "text"
                             }
-                        ) ↦ /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "text"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "text"
                 }
             )
         , /Catln/#print
@@ -98,8 +109,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "3"
                 }
             )
         ]

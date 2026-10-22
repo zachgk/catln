@@ -60,28 +60,24 @@ Prgm
                     , omiDefs =
                         [ /Data/msg
                             ( Value /this -> /Llm/LlmErr/Unset( /variable=∀/Data/String ) = /Llm/LlmErr/Unset( Value /variable -> ∀/Data/String ) ) -> ∀/Data/String = /operator++( Value /l -> TVArg /variable = Value /variable )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " is not set, so there is no model to ask" }
                             )
                         , /Data/msg
                             ( Value /this -> /Llm/LlmErr/Request( /cause=∀/Http/HttpErr ) = /Llm/LlmErr/Request( Value /cause -> ∀/Http/HttpErr ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the model could not be asked: " }
                             )
                             ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
                         , /Data/msg
                             ( Value /this -> /Llm/LlmErr/NotJson( /cause=/Data/JsonParseErr.. ) = /Llm/LlmErr/NotJson( Value /cause -> /Data/JsonParseErr.. ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the model's response is " }
                             )
                             ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
                         , /Data/msg
                             ( Value /this -> /Llm/LlmErr/ApiError( /message=∀/Data/String ) = /Llm/LlmErr/ApiError( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the model's API answered with an error: " }
                             )( Value /r -> TVArg /message = Value /message )
                         , /Data/msg
@@ -92,13 +88,11 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /l -> /Data/String/Text.. = CStr
                                         { csValue = "the model's response has no reply at " }
                                     )( Value /r -> TVArg /path = Value /path )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ": " }
                                 )
                             )
@@ -112,22 +106,17 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /l -> /Data/String/Text.. = CStr
                                             { csValue = "the model's reply at " }
                                         )( Value /r -> TVArg /path = Value /path )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r -> /Data/String/Text.. = CStr
                                         { csValue = " is " }
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/jsonKind( Value /j -> TVArg /found = Value /found )
-                                )
+                                ( Value /r -> /Data/String/Text.. = /Data/jsonKind( Value /j -> TVArg /found = Value /found ) )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = ", not text" }
                             )
                         , /Data/msg
@@ -138,14 +127,12 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /l -> /Data/String/Text.. = CStr
                                         { csValue = "the model's reply is not a value of the type asked for: " }
                                     )
                                     ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /cause = Value /cause ) )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = "
                                     The reply was: " }
                                 )
@@ -222,8 +209,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
                 ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
                 response is not JSON ([NotJson]); the API answered with an error saying

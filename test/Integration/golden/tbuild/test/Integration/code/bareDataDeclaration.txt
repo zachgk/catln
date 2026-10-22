@@ -81,8 +81,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A declaration naming a data type by its BARE NAME, fulfilled by a definition which destructures
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A declaration naming a data type by its BARE NAME, fulfilled by a definition which destructures
                   that type's fields.
                   The two sides spell the same type differently: the declaration writes @Plain@ and says nothing
                   about what it holds, where the definition writes @/Plain(name, other)@ and binds every field. A

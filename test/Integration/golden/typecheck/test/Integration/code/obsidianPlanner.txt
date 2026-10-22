@@ -80,8 +80,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests importing an Obsidian vault which runs the Day Planner community plugin beside the Tasks
                 plugin. A checkbox of such a vault carries what the planner reads it as: the block of the day its
                 line writes at its start, and the day it is planned for — the day of the daily note it is written

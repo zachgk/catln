@@ -87,8 +87,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Repro: a destructured element binding in a definition pattern must inherit the element
                 bound declared on the function's argument. This uses a local `Boxed` class with a member
                 `unbox` instead of the stdlib `Eq` class (which is no longer an effective class — equality

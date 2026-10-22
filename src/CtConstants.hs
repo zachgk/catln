@@ -47,8 +47,10 @@ ioPrim = "/Catln/IO"
 -- the list of @\/Data\/Char@ the string is made of. A class with one member rather than a data type,
 -- so that @String@ written as a type means every string and not only the one with no characters —
 -- a data type's bare name is its argument-less form, which a string with characters is not.
-ctStringText, ctStringChars :: String
+ctStringText, ctStringChars, ctCStr :: String
 ctStringText = "/Data/String/Text"
+-- | The string the interpreter holds packed ('Semantics.Val.CStrVal'): what a string constant is.
+ctCStr = "/Catln/CStr"
 ctStringChars = "chars"
 
 pattern ContextStr :: String

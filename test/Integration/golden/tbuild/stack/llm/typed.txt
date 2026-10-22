@@ -71,15 +71,14 @@ Prgm
                             ( EAppArg { eaaArg = Value /decls -> ∀/Data/String } ) | /isEmpty
                             ( EAppArg
                                 { eaaArg = Value /this -> TVArg /decls = ( Value /decls ↦ TVArg /decls ) }
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = ""
                         , /Llm/typedDecls
                             ( EAppArg { eaaArg = Value /decls -> ∀/Data/String } ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " It is declared as:
-                                      "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( " It is declared as:
+                                        " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -279,11 +278,20 @@ Prgm
                                 { eaaArg = Value /value -> /Llm/tlcm
                                     ( /type=∀/Catln/Type
                                     , /input=∀/Data/String
-                                    , /source=∀/Data/String
+                                    , /source=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
                                     ) = /Llm/tlcm
                                     ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
                                     ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                                    ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /source ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                            )
+                                        }
+                                    )
                                 }
                             )
                             ( EAppArg
@@ -333,7 +341,7 @@ Prgm
                                                         { eaaArg = Value /page -> /Catln/RawPrgm.. =
                                                             ( /Catln/pageAt
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
+                                                                    { eaaArg = Value /source -> /Catln/CStr = ( Value /source ↦ /Catln/CStr ) }
                                                                 ) ↦ /Catln/RawPrgm..
                                                             )
                                                         }
@@ -439,10 +447,10 @@ Prgm
                                                                         { eaaArg = Value /l -> TVArg /input = ( Value /input ↦ TVArg /input ) }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                            ( "
 
-                                                                          Answer with only a Catln expression of type "
+                                                                            Answer with only a Catln expression of type " ↦ /Data/String/Text.. )
                                                                         }
                                                                     ) ↦ ∀/Data/String
                                                                 )
@@ -461,8 +469,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", with nothing before or after it."
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ", with nothing before or after it." ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -496,7 +504,13 @@ Prgm
                     , omiDefs =
                         [ /Llm/tlcm.$6d0af4
                             ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /source ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /$6d0af4-arg -> /Context
                                     [ /V=∀/Data/Result
@@ -582,8 +596,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the reply is not an answer: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the reply is not an answer: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -631,12 +645,34 @@ Prgm
                             )
                         , /Llm/typedReply
                             ( EAppArg
-                                { eaaArg = Value /reply -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                { eaaArg = Value /reply -> /Data/Result/Ok
+                                    [ /T=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    ]
+                                    ( /value=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    ) = /Data/Result/Ok
+                                    ( EAppArg
+                                        { eaaArg = Value /value ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                            )
+                                        }
+                                    )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } ) ->
+                            ( EAppArg
+                                { eaaArg = Value /source ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            ) ->
                             ( /Data/Result/Fail
                                 [ /E=/Llm/LlmErr/NotOf
                                     ( /reply=∀/Data/String
@@ -657,13 +693,13 @@ Prgm
                                     { eaaArg = Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                         ( /Catln/parseExprIn
                                             ( EAppArg
-                                                { eaaArg = Value /input -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                                { eaaArg = Value /input -> /Catln/CStr = ( Value /value ↦ /Catln/CStr ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
+                                                { eaaArg = Value /source -> /Catln/CStr = ( Value /source ↦ /Catln/CStr ) }
                                             ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                         )
                                     }
@@ -796,21 +832,19 @@ Prgm
                                                 { eaaArg = Value /l -> TVArg /text = ( Value /text ↦ TVArg /text ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", sure: "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ", sure: " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
                                         ( /Data/toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /sure = ( Value /sure ↦ TVArg /sure ) }
-                                            ) ↦ /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ) ↦ /Data/String/Text..
                                         )
                                     }
                                 ) ↦ ∀/Data/String
@@ -829,8 +863,7 @@ Prgm
                         , /Llm/TypedExample/answerShown
                             ( EAppArg
                                 { eaaArg = Value /r -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] }
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "something other than an answer"
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = "something other than an answer"
                         ]
                     }
                 )
@@ -852,8 +885,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking for a value
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Asking for a value
                   [tllm] and [tlcm] ask as [llm] and [lcm] do, but for a value of a type rather than for text.
                   The model is told to answer with a Catln expression of the type, and shown the declarations of
                   what the type is made of ([/Catln/typeDecls]). Its reply is read as Catln ([/Catln/parseExpr]),
@@ -866,16 +901,20 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking for a value, without asking
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Asking for a value, without asking
                   What [/Llm/tllm] asks and what it makes of the reply are checked here without asking a model.
                   [Answer] is the type asked for, a type of this page."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The model is told what to answer with, and shown what an [Answer] is."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The model is told what to answer with, and shown what an [Answer] is."
                 }
             )
         , /Catln/#print
@@ -883,8 +922,10 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/String =
                     ( /Llm/typedPrompt
                         ( EAppArg
-                            { eaaArg = Value /input -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Is the sky blue?"
+                            { eaaArg = Value /input ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "Is the sky blue?"
                             }
                         )
                         ( EAppArg
@@ -917,8 +958,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Is the sky blue?
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Is the sky blue?
 
                   Answer with only a Catln expression of type /Llm/TypedExample/Answer, with nothing before or after it. It is declared as:
                   data(Answer(text -> String, sure -> Boolean))"
@@ -926,8 +969,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A reply which is an [Answer] is answered with it, and one which is not with why."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A reply which is an [Answer] is answered with it, and one which is not with why."
                 }
             )
         , /Catln/#print
@@ -950,16 +995,20 @@ Prgm
                                 ) =
                                 ( /Llm/typedValue
                                     ( EAppArg
-                                        { eaaArg = Value /reply -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Answer(text= "yes", sure= True)"
+                                        { eaaArg = Value /reply ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "Answer(text= "yes", sure= True)"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                             ( /Catln/parseExpr
                                                 ( EAppArg
-                                                    { eaaArg = Value /input -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Answer(text= "yes", sure= True)"
+                                                    { eaaArg = Value /input ->
+                                                        ( /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                        ) = "Answer(text= "yes", sure= True)"
                                                     }
                                                 )
                                                 ( EAppArg
@@ -989,9 +1038,7 @@ Prgm
                                                     }
                                                 )
                                                 ( EAppArg
-                                                    { eaaArg = Value /source -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/stack/llm/typed.ct"
-                                                    }
+                                                    { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/stack/llm/typed.ct" }
                                                 ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                             )
                                         }
@@ -1015,8 +1062,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "yes, sure: True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "yes, sure: True"
                 }
             )
         , /Catln/#print
@@ -1039,16 +1088,20 @@ Prgm
                                 ) =
                                 ( /Llm/typedValue
                                     ( EAppArg
-                                        { eaaArg = Value /reply -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "yes"
+                                        { eaaArg = Value /reply ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "yes"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                             ( /Catln/parseExpr
                                                 ( EAppArg
-                                                    { eaaArg = Value /input -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "yes"
+                                                    { eaaArg = Value /input ->
+                                                        ( /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                        ) = "yes"
                                                     }
                                                 )
                                                 ( EAppArg
@@ -1078,9 +1131,7 @@ Prgm
                                                     }
                                                 )
                                                 ( EAppArg
-                                                    { eaaArg = Value /source -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/stack/llm/typed.ct"
-                                                    }
+                                                    { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/stack/llm/typed.ct" }
                                                 ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                             )
                                         }
@@ -1104,14 +1155,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the reply is not an answer: yes"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "the reply is not an answer: yes"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "No reply at all is passed on as it was."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "No reply at all is passed on as it was."
                 }
             )
         , /Catln/#print
@@ -1121,31 +1176,25 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /r -> /Data/Result/Fail
                                 [ /E=/Llm/LlmErr/Unset
-                                    ( /variable=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
+                                    ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                                 ]
                                 ( /err=/Llm/LlmErr/Unset
-                                    ( /variable=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
+                                    ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                                 ) =
                                 ( /Llm/typedReply
                                     ( EAppArg
                                         { eaaArg = Value /reply -> /Data/Result/Fail
                                             ( /err=/Llm/LlmErr/Unset
-                                                ( /variable=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
+                                                ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                                             ) = /Data/Result/Fail
                                             ( EAppArg
                                                 { eaaArg = Value /err -> /Llm/LlmErr/Unset
-                                                    ( /variable=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ) = /Llm/LlmErr/Unset
+                                                    ( /variable=( /Data/String/Text.. + /Catln/CStr ) ) = /Llm/LlmErr/Unset
                                                     ( EAppArg
-                                                        { eaaArg = Value /variable -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_MODEL"
+                                                        { eaaArg = Value /variable ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "OPENAI_MODEL"
                                                         }
                                                     )
                                                 }
@@ -1179,19 +1228,17 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                        { eaaArg = Value /source ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = ""
                                         }
                                     ) ↦ /Data/Result/Fail
                                     [ /E=/Llm/LlmErr/Unset
-                                        ( /variable=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                                     ]
                                     ( /err=/Llm/LlmErr/Unset
-                                        ( /variable=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                                     )
                                 )
                             }
@@ -1200,8 +1247,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "OPENAI_MODEL is not set, so there is no model to ask"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "OPENAI_MODEL is not set, so there is no model to ask"
                 }
             )
         ]

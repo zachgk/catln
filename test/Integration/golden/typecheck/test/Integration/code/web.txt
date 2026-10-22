@@ -12,22 +12,19 @@ Prgm
                             ( /Catln/www( /html=∀/Data/String ) + /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                                         , /contents=∀/Data/String
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                                         , /contents=∀/Data/String
                                         )
                                     , /tail=/Data/List/Nil
                                     )
                                 )
                             ) = /Catln/www
-                            ( Value /html -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /html -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                                 { csValue = "<html><body>web test</body></html>" }
                             )
                         ]
@@ -39,8 +36,10 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests using a custom build type [www].
                 It also prints the result of the build in an iframe." }
             )
@@ -48,14 +47,12 @@ Prgm
             ( Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons
                     [ /T=/Catln/BuildFile
-                        ( /path=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                         , /contents=∀/Data/String
                         )
                     ]
                     ( /head=/Catln/BuildFile
-                        ( /path=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                         , /contents=∀/Data/String
                         )
                     , /tail=/Data/List/Nil

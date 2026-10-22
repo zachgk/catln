@@ -27,6 +27,7 @@ import           Semantics.Types
 import           Control.Applicative     (asum, (<|>))
 import           Control.Monad
 import           Data.Graph
+import           Data.List               (isSuffixOf)
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           Control.Monad.State
@@ -132,8 +133,8 @@ evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ fl
 evalCompAnnot :: TExpr EvalMetaDat -> Val -> EvalM ()
 
 evalCompAnnot _ (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
-  (Just b, Just (StrVal _)) | b == true -> return ()
-  (Just b, Just (StrVal msg)) | b == false -> liftCRes $ CErr [MkCNote $ AssertCErr msg]
+  (Just b, Just (AnyStrVal _)) | b == true -> return ()
+  (Just b, Just (AnyStrVal msg)) | b == false -> liftCRes $ CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return ()
   (Just b, Nothing) | b == false -> liftCRes $ CErr [MkCNote $ AssertCErr "Failed assertion"]
   _ -> evalError $ printf "Invalid assertion with unexpected args %s" (show args)
@@ -241,7 +242,12 @@ evalCallTree  m (TCMatch destType opts) = do
   let valP = reKeyP $ getValDispatchPartial evTypeEnv pats depth m
   -- Membership with the arm's value predicates evaluated on the value ('valWithinTypeAs'): an arm
   -- refined by a predicate the type layer could not decide is taken when the predicate holds.
-  let optMatches optType = valWithinTypeAs valP m (singletonType $ reKeyP optType)
+  -- A call keeps the name it is written with, which may be relative (@x.length@ is a @/length@,
+  -- spelled with the leading slash every value name carries), while each option is keyed by the
+  -- absolute name inference resolved it to (@/Data/String/length@). The value is that option's call
+  -- where the option's name ends with its own.
+  let asOption optType = if nameStr (ptName valP) `isSuffixOf` nameStr (ptName optType) then valP{ptName = ptName optType} else valP
+  let optMatches optType = valWithinTypeAs (asOption optType) m (singletonType $ reKeyP optType)
   matching <- filterM (optMatches . fst) (H.toList opts)
   case matching of
     [(_, resArrowTree)] -> do
@@ -252,9 +258,20 @@ evalCallTree  m (TCMatch destType opts) = do
     -- The runtime value is
     -- concrete, so rebuilding the dispatch from its type cannot cycle. Rebuild from the value and
     -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
+    --
+    -- The rebuild is a build like any other ('buildCallTree'): a member of a class an arrow is written
+    -- from converts on the way in there too, which is what a call whose argument is still a variable
+    -- at build time (a lambda's @acc@ in @acc ++ "x"@) needs once its value is known. It is built under
+    -- the name the options resolved the call to, where they agree on one the value's name names, rather
+    -- than the relative name the call was written with, which names every function so called.
     [] -> do
       Env{evTbEnv} <- get
-      case buildPartialCallTree evTbEnv [] S.empty PTopType MayHold DestRequired (getValPartialType m) destType of
+      let valType = getValPartialType m
+      let optionNames = S.toList $ S.fromList [ ptName o | o <- H.keys opts, nameStr (ptName valType) `isSuffixOf` nameStr (ptName o) ]
+      let rebuildSrc = case optionNames of
+            [n] -> valType{ptName = n}
+            _   -> valType
+      case buildCallTree evTbEnv [] S.empty PTopType MayHold DestRequired (singletonType rebuildSrc) destType of
         CRes _ rebuilt | rebuilt /= TCMatch destType opts ->
           withEvalPush ("rebuild match with val " ++ show m) $ evalCallTree m rebuilt
         _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValPartialType m) (show opts)
@@ -296,6 +313,17 @@ evalCallTree v (TCRefine t) = do
   if ok
     then return v
     else evalError $ printf "The value %s is outside the refinement %s" (show v) (show t)
+-- An argument converted before the call takes it ('TCArgConv'): the argument at the path is
+-- evaluated through the tree, and the value is the same call holding what that gave.
+evalCallTree v (TCArgConv argPath t) = convertAt argPath v
+  where
+    convertAt [] x = evalCallTree x t
+    convertAt (k:ks) (TupleVal n args) = case H.lookup k args of
+      Just a  -> do
+        a' <- convertAt ks a
+        return $ TupleVal n (H.insert k a' args)
+      Nothing -> evalError $ printf "The argument %s to convert is not in %s" k (show v)
+    convertAt _ x = evalError $ printf "The argument at %s to convert is not in %s, which holds no arguments there" (show argPath) (show x)
 evalCallTree input (TCArg _ name) = do
   Env{evArgs} <- get
   case H.lookup name evArgs of
@@ -617,16 +645,16 @@ llmShowPage = EEvalPrim "llmShowPage" prim
           res <- runCResT $ evalDShowAnnot env os a
           return $ case res of
             CErr notes -> Just $ ShownFailed notes
-            CRes _ (Just (StrVal actual)) -> case checkPrintGolden a actual of
+            CRes _ (Just (AnyStrVal actual)) -> case checkPrintGolden a actual of
               CErr notes -> Just $ ShownFailed notes
               CRes{}     -> Nothing
             CRes{} -> Nothing
       | otherwise = do
           res <- runCResT $ evalShowAnnot llmshowClass env os a
           return $ case res of
-            CErr notes                  -> Just $ ShownFailed notes
-            CRes _ (Just (StrVal text)) -> Just $ Shown text
-            CRes{}                      -> Nothing
+            CErr notes                     -> Just $ ShownFailed notes
+            CRes _ (Just (AnyStrVal text)) -> Just $ Shown text
+            CRes{}                         -> Nothing
 
     -- The page a page was read from is the one its statements say they were written in.
     pageFile (RawPrgm _ trees) = listToMaybe [sourceName start | tree <- trees, Just start <- [treeStart tree]]
@@ -893,8 +921,8 @@ evalShowAnnot sc env0@Env{evTbEnv, evTypeEnv} os annot0
     evalToValue a = do
       tree <- asCResT $ toTExprDest evTbEnv os a (emptyMetaT dshowDestType)
       evalStateT (evalExpr tree) env
-    onlyText v@(Just StrVal{}) = v
-    onlyText _                 = Nothing
+    onlyText v@(Just AnyStrVal{}) = v
+    onlyText _                    = Nothing
 
 -- | A value rendered as text through @/Data/toString@, when it is @ToString@: what a @#print@ of it
 -- shows, and the only form a golden can check.
@@ -913,8 +941,8 @@ renderValTextIn env@Env{evExEnv} v
   | displayableVal v = do
       called <- callOnVal env dshowDestType (TupleVal "/Data/toString" (H.singleton "/this" v))
       return $ case called of
-        Just (str@StrVal{}, built) -> (Just str, built)
-        _                          -> (Nothing, evExEnv)
+        Just (str@AnyStrVal{}, built) -> (Just str, built)
+        _                             -> (Nothing, evExEnv)
   | otherwise = return (Nothing, evExEnv)
 
 -- | A value's display: what @/Catln/Doc/dshow@ makes of it, and that rendered as text when it is
@@ -1449,3 +1477,4 @@ evalBuild session function prgm = do
     val -> case valResultFiles val of
       Right _ -> return (val, results)
       Left err -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not build a %s: %s" function catlnResultPath err]
+

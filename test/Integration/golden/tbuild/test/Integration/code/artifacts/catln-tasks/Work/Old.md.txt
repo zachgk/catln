@@ -7,20 +7,14 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Archive the plan ✅ 2025-12-20"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "Archive the plan ✅ 2025-12-20" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                }
+                                { eaaArg = Value /symbol -> /Catln/CStr = "x" }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done } )
                             ( EAppArg
-                                { eaaArg = Value /description -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Archive the plan"
-                                }
+                                { eaaArg = Value /description -> /Catln/CStr = "Archive the plan" }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
                             ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -28,28 +22,20 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusDate":"2025-12-20","statusName":"Done"}"
-                                }
+                                { eaaArg = Value /rest -> /Catln/CStr = "{"statusDate":"2025-12-20","statusName":"Done"}" }
                             )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Review the archive 📅 2025-12-31"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "Review the archive 📅 2025-12-31" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
-                                }
+                                { eaaArg = Value /symbol -> /Catln/CStr = " " }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Review the archive"
-                                }
+                                { eaaArg = Value /description -> /Catln/CStr = "Review the archive" }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
                             ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -149,9 +135,7 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo"}"
-                                }
+                                { eaaArg = Value /rest -> /Catln/CStr = "{"statusName":"Todo"}" }
                             )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -167,9 +151,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Old"
-                                }
+                                { eaaArg = Value /title -> /Catln/CStr = "Old" }
                             )
                         ]
                     , omiRuntimeDecls = []

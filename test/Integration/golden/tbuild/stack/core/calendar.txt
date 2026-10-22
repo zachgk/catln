@@ -240,8 +240,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Calendars
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Calendars
                   A calendar lays out the things a page reaches which sit on a day, on the days they sit on.
                   What such a thing is, is not decided here. This declares only what a calendar needs to know
                   about one — which day it is assigned to — and leaves every answer to whoever has something to
@@ -252,8 +254,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[CalendarEntry] is the class of things a calendar can show. A task is one, which
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[CalendarEntry] is the class of things a calendar can show. A task is one, which
                   @stack/core/note.ct@ says where a task is declared rather than this file saying it here.
                   Membership is declared by the member and not by the class for the reason the class exists: a
                   calendar which had to be told about each of its members would be a calendar of a fixed list of
@@ -267,8 +271,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
                   [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
                   value's own type comes back as the unevaluated application of it.
                   Said here rather than in @stack/core/maybe.ct@, where it would read as the more general truth
@@ -279,8 +285,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An [Event] is something that takes up a block of a day: a meeting from nine until half past
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "An [Event] is something that takes up a block of a day: a meeting from nine until half past
                   ten, or a line a day planner reads a time off. It is what a day planner lays out, and the
                   whole of what one lays out along a day.
                   A narrower class than [CalendarEntry] rather than an answer it gives, because whether a thing

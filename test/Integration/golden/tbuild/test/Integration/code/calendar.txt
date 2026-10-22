@@ -145,8 +145,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
                   written in reaches which sits on a day, so this page reaches the vault beside it and the calendar
                   is of the tasks that vault holds.
                   Written in a .ct page and not in a note. A calendar is Catln's own and not a reading of the

@@ -7,76 +7,58 @@ Prgm
                     { omiDecls =
                         [ /Wide( Value /a -> ∀/Data/String )( Value /b -> ∀/Data/String )( Value /c -> ∀/Data/String )( Value /d -> ∀/Data/String )( Value /e -> ∀/Data/String )( Value /f -> ∀/Data/String )( Value /g -> ∀/Data/String )( Value /h -> ∀/Data/String )( Value /i -> ∀/Data/String )( Value /j -> ∀/Data/String )( Value /k -> ∀/Data/String )( Value /l -> ∀/Data/String )( Value /m -> ∀/Data/String )( Value /n -> ∀/Data/String )( Value /o -> ∀/Data/String )( Value /p -> ∀/Data/String )( Value /q -> ∀/Data/String )( Value /r -> ∀/Data/String )
                         , /Wide
-                            ( Value /a -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /a -> /Catln/CStr = CStr
                                 { csValue = "1" }
                             )
-                            ( Value /b -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /b -> /Catln/CStr = CStr
                                 { csValue = "2" }
                             )
-                            ( Value /c -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /c -> /Catln/CStr = CStr
                                 { csValue = "3" }
                             )
-                            ( Value /d -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /d -> /Catln/CStr = CStr
                                 { csValue = "4" }
                             )
-                            ( Value /e -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /e -> /Catln/CStr = CStr
                                 { csValue = "5" }
                             )
-                            ( Value /f -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /f -> /Catln/CStr = CStr
                                 { csValue = "6" }
                             )
-                            ( Value /g -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /g -> /Catln/CStr = CStr
                                 { csValue = "7" }
                             )
-                            ( Value /h -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /h -> /Catln/CStr = CStr
                                 { csValue = "8" }
                             )
-                            ( Value /i -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /i -> /Catln/CStr = CStr
                                 { csValue = "9" }
                             )
-                            ( Value /j -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /j -> /Catln/CStr = CStr
                                 { csValue = "10" }
                             )
-                            ( Value /k -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /k -> /Catln/CStr = CStr
                                 { csValue = "11" }
                             )
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Catln/CStr = CStr
                                 { csValue = "12" }
                             )
-                            ( Value /m -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /m -> /Catln/CStr = CStr
                                 { csValue = "13" }
                             )
-                            ( Value /n -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /n -> /Catln/CStr = CStr
                                 { csValue = "14" }
                             )
-                            ( Value /o -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /o -> /Catln/CStr = CStr
                                 { csValue = "15" }
                             )
-                            ( Value /p -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /p -> /Catln/CStr = CStr
                                 { csValue = "16" }
                             )
-                            ( Value /q -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /q -> /Catln/CStr = CStr
                                 { csValue = "17" }
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Catln/CStr = CStr
                                 { csValue = "18" }
                             )
                         ]
@@ -188,8 +170,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A data type eighteen fields wide, declared, shown, and printed, which is what holds that a type
                 costs what its width says it costs.
                 Typechecking does not CONVERGE any slower for the width. This file is 9 epochs over 3 fragments,
@@ -220,8 +204,10 @@ Prgm
                 the width below. [/Data/Note/Task/Obsidian] is the type such a checkbox is read into." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
                 the same reason: the width that costs anything is the width something reads. The first and the
                 last field, so the reading reaches across the whole width." }

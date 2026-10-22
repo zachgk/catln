@@ -108,8 +108,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "`classArrow.ct` run, rather than only built.
                 A built conversion shows as its source and its destination, so a golden cannot tell a conversion
                 that fires from one that never does. Each value here is read by an arm that only takes a

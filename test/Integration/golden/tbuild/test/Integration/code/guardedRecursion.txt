@@ -290,9 +290,9 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /showD
                                                                 ( EAppArg
                                                                     { eaaArg = Value /d -> /Digits
@@ -348,7 +348,7 @@ Prgm
                                                                             )
                                                                         )
                                                                     }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -452,8 +452,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/"
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( "/" ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -486,8 +486,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A guarded arm whose body is a call of its own function, in a function answering with a record.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A guarded arm whose body is a call of its own function, in a function answering with a record.
                   [digs] reads the digits a list starts with. Its middle arm applies only to a digit, by its guard,
                   and continues the reading by calling [digs] on the rest. That arm must be the one chosen for a
                   digit, so reading @[1, 2, 30]@ reads the first two.

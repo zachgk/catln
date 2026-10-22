@@ -123,8 +123,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A data field whose declared type carries fields of its own.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A data field whose declared type carries fields of its own.
                   What the annotation `inner -> Inner..` means is "any Inner", and the spread is how that is said.
                   A bare `Inner` is the argument-less partial application — the constructor before anything has been
                   given to it — so a field declared that way admits only that, and the value stored in it never is.
@@ -140,8 +142,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so the value is evaluated and not only built: the inner record's field is reached
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Read back so the value is evaluated and not only built: the inner record's field is reached
                   through the outer one."
                 }
             )

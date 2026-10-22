@@ -31,7 +31,7 @@ import           CRes
 import           CtConstants
 import           Semantics.Prgm
 import           Semantics.Types
-import           Semantics.Val              (Val (..), pattern StrVal)
+import           Semantics.Val              (Val (..), pattern AnyStrVal)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.MapRawMeta       (mapMetaRawStatementM)
 import           Syntax.Ct.Prgm
@@ -89,7 +89,7 @@ removeAnnotById i (RawPrgm imports stmts) = RawPrgm imports (mapMaybe fixTree st
 -- each of its arguments written the same way. A value only the runtime can hold has no such
 -- expression.
 valToRawExpr :: (MetaDat m, Show m) => Val r -> Either String (RawExpr m)
-valToRawExpr (StrVal s) = Right $ rawStr s
+valToRawExpr (AnyStrVal s) = Right $ rawStr s
 valToRawExpr (IntVal i) = Right $ rawInt i
 valToRawExpr (FloatVal d) = Right $ RawCExpr emptyMetaN (CFloat d)
 valToRawExpr (CharVal c) = Right $ RawCExpr emptyMetaN (CChar c)

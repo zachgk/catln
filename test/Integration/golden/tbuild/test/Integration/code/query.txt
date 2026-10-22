@@ -31,44 +31,58 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Questions about a page, written on the page. Each is a [/Llm/#q], asked by `catln process` and
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Questions about a page, written on the page. Each is a [/Llm/#q], asked by `catln process` and
                   answered under it. They are not asked when the page is compiled, run, or tested."
                 }
             )
         , /Llm/#q
             ( EAppArg
-                { eaaArg = Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What does double do?"
+                { eaaArg = Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "What does double do?"
                 }
             )
         , /Llm/#q
             ( EAppArg
-                { eaaArg = Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Is double fast?"
+                { eaaArg = Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Is double fast?"
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Yes.
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Yes.
                   It is one addition."
                 }
             )
         , /Llm/#q
             ( EAppArg
-                { eaaArg = Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A question written as #q, with a reply too long for one line"
+                { eaaArg = Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A question written as #q, with a reply too long for one line"
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "It is written back as q>."
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "It is written back as q>."
                 }
             )
         , /Llm/#q
             ( EAppArg
-                { eaaArg = Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A question of
+                { eaaArg = Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A question of
                   two lines"
                 }
             )

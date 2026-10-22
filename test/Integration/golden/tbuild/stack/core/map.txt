@@ -2388,8 +2388,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maps
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Maps
                   A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
                   its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
                   [containsKey], [size], [keys], [values] — without fixing how the entries are stored. Concrete map
@@ -2400,8 +2402,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## An unbalanced binary search tree
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## An unbalanced binary search tree
                   A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
                   pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
                   so each operation can compare the target key against a node's key and descend the correct way.
@@ -2412,15 +2416,19 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
                   empty map is written [Leaf]."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Size"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Size"
                 }
             )
         , /Catln/#print
@@ -2586,8 +2594,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "30"
                 }
             )
         , /Catln/#print
@@ -2617,8 +2627,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "0"
                 }
             )
         , /Catln/#print
@@ -2766,8 +2778,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2"
                 }
             )
         , /Catln/#print
@@ -2779,14 +2793,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "0"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Lookup"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Lookup"
                 }
             )
         , /Catln/#print
@@ -2950,8 +2968,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -3001,20 +3021,26 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Each branch of the [match] is taken: the lookups below descend left, find the root, and descend"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Each branch of the [match] is taken: the lookups below descend left, find the root, and descend"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  right."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  right."
                 }
             )
         , /Catln/#print
@@ -3196,8 +3222,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -3379,8 +3407,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -3562,14 +3592,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Membership"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Membership"
                 }
             )
         , /Catln/#print
@@ -3612,8 +3646,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -3656,14 +3692,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Insertion"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Insertion"
                 }
             )
         , /Catln/#print
@@ -3827,20 +3867,26 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Removal"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Removal"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Removing a present key drops it (the other entries stay); removing an absent key is a no-op."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Removing a present key drops it (the other entries stay); removing an absent key is a no-op."
                 }
             )
         , /Catln/#print
@@ -4006,8 +4052,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#print
@@ -4173,8 +4221,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -4229,14 +4279,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "1"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Removing a node with two children merges its subtrees; the remaining keys are intact."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Removing a node with two children merges its subtrees; the remaining keys are intact."
                 }
             )
         , /Catln/#print
@@ -4464,8 +4518,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#print
@@ -4742,14 +4798,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Keys and values
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Keys and values
                   [keys] and [values] are the same in-order traversal as [size], differing only in what each entry
                   contributes, so all three are [foldEntries] with a different step. Because a node sits BETWEEN
                   its two subtrees, the fold walks the [right] subtree into the accumulator first, then the node,
@@ -4953,8 +5013,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -5154,14 +5216,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# BinTree Eq membership (order-independent)
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# BinTree Eq membership (order-independent)
                   Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
                   [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
                   they hold the same key/value entries, regardless of the tree shape their insertion order produced.
@@ -5174,14 +5240,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Two maps with the same entries are equal even when built in different orders (different tree"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Two maps with the same entries are equal even when built in different orders (different tree"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  shapes); maps differing in a value are not."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  shapes); maps differing in a value are not."
                 }
             )
         , /Catln/#print
@@ -5466,8 +5536,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -5515,8 +5587,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#print
@@ -5585,14 +5659,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Functor: mapping over values
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Functor: mapping over values
                   A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
                   preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
                   [{k1: f v1, k2: f v2}] — the "map a function over a collection" operation [fmap] generalises, here
@@ -5604,14 +5682,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  looking the mapped value back up with [get])."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  looking the mapped value back up with [get])."
                 }
             )
         , /Catln/#print
@@ -5722,8 +5804,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -5936,8 +6020,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         ]

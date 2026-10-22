@@ -25,8 +25,7 @@ Prgm
                                                             )
                                                         )
                                                     )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Json/Member
@@ -41,14 +40,12 @@ Prgm
                                                             )
                                                         )
                                                     )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Nil
                                             )
                                         )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Json/Member
@@ -66,8 +63,7 @@ Prgm
                                                             )
                                                         )
                                                     )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Json/Member
@@ -82,14 +78,12 @@ Prgm
                                                             )
                                                         )
                                                     )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Nil
                                             )
                                         )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Nil
                                 )
@@ -111,8 +105,7 @@ Prgm
                                                                 )
                                                             )
                                                         )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 ]
                                                 ( /head=/Json/Member
@@ -127,14 +120,12 @@ Prgm
                                                                 )
                                                             )
                                                         )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 )
                                             )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Json/Member
@@ -152,8 +143,7 @@ Prgm
                                                                 )
                                                             )
                                                         )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 ]
                                                 ( /head=/Json/Member
@@ -168,14 +158,12 @@ Prgm
                                                                 )
                                                             )
                                                         )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 )
                                             )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
@@ -195,8 +183,7 @@ Prgm
                                                                     )
                                                                 )
                                                             )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     ]
                                                     ( /head=/Json/Member
@@ -211,18 +198,18 @@ Prgm
                                                                     )
                                                                 )
                                                             )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     )
                                                 )
-                                            , /key=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Json/Member
                                             ( EAppArg
-                                                { eaaArg = Value /key -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "author"
+                                                { eaaArg = Value /key ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "author"
                                                 }
                                             )
                                             ( EAppArg
@@ -240,8 +227,7 @@ Prgm
                                                                         )
                                                                     )
                                                                 )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                                             )
                                                         ]
                                                         ( /head=/Json/Member
@@ -256,8 +242,7 @@ Prgm
                                                                         )
                                                                     )
                                                                 )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                                             )
                                                         , /tail=/Data/List/Nil
                                                         )
@@ -276,8 +261,7 @@ Prgm
                                                                             )
                                                                         )
                                                                     )
-                                                                , /key=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             ]
                                                             ( /head=/Json/Member
@@ -292,8 +276,7 @@ Prgm
                                                                             )
                                                                         )
                                                                     )
-                                                                , /key=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             , /tail=/Data/List/Nil
                                                             ) = /Data/List/Cons
@@ -310,12 +293,13 @@ Prgm
                                                                                 )
                                                                             )
                                                                         )
-                                                                    , /key=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     ) = /Json/Member
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /key -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "years"
+                                                                        { eaaArg = Value /key ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "years"
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -544,8 +528,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A list of two or more whose elements CARRY A FIELD, sitting under two further lists.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A list of two or more whose elements CARRY A FIELD, sitting under two further lists.
                   The deep face of @listFieldMultiple.ct@: there the element bound has to reach a nested cons, and
                   here it has to reach that cons's element as well. The shape needs all three at once — three
                   levels of list, two or more in the innermost, and elements which carry a field — and each of the
@@ -565,14 +551,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The shape: three levels of list, two field-carrying elements in the innermost."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The shape: three levels of list, two field-carrying elements in the innermost."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so that the value is evaluated and not only built: the object's members are counted,
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Read back so that the value is evaluated and not only built: the object's members are counted,
                   which builds the whole of the value beneath them."
                 }
             )

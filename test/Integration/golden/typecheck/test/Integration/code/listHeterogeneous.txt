@@ -85,8 +85,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A list literal whose elements are DIFFERENT arms of the class the list is bounded by.
                 @listFieldMultiple.ct@ holds two of one type; this holds one of each. The two are not the same
                 check: a spine binds its element parameter once for the whole of itself, so a literal of two
@@ -98,15 +100,19 @@ Prgm
                 a library type, and this is it written over the smallest class that shows it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Named [countMixed] rather than [count] because [/Data/List/count] is declared in the imported
                 standard library, and an unqualified [count] here would resolve to it and be checked against its
                 signature. The name is incidental to what this file checks." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Homogeneous first, as the floor: this passed on the head-alone rule too. Then one of each arm,
                 in both orders — the arm carrying a field is read whether it is the cell the spine starts from or
                 one it reaches through the tail.

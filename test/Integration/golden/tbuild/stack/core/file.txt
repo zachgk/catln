@@ -61,8 +61,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Files
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Files
                   A [FileOrDir] is a tree of files: a [File], which is a name and what is written in it, or a
                   [Dir], which is a name and the entries beneath it. It is the shape a directory has, written as a
                   value, so a program can be given one to read or can produce one to be written.
@@ -74,8 +76,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [File] carries its writing itself, rather than the path it was read from or is to be written
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [File] carries its writing itself, rather than the path it was read from or is to be written
                   to. A tree says where each thing is by where it is in the tree, so a name is the one part of a
                   path a file holds, and the rest of it is the names of the directories above it. This is what
                   lets the same tree be written somewhere other than where it was read from, which is the whole
@@ -87,8 +91,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Read by destructuring
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Read by destructuring
                   Nothing uses this yet, but it does work. A [Dir] holding both a [File] and a [Dir] can be
                   written and can be walked, by arms matching the two constructors — which is how every other
                   recursive type here is read, [ConsList] and [BinTree] alike.
@@ -106,8 +112,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Naming
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Naming
                   The name of an entry is the one it has under its parent, not a path: a [Dir] named `notes`
                   holding a [File] named `a.md` is the file `notes/a.md`. Nothing here checks that a name is one a
                   filesystem accepts, because a tree is a value and may be built long before anything writes it —

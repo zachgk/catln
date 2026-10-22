@@ -13,46 +13,36 @@ Prgm
                                 [ /T=/Data/Json/Member
                                     ( /value=
                                         ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                            ( /value=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            )
+                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
                                         )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Data/Json/Member
                                     ( /value=/Data/Json/Str
-                                        ( /value=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Cons
                                     [ /T=/Data/Json/Member
                                         ( /value=
                                             ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Member
                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                            , /key=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                            , /key=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         , /tail=/Data/List/Nil
                                         )
@@ -64,46 +54,36 @@ Prgm
                                     [ /T=/Data/Json/Member
                                         ( /value=
                                             ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                                ( /value=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
+                                                ( /value=( /Data/String/Text.. + /Catln/CStr ) )
                                             )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Str
-                                            ( /value=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Member
                                             ( /value=
                                                 ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                            , /key=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                            , /key=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         , /tail=/Data/List/Cons
                                             [ /T=/Data/Json/Member
                                                 ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Data/Json/Member
                                                 ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Nil
                                             )
@@ -112,25 +92,24 @@ Prgm
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Data/Json/Member
                                             ( /value=/Data/Json/Str
-                                                ( /value=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
-                                            , /key=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Data/Json/Member
                                             ( EAppArg
-                                                { eaaArg = Value /key -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "name"
+                                                { eaaArg = Value /key ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "name"
                                                 }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Json/Str
-                                                    ( /value=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ) = /Data/Json/Str
+                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Json/Str
                                                     ( EAppArg
-                                                        { eaaArg = Value /value -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "catln"
+                                                        { eaaArg = Value /value ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "catln"
                                                         }
                                                     )
                                                 }
@@ -142,26 +121,22 @@ Prgm
                                             [ /T=/Data/Json/Member
                                                 ( /value=
                                                     ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Data/Json/Member
                                                 ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                                , /key=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Cons
                                                 [ /T=/Data/Json/Member
                                                     ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 ]
                                                 ( /head=/Data/Json/Member
                                                     ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 )
@@ -169,12 +144,13 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Data/Json/Member
                                                     ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Data/Json/Member
                                                     ( EAppArg
-                                                        { eaaArg = Value /key -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "stable"
+                                                        { eaaArg = Value /key ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "stable"
                                                         }
                                                     )
                                                     ( EAppArg
@@ -188,26 +164,25 @@ Prgm
                                                 { eaaArg = Value /tail -> /Data/List/Cons
                                                     [ /T=/Data/Json/Member
                                                         ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     ]
                                                     ( /head=/Data/Json/Member
                                                         ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     ) = /Data/List/Cons
                                                     ( EAppArg
                                                         { eaaArg = Value /head -> /Data/Json/Member
                                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                                             ) = /Data/Json/Member
                                                             ( EAppArg
-                                                                { eaaArg = Value /key -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "version"
+                                                                { eaaArg = Value /key ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "version"
                                                                 }
                                                             )
                                                             ( EAppArg
@@ -236,8 +211,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The JSON in /repo/dir/test/Integration/code/config.json. Write `/JsonFile/repo/dir/test/Integration/code/configq2Ejson` to reach it."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The JSON in /repo/dir/test/Integration/code/config.json. Write `/JsonFile/repo/dir/test/Integration/code/configq2Ejson` to reach it."
                 }
             )
         , /Catln/#print
@@ -248,46 +225,36 @@ Prgm
                             [ /T=/Data/Json/Member
                                 ( /value=
                                     ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                        ( /value=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /value=( /Data/String/Text.. + /Catln/CStr ) )
                                     )
-                                , /key=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Data/Json/Member
                                 ( /value=/Data/Json/Str
-                                    ( /value=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
-                                , /key=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Cons
                                 [ /T=/Data/Json/Member
                                     ( /value=
                                         ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Data/Json/Member
                                     ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Cons
                                     [ /T=/Data/Json/Member
                                         ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                        , /key=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Nil
                                     )
@@ -300,220 +267,208 @@ Prgm
                             [ /T=/Data/Json/Member
                                 ( /value=
                                     ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                        ( /value=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /value=( /Data/String/Text.. + /Catln/CStr ) )
                                     )
-                                , /key=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Data/Json/Member
                                 ( /value=/Data/Json/Str
-                                    ( /value=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
-                                , /key=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Cons
                                 [ /T=/Data/Json/Member
                                     ( /value=
                                         ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                    , /key=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
-                                ( /head=/Data/Jso…( truncated ) =
-                                    ( /Catln/Doc/dshow
-                                        ( EAppArg
-                                            { eaaArg = Value /s -> /Data/Json/Object
-                                                ( /entries=/Data/List/Cons
-                                                    [ /T=/Data/Json/Member
-                                                        ( /value=
-                                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                                                ( /value=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                )
-                                                            )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    ]
-                                                    ( /head=/Data/Json/Member
-                                                        ( /value=/Data/Json/Str
-                                                            ( /value=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    , /tail=/Data/List/Cons
-                                                        [ /T=/Data/Json/Member
-                                                            ( /value=
-                                                                ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        ]
-                                                        ( /head=/Data/Json/Member
-                                                            ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        , /tail=/Data/List/Cons
-                                                            [ /T=/Data/Json/Member
-                                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                                , /key=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                )
-                                                            ]
-                                                            ( /head=/Data/Json/Member
-                                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                                , /key=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                )
-                                                            , /tail=/Data/List/Nil
-                                                            )
-                                                        )
-                                                    )
-                                                ) =
-                                                ( Value /JsonFile/repo/dir/test/Integration/code/configq2Ejson ↦ /Data/Json/Object
-                                                    ( /entries=/Data/List/Cons
-                                                        [ /T=/Data/Json/Member
-                                                            ( /value=
-                                                                ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                                                    ( /value=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                    )
-                                                                )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        ]
-                                                        ( /head=/Data/Json/Member
-                                                            ( /value=/Data/Json/Str
-                                                                ( /value=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        , /tail=/Data/List/Cons
-                                                            [ /T=/Data/Json/Member
-                                                                ( /value=
-                                                                    ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                                                , /key=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                )
-                                                            ]
-                                                            ( /head=/Data/Json/Member
-                                                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                                                , /key=/Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                                )
-                                                            , /tail=/Data/List/Cons
+                                ( /head=/Data/Json/Member
+                                    ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                    )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Member
+                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                        , /key=
+                                            ( /Dat…( truncated ) =
+                                                ( /Catln/Doc/dshow
+                                                    ( EAppArg
+                                                        { eaaArg = Value /s -> /Data/Json/Object
+                                                            ( /entries=/Data/List/Cons
                                                                 [ /T=/Data/Json/Member
-                                                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                                    , /key=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    ( /value=
+                                                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
+                                                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                        )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
                                                                 ]
                                                                 ( /head=/Data/Json/Member
-                                                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                                    , /key=/Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    ( /value=/Data/Json/Str
+                                                                        ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
-                                                                , /tail=/Data/List/Nil
+                                                                , /tail=/Data/List/Cons
+                                                                    [ /T=/Data/Json/Member
+                                                                        ( /value=
+                                                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    ]
+                                                                    ( /head=/Data/Json/Member
+                                                                        ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    , /tail=/Data/List/Cons
+                                                                        [ /T=/Data/Json/Member
+                                                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                            )
+                                                                        ]
+                                                                        ( /head=/Data/Json/Member
+                                                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                            )
+                                                                        , /tail=/Data/List/Nil
+                                                                        )
+                                                                    )
+                                                                )
+                                                            ) =
+                                                            ( Value /JsonFile/repo/dir/test/Integration/code/configq2Ejson ↦ /Data/Json/Object
+                                                                ( /entries=/Data/List/Cons
+                                                                    [ /T=/Data/Json/Member
+                                                                        ( /value=
+                                                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
+                                                                                ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                            )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    ]
+                                                                    ( /head=/Data/Json/Member
+                                                                        ( /value=/Data/Json/Str
+                                                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    , /tail=/Data/List/Cons
+                                                                        [ /T=/Data/Json/Member
+                                                                            ( /value=
+                                                                                ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                            )
+                                                                        ]
+                                                                        ( /head=/Data/Json/Member
+                                                                            ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                            )
+                                                                        , /tail=/Data/List/Cons
+                                                                            [ /T=/Data/Json/Member
+                                                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                )
+                                                                            ]
+                                                                            ( /head=/Data/Json/Member
+                                                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                )
+                                                                            , /tail=/Data/List/Nil
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                )
+                                                            )
+                                                        }
+                                                    ) ↦ /Catln/Doc/Show/Rendered
+                                                    [ /V=/Data/Json/Object
+                                                        ( /entries=/Data/List/Cons
+                                                            [ /T=/Data/Json/Member
+                                                                ( /value=
+                                                                    ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
+                                                                        ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                    )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                )
+                                                            ]
+                                                            ( /head=/Data/Json/Member
+                                                                ( /value=/Data/Json/Str
+                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                )
+                                                            , /tail=/Data/List/Cons
+                                                                [ /T=/Data/Json/Member
+                                                                    ( /value=
+                                                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                    )
+                                                                ]
+                                                                ( /head=/Data/Json/Member
+                                                                    ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                    )
+                                                                , /tail=/Data/List/Cons
+                                                                    [ /T=/Data/Json/Member
+                                                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    ]
+                                                                    ( /head=/Data/Json/Member
+                                                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    , /tail=/Data/List/Nil
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    ]
+                                                    ( /value=/Data/Json/Object
+                                                        ( /entries=/Data/List/Cons
+                                                            [ /T=/Data/Json/Member
+                                                                ( /value=
+                                                                    ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
+                                                                        ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                    )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                )
+                                                            ]
+                                                            ( /head=/Data/Json/Member
+                                                                ( /value=/Data/Json/Str
+                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                )
+                                                            , /tail=/Data/List/Cons
+                                                                [ /T=/Data/Json/Member
+                                                                    ( /value=
+                                                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                    )
+                                                                ]
+                                                                ( /head=/Data/Json/Member
+                                                                    ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                    )
+                                                                , /tail=/Data/List/Cons
+                                                                    [ /T=/Data/Json/Member
+                                                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                        )
+                                                                    ]
+                                                                    ( /head=/Data/Json/Member
+                                                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                                        , /key=
+                                                                            ( /Dat…( truncated ) )
+                                                                        )
+                                                                    )
                                                                 )
                                                             )
                                                         )
                                                     )
-                                                )
-                                            }
-                                        ) ↦ /Catln/Doc/Show/Rendered
-                                        [ /V=/Data/Json/Object
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Data/Json/Member
-                                                    ( /value=
-                                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                                            ( /value=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    )
-                                                ]
-                                                ( /head=/Data/Json/Member
-                                                    ( /value=/Data/Json/Str
-                                                        ( /value=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    )
-                                                , /tail=/Data/List/Cons
-                                                    [ /T=/Data/Json/Member
-                                                        ( /value=
-                                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    ]
-                                                    ( /head=/Data/Json/Member
-                                                        ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    , /tail=/Data/List/Cons
-                                                        [ /T=/Data/Json/Member
-                                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        ]
-                                                        ( /head=/Data/Json/Member
-                                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                            , /key=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        , /tail=/Data/List/Nil
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ]
-                                        ( /value=/Data/Json/Object
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Data/Json/Member
-                                                    ( /value=
-                                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str
-                                                            ( /value=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            )
-                                                        )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    )
-                                                ]
-                                                ( /head=/Data/Json/Member
-                                                    ( /value=/Data/Json/Str
-                                                        ( /value=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    , /key=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    )
-                                                , /tail=/Data/List/Cons
-                                                    [ /T=/Data/Json/Member
-                                                        ( /value=
-                                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
-                                                        , /key=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        )
-                                                    ]
-                                                    ( /head=/Data/Jso…( truncated ) )
                                                 )
                                             )
                                         )

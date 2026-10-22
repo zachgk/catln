@@ -49,13 +49,11 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /l=/Data/String/Text..
                                 )
                             , []
                             ) = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "hint: " }
                             )( Value /r -> TVArg /text = Value /text )
                         ]
@@ -100,8 +98,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A page for lcmPrompt.ct to show as [/Llm/lcm] would show it to a model: as it was written, with
                 its annotations shown and what is wrong with it noted where it is wrong. It is written to be
                 wrong in each way a prompt notes, so it is data of that test rather than a fixture of the suite:
@@ -114,8 +114,10 @@ Prgm
                 )
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A print whose golden is no longer what it prints is shown with the golden it was written with,
                 and noted as failing." }
             )
@@ -125,31 +127,41 @@ Prgm
                     { ciValue = 3 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "5" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "An annotation that fails is noted with what it failed with. This one asks for the page to be
                 shown while it is being shown." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Llm/lcmPrompt
-                ( Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "And again?" }
                 )
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A definition the compiler cannot build is noted with what the compiler said." }
             )
         , /#hint
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "double never fails" }
             )
         ]

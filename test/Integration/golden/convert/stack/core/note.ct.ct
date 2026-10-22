@@ -315,7 +315,7 @@ module(Data/Note)
   every(Show/TaskQuery.., isa= [/Catln/Doc/DShow])
 
   /Catln/Doc/dshow(s= #tasks(query)) =
-    tasksQuery(query -> String) -> String
+    tasksQuery(query -> /Catln/CStr) -> String
       # [tasksQuery] answers a note's query as JSON: the tasks of the note's vault it found, each
         beside the page it was written in and the expression it was declared by, or the lines of the
         query which were not understood.

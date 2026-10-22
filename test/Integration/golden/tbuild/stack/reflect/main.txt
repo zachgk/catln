@@ -77,8 +77,7 @@ Prgm
                                 { eaaArg = Value /e -> /Catln/ParseExprErr/Type( /message=∀/Data/String ) = /Catln/ParseExprErr/Type
                                     ( EAppArg { eaaArg = Value /message -> ∀/Data/String } )
                                 }
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the expression is not of the type asked for"
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = "the expression is not of the type asked for"
                         , /Catln/ReflectExample/parsedErrShown
                             ( EAppArg { eaaArg = Value /e -> ∀/Catln/ParseExprErr } ) -> ∀/Data/String =
                             ( /msg
@@ -141,8 +140,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the text is not a Catln expression: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the text is not a Catln expression: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -157,8 +156,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the expression is not of the type asked for: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the expression is not of the type asked for: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -170,8 +169,7 @@ Prgm
                                 { eaaArg = Value /this -> /Catln/ParseExprErr/NotOf( /found=TopType ) = /Catln/ParseExprErr/NotOf
                                     ( EAppArg { eaaArg = Value /found } )
                                 }
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the expression's value is not of the type asked for"
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = "the expression's value is not of the type asked for"
                         , /Data/msg
                             ( EAppArg
                                 { eaaArg = Value /this -> /Catln/ParseExprErr/Eval( /message=∀/Data/String ) = /Catln/ParseExprErr/Eval
@@ -180,8 +178,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the expression failed to evaluate: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the expression failed to evaluate: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -218,10 +216,9 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator++[ /T=∀/Data/String ]
+                                ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=/Data/String/Text..
                                     ) + /Data/toString( /this=/Data/Primitive/Integer ) + /Data/toStringBase
                                     ( /this=/Data/Primitive/Integer
                                     , /base=/Data/Primitive/Integer
@@ -239,10 +236,9 @@ Prgm
                                     , []
                                     )
                                 ,
-                                    ( /operator++[ /T=∀/Data/String ]
+                                    ( /operator++
                                         ( /r=∀/Data/String
-                                        , /l=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        , /l=/Data/String/Text..
                                         ) + /Data/toStringBase
                                         ( /this=/Data/Primitive/Integer
                                         , /base=/Data/Primitive/Integer
@@ -280,8 +276,8 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Point at "
+                                                            { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                ( "Point at " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
@@ -297,8 +293,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ", " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -315,8 +311,7 @@ Prgm
                                 ) ↦ ∀/Data/String
                             )
                         , /Catln/ReflectExample/parsedShownValue
-                            ( EAppArg { eaaArg = Value /v } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "something else"
+                            ( EAppArg { eaaArg = Value /v } ) -> ( /Data/String/Text.. + /Catln/CStr ) = "something else"
                         ]
                     }
                 )
@@ -332,9 +327,21 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/parseExpr
-                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /input ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            )
                             ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } ) -> UnionType
+                            ( EAppArg
+                                { eaaArg = Value /source ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Result[ /E=∀/Catln/ParseExprErr ]
                                 , fromList []
@@ -342,20 +349,20 @@ Prgm
                                 )
                             , /Catln/parseExprIn
                                 ( /type=∀/Catln/Type
-                                , /input=∀/Data/String
-                                , /source=∀/Data/String
+                                , /input=/Catln/CStr
+                                , /source=/Catln/CStr
                                 )
                             , []
                             ) =
                             ( /Catln/parseExprIn
                                 ( EAppArg
-                                    { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                    { eaaArg = Value /input -> /Catln/CStr = ( Value /input ↦ /Catln/CStr ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
+                                    { eaaArg = Value /source -> /Catln/CStr = ( Value /source ↦ /Catln/CStr ) }
                                 ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                             )
                         ]
@@ -395,9 +402,9 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/parseExprIn
-                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /input -> /Catln/CStr } )
                             ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
+                            ( EAppArg { eaaArg = Value /source -> /Catln/CStr } ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -459,8 +466,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading values from text
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Reading values from text
                   A program can be handed a value as text: written by a person, or by a language model asked for
                   one. [parseExpr] reads such text as a Catln expression, by the parser a page is read with, and
                   answers with its value when it is a value of the type it was asked for. The expression is
@@ -474,8 +483,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[ParseExprErr] is why text is not a value of a type: it is not an expression ([Syntax]), it
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[ParseExprErr] is why text is not a value of a type: it is not an expression ([Syntax]), it
                   does not typecheck as a value of the type ([Type]), its value is [found] and that is not one
                   of the type ([NotOf]), or it failed while it was being evaluated ([Eval]). Each [message] is
                   what the compiler said."
@@ -483,8 +494,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Reading a value
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Reading a value
                   The value [parseExpr] answers with is of no one type the program can see: the type it was asked
                   for is a value, known only once the call is made. So it is read the way any value of unknown
                   shape is, by the arms that take each shape it may be, with an `else` for the rest. Here [Point]
@@ -499,8 +512,10 @@ Prgm
                             { eaaArg = Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                 ( /Catln/parseExpr
                                     ( EAppArg
-                                        { eaaArg = Value /input -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                                        { eaaArg = Value /input ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "3"
                                         }
                                     )
                                     ( EAppArg
@@ -530,9 +545,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/stack/reflect/main.ct"
-                                        }
+                                        { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/stack/reflect/main.ct" }
                                     ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                 )
                             }
@@ -541,8 +554,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "3"
                 }
             )
         , /Catln/#print
@@ -553,8 +568,10 @@ Prgm
                             { eaaArg = Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                 ( /Catln/parseExpr
                                     ( EAppArg
-                                        { eaaArg = Value /input -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Point(x= 1 + 2, y= 4)"
+                                        { eaaArg = Value /input ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "Point(x= 1 + 2, y= 4)"
                                         }
                                     )
                                     ( EAppArg
@@ -584,9 +601,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/stack/reflect/main.ct"
-                                        }
+                                        { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/stack/reflect/main.ct" }
                                     ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                 )
                             }
@@ -595,14 +610,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Point at 3, 4"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Point at 3, 4"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Text that is not an expression is answered with what the parser says of it, and an expression
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Text that is not an expression is answered with what the parser says of it, and an expression
                   of some other type with what the typecheck says."
                 }
             )
@@ -614,8 +633,10 @@ Prgm
                             { eaaArg = Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                 ( /Catln/parseExpr
                                     ( EAppArg
-                                        { eaaArg = Value /input -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Point(x= "
+                                        { eaaArg = Value /input ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "Point(x= "
                                         }
                                     )
                                     ( EAppArg
@@ -645,9 +666,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/stack/reflect/main.ct"
-                                        }
+                                        { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/stack/reflect/main.ct" }
                                     ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                 )
                             }
@@ -656,8 +675,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the text is not a Catln expression: <parseExpr>:1:10:
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "the text is not a Catln expression: <parseExpr>:1:10:
                     |
                   1 | Point(x= 
                     |          ^
@@ -673,8 +694,10 @@ Prgm
                             { eaaArg = Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] =
                                 ( /Catln/parseExpr
                                     ( EAppArg
-                                        { eaaArg = Value /input -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""a""
+                                        { eaaArg = Value /input ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = ""a""
                                         }
                                     )
                                     ( EAppArg
@@ -704,9 +727,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/stack/reflect/main.ct"
-                                        }
+                                        { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/stack/reflect/main.ct" }
                                     ) ↦ ∀/Data/Result[ /E=∀/Catln/ParseExprErr ]
                                 )
                             }
@@ -715,14 +736,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the expression is not of the type asked for"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "the expression is not of the type asked for"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A model told to write a value of a type is told it as [/Catln/typeText] writes it, with what
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A model told to write a value of a type is told it as [/Catln/typeText] writes it, with what
                   [/Catln/typeDecls] says it is made of."
                 }
             )
@@ -760,8 +785,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Catln/ReflectExample/Point"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "/Catln/ReflectExample/Point"
                 }
             )
         , /Catln/#print
@@ -798,8 +825,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "data(Point(x -> Integer, y -> Integer))"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "data(Point(x -> Integer, y -> Integer))"
                 }
             )
         , /Catln/#md

@@ -129,25 +129,23 @@ Prgm
         [ Value /#noCore
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An arrow whose source is a declared data type.
-                  A bare name is a term in its own right, so an arrow may be written from it — `/Sample= Outer(..)`
-                  in `recordField.ct` is one, `f= f(b= 2, c= 3)` in `defaultArrow.ct` is another. In both, the name
-                  on the left has no data definition of its own, and nothing in the library or the tests had ever
-                  put one there: `data(A)` above `A= B` is a shape this file writes first. It is the shape that says
-                  a rewrite rule is a rewrite rule whoever wrote its left side. A function-typed value set is as
-                  much a data object as a declared one, and a declared data object is just as rewritable — arrows
-                  between data objects are what this file is made of. Nothing may read "this name has a data
-                  definition" as "this name is finished"; what may happen to a value is decided by the arrows that
-                  exist and by the destination its consumer permits, and by nothing else.
-                  Three types and two arrows, so the chain is walked more than once: `B` reaching `C` is the single
-                  arrow found at the source, while `A` reaching `C` must go on from what that arrow produced. The
-                  hops are written as separate definitions so a failure says which one broke, and `isC`'s arm
-                  matches the VALUE `C` rather than the type, so a hop that arrives unrewritten finds no arm rather
-                  than quietly passing.
-                  Written without the core library, so that when a compiler change breaks it there are eleven lines
-                  to read rather than a standard library."
-                }
+                { eaaArg = Value /text -> /Catln/CStr = "An arrow whose source is a declared data type.
+                A bare name is a term in its own right, so an arrow may be written from it — `/Sample= Outer(..)`
+                in `recordField.ct` is one, `f= f(b= 2, c= 3)` in `defaultArrow.ct` is another. In both, the name
+                on the left has no data definition of its own, and nothing in the library or the tests had ever
+                put one there: `data(A)` above `A= B` is a shape this file writes first. It is the shape that says
+                a rewrite rule is a rewrite rule whoever wrote its left side. A function-typed value set is as
+                much a data object as a declared one, and a declared data object is just as rewritable — arrows
+                between data objects are what this file is made of. Nothing may read "this name has a data
+                definition" as "this name is finished"; what may happen to a value is decided by the arrows that
+                exist and by the destination its consumer permits, and by nothing else.
+                Three types and two arrows, so the chain is walked more than once: `B` reaching `C` is the single
+                arrow found at the source, while `A` reaching `C` must go on from what that arrow produced. The
+                hops are written as separate definitions so a failure says which one broke, and `isC`'s arm
+                matches the VALUE `C` rather than the type, so a hop that arrives unrewritten finds no arm rather
+                than quietly passing.
+                Written without the core library, so that when a compiler change breaks it there are eleven lines
+                to read rather than a standard library." }
             )
         ]
     }

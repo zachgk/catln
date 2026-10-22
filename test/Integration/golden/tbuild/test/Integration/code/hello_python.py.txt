@@ -161,13 +161,13 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /toString
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -247,13 +247,13 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /toString
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -332,20 +332,17 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println
-                                                    ( /msg=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ) = /println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /toString
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /this -> /Data/String/Text
-                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """"
+                                                                    { eaaArg = Value /this ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = """"
                                                                     }
-                                                                ) ↦ /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -629,13 +626,13 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /toString
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )

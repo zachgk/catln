@@ -45,27 +45,18 @@ Prgm
                             )
                         , /Dated
                             ( EAppArg
-                                { eaaArg = Value /name -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has one"
-                                }
+                                { eaaArg = Value /name -> /Catln/CStr = "has one" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /due -> /Data/Maybe/Some
-                                    ( /value=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Data/Maybe/Some
+                                { eaaArg = Value /due -> /Data/Maybe/Some( /value=/Catln/CStr ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-01"
-                                        }
+                                        { eaaArg = Value /value -> /Catln/CStr = "2026-01-01" }
                                     )
                                 }
                             )
                         , /Dated
                             ( EAppArg
-                                { eaaArg = Value /name -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has none"
-                                }
+                                { eaaArg = Value /name -> /Catln/CStr = "has none" }
                             )
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ]
@@ -118,8 +109,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A field of a data type may be a [/Data/Maybe] of a concrete element.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A field of a data type may be a [/Data/Maybe] of a concrete element.
                   A task read out of an Obsidian note has a due date or it has none, and having none is the
                   [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
                   hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
@@ -132,14 +125,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Shown as the value it is, with no display type standing in for it, as a task is."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Shown as the value it is, with no display type standing in for it, as a task is."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so that the values are evaluated and not only built: the [/Data/Maybe] field is
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Read back so that the values are evaluated and not only built: the [/Data/Maybe] field is
                   destructured and compared, which is a reading of the field the display would otherwise make."
                 }
             )

@@ -60,8 +60,7 @@ Prgm
                             ( Value /this -> /Data/Result/Ok[ /T=∀/Data/ToString ]( /value=∀/Data/ToString ) = /Data/Result/Ok[ /T : ∀/Data/ToString ]( Value /value -> ∀/Data/ToString ) ) -> ∀/Data/String = /toString( Value /this -> TVArg /value = Value /value )
                         , /Data/toString
                             ( Value /this -> /Data/Result/Fail[ /E=∀/Data/Err ]( /err=∀/Data/Err ) = /Data/Result/Fail[ /E : ∀/Data/Err ]( Value /err -> ∀/Data/Err ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "error: " }
                             )
                             ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /err = Value /err ) )
@@ -324,8 +323,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Errors
                 An operation which can fail answers with a [Result]: either the value it computed ([Ok]), or
                 the [Err] saying why there is none ([Fail]). Unlike a [Maybe], whose [Nothing] says only that
@@ -333,27 +334,35 @@ Prgm
                 reply that was not there." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
                 declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
                 so a caller can match exactly the cause it handles." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Result" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
                 The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
                 [/Data/Result/Ok] and [/Data/Result/Fail]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A [Result] of a [ToString] value is written as its [value] where it is [Ok], and as what went
                 wrong where it is a [Fail]: `error: ` and then the [msg] of its [err]." }
             )
@@ -363,39 +372,41 @@ Prgm
                     { ciValue = 3 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "3" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Result/Fail
                 [ /E=/Data/Failure
-                    ( /reason=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    )
+                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                 ]
                 ( /err=/Data/Failure
-                    ( /reason=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    )
+                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                 ) = /Data/Result/Fail
                 ( Value /err -> /Data/Failure
-                    ( /reason=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ) = /Data/Failure
-                    ( Value /reason -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                    ( Value /reason ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "it broke" }
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: it broke" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Reading a Result
                 [withDefault] and [toMaybe] read a [Result] for a caller which does not need to know why it
                 failed. One which does matches [Fail] and its [err]." }
@@ -411,24 +422,24 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "3" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
                 ( Value /r -> /Data/Result/Fail
                     ( /err=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                     ) = /Data/Result/Fail
                     ( Value /err -> /Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        ) = /Data/Failure
-                        ( Value /reason -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                        ( Value /reason ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "no" }
                         )
                     )
@@ -437,8 +448,10 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
@@ -456,8 +469,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -465,24 +480,24 @@ Prgm
                 ( Value /l -> /Data/Maybe/Nothing = /Data/Result/toMaybe
                     ( Value /r -> /Data/Result/Fail
                         ( /err=/Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            )
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                         ) = /Data/Result/Fail
                         ( Value /err -> /Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ) = /Data/Failure
-                            ( Value /reason -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                            ( Value /reason ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "no" }
                             )
                         )
                     )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -494,11 +509,11 @@ Prgm
                         )
                     )
                     ( Value /err -> /Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        ) = /Data/Failure
-                        ( Value /reason -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                        ( Value /reason ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "no" }
                         )
                     )
@@ -507,29 +522,27 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "3" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/Result/withDefault
                 ( Value /r -> /Data/Result/Fail
                     [ /E=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                     ]
                     ( /err=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                     ) = /Data/Result/orFail( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                     ( Value /err -> /Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        ) = /Data/Failure
-                        ( Value /reason -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                        ( Value /reason ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "no" }
                         )
                     )
@@ -538,30 +551,38 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /msg
+            ( Value /p ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = /msg
                 ( Value /this -> /Data/Failure
-                    ( /reason=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    ) = /Data/Failure
-                    ( Value /reason -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                    ( Value /reason ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "it broke" }
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "it broke" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Result Eq membership
                 Makes a [Result] of [Eq] values and [Eq] errors a member of [Eq]: two [Result]s are equal when
                 both are [Ok] of equal values, or both [Fail] with equal errors. [equal] repeats [rel] for the
@@ -580,8 +601,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -597,13 +620,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Result Functor and Monad instances
                 Makes a [Result] a [Functor] and a [Monad] over its [value], with the error left as it is:
                 [fmap] and [mmap] apply to the [value] of an [Ok] and pass a [Fail] on unchanged. So a chain of
@@ -628,8 +655,10 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "4" }
             )
         , /Catln/#print
@@ -637,14 +666,10 @@ Prgm
                 ( Value /r ->
                     ( /Data/Result/Fail
                         [ /E=/Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            )
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                         ]
                         ( /err=/Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            )
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                         ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                     ) = /Data/Monad/mmap
                     ( Value /m -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok
@@ -654,16 +679,14 @@ Prgm
                     )
                     ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Result/Fail
                         ( /err=/Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            )
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                         ) = /Data/Result/Fail
                         ( Value /err -> /Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ) = /Data/Failure
-                            ( Value /reason -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                            ( Value /reason ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "no" }
                             )
                         )
@@ -673,8 +696,10 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "0" }
             )
         ]

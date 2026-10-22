@@ -6,16 +6,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "Ship it [due:: 2026-01-04] [priority:: high] [repeat:: every week]" }
                             )
-                            ( Value /symbol -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /symbol -> /Catln/CStr = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /description -> /Catln/CStr = CStr
                                 { csValue = "Ship it" }
                             )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /due -> /Data/Maybe/Some
@@ -104,30 +101,22 @@ Prgm
                                     )
                                 )
                             )
-                            ( Value /recurrence -> /Data/Maybe/Some
-                                ( /value=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /recurrence -> /Data/Maybe/Some( /value=/Catln/CStr ) = /Data/Maybe/Some
+                                ( Value /value -> /Catln/CStr = CStr
                                     { csValue = "every week" }
                                 )
                             )
-                            ( Value /rest -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /rest -> /Catln/CStr = CStr
                                 { csValue = "{"statusName":"Todo"}" }
                             )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "Ship it between parentheses (due:: 2026-01-04)" }
                             )
-                            ( Value /symbol -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /symbol -> /Catln/CStr = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /description -> /Catln/CStr = CStr
                                 { csValue = "Ship it between parentheses" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /due -> /Data/Maybe/Some
@@ -216,76 +205,59 @@ Prgm
                                     )
                                 )
                             )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /rest -> /Catln/CStr = CStr
                                 { csValue = "{"statusName":"Todo"}" }
                             )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "Named (id:: abc)" }
                             )
-                            ( Value /symbol -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /symbol -> /Catln/CStr = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /description -> /Catln/CStr = CStr
                                 { csValue = "Named" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /rest -> /Catln/CStr = CStr
                                 { csValue = "{"id":"abc","statusName":"Todo"}" }
                             )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "An emoji mark in a dataview vault is writing 📅 2026-01-04" }
                             )
-                            ( Value /symbol -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /symbol -> /Catln/CStr = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /description -> /Catln/CStr = CStr
                                 { csValue = "An emoji mark in a dataview vault is writing 📅 2026-01-04" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /rest -> /Catln/CStr = CStr
                                 { csValue = "{"statusName":"Todo"}" }
                             )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "A status the vault named" }
                             )
-                            ( Value /symbol -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /symbol -> /Catln/CStr = CStr
                                 { csValue = "?" }
                             )( Value /statusType -> /Data/Note/StatusType/OnHold = Value /Data/Note/StatusType/OnHold )
-                            ( Value /description -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /description -> /Catln/CStr = CStr
                                 { csValue = "A status the vault named" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /rest -> /Catln/CStr = CStr
                                 { csValue = "{"statusName":"Question"}" }
                             )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "A symbol the vault did not name is still something to do" }
                             )
-                            ( Value /symbol -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /symbol -> /Catln/CStr = CStr
                                 { csValue = "!" }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /description -> /Catln/CStr = CStr
                                 { csValue = "A symbol the vault did not name is still something to do" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /rest -> /Catln/CStr = CStr
                                 { csValue = "{"statusName":"!"}" }
                             )( Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
@@ -299,8 +271,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /title -> /Catln/CStr = CStr
                                 { csValue = "Tasks" }
                             )
                         ]

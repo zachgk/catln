@@ -113,7 +113,7 @@ ioHttpPost = EIOPrim "ioHttpPost" prim
       headerVals <- valList =<< maybe (Left "IO.httpPost has no /headers") Right (H.lookup (runtimeArgKey "headers") args)
       headers <- mapM header headerVals
       return (url, headers, body)
-    header (TupleVal name hArgs) = (,) <$> valStrArg name "name" hArgs <*> valStrArg name "value" hArgs
+    header (TupleVal name hArgs) = (,) <$> valAnyStrArg name "name" hArgs <*> valAnyStrArg name "value" hArgs
     header v = Left $ printf "%s is not an HTTP header" (show v)
 
 -- | The @\/Http\/HttpErr@ saying why the request to @url@ has no response.

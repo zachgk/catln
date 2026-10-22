@@ -545,8 +545,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
                 parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
                 over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
@@ -558,8 +560,10 @@ Prgm
                 typechecks in seconds; the `main` exercises dispatch on the recursive result." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
                 call stored in a field of the arm's constructed value. The arm is built at eval time against the
                 runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a

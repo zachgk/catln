@@ -98,20 +98,26 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Exercises the bind operator ([<-]) routing through [bindap]'s [fmap] arm. The continuation returns a"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Exercises the bind operator ([<-]) routing through [bindap]'s [fmap] arm. The continuation returns a"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "plain [Integer], so it cannot be the [mmap] arm (which needs the continuation to return the monad)"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "plain [Integer], so it cannot be the [mmap] arm (which needs the continuation to return the monad)"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "and the declared [Maybe] return rules out the [ap] arm (which would return the [Integer] itself)."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "and the declared [Maybe] return rules out the [ap] arm (which would return the [Integer] itself)."
                 }
             )
         ]

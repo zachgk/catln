@@ -268,16 +268,14 @@ Prgm
         [ Value /#noCore
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An argument refined by a value predicate, passed a value the predicate is decided on.
-                  [Nat_isZ] is [Nat | $this.isZ == True]. The call [f(a= Z)] is typed with its argument met with
-                  the refinement, [Z | $this.isZ == True], and building it asks whether a [Z] is within that: the
-                  predicate evaluated on [Z] through the type graph reaches only [True], so it is. Before the type
-                  checker decided value predicates, the build found no arrow from [Z] to the refined slot.
-                  [hGen] returns its argument where a [Nat_isZ] is declared: the declaration is undecided on every
-                  [Nat], but a call is read within it, so [hGenZ] is a [Z] within the refinement.
-                  Written without the core library, so the predicate bottoms out at arms rather than primitives."
-                }
+                { eaaArg = Value /text -> /Catln/CStr = "An argument refined by a value predicate, passed a value the predicate is decided on.
+                [Nat_isZ] is [Nat | $this.isZ == True]. The call [f(a= Z)] is typed with its argument met with
+                the refinement, [Z | $this.isZ == True], and building it asks whether a [Z] is within that: the
+                predicate evaluated on [Z] through the type graph reaches only [True], so it is. Before the type
+                checker decided value predicates, the build found no arrow from [Z] to the refined slot.
+                [hGen] returns its argument where a [Nat_isZ] is declared: the declaration is undecided on every
+                [Nat], but a call is read within it, so [hGenZ] is a [Z] within the refinement.
+                Written without the core library, so the predicate bottoms out at arms rather than primitives." }
             )
         ]
     }

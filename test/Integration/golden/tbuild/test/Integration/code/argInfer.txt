@@ -100,8 +100,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Infers an undeclared argument's type from how it is used. `a` is never annotated,
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Infers an undeclared argument's type from how it is used. `a` is never annotated,
                   yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
                   so the compiler infers `isOne(a -> Integer)` and augments the written definition
                   with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.

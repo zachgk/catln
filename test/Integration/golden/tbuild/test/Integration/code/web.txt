@@ -12,14 +12,12 @@ Prgm
                             ( /Catln/www( /html=∀/Data/String ) + /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                                         , /contents=∀/Data/String
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                                         , /contents=∀/Data/String
                                         )
                                     , /tail=/Data/List/Nil
@@ -28,20 +26,16 @@ Prgm
                             ) =
                             ( /Catln/www
                                 ( EAppArg
-                                    { eaaArg = Value /html -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<html><body>web test</body></html>"
-                                    }
+                                    { eaaArg = Value /html -> ( /Data/String/Text.. + /Catln/CStr ) = "<html><body>web test</body></html>" }
                                 ) ↦ /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                                         , /contents=∀/Data/String
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
                                         , /contents=∀/Data/String
                                         )
                                     , /tail=/Data/List/Nil
@@ -58,8 +52,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests using a custom build type [www].
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests using a custom build type [www].
                   It also prints the result of the build in an iframe."
                 }
             )
@@ -68,14 +64,12 @@ Prgm
                 { eaaArg = Value /p -> /Catln/CatlnResult
                     ( /files=/Data/List/Cons
                         [ /T=/Catln/BuildFile
-                            ( /path=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /path=( /Data/String/Text.. + /Catln/CStr )
                             , /contents=∀/Data/String
                             )
                         ]
                         ( /head=/Catln/BuildFile
-                            ( /path=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /path=( /Data/String/Text.. + /Catln/CStr )
                             , /contents=∀/Data/String
                             )
                         , /tail=/Data/List/Nil
@@ -84,14 +78,12 @@ Prgm
                     ( Value /main ↦ /Catln/CatlnResult
                         ( /files=/Data/List/Cons
                             [ /T=/Catln/BuildFile
-                                ( /path=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /path=( /Data/String/Text.. + /Catln/CStr )
                                 , /contents=∀/Data/String
                                 )
                             ]
                             ( /head=/Catln/BuildFile
-                                ( /path=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /path=( /Data/String/Text.. + /Catln/CStr )
                                 , /contents=∀/Data/String
                                 )
                             , /tail=/Data/List/Nil

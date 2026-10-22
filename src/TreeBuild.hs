@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  TreeBuild
@@ -24,6 +25,7 @@ import           Text.Printf
 
 import           Control.Monad
 import           CRes
+import           CtConstants         (contextValStr, pattern ContextInStr)
 import           Data.Either
 import           Eval.Common
 import           Semantics
@@ -579,7 +581,10 @@ buildCallTreeAt TBEnv{tbTypeEnv} os _ _ MayHold _ srcType destType | isSubtypeOf
 buildCallTreeAt env os _ _ MayHold _ srcType destType | Just refine <- refinesTo env os srcType destType = refine
 -- buildCallTree _ os _ _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
 buildCallTreeAt _ _ _ _ MayHold _ _ PTopType = return TCTId
-buildCallTreeAt _ _ _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
+-- A value of no known type has nothing to build a call from. It is what a value whose typing failed
+-- is left as, so it is reported where it is built, and the definition or annotation it is in is
+-- left out with the reason ('Eval.buildReporting') rather than taking the whole build with it.
+buildCallTreeAt _ os _ _ _ _ PTopType destType = CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot build a call to %s from a value of no known type (in %s)" (show destType) (show $ map fst os)]
 buildCallTreeAt env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound force basis (TypeVar v _ i) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
   [vaenv] -> case H.lookup v vaenv of
     Just ArgBind{abType=srcType'} -> buildCallTree env objSrcs visitedArrows bound force basis (intersectTypes tbTypeEnv srcType' i) destType
@@ -601,8 +606,18 @@ buildCallTreeAt env@TBEnv{tbTypeEnv} os visitedArrows bound force basis (UnionTy
   -- has that shape, so it takes no arm. Building it anyway offers a runtime match option that a
   -- value of the other, real, leaf can be steered into.
   let inhabited p = not (carriesMembership p) || not (isBottomType (compactType tbTypeEnv H.empty (singletonType p)))
-  let allPartials = filter inhabited (splitUnionType srcLeafs) ++ map constantPartialType consts
-  let tryBuilds = map (\srcPartial -> (srcPartial, buildPartialCallTree env os visitedArrows bound force basis srcPartial destType)) allPartials
+  -- Each call split off the members of a class a class arrow converts ('splitClassMemberArgs'). The
+  -- split is how a member reaches an arm written for what it converts to. A member call that cannot
+  -- be built even converted is one no arm of this call takes, so it is no reading of the call: an
+  -- argument tied by a shared variable to an @Integer@ is never a @\/Catln\/CStr@, and a relative
+  -- @length@ read as @\/Data\/List\/length@ is never given one. It is left out, and a value of the
+  -- member finds the readings that do take it. The rest of the call is built, and reported where it
+  -- cannot be, as any call is.
+  let build p = buildPartialOrConvert env os visitedArrows bound force basis p destType
+  let buildSplit p = case splitClassMemberArgs env os p of
+        [(q, _)] -> [(q, build q)]
+        parts    -> [ (q, res) | (q, isMember) <- parts, let res = build q, not isMember || isJust (cresToMaybe res) ]
+  let tryBuilds = concatMap buildSplit (filter inhabited (splitUnionType srcLeafs)) ++ [ (c, build c) | c <- map constantPartialType consts ]
   -- The type checker keeps an applied term in both its raw and settled forms (@5 + 1@ is
   -- @(/operator+(..) + Integer)@), distributed into sibling container leaves
   -- (@Box[/v=/operator+(..)] + Box[/v=Integer]@). The raw leaf can fail to build: a settled
@@ -629,6 +644,125 @@ buildCallTreeAt env@TBEnv{tbTypeEnv} os visitedArrows bound force basis (UnionTy
   return $ case nub (map snd matchVal) of
     [t] -> t
     _   -> TCMatch destType $ H.fromList matchVal
+
+-- | The arguments of a call that a class arrow may convert ('classArrowsOf'): each by its keys from the
+-- outermost in, with what it holds and what the arrow converts it to. An argument is one when it
+-- holds members of the class beyond what the arrow converts them to (a @\/Catln\/CStr@ where
+-- @(_ -> String) -> String\/Text..@ is written). A call made in a context (@ContextIn(value= f(..),
+-- ..)@) is asked of the call it holds, whose arguments are the ones its arms take.
+classArrowArgs :: TBEnv -> PartialType -> [([PartialKey], Type, Type)]
+classArrowArgs TBEnv{tbTypeEnv} = argsOf
+  where
+    arrows = classArrowsOf tbTypeEnv
+    argsOf p@PartialType{ptName, ptArgs} = direct ++ inContext
+      where
+        direct = [ ([k], t, res)
+                 | (k, t) <- H.toList ptArgs
+                 , t /= PTopType
+                 , res <- take 1 [ res | (cls, res) <- arrows, isSubtypeOf tbTypeEnv t cls, not (isSubtypeOf tbTypeEnv t res) ] ]
+        inContext
+          | nameStr (makeAbsoluteName ptName) == ContextInStr
+          , Just (UnionType Nothing calls []) <- H.lookup valueKey ptArgs
+          , [call] <- splitUnionType calls
+          = [ (valueKey : ks, t, res) | (ks, t, res) <- argsOf call ]
+          | otherwise = const [] p
+    valueKey = partialKey (mkName contextValStr)
+
+-- | A call split so that each member of a class arrow's class that an argument may hold, and that the
+-- arrow converts ('classMembersToConvert'), is a call of its own, built apart from the rest
+-- ('buildPartialOrConvert'): @length(this= ∀String)@ into @length(this= ∀String - \/Catln\/CStr)@ and
+-- @length(this= \/Catln\/CStr)@, between which the value's own type chooses at runtime. The rest is
+-- left as it was written, as a class or a union, so a call over a class is built as it was.
+--
+-- An argument that is a reference to one of the enclosing definition's arguments (@sep= oldText@ in
+-- @findEdit@) is read as what the definition binds it to ('exprVarArgsWithObjSrcs'), as
+-- 'buildCallTreeAt' reads a variable source: what the reference may hold is what that argument may.
+splitClassMemberArgs :: TBEnv -> [ObjSrc] -> PartialType -> [(PartialType, Bool)]
+splitClassMemberArgs env@TBEnv{tbTypeEnv} os p0 = splitIn (p0, False)
+  where
+    members = classMembersToConvert env
+    splitIn pm@(PartialType{ptName=pName, ptArgs=pArgs}, _)
+      | null members = [pm]
+      | otherwise = foldr splitArg [pm] (H.keys pArgs) >>= splitContext
+      where
+        splitContext (q, qm)
+          | nameStr (makeAbsoluteName pName) == ContextInStr
+          , Just (UnionType Nothing calls []) <- H.lookup valueKey (ptArgs q)
+          , [call] <- splitUnionType calls
+          = [ (q{ptArgs = H.insert valueKey (singletonType call') (ptArgs q)}, qm || cm) | (call', cm) <- splitIn (call, False) ]
+          | otherwise = [(q, qm)]
+    splitArg k qs = concatMap (splitOne k) qs
+    splitOne k (q, qm) = case resolveRef <$> H.lookup k (ptArgs q) of
+      Just t | t /= PTopType, not (typeContainsTypeVar t), k /= valueKey || nameStr (makeAbsoluteName (ptName q)) /= ContextInStr ->
+        case [ m | m <- members, not (isBottomType (intersectTypes tbTypeEnv t (singletonType m))) ] of
+          [] -> [(q, qm)]
+          held ->
+            let rest = snd $ differenceTypeWithEnv tbTypeEnv H.empty t (unionAllTypes tbTypeEnv (map singletonType held))
+            in [ (q{ptArgs = H.insert k rest (ptArgs q)}, qm) | not (isBottomType rest) ]
+               ++ [ (q{ptArgs = H.insert k (singletonType m) (ptArgs q)}, True) | m <- held ]
+      _ -> [(q, qm)]
+    valueKey = partialKey (mkName contextValStr)
+    -- Read through the binders among the sources, as 'objSrcsEnv' reads them: the definition's object
+    -- and each lambda's pattern. The stack also holds each argument being built, which binds nothing.
+    resolveRef t@(TypeVar v _ i) = case exprVarArgsWithObjSrcs tbTypeEnv [ src | src@(_, oa) <- os, not (null (exprAppliedArgs (oaObjExpr oa))) ] of
+      [vaenv] | Just ArgBind{abType} <- H.lookup v vaenv -> intersectTypes tbTypeEnv abType i
+      _ -> t
+    resolveRef t = t
+
+-- | The members of the classes of the class arrows ('classArrowsOf') that the arrows convert: those
+-- not already within what they convert to (@\/Catln\/CStr@, of @(_ -> String) -> String\/Text..@).
+classMembersToConvert :: TBEnv -> [PartialType]
+classMembersToConvert TBEnv{tbTypeEnv} =
+  [ m
+  | (cls, res) <- classArrowsOf tbTypeEnv
+  , m <- classMemberLeaves tbTypeEnv cls
+  , not (isSubtypeOf tbTypeEnv (singletonType m) res) ]
+
+-- | A call built as it is, or, where no arm takes it and a class arrow converts one of its arguments
+-- to what an arm does take, built with that argument converted first ('TCArgConv'). This is the
+-- arrow written from a class doing what it declares: a definition written for what every member
+-- converts to takes every member, by converting it on the way in.
+buildPartialOrConvert :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> CallForce -> DestBasis -> PartialType -> Type -> CRes TCallTree
+buildPartialOrConvert env@TBEnv{tbTypeEnv, tbResEnv} os visitedArrows bound force basis srcPartial destType =
+  case buildPartialCallTree env os visitedArrows bound force basis srcPartial destType of
+    res@CRes{} -> res
+    err -> fromMaybe err $ listToMaybe [ r | args <- candidates, let r = convertedBy args, isJust (cresToMaybe r) ]
+  where
+    -- What to convert, tried in turn: the arguments a class arrow converts to its result, and then,
+    -- for each arm of the call's name, the arguments that arm does not take as they are but that convert
+    -- to what it takes ('armConversions') — a @String\/Text@ given to a primitive declared to take a
+    -- @\/Catln\/CStr@, which no class arrow converts it to but its own arrow does.
+    candidates = [ args | args@(_:_) <- [classArrowArgs env srcPartial] ] ++ armCandidates
+    armCandidates = case suffixLookupInDict (ptName srcPartial) tbResEnv of
+      Just items -> [ args | (armT, _, _) <- items, Just args@(_:_) <- [armConversions [] srcPartial armT] ]
+      Nothing    -> []
+    convertedBy args = do
+      let converted = foldr (\(ks, _, res) q -> setAt ks res q) srcPartial args
+      tree <- buildPartialCallTree env os visitedArrows bound force basis converted destType
+      convs <- forM args $ \(ks, t, res) ->
+        TCArgConv (map (nameStr . makeAbsoluteName . pkName) ks) <$> buildCallTree env os visitedArrows PTopType MayHold DestRequired t res
+      return $ foldr TCSeq tree convs
+    -- The arguments of the call to convert for the arm to take them, by their keys from the outermost
+    -- in, or 'Nothing' where the arm cannot take one of them even converted. A call in a context is
+    -- read through the call it holds, as the arm's own context object is.
+    armConversions path src arm = fmap concat $ forM (H.toList (ptArgs src)) $ \(k, t) -> case H.lookup k (ptArgs arm) of
+      Nothing -> Nothing
+      Just ta
+        | nameStr (makeAbsoluteName (ptName src)) == ContextInStr, k == valueKey
+        , UnionType Nothing sls [] <- t, [sc] <- splitUnionType sls
+        , UnionType Nothing als [] <- ta, [ac] <- splitUnionType als
+        -> armConversions (path ++ [k]) sc ac
+        | isSubtypeOf tbTypeEnv t ta -> Just []
+        -- Whether it converts is whether the conversion builds ('convertedBy'), which is the question
+        -- asked of the arrows themselves rather than of the type graph's reach.
+        | t /= PTopType, not (typeContainsTypeVar t) -> Just [(path ++ [k], t, ta)]
+        | otherwise -> Nothing
+    valueKey = partialKey (mkName contextValStr)
+    setAt [k] t q = q{ptArgs = H.insert k t (ptArgs q)}
+    setAt (k:ks) t q = case H.lookup k (ptArgs q) of
+      Just (UnionType Nothing ls []) | [inner] <- splitUnionType ls -> q{ptArgs = H.insert k (singletonType (setAt ks t inner)) (ptArgs q)}
+      _ -> q
+    setAt [] _ q = q
 
 -- | Whether a leaf, or a leaf in one of its slots at any depth, carries a class\/relation
 -- membership atom attached to it (@X|C@). That is the spelling inference keeps for a value whose
@@ -665,13 +799,36 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
     EAppVar _ _ -> toTExprDestBase env os be m
     _           -> toTExprDestBase env os be (baseBuildMeta env os be bm)
   arg' <- case arg of
-    EAppArg a     -> EAppArg <$> toTEObjArr env os True a
+    EAppArg a     -> EAppArg <$> toTEObjArr env os True (towardCallSlot env os m a)
     EAppVar vn vm -> return $ EAppVar vn vm
     -- A value spread into a call is read for its arguments, so it has to be a value by then: a
     -- reference to an argument resolved and an applied term called. Built toward ⊤, which is what
     -- 'toTExprDest' does for a destination that imposes nothing on the value but that it be one.
     EAppSpread a  -> EAppSpread <$> toTExprDest env os a (emptyMetaT PTopType)
   return $ TTupleApply m (bm, be') arg'
+
+-- | An argument given as a bare reference to one of the enclosing definition's arguments, built
+-- toward what the call takes in its slot where the call converts it.
+--
+-- Such an argument's meta is the reference itself (@source@'s @TVArg /source@), so building it toward
+-- its own meta asks nothing of it, while the call it is given to was typed for what that slot takes
+-- (@prim(input= \/Catln\/CStr)@). The argument may be wider than that — a definition accepts what
+-- converts to what its body needs ('TypeCheck.Constrain.updateSchemeProp') — and what makes it fit is
+-- the conversion the slot is built through. So where what the argument is bound to here converts
+-- into the slot ('bindingConvertsInto'), it is built toward the slot's type, as the call's own meta
+-- has it. Any other argument is the value it is bound to, which the call reads as it is
+-- ('applyArgRefBindings'), and is built toward its own meta.
+towardCallSlot :: TBEnv -> [ObjSrc] -> EvalMeta -> EObjArr -> EObjArr
+towardCallSlot TBEnv{tbTypeEnv} os m a@ObjArr{oaObj=Just obj, oaArr=Just (Just e, am)}
+  | TypeVar{} <- getMetaType am
+  , isJust (maybeExprPath e), null (exprAppliedArgs e)
+  , Just fv <- H.lookup (extKey (TVArg (inExprSingleton e))) (objSrcsEnv tbTypeEnv os)
+  , UnionType Nothing callLeafs _ <- getMetaType m
+  , [callLeaf] <- splitUnionType callLeafs
+  , Just slotT <- H.lookup (inExprSingleton obj) (ptArgs callLeaf)
+  , bindingConvertsInto tbTypeEnv fv slotT
+  = a{oaArr = Just (Just e, mWithType slotT am)}
+towardCallSlot _ _ _ a = a
 
 -- | The destination an application's BASE is built toward.
 --

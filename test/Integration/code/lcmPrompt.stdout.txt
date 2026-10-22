@@ -24,7 +24,7 @@ double(x)= x + x
 > /Llm/lcmPrompt(input= "And again?")
   !!! error: llmShowPage was asked to show a page while showing it, which only the page being shown can be answered by
   !!! 	Stack trace:
-  !!! 		ResEArrow Left /Llm/lcmPrompt(Value /input -> ∀/Data/String)(Value /page -> /Catln/RawPrgm..) -> UnionType(Just (PredClass /Data/String,fromList [],[]), /operator++(/r=∀/Data/String, /l=∀/Data/String), []) = /operator++(Value /l -> ∀/Data/String = /operator++(Value /l -> ∀/Data/String = /Llm/showPage(Value /page -> TVArg /page = Value /page))(Value /r -> /Data/String/Text(/chars=∀/Data/List/ConsList[/T=/Data/Char]) = CStr {csValue = "\n"}))(Value /r -> TVArg /input = Value /input)
+  !!! 		ResEArrow Left /Llm/lcmPrompt(Value /input -> ∀/Data/String)(Value /page -> /Catln/RawPrgm..) -> UnionType(Just (PredClass /Data/String,fromList [],[]), /operator++(/r=∀/Data/String, /l=∀/Data/String), []) = /operator++(Value /l -> ∀/Data/String = /operator++(Value /l -> ∀/Data/String = /Llm/showPage(Value /page -> TVArg /page = Value /page))(Value /r -> /Data/String/Text.. = CStr {csValue = "\n"}))(Value /r -> TVArg /input = Value /input)
 # A definition the compiler cannot build is noted with what the compiler said.
 anyOver[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
 anyOver(lst, fn(v))= /Data/List/any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))

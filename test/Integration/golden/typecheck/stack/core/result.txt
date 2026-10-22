@@ -21,14 +21,12 @@ Prgm
                         [ /Catln/www( Value /html -> ∀/Data/String ) -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
                                 [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
                                     , /contents=∀/Data/String
                                     )
                                 ]
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
                                     , /contents=∀/Data/String
                                     )
                                 , /tail=/Data/List/Nil
@@ -36,25 +34,24 @@ Prgm
                             ) = /Catln/CatlnResult
                             ( Value /files -> /Data/List/Cons
                                 [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
                                     , /contents=∀/Data/String
                                     )
                                 ]
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
                                     , /contents=∀/Data/String
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
                                     , /contents=∀/Data/String
                                     ) = /Catln/BuildFile
-                                    ( Value /path -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /path ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "index.html" }
                                     )( Value /contents -> TVArg /html = Value /html )
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -93,8 +90,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Build Results
                 What a build produces, and the ways of producing one.
                 This is declared apart from @core/compile.ct@, where it was, and the separation is load-bearing

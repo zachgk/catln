@@ -11,31 +11,23 @@ Prgm
                         [ Value /main -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
                                 [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Nil
                                     )
@@ -44,50 +36,44 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /files -> /Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Catln/BuildFile
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         ]
                                         ( /head=/Catln/BuildFile
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         , /tail=/Data/List/Nil
                                         )
                                     ) = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Catln/BuildFile
-                                            ( /path=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            , /contents=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                                             ) = /Catln/BuildFile
                                             ( EAppArg
-                                                { eaaArg = Value /path -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "index.html"
+                                                { eaaArg = Value /path ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "index.html"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /contents -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<html><body>tree test</body></html>"
+                                                { eaaArg = Value /contents ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "<html><body>tree test</body></html>"
                                                 }
                                             )
                                         }
@@ -95,35 +81,33 @@ Prgm
                                     ( EAppArg
                                         { eaaArg = Value /tail -> /Data/List/Cons
                                             [ /T=/Catln/BuildFile
-                                                ( /path=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /contents=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Catln/BuildFile
-                                                ( /path=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /contents=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Catln/BuildFile
-                                                    ( /path=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /contents=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Catln/BuildFile
                                                     ( EAppArg
-                                                        { eaaArg = Value /path -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "notes/deep.txt"
+                                                        { eaaArg = Value /path ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "notes/deep.txt"
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /contents -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "under a directory"
+                                                        { eaaArg = Value /contents ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "under a directory"
                                                         }
                                                     )
                                                 }
@@ -143,8 +127,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a build result of more than one file.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests a build result of more than one file.
                   A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
                   built at, so a build produces a directory of files rather than the single file it once could. The
                   path is what says where a file goes, and a path with a @/@ in it is a file under a directory the
@@ -156,31 +142,23 @@ Prgm
                 { eaaArg = Value /p -> /Catln/CatlnResult
                     ( /files=/Data/List/Cons
                         [ /T=/Catln/BuildFile
-                            ( /path=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /contents=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Catln/BuildFile
-                            ( /path=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /contents=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Catln/BuildFile
-                                ( /path=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Catln/BuildFile
-                                ( /path=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             )
@@ -189,31 +167,23 @@ Prgm
                     ( Value /main ↦ /Catln/CatlnResult
                         ( /files=/Data/List/Cons
                             [ /T=/Catln/BuildFile
-                                ( /path=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Catln/BuildFile
-                                ( /path=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /contents=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                , /contents=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Cons
                                 [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Nil
                                 )

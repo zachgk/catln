@@ -91,8 +91,8 @@ Prgm
                             )
                         , /ContextIn
                             ( EAppArg
-                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
+                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( EAppArg { eaaArg = Value /msg -> /Catln/CStr } )
                                 }
                             )
                             ( EAppArg
@@ -275,11 +275,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/msg
-                            ( EAppArg { eaaArg = Value /this -> /Catln/InputErr/EndOfInput.. } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the input has ended"
+                            ( EAppArg { eaaArg = Value /this -> /Catln/InputErr/EndOfInput.. } ) -> ( /Data/String/Text.. + /Catln/CStr ) = "the input has ended"
                         , /Data/msg
-                            ( EAppArg { eaaArg = Value /this -> /Catln/InputErr/NoInput.. } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "this run has no input to read"
+                            ( EAppArg { eaaArg = Value /this -> /Catln/InputErr/NoInput.. } ) -> ( /Data/String/Text.. + /Catln/CStr ) = "this run has no input to read"
                         ]
                     }
                 )
@@ -426,40 +424,52 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Catln Core Compiling Types and Annotations"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Catln Core Compiling Types and Annotations"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## IO"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## IO"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[InputErr] is why there is no line of input to read: the input has ended ([EndOfInput]), or
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[InputErr] is why there is no line of input to read: the input has ended ([EndOfInput]), or
                   the run has no input to read at all, as a debugger's has not ([NoInput])."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Core Annotations
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Core Annotations
                   The core annotations are all of the annotations used by the compiler and the web docs program."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Build-in Type Macros"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Build-in Type Macros"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Result Classes
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Result Classes
                   What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
                   so declaring it here would make this file reach @core/list.ct@ — and this file is one every
                   program reaches, through the annotations above. See @core/result.ct@ for what that costs."

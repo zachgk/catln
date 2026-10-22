@@ -1108,6 +1108,9 @@ primInputArgs (TupleVal n args)
       Just (TupleVal _ st) -> st
       _                    -> H.empty
 primInputArgs (TupleVal _ args) = Just args
+-- A packed string has no arguments to give. An arrow written from one (@\/Catln\/CStr -> ..@) is
+-- given the value itself, as the receiver a method is given.
+primInputArgs v@CStrVal{} = Just (H.singleton "/this" v)
 primInputArgs _ = Nothing
 
 resultType :: Type
@@ -1122,6 +1125,7 @@ getValType :: Val -> Type
 getValType (IntVal n)   = constantType (CInt n)
 getValType (FloatVal f) = constantType (CFloat f)
 getValType (CharVal c)  = constantType (CChar c)
+getValType CStrVal{}    = cstrType
 getValType (TupleVal name args) = singletonType (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey (mkName argName), getValType argVal)
 getValType (ObjArrVal oa _) = getExprType $ oaObjExpr oa
@@ -1138,6 +1142,7 @@ getValPartialType :: Val -> PartialType
 getValPartialType IntVal{} = intLeaf
 getValPartialType FloatVal{} = floatLeaf
 getValPartialType CharVal{} = charLeaf
+getValPartialType CStrVal{} = cstrLeaf
 getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map (\(argName, argVal) -> (valArgKey argName argVal, singletonType $ getValPartialType argVal)) $ H.toList args}
 getValPartialType (ObjArrVal oa _) = getSingleton $ getExprType $ oaObjExpr oa
 getValPartialType IOVal{}     = ioLeaf
@@ -1265,15 +1270,16 @@ instance ToJSON MacroFunction where
   toJSON MacroFunction{} = object ["type".=("MacroFunction" :: String)]
 
 instance Show TCallTree where
-  show TCTId            = "TCTId"
-  show (TCMatch _ opts) = printf "TCMatch (%s)" (show opts)
-  show (TCSeq a b)      = printf "TCSeq (%s) (%s)" (show a) (show b)
-  show (TCCond t ifs)   = printf "TCCond %s (%s)" (show t) (show ifs)
-  show (TCRefine t)     = printf "TCRefine %s" (show t)
-  show (TCArg t _)      = printf "TCArg %s" (show t)
-  show (TCObjArr oa)    = printf "TCObjArr (%s)" (show oa)
-  show (TCPrim oa _)    = printf "TCPrim (%s)" (show oa)
-  show (TCMacro oa _)   = printf "TCMacro (%s)" (show oa)
+  show TCTId              = "TCTId"
+  show (TCMatch _ opts)   = printf "TCMatch (%s)" (show opts)
+  show (TCSeq a b)        = printf "TCSeq (%s) (%s)" (show a) (show b)
+  show (TCCond t ifs)     = printf "TCCond %s (%s)" (show t) (show ifs)
+  show (TCRefine t)       = printf "TCRefine %s" (show t)
+  show (TCArgConv path t) = printf "TCArgConv %s (%s)" (show path) (show t)
+  show (TCArg t _)        = printf "TCArg %s" (show t)
+  show (TCObjArr oa)      = printf "TCObjArr (%s)" (show oa)
+  show (TCPrim oa _)      = printf "TCPrim (%s)" (show oa)
+  show (TCMacro oa _)     = printf "TCMacro (%s)" (show oa)
 
 data TCallTree
   = TCTId
@@ -1281,6 +1287,10 @@ data TCallTree
   | TCSeq TCallTree TCallTree
   | TCCond Type [(Maybe ([TExpr EvalMetaDat], EObjArr), TCallTree)] -- [((if, ifObj), then)]
   | TCRefine Type -- ^ The value as it is, when its value predicates hold of it ('Eval.valWithinType')
+  -- | The value with one of its arguments converted by the tree, the argument found by its keys from
+  -- the outermost in ('TreeBuild.classArrowConversion'): a member of a class an arrow is written
+  -- from, converted to what the arrow converts it to before an arm taking only that is called.
+  | TCArgConv [String] TCallTree
   | TCArg Type String
   | TCObjArr EObjArr
   | TCPrim EObjArr EPrim
@@ -1482,7 +1492,7 @@ exprArgsWithVal Value{} _ = H.empty
 exprArgsWithVal HoleExpr{} _ = H.empty
 exprArgsWithVal (EWhere _ base _) val = exprArgsWithVal base val
 exprArgsWithVal (AliasExpr base n) val = H.insert (nameStr (exprPath n)) val (exprArgsWithVal base val)
-exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
+exprArgsWithVal pat@(TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => EApp Expr m -> Val -> Args
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
@@ -1507,7 +1517,7 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
     -- matched against the value itself: the hole @.._@ binds nothing, and the fields it stands for
     -- are left to whatever else the value is matched by.
     fromArg (EAppSpread a) _ = exprArgsWithVal a val
-    fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
+    fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s, in the pattern %s" (show oa) (show val) (show pat)
 
 -- | Extracts the arguments from a value using a matching expression
 -- | As there are no vars stored in the value, it only gets arguments

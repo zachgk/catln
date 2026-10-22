@@ -119,8 +119,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Two functions that recurse by calling each other. [even] and [odd] each answer from their own
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Two functions that recurse by calling each other. [even] and [odd] each answer from their own
                   base case at zero and otherwise hand the decremented argument to the other, so every answer but
                   the one at zero is produced by a bounce through the other function.
                   A test of mutual recursion has to run an argument of each parity. [odd(x= 4)] and [even(x= 4)]
@@ -135,8 +137,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
                   argument and on [even(x= 0)]'s 0 for an odd one."
                 }
             )

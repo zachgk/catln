@@ -51,12 +51,12 @@ Prgm
                             ( Value /pages -> ∀/Data/String = /Catln/Doc/dshow.sidebar( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#search = Value /Catln/Doc/#search ) ->
                             ( /Catln/Doc/Show/Search( /pages=∀/Data/String ) + /Catln/Doc/searchWebdocs
-                                ( /query=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
+                                ( /query=( /Data/String/Text.. + /Catln/CStr ) )
                             ) = /Catln/Doc/searchWebdocs
-                            ( Value /query -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /query ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" }
                             )
                         , /Catln/Doc/dshow( Value /s -> /Catln/#test = Value /Catln/#test ) -> /Catln/Doc/Show/Test( /run=∀/Data/String ) = /Catln/Doc/Show/Test
@@ -268,7 +268,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/docPages.docPagesFor( Value /query -> ∀/Data/String ) -> ∀/Data/String ]
+                        [ /Catln/Doc/docPages.docPagesFor( Value /query -> /Catln/CStr ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -289,7 +289,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/docPages( Value /query -> ∀/Data/String ) -> /Catln/Doc/Show/DocPages( /pages=∀/Data/String ) = /Catln/Doc/Show/DocPages
+                        [ /Catln/Doc/docPages
+                            ( Value /query ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            ) -> /Catln/Doc/Show/DocPages( /pages=∀/Data/String ) = /Catln/Doc/Show/DocPages
                             ( Value /pages -> ∀/Data/String = /Catln/Doc/docPages.docPagesFor( Value /query -> TVArg /query = Value /query ) )
                         ]
                     }
@@ -461,7 +466,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/searchWebdocs( Value /query -> ∀/Data/String ) -> /Catln/Doc/Show/Search( /pages=∀/Data/String ) = /Catln/Doc/Show/Search
+                        [ /Catln/Doc/searchWebdocs
+                            ( Value /query ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            ) -> /Catln/Doc/Show/Search( /pages=∀/Data/String ) = /Catln/Doc/Show/Search
                             ( Value /pages -> ∀/Data/String = /Catln/Doc/searchWebdocs.searchPagesFor( Value /query -> TVArg /query = Value /query ) )
                         ]
                     }
@@ -530,7 +540,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/searchWebdocs.searchPagesFor( Value /query -> ∀/Data/String ) -> ∀/Data/String ]
+                        [ /Catln/Doc/searchWebdocs.searchPagesFor( Value /query -> /Catln/CStr ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -667,20 +677,26 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Catln WebDocs
                 This provides common components and annotations used in Webdocs.
                 These include the ones" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Represents objects which can be shown in the webdocs." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Marks an annotation as one the webdocs offer as a page of its own, rather than one only written
                 into a program beside the thing it is about. A reader is offered these by name — in the search
                 box, without having to know they exist — so what is marked here is what there is to find, and
@@ -706,8 +722,10 @@ Prgm
                 there is somewhere to type that in." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Represents calls which have a display of their own, as [DShow] represents values which do.
                 A call is not a value, and that is the whole reason this is a second class rather than more
                 members of the first. What [DShow] answers about is something the program computed and is
@@ -719,8 +737,10 @@ Prgm
                 beside the function, not by an [every]. See [/Data/List] in @core/list-webdocs.ct@." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
                 webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
                 print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
@@ -728,8 +748,10 @@ Prgm
                 against a print/result golden." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Which compiler stage a [#listProgram] lists: the program before typechecking, after
                 typechecking, or after tree building." }
             )

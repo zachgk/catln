@@ -7,36 +7,28 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read [[Welcome]]"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "Read [[Welcome]]" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Write this note"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "Write this note" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/True = Value /Data/Primitive/True } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Plan the rest"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "Plan the rest" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /plannedDay -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox indented deeper is a task of its own"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "A checkbox indented deeper is a task of its own" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -53,9 +45,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tasks"
-                                }
+                                { eaaArg = Value /title -> /Catln/CStr = "Tasks" }
                             )
                         ]
                     , omiRuntimeDecls = []

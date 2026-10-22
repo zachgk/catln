@@ -8,11 +8,11 @@ Prgm
                     , omiRuntimeDecls =
                         [ /ContextIn
                             ( Value /value -> /Http/httpPost
-                                ( /body=∀/Data/String
+                                ( /body=/Catln/CStr
                                 , /headers=∀/Data/List[ /T=/Http/Header.. ]
-                                , /url=∀/Data/String
-                                ) = /Http/httpPost( Value /url -> ∀/Data/String )
-                                ( Value /headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value /body -> ∀/Data/String )
+                                , /url=/Catln/CStr
+                                ) = /Http/httpPost( Value /url -> /Catln/CStr )
+                                ( Value /headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value /body -> /Catln/CStr )
                             )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
@@ -82,8 +82,7 @@ Prgm
                                 ) = /Http/HttpErr/InvalidUrl( Value /url -> ∀/Data/String )( Value /detail -> ∀/Data/String )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /url = Value /url )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = " is not a URL a request can be sent to: " }
                                 )
                             )( Value /r -> TVArg /detail = Value /detail )
@@ -95,13 +94,11 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /l -> /Data/String/Text.. = CStr
                                         { csValue = "the request to " }
                                     )( Value /r -> TVArg /url = Value /url )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = " could not be made: " }
                                 )
                             )( Value /r -> TVArg /detail = Value /detail )
@@ -116,33 +113,28 @@ Prgm
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
                                         ( Value /l -> ∀/Data/String = /operator++
-                                            ( Value /l -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /l -> /Data/String/Text.. = CStr
                                                 { csValue = "the request to " }
                                             )( Value /r -> TVArg /url = Value /url )
                                         )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /r -> /Data/String/Text.. = CStr
                                             { csValue = " answered with status " }
                                         )
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /code = Value /code ) )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ": " }
                                 )
                             )( Value /r -> TVArg /body = Value /body )
                         , /Data/msg
                             ( Value /this -> /Http/HttpErr/NotSent( /url=∀/Data/String ) = /Http/HttpErr/NotSent( Value /url -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l -> /Data/String/Text.. = CStr
                                     { csValue = "the request to " }
                                 )( Value /r -> TVArg /url = Value /url )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " was not sent, as this run reaches no network" }
                             )
                         ]
@@ -203,8 +195,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# HTTP
                 Requests over the network. Sending one runs in an [/Catln/IO] context, because it reaches
                 outside the program: what comes back is decided by whatever answers, and sending it can change
@@ -213,8 +207,10 @@ Prgm
                 and one that does writes `import "http"`." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[HttpErr] is why a request to [url] has no response: the URL is not one ([InvalidUrl]); the
                 request could not be made, as where the host does not answer ([Unreachable]); the response's
                 status [code] is not a success, with the [body] it came with, which is where an API says what
@@ -224,43 +220,43 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Result/Fail
                 [ /E=/Http/HttpErr/Status
-                    ( /body=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    , /url=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ( /body=( /Data/String/Text.. + /Catln/CStr )
+                    , /url=( /Data/String/Text.. + /Catln/CStr )
                     , /code=/Data/Primitive/Integer
                     )
                 ]
                 ( /err=/Http/HttpErr/Status
-                    ( /body=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    , /url=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ( /body=( /Data/String/Text.. + /Catln/CStr )
+                    , /url=( /Data/String/Text.. + /Catln/CStr )
                     , /code=/Data/Primitive/Integer
                     )
                 ) = /Data/Result/Fail
                 ( Value /err -> /Http/HttpErr/Status
-                    ( /body=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                    , /url=/Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ( /body=( /Data/String/Text.. + /Catln/CStr )
+                    , /url=( /Data/String/Text.. + /Catln/CStr )
                     , /code=/Data/Primitive/Integer
                     ) = /Http/HttpErr/Status
-                    ( Value /url -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /url ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "http://x.test" }
                     )
                     ( Value /code -> /Data/Primitive/Integer = CInt
                         { ciValue = 401 }
                     )
-                    ( Value /body -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /body ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "no key" }
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: the request to http://x.test answered with status 401: no key" }
             )
         ]

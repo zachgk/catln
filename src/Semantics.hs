@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Semantics
@@ -17,8 +18,9 @@ module Semantics where
 import qualified Data.HashMap.Strict as H
 
 import           Control.Exception   (bracket_, evaluate)
-import           CtConstants         (builtinAnnotNames, errPageSuffix,
-                                      macroThisKey)
+import           CtConstants         (builtinAnnotNames, contextValStr,
+                                      errPageSuffix, macroThisKey,
+                                      pattern ContextInStr)
 import           Data.Graph          (graphFromEdges)
 import           Data.Hashable       (hash)
 import qualified Data.HashSet        as S
@@ -30,7 +32,8 @@ import           Data.Maybe
 import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
 import           Semantics.TypeGraph (ReachesEnv (..), completePartials,
-                                      reachesPartials, unionReachesTree)
+                                      reachesPartials, reachesTo,
+                                      unionReachesTree)
 import           Semantics.Types
 import           System.Directory    (doesDirectoryExist, getHomeDirectory)
 import           System.FilePath     (joinPath)
@@ -45,25 +48,75 @@ instance Semigroup (ObjArrTypeGraph e m) where
 -- | The arrows written from classes (@(_ -> String) -> String\/Text..@) a type graph holds, among its
 -- declarations written from a set of objects ('omDecls'): each as the class, which is the type of
 -- every member of it, and what every member converts to.
-classArrowsOf :: (ExprClass e) => TypeEnv (ObjArrTypeGraph e m) -> [(Type, Type)]
-classArrowsOf TypeEnv{teTypeGraph=ObjArrTypeGraph om} =
-  [ (getMetaType (getExprMeta obj), getMetaType m)
-  | ObjArr{oaObj=Just obj, oaArr=Just (_, m)} <- omDecls om ]
-
--- | A definition's input as what it takes once the class arrows have converted what they convert.
 --
--- An argument slot accepting the whole of what an arrow written from a class converts to accepts the
--- whole class: every member converts there first, which the class arrow promises
--- ('TypeCheck.Decode.verifyClassArrows'). So @f(x= String\/Text(chars))@ takes every @String@ by
--- @(_ -> String) -> String\/Text..@. Only the definition's own arguments widen, as only an argument is
--- converted on the way into a call; a value held in one of their fields is taken as it is.
-widenByClassArrows :: (TypeGraph tg) => TypeEnv tg -> [(Type, Type)] -> Type -> Type
-widenByClassArrows _ [] t = t
-widenByClassArrows typeEnv arrows (UnionType mTop leafs consts) = UnionType mTop (joinUnionType (map widenLeaf (splitUnionType leafs))) consts
+-- The result is read as the members of the class within it, as the class is expanded into them:
+-- written @String\/Text..@, it is the member @String\/Text(chars= ConsList[Char])..@ the class
+-- completes from its declared fields, which is the spelling everything reading the class's members
+-- reads. The two denote the same values, but as written the first leaves the field open, and the set
+-- algebra reads it as wider.
+classArrowsOf :: (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeEnv (ObjArrTypeGraph e m) -> [(Type, Type)]
+classArrowsOf typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph om} =
+  [ (cls, asMembers cls (getMetaType m))
+  | ObjArr{oaObj=Just obj, oaArr=Just (_, m)} <- omDecls om
+  , let cls = getMetaType (getExprMeta obj) ]
   where
-    widenLeaf p@PartialType{ptArgs} = p{ptArgs = fmap widenSlot ptArgs}
-    widenSlot t = foldl' (\acc (cls, res) -> if isSubtypeOf typeEnv res acc then unionTypes typeEnv acc cls else acc) t arrows
-widenByClassArrows _ _ t = t
+    asMembers cls res = case [ memberAsDeclared typeEnv l | l <- classMemberLeaves typeEnv cls, isSubtypeOf typeEnv (singletonType l) res ] of
+      []      -> res
+      members -> unionAllTypes typeEnv members
+
+-- | A class's member as its data declaration has it, fields and all. A class lists a member by name
+-- (@String\/Text..@), which is every value the declaration makes, and the declaration's own spelling
+-- (@String\/Text(chars= ∀ConsList[T= Char])@) is the one an arrow written from the member reads its
+-- input as. The two denote the same values, but the set algebra does not complete the first from
+-- the declaration, and reads it as wider.
+memberAsDeclared :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Type
+memberAsDeclared typeEnv l = case typeGraphData typeEnv (ptName l) of
+  []    -> singletonType l
+  decls -> intersectTypes typeEnv (singletonType l) (unionAllTypes typeEnv (map singletonType decls))
+
+-- | The data members a class type stands for: its positive leaves, and what its predicates expand
+-- to, expanded in turn where a member is a class itself.
+classMemberLeaves :: (TypeGraph tg) => TypeEnv tg -> Type -> [PartialType]
+classMemberLeaves typeEnv = go (10 :: Int)
+  where
+    go fuel t@(UnionType mTop leafs _) = splitUnionType leafs ++ case mTop of
+      Just (preds, _, _) | fuel > 0, let e = expandPredicates typeEnv H.empty preds, e /= t -> go (fuel - 1) e
+      _ -> []
+    go _ _ = []
+
+-- | A declaration's input as what its definitions must take once the class arrows have converted
+-- what they convert.
+--
+-- An argument slot declared to take a whole class an arrow is written from takes every member, and
+-- every member converts to the arrow's result on the way in ('TypeCheck.Decode.verifyClassArrows'
+-- holds each member to that). So the definitions only need to take the result there:
+-- @(_ -> String) -> String\/Text..@ makes @isEmpty(this -> String)@ fulfilled by arms over
+-- @String\/Text(chars= Nil)@ and @String\/Text(chars= Cons(..))@ together. It is the declaration that
+-- is narrowed rather than each definition widened, as several definitions may take the result
+-- between them where none takes it alone. Only the declaration's own arguments narrow, as only an
+-- argument is converted on the way into a call; a value held in one of their fields is taken as it
+-- is.
+narrowByClassArrows :: (TypeGraph tg) => TypeEnv tg -> [(Type, Type)] -> Type -> Type
+narrowByClassArrows _ [] t = t
+narrowByClassArrows typeEnv arrows (UnionType mTop leafs consts) = UnionType mTop (joinUnionType (map narrowLeaf (splitUnionType leafs))) consts
+  where
+    narrowLeaf p@PartialType{ptArgs} = p{ptArgs = fmap (narrowSlotByClassArrows typeEnv arrows) ptArgs}
+narrowByClassArrows _ _ t = t
+
+-- | One argument slot as 'narrowByClassArrows' narrows it: the members of a class an arrow is
+-- written from, where the slot takes the whole class, replaced by what they convert to.
+--
+-- Only a slot that states what it takes. A ⊤ slot takes the class too, but it takes every value as
+-- it is, and its definitions are written for every value; a slot typed by a declaration variable is
+-- what a call binds it to, which is not decided here.
+narrowSlotByClassArrows :: (TypeGraph tg) => TypeEnv tg -> [(Type, Type)] -> Type -> Type
+narrowSlotByClassArrows typeEnv arrows t
+  | t == PTopType || typeContainsTypeVar t = t
+  | otherwise = foldl' narrowBy t arrows
+  where
+    narrowBy acc (cls, res)
+      | isSubtypeOf typeEnv cls acc = unionTypes typeEnv (snd $ differenceTypeWithEnv typeEnv H.empty acc cls) res
+      | otherwise = acc
 -- | THE REACH-QUERY MEMO. Profiling a near-empty program against core put 48.5% of all
 -- time in 'objArrGraphQuery' — 121,525 calls at ~9ms each — while the reaches graph they
 -- query changes at most once per epoch. The query is called from PURE set-algebra
@@ -403,11 +456,22 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
     where
       itemTemplates = concatMap oaInputTemplates . flatObjectMapItem
 
+  -- A function declared in a context (@println{io -> IO}(msg -> \/Catln\/CStr)@) is an arrow from the
+  -- context call (@ContextIn(value= println(msg -> \/Catln\/CStr), ctx= ..)@), so the arguments it
+  -- takes are spelled one level further in, on the call in its @value@. They are its inputs as much
+  -- as a plain function's own arguments are.
   typeGraphInputEmbeddedNames TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} =
-    S.unions [ S.unions (map leafNameSet (H.elems (ptArgs tmpl)))
+    S.unions [ S.unions (map leafNameSet (inputSlots tmpl))
              | item <- H.elems tg
              , oa <- flatObjectMapItem item
              , tmpl <- oaInputTemplates oa ]
+    where
+      inputSlots tmpl = H.elems (ptArgs tmpl) ++ contextCallSlots tmpl
+      contextCallSlots tmpl
+        | nameStr (makeAbsoluteName (ptName tmpl)) == ContextInStr
+        , Just (UnionType _ calls _) <- H.lookup (partialKey (mkName contextValStr)) (ptArgs tmpl)
+        = concatMap (H.elems . ptArgs) (splitUnionType calls)
+        | otherwise = []
 
   -- The arg keysets come from the object EXPRESSION structure ('exprAppliedArgs' /
   -- 'inExprSingleton' — the same keying every partial built from an expression uses), not
@@ -1030,6 +1094,13 @@ exprArgRefBindings vaenv e = H.fromList
 -- result an arm presents ('arrowDestTypeBase') and the source of a call built inside an arm
 -- ('TreeBuild.toTExprDest') are read this way, so the two sides of a call agree on what its
 -- arguments are. A narrower binding only narrows the slot.
+--
+-- A binding holding values outside its slot which reach it is an argument the call converts on
+-- the way in: a definition
+-- accepts what converts to what its body needs ('TypeCheck.Constrain.updateSchemeProp'), and the
+-- argument is built toward the slot ('TreeBuild.towardCallSlot'), so what the slot holds is what
+-- the conversion gives, a value of the slot's type. Read narrowed to the binding instead, a
+-- @String\/Text@ given to a @\/Catln\/CStr@ slot is the empty slot, and a call from nothing is no call.
 applyArgRefBindings :: (TypeGraph tg, ExprClass e) => TypeEnv tg -> e m -> H.HashMap ArgName Type -> Type -> Type
 applyArgRefBindings typeEnv e bindings t
   | H.null bindings = t
@@ -1040,8 +1111,19 @@ applyArgRefBindings typeEnv e bindings t
       _ -> t
   where
     readSlot k slot = case H.lookup k bindings of
-      Just fv | not (isTypeVar fv) -> intersectTypes typeEnv slot fv
-      _                            -> slot
+      Just fv | not (isTypeVar fv), not (bindingConvertsInto typeEnv fv slot) -> intersectTypes typeEnv slot fv
+      _ -> slot
+
+-- | Whether an argument bound to @fv@ is converted on its way into a call slot of type @slot@: some
+-- of what it holds is outside the slot and reaches it. What is outside and reaches nothing in the
+-- slot is not converted — it is the slot's imprecision, as an open class read against another is —
+-- and the binding is read within the slot ('applyArgRefBindings'). A slot of ⊤ or of a declaration
+-- variable takes the argument as it is.
+bindingConvertsInto :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Bool
+bindingConvertsInto typeEnv fv slot
+  | slot == PTopType || typeContainsTypeVar slot || isSubtypeOf typeEnv fv slot = False
+  | otherwise = let outside = snd $ differenceTypeWithEnv typeEnv H.empty fv slot
+                in not (isBottomType outside) && reachesTo typeEnv H.empty outside slot
 
 -- | Set resolved field values on a constructed type and bind the data parameters those fields
 -- define. For @Cons(head=x)@ resolved to @head=Integer@, the Cons declaration links @head -> $T@,

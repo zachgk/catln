@@ -193,8 +193,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A class's name may be a prefix of its members' names.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A class's name may be a prefix of its members' names.
                   A note's checkbox is read as one of two things, and the two are named under the name of the class
                   they are both members of, so that what a checkbox is read as is one name with two readings under
                   it rather than two unrelated names. That makes the class name a strict prefix of every member
@@ -212,8 +214,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The values a page of such members declares, written out and never defined — the shape a note's
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The values a page of such members declares, written out and never defined — the shape a note's
                   page holds a checkbox as."
                 }
             )

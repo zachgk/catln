@@ -18,7 +18,7 @@ module(Http)
       the matter was ([Status]); or the run reaches no network, so it was not sent ([NotSent]).
       [detail] is what the system said went wrong.
 
-  httpPost{io -> IO}(url -> String, headers -> /Data/List[$T -> Header..], body -> String) -> /Data/Result[$T -> String, $E -> HttpErr]{IO}
+  httpPost{io -> IO}(url -> /Catln/CStr, headers -> /Data/List[$T -> Header..], body -> /Catln/CStr) -> /Data/Result[$T -> String, $E -> HttpErr]{IO}
     # [httpPost] sends [body] to [url] as the body of a POST request with [headers] set, and answers
       with the body of the response, or the [HttpErr] saying why there is none. The body is sent
       and read as UTF-8.

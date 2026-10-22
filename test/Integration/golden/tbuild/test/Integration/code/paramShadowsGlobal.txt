@@ -30,9 +30,9 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /Data/toString
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> /Data/Primitive/Integer =
@@ -43,7 +43,7 @@ Prgm
                                                                             ( EAppArg { eaaArg = Value /more -> /Data/Primitive/True = Value /Data/Primitive/True } ) ↦ /Data/Primitive/Integer
                                                                         )
                                                                     }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -352,8 +352,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A parameter named the same as a function the program imports.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A parameter named the same as a function the program imports.
                   [step] takes a parameter called [count], and @core/list.ct@ declares a function [/Data/List/count].
                   Inside [step], `count` is the parameter: a definition's own arguments shadow every other name they
                   match. Were the function a candidate too, the parameter — which names no object — would be the one

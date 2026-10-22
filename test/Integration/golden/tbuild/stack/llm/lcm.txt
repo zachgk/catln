@@ -39,9 +39,9 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
-                                                  "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( "
+                                                    " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -300,8 +300,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking about the program it is asked from
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Asking about the program it is asked from
                   [lcm], a large code model, asks [llm] with the program it is written in. The page the call is
                   written on is put before what it asks, as it was written and with each of its annotations shown
                   with what it evaluates to: a `> expr` with its `>>>` result, and any other annotation a model
@@ -314,8 +316,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
                   it is shown as nothing, so what is asked is the question alone."
                 }
             )
@@ -324,8 +328,10 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/String =
                     ( /Llm/lcmPrompt
                         ( EAppArg
-                            { eaaArg = Value /input -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What is on this page?"
+                            { eaaArg = Value /input ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "What is on this page?"
                             }
                         )
                         ( EAppArg
@@ -341,8 +347,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "
                   What is on this page?"
                 }
             )

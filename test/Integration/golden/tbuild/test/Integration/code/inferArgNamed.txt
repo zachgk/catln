@@ -145,8 +145,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A function-typed argument beside a plain argument typed by the same type variable.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A function-typed argument beside a plain argument typed by the same type variable.
                   This is the shape a fold's signature needs — @fn@ produces a @$_B@ and @init@ already is one —
                   and it used to be rejected with
                     Definition Outside Declaration for /f1:
@@ -166,15 +168,19 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A destructuring pattern still fills its slot by inference, with no name to go on. Kept in a
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A destructuring pattern still fills its slot by inference, with no name to go on. Kept in a
                   module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function."
                 }
             )
         ]

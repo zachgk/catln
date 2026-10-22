@@ -7,20 +7,14 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30 Write the report #task"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "09:00 - 10:30 Write the report #task" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
-                                }
+                                { eaaArg = Value /symbol -> /Catln/CStr = " " }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30 Write the report #task"
-                                }
+                                { eaaArg = Value /description -> /Catln/CStr = "09:00 - 10:30 Write the report #task" }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
                             ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -28,9 +22,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo","tags":["#task"]}"
-                                }
+                                { eaaArg = Value /rest -> /Catln/CStr = "{"statusName":"Todo","tags":["#task"]}" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /time -> /Data/Maybe/Some
@@ -297,20 +289,14 @@ Prgm
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1:30pm - 2:15pm Review the draft #task ⏫"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "1:30pm - 2:15pm Review the draft #task ⏫" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
-                                }
+                                { eaaArg = Value /symbol -> /Catln/CStr = " " }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1:30pm - 2:15pm Review the draft #task"
-                                }
+                                { eaaArg = Value /description -> /Catln/CStr = "1:30pm - 2:15pm Review the draft #task" }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High } )
                             ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -318,9 +304,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo","tags":["#task"]}"
-                                }
+                                { eaaArg = Value /rest -> /Catln/CStr = "{"statusName":"Todo","tags":["#task"]}" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /time -> /Data/Maybe/Some
@@ -597,9 +581,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "11:00 Stand up"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "11:00 Stand up" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/True = Value /Data/Primitive/True } )
                             ( EAppArg
@@ -867,9 +849,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read the paper"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "Read the paper" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -968,9 +948,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16:00 Call about the paper"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "16:00 Call about the paper" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -1238,9 +1216,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9.00-10.00 No spaces around the dash"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "9.00-10.00 No spaces around the dash" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -1508,9 +1484,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1130 AM - 12:00 Without a colon, with a space"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "1130 AM - 12:00 Without a colon, with a space" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -1778,9 +1752,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:15am Midnight on a twelve-hour clock"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "12:15am Midnight on a twelve-hour clock" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -2048,9 +2020,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03 A day is not a time"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "2026-01-03 A day is not a time" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -2149,9 +2119,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "25:00 An hour past the day"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "25:00 An hour past the day" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -2250,9 +2218,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "13:00pm A twelve-hour clock has no thirteenth hour"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "13:00pm A twelve-hour clock has no thirteenth hour" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg { eaaArg = Value /time -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -2351,9 +2317,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9:30amble The am must end a word"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "9:30amble The am must end a word" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -2631,9 +2595,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Event
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "17:00 - 17:30 Write up the call"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "17:00 - 17:30 Write up the call" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /time -> /Data/Time/TimeRange
@@ -2857,9 +2819,7 @@ Prgm
                             )
                         , /Data/Note/Event
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:00 - 13:00 Lunch"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "12:00 - 13:00 Lunch" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /time -> /Data/Time/TimeRange
@@ -3093,9 +3053,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
-                                }
+                                { eaaArg = Value /title -> /Catln/CStr = "2026-01-03" }
                             )
                         ]
                     , omiRuntimeDecls = []

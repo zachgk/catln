@@ -48,41 +48,29 @@ Prgm
                             )
                         , /Noted
                             ( EAppArg
-                                { eaaArg = Value /name -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has both"
-                                }
+                                { eaaArg = Value /name -> /Catln/CStr = "has both" }
                             )
                             ( EAppArg
                                 { eaaArg = Value /tags -> /Data/List/Cons
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /head=/Catln/CStr
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
                                     ( EAppArg
-                                        { eaaArg = Value /head -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
-                                        }
+                                        { eaaArg = Value /head -> /Catln/CStr = "x" }
                                     )
                                     ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /due -> /Data/Maybe/Some
-                                    ( /value=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Data/Maybe/Some
+                                { eaaArg = Value /due -> /Data/Maybe/Some( /value=/Catln/CStr ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-01"
-                                        }
+                                        { eaaArg = Value /value -> /Catln/CStr = "2026-01-01" }
                                     )
                                 }
                             )
                         , /Noted
                             ( EAppArg
-                                { eaaArg = Value /name -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has neither"
-                                }
+                                { eaaArg = Value /name -> /Catln/CStr = "has neither" }
                             )
                             ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -175,8 +163,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The shape a note's page is, with the fields a task carries.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The shape a note's page is, with the fields a task carries.
                   [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
                   nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
                   beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
@@ -192,14 +182,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Shown as the value it is, with no display type standing in for it, as a task is."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Shown as the value it is, with no display type standing in for it, as a task is."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so that the values are evaluated and not only built: both fields are destructured,
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Read back so that the values are evaluated and not only built: both fields are destructured,
                   the list counted and the [/Data/Maybe] compared."
                 }
             )

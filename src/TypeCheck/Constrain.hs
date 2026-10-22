@@ -27,14 +27,15 @@ import qualified Data.Zip                   as Z
 import           Control.Monad.State.Strict
 import           CtConstants                (macroThisKey)
 import           Semantics                  (ObjArrTypeGraph (..),
-                                             stampQueryToken)
+                                             classArrowsOf, classMemberLeaves,
+                                             memberAsDeclared, stampQueryToken)
 import           Semantics.Prgm             (Meta (..), ObjArr (..),
                                              ObjectBasis (ArgObj),
                                              ObjectMapItem (..),
                                              exprAppliedArgs, exprVarArgs,
                                              getExprMeta, inExprSingleton,
                                              oaObjExpr, pattern ObjectMap)
-import           Semantics.TypeGraph        (ReachesEnv (..),
+import           Semantics.TypeGraph        (ReachesEnv (..), reachesTo,
                                              typeGuaranteedWithin)
 import           Semantics.Types
 import           Text.Printf
@@ -134,7 +135,15 @@ updateSchemeProp env@FEnv{feTypeEnv} (lambdaArgs, defArgs) vaenv super@SType{sty
     subReqDecl' | typeVarLost subReqDecl subReqDecl'0 = subReqDecl
                 | otherwise                           = subReqDecl'0
     (superAct'', superReq'', superReqDecl'') = settlePropSlot env (ambientEnv $ fmap stypeAct vaenv) propName superAct' superReq' superReqDecl'
-    vaenv' = argRefReq $ H.intersectionWith (\t s -> s{stypeReqDecl=t}) (envAmbient declVaenv') $ H.intersectionWith (\t s -> s{stypeReq=t}) (envAmbient reqVaenv') $ H.intersectionWith (\t s -> s{stypeAct=t}) (envAmbient actVaenv') vaenv
+    vaenv' = argRefReq $ H.intersectionWith (\t s -> s{stypeReqDecl=t}) (envAmbient declVaenv') $ H.intersectionWith (\t s -> s{stypeReq=t}) (envAmbient reqVaenv') $ H.mapWithKey argRefAct $ H.intersectionWith (\t s -> (t, s)) (envAmbient actVaenv') vaenv
+    -- The same for the actual: a slot holding a bare reference to an argument reads the
+    -- argument's point as its own, so the slot's actual is met into the argument's. What the
+    -- slot holds is what it takes once converted ('useNeeds'), so the argument keeps the values
+    -- that convert to it: a @String\/Text@ given where a @\/Catln\/CStr@ is taken is still one the
+    -- argument may be.
+    argRefAct tv (t, s) = case subAct of
+      TypeVar stv@TVArg{} _ _ | stv == tv, t /= stypeAct s -> s{stypeAct = keepConverting (stypeAct s) t}
+      _ -> s{stypeAct=t}
     -- A slot whose value is a bare reference to one of a lambda's own arguments (@r= v@ in
     -- @fn(acc, v)= acc + v@) IS that argument, so what the slot is required to be the argument is
     -- required to be: the requirement is what its use needs of it. The slot's own requirement is
@@ -164,8 +173,31 @@ updateSchemeProp env@FEnv{feTypeEnv} (lambdaArgs, defArgs) vaenv super@SType{sty
     -- An argument required as its declared variable (@a -> $T@) keeps that spelling and carries
     -- the use's requirement as its inner, which lies within it; met as a value, the variable would
     -- read as ⊤ and be dropped.
-    narrowReq (TypeVar v loc i) = TypeVar v loc (intersectTypes feTypeEnv i subReq')
-    narrowReq r                 = intersectTypes feTypeEnv r subReq'
+    narrowReq (TypeVar v loc i) = TypeVar v loc (useNeeds i)
+    narrowReq r                 = useNeeds r
+    -- What a use needs of an argument is a value the slot it is given in can take: one within the
+    -- slot's requirement, or one that converts to it, as the slot is built through the arrows that
+    -- reach its type ('TreeBuild.toTExprDest'). A @String\/Text@ given where a @\/Catln\/CStr@ is
+    -- required converts to one, so it is not ruled out of the argument by being given there. The
+    -- members are read through the class the argument is typed by, as a class itself converts to
+    -- nothing ('reaches' of a class source is a leaf).
+    useNeeds r = keepConverting r (intersectTypes feTypeEnv r subReq')
+    -- A type narrowed to @narrowed@, with what it was that converts into it kept. What converts is
+    -- read from the class arrows ('classArrowsOf'): the members of a class one is written from that
+    -- reach what is narrowed to, whatever the type was read as so far — an argument still ⊤ when a
+    -- use first narrows it keeps the members it may yet be.
+    -- A member within what the argument was is kept as the class spells it, which is the spelling
+    -- the coverage of a declaration over the class reads ('narrowByClassArrows').
+    keepConverting was narrowed = unionAllTypes feTypeEnv (narrowed : [ keep (memberAsDeclared feTypeEnv l) | l <- converting narrowed ])
+      where keep m | isSubtypeOf feTypeEnv m was = m
+                   | otherwise                    = intersectTypes feTypeEnv was m
+    converting narrowed =
+      [ l
+      | (cls, _) <- classArrowsOf feTypeEnv
+      , not (isBottomType (intersectTypes feTypeEnv cls narrowed))
+      , l <- classMemberLeaves feTypeEnv cls
+      , not (isSubtypeOf feTypeEnv (singletonType l) narrowed)
+      , reachesTo feTypeEnv H.empty (singletonType l) narrowed ]
 
 -- | The arguments of the bodies a constraint is inside, as (the lambdas', the definitions'): each
 -- enclosing object with a body that takes parameters binds its own — a lambda a call is given
@@ -199,11 +231,27 @@ addArgToType _ _ PTopType _ = Nothing
 -- the call: the base left as written (@inner(input)@, a positive leaf) and the base followed to
 -- what it evaluates to (@inner(input) -> String@), which may be a class and so a top. The argument
 -- is added to each reading, and the one that cannot be called is refuted downstream. A top is
--- read through its members where they are exactly the ones known (a sealed class); where they are
--- not, no set of values with the argument added can be named, and nothing is known.
+-- read through the members of its class that are known, whether the class is sealed or open (a
+-- user ruling, 2026-10-21): an open class may gain members on a later page, but what a call is
+-- applied to here is what is in scope here, and an open class read as nothing known left the whole
+-- application ⊤ — @lcmPrompt(input= .., page= ..)@, whose base reaches @∀String@ through the
+-- one-argument declaration beside it, once @String@ was opened to hold its representations.
+--
+-- A member read out of the class is a value of it, not a call being assembled, so it takes the
+-- argument only where its declaration holds one: a data member whose declared arguments do not
+-- (@String\/Text(chars)@ given a @page@) is no value at all, and is dropped. A positive leaf is the
+-- call as written and keeps the reading 'addArgToType' gives any form.
 addArgToType env@FEnv{feTypeEnv=typeEnv@TypeEnv{teNames}} vaenv (UnionType mTop@(Just _) pos []) newArg
-  | (topLeafs, False) <- expandTypesWithNamesFull typeEnv vaenv (UnionType mTop H.empty []) teNames
-  = addArgToType env vaenv (UnionType Nothing (H.unionWith S.union topLeafs pos) []) newArg
+  | (topLeafs, _) <- expandTypesWithNamesFull typeEnv vaenv (UnionType mTop H.empty []) teNames
+  , not (H.null topLeafs)
+  = let fromMembers = case addArgToType env vaenv (UnionType Nothing topLeafs []) newArg of
+          Just (UnionType Nothing ls []) -> [ p | p <- splitUnionType ls, null (typeGraphData typeEnv (ptName p)) || relArgKeysFeasible typeEnv p (ptName p) ]
+          _                              -> []
+        fromCall = if H.null pos then Nothing else addArgToType env vaenv (UnionType Nothing pos []) newArg
+    in case (fromMembers, fromCall) of
+         ([], Nothing) -> Nothing
+         (ms, Nothing) -> Just $ unionAllTypes typeEnv (map singletonType ms)
+         (ms, Just c)  -> Just $ unionAllTypes typeEnv (c : map singletonType ms)
 addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
 -- A type-variable source is a point's own top-level type, where no partial encloses it: the
 -- parent and scope layers are both the constraint's env there (the fragment rule of
@@ -244,7 +292,7 @@ addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> STyp
 addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} newArgName dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl} = dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}
   where
     envOf f = ambientEnv (fmap f vaenv)
-    destAct' = case addArgToType env (envOf stypeAct) srcAct newArgName of
+    destAct' = refuteByDeclaredClass env newArgName $ case addArgToType env (envOf stypeAct) srcAct newArgName of
       Just addDestAct -> snd $ intersectTypesWithVarEnv feTypeEnv (envOf stypeAct) destAct addDestAct
       Nothing         -> destAct
     destReq' = case addArgToType env (envOf stypeReq) srcReq newArgName of
@@ -253,6 +301,41 @@ addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq,
     destReqDecl' = case addArgToType env (envOf stypeReqDecl) srcReqDecl newArgName of
       Just addDestReqDecl -> intersectTypesEnv feTypeEnv (envOf stypeReqDecl) destReqDecl addDestReqDecl
       Nothing             -> destReqDecl
+
+-- | An application's readings, less those whose declaration takes the argument just applied as a
+-- class none of whose known members the argument can be (a user ruling, 2026-10-21).
+--
+-- A call written with a relative name is every function so named (@entries.length@ is both
+-- @\/Data\/List\/length@ and @\/Data\/String\/length@), and the argument applied to it is what
+-- tells them apart. Where the reading declares the parameter as a class, and no member of the class
+-- in scope meets what the argument is (@∀String@'s @String\/Text@ and @\/Catln\/CStr@ against an
+-- @∀List@), the argument is not one the reading takes, and the reading is dropped. A class's open
+-- world (a later page may declare a type that is both a list and a string) is left to that page:
+-- the meet of two classes is not otherwise decided here. A reading whose declarations do not
+-- declare the parameter, or declare it other than as a class, is kept; and the readings are left as
+-- they were rather than emptied where every one would be dropped.
+refuteByDeclaredClass :: FEnv -> TypeVarAux -> Type -> Type
+refuteByDeclaredClass FEnv{feTypeEnv=typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)}} (TVArg argKey) t@(UnionType Nothing leafs consts)
+  | length readings > 1, not (null kept), length kept < length readings = UnionType Nothing (joinUnionType kept) consts
+  | otherwise = t
+  where
+    readings = splitUnionType leafs
+    kept = filter (not . refuted) readings
+    refuted p = case (declaredParam (ptName p), H.lookup argKey (ptArgs p)) of
+      (Just cls@(UnionType (Just _) _ _), Just actual)
+        | actual /= PTopType, not (typeContainsTypeVar actual)
+        , members@(_:_) <- classMemberLeaves typeEnv cls
+        -> all (\m -> isBottomType (intersectTypes typeEnv actual (singletonType m))) members
+      _ -> False
+    declaredParam name = case [ argT
+                              | item <- maybe [] pure (H.lookup name tg)
+                              , oa <- omiDecls item ++ omiRuntimeDecls item
+                              , UnionType Nothing objLeafs _ <- [getMetaType (getExprMeta (oaObjExpr oa))]
+                              , l <- splitUnionType objLeafs
+                              , Just argT <- [H.lookup argKey (ptArgs l)] ] of
+      [] -> Nothing
+      ts -> Just (unionAllTypes typeEnv ts)
+refuteByDeclaredClass _ _ t = t
 
 -- | A helper for the 'SpreadArgs' 'Constraint': the base applied to every argument of the value
 -- spread into it. Each base partial meets each partial the spread may be, taking the spread's

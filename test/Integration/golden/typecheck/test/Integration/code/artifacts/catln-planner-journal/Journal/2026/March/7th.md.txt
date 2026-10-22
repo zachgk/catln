@@ -6,8 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Simple
-                            ( Value /contents -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /contents -> /Catln/CStr = CStr
                                 { csValue = "10:00 At ten, on no day" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                             ( Value /time -> /Data/Maybe/Some
@@ -179,8 +178,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /title -> /Catln/CStr = CStr
                                 { csValue = "7th" }
                             )
                         ]

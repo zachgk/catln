@@ -61,7 +61,7 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Process/removeAnnot
                             ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } )
-                            ( EAppArg { eaaArg = Value /annotId -> ∀/Data/String } ) -> /Catln/RawPrgm..
+                            ( EAppArg { eaaArg = Value /annotId -> /Catln/CStr } ) -> /Catln/RawPrgm..
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -74,7 +74,7 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Process/setAnnot
                             ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } )
-                            ( EAppArg { eaaArg = Value /annotId -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /annotId -> /Catln/CStr } )
                             ( EAppArg { eaaArg = Value /annot } ) -> /Catln/RawPrgm..
                         ]
                     , omiRefineDecls = []
@@ -99,7 +99,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Process/parsePage
-                            ( EAppArg { eaaArg = Value /text -> ∀/Data/String } ) -> ∀/Data/Result
+                            ( EAppArg { eaaArg = Value /text -> /Catln/CStr } ) -> ∀/Data/Result
                             [ /T=/Catln/RawPrgm..
                             , /E=∀/Process/ParsePageErr
                             ]
@@ -135,8 +135,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the text is not a page: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the text is not a page: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -174,8 +174,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## The page a file processor rewrites
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## The page a file processor rewrites
                   A file processor is given the page it is written on as a [/Catln/RawPrgm], the page as it was
                   written, and answers with the page it is to become. These are what it is rewritten with: in
                   place, by the annotation it is written as ([setAnnot], [removeAnnot]), or as text
@@ -184,14 +186,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[ParsePageErr] is why text is not a page: the [message] the parser said of it."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[ParsePageErr] is why text is not a page: the [message] the parser said of it."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A page read from text is written back as the formatter writes it, and text which is not a page
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A page read from text is written back as the formatter writes it, and text which is not a page
                   is answered with what the parser says of it."
                 }
             )
@@ -206,10 +212,8 @@ Prgm
                                 ] =
                                 ( /Process/parsePage
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x=1
-                                          "
-                                        }
+                                        { eaaArg = Value /text -> /Catln/CStr = "x=1
+                                        " }
                                     ) ↦ ∀/Data/Result
                                     [ /T=/Catln/RawPrgm..
                                     , /E=∀/Process/ParsePageErr
@@ -221,8 +225,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x= 1"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "x= 1"
                 }
             )
         , /Catln/#print
@@ -236,10 +242,8 @@ Prgm
                                 ] =
                                 ( /Process/parsePage
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x= (
-                                          "
-                                        }
+                                        { eaaArg = Value /text -> /Catln/CStr = "x= (
+                                        " }
                                     ) ↦ ∀/Data/Result
                                     [ /T=/Catln/RawPrgm..
                                     , /E=∀/Process/ParsePageErr
@@ -251,8 +255,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the text is not a page: <parsePage>:1:5:
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "the text is not a page: <parsePage>:1:5:
                     |
                   1 | x= (
                     |     ^

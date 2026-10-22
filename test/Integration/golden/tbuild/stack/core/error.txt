@@ -118,8 +118,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "error: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -655,8 +655,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Errors
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Errors
                   An operation which can fail answers with a [Result]: either the value it computed ([Ok]), or
                   the [Err] saying why there is none ([Fail]). Unlike a [Maybe], whose [Nothing] says only that
                   there is no value, a failure keeps its cause, so a caller can tell an unset variable from a
@@ -665,30 +667,38 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[Err] is the class of reasons an operation can fail. It is open: each kind of operation
                   declares its own errors as a class of the failures it has, joined to [Err] with `isa= [/Data/Err]`,
                   so a caller can match exactly the cause it handles."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Result"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Result"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [Result] is the [value] an operation computed ([Ok]), or the [err] it failed with ([Fail]).
                   The constructors are named into the [Result] namespace, as [Maybe]'s are, so they live at
                   [/Data/Result/Ok] and [/Data/Result/Fail]."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Result] of a [ToString] value is written as its [value] where it is [Ok], and as what went
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [Result] of a [ToString] value is written as its [value] where it is [Ok], and as what went
                   wrong where it is a [Fail]: `error: ` and then the [msg] of its [err]."
                 }
             )
@@ -701,31 +711,29 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "3"
                 }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Result/Fail
                     [ /E=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                     ]
                     ( /err=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                     ) = /Data/Result/Fail
                     ( EAppArg
                         { eaaArg = Value /err -> /Data/Failure
-                            ( /reason=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ) = /Data/Failure
+                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                             ( EAppArg
-                                { eaaArg = Value /reason -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "it broke"
+                                { eaaArg = Value /reason ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = "it broke"
                                 }
                             )
                         }
@@ -733,14 +741,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: it broke"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: it broke"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading a Result
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Reading a Result
                   [withDefault] and [toMaybe] read a [Result] for a caller which does not need to know why it
                   failed. One which does matches [Fail] and its [err]."
                 }
@@ -763,8 +775,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "3"
                 }
             )
         , /Catln/#print
@@ -774,18 +788,16 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /r -> /Data/Result/Fail
                                 ( /err=/Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
+                                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                 ) = /Data/Result/Fail
                                 ( EAppArg
                                     { eaaArg = Value /err -> /Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ) = /Data/Failure
+                                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                         ( EAppArg
-                                            { eaaArg = Value /reason -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                            { eaaArg = Value /reason ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = "no"
                                             }
                                         )
                                     }
@@ -799,8 +811,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "0"
                 }
             )
         , /Catln/#print
@@ -831,8 +845,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -845,18 +861,16 @@ Prgm
                                     ( EAppArg
                                         { eaaArg = Value /r -> /Data/Result/Fail
                                             ( /err=/Data/Failure
-                                                ( /reason=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
+                                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                             ) = /Data/Result/Fail
                                             ( EAppArg
                                                 { eaaArg = Value /err -> /Data/Failure
-                                                    ( /reason=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ) = /Data/Failure
+                                                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                                     ( EAppArg
-                                                        { eaaArg = Value /reason -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                        { eaaArg = Value /reason ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "no"
                                                         }
                                                     )
                                                 }
@@ -871,8 +885,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -891,12 +907,12 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /err -> /Data/Failure
-                                            ( /reason=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            ) = /Data/Failure
+                                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                             ( EAppArg
-                                                { eaaArg = Value /reason -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                { eaaArg = Value /reason ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "no"
                                                 }
                                             )
                                         }
@@ -911,8 +927,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "3"
                 }
             )
         , /Catln/#print
@@ -922,38 +940,30 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /r -> /Data/Result/Fail
                                 [ /E=/Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
+                                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                 ]
                                 ( /err=/Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
+                                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                 ) =
                                 ( /Data/Result/orFail
                                     ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
                                         { eaaArg = Value /err -> /Data/Failure
-                                            ( /reason=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            ) = /Data/Failure
+                                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                             ( EAppArg
-                                                { eaaArg = Value /reason -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                { eaaArg = Value /reason ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "no"
                                                 }
                                             )
                                         }
                                     ) ↦ /Data/Result/Fail
                                     [ /E=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                     ]
                                     ( /err=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                     )
                                 )
                             }
@@ -965,40 +975,47 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "0"
                 }
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) =
                     ( /msg
                         ( EAppArg
                             { eaaArg = Value /this -> /Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Failure
+                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                 ( EAppArg
-                                    { eaaArg = Value /reason -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "it broke"
+                                    { eaaArg = Value /reason ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "it broke"
                                     }
                                 )
                             }
-                        ) ↦ /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "it broke"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "it broke"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Result Eq membership
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Result Eq membership
                   Makes a [Result] of [Eq] values and [Eq] errors a member of [Eq]: two [Result]s are equal when
                   both are [Ok] of equal values, or both [Fail] with equal errors. [equal] repeats [rel] for the
                   reason [Maybe]'s does (see @core/maybe.ct@)."
@@ -1026,8 +1043,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -1052,14 +1071,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Result Functor and Monad instances
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Result Functor and Monad instances
                   Makes a [Result] a [Functor] and a [Monad] over its [value], with the error left as it is:
                   [fmap] and [mmap] apply to the [value] of an [Ok] and pass a [Fail] on unchanged. So a chain of
                   operations which can fail stops at the first that does, with its error. The definitions are
@@ -1103,8 +1126,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "4"
                 }
             )
         , /Catln/#print
@@ -1115,14 +1140,10 @@ Prgm
                             { eaaArg = Value /r ->
                                 ( /Data/Result/Fail
                                     [ /E=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                     ]
                                     ( /err=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
+                                        ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                     ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                 ) =
                                 ( /Data/Monad/mmap
@@ -1137,18 +1158,16 @@ Prgm
                                         { eaaArg = /fn
                                             ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Result/Fail
                                             ( /err=/Data/Failure
-                                                ( /reason=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                )
+                                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                             ) = /Data/Result/Fail
                                             ( EAppArg
                                                 { eaaArg = Value /err -> /Data/Failure
-                                                    ( /reason=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ) = /Data/Failure
+                                                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                                     ( EAppArg
-                                                        { eaaArg = Value /reason -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                                                        { eaaArg = Value /reason ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "no"
                                                         }
                                                     )
                                                 }
@@ -1157,14 +1176,10 @@ Prgm
                                     ) ↦
                                     ( /Data/Result/Fail
                                         [ /E=/Data/Failure
-                                            ( /reason=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            )
+                                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                         ]
                                         ( /err=/Data/Failure
-                                            ( /reason=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                            )
+                                            ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                                         ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                     )
                                 )
@@ -1177,8 +1192,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "0"
                 }
             )
         ]

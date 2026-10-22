@@ -60,8 +60,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/ReflectExample/parsedErrShown
-                            ( Value /e -> /Catln/ParseExprErr/Type( /message=∀/Data/String ) = /Catln/ParseExprErr/Type( Value /message -> ∀/Data/String ) ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /e -> /Catln/ParseExprErr/Type( /message=∀/Data/String ) = /Catln/ParseExprErr/Type( Value /message -> ∀/Data/String ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "the expression is not of the type asked for" }
                         , /Catln/ReflectExample/parsedErrShown( Value /e -> ∀/Catln/ParseExprErr ) -> ∀/Data/String = /msg( Value /this -> TVArg /e = Value /e )
                         ]
@@ -93,24 +92,20 @@ Prgm
                     , omiDefs =
                         [ /Data/msg
                             ( Value /this -> /Catln/ParseExprErr/Syntax( /message=∀/Data/String ) = /Catln/ParseExprErr/Syntax( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the text is not a Catln expression: " }
                             )( Value /r -> TVArg /message = Value /message )
                         , /Data/msg
                             ( Value /this -> /Catln/ParseExprErr/Type( /message=∀/Data/String ) = /Catln/ParseExprErr/Type( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the expression is not of the type asked for: " }
                             )( Value /r -> TVArg /message = Value /message )
                         , /Data/msg
-                            ( Value /this -> /Catln/ParseExprErr/NotOf( /found=TopType ) = /Catln/ParseExprErr/NotOf( Value /found ) ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /this -> /Catln/ParseExprErr/NotOf( /found=TopType ) = /Catln/ParseExprErr/NotOf( Value /found ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "the expression's value is not of the type asked for" }
                         , /Data/msg
                             ( Value /this -> /Catln/ParseExprErr/Eval( /message=∀/Data/String ) = /Catln/ParseExprErr/Eval( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the expression failed to evaluate: " }
                             )( Value /r -> TVArg /message = Value /message )
                         ]
@@ -140,10 +135,9 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator++[ /T=∀/Data/String ]
+                                ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=/Data/String/Text..
                                     ) + /Data/toString( /this=/Data/Primitive/Integer ) + /Data/toStringBase
                                     ( /this=/Data/Primitive/Integer
                                     , /base=/Data/Primitive/Integer
@@ -170,20 +164,17 @@ Prgm
                             ) = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /l -> /Data/String/Text.. = CStr
                                         { csValue = "Point at " }
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /x = Value /x ) )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ", " }
                                 )
                             )
                             ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /y = Value /y ) )
-                        , /Catln/ReflectExample/parsedShownValue( Value /v ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        , /Catln/ReflectExample/parsedShownValue( Value /v ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "something else" }
                         ]
                     }
@@ -196,7 +187,17 @@ Prgm
                         [ /Catln/parseExpr( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/parseExpr( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) -> UnionType
+                        [ /Catln/parseExpr
+                            ( Value /input ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            )( Value /type -> ∀/Catln/Type )
+                            ( Value /source ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Result[ /E=∀/Catln/ParseExprErr ]
                                 , fromList []
@@ -204,8 +205,8 @@ Prgm
                                 )
                             , /Catln/parseExprIn
                                 ( /type=∀/Catln/Type
-                                , /input=∀/Data/String
-                                , /source=∀/Data/String
+                                , /input=/Catln/CStr
+                                , /source=/Catln/CStr
                                 )
                             , []
                             ) = /Catln/parseExprIn( Value /input -> TVArg /input = Value /input )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
@@ -237,7 +238,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/parseExprIn( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] ]
+                        [ /Catln/parseExprIn( Value /input -> /Catln/CStr )( Value /type -> ∀/Catln/Type )( Value /source -> /Catln/CStr ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -294,8 +295,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Reading values from text
                 A program can be handed a value as text: written by a person, or by a language model asked for
                 one. [parseExpr] reads such text as a Catln expression, by the parser a page is read with, and
@@ -308,16 +311,20 @@ Prgm
                 `import "reflect"`." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[ParseExprErr] is why text is not a value of a type: it is not an expression ([Syntax]), it
                 does not typecheck as a value of the type ([Type]), its value is [found] and that is not one
                 of the type ([NotOf]), or it failed while it was being evaluated ([Eval]). Each [message] is
                 what the compiler said." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Reading a value
                 The value [parseExpr] answers with is of no one type the program can see: the type it was asked
                 for is a value, known only once the call is made. So it is read the way any value of unknown
@@ -327,49 +334,63 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Catln/ReflectExample/parsedShown
                 ( Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
-                    ( Value /input -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /input ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "3" }
                     )
                     ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "3" }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Catln/ReflectExample/parsedShown
                 ( Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
-                    ( Value /input -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /input ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "Point(x= 1 + 2, y= 4)" }
                     )
                     ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Point at 3, 4" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Text that is not an expression is answered with what the parser says of it, and an expression
                 of some other type with what the typecheck says." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Catln/ReflectExample/parsedShown
                 ( Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
-                    ( Value /input -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /input ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "Point(x= " }
                     )
                     ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "the text is not a Catln expression: <parseExpr>:1:10:
                   |
                 1 | Point(x= 
@@ -380,20 +401,26 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Catln/ReflectExample/parsedShown
                 ( Value /r -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
-                    ( Value /input -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /input ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = ""a"" }
                     )
                     ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "the expression is not of the type asked for" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A model told to write a value of a type is told it as [/Catln/typeText] writes it, with what
                 [/Catln/typeDecls] says it is made of." }
             )
@@ -401,16 +428,20 @@ Prgm
             ( Value /p -> ∀/Data/String = /Catln/typeText
                 ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "/Catln/ReflectExample/Point" }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Catln/typeDecls
                 ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "data(Point(x -> Integer, y -> Integer))" }
             )
         , /Catln/#md

@@ -11,8 +11,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/showEntrySteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        [ /Data/Map/showEntrySteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Data/Map/showEntrySteps
                             ( Value /steps -> /Data/List/Cons[ /T=/Catln/Doc/Show/EntryStep.. ]
@@ -41,26 +40,22 @@ Prgm
                                                 ( Value /l -> ∀/Data/String = /operator++
                                                     ( Value /l -> ∀/Data/String = /operator++
                                                         ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
-                                                        ( Value /r -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                        ( Value /r -> /Data/String/Text.. = CStr
                                                             { csValue = ":" }
                                                         )
                                                     )( Value /r -> TVArg /key = Value /key )
                                                 )
-                                                ( Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                ( Value /r -> /Data/String/Text.. = CStr
                                                     { csValue = "=" }
                                                 )
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /r -> /Data/String/Text.. = CStr
                                             { csValue = "->" }
                                         )
                                     )( Value /r -> TVArg /output = Value /output )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ";" }
                                 )
                             )
@@ -302,8 +297,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/showEntryFoldSteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        [ /Data/Map/showEntryFoldSteps( Value /steps -> /Data/List/Nil = Value /Data/List/Nil ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Data/Map/showEntryFoldSteps
                             ( Value /steps -> /Data/List/Cons[ /T=/Catln/Doc/Show/EntryFoldStep.. ]
@@ -336,32 +330,27 @@ Prgm
                                                         ( Value /l -> ∀/Data/String = /operator++
                                                             ( Value /l -> ∀/Data/String = /operator++
                                                                 ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
-                                                                ( Value /r -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                                ( Value /r -> /Data/String/Text.. = CStr
                                                                     { csValue = ":" }
                                                                 )
                                                             )( Value /r -> TVArg /key = Value /key )
                                                         )
-                                                        ( Value /r -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                        ( Value /r -> /Data/String/Text.. = CStr
                                                             { csValue = ":" }
                                                         )
                                                     )( Value /r -> TVArg /acc = Value /acc )
                                                 )
-                                                ( Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                ( Value /r -> /Data/String/Text.. = CStr
                                                     { csValue = "+" }
                                                 )
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /r -> /Data/String/Text.. = CStr
                                             { csValue = "=" }
                                         )
                                     )( Value /r -> TVArg /output = Value /output )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ";" }
                                 )
                             )
@@ -739,8 +728,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# The map library's displays of its own calls
                 @core/map.ct@'s combinators, shown as what they did, as @core/list-webdocs.ct@ shows the list's. A
                 mapping over a map returns a map, and a fold over one returns its last accumulator; neither says
@@ -753,16 +744,20 @@ Prgm
                 and values that are [/Data/ToString], which is what a row can hold." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Why this is a page of its own
                 For the reason @core/list-webdocs.ct@ is: the arms name [/Catln/Doc/dshowCall], so this page reaches
                 @core/webdoc.ct@, and @core/map.ct@ must not. This reaches @core/map.ct@ freely, and nothing in the
                 library reaches it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Sets
                 @core/set.ct@ has no page like this, since a set has no combinator of its own that takes a function
                 to show. Its operations that walk items do so through the list's ([/Data/List/foldl],
@@ -770,8 +765,10 @@ Prgm
                 they are handed renders as text." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[mapValues] over a [BinTree] shown as the table of what each value became: a row per entry, in
                 ascending key order, the value on the left and the result of applying [fn] to it on the right.
                 The recursion is over the tree's shape — each call rebuilds a node from the calls on its two
@@ -779,20 +776,26 @@ Prgm
                 represents does not depend on. The rows are the entries, which it does." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A mapping over a [BinTree] whose keys and values render text, to results that do, is a call with a
                 display." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The rows of that table, walking the map's entries in ascending key order and applying [fn] to
                 each value as it goes." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[foldEntries] over a [BinTree] shown as the steps it took: a row per entry, each with the
                 accumulator it was handed, the value it combined in, and the accumulator it handed on to the next
                 row, from [init] down to the fold's result.
@@ -803,31 +806,41 @@ Prgm
                 onto some other entry's step." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A fold over a [BinTree] whose keys, values, accumulator and step results render text is a call with
                 a display." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The display around a fold's rows. Its result is the last row's output, read off the rows for the
                 reason [/Data/List/foldlShow] gives. A fold over no entries hands [init] straight on." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The output of the last row, or [prev] where there are none." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The rows of a fold, walking the map's entries in the order [foldEntries] visits them and carrying
                 the accumulator forward as it does." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# The entries a call visits
                 A row is built from one entry, and the rows are wanted in the order the call visited the
                 entries, so the tree is first read off into a list in that order. A list of entries rather than
@@ -835,43 +848,57 @@ Prgm
                 other, which a map's two never do but a walk of them has to say what happens in anyway." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The entries of [m] in ascending key order, in front of [rest]: the left subtree's, then the
                 node's own, then the right subtree's, which is the order [mapValues] makes its calls of [fn] in." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The entries of [m] in descending key order, in front of [rest]: [ascending] with the subtrees
                 the other way round, which is the order [foldEntries] visits them in." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The rows written out as text, which is how this page checks the ones it builds, as
                 [/Data/List/showSteps] does for a list's." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The rows come out in key order whatever order the entries were inserted in, since the tree the
                 insertions shaped is not what they are read off." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The rows of a fold written out as text, as [showEntrySteps] writes a mapping's." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A sum visits the largest key first, and joining text shows it: the text the fold makes has the
                 smallest key's value at its end." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The result is read off the rows: the last row's output, and [init] for a fold over no entries." }
             )
         ]

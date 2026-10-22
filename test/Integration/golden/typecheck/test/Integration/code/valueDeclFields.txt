@@ -28,32 +28,24 @@ Prgm
                             ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
                             ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         , /Noted
-                            ( Value /name -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /name -> /Catln/CStr = CStr
                                 { csValue = "has both" }
                             )
                             ( Value /tags -> /Data/List/Cons
-                                ( /head=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /head=/Catln/CStr
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
-                                ( Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /head -> /Catln/CStr = CStr
                                     { csValue = "x" }
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
-                            ( Value /due -> /Data/Maybe/Some
-                                ( /value=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /due -> /Data/Maybe/Some( /value=/Catln/CStr ) = /Data/Maybe/Some
+                                ( Value /value -> /Catln/CStr = CStr
                                     { csValue = "2026-01-01" }
                                 )
                             )
                         , /Noted
-                            ( Value /name -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /name -> /Catln/CStr = CStr
                                 { csValue = "has neither" }
                             )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
@@ -120,8 +112,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The shape a note's page is, with the fields a task carries.
                 [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
                 nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
@@ -136,13 +130,17 @@ Prgm
                 @test/Integration/code/listFieldMultiple.ct@." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Shown as the value it is, with no display type standing in for it, as a task is." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Read back so that the values are evaluated and not only built: both fields are destructured,
                 the list counted and the [/Data/Maybe] compared." }
             )

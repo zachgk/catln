@@ -18,7 +18,7 @@ module(Catln)
     # [exit] sets [val] as the status value the process ends with.
     #runtime("ioExit")
 
-  println{io -> IO}(msg -> String) -> (){IO}
+  println{io -> IO}(msg -> /Catln/CStr) -> (){IO}
     # [println] will print the [msg] to the standard output along with a newline character.
     #runtime("println")
 

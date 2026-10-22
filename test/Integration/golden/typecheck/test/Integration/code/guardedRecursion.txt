@@ -158,8 +158,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /showD
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /showD
                                         ( Value /d -> /Digits
                                             ( /v=/Data/Primitive/Integer
                                             , /k=/Data/Primitive/Integer
@@ -247,8 +247,7 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /v = Value /v ) )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = "/" }
                                 )
                             )
@@ -269,8 +268,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A guarded arm whose body is a call of its own function, in a function answering with a record.
                 [digs] reads the digits a list starts with. Its middle arm applies only to a digit, by its guard,
                 and continues the reading by calling [digs] on the rest. That arm must be the one chosen for a

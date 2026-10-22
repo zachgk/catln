@@ -7,7 +7,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Json/parseJson
-                            ( EAppArg { eaaArg = Value /path -> ∀/Data/String } ) -> /Catln/ImportResult..
+                            ( EAppArg { eaaArg = Value /path -> /Catln/CStr } ) -> /Catln/ImportResult..
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -20,8 +20,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading JSON
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Reading JSON
                   An importer: a way of reading files written in another syntax, declared in Catln rather than
                   built into the compiler. A file which writes `import "json/importer.ct"` on one line may write
                   `import json("config.json")` on the next, and the compiler will read that file by building this

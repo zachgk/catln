@@ -104,92 +104,32 @@ Prgm
                             ] =
                             ( /Data/Time/minutesOf
                                 ( EAppArg
-                                    { eaaArg = Value /hour ->
-                                        ( /Data/Result/Fail
-                                            [ /E=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ]
-                                            ( /err=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        ) =
+                                    { eaaArg = Value /hour -> ∀/Data/Result
+                                        [ /T=/Data/Primitive/Integer
+                                        , /E=∀/Data/IntegerParseErr
+                                        ] =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                            ) ↦
-                                            ( /Data/Result/Fail
-                                                [ /E=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ]
-                                                ( /err=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            )
+                                            ) ↦ ∀/Data/Result
+                                            [ /T=/Data/Primitive/Integer
+                                            , /E=∀/Data/IntegerParseErr
+                                            ]
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /minute ->
-                                        ( /Data/Result/Fail
-                                            [ /E=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ]
-                                            ( /err=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        ) =
+                                    { eaaArg = Value /minute -> ∀/Data/Result
+                                        [ /T=/Data/Primitive/Integer
+                                        , /E=∀/Data/IntegerParseErr
+                                        ] =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /m = ( Value /m ↦ TVArg /m ) }
-                                            ) ↦
-                                            ( /Data/Result/Fail
-                                                [ /E=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ]
-                                                ( /err=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            )
+                                            ) ↦ ∀/Data/Result
+                                            [ /T=/Data/Primitive/Integer
+                                            , /E=∀/Data/IntegerParseErr
+                                            ]
                                         )
                                     }
                                 ) ↦ ∀/Data/Result
@@ -779,8 +719,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "h"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "h" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -812,8 +752,8 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "h "
+                                                            { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                ( "h " ↦ /Data/String/Text.. )
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -841,8 +781,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "m"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "m" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -891,8 +831,8 @@ Prgm
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
+                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                            ( "-" ↦ /Data/String/Text.. )
                                                                         }
                                                                     ) ↦ ∀/Data/String
                                                                 )
@@ -914,8 +854,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( "-" ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -961,8 +901,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ":"
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ":" ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -1004,8 +944,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "m"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "m" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -1044,8 +984,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " - "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( " - " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -1082,8 +1022,8 @@ Prgm
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
-                                { eaaArg = Value /sub -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ":"
+                                { eaaArg = Value /sub -> /Data/String/Text.. =
+                                    ( ":" ↦ /Data/String/Text.. )
                                 }
                             )
                             ( EAppArg
@@ -1100,8 +1040,8 @@ Prgm
                                     { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                         ( /Data/String/split
                                             ( EAppArg
-                                                { eaaArg = Value /sep -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ":"
+                                                { eaaArg = Value /sep -> /Data/String/Text.. =
+                                                    ( ":" ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
@@ -1503,25 +1443,10 @@ Prgm
                             ] =
                             ( /Data/Time/dateOf
                                 ( EAppArg
-                                    { eaaArg = Value /y ->
-                                        ( /Data/Result/Fail
-                                            [ /E=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ]
-                                            ( /err=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        ) =
+                                    { eaaArg = Value /y -> ∀/Data/Result
+                                        [ /T=/Data/Primitive/Integer
+                                        , /E=∀/Data/IntegerParseErr
+                                        ] =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> ∀/Data/String =
@@ -1534,48 +1459,18 @@ Prgm
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
-                                            ) ↦
-                                            ( /Data/Result/Fail
-                                                [ /E=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ]
-                                                ( /err=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            )
+                                            ) ↦ ∀/Data/Result
+                                            [ /T=/Data/Primitive/Integer
+                                            , /E=∀/Data/IntegerParseErr
+                                            ]
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /m ->
-                                        ( /Data/Result/Fail
-                                            [ /E=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ]
-                                            ( /err=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        ) =
+                                    { eaaArg = Value /m -> ∀/Data/Result
+                                        [ /T=/Data/Primitive/Integer
+                                        , /E=∀/Data/IntegerParseErr
+                                        ] =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> ∀/Data/String =
@@ -1591,48 +1486,18 @@ Prgm
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
-                                            ) ↦
-                                            ( /Data/Result/Fail
-                                                [ /E=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ]
-                                                ( /err=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            )
+                                            ) ↦ ∀/Data/Result
+                                            [ /T=/Data/Primitive/Integer
+                                            , /E=∀/Data/IntegerParseErr
+                                            ]
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /d ->
-                                        ( /Data/Result/Fail
-                                            [ /E=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ]
-                                            ( /err=
-                                                ( /Data/IntegerParseErr/NotADigit
-                                                    ( /at=/Data/Primitive/Integer
-                                                    , /base=/Data/Primitive/Integer
-                                                    , /c=/Data/Char
-                                                    ) + /Data/IntegerParseErr/NoText
-                                                )
-                                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        ) =
+                                    { eaaArg = Value /d -> ∀/Data/Result
+                                        [ /T=/Data/Primitive/Integer
+                                        , /E=∀/Data/IntegerParseErr
+                                        ] =
                                         ( /Data/Time/natural
                                             ( EAppArg
                                                 { eaaArg = Value /s -> ∀/Data/String =
@@ -1645,25 +1510,10 @@ Prgm
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
-                                            ) ↦
-                                            ( /Data/Result/Fail
-                                                [ /E=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ]
-                                                ( /err=
-                                                    ( /Data/IntegerParseErr/NotADigit
-                                                        ( /at=/Data/Primitive/Integer
-                                                        , /base=/Data/Primitive/Integer
-                                                        , /c=/Data/Char
-                                                        ) + /Data/IntegerParseErr/NoText
-                                                    )
-                                                ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            )
+                                            ) ↦ ∀/Data/Result
+                                            [ /T=/Data/Primitive/Integer
+                                            , /E=∀/Data/IntegerParseErr
+                                            ]
                                         )
                                     }
                                 ) ↦ ∀/Data/Result
@@ -1750,8 +1600,8 @@ Prgm
                         [ /Data/Time/clockOf
                             ( EAppArg { eaaArg = Value /t -> ∀/Data/String } ) | /Data/String/endsWith
                             ( EAppArg
-                                { eaaArg = Value /suffix -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "am"
+                                { eaaArg = Value /suffix -> /Data/String/Text.. =
+                                    ( "am" ↦ /Data/String/Text.. )
                                 }
                             )
                             ( EAppArg
@@ -1815,8 +1665,8 @@ Prgm
                         , /Data/Time/clockOf
                             ( EAppArg { eaaArg = Value /t -> ∀/Data/String } ) | /Data/String/endsWith
                             ( EAppArg
-                                { eaaArg = Value /suffix -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "pm"
+                                { eaaArg = Value /suffix -> /Data/String/Text.. =
+                                    ( "pm" ↦ /Data/String/Text.. )
                                 }
                             )
                             ( EAppArg
@@ -2391,8 +2241,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "0" ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -2606,26 +2456,25 @@ Prgm
                                 }
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( EAppArg
                                 { eaaArg = Value /err -> /Data/Time/TimeParseErr/BadPart
-                                    ( /part=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /part=( /Data/String/Text.. + /Catln/CStr )
                                     , /cause=∀/Data/IntegerParseErr
                                     ) = /Data/Time/TimeParseErr/BadPart
                                     ( EAppArg
-                                        { eaaArg = Value /part -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hour"
+                                        { eaaArg = Value /part ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "hour"
                                         }
                                     )
                                     ( EAppArg
@@ -2645,26 +2494,25 @@ Prgm
                                 }
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( EAppArg
                                 { eaaArg = Value /err -> /Data/Time/TimeParseErr/BadPart
-                                    ( /part=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /part=( /Data/String/Text.. + /Catln/CStr )
                                     , /cause=∀/Data/IntegerParseErr
                                     ) = /Data/Time/TimeParseErr/BadPart
                                     ( EAppArg
-                                        { eaaArg = Value /part -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "minute"
+                                        { eaaArg = Value /part ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "minute"
                                         }
                                     )
                                     ( EAppArg
@@ -2956,26 +2804,25 @@ Prgm
                                 }
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( EAppArg
                                 { eaaArg = Value /err -> /Data/Time/DateParseErr/BadPart
-                                    ( /part=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /part=( /Data/String/Text.. + /Catln/CStr )
                                     , /cause=∀/Data/IntegerParseErr
                                     ) = /Data/Time/DateParseErr/BadPart
                                     ( EAppArg
-                                        { eaaArg = Value /part -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "year"
+                                        { eaaArg = Value /part ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "year"
                                         }
                                     )
                                     ( EAppArg
@@ -3002,26 +2849,25 @@ Prgm
                                 }
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( EAppArg
                                 { eaaArg = Value /err -> /Data/Time/DateParseErr/BadPart
-                                    ( /part=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /part=( /Data/String/Text.. + /Catln/CStr )
                                     , /cause=∀/Data/IntegerParseErr
                                     ) = /Data/Time/DateParseErr/BadPart
                                     ( EAppArg
-                                        { eaaArg = Value /part -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "month"
+                                        { eaaArg = Value /part ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "month"
                                         }
                                     )
                                     ( EAppArg
@@ -3046,26 +2892,25 @@ Prgm
                                 }
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( EAppArg
                                 { eaaArg = Value /err -> /Data/Time/DateParseErr/BadPart
-                                    ( /part=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /part=( /Data/String/Text.. + /Catln/CStr )
                                     , /cause=∀/Data/IntegerParseErr
                                     ) = /Data/Time/DateParseErr/BadPart
                                     ( EAppArg
-                                        { eaaArg = Value /part -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "day"
+                                        { eaaArg = Value /part ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "day"
                                         }
                                     )
                                     ( EAppArg
@@ -3094,8 +2939,8 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """
+                                                { eaaArg = Value /l -> /Data/String/Text.. =
+                                                    ( """ ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
@@ -3105,8 +2950,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "" is not a date written YYYY-MM-DD"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "" is not a date written YYYY-MM-DD" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3128,8 +2973,8 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the "
+                                                            { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                ( "the " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
@@ -3139,8 +2984,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a number: "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( " is not a number: " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -3173,8 +3018,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a month from 1 to 12"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not a month from 1 to 12" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3215,8 +3060,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a day that exists"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not a day that exists" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3231,8 +3076,8 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """
+                                                { eaaArg = Value /l -> /Data/String/Text.. =
+                                                    ( """ ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
@@ -3242,8 +3087,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "" does not write an hour and minutes apart"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "" does not write an hour and minutes apart" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3268,8 +3113,8 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """
+                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                            ( """ ↦ /Data/String/Text.. )
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -3279,8 +3124,8 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "" and ""
+                                                            { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                ( "" and "" ↦ /Data/String/Text.. )
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -3293,8 +3138,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "" are not an hour of one or two digits and minutes of two"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "" are not an hour of one or two digits and minutes of two" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3316,8 +3161,8 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the "
+                                                            { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                ( "the " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
@@ -3327,8 +3172,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a number: "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( " is not a number: " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -3361,8 +3206,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a minute, 0 to 59"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not a minute, 0 to 59" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3383,8 +3228,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not an hour of a 24-hour clock, 0 to 23"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not an hour of a 24-hour clock, 0 to 23" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3405,8 +3250,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not an hour of a 12-hour clock, 1 to 12"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not an hour of a 12-hour clock, 1 to 12" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -4063,8 +3908,8 @@ Prgm
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
-                                { eaaArg = Value /sub -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "."
+                                { eaaArg = Value /sub -> /Data/String/Text.. =
+                                    ( "." ↦ /Data/String/Text.. )
                                 }
                             )
                             ( EAppArg
@@ -4081,8 +3926,8 @@ Prgm
                                     { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                         ( /Data/String/split
                                             ( EAppArg
-                                                { eaaArg = Value /sep -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "."
+                                                { eaaArg = Value /sep -> /Data/String/Text.. =
+                                                    ( "." ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
@@ -4820,8 +4665,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Dates and times
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Dates and times
                   A [Date] is a day of the proleptic Gregorian calendar and a [TimeOfDay] is a minute within a
                   day. Both are data rather than text: a day written as @2026-01-03@ is read into a [Date] once,
                   where it is written, and from then on is a value with an order and an arithmetic.
@@ -4833,8 +4680,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Days"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Days"
                 }
             )
         , /Catln/#print
@@ -4848,8 +4697,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -4863,8 +4714,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#print
@@ -4878,8 +4731,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -4893,8 +4748,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#print
@@ -4911,8 +4768,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "29"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "29"
                 }
             )
         , /Catln/#print
@@ -4929,8 +4788,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "28"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "28"
                 }
             )
         , /Catln/#print
@@ -4947,8 +4808,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "30"
                 }
             )
         , /Catln/#print
@@ -4965,14 +4828,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "31"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "31"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Counting days
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Counting days
                   A day is counted as how many days it is after the 1st of January 1970, which turns adding days
                   and comparing days into adding and comparing numbers. The count and its reverse are Howard
                   Hinnant's: the year is started in March so that the leap day falls at its end, and is counted in
@@ -5004,8 +4871,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "0"
                 }
             )
         , /Catln/#print
@@ -5033,8 +4902,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "20456"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "20456"
                 }
             )
         , /Catln/#print
@@ -5062,8 +4933,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-1"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "-1"
                 }
             )
         , /Catln/#print
@@ -5085,8 +4958,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2026-01-03"
                 }
             )
         , /Catln/#print
@@ -5117,8 +4992,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1969-12-31"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "1969-12-31"
                 }
             )
         , /Catln/#print
@@ -5140,8 +5017,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2024-02-29"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2024-02-29"
                 }
             )
         , /Catln/#print
@@ -5180,8 +5059,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-02-01"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2026-02-01"
                 }
             )
         , /Catln/#print
@@ -5220,8 +5101,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2024-02-29"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2024-02-29"
                 }
             )
         , /Catln/#print
@@ -5269,8 +5152,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2025-12-31"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2025-12-31"
                 }
             )
         , /Catln/#print
@@ -5298,8 +5183,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "6"
                 }
             )
         , /Catln/#print
@@ -5327,14 +5214,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "4"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Writing and reading days"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Writing and reading days"
                 }
             )
         , /Catln/#print
@@ -5356,173 +5247,129 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2026-01-03"
                 }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p ->
-                    ( /Data/Result/Fail
-                        [ /E=
-                            ( /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) + /Data/IntegerParseErr/NoText
-                            )
-                        ]
-                        ( /err=
-                            ( /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) + /Data/IntegerParseErr/NoText
-                            )
-                        ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
                     ) =
                     ( /Data/Time/natural
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "042"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
+                                    ) + /Catln/CStr
+                                ) = "042"
                             }
                         ) ↦
-                        ( /Data/Result/Fail
-                            [ /E=
-                                ( /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) + /Data/IntegerParseErr/NoText
-                                )
-                            ]
-                            ( /err=
-                                ( /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) + /Data/IntegerParseErr/NoText
-                                )
-                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
                         )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "42"
                 }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p ->
-                    ( /Data/Result/Fail
-                        [ /E=
-                            ( /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) + /Data/IntegerParseErr/NoText
-                            )
-                        ]
-                        ( /err=
-                            ( /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) + /Data/IntegerParseErr/NoText
-                            )
-                        ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
                     ) =
                     ( /Data/Time/natural
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "+42"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
+                                    ) + /Catln/CStr
+                                ) = "+42"
                             }
                         ) ↦
-                        ( /Data/Result/Fail
-                            [ /E=
-                                ( /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) + /Data/IntegerParseErr/NoText
-                                )
-                            ]
-                            ( /err=
-                                ( /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) + /Data/IntegerParseErr/NoText
-                                )
-                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
                         )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: '+' at 0 is not a digit of base 10"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: '+' at 0 is not a digit of base 10"
                 }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p ->
-                    ( /Data/Result/Fail
-                        [ /E=
-                            ( /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) + /Data/IntegerParseErr/NoText
-                            )
-                        ]
-                        ( /err=
-                            ( /Data/IntegerParseErr/NotADigit
-                                ( /at=/Data/Primitive/Integer
-                                , /base=/Data/Primitive/Integer
-                                , /c=/Data/Char
-                                ) + /Data/IntegerParseErr/NoText
-                            )
-                        ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                    ( TopType | PredClass /Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ] && PredClass /Catln/Doc/DShow
                     ) =
                     ( /Data/Time/natural
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
+                                    ) + /Catln/CStr
+                                ) = ""
                             }
                         ) ↦
-                        ( /Data/Result/Fail
-                            [ /E=
-                                ( /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) + /Data/IntegerParseErr/NoText
-                                )
-                            ]
-                            ( /err=
-                                ( /Data/IntegerParseErr/NotADigit
-                                    ( /at=/Data/Primitive/Integer
-                                    , /base=/Data/Primitive/Integer
-                                    , /c=/Data/Char
-                                    ) + /Data/IntegerParseErr/NoText
-                                )
-                            ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        ( TopType | PredClass /Data/Result
+                            [ /T=/Data/Primitive/Integer
+                            , /E=∀/Data/IntegerParseErr
+                            ] && PredClass /Catln/Doc/DShow
                         )
                     )
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: there is no number in an empty string"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: there is no number in an empty string"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[DateParseErr] is why a string is no [Date]: it is not written @YYYY-MM-DD@ ([BadShape]), the
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[DateParseErr] is why a string is no [Date]: it is not written @YYYY-MM-DD@ ([BadShape]), the
                   year, month or day written is not a number ([BadPart]), the month is not one of the twelve
                   ([MonthOutOfRange]), or the day is not one the month has ([NoSuchDay])."
                 }
@@ -5537,8 +5384,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseDate
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "2026-01-03"
                             }
                         ) ↦
                         ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
@@ -5550,8 +5399,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2026-01-03"
                 }
             )
         , /Catln/#print
@@ -5564,8 +5415,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseDate
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2024-02-29"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "2024-02-29"
                             }
                         ) ↦
                         ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
@@ -5577,8 +5430,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2024-02-29"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2024-02-29"
                 }
             )
         , /Catln/#print
@@ -5591,8 +5446,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseDate
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-02-29"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "2026-02-29"
                             }
                         ) ↦
                         ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
@@ -5604,8 +5461,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 2026-02-29 is not a day that exists"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 2026-02-29 is not a day that exists"
                 }
             )
         , /Catln/#print
@@ -5618,8 +5477,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseDate
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-13-01"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "2026-13-01"
                             }
                         ) ↦
                         ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
@@ -5631,8 +5492,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 13 is not a month from 1 to 12"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 13 is not a month from 1 to 12"
                 }
             )
         , /Catln/#print
@@ -5645,8 +5508,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseDate
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-0x-01"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "2026-0x-01"
                             }
                         ) ↦
                         ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
@@ -5658,8 +5523,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the month is not a number: 'x' at 1 is not a digit of base 10"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: the month is not a number: 'x' at 1 is not a digit of base 10"
                 }
             )
         , /Catln/#print
@@ -5672,8 +5539,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseDate
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "lunch"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "lunch"
                             }
                         ) ↦
                         ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
@@ -5685,39 +5554,51 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "lunch" is not a date written YYYY-MM-DD"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: "lunch" is not a date written YYYY-MM-DD"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Ordering days
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Ordering days
                   Days are ordered by when they fall, which is the order of their counts."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The arms answering the [/Data/Algebra/Ord] methods are written in that module, as [/Data/Maybe]'s"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The arms answering the [/Data/Algebra/Ord] methods are written in that module, as [/Data/Maybe]'s"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  are, so that the names they answer are the class's own rather than new ones of this module."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  are, so that the names they answer are the class's own rather than new ones of this module."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  Each date is written out again from its fields rather than named as [this], because a receiver"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  Each date is written out again from its fields rather than named as [this], because a receiver"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  taken apart into its fields is not also bound whole."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "  taken apart into its fields is not also bound whole."
                 }
             )
         , /Catln/#print
@@ -5762,8 +5643,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -5808,8 +5691,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -5854,14 +5739,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "False"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Times of day"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Times of day"
                 }
             )
         , /Catln/#print
@@ -5879,8 +5768,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:05"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "09:05"
                 }
             )
         , /Catln/#print
@@ -5913,8 +5804,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "00:15"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "00:15"
                 }
             )
         , /Catln/#print
@@ -5956,8 +5849,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "23:50"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "23:50"
                 }
             )
         , /Catln/#print
@@ -5994,8 +5889,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#print
@@ -6032,14 +5929,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "True"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Reading times of day
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Reading times of day
                   A time is read as a note writes one: on a 24-hour clock with a colon or a dot between the hour
                   and the minutes, @9:30@ or @09.30@; or on a 12-hour clock with @am@ or @pm@ after it, in either
                   case and with or without a space, where the colon may be left out too, @9:30pm@ or @930 PM@.
@@ -6049,8 +5950,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[TimeParseErr] is why a string is no [TimeOfDay]: it does not write an hour and minutes apart
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[TimeParseErr] is why a string is no [TimeOfDay]: it does not write an hour and minutes apart
                   ([BadShape]); the hour is not one or two digits or the minutes not two ([BadDigits]); the
                   hour or minutes written are not a number ([BadPart]); or the minutes are 60 or more
                   ([MinuteOutOfRange]), the hour of a 24-hour clock is past 23 ([HourOutOfRange]), or the hour
@@ -6067,8 +5970,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9:30"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "9:30"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6080,8 +5985,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "09:30"
                 }
             )
         , /Catln/#print
@@ -6094,8 +6001,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09.00"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "09.00"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6107,8 +6016,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "09:00"
                 }
             )
         , /Catln/#print
@@ -6121,8 +6032,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9:30pm"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "9:30pm"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6134,8 +6047,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "21:30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "21:30"
                 }
             )
         , /Catln/#print
@@ -6148,8 +6063,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "930 PM"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "930 PM"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6161,8 +6078,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "21:30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "21:30"
                 }
             )
         , /Catln/#print
@@ -6175,8 +6094,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12:15am"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "12:15am"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6188,8 +6109,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "00:15"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "00:15"
                 }
             )
         , /Catln/#print
@@ -6202,8 +6125,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "25:00"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "25:00"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6215,8 +6140,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 25 is not an hour of a 24-hour clock, 0 to 23"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 25 is not an hour of a 24-hour clock, 0 to 23"
                 }
             )
         , /Catln/#print
@@ -6229,8 +6156,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "13:00pm"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "13:00pm"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6242,8 +6171,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 13 is not an hour of a 12-hour clock, 1 to 12"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 13 is not an hour of a 12-hour clock, 1 to 12"
                 }
             )
         , /Catln/#print
@@ -6256,8 +6187,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "13pm"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "13pm"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6269,8 +6202,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "13" does not write an hour and minutes apart"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: "13" does not write an hour and minutes apart"
                 }
             )
         , /Catln/#print
@@ -6283,8 +6218,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "930"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "930"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6296,8 +6233,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "930" does not write an hour and minutes apart"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: "930" does not write an hour and minutes apart"
                 }
             )
         , /Catln/#print
@@ -6310,8 +6249,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9:75"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "9:75"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6323,8 +6264,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 75 is not a minute, 0 to 59"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 75 is not a minute, 0 to 59"
                 }
             )
         , /Catln/#print
@@ -6337,8 +6280,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9:3"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "9:3"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6350,8 +6295,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "9" and "3" are not an hour of one or two digits and minutes of two"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: "9" and "3" are not an hour of one or two digits and minutes of two"
                 }
             )
         , /Catln/#print
@@ -6364,8 +6311,10 @@ Prgm
                     ) =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
-                            { eaaArg = Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9:3x"
+                            { eaaArg = Value /s ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "9:3x"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -6377,14 +6326,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the minute is not a number: 'x' at 1 is not a digit of base 10"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: the minute is not a number: 'x' at 1 is not a digit of base 10"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Lengths of time and spans of a day"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Lengths of time and spans of a day"
                 }
             )
         , /Catln/#print
@@ -6396,8 +6349,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1h 30m"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "1h 30m"
                 }
             )
         , /Catln/#print
@@ -6409,8 +6364,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2h"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2h"
                 }
             )
         , /Catln/#print
@@ -6422,8 +6379,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "45m"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "45m"
                 }
             )
         , /Catln/#print
@@ -6467,8 +6426,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 10:30"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "09:00 - 10:30"
                 }
             )
         , /Catln/#print
@@ -6518,8 +6479,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1h 30m"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "1h 30m"
                 }
             )
         , /Catln/#print
@@ -6569,8 +6532,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2h"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2h"
                 }
             )
         ]

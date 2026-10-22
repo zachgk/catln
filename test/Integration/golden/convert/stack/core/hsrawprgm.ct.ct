@@ -47,6 +47,6 @@ data(/Catln/RawStatementTree(statement -> /Catln/RawStatement.., children -> /Da
 class(/Catln/RawStatement, [/Catln/RawStatement/RawDeclStatement(objArr -> /Catln/RawObjArr..), /Catln/RawStatement/RawBindStatement(objArr -> /Catln/RawObjArr..), /Catln/RawStatement/RawAnnot(annot -> /Catln/RawExpr..)])
   # One statement of a page: a declaration, a bind written with `<-`, or an annotation.
   # A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation.
-/Catln/pageAt(/source -> /Data/String) -> /Catln/RawPrgm..
+/Catln/pageAt(/source -> /Catln/CStr) -> /Catln/RawPrgm..
   # Answers with the page read from [source], as it was written.
   # The page is one the program being evaluated was read from, under the path its positions carry. A page the evaluation was not handed is reported rather than read, so what is answered is always what the program was compiled from.

@@ -112,8 +112,8 @@ definedNameItems (ObjectMap omap) = H.fromList $
 
 -- | Dependency-first solve groups of object-map item keys.
 --
--- The first group is the DATA PRELUDE: every item whose ObjArrs are all
--- arrow-less (data\/type objects). Solving them first finalizes the data and
+-- The first group is the DATA PRELUDE: every data item ('isDataObjectMapItem') —
+-- arrow-less, or a type with only bodiless arrows written from it. Solving them first finalizes the data and
 -- pattern entries of the object universe before any function group reads it.
 -- The remaining groups are the SCCs of the name-reference graph between
 -- function items, in dependency-first order ('stronglyConnCompR' returns
@@ -128,7 +128,7 @@ itemSccGroups :: (MetaDat m, Show m) => ObjectMap Expr m -> [[Name]]
 itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
   where
     keys = sortOn nameStr $ H.keys omap
-    isDataItem item = all (isNothing . oaArr) (flatObjectMapItem item)
+    isDataItem = isDataObjectMapItem
     (dataKeys, funcKeys) = partition (\k -> isDataItem (H.lookupDefault (error "itemSccGroups: missing key") k omap)) keys
     funcKeySet = S.fromList funcKeys
     funcNames = definedNameItems (objectMapItems (H.filterWithKey (\k _ -> S.member k funcKeySet) omap))
@@ -140,12 +140,26 @@ itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
         resolveRef r = relativeNameFilter r keys
     sccGroups = map (sortOn nameStr . map snd3 . flattenSCC) $ stronglyConnCompR [((), k, itemEdges k) | k <- funcKeys]
 
--- | The keys of all arrow-less (data\/type) items. Class expansions materialize member
+-- | The keys of all data items ('isDataObjectMapItem'). Class expansions materialize member
 -- objects from the static class graph regardless of any name reference, so EVERY solve
 -- fragment needs the data items in its dependency closure — they are cheap (no bodies) and
 -- their absence sends a class-typed solve through the un-memoized expansion fallbacks.
 dataItemKeys :: ObjectMap Expr m -> [Name]
-dataItemKeys (ObjectMap omap) = H.keys $ H.filter (all (isNothing . oaArr) . flatObjectMapItem) omap
+dataItemKeys (ObjectMap omap) = H.keys $ H.filter isDataObjectMapItem omap
+
+-- | Whether an item is a data type's: it declares the type, and every arrow it holds is one without
+-- a body. A data type may have runtime arrows written from it (@\/Catln\/CStr -> String\/Text..@,
+-- @String\/Text(chars) -> \/Catln\/CStr@), which are bodiless and so need no solving, and it is no
+-- less a type a class expands into for having them. An item an arrow with a body is written under is
+-- a function's, and is solved in its own fragment.
+isDataObjectMapItem :: ObjectMapItem Expr m -> Bool
+isDataObjectMapItem item = all (isNothing . oaArr) arrs || (any isTypeObject arrs && all bodiless arrs)
+  where
+    arrs = flatObjectMapItem item
+    isTypeObject oa = oaBasis oa == TypeObj && isNothing (oaArr oa)
+    bodiless oa = case oaArr oa of
+      Just (Just _, _) -> False
+      _                -> True
 
 -- | Per-item UNRESOLVED references: every name each item's ObjArrs mention. Polymorphic in
 -- the meta so it serves both the page side (pre-typed) and the dependency side (typechecked

@@ -74,8 +74,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Two functions that recurse by calling each other. [even] and [odd] each answer from their own
                 base case at zero and otherwise hand the decremented argument to the other, so every answer but
                 the one at zero is produced by a bounce through the other function.
@@ -89,8 +91,10 @@ Prgm
                 them is what to pursue here; the file does not pass without them today." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Each call bounces through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even
                 argument and on [even(x= 0)]'s 0 for an odd one." }
             )

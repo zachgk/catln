@@ -145,8 +145,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests importing vaults whose Day Planner and Daily Notes plugins are set some other way than
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests importing vaults whose Day Planner and Daily Notes plugins are set some other way than
                   @artifacts/catln-planner@ sets them, since a vault can only be set one way and what a line reads
                   as is decided by the vault's settings. One vault per setting: a planner extending each block until
                   the next, with daily notes in a folder written with slashes and named in a format writing folders

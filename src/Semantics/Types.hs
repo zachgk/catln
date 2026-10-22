@@ -54,7 +54,7 @@ import           Debug.Trace         (trace)
 import           GHC.Generics
 import           Prelude             hiding (unzip)
 import           Semantics.CtType
-import           Semantics.Val       (pattern StrVal)
+import           Semantics.Val       (pattern AnyStrVal, pattern StrVal)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           Utils
@@ -86,8 +86,8 @@ instance CtType Name where
   ctImports _ = [coreStrPage]
   ctPageInto = ctPageImport
   toCt = StrVal . nameStr
-  fromCt (StrVal s) = Right $ mkName s
-  fromCt v          = Left $ printf "%s is not a %s" (show v) strPrim
+  fromCt (AnyStrVal s) = Right $ mkName s
+  fromCt v             = Left $ printf "%s is not a %s" (show v) strPrim
 
 instance IsString Name where
   fromString = mkName
@@ -1636,34 +1636,39 @@ listClassNames :: (TypeGraph tg) => TypeEnv tg -> [ClassName]
 listClassNames = scClassNames . teSatCache
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'PartialType'
-intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, charLeaf, ioLeaf :: PartialType
+intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, cstrLeaf, charLeaf, ioLeaf :: PartialType
 intLeaf = partialVal "/Data/Primitive/Integer"
 floatLeaf = partialVal "/Data/Primitive/Float"
 trueLeaf = partialVal "/Data/Primitive/True"
 falseLeaf = partialVal "/Data/Primitive/False"
--- | A string holding any characters: the one member of the @\/Data\/String@ class
--- ('ctStringText'), as @stack\/core\/string.ct@ declares it — its one field the list of characters it
--- is made of, @chars -> ConsList[$T -> Char]@. It is every value of the class, as @String@ says in
--- Catln, and it is the member's own declared form so that it is a member.
+-- | A string holding any characters as Catln takes one apart: the @\/Data\/String\/Text@ member of the
+-- @\/Data\/String@ class ('ctStringText'), as @stack\/core\/string.ct@ declares it — its one field the
+-- list of characters it is made of, @chars -> ConsList[$T -> Char]@. It is the member's own declared
+-- form so that it is a member.
 strLeaf = (partialVal (mkName ctStringText)){ptArgs = H.singleton (partialKey (mkName ctStringChars)) charList}
   where charList = classPartial (partialVal (mkName ctConsListPath)){ptVars = H.singleton (partialKey "T") (singletonType charLeaf)}
+-- | A string as the interpreter holds it, packed: the @\/Catln\/CStr@ member of the @\/Data\/String@
+-- class ('ctCStr'). Every string constant is one.
+cstrLeaf = partialVal (mkName ctCStr)
 charLeaf = partialVal (mkName charPrim)
 ioLeaf = partialVal "/Catln/IO"
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'Type'
-intType, floatType, trueType, falseType, boolType, strType, ioType :: Type
+intType, floatType, trueType, falseType, boolType, strType, cstrType, ioType :: Type
 intType = singletonType intLeaf
 floatType = singletonType floatLeaf
 trueType = singletonType trueLeaf
 falseType = singletonType falseLeaf
 boolType = UnionType Nothing (joinUnionType [trueLeaf, falseLeaf]) []
-strType = singletonType strLeaf
+-- | Every string, in whichever representation: the @\/Data\/String@ class.
+strType = classPartial (partialVal (mkName strPrim))
+cstrType = singletonType cstrLeaf
 ioType = singletonType ioLeaf
 
 constantPartialType :: Constant -> PartialType
 constantPartialType CInt{}   = intLeaf
 constantPartialType CFloat{} = floatLeaf
-constantPartialType CStr{}   = strLeaf
+constantPartialType CStr{}   = cstrLeaf
 constantPartialType CChar{}  = charLeaf
 
 -- | Whether a leaf's name is one of the primitive types whose values include constants
@@ -1674,12 +1679,12 @@ leafHoldsConstants PartialType{ptName=n} = n `elem` map ptName [intLeaf, floatLe
 -- | The singleton type containing exactly one constant value.
 -- For example, @constantType (CInt 5)@ represents the type @{5}@, a subtype of @Integer@.
 --
--- Except a string literal, which is typed as a 'strType' and not as the one string it is. A string
--- is a list of characters rather than a primitive, so its exact type is a @Cons@ per character —
--- as long as the text, for every doc comment and annotation argument written as one — and nothing
--- dispatches on which string a value is: a string is matched against another by @==@.
+-- Except a string literal, which is typed as a 'cstrType' and not as the one string it is: the
+-- string the interpreter holds packed, which is what a constant is. Nothing dispatches on which
+-- string a value is — a string is matched against another by @==@ — so the type is the
+-- representation and not the text.
 constantType :: Constant -> Type
-constantType CStr{} = strType
+constantType CStr{} = cstrType
 constantType c      = UnionType Nothing H.empty [c]
 
 

@@ -130,8 +130,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A list whose element parameter is bounded by a CONCRETE DATA TYPE, destructured.
                 Every list in the checked standard library bounds its element by a CLASS — [/Data/ToString],
                 [/Data/Algebra/Ord], [/Data/Algebra/Eq] — so a bound naming a data type directly was never
@@ -145,8 +147,10 @@ Prgm
                 builds, as @listField.ct@ is, so that a failure says which of the two it is." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
                 even while the bound above did not. Held beside it so a regression says which of the two broke." }
             )

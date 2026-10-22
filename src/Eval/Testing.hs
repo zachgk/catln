@@ -677,8 +677,8 @@ collectPrintAnnots (Prgm objMap _ globalAnnots) =
 -- golden. Returns the raw string for those, and 'Nothing' for any other DShow value (e.g. a
 -- visualization), which is not golden-checkable.
 printGolden :: Val -> Maybe String
-printGolden (StrVal s) = Just s
-printGolden _          = Nothing
+printGolden (AnyStrVal s) = Just s
+printGolden _             = Nothing
 
 -- | Build and evaluate every @#print@ reachable in the program to its rendered value, keeping
 -- only the string-serializable ones, paired with the source range of the print's @p@ argument
@@ -707,7 +707,7 @@ derivePrintTests session own prgm = catMaybes <$> mapM mkTest (collectPrintAnnot
     mkTest (os, annot) = do
       shown <- runCResT $ evalDShowAnnot env os annot
       return $ case shown of
-        CRes _ (Just (StrVal actual)) -> Just (desc $ checkAction actual)
+        CRes _ (Just (AnyStrVal actual)) -> Just (desc $ checkAction actual)
         CRes _ _                      -> Nothing
         CErr notes                    -> Just (desc $ CResT $ return $ CErr notes)
       where

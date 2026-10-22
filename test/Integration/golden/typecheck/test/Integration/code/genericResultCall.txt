@@ -114,8 +114,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A call whose declared result is a declaration variable, landing where nothing requires a type.
                 A term may be handed on unrewritten — rewriting is a chain and the consumer's followup applies
                 it — so the tree build leaves a term that already reaches its destination alone. A Top
@@ -130,8 +132,10 @@ Prgm
                 worked, and it is what says the fault was the variable rather than the shape." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The same defect is what stopped a fold over a polymorphic accumulator, which is the shape it was
                 found from. The recursive call is what reaches the step function, and it reached it as the
                 unevaluated @/foldrG(..)@ tuple:
@@ -142,8 +146,10 @@ Prgm
                 concrete until it is called." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The accumulator need not be the element type: the last fold folds a list of Integers into a
                 String." }
             )

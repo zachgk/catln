@@ -1052,8 +1052,11 @@ mapMObjectMap f (ObjectMapWith objMap setDecls) = ObjectMapWith <$> mapM (mapMOM
       return $ ObjectMapItem decls' runtimeDecls' refineDecls' defs'
 
 
+-- | The map's items filtered by @f@. The declarations written from a set of objects ('omDecls') are
+-- kept as they are: a filter over objects asks what an object is called or how it is written, which
+-- a set of objects has no single answer to, so a caller narrowing those does so itself.
 filterObjectMap :: (ObjArr e m -> Bool) -> ObjectMap e m -> ObjectMap e m
-filterObjectMap f (ObjectMapWith objMap setDecls) = ObjectMapWith (H.mapMaybe f' objMap) (filter f setDecls)
+filterObjectMap f (ObjectMapWith objMap setDecls) = ObjectMapWith (H.mapMaybe f' objMap) setDecls
   where
     f' (ObjectMapItem decls runtimeDecls refineDecls defs) = case (filter f decls, filter f runtimeDecls, filter f refineDecls, filter f defs) of
       ([], [], [], [])                                -> Nothing

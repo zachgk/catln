@@ -80,8 +80,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests importing a directory as the page of the files under it. The page declares the directory
                 under a name built from its path, as the files it holds at the paths they are at, sorted, with a
                 file under a subdirectory keeping the subdirectory in its path. A dotted entry is passed over, and

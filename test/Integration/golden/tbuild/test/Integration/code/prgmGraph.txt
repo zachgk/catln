@@ -145,8 +145,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a /Catln/Doc/#prgmGraph over a program with pages of its own. A graph shows the pages the
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests a /Catln/Doc/#prgmGraph over a program with pages of its own. A graph shows the pages the
                   page it is written in reaches and the imports between them, so this page reaches a vault beside it
                   and the graph holds this page, the vault, the notes the vault holds, and the standard library.
                   The vault is named note by note as calendar.ct names it, and for its reason: a vault does not

@@ -26,94 +26,58 @@ Prgm
                             ( EAppArg { eaaArg = Value /r -> ∀/Data/String } )
                         , /Wide
                             ( EAppArg
-                                { eaaArg = Value /a -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
-                                }
+                                { eaaArg = Value /a -> /Catln/CStr = "1" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2"
-                                }
+                                { eaaArg = Value /b -> /Catln/CStr = "2" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /c -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
-                                }
+                                { eaaArg = Value /c -> /Catln/CStr = "3" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /d -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
-                                }
+                                { eaaArg = Value /d -> /Catln/CStr = "4" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /e -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
-                                }
+                                { eaaArg = Value /e -> /Catln/CStr = "5" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /f -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "6"
-                                }
+                                { eaaArg = Value /f -> /Catln/CStr = "6" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /g -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "7"
-                                }
+                                { eaaArg = Value /g -> /Catln/CStr = "7" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /h -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "8"
-                                }
+                                { eaaArg = Value /h -> /Catln/CStr = "8" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /i -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "9"
-                                }
+                                { eaaArg = Value /i -> /Catln/CStr = "9" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /j -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "10"
-                                }
+                                { eaaArg = Value /j -> /Catln/CStr = "10" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /k -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "11"
-                                }
+                                { eaaArg = Value /k -> /Catln/CStr = "11" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12"
-                                }
+                                { eaaArg = Value /l -> /Catln/CStr = "12" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /m -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "13"
-                                }
+                                { eaaArg = Value /m -> /Catln/CStr = "13" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /n -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "14"
-                                }
+                                { eaaArg = Value /n -> /Catln/CStr = "14" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /o -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "15"
-                                }
+                                { eaaArg = Value /o -> /Catln/CStr = "15" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /p -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "16"
-                                }
+                                { eaaArg = Value /p -> /Catln/CStr = "16" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /q -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "17"
-                                }
+                                { eaaArg = Value /q -> /Catln/CStr = "17" }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "18"
-                                }
+                                { eaaArg = Value /r -> /Catln/CStr = "18" }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -283,8 +247,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A data type eighteen fields wide, declared, shown, and printed, which is what holds that a type
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A data type eighteen fields wide, declared, shown, and printed, which is what holds that a type
                   costs what its width says it costs.
                   Typechecking does not CONVERGE any slower for the width. This file is 9 epochs over 3 fragments,
                   and so is the same shape at twenty-four fields, at thirty-two and at forty-eight. Measured with
@@ -316,8 +282,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Read back so that the value is built and not only declared, as @valueDeclFields.ct@ does and for
                   the same reason: the width that costs anything is the width something reads. The first and the
                   last field, so the reading reaches across the whole width."
                 }

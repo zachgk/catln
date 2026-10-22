@@ -82,8 +82,8 @@ Prgm
                                     { eaaArg = Value /l -> TVArg /variable = ( Value /variable ↦ TVArg /variable ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not set, so there is no model to ask"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not set, so there is no model to ask" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -95,8 +95,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model could not be asked: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the model could not be asked: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -117,8 +117,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's response is "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the model's response is " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -139,8 +139,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's API answered with an error: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "the model's API answered with an error: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -165,8 +165,8 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's response has no reply at "
+                                                            { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                ( "the model's response has no reply at " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
@@ -176,8 +176,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ": "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ": " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -214,8 +214,8 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's reply at "
+                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                            ( "the model's reply at " ↦ /Data/String/Text.. )
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -225,21 +225,19 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is "
+                                                            { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                ( " is " ↦ /Data/String/Text.. )
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
                                                     ( /Data/jsonKind
                                                         ( EAppArg
                                                             { eaaArg = Value /j -> TVArg /found = ( Value /found ↦ TVArg /found ) }
-                                                        ) ↦ /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ) ↦ /Data/String/Text..
                                                     )
                                                 }
                                             ) ↦ ∀/Data/String
@@ -247,8 +245,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", not text"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( ", not text" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -270,8 +268,8 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model's reply is not a value of the type asked for: "
+                                                            { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                ( "the model's reply is not a value of the type asked for: " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
@@ -287,9 +285,9 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
-                                                  The reply was: "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( "
+                                                    The reply was: " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -376,8 +374,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[LlmErr] is why a model gave no reply: the variable [variable] it is configured by is unset
                   ([Unset]); the request could not be sent or was answered with a failure ([Request]); the
                   response is not JSON ([NotJson]); the API answered with an error saying
                   [message] ([ApiError]); or the response has nothing at [path], where the reply is

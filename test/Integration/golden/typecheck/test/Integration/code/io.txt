@@ -20,12 +20,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = CStr
                                         { csValue = "hello world" }
                                     )
                                 )

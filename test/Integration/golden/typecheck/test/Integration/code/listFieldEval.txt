@@ -129,8 +129,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A list of two or more held in a FIELD, built and evaluated rather than only declared.
                 The printed face of @listFieldMultiple.ct@, which declares these same two cells and stops short
                 of printing them: printing is what builds a value, so a list field that typechecks and a list
@@ -148,8 +150,10 @@ Prgm
                 about how a relative name resolves and not about what a field may hold." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Read back so that the values are built and not only declared, which is the whole of what this
                 adds: each field holding a list is destructured and the list's length is what the run checks." }
             )

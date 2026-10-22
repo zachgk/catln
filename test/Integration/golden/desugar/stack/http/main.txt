@@ -7,8 +7,8 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value= /Http/httpPost( Value url -> ∀/Data/String )
-                                ( Value headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value body -> ∀/Data/String )
+                            ( Value /value= /Http/httpPost( Value url -> /Catln/CStr )
+                                ( Value headers -> ∀/Data/List[ /T=/Http/Header.. ] )( Value body -> /Catln/CStr )
                             )
                             ( Value /ctx= /( Value io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )

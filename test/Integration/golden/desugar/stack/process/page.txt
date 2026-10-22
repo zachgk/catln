@@ -29,7 +29,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Process/removeAnnot( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String ) -> /Catln/RawPrgm.. ]
+                        [ /Process/removeAnnot( Value page -> /Catln/RawPrgm.. )( Value annotId -> /Catln/CStr ) -> /Catln/RawPrgm.. ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -39,7 +39,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Process/setAnnot( Value page -> /Catln/RawPrgm.. )( Value annotId -> ∀/Data/String )( Value annot ) -> /Catln/RawPrgm.. ]
+                        [ /Process/setAnnot( Value page -> /Catln/RawPrgm.. )( Value annotId -> /Catln/CStr )( Value annot ) -> /Catln/RawPrgm.. ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -59,7 +59,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Process/parsePage( Value text -> ∀/Data/String ) -> ∀/Data/Result
+                        [ /Process/parsePage( Value text -> /Catln/CStr ) -> ∀/Data/Result
                             [ /T=/Catln/RawPrgm..
                             , /E=∀/Process/ParsePageErr
                             ]

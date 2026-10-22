@@ -20,24 +20,21 @@ Prgm
                                 ( /const=∀/Catln/Constant
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/CExpr( Value /meta -> /Catln/Meta.. )( Value /const -> ∀/Catln/Constant )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Test/valueName
                             ( Value /e -> /Catln/Expr/HoleExpr
                                 ( /hole=∀/Catln/Hole
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/HoleExpr( Value /meta -> /Catln/Meta.. )( Value /hole -> ∀/Catln/Hole )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Test/valueName
                             ( Value /e -> /Catln/Expr/AliasExpr
                                 ( /base=∀/Catln/Expr
                                 , /alias=∀/Catln/Expr
                                 ) = /Catln/Expr/AliasExpr( Value /base -> ∀/Catln/Expr )( Value /alias -> ∀/Catln/Expr )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Test/valueName
                             ( Value /e -> /Catln/Expr/EWhere
@@ -45,8 +42,7 @@ Prgm
                                 , /cond=∀/Catln/Expr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/EWhere( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/Expr )( Value /cond -> ∀/Catln/Expr )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Test/valueName
                             ( Value /e -> /Catln/Expr/TupleApply
@@ -62,8 +58,7 @@ Prgm
                                     , /A=/Catln/Meta..
                                     ]..
                                 )( Value /app -> ∀/Catln/EApp )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         ]
                     }
@@ -133,58 +128,56 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/keyDepth
                                             ( Value /k -> /Catln/PartialKey
-                                                ( /name=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                 , /vars=/Data/List/Nil
                                                 , /args=/Data/List/Cons
                                                     [ /T=/Catln/PartialKey
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                         , /vars=/Data/List/Nil
                                                         , /args=/Data/List/Nil
                                                         )
                                                     ]
                                                     ( /head=/Catln/PartialKey
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                         , /vars=/Data/List/Nil
                                                         , /args=/Data/List/Nil
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     )
                                                 ) = /Catln/PartialKey
-                                                ( Value /name -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                ( Value /name ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
                                                     { csValue = "f" }
                                                 )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
                                                 ( Value /args -> /Data/List/Cons
                                                     [ /T=/Catln/PartialKey
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                         , /vars=/Data/List/Nil
                                                         , /args=/Data/List/Nil
                                                         )
                                                     ]
                                                     ( /head=/Catln/PartialKey
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                         , /vars=/Data/List/Nil
                                                         , /args=/Data/List/Nil
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     ) = /Data/List/Cons
                                                     ( Value /head -> /Catln/PartialKey
-                                                        ( /name=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                         , /vars=/Data/List/Nil
                                                         , /args=/Data/List/Nil
                                                         ) = /Catln/PartialKey
-                                                        ( Value /name -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                        ( Value /name ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = CStr
                                                             { csValue = "a" }
                                                         )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( Value /args -> /Data/List/Nil = Value /Data/List/Nil )
                                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -230,8 +223,7 @@ Prgm
                                 , /leafs=/Data/List/Nil
                                 )
                             , /dat=/Catln/Unit
-                            , /id=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            , /id=( /Data/String/Text.. + /Catln/CStr )
                             , /pos=/Data/Maybe/Nothing
                             ) = /Catln/Meta
                             ( Value /type -> /Catln/Type/UnionType
@@ -240,8 +232,10 @@ Prgm
                                 , /leafs=/Data/List/Nil
                                 ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )( Value /consts -> /Data/List/Nil = Value /Data/List/Nil )
                             )( Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /id -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /id ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" }
                             )( Value /dat -> /Catln/Unit = Value /Catln/Unit )
                         ]
@@ -297,8 +291,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/declCount
                                             ( Value /p -> /Catln/Prgm
                                                 ( /cg=/Data/List/Nil
@@ -365,8 +359,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/constCount
                                             ( Value /t -> /Catln/Type/UnionType
                                                 ( /top=/Data/Maybe/Nothing
@@ -440,15 +434,10 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/exprKind
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/exprKind
                                         ( Value /e -> /Catln/Expr/Value
-                                            ( /name=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
                                             , /meta=/Catln/Meta
                                                 ( /type=∀/Catln/Type
                                                 , /dat=/Catln/Unit..
@@ -473,8 +462,10 @@ Prgm
                                                     ]
                                                 ).. = Value /Test/noMeta
                                             )
-                                            ( Value /name -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "foo" }
                                             )
                                         )
@@ -529,15 +520,10 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/valueName
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/valueName
                                         ( Value /e -> /Catln/Expr/Value
-                                            ( /name=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
                                             , /meta=/Catln/Meta
                                                 ( /type=∀/Catln/Type
                                                 , /dat=/Catln/Unit..
@@ -562,8 +548,10 @@ Prgm
                                                     ]
                                                 ).. = Value /Test/noMeta
                                             )
-                                            ( Value /name -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "foo" }
                                             )
                                         )
@@ -602,20 +590,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Test/constantKind
-                            ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer.. ) = /Catln/Constant/CInt( Value /value -> /Data/Primitive/Integer.. ) ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer.. ) = /Catln/Constant/CInt( Value /value -> /Data/Primitive/Integer.. ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "int" }
                         , /Test/constantKind
-                            ( Value /c -> /Catln/Constant/CFloat( /value=/Data/Primitive/Float.. ) = /Catln/Constant/CFloat( Value /value -> /Data/Primitive/Float.. ) ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /c -> /Catln/Constant/CFloat( /value=/Data/Primitive/Float.. ) = /Catln/Constant/CFloat( Value /value -> /Data/Primitive/Float.. ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "float" }
                         , /Test/constantKind
-                            ( Value /c -> /Catln/Constant/CStr( /value=∀/Data/String ) = /Catln/Constant/CStr( Value /value -> ∀/Data/String ) ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /c -> /Catln/Constant/CStr( /value=∀/Data/String ) = /Catln/Constant/CStr( Value /value -> ∀/Data/String ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "str" }
                         , /Test/constantKind
-                            ( Value /c -> /Catln/Constant/CChar( /value=/Data/Char.. ) = /Catln/Constant/CChar( Value /value -> /Data/Char.. ) ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /c -> /Catln/Constant/CChar( /value=/Data/Char.. ) = /Catln/Constant/CChar( Value /value -> /Data/Char.. ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "char" }
                         ]
                     }
@@ -670,12 +654,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/constantKind
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/constantKind
                                         ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
                                             ( Value /value -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 3 }
@@ -713,32 +693,28 @@ Prgm
                                 ( /const=∀/Catln/Constant
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/CExpr( Value /meta -> /Catln/Meta.. )( Value /const -> ∀/Catln/Constant )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "const" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/Expr/Value
                                 ( /name=∀/Data/String
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/Value( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "value" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/Expr/HoleExpr
                                 ( /hole=∀/Catln/Hole
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/HoleExpr( Value /meta -> /Catln/Meta.. )( Value /hole -> ∀/Catln/Hole )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "hole" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/Expr/AliasExpr
                                 ( /base=∀/Catln/Expr
                                 , /alias=∀/Catln/Expr
                                 ) = /Catln/Expr/AliasExpr( Value /base -> ∀/Catln/Expr )( Value /alias -> ∀/Catln/Expr )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "alias" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/Expr/EWhere
@@ -746,8 +722,7 @@ Prgm
                                 , /cond=∀/Catln/Expr
                                 , /meta=/Catln/Meta..
                                 ) = /Catln/Expr/EWhere( Value /meta -> /Catln/Meta.. )( Value /base -> ∀/Catln/Expr )( Value /cond -> ∀/Catln/Expr )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "where" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/Expr/TupleApply
@@ -763,8 +738,7 @@ Prgm
                                     , /A=/Catln/Meta..
                                     ]..
                                 )( Value /app -> ∀/Catln/EApp )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "apply" }
                         ]
                     }
@@ -777,7 +751,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/ownDeclCount( Value /name -> ∀/Data/String ) -> /Data/Primitive/Integer = /Test/declCount
+                        [ /Test/ownDeclCount
+                            ( Value /name ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            ) -> /Data/Primitive/Integer = /Test/declCount
                             ( Value /p -> /Catln/Prgm
                                 ( /cg=∀/Data/List
                                     [ /T=/Catln/Triple
@@ -818,16 +797,17 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Test/keyName
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/keyName
                                         ( Value /k -> /Catln/PartialKey
-                                            ( /name=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
                                             , /vars=/Data/List/Nil
                                             , /args=/Data/List/Nil
                                             ) = /Catln/PartialKey
-                                            ( Value /name -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "x" }
                                             )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( Value /args -> /Data/List/Nil = Value /Data/List/Nil )
                                         )
@@ -961,8 +941,7 @@ Prgm
                                     ]
                                 )
                                 ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "union" }
                         , /Test/typeKind
                             ( Value /t -> /Catln/Type/TypeVar
@@ -970,8 +949,7 @@ Prgm
                                 , /inner=∀/Catln/Type
                                 , /loc=∀/Catln/TypeVarLoc
                                 ) = /Catln/Type/TypeVar( Value /aux -> ∀/Catln/TypeVarAux )( Value /loc -> ∀/Catln/TypeVarLoc )( Value /inner -> ∀/Catln/Type )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "var" }
                         ]
                     }
@@ -1028,8 +1006,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/intOf
                                             ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
                                                 ( Value /value -> /Data/Primitive/Integer = CInt
@@ -1104,17 +1082,18 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/posLine
                                             ( Value /p -> /Catln/SourcePos
-                                                ( /file=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /file=( /Data/String/Text.. + /Catln/CStr )
                                                 , /line=/Data/Primitive/Integer
                                                 , /column=/Data/Primitive/Integer
                                                 ) = /Catln/SourcePos
-                                                ( Value /file -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                ( Value /file ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
                                                     { csValue = "a.ct" }
                                                 )
                                                 ( Value /line -> /Data/Primitive/Integer = CInt
@@ -1170,12 +1149,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/writtenIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/writtenIn
                                         ( Value /m -> /Catln/Meta
                                             ( /type=/Catln/Type/UnionType
                                                 ( /top=/Data/Maybe/Nothing
@@ -1183,8 +1158,7 @@ Prgm
                                                 , /leafs=/Data/List/Nil
                                                 )
                                             , /dat=/Catln/Unit
-                                            , /id=/Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                            , /id=( /Data/String/Text.. + /Catln/CStr )
                                             , /pos=/Data/Maybe/Nothing
                                             ) = /Catln/Meta
                                             ( Value /type -> /Catln/Type/UnionType
@@ -1193,8 +1167,10 @@ Prgm
                                                 , /leafs=/Data/List/Nil
                                                 ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )( Value /consts -> /Data/List/Nil = Value /Data/List/Nil )
                                             )( Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                                            ( Value /id -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /id ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "" }
                                             )( Value /dat -> /Catln/Unit = Value /Catln/Unit )
                                         )
@@ -1242,12 +1218,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Test/typeKind
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/typeKind
                                         ( Value /t -> /Catln/Type/UnionType
                                             ( /top=/Data/Maybe/Nothing
                                             , /consts=/Data/List/Nil
@@ -1422,11 +1394,13 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /Test/ownDeclCount
-                                            ( Value /name -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "/Test/intOf" }
                                             )
                                         )
@@ -1566,8 +1540,7 @@ Prgm
                                 , /id=∀/Data/String
                                 , /pos=/Data/Maybe/Nothing
                                 ) = /Catln/Meta( Value /type -> ∀/Catln/Type )( Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /id -> ∀/Data/String )( Value /dat -> /Catln/Unit.. )
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "nowhere" }
                         , /Test/writtenIn
                             ( Value /m -> /Catln/Meta
@@ -1673,22 +1646,28 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Reading the compiler's own types
                 The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
                 a Catln program can be handed one and read it. This file is what typechecks those declarations:
                 a page nothing imports is a page nothing checks." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
                 reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Being given a real program
                 Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
                 with the program it is actually compiling — this page and everything it reaches — narrowed to
@@ -1696,8 +1675,10 @@ Prgm
                 data, through the same declarations the rest of the file exercises." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## What the suite checks
                 The integration suite typechecks and builds this file, then runs [main] and compares what it
                 printed against @hsprgm.stdout.txt@, which is the one mechanism the integration runner has for
@@ -1705,23 +1686,31 @@ Prgm
                 import cycle @core/result.ct@ measures, so the values cannot be print goldens of a library page." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "One line per answer rather than one joined string. Joining them chained eight [operator++]s and" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  reached the [runConstraints] limit on [/operator++[$T -> Semigroup]] — the same non-convergence" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  the suite's two standing failures are, which is being worked on elsewhere. Printing each is" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  what the answers are for, and it does not stand on the part of the solver that is unwell." }
             )
         ]

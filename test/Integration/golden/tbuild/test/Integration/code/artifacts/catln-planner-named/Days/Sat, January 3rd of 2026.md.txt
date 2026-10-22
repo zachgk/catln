@@ -7,9 +7,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "10:00 On the day the name spells"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "10:00 On the day the name spells" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -287,9 +285,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Sat, January 3rd of 2026"
-                                }
+                                { eaaArg = Value /title -> /Catln/CStr = "Sat, January 3rd of 2026" }
                             )
                         ]
                     , omiRuntimeDecls = []

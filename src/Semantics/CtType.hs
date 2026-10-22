@@ -392,8 +392,8 @@ instance {-# OVERLAPPING #-} CtType String where
   ctImports _ = [coreStrPage]
   ctPageInto = ctPageImport
   toCt = StrVal
-  fromCt (StrVal s) = Right s
-  fromCt v          = Left $ printf "%s is not a %s" (show v) strPrim
+  fromCt (AnyStrVal s) = Right s
+  fromCt v             = Left $ printf "%s is not a %s" (show v) strPrim
 
 instance CtType Integer where
   ctPath _ = intPrim
@@ -550,7 +550,7 @@ instance CtType UUID where
   ctImports _ = [coreStrPage]
   ctPageInto = ctPageImport
   toCt = StrVal . UUID.toString
-  fromCt (StrVal s) = maybe (Left $ printf "%s is not an id" (show s)) Right (UUID.fromString s)
+  fromCt (AnyStrVal s) = maybe (Left $ printf "%s is not an id" (show s)) Right (UUID.fromString s)
   fromCt v          = Left $ printf "%s is not a %s" (show v) strPrim
 
 -- | Three values together, for the same reason a pair is two.

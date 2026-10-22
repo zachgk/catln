@@ -80,8 +80,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests importing vaults whose Tasks plugin is set some other way than @artifacts/catln-tasks@ sets
                 it, since a vault can only be set one way and what a checkbox reads as is decided by the vault's
                 settings. One vault per setting: the dataview notation beside a status the vault named itself, a

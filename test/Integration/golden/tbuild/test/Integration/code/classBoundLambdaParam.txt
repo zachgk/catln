@@ -201,8 +201,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
                   A declaration's function-typed argument slot holds its INPUT OBJECT, with @w@ annotated by the
                   declaration's own variable (@headTo[/A](/fn=/fn[/A=$^A](/w=$/A))@). A call meets that declaration,
                   which binds @/A@, and the lambda's pattern @fn(w)@ receives @w@'s type from the call's requirement
@@ -218,8 +220,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Bound through a container's class parameter
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Bound through a container's class parameter
                   @$A@ is pinned only by @lst@, and it is pinned through a class PARAMETER rather than by being the
                   argument's whole type. A parameter that points at a variable is not itself one, so meeting
                   @List[$T -> $_A]@ against a @Cons(head= 3, ..)@ bound nothing: the value's own vars are empty
@@ -232,8 +236,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Called from inside a generic definition
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Called from inside a generic definition
                   The same call made where the element type is not yet concrete. In @viaGeneric@'s frame @$_A@
                   reads as its own bound @∀Eq@, and the parameter was refused because it was not FULLY CONCRETE.
                   A bound is resolved knowledge, not a symbolic variable: no value of @$_A@ can fall outside its
@@ -243,8 +249,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## The control: the variable IS the argument's type
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## The control: the variable IS the argument's type
                   Nothing points anywhere, so @$A@ binds directly from @x@. This passed before either fix and is
                   the passing half of the pair that pinned the cause on how the variable is bound rather than on
                   the class bound itself."
@@ -252,8 +260,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Both examples for each function are the same call; only the lambda's body differs, and the one
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Both examples for each function are the same call; only the lambda's body differs, and the one
                   that does not need the bound is what says the traversal was never the problem."
                 }
             )

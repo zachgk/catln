@@ -148,8 +148,7 @@ Prgm
     , prgmAnnots =
         [ Value /#noCore
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "A call written as a pattern is not a declaration of the function it calls.
                 An arm may match a call rather than a value: [describe] below matches an [mmap] over a [Box], which
                 is the shape of an arm of [/Catln/Doc/dshowCall] giving a call a display of its own. The call
@@ -163,18 +162,15 @@ Prgm
                 read rather than a standard library." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "What an example is printed as. A [Maybe] is shown as itself, which is all this page needs." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "Matches a call of [mmap] over a [Box], not the value one evaluates to." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "The call the pattern above used to break. An example rather than a definition, since examples are
                 solved last against every object of the page, which is how the pattern reaches it." }
             )

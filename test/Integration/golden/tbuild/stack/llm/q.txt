@@ -372,8 +372,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking about a page from the page
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Asking about a page from the page
                   A question about a page can be written on the page itself, as `q> ` and then the question. It
                   is a [#q], and is asked by `catln process`, which writes the reply under the question as the
                   `>>>` lines of its [result], the way `catln test --update` writes what a `> expr` prints. A

@@ -875,8 +875,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
                   parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
                   over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
                   its fields. Before the parameterised `isa` edge compared type parameters
@@ -889,8 +891,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
                   call stored in a field of the arm's constructed value. The arm is built at eval time against the
                   runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
                   binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and

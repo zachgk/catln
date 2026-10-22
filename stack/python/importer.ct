@@ -15,7 +15,7 @@ module(Python)
     This page writes `import hsrawprgm()`, because that is where [/Catln/ImportResult] and the raw
     program inside it are declared. No page of @stack/core/@ may write that import — see
     @core/hsprgm.ct@, which says why — and this page is not one of them.
-  parsePython(path -> String) -> /Catln/ImportResult..
+  parsePython(path -> /Catln/CStr) -> /Catln/ImportResult..
     # [parsePython] reads the Python module at [path] as the program it declares: its functions and
       classes as definitions, its own imports dropped, and @python/builtins.ct@ imported for the
       built-ins its expressions are rewritten into.

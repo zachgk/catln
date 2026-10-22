@@ -20,8 +20,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
-                                    ( Value /msg -> ∀/Data/String = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> /Data/Primitive/Integer = /step
                                             ( Value /count -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 1 }
@@ -193,8 +193,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A parameter named the same as a function the program imports.
                 [step] takes a parameter called [count], and @core/list.ct@ declares a function [/Data/List/count].
                 Inside [step], `count` is the parameter: a definition's own arguments shadow every other name they

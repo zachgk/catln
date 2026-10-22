@@ -221,8 +221,7 @@ Prgm
     , prgmAnnots =
         [ Value /#noCore
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "An argument refined by a value predicate, passed a value the predicate is decided on.
                 [Nat_isZ] is [Nat | $this.isZ == True]. The call [f(a= Z)] is typed with its argument met with
                 the refinement, [Z | $this.isZ == True], and building it asks whether a [Z] is within that: the

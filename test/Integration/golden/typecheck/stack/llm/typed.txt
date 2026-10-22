@@ -41,12 +41,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/typedDecls( Value /decls -> ∀/Data/String ) | /isEmpty( Value /this -> TVArg /decls = Value /decls ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        [ /Llm/typedDecls( Value /decls -> ∀/Data/String ) | /isEmpty( Value /this -> TVArg /decls = Value /decls ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Llm/typedDecls( Value /decls -> ∀/Data/String ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = " It is declared as:
                                 " }
                             )( Value /r -> TVArg /decls = Value /decls )
@@ -149,8 +147,16 @@ Prgm
                             ( Value /value -> /Llm/tlcm
                                 ( /type=∀/Catln/Type
                                 , /input=∀/Data/String
-                                , /source=∀/Data/String
-                                ) = /Llm/tlcm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                                , /source=
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                ) = /Llm/tlcm( Value /input -> ∀/Data/String )( Value /type -> ∀/Catln/Type )
+                                ( Value /source ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                )
                             )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
@@ -214,8 +220,7 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /input = Value /input )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /r -> /Data/String/Text.. = CStr
                                             { csValue = "
 
                                             Answer with only a Catln expression of type " }
@@ -223,8 +228,7 @@ Prgm
                                     )
                                     ( Value /r -> ∀/Data/String = /Catln/typeText( Value /type -> TVArg /type = Value /type ) )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ", with nothing before or after it." }
                                 )
                             )
@@ -241,7 +245,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                        [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )
+                            ( Value /source ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            )
                             ( Value /$6d0af4-arg -> /Context
                                 [ /V=∀/Data/Result
                                     [ /T=∀/Data/String
@@ -287,8 +296,7 @@ Prgm
                                 , /cause=∀/Catln/ParseExprErr
                                 ) = /Llm/LlmErr/NotOf( Value /reply -> ∀/Data/String )( Value /cause -> ∀/Catln/ParseExprErr )
                             ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "the reply is not an answer: " }
                             )( Value /r -> TVArg /reply = Value /reply )
                         , /Llm/TypedExample/answerErrShown( Value /e -> ∀/Llm/LlmErr ) -> ∀/Data/String = /msg( Value /this -> TVArg /e = Value /e )
@@ -312,7 +320,28 @@ Prgm
                         [ /Llm/typedReply
                             ( Value /reply -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail( Value /err -> ∀/Llm/LlmErr ) )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=$/E ) = /Data/Result/Fail( Value /err -> TVArg /err = Value /err )
                         , /Llm/typedReply
-                            ( Value /reply -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok( Value /value -> ∀/Data/String ) )( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String ) ->
+                            ( Value /reply -> /Data/Result/Ok
+                                [ /T=
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                ]
+                                ( /value=
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                ) = /Data/Result/Ok
+                                ( Value /value ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                )
+                            )( Value /type -> ∀/Catln/Type )
+                            ( Value /source ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            ) ->
                             ( /Data/Result/Fail
                                 [ /E=/Llm/LlmErr/NotOf
                                     ( /reply=∀/Data/String
@@ -392,19 +421,15 @@ Prgm
                                 )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /text = Value /text )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ", sure: " }
                                 )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString( Value /this -> TVArg /sure = Value /sure )
-                            )
+                            ( Value /r -> /Data/String/Text.. = /Data/toString( Value /this -> TVArg /sure = Value /sure ) )
                         , /Llm/TypedExample/answerShown
                             ( Value /r -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail( Value /err -> ∀/Llm/LlmErr ) ) -> ∀/Data/String = /Llm/TypedExample/answerErrShown( Value /e -> TVArg /err = Value /err )
                         , /Llm/TypedExample/answerShown
-                            ( Value /r -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "something other than an answer" }
                         ]
                     }
@@ -426,8 +451,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Asking for a value
                 [tllm] and [tlcm] ask as [llm] and [lcm] do, but for a value of a type rather than for text.
                 The model is told to answer with a Catln expression of the type, and shown the declarations of
@@ -439,35 +466,45 @@ Prgm
                 `tllm(input= "...", type= /Catln/typeOf[$T -> Point..])`." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Asking for a value, without asking
                 What [/Llm/tllm] asks and what it makes of the reply are checked here without asking a model.
                 [Answer] is the type asked for, a type of this page." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The model is told what to answer with, and shown what an [Answer] is." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Llm/typedPrompt
-                ( Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "Is the sky blue?" }
                 )
                 ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Is the sky blue?
 
                 Answer with only a Catln expression of type /Llm/TypedExample/Answer, with nothing before or after it. It is declared as:
                 data(Answer(text -> String, sure -> Boolean))" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A reply which is an [Answer] is answered with it, and one which is not with why." }
             )
         , /Catln/#print
@@ -485,21 +522,27 @@ Prgm
                             )
                         ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
                     ) = /Llm/typedValue
-                    ( Value /reply -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /reply ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "Answer(text= "yes", sure= True)" }
                     )
                     ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
-                        ( Value /input -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( Value /input ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "Answer(text= "yes", sure= True)" }
                         )
                         ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "yes, sure: True" }
             )
         , /Catln/#print
@@ -517,66 +560,72 @@ Prgm
                             )
                         ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
                     ) = /Llm/typedValue
-                    ( Value /reply -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /reply ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "yes" }
                     )
                     ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExpr
-                        ( Value /input -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( Value /input ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "yes" }
                         )
                         ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "the reply is not an answer: yes" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "No reply at all is passed on as it was." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Llm/TypedExample/answerShown
                 ( Value /r -> /Data/Result/Fail
                     [ /E=/Llm/LlmErr/Unset
-                        ( /variable=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                     ]
                     ( /err=/Llm/LlmErr/Unset
-                        ( /variable=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
+                        ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                     ) = /Llm/typedReply
                     ( Value /reply -> /Data/Result/Fail
                         ( /err=/Llm/LlmErr/Unset
-                            ( /variable=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            )
+                            ( /variable=( /Data/String/Text.. + /Catln/CStr ) )
                         ) = /Data/Result/Fail
                         ( Value /err -> /Llm/LlmErr/Unset
-                            ( /variable=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ) = /Llm/LlmErr/Unset
-                            ( Value /variable -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( /variable=( /Data/String/Text.. + /Catln/CStr ) ) = /Llm/LlmErr/Unset
+                            ( Value /variable ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "OPENAI_MODEL" }
                             )
                         )
                     )
                     ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Llm/TypedExample/Answer.. ] )
-                    ( Value /source -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /source ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "" }
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "OPENAI_MODEL is not set, so there is no model to ask" }
             )
         ]

@@ -184,7 +184,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/parseExprIn( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] ]
+                        [ /Catln/parseExprIn( Value input -> /Catln/CStr )( Value type -> ∀/Catln/Type )( Value source -> /Catln/CStr ) -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

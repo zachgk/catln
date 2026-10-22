@@ -32,6 +32,7 @@ import           Data.List           (elemIndex, intercalate, isInfixOf, nub,
 import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe, mapMaybe)
+import qualified Data.Text           as T
 import qualified Data.Text.Lazy      as TL
 import           Eval.Common
 import           GHC.Generics        (Generic)
@@ -52,6 +53,7 @@ import           Text.Printf
 import           TypeCheck.Common    (InstrumentResults, VPrgm,
                                       filterTraceConstrain, flipTraceConstrain,
                                       lookupTraceResult)
+import           TypeCheck.Partition (typeRefNames)
 import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
@@ -119,7 +121,7 @@ filterProgram :: EPrim
 filterProgram = EEnvPrim "filterProgram" prim
   where
     prim Env{evTbEnv=TBEnv{tbPrgm}} args = case H.lookup filterProgramNameArg args of
-      Just (StrVal name) -> Right $ encodeJson $ filterByType name tbPrgm
+      Just (AnyStrVal name) -> Right $ encodeJson $ filterByType name tbPrgm
       Just v -> Left $ printf "filterProgram was given %s, which is not a String type name" (show v)
       Nothing -> Left $ printf "filterProgram has no %s argument, only %s" filterProgramNameArg (show $ sort $ H.keys args)
 
@@ -129,7 +131,10 @@ filterProgram = EEnvPrim "filterProgram" prim
 filterByType :: (ExprClass e, MetaDat m, Show m, Show (e m)) => String -> Prgm e m -> Prgm e m
 filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGraph' []
   where
-    objMap' = filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap
+    -- A declaration written from a set of objects is under no name, so it is kept where the type it
+    -- is written from names the one asked for (@(_ -> String) -> String\/Text..@ for @String@).
+    objMap' = (filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap){omDecls = filter namesIt (omDecls objMap)}
+    namesIt oa = any (relativeNameMatches (mkName name)) (typeRefNames (getMetaType (getExprMeta (oaObjExpr oa))))
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches (mkName name) (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
 -- | The argument of @/Catln/Doc/typeInferPnt@ naming which point of the trace to report on.
@@ -161,7 +166,7 @@ typeInfer = EEnvPrim "typeInfer" prim
 --
 -- It hands the whole answer to its caller rather than the value inside it, because the notes a
 -- typecheck left are part of what a reader of this is asking about.
-withTypeInfer :: Env -> (CRes (VPrgm, InstrumentResults) -> Either String String) -> Either String Val
+withTypeInfer :: Env -> (CRes (VPrgm, InstrumentResults) -> Either String T.Text) -> Either String Val
 withTypeInfer env render = case evService env of
   Nothing -> Left noService
   Just svc -> case scopedTo (esScope svc) "type inference to report on" of
@@ -216,7 +221,7 @@ debugger :: EPrim
 debugger = EEnvPrim "debugger" prim
   where
     prim env args = case H.lookup debuggerFunArg args of
-      Just (StrVal fun) -> do
+      Just (AnyStrVal fun) -> do
         instruments <- debuggerInstruments "debugger" args
         askRun env "program to run" (\svc prgmName -> esRunFun svc prgmName fun instruments)
       Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
@@ -249,7 +254,7 @@ debugExpr :: EPrim
 debugExpr = EEnvPrim "debugExpr" prim
   where
     prim env args = case H.lookup debugExprArg args of
-      Just (StrVal expr) -> do
+      Just (AnyStrVal expr) -> do
         instruments <- debuggerInstruments "debugExpr" args
         askRun env "expression to run" (\svc prgmName -> esRunExpr svc prgmName expr instruments)
       Just v -> Left $ printf "debugExpr was given %s, which is not a String expression" (show v)
@@ -635,14 +640,19 @@ scopedTo Nothing what = Left $ "This evaluation is not scoped to a single page, 
 -- The ask may be run more than once, which 'unsafePerformIO' does not promise not to do. That is
 -- harmless for all of them: building is idempotent, a test run is kept on its page, and a debugger's
 -- run is mocked. Nothing here writes anything a second run would double.
-askService :: IO (Either String String) -> Either String Val
+--
+-- The text is strict, so forcing it to WHNF is forcing all of it, and it is answered packed
+-- ('CStrVal'): a listing of a whole program is tens of megabytes of JSON, which as a list of
+-- characters was a cons cell per character and ran the doc server out of memory.
+askService :: IO (Either String T.Text) -> Either String Val
 askService ask = case unsafePerformIO ask of
   Left err   -> Left err
-  Right text -> length text `seq` Right (StrVal text)
+  Right text -> text `seq` Right (CStrVal text)
 
 encodeJson :: (ToJSON p) => p -> Val
-encodeJson = StrVal . encodeJsonText
+encodeJson = CStrVal . encodeJsonText
 
--- | A display's data as the JSON text it is carried as.
-encodeJsonText :: (ToJSON p) => p -> String
-encodeJsonText = TL.unpack . encodeToLazyText
+-- | A display's data as the JSON text it is carried as: built as text and kept as text, never a
+-- 'String' on the way.
+encodeJsonText :: (ToJSON p) => p -> T.Text
+encodeJsonText = TL.toStrict . encodeToLazyText

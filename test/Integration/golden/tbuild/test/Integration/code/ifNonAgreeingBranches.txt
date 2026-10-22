@@ -52,8 +52,7 @@ Prgm
                             ,
                                 ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=/Data/String/Text..
                                     ) + /greet.$c213d7
                                     ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                     , /name=∀/Data/String
@@ -79,10 +78,9 @@ Prgm
                                     , fromList []
                                     , []
                                     )
-                                , /operator++
+                                , /operator++[ /T=∀/Data/String ]
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=/Data/String/Text..
                                     )
                                 , []
                                 )
@@ -107,15 +105,14 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /l=/Data/String/Text..
                                 )
                             , []
                             ) =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Dear "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "Dear " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -132,15 +129,14 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /l=/Data/String/Text..
                                 )
                             , []
                             ) =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Hi "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "Hi " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -161,8 +157,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An [if] whose two branches produce different values is just an [if], not a disagreement.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "An [if] whose two branches produce different values is just an [if], not a disagreement.
                   This is a regression test for a gap where such an [if] derived an overlap-agreement test pairing
                   its two branches against each other and reporting that they disagree — asserting, in effect, that
                   the [if] must not branch.
@@ -181,8 +179,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "That no agreement test is derived for [greet] is asserted by the test engine's own tests
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "That no agreement test is derived for [greet] is asserted by the test engine's own tests
                   (@test/Eval/QuantificationTests.hs@); what is held here is that the branch is taken."
                 }
             )

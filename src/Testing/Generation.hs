@@ -1012,7 +1012,11 @@ genVal :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Gen Val
 genVal typeEnv pt0
   | pt == intLeaf   = IntVal <$> HG.integral (linear (-1000) 1000)
   | pt == floatLeaf = FloatVal <$> HG.double (linearFrac (-1000) 1000)
-  | pt == strLeaf   = StrVal <$> HG.string (linear 0 20) HG.unicode
+  -- A string by its name, however its fields are spelled: a member read out of the @String@ class
+  -- (@String\/Text..@) leaves its characters' type to the declaration, and generated field by field
+  -- it would be a list of anything rather than of characters.
+  | ptName pt == ptName strLeaf  = textVal <$> HG.string (linear 0 20) HG.unicode
+  | ptName pt == ptName cstrLeaf = StrVal <$> HG.string (linear 0 20) HG.unicode
   | pt == charLeaf  = CharVal <$> HG.unicode
   | nameStr (ptName pt) == truePrim  = pure $ TupleVal truePrim H.empty
   | nameStr (ptName pt) == falsePrim = pure $ TupleVal falsePrim H.empty

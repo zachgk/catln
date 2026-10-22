@@ -56,9 +56,7 @@ Prgm
                                     { eaaArg = Value /page -> /Catln/RawPrgm.. =
                                         ( /Catln/pageAt
                                             ( EAppArg
-                                                { eaaArg = Value /source -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/test/Integration/code/artifacts/lcm/page.ct"
-                                                }
+                                                { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/test/Integration/code/artifacts/lcm/page.ct" }
                                             ) ↦ /Catln/RawPrgm..
                                         )
                                     }
@@ -87,15 +85,14 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /l=/Data/String/Text..
                                 )
                             , []
                             ) =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hint: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "hint: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -142,8 +139,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A page for lcmPrompt.ct to show as [/Llm/lcm] would show it to a model: as it was written, with
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A page for lcmPrompt.ct to show as [/Llm/lcm] would show it to a model: as it was written, with
                   its annotations shown and what is wrong with it noted where it is wrong. It is written to be
                   wrong in each way a prompt notes, so it is data of that test rather than a fixture of the suite:
                   a fixture's prints are its tests, and these are written to fail."
@@ -161,8 +160,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A print whose golden is no longer what it prints is shown with the golden it was written with,
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A print whose golden is no longer what it prints is shown with the golden it was written with,
                   and noted as failing."
                 }
             )
@@ -177,14 +178,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "5"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An annotation that fails is noted with what it failed with. This one asks for the page to be
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "An annotation that fails is noted with what it failed with. This one asks for the page to be
                   shown while it is being shown."
                 }
             )
@@ -193,17 +198,17 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/String =
                     ( /Llm/lcmPrompt
                         ( EAppArg
-                            { eaaArg = Value /input -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "And again?"
+                            { eaaArg = Value /input ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = "And again?"
                             }
                         )
                         ( EAppArg
                             { eaaArg = Value /page -> /Catln/RawPrgm.. =
                                 ( /Catln/pageAt
                                     ( EAppArg
-                                        { eaaArg = Value /source -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/repo/dir/test/Integration/code/artifacts/lcm/page.ct"
-                                        }
+                                        { eaaArg = Value /source -> /Catln/CStr = "/repo/dir/test/Integration/code/artifacts/lcm/page.ct" }
                                     ) ↦ /Catln/RawPrgm..
                                 )
                             }
@@ -213,14 +218,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A definition the compiler cannot build is noted with what the compiler said."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A definition the compiler cannot build is noted with what the compiler said."
                 }
             )
         , /#hint
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "double never fails"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "double never fails"
                 }
             )
         ]

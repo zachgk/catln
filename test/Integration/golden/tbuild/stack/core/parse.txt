@@ -499,11 +499,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/msg
-                            ( EAppArg { eaaArg = Value /this -> /Data/IntegerParseErr/NoText.. } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "there is no number in an empty string"
+                            ( EAppArg { eaaArg = Value /this -> /Data/IntegerParseErr/NoText.. } ) -> ( /Data/String/Text.. + /Catln/CStr ) = "there is no number in an empty string"
                         , /Data/msg
-                            ( EAppArg { eaaArg = Value /this -> /Data/IntegerParseErr/NoDigits.. } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a sign has no digits after it"
+                            ( EAppArg { eaaArg = Value /this -> /Data/IntegerParseErr/NoDigits.. } ) -> ( /Data/String/Text.. + /Catln/CStr ) = "a sign has no digits after it"
                         , /Data/msg
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/IntegerParseErr/NotADigit
@@ -524,43 +522,36 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> ∀/Data/String =
+                                                            { eaaArg = Value /l -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> ∀/Data/String =
+                                                                        { eaaArg = Value /l -> /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                                                                             ( /operator++
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "'"
+                                                                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                                        ( "'" ↦ /Data/String/Text.. )
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /r -> /Data/String/Text
-                                                                                        ( /chars=/Data/List/Cons[ /T=/Data/Char ]
-                                                                                            ( /head=/Data/Char
-                                                                                            , /tail=/Data/List/Nil
-                                                                                            )
-                                                                                        ) =
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
                                                                                         ( /Data/toString
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
-                                                                                            ) ↦ /Data/String/Text
-                                                                                            ( /chars=/Data/List/Cons[ /T=/Data/Char ]
-                                                                                                ( /head=/Data/Char
-                                                                                                , /tail=/Data/List/Nil
-                                                                                                )
-                                                                                            )
+                                                                                            ) ↦ /Data/String/Text..
                                                                                         )
                                                                                     }
-                                                                                ) ↦ ∀/Data/String
+                                                                                ) ↦ /Data/String/Text..
                                                                             )
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "' at "
+                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                            ( "' at " ↦ /Data/String/Text.. )
                                                                         }
-                                                                    ) ↦ ∀/Data/String
+                                                                    ) ↦ /Data/String/Text..
                                                                 )
                                                             }
                                                         )
@@ -577,8 +568,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a digit of base "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( " is not a digit of base " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -611,8 +602,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a base from 2 to 36"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " is not a base from 2 to 36" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -927,16 +918,20 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Reading numbers
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Reading numbers
                   A number is read from a [String] as a [Result]: the number written there, or the
                   [IntegerParseErr] saying why there is none."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[IntegerParseErr] is why a string is no whole number: it holds nothing ([NoText]), it is a
                   sign with no digits after it ([NoDigits]), the character [c] at position [at] (counting from
                   0) is no digit of [base] ([NotADigit]), or [base] is no base a number can be written in, 2
                   to 36 ([BadBase])."
@@ -952,8 +947,10 @@ Prgm
                     ) =
                     ( /Data/parseInteger
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = "42"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -965,8 +962,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "42"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "42"
                 }
             )
         , /Catln/#print
@@ -979,8 +978,10 @@ Prgm
                     ) =
                     ( /Data/parseInteger
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-17"
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = "-17"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -992,8 +993,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-17"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "-17"
                 }
             )
         , /Catln/#print
@@ -1009,8 +1012,10 @@ Prgm
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 16 }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "ff"
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = "ff"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -1022,8 +1027,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "255"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "255"
                 }
             )
         , /Catln/#print
@@ -1036,8 +1043,10 @@ Prgm
                     ) =
                     ( /Data/parseInteger
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12a"
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = "12a"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -1049,8 +1058,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 'a' at 2 is not a digit of base 10"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 'a' at 2 is not a digit of base 10"
                 }
             )
         , /Catln/#print
@@ -1063,8 +1074,10 @@ Prgm
                     ) =
                     ( /Data/parseInteger
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = "-"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -1076,8 +1089,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: a sign has no digits after it"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: a sign has no digits after it"
                 }
             )
         , /Catln/#print
@@ -1090,8 +1105,10 @@ Prgm
                     ) =
                     ( /Data/parseInteger
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = ""
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -1103,8 +1120,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: there is no number in an empty string"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: there is no number in an empty string"
                 }
             )
         , /Catln/#print
@@ -1120,8 +1139,10 @@ Prgm
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 1 }
                         )
                         ( EAppArg
-                            { eaaArg = Value /this -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12"
+                            { eaaArg = Value /this ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = "12"
                             }
                         ) ↦
                         ( TopType | PredClass /Data/Result
@@ -1133,8 +1154,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: 1 is not a base from 2 to 36"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: 1 is not a base from 2 to 36"
                 }
             )
         ]

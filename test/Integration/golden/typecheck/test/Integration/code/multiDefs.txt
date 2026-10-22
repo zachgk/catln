@@ -41,8 +41,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests multiple definitions of the same name distinguished by their RETURN type. Both `mdbl`
                 definitions take the same input (`v -> Integer`) but return different types: one returns
                 `Integer`, the other `Maybe[Integer]`. The use site `mdbl(v= 1) + 1` demands an `Integer`

@@ -7,7 +7,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value= /System/env( Value name -> ∀/Data/String ) )
+                            ( Value /value= /System/env( Value name -> /Catln/CStr ) )
                             ( Value /ctx= /( Value io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context

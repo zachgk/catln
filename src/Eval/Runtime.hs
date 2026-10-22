@@ -188,6 +188,26 @@ charFromCode = EPrim "charFromCode" prim
       Just (IntVal n) -> Left $ printf "%d is not a Unicode code point" n
       _ -> Left $ printf "Invalid charFromCode signature with args %s" (show args)
 
+-- | A @\/Catln\/CStr@ as the @\/Data\/String\/Text@ holding its characters: the arrow by which a
+-- packed string is one Catln can take apart. It is the @\/Catln\/CStr@ member's arrow to what every
+-- @String@ converts to (@(_ -> String) -> String\/Text..@ in @stack\/core\/string.ct@).
+cstrToText :: EPrim
+cstrToText = EPrim "cstrToText" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (StrVal s) -> Right $ textVal s
+      v               -> Left $ printf "cstrToText was given %s, which is not a %s" (show v) ctCStr
+
+-- | A @\/Data\/String\/Text@ as the @\/Catln\/CStr@ holding its characters packed, which is what a
+-- runtime primitive taking a string is declared to take. It is given the text's one argument, the
+-- list of its characters.
+textToCStr :: EPrim
+textToCStr = EPrim "textToCStr" prim
+  where
+    prim args = case valString (TupleVal ctStringText args) of
+      Just s  -> Right $ StrVal s
+      Nothing -> Left $ printf "textToCStr was given %s, which is not the characters of a %s" (show args) ctStringText
+
 intMax :: EPrim
 intMax = liftIntOp "Max" max
 
@@ -378,7 +398,7 @@ callerSource = ("callerSource", Right (MacroFunction macroBuild))
       case maybeGetSingleton (getExprType input) of
         Nothing -> fail $ printf "%s asks for the page it is written in, but it is not a call of one shape to add the page to: %s" (show input) (show $ getExprType input)
         Just _ -> do
-          let withSource e = e `eApplyOAs` [mkIOObjArr (emptyMetaT strType) (partialKey (mkName "/source")) (valToEExpr (StrVal source))]
+          let withSource e = e `eApplyOAs` [mkIOObjArr (emptyMetaT cstrType) (partialKey (mkName "/source")) (valToEExpr (StrVal source))]
           return $ Right $ fromMaybe (withSource input) (inContextCall withSource input)
 
 -- | The type written as the type argument of @\/Catln\/typeOf[$T -> ...]@, as a value: the
@@ -442,6 +462,8 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatToBool
             , charCode
             , charFromCode
+            , cstrToText
+            , textToCStr
             , intMax
             , floatMax
             , intMin

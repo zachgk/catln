@@ -23,8 +23,7 @@ Prgm
                             ) = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Llm/showPage( Value /page -> TVArg /page = Value /page ) )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = "
                                     " }
                                 )
@@ -166,8 +165,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Asking about the program it is asked from
                 [lcm], a large code model, asks [llm] with the program it is written in. The page the call is
                 written on is put before what it asks, as it was written and with each of its annotations shown
@@ -179,15 +180,19 @@ Prgm
                 `lcm(input= ..., page= ...)` where it is written ([/Catln/pageAt])." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[lcm] calls [lcmPrompt] with the page it was handed, as here. A page with nothing written on
                 it is shown as nothing, so what is asked is the question alone." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Llm/lcmPrompt
-                ( Value /input -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /input ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "What is on this page?" }
                 )
                 ( Value /page -> /Catln/RawPrgm
@@ -196,8 +201,10 @@ Prgm
                     ) = /Catln/RawPrgm( Value /imports -> /Data/List/Nil = Value /Data/List/Nil )( Value /statements -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "
                 What is on this page?" }
             )

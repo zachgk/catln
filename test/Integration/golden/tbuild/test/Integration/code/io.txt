@@ -30,14 +30,9 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println
-                                                    ( /msg=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ) = /Catln/println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hello world"
-                                                        }
+                                                        { eaaArg = Value /msg -> /Catln/CStr = "hello world" }
                                                     )
                                                 }
                                             )

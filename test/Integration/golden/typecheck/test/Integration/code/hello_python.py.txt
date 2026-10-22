@@ -93,8 +93,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
-                                    ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
+                                    ( Value /msg -> /Catln/CStr = /toString( Value /this -> TVArg /msg = Value /msg ) )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
@@ -123,8 +123,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
-                                    ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
+                                    ( Value /msg -> /Catln/CStr = /toString( Value /this -> TVArg /msg = Value /msg ) )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
@@ -152,14 +152,12 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /toString
-                                        ( Value /this -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
+                                    ( Value /msg -> /Catln/CStr = /toString
+                                        ( Value /this ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = """" }
                                         )
                                     )
@@ -307,8 +305,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /println
-                                    ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
+                                    ( Value /msg -> /Catln/CStr = /toString( Value /this -> TVArg /msg = Value /msg ) )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
                             )

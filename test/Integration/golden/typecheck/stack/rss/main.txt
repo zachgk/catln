@@ -20,16 +20,20 @@ Prgm
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
                                         ( Value /l -> ∀/Data/String = /operator++
-                                            ( Value /l -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /l ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "<p>" }
                                             )
                                             ( Value /r -> ∀/Data/String = /Catln/Doc/dshow.titleOf( Value /title -> TVArg /title = Value /title )( Value /link -> TVArg /link = Value /link ) )
                                         )
                                         ( Value /r -> ∀/Data/String = /Catln/Doc/dshow.publishedOf( Value /published -> TVArg /published = Value /published ) )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "</p>" }
                                     )
                                 )( Value /r -> TVArg /description = Value /description )
@@ -46,21 +50,26 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow.publishedOf( Value /published -> ∀/Data/String ) | /operator==( Value /l -> TVArg /published = Value /published )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" }
-                            ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Catln/Doc/dshow.publishedOf( Value /published -> ∀/Data/String ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " <small>" }
                                 )( Value /r -> TVArg /published = Value /published )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "</small>" }
                             )
                         ]
@@ -85,37 +94,49 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow.titleOf( Value /title -> ∀/Data/String )( Value /link -> ∀/Data/String ) | /operator==( Value /l -> TVArg /link = Value /link )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" }
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "<strong>" }
                                 )( Value /r -> TVArg /title = Value /title )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "</strong>" }
                             )
                         , /Catln/Doc/dshow.titleOf( Value /title -> ∀/Data/String )( Value /link -> ∀/Data/String ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "<strong><a href="" }
                                         )( Value /r -> TVArg /link = Value /link )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "">" }
                                     )
                                 )( Value /r -> TVArg /title = Value /title )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "</a></strong>" }
                             )
                         ]
@@ -132,8 +153,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# RSS
                 An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
                 is a page and each checkbox of it is a task declared on that page. Importing a feed writes the

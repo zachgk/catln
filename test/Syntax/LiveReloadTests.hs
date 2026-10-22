@@ -30,6 +30,7 @@ import qualified Data.HashSet           as S
 import           Data.IORef             (modifyIORef', newIORef, readIORef)
 import           Data.List              (isPrefixOf, sort)
 import           Data.Maybe             (isJust, isNothing, listToMaybe)
+import qualified Data.Text              as T
 import           Data.Time.Calendar     (fromGregorian)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime, utctDay)
 import           Eval.Common            (AnnotAsks (..), SSF (..), Val)
@@ -355,8 +356,9 @@ testAnnotsFollowTheirAsks = testCase "a page's annotations are dropped when a pa
 testAskServiceForcesItsAnswer :: TestTree
 testAskServiceForcesItsAnswer = testCase "a display's ask is finished before its value is handed back" $ do
   -- An answer whose tail cannot be produced. Forced where it is asked, this raises here; left lazy,
-  -- an intact value is handed back and raises whenever something later reads it.
-  let asked = askService $ return $ Right ("ok" ++ error "the answer was not forced where it was asked")
+  -- an intact value is handed back and raises whenever something later reads it. The answer is
+  -- strict text, which is forced whole or not at all, so its tail is reached by forcing it at all.
+  let asked = askService $ return $ Right (T.pack ("ok" ++ error "the answer was not forced where it was asked"))
   forced <- try (evaluate asked) :: IO (Either SomeException (Either String Val))
   case forced of
     Left _  -> return ()

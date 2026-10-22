@@ -7,8 +7,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Asking a language model
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Asking a language model
                   [llm] sends a prompt to a language model and answers with its reply. It speaks the chat
                   completions API that OpenAI serves and that most other model servers copy, so where it sends is
                   configured rather than fixed, by environment variables:

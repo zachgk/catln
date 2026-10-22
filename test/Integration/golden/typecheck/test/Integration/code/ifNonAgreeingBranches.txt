@@ -36,8 +36,7 @@ Prgm
                             ,
                                 ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=/Data/String/Text..
                                     ) + /greet.$c213d7
                                     ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                     , /name=∀/Data/String
@@ -64,13 +63,11 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /l=/Data/String/Text..
                                 )
                             , []
                             ) = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "Dear " }
                             )( Value /r -> TVArg /name = Value /name )
                         , /greet.$c213d7( Value /name -> ∀/Data/String )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) -> UnionType
@@ -81,13 +78,11 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /l=/Data/String/Text..
                                 )
                             , []
                             ) = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "Hi " }
                             )( Value /r -> TVArg /name = Value /name )
                         ]
@@ -103,8 +98,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "An [if] whose two branches produce different values is just an [if], not a disagreement.
                 This is a regression test for a gap where such an [if] derived an overlap-agreement test pairing
                 its two branches against each other and reporting that they disagree — asserting, in effect, that
@@ -122,8 +119,10 @@ Prgm
                 preprocessors putting a pattern somewhere it could not constrain anything." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "That no agreement test is derived for [greet] is asserted by the test engine's own tests
                 (@test/Eval/QuantificationTests.hs@); what is held here is that the branch is taken." }
             )

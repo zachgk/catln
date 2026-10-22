@@ -55,8 +55,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Repro: the EXPLICIT-parameter twin of boxUnwrap — a declared [$U] referenced inside a
                 nested application (Box[$T -> $U]) must bind from the argument's content the same way the
                 implicit $_T spelling does. unwrap(b= Box(v= 5)) should reduce to 5 at eval, not leak the

@@ -11,31 +11,23 @@ Prgm
                         [ Value /main -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
                                 [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Nil
                                     )
@@ -43,78 +35,70 @@ Prgm
                             ) = /Catln/CatlnResult
                             ( Value /files -> /Data/List/Cons
                                 [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Nil
                                     )
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Catln/BuildFile
-                                    ( /path=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /contents=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=( /Data/String/Text.. + /Catln/CStr )
                                     ) = /Catln/BuildFile
-                                    ( Value /path -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /path ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "index.html" }
                                     )
-                                    ( Value /contents -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /contents ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "<html><body>tree test</body></html>" }
                                     )
                                 )
                                 ( Value /tail -> /Data/List/Cons
                                     [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
                                     ( Value /head -> /Catln/BuildFile
-                                        ( /path=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /contents=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                                         ) = /Catln/BuildFile
-                                        ( Value /path -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /path ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "notes/deep.txt" }
                                         )
-                                        ( Value /contents -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /contents ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "under a directory" }
                                         )
                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -129,8 +113,10 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Tests a build result of more than one file.
                 A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
                 built at, so a build produces a directory of files rather than the single file it once could. The
@@ -141,31 +127,23 @@ Prgm
             ( Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons
                     [ /T=/Catln/BuildFile
-                        ( /path=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /contents=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                         )
                     ]
                     ( /head=/Catln/BuildFile
-                        ( /path=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /contents=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                        , /contents=( /Data/String/Text.. + /Catln/CStr )
                         )
                     , /tail=/Data/List/Cons
                         [ /T=/Catln/BuildFile
-                            ( /path=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /contents=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Catln/BuildFile
-                            ( /path=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /contents=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                            , /contents=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Nil
                         )

@@ -79,7 +79,7 @@ Prgm
                             , /ctx=( /io=/Catln/IO )..
                             )
                         , /ContextIn
-                            ( Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println( Value /msg -> ∀/Data/String ) )
+                            ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println( Value /msg -> /Catln/CStr ) )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
@@ -230,11 +230,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/msg( Value /this -> /Catln/InputErr/EndOfInput.. ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        [ /Data/msg( Value /this -> /Catln/InputErr/EndOfInput.. ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "the input has ended" }
-                        , /Data/msg( Value /this -> /Catln/InputErr/NoInput.. ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        , /Data/msg( Value /this -> /Catln/InputErr/NoInput.. ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "this run has no input to read" }
                         ]
                     }
@@ -368,35 +366,47 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Catln Core Compiling Types and Annotations" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## IO" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[InputErr] is why there is no line of input to read: the input has ended ([EndOfInput]), or
                 the run has no input to read at all, as a debugger's has not ([NoInput])." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Core Annotations
                 The core annotations are all of the annotations used by the compiler and the web docs program." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Build-in Type Macros" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Result Classes
                 What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
                 so declaring it here would make this file reach @core/list.ct@ — and this file is one every

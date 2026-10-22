@@ -83,8 +83,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Repro: a return-position element var must bind from a parameterized argument.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Repro: a return-position element var must bind from a parameterized argument.
                   unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType.
                   Kept in a module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]."
                 }

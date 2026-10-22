@@ -9,15 +9,15 @@ Prgm
                         [ /ContextIn
                             ( EAppArg
                                 { eaaArg = Value /value -> /Http/httpPost
-                                    ( /body=∀/Data/String
+                                    ( /body=/Catln/CStr
                                     , /headers=∀/Data/List[ /T=/Http/Header.. ]
-                                    , /url=∀/Data/String
+                                    , /url=/Catln/CStr
                                     ) = /Http/httpPost
-                                    ( EAppArg { eaaArg = Value /url -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /url -> /Catln/CStr } )
                                     ( EAppArg
                                         { eaaArg = Value /headers -> ∀/Data/List[ /T=/Http/Header.. ] }
                                     )
-                                    ( EAppArg { eaaArg = Value /body -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /body -> /Catln/CStr } )
                                 }
                             )
                             ( EAppArg
@@ -116,8 +116,8 @@ Prgm
                                                 { eaaArg = Value /l -> TVArg /url = ( Value /url ↦ TVArg /url ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not a URL a request can be sent to: "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( " is not a URL a request can be sent to: " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -145,8 +145,8 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the request to "
+                                                            { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                ( "the request to " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
@@ -156,8 +156,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " could not be made: "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( " could not be made: " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -193,8 +193,8 @@ Prgm
                                                                         { eaaArg = Value /l -> ∀/Data/String =
                                                                             ( /operator++
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the request to "
+                                                                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                                        ( "the request to " ↦ /Data/String/Text.. )
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
@@ -204,8 +204,8 @@ Prgm
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " answered with status "
+                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                            ( " answered with status " ↦ /Data/String/Text.. )
                                                                         }
                                                                     ) ↦ ∀/Data/String
                                                                 )
@@ -224,8 +224,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ": "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ": " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -246,8 +246,8 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the request to "
+                                                { eaaArg = Value /l -> /Data/String/Text.. =
+                                                    ( "the request to " ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
@@ -257,8 +257,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " was not sent, as this run reaches no network"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( " was not sent, as this run reaches no network" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -324,8 +324,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# HTTP
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# HTTP
                   Requests over the network. Sending one runs in an [/Catln/IO] context, because it reaches
                   outside the program: what comes back is decided by whatever answers, and sending it can change
                   what answers the next one. So a program can only send a request where it runs in an io.
@@ -335,8 +337,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[HttpErr] is why a request to [url] has no response: the URL is not one ([InvalidUrl]); the
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[HttpErr] is why a request to [url] has no response: the URL is not one ([InvalidUrl]); the
                   request could not be made, as where the host does not answer ([Unreachable]); the response's
                   status [code] is not a success, with the [body] it came with, which is where an API says what
                   the matter was ([Status]); or the run reaches no network, so it was not sent ([NotSent]).
@@ -347,40 +351,38 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Result/Fail
                     [ /E=/Http/HttpErr/Status
-                        ( /body=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /url=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /body=( /Data/String/Text.. + /Catln/CStr )
+                        , /url=( /Data/String/Text.. + /Catln/CStr )
                         , /code=/Data/Primitive/Integer
                         )
                     ]
                     ( /err=/Http/HttpErr/Status
-                        ( /body=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /url=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /body=( /Data/String/Text.. + /Catln/CStr )
+                        , /url=( /Data/String/Text.. + /Catln/CStr )
                         , /code=/Data/Primitive/Integer
                         )
                     ) = /Data/Result/Fail
                     ( EAppArg
                         { eaaArg = Value /err -> /Http/HttpErr/Status
-                            ( /body=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /url=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /body=( /Data/String/Text.. + /Catln/CStr )
+                            , /url=( /Data/String/Text.. + /Catln/CStr )
                             , /code=/Data/Primitive/Integer
                             ) = /Http/HttpErr/Status
                             ( EAppArg
-                                { eaaArg = Value /url -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "http://x.test"
+                                { eaaArg = Value /url ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = "http://x.test"
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = Value /code -> /Data/Primitive/Integer = 401 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /body -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no key"
+                                { eaaArg = Value /body ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = "no key"
                                 }
                             )
                         }
@@ -388,8 +390,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the request to http://x.test answered with status 401: no key"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: the request to http://x.test answered with status 401: no key"
                 }
             )
         ]

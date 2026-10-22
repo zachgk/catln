@@ -62,8 +62,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
                 call that has only some of its arguments, and the rest are applied later.
                   baseFunctionCall = callName(arg1=1, arg2=2)

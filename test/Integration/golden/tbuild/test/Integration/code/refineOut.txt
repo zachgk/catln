@@ -275,14 +275,12 @@ Prgm
         [ Value /#noCore
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A result type's condition written over [$out], the value the arrow produces, and over [$this],
-                  the value of the type it refines: both name the one value a predicate is decided on, so
-                  [Nat | $out.isZ == True] is [Nat_isZ] written in full. [h], [hFn] and [hThis] return a [Z], on
-                  which the predicate is decided true; [hRt] returns every [Nat], on which it is undecided, so
-                  its result is held to the refinement at runtime. Written without the core library, so the
-                  predicate bottoms out at arms rather than primitives."
-                }
+                { eaaArg = Value /text -> /Catln/CStr = "A result type's condition written over [$out], the value the arrow produces, and over [$this],
+                the value of the type it refines: both name the one value a predicate is decided on, so
+                [Nat | $out.isZ == True] is [Nat_isZ] written in full. [h], [hFn] and [hThis] return a [Z], on
+                which the predicate is decided true; [hRt] returns every [Nat], on which it is undecided, so
+                its result is held to the refinement at runtime. Written without the core library, so the
+                predicate bottoms out at arms rather than primitives." }
             )
         ]
     }

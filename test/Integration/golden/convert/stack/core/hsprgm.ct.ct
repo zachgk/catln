@@ -96,7 +96,7 @@ class(/Catln/EApp, [/Catln/EApp/EAppArg(arg -> /Catln/ObjArr..), /Catln/EApp/EAp
 class(/Catln/CGNode, [/Catln/CGNode/CGClass(sealed -> /Data/Primitive/Boolean.., partial -> /Catln/PartialType.., extends -> /Data/List..[$T -> /Catln/Type..], doc -> /Data/Maybe..[$T -> /Data/String..]), /Catln/CGNode/CGType])
   # What a class graph holds at a name: a class, or a type.
   # A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say.
-/Catln/prgmFor(/name -> /Data/String) -> /Catln/Prgm..
+/Catln/prgmFor(/name -> /Catln/CStr) -> /Catln/Prgm..
   # Answers with the program being compiled, narrowed to the things written under [name].
   # The program is the one the page asking was compiled as part of — that page and everything it reaches — so what is answered is what the asking program can see rather than everything there is.
   # It is narrowed by [name] rather than handed over whole because what a value costs to work with is what it holds, and the standard library is a large thing to be handed in order to read one definition of it.

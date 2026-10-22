@@ -183,8 +183,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests the [#debug] annotation, which records its value every time the definition it is written on
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests the [#debug] annotation, which records its value every time the definition it is written on
                   is evaluated.
                   Two of them on one definition, one on an argument and one on a computed expression. The computed
                   one is what checks that a record is placed by the annotation it was written as: an operator apply

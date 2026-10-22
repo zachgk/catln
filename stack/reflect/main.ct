@@ -51,7 +51,7 @@ module(Catln)
     #runtime("callerSource")
   parseExpr(input -> String, type -> /Catln/Type, source -> String)= parseExprIn(input= input, type= type, source= source)
 
-  parseExprIn(input -> String, type -> /Catln/Type, source -> String) -> /Data/Result[$E -> ParseExprErr]
+  parseExprIn(input -> /Catln/CStr, type -> /Catln/Type, source -> /Catln/CStr) -> /Data/Result[$E -> ParseExprErr]
     # [parseExprIn] is [parseExpr] of text written on the page read from [source].
     #runtime("parseExpr")
 module(Catln/ReflectExample)

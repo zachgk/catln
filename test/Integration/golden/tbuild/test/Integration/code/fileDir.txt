@@ -145,8 +145,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests importing a directory as the page of the files under it. The page declares the directory
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests importing a directory as the page of the files under it. The page declares the directory
                   under a name built from its path, as the files it holds at the paths they are at, sorted, with a
                   file under a subdirectory keeping the subdirectory in its path. A dotted entry is passed over, and
                   a file which is not text is left out and said to be. All of that is held by the goldens of the page

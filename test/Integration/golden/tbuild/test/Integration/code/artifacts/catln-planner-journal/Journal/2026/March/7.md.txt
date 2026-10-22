@@ -7,9 +7,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "10:00 Extended until the next block"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "10:00 Extended until the next block" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -277,9 +275,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "09:00 - 09:20 Written with its own end"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "09:00 - 09:20 Written with its own end" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -547,9 +543,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "10:20 The next block, with nothing after it"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "10:20 The next block, with nothing after it" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -817,9 +811,7 @@ Prgm
                             )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "23:50 Past midnight"
-                                }
+                                { eaaArg = Value /contents -> /Catln/CStr = "23:50 Past midnight" }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                             ( EAppArg
@@ -1097,9 +1089,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "7"
-                                }
+                                { eaaArg = Value /title -> /Catln/CStr = "7" }
                             )
                         ]
                     , omiRuntimeDecls = []

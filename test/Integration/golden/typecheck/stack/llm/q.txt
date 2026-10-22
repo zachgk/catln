@@ -208,8 +208,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Asking about a page from the page
                 A question about a page can be written on the page itself, as `q> ` and then the question. It
                 is a [#q], and is asked by `catln process`, which writes the reply under the question as the

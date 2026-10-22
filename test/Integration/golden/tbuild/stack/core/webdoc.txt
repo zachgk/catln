@@ -142,14 +142,14 @@ Prgm
                         , /Catln/Doc/dshow
                             ( EAppArg { eaaArg = Value /s -> /Catln/Doc/#search = Value /Catln/Doc/#search } ) ->
                             ( /Catln/Doc/Show/Search( /pages=∀/Data/String ) + /Catln/Doc/searchWebdocs
-                                ( /query=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
+                                ( /query=( /Data/String/Text.. + /Catln/CStr ) )
                             ) =
                             ( /Catln/Doc/searchWebdocs
                                 ( EAppArg
-                                    { eaaArg = Value /query -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                    { eaaArg = Value /query ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        ) = ""
                                     }
                                 ) ↦ /Catln/Doc/Show/Search( /pages=∀/Data/String )
                             )
@@ -439,7 +439,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/Doc/docPages.docPagesFor
-                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> ∀/Data/String
+                            ( EAppArg { eaaArg = Value /query -> /Catln/CStr } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -462,12 +462,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/docPages
-                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> /Catln/Doc/Show/DocPages( /pages=∀/Data/String ) = /Catln/Doc/Show/DocPages
+                            ( EAppArg
+                                { eaaArg = Value /query ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            ) -> /Catln/Doc/Show/DocPages( /pages=∀/Data/String ) = /Catln/Doc/Show/DocPages
                             ( EAppArg
                                 { eaaArg = Value /pages -> ∀/Data/String =
                                     ( /Catln/Doc/docPages.docPagesFor
                                         ( EAppArg
-                                            { eaaArg = Value /query -> TVArg /query = ( Value /query ↦ TVArg /query ) }
+                                            { eaaArg = Value /query -> /Catln/CStr = ( Value /query ↦ /Catln/CStr ) }
                                         ) ↦ ∀/Data/String
                                     )
                                 }
@@ -675,12 +681,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/searchWebdocs
-                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> /Catln/Doc/Show/Search( /pages=∀/Data/String ) = /Catln/Doc/Show/Search
+                            ( EAppArg
+                                { eaaArg = Value /query ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            ) -> /Catln/Doc/Show/Search( /pages=∀/Data/String ) = /Catln/Doc/Show/Search
                             ( EAppArg
                                 { eaaArg = Value /pages -> ∀/Data/String =
                                     ( /Catln/Doc/searchWebdocs.searchPagesFor
                                         ( EAppArg
-                                            { eaaArg = Value /query -> TVArg /query = ( Value /query ↦ TVArg /query ) }
+                                            { eaaArg = Value /query -> /Catln/CStr = ( Value /query ↦ /Catln/CStr ) }
                                         ) ↦ ∀/Data/String
                                     )
                                 }
@@ -763,7 +775,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/Doc/searchWebdocs.searchPagesFor
-                            ( EAppArg { eaaArg = Value /query -> ∀/Data/String } ) -> ∀/Data/String
+                            ( EAppArg { eaaArg = Value /query -> /Catln/CStr } ) -> ∀/Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -902,22 +914,28 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Catln WebDocs
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# Catln WebDocs
                   This provides common components and annotations used in Webdocs.
                   These include the ones"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Represents objects which can be shown in the webdocs."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Represents objects which can be shown in the webdocs."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Marks an annotation as one the webdocs offer as a page of its own, rather than one only written
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Marks an annotation as one the webdocs offer as a page of its own, rather than one only written
                   into a program beside the thing it is about. A reader is offered these by name — in the search
                   box, without having to know they exist — so what is marked here is what there is to find, and
                   an annotation added below is found by marking it and nothing else.
@@ -944,8 +962,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Represents calls which have a display of their own, as [DShow] represents values which do.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Represents calls which have a display of their own, as [DShow] represents values which do.
                   A call is not a value, and that is the whole reason this is a second class rather than more
                   members of the first. What [DShow] answers about is something the program computed and is
                   holding; what this answers about is the computing — which arguments went in, what came back,
@@ -958,8 +978,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
                   webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
                   print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
                   visualization like [Show/MD]) is still printable, but only [ToString] values are compared
@@ -968,8 +990,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Which compiler stage a [#listProgram] lists: the program before typechecking, after
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Which compiler stage a [#listProgram] lists: the program before typechecking, after
                   typechecking, or after tree building."
                 }
             )

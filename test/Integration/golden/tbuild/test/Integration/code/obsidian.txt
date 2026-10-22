@@ -141,9 +141,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A page written rather than read"
-                                }
+                                { eaaArg = Value /title -> /Catln/CStr = "A page written rather than read" }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -162,8 +160,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
                   depth, and the vault's own .obsidian configuration is not read as notes.
                   The notes are named here as well as the vault, and that is what gives them goldens. A vault does
                   not import its notes — it holds them, and each says for itself what it links to — so the pages of
@@ -180,8 +180,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A page written rather than read, which is compiled and typechecked here and NOT displayed.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A page written rather than read, which is compiled and typechecked here and NOT displayed.
                   It was written to hold the display of a note's page down: the annotations and values of a page are
                   evaluated for the file a test names and not for the pages it reaches, so the pages of the vault
                   above are read, desugared, typechecked and built while their values are never asked for.

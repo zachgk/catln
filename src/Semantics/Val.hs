@@ -34,6 +34,7 @@ import           Data.Aeson
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           Data.List           (intercalate)
+import qualified Data.Text           as T
 import           Data.Time.Calendar  (Day, fromGregorianValid)
 import           Text.Printf
 
@@ -46,6 +47,10 @@ data Val r
   = IntVal Integer
   | FloatVal Double
   | CharVal Char
+  -- | A @\/Catln\/CStr@: a string as the interpreter holds one, packed rather than a list of its
+  -- characters. It is what a string constant and a runtime primitive's string are, and it converts
+  -- to and from a @\/Data\/String\/Text@ by the runtime arrows of @stack\/core\/string.ct@.
+  | CStrVal !T.Text
   | TupleVal String (H.HashMap String (Val r))
   -- | A value only the runtime knows the inside of — a closure, an action, compiled code.
   | RuntimeVal r
@@ -54,22 +59,32 @@ data Val r
 -- | The arguments of an evaluated value, by the name each is declared under.
 type Args r = H.HashMap String (Val r)
 
--- | A string: a @\/Data\/String\/Text@ holding the list of characters it is made of.
+-- | A @\/Catln\/CStr@, the string the interpreter holds packed ('CStrVal'), as the Haskell 'String'
+-- it is to the outside world.
 --
--- A string is not a primitive of its own. @stack\/core\/string.ct@ declares it as the one member of
--- the @String@ class, @String\/Text(chars -> ConsList[$T -> Char])@, so what an evaluation holds for
--- one is that tuple, with a
--- @Cons@ per character — which is what lets a string be taken apart and built up in Catln. This
--- pattern is how the compiler's own code reads and writes one as the Haskell 'String' it is to the
--- outside world: matching it walks the characters, and building it lays them out.
+-- A string is one of the members of the open @String@ class of @stack\/core\/string.ct@. This is the
+-- one the interpreter makes — every string constant, and every string a runtime primitive returns —
+-- and the one a runtime primitive is declared to take, so matching it is how a primitive reads its
+-- argument. It does not match the other member, a @\/Data\/String\/Text@ holding its characters as a
+-- list: a primitive given one was given what its declaration does not take, which the tree build is
+-- to have converted. A string read out of data the program built may be either, and is read by
+-- 'valString'.
+pattern StrVal :: String -> Val r
+pattern StrVal s <- CStrVal (T.unpack -> s)
+  where StrVal s = CStrVal (T.pack s)
+{-# COMPLETE IntVal, FloatVal, CharVal, StrVal, TupleVal, RuntimeVal, NoVal #-}
+
+-- | A @\/Data\/String\/Text@: a string as Catln takes one apart, the list of the characters it is made
+-- of. Built where a runtime arrow converts a 'CStrVal' to one.
+textVal :: String -> Val r
+textVal s = TupleVal ctStringText (H.singleton (runtimeArgKey ctStringChars) (valListOf (map CharVal s)))
+
+-- | The characters of a string value, where it is one, in whichever representation it is held:
+-- packed ('CStrVal') or as a @\/Data\/String\/Text@.
 --
 -- A tuple whose characters are not all 'CharVal's, or whose list does not end, does not match.
-pattern StrVal :: String -> Val r
-pattern StrVal s <- (valString -> Just s)
-  where StrVal s = TupleVal ctStringText (H.singleton (runtimeArgKey ctStringChars) (valListOf (map CharVal s)))
-
--- | The characters of a string value, where it is one.
 valString :: Val r -> Maybe String
+valString (CStrVal t) = Just (T.unpack t)
 valString (TupleVal name args) | name == ctStringText = charsOf [] =<< H.lookup (runtimeArgKey ctStringChars) args
   where
     -- A loop over the characters seen so far rather than a recursion, since whether the value is a
@@ -82,6 +97,12 @@ valString (TupleVal name args) | name == ctStringText = charsOf [] =<< H.lookup 
         _                          -> Nothing
     charsOf _ _ = Nothing
 valString _ = Nothing
+
+-- | A string in either representation ('valString'), as a view.
+pattern AnyStrVal :: String -> Val r
+pattern AnyStrVal s <- (valString -> Just s)
+-- Every packed string is one, so with the other arms it is all of them.
+{-# COMPLETE IntVal, FloatVal, CharVal, AnyStrVal, TupleVal, RuntimeVal, NoVal #-}
 
 -- | What a runtime must say about its own values for a 'Val' to be shown, compared, hashed or
 -- serialized.
@@ -99,10 +120,13 @@ class RuntimeValue r where
 -- | Whether two values are the same value.
 --
 -- The data arms are equal when what they carry is; a runtime arm answers for itself, on either side.
+-- Two strings are equal when their characters are, whichever representation each is held in: a
+-- @\/Catln\/CStr@ and a @\/Data\/String\/Text@ are two ways of holding the one string.
 instance (RuntimeValue r) => Eq (Val r) where
   (IntVal a) == (IntVal b)             = a == b
   (FloatVal a) == (FloatVal b)         = a == b
-  (StrVal a) == (StrVal b)             = a == b
+  (CStrVal a) == (CStrVal b)           = a == b
+  (AnyStrVal a) == (AnyStrVal b)       = a == b
   (CharVal a) == (CharVal b)           = a == b
   (TupleVal an aa) == (TupleVal bn ba) = an == bn && aa == ba
   (RuntimeVal a) == b                  = rvEqVal a b
@@ -113,7 +137,8 @@ instance (RuntimeValue r) => Eq (Val r) where
 instance (RuntimeValue r) => Show (Val r) where
   show (IntVal i)   = show i
   show (FloatVal d) = show d
-  show (StrVal s)   = show s
+  show (CStrVal s)  = show s
+  show (AnyStrVal s) = show s
   show (CharVal c)  = show c
   show (TupleVal name args) = "TupleVal " ++ name ++ showArgs args
     where
@@ -126,7 +151,9 @@ instance (RuntimeValue r) => Show (Val r) where
 instance (RuntimeValue r) => Hashable (Val r) where
   hashWithSalt s (IntVal i)      = s `hashWithSalt` i
   hashWithSalt s (FloatVal i)    = s `hashWithSalt` i
-  hashWithSalt s (StrVal i)      = s `hashWithSalt` i
+  -- By its characters, as two strings holding them are equal ('Eq').
+  hashWithSalt s (CStrVal i)     = s `hashWithSalt` T.unpack i
+  hashWithSalt s (AnyStrVal i)   = s `hashWithSalt` i
   hashWithSalt s (CharVal i)     = s `hashWithSalt` i
   hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
   hashWithSalt s (RuntimeVal r)  = rvHash s r
@@ -135,7 +162,10 @@ instance (RuntimeValue r) => Hashable (Val r) where
 instance (RuntimeValue r) => ToJSON (Val r) where
   toJSON (IntVal v) = object ["tag".=("IntVal" :: String), "contents".=toJSON v]
   toJSON (FloatVal v) = object ["tag".=("FloatVal" :: String), "contents".=toJSON v]
-  toJSON (StrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
+  -- The packed text as it is, with no walk over characters: a listing is one of these, and is
+  -- written out of it whole.
+  toJSON (CStrVal v) = object ["tag".=("StrVal" :: String), "contents".=v]
+  toJSON (AnyStrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
   toJSON (CharVal v) = object ["tag".=("CharVal" :: String), "contents".=toJSON v]
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
   toJSON (RuntimeVal r) = rvToJSON r
@@ -155,13 +185,24 @@ valArg name argName args = case H.lookup (runtimeArgKey argName) args of
   Just v  -> Right v
   Nothing -> Left $ printf "A %s has no %s, only %s" name (runtimeArgKey argName) (show $ H.keys args)
 
--- | The same, where the argument must be a string — which every name and every file's writing is.
+-- | The same, where the argument must be a string — which every name and every file's writing is —
+-- given to a runtime primitive, which is declared to take a @\/Catln\/CStr@ ('StrVal').
 valStrArg :: (RuntimeValue r) => String -> String -> Args r -> Either String String
 valStrArg name argName args = do
   v <- valArg name argName args
   case v of
     StrVal s -> Right s
+    AnyStrVal _ -> Left $ printf "The %s of a %s is %s, a String held as its characters where a %s is declared: the tree build did not convert it" (runtimeArgKey argName) name (show v) ctCStr
     _        -> Left $ printf "The %s of a %s is %s, which is not a String" (runtimeArgKey argName) name (show v)
+
+-- | The same, where the argument is a string read out of data the program built, which may be held
+-- in either representation ('valString').
+valAnyStrArg :: (RuntimeValue r) => String -> String -> Args r -> Either String String
+valAnyStrArg name argName args = do
+  v <- valArg name argName args
+  case v of
+    AnyStrVal s -> Right s
+    _           -> Left $ printf "The %s of a %s is %s, which is not a String" (runtimeArgKey argName) name (show v)
 
 -- | The same, where the argument is a string which may be absent — which is a @\/Data\/Maybe@ of one.
 valMaybeStrArg :: (RuntimeValue r) => String -> String -> Args r -> Either String (Maybe String)
@@ -169,7 +210,7 @@ valMaybeStrArg name argName args = do
   v <- valArg name argName args
   case v of
     TupleVal m _ | m == ctMaybeNothing -> Right Nothing
-    TupleVal m inner | m == ctMaybeSome -> Just <$> valStrArg name ctMaybeSomeValue inner
+    TupleVal m inner | m == ctMaybeSome -> Just <$> valAnyStrArg name ctMaybeSomeValue inner
     _ -> Left $ printf "The %s of a %s is %s, which is not a Maybe String" (runtimeArgKey argName) name (show v)
 
 -- | The same, where the argument is a whole number.

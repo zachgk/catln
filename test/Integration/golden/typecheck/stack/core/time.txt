@@ -51,45 +51,15 @@ Prgm
                             [ /T=/Data/Time/TimeOfDay..
                             , /E=∀/Data/Time/TimeParseErr
                             ] = /Data/Time/minutesOf
-                            ( Value /hour ->
-                                ( /Data/Result/Fail
-                                    [ /E=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ]
-                                    ( /err=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /Data/Time/natural( Value /s -> TVArg /h = Value /h )
+                            ( Value /hour -> ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ] = /Data/Time/natural( Value /s -> TVArg /h = Value /h )
                             )
-                            ( Value /minute ->
-                                ( /Data/Result/Fail
-                                    [ /E=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ]
-                                    ( /err=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /Data/Time/natural( Value /s -> TVArg /m = Value /m )
+                            ( Value /minute -> ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ] = /Data/Time/natural( Value /s -> TVArg /m = Value /m )
                             )
                         , /Data/Time/partsOf( Value /clock -> ∀/Data/String )
                             ( Value /parts -> /Data/List/Cons[ /T=∀/Data/String ]
@@ -414,8 +384,7 @@ Prgm
                                     )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "h" }
                             )
                         , /Data/Time/hoursText( Value /minutes -> /Data/Primitive/Integer ) -> ∀/Data/String = /operator++
@@ -428,8 +397,7 @@ Prgm
                                             )
                                         )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r -> /Data/String/Text.. = CStr
                                         { csValue = "h " }
                                     )
                                 )
@@ -441,8 +409,7 @@ Prgm
                                     )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "m" }
                             )
                         ]
@@ -470,8 +437,7 @@ Prgm
                                                 { ciValue = 4 }
                                             )
                                         )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /r -> /Data/String/Text.. = CStr
                                             { csValue = "-" }
                                         )
                                     )
@@ -481,8 +447,7 @@ Prgm
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = "-" }
                                 )
                             )
@@ -503,8 +468,7 @@ Prgm
                                         { ciValue = 2 }
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ":" }
                                 )
                             )
@@ -519,8 +483,7 @@ Prgm
                                 { ciValue = 60 }
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /minutes = Value /minutes ) )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "m" }
                             )
                         , /Data/toString
@@ -533,8 +496,7 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /start = Value /start ) )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = " - " }
                                 )
                             )
@@ -555,16 +517,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/clockParts( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /Data/String/contains
-                            ( Value /sub -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /sub -> /Data/String/Text.. = CStr
                                 { csValue = ":" }
                             )( Value /this -> TVArg /clock = Value /clock ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
                             , /E=∀/Data/Time/TimeParseErr
                             ] = /Data/Time/partsOf( Value /clock -> TVArg /clock = Value /clock )
                             ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
-                                ( Value /sep -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /sep -> /Data/String/Text.. = CStr
                                     { csValue = ":" }
                                 )( Value /this -> TVArg /clock = Value /clock )
                             )
@@ -760,50 +720,20 @@ Prgm
                             [ /T=/Data/Time/Date..
                             , /E=∀/Data/Time/DateParseErr
                             ] = /Data/Time/dateOf
-                            ( Value /y ->
-                                ( /Data/Result/Fail
-                                    [ /E=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ]
-                                    ( /err=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /Data/Time/natural
+                            ( Value /y -> ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ] = /Data/Time/natural
                                 ( Value /s -> ∀/Data/String = /Data/String/take
                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                         { ciValue = 4 }
                                     )( Value /this -> TVArg /s = Value /s )
                                 )
                             )
-                            ( Value /m ->
-                                ( /Data/Result/Fail
-                                    [ /E=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ]
-                                    ( /err=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /Data/Time/natural
+                            ( Value /m -> ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ] = /Data/Time/natural
                                 ( Value /s -> ∀/Data/String = /Data/String/slice
                                     ( Value /start -> /Data/Primitive/Integer = CInt
                                         { ciValue = 5 }
@@ -813,25 +743,10 @@ Prgm
                                     )( Value /this -> TVArg /s = Value /s )
                                 )
                             )
-                            ( Value /d ->
-                                ( /Data/Result/Fail
-                                    [ /E=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ]
-                                    ( /err=
-                                        ( /Data/IntegerParseErr/NotADigit
-                                            ( /at=/Data/Primitive/Integer
-                                            , /base=/Data/Primitive/Integer
-                                            , /c=/Data/Char
-                                            ) + /Data/IntegerParseErr/NoText
-                                        )
-                                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /Data/Time/natural
+                            ( Value /d -> ∀/Data/Result
+                                [ /T=/Data/Primitive/Integer
+                                , /E=∀/Data/IntegerParseErr
+                                ] = /Data/Time/natural
                                 ( Value /s -> ∀/Data/String = /Data/String/drop
                                     ( Value /n -> /Data/Primitive/Integer = CInt
                                         { ciValue = 8 }
@@ -898,8 +813,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/clockOf( Value /t -> ∀/Data/String ) | /Data/String/endsWith
-                            ( Value /suffix -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /suffix -> /Data/String/Text.. = CStr
                                 { csValue = "am" }
                             )( Value /this -> TVArg /t = Value /t ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
@@ -921,8 +835,7 @@ Prgm
                                 )( Value /bare -> /Data/Primitive/True = Value /Data/Primitive/True )
                             )( Value /pm -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Time/clockOf( Value /t -> ∀/Data/String ) | /Data/String/endsWith
-                            ( Value /suffix -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /suffix -> /Data/String/Text.. = CStr
                                 { csValue = "pm" }
                             )( Value /this -> TVArg /t = Value /t ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
@@ -1221,8 +1134,7 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = /Data/String/length
                                 ( Value /this -> ∀/Data/String = /toString( Value /this -> TVArg /n = Value /n ) )
                             )( Value /r -> TVArg /width = Value /width ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "0" }
                             )
                             ( Value /r -> ∀/Data/String = /Data/Time/padded( Value /n -> TVArg /n = Value /n )
@@ -1324,24 +1236,23 @@ Prgm
                                 ]
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( Value /err -> /Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 ) = /Data/Time/TimeParseErr/BadPart
-                                ( Value /part -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /part ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "hour" }
                                 )( Value /cause -> TVArg /err = Value /err )
                             )
@@ -1349,24 +1260,23 @@ Prgm
                             ( Value /hour -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok( Value /value -> /Data/Primitive/Integer ) )
                             ( Value /minute -> /Data/Result/Fail[ /E=∀/Data/IntegerParseErr ]( /err=∀/Data/IntegerParseErr ) = /Data/Result/Fail( Value /err -> ∀/Data/IntegerParseErr ) ) -> /Data/Result/Fail
                             [ /E=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( Value /err -> /Data/Time/TimeParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 ) = /Data/Time/TimeParseErr/BadPart
-                                ( Value /part -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /part ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "minute" }
                                 )( Value /cause -> TVArg /err = Value /err )
                             )
@@ -1514,24 +1424,23 @@ Prgm
                                 ]
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( Value /err -> /Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 ) = /Data/Time/DateParseErr/BadPart
-                                ( Value /part -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /part ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "year" }
                                 )( Value /cause -> TVArg /err = Value /err )
                             )
@@ -1544,24 +1453,23 @@ Prgm
                                 ]
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( Value /err -> /Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 ) = /Data/Time/DateParseErr/BadPart
-                                ( Value /part -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /part ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "month" }
                                 )( Value /cause -> TVArg /err = Value /err )
                             )
@@ -1570,24 +1478,23 @@ Prgm
                             ( Value /m -> /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Result/Ok( Value /value@Value /mv -> /Data/Primitive/Integer ) )
                             ( Value /d -> /Data/Result/Fail[ /E=∀/Data/IntegerParseErr ]( /err=∀/Data/IntegerParseErr ) = /Data/Result/Fail( Value /err -> ∀/Data/IntegerParseErr ) ) -> /Data/Result/Fail
                             [ /E=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ]
                             ( /err=/Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 )
                             ) = /Data/Result/Fail
                             ( Value /err -> /Data/Time/DateParseErr/BadPart
-                                ( /part=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /part=( /Data/String/Text.. + /Catln/CStr )
                                 , /cause=∀/Data/IntegerParseErr
                                 ) = /Data/Time/DateParseErr/BadPart
-                                ( Value /part -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /part ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "day" }
                                 )( Value /cause -> TVArg /err = Value /err )
                             )
@@ -1604,13 +1511,11 @@ Prgm
                         [ /Data/msg
                             ( Value /this -> /Data/Time/DateParseErr/BadShape( /text=∀/Data/String ) = /Data/Time/DateParseErr/BadShape( Value /text -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l -> /Data/String/Text.. = CStr
                                     { csValue = """ }
                                 )( Value /r -> TVArg /text = Value /text )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "" is not a date written YYYY-MM-DD" }
                             )
                         , /Data/msg
@@ -1621,13 +1526,11 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /l -> /Data/String/Text.. = CStr
                                         { csValue = "the " }
                                     )( Value /r -> TVArg /part = Value /part )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = " is not a number: " }
                                 )
                             )
@@ -1635,8 +1538,7 @@ Prgm
                         , /Data/msg
                             ( Value /this -> /Data/Time/DateParseErr/MonthOutOfRange( /month=/Data/Primitive/Integer ) = /Data/Time/DateParseErr/MonthOutOfRange( Value /month -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /month = Value /month ) )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " is not a month from 1 to 12" }
                             )
                         , /Data/msg
@@ -1654,20 +1556,17 @@ Prgm
                                     ) = /Data/Time/Date( Value /year -> TVArg /year = Value /year )( Value /month -> TVArg /month = Value /month )( Value /day -> TVArg /day = Value /day )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " is not a day that exists" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/BadShape( /text=∀/Data/String ) = /Data/Time/TimeParseErr/BadShape( Value /text -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l -> /Data/String/Text.. = CStr
                                     { csValue = """ }
                                 )( Value /r -> TVArg /text = Value /text )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "" does not write an hour and minutes apart" }
                             )
                         , /Data/msg
@@ -1679,19 +1578,16 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /l -> /Data/String/Text.. = CStr
                                             { csValue = """ }
                                         )( Value /r -> TVArg /hour = Value /hour )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r -> /Data/String/Text.. = CStr
                                         { csValue = "" and "" }
                                     )
                                 )( Value /r -> TVArg /minute = Value /minute )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "" are not an hour of one or two digits and minutes of two" }
                             )
                         , /Data/msg
@@ -1702,13 +1598,11 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /l -> /Data/String/Text.. = CStr
                                         { csValue = "the " }
                                     )( Value /r -> TVArg /part = Value /part )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = " is not a number: " }
                                 )
                             )
@@ -1716,22 +1610,19 @@ Prgm
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/MinuteOutOfRange( /minute=/Data/Primitive/Integer ) = /Data/Time/TimeParseErr/MinuteOutOfRange( Value /minute -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /minute = Value /minute ) )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " is not a minute, 0 to 59" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/HourOutOfRange( /hour=/Data/Primitive/Integer ) = /Data/Time/TimeParseErr/HourOutOfRange( Value /hour -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /hour = Value /hour ) )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " is not an hour of a 24-hour clock, 0 to 23" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/TwelveHourOutOfRange( /hour=/Data/Primitive/Integer ) = /Data/Time/TimeParseErr/TwelveHourOutOfRange( Value /hour -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /hour = Value /hour ) )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = " is not an hour of a 12-hour clock, 1 to 12" }
                             )
                         ]
@@ -2056,16 +1947,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/dottedOrBare( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /Data/String/contains
-                            ( Value /sub -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /sub -> /Data/String/Text.. = CStr
                                 { csValue = "." }
                             )( Value /this -> TVArg /clock = Value /clock ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
                             , /E=∀/Data/Time/TimeParseErr
                             ] = /Data/Time/partsOf( Value /clock -> TVArg /clock = Value /clock )
                             ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
-                                ( Value /sep -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /sep -> /Data/String/Text.. = CStr
                                     { csValue = "." }
                                 )( Value /this -> TVArg /clock = Value /clock )
                             )
@@ -2502,8 +2391,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Dates and times
                 A [Date] is a day of the proleptic Gregorian calendar and a [TimeOfDay] is a minute within a
                 day. Both are data rather than text: a day written as @2026-01-03@ is read into a [Date] once,
@@ -2514,8 +2405,10 @@ Prgm
                 something needs one." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Days" }
             )
         , /Catln/#print
@@ -2524,8 +2417,10 @@ Prgm
                     { ciValue = 2024 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -2534,8 +2429,10 @@ Prgm
                     { ciValue = 1900 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -2544,8 +2441,10 @@ Prgm
                     { ciValue = 2000 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -2554,8 +2453,10 @@ Prgm
                     { ciValue = 2026 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -2567,8 +2468,10 @@ Prgm
                     { ciValue = 2 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "29" }
             )
         , /Catln/#print
@@ -2580,8 +2483,10 @@ Prgm
                     { ciValue = 2 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "28" }
             )
         , /Catln/#print
@@ -2593,8 +2498,10 @@ Prgm
                     { ciValue = 4 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "30" }
             )
         , /Catln/#print
@@ -2606,13 +2513,17 @@ Prgm
                     { ciValue = 12 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "31" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Counting days
                 A day is counted as how many days it is after the 1st of January 1970, which turns adding days
                 and comparing days into adding and comparing numbers. The count and its reverse are Howard
@@ -2637,8 +2548,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
@@ -2659,8 +2572,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "20456" }
             )
         , /Catln/#print
@@ -2681,8 +2596,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "-1" }
             )
         , /Catln/#print
@@ -2695,8 +2612,10 @@ Prgm
                     { ciValue = 20456 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2026-01-03" }
             )
         , /Catln/#print
@@ -2714,8 +2633,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "1969-12-31" }
             )
         , /Catln/#print
@@ -2728,8 +2649,10 @@ Prgm
                     { ciValue = 19782 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2024-02-29" }
             )
         , /Catln/#print
@@ -2757,8 +2680,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2026-02-01" }
             )
         , /Catln/#print
@@ -2786,8 +2711,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2024-02-29" }
             )
         , /Catln/#print
@@ -2820,8 +2747,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2025-12-31" }
             )
         , /Catln/#print
@@ -2842,8 +2771,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "6" }
             )
         , /Catln/#print
@@ -2864,13 +2795,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "4" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Writing and reading days" }
             )
         , /Catln/#print
@@ -2889,100 +2824,95 @@ Prgm
                     { ciValue = 3 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2026-01-03" }
             )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Result/Fail
-                    [ /E=
-                        ( /Data/IntegerParseErr/NotADigit
-                            ( /at=/Data/Primitive/Integer
-                            , /base=/Data/Primitive/Integer
-                            , /c=/Data/Char
-                            ) + /Data/IntegerParseErr/NoText
-                        )
-                    ]
-                    ( /err=
-                        ( /Data/IntegerParseErr/NotADigit
-                            ( /at=/Data/Primitive/Integer
-                            , /base=/Data/Primitive/Integer
-                            , /c=/Data/Char
-                            ) + /Data/IntegerParseErr/NoText
-                        )
-                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                ( TopType | PredClass /Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/natural
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=
+                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            )
+                        ) + /Catln/CStr
+                    ) = CStr
                     { csValue = "042" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "42" }
             )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Result/Fail
-                    [ /E=
-                        ( /Data/IntegerParseErr/NotADigit
-                            ( /at=/Data/Primitive/Integer
-                            , /base=/Data/Primitive/Integer
-                            , /c=/Data/Char
-                            ) + /Data/IntegerParseErr/NoText
-                        )
-                    ]
-                    ( /err=
-                        ( /Data/IntegerParseErr/NotADigit
-                            ( /at=/Data/Primitive/Integer
-                            , /base=/Data/Primitive/Integer
-                            , /c=/Data/Char
-                            ) + /Data/IntegerParseErr/NoText
-                        )
-                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                ( TopType | PredClass /Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/natural
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=
+                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            )
+                        ) + /Catln/CStr
+                    ) = CStr
                     { csValue = "+42" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: '+' at 0 is not a digit of base 10" }
             )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Result/Fail
-                    [ /E=
-                        ( /Data/IntegerParseErr/NotADigit
-                            ( /at=/Data/Primitive/Integer
-                            , /base=/Data/Primitive/Integer
-                            , /c=/Data/Char
-                            ) + /Data/IntegerParseErr/NoText
-                        )
-                    ]
-                    ( /err=
-                        ( /Data/IntegerParseErr/NotADigit
-                            ( /at=/Data/Primitive/Integer
-                            , /base=/Data/Primitive/Integer
-                            , /c=/Data/Char
-                            ) + /Data/IntegerParseErr/NoText
-                        )
-                    ) + /Data/Result/Ok[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                ( TopType | PredClass /Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/natural
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=
+                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            )
+                        ) + /Catln/CStr
+                    ) = CStr
                     { csValue = "" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: there is no number in an empty string" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[DateParseErr] is why a string is no [Date]: it is not written @YYYY-MM-DD@ ([BadShape]), the
                 year, month or day written is not a number ([BadPart]), the month is not one of the twelve
                 ([MonthOutOfRange]), or the day is not one the month has ([NoSuchDay])." }
@@ -2994,13 +2924,17 @@ Prgm
                     , /E=∀/Data/Time/DateParseErr
                     ]
                 ) = /Data/Time/parseDate
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "2026-01-03" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2026-01-03" }
             )
         , /Catln/#print
@@ -3010,13 +2944,17 @@ Prgm
                     , /E=∀/Data/Time/DateParseErr
                     ]
                 ) = /Data/Time/parseDate
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "2024-02-29" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2024-02-29" }
             )
         , /Catln/#print
@@ -3026,13 +2964,17 @@ Prgm
                     , /E=∀/Data/Time/DateParseErr
                     ]
                 ) = /Data/Time/parseDate
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "2026-02-29" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: 2026-02-29 is not a day that exists" }
             )
         , /Catln/#print
@@ -3042,13 +2984,17 @@ Prgm
                     , /E=∀/Data/Time/DateParseErr
                     ]
                 ) = /Data/Time/parseDate
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "2026-13-01" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: 13 is not a month from 1 to 12" }
             )
         , /Catln/#print
@@ -3058,13 +3004,17 @@ Prgm
                     , /E=∀/Data/Time/DateParseErr
                     ]
                 ) = /Data/Time/parseDate
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "2026-0x-01" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: the month is not a number: 'x' at 1 is not a digit of base 10" }
             )
         , /Catln/#print
@@ -3074,39 +3024,53 @@ Prgm
                     , /E=∀/Data/Time/DateParseErr
                     ]
                 ) = /Data/Time/parseDate
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "lunch" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: "lunch" is not a date written YYYY-MM-DD" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Ordering days
                 Days are ordered by when they fall, which is the order of their counts." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "The arms answering the [/Data/Algebra/Ord] methods are written in that module, as [/Data/Maybe]'s" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  are, so that the names they answer are the class's own rather than new ones of this module." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  Each date is written out again from its fields rather than named as [this], because a receiver" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "  taken apart into its fields is not also bound whole." }
             )
         , /Catln/#print
@@ -3142,8 +3106,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -3179,8 +3145,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -3216,13 +3184,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Times of day" }
             )
         , /Catln/#print
@@ -3237,8 +3209,10 @@ Prgm
                     { ciValue = 5 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "09:05" }
             )
         , /Catln/#print
@@ -3261,8 +3235,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "00:15" }
             )
         , /Catln/#print
@@ -3290,8 +3266,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "23:50" }
             )
         , /Catln/#print
@@ -3319,8 +3297,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -3348,13 +3328,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Reading times of day
                 A time is read as a note writes one: on a 24-hour clock with a colon or a dot between the hour
                 and the minutes, @9:30@ or @09.30@; or on a 12-hour clock with @am@ or @pm@ after it, in either
@@ -3363,8 +3347,10 @@ Prgm
                 start of a line." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[TimeParseErr] is why a string is no [TimeOfDay]: it does not write an hour and minutes apart
                 ([BadShape]); the hour is not one or two digits or the minutes not two ([BadDigits]); the
                 hour or minutes written are not a number ([BadPart]); or the minutes are 60 or more
@@ -3378,13 +3364,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "9:30" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "09:30" }
             )
         , /Catln/#print
@@ -3394,13 +3384,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "09.00" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "09:00" }
             )
         , /Catln/#print
@@ -3410,13 +3404,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "9:30pm" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "21:30" }
             )
         , /Catln/#print
@@ -3426,13 +3424,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "930 PM" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "21:30" }
             )
         , /Catln/#print
@@ -3442,13 +3444,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "12:15am" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "00:15" }
             )
         , /Catln/#print
@@ -3458,13 +3464,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "25:00" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: 25 is not an hour of a 24-hour clock, 0 to 23" }
             )
         , /Catln/#print
@@ -3474,13 +3484,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "13:00pm" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: 13 is not an hour of a 12-hour clock, 1 to 12" }
             )
         , /Catln/#print
@@ -3490,13 +3504,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "13pm" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: "13" does not write an hour and minutes apart" }
             )
         , /Catln/#print
@@ -3506,13 +3524,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "930" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: "930" does not write an hour and minutes apart" }
             )
         , /Catln/#print
@@ -3522,13 +3544,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "9:75" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: 75 is not a minute, 0 to 59" }
             )
         , /Catln/#print
@@ -3538,13 +3564,17 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "9:3" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: "9" and "3" are not an hour of one or two digits and minutes of two" }
             )
         , /Catln/#print
@@ -3554,18 +3584,24 @@ Prgm
                     , /E=∀/Data/Time/TimeParseErr
                     ] && PredClass /Catln/Doc/DShow
                 ) = /Data/Time/parseTimeOfDay
-                ( Value /s -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /s ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "9:3x" }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: the minute is not a number: 'x' at 1 is not a digit of base 10" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Lengths of time and spans of a day" }
             )
         , /Catln/#print
@@ -3574,8 +3610,10 @@ Prgm
                     { ciValue = 90 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "1h 30m" }
             )
         , /Catln/#print
@@ -3584,8 +3622,10 @@ Prgm
                     { ciValue = 120 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2h" }
             )
         , /Catln/#print
@@ -3594,8 +3634,10 @@ Prgm
                     { ciValue = 45 }
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "45m" }
             )
         , /Catln/#print
@@ -3632,8 +3674,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "09:00 - 10:30" }
             )
         , /Catln/#print
@@ -3672,8 +3716,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "1h 30m" }
             )
         , /Catln/#print
@@ -3712,8 +3758,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "2h" }
             )
         ]

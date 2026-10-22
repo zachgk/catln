@@ -7,7 +7,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /ContextIn
-                            ( Value /value -> /System/env( /name=∀/Data/String ) = /System/env( Value /name -> ∀/Data/String ) )
+                            ( Value /value -> /System/env( /name=/Catln/CStr ) = /System/env( Value /name -> /Catln/CStr ) )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
@@ -25,8 +25,10 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Environment
                 What a program can read of the environment it was started in. It runs in an [/Catln/IO]
                 context because it reaches outside the program: a run started with different variables set

@@ -448,8 +448,8 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Llm/AgentEdit(oldText= "
+                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                            ( "/Llm/AgentEdit(oldText= " ↦ /Data/String/Text.. )
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -465,8 +465,8 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", newText= "
+                                                            { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                ( ", newText= " ↦ /Data/String/Text.. )
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -485,8 +485,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ")"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( ")" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -514,8 +514,8 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Llm/AgentStep/Edit(edits= ["
+                                                { eaaArg = Value /l -> /Data/String/Text.. =
+                                                    ( "/Llm/AgentStep/Edit(edits= [" ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
@@ -531,8 +531,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "])"
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( "])" ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -834,8 +834,7 @@ Prgm
                                         ( /ContextIn
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Llm/agentAsk
-                                                    ( /history=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /history=( /Data/String/Text.. + /Catln/CStr )
                                                     , /at=/Llm/AgentAt
                                                         ( /annotId=∀/Data/String
                                                         , /page=/Catln/RawPrgm..
@@ -869,8 +868,10 @@ Prgm
                                                         { eaaArg = Value /tries -> /Data/Primitive/Integer = 0 }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /history -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                                        { eaaArg = Value /history ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = ""
                                                         }
                                                     )
                                                 }
@@ -934,7 +935,10 @@ Prgm
                                         ( /annotId=∀/Data/String
                                         , /page=/Catln/RawPrgm..
                                         , /input=∀/Data/String
-                                        , /source=∀/Data/String
+                                        , /source=
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                            )
                                         )
                                     , /tries=/Data/Primitive/Integer
                                     ) = /Llm/agentAsk
@@ -943,12 +947,21 @@ Prgm
                                             ( /annotId=∀/Data/String
                                             , /page=/Catln/RawPrgm..
                                             , /input=∀/Data/String
-                                            , /source=∀/Data/String
+                                            , /source=
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                                )
                                             ) = /Llm/AgentAt
                                             ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
                                             ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } )
                                             ( EAppArg { eaaArg = Value /annotId -> ∀/Data/String } )
-                                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
+                                            ( EAppArg
+                                                { eaaArg = Value /source ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                                    )
+                                                }
+                                            )
                                         }
                                     )
                                     ( EAppArg { eaaArg = Value /tries -> /Data/Primitive/Integer } )
@@ -1013,7 +1026,10 @@ Prgm
                                                         , []
                                                         )
                                                     , /input=∀/Data/String
-                                                    , /source=∀/Data/String
+                                                    , /source=
+                                                        ( /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                                        )
                                                     ) = /Llm/tlcm
                                                     ( EAppArg
                                                         { eaaArg = Value /input -> ∀/Data/String =
@@ -1369,8 +1385,8 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: "
+                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                        ( "error: " ↦ /Data/String/Text.. )
                                     }
                                 )
                                 ( EAppArg
@@ -1405,24 +1421,13 @@ Prgm
                         [ /Llm/applyEdits
                             ( EAppArg { eaaArg = Value /text -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /edits -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Result/Fail
-                            [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
+                            [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                            ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Data/Result/Fail
                             ( EAppArg
-                                { eaaArg = Value /err -> /Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Data/Failure
+                                { eaaArg = Value /err -> /Data/Failure( /reason=/Data/String/Text.. ) = /Data/Failure
                                     ( EAppArg
-                                        { eaaArg = Value /reason -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the step has no edits"
+                                        { eaaArg = Value /reason -> /Data/String/Text.. =
+                                            ( "the step has no edits" ↦ /Data/String/Text.. )
                                         }
                                     )
                                 }
@@ -1531,34 +1536,19 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /this -> TVArg /oldText = ( Value /oldText ↦ TVArg /oldText ) }
                             ) -> /Data/Result/Fail
-                            [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
+                            [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                            ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Data/Result/Fail
                             ( EAppArg
-                                { eaaArg = Value /err -> /Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Data/Failure
+                                { eaaArg = Value /err -> /Data/Failure( /reason=/Data/String/Text.. ) = /Data/Failure
                                     ( EAppArg
-                                        { eaaArg = Value /reason -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "an edit has an empty oldText"
+                                        { eaaArg = Value /reason -> /Data/String/Text.. =
+                                            ( "an edit has an empty oldText" ↦ /Data/String/Text.. )
                                         }
                                     )
                                 }
                             )
                         , /Llm/findEdit
-                            ( EAppArg
-                                { eaaArg = Value /text -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /text -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /e -> /Llm/AgentEdit
                                     ( /oldText=∀/Data/String
@@ -1641,60 +1631,54 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/quoted
-                            ( EAppArg
-                                { eaaArg = Value /s -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                }
-                            ) -> ∀/Data/String =
+                            ( EAppArg { eaaArg = Value /s -> ∀/Data/String } ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """
+                                                { eaaArg = Value /l -> /Data/String/Text.. =
+                                                    ( """ ↦ /Data/String/Text.. )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                { eaaArg = Value /r -> ∀/Data/String =
                                                     ( /Data/String/replace
                                                         ( EAppArg
-                                                            { eaaArg = Value /old -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
-                                                              "
+                                                            { eaaArg = Value /old -> /Data/String/Text.. =
+                                                                ( "
+                                                                " ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /new -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "\n"
+                                                            { eaaArg = Value /new -> /Data/String/Text.. =
+                                                                ( "\n" ↦ /Data/String/Text.. )
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /this -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                            { eaaArg = Value /this -> ∀/Data/String =
                                                                 ( /Data/String/replace
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /old -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """
+                                                                        { eaaArg = Value /old -> /Data/String/Text.. =
+                                                                            ( """ ↦ /Data/String/Text.. )
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /new -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "\""
+                                                                        { eaaArg = Value /new -> /Data/String/Text.. =
+                                                                            ( "\"" ↦ /Data/String/Text.. )
                                                                         }
                                                                     )
                                                                     ( EAppArg
                                                                         { eaaArg = Value /this -> ∀/Data/String =
                                                                             ( /Data/String/replace
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /old -> /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "\"
+                                                                                    { eaaArg = Value /old -> /Data/String/Text.. =
+                                                                                        ( "\" ↦ /Data/String/Text.. )
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /new -> /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "\\"
+                                                                                    { eaaArg = Value /new -> /Data/String/Text.. =
+                                                                                        ( "\\" ↦ /Data/String/Text.. )
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
@@ -1702,12 +1686,10 @@ Prgm
                                                                                 ) ↦ ∀/Data/String
                                                                             )
                                                                         }
-                                                                    ) ↦ /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                                    ) ↦ ∀/Data/String
                                                                 )
                                                             }
-                                                        ) ↦ /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             ) ↦ ∀/Data/String
@@ -1715,8 +1697,8 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """
+                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                        ( """ ↦ /Data/String/Text.. )
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -1825,24 +1807,13 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /ats -> TVArg /ats = ( Value /ats ↦ TVArg /ats ) }
                             ) -> /Data/Result/Fail
-                            [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
+                            [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                            ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Data/Result/Fail
                             ( EAppArg
-                                { eaaArg = Value /err -> /Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Data/Failure
+                                { eaaArg = Value /err -> /Data/Failure( /reason=/Data/String/Text.. ) = /Data/Failure
                                     ( EAppArg
-                                        { eaaArg = Value /reason -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "two of the edits overlap; edits close together are to be one edit"
+                                        { eaaArg = Value /reason -> /Data/String/Text.. =
+                                            ( "two of the edits overlap; edits close together are to be one edit" ↦ /Data/String/Text.. )
                                         }
                                     )
                                 }
@@ -2047,23 +2018,19 @@ Prgm
                                 { eaaArg = Value /reply -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] }
                             ) -> /Data/Result/Fail
                             [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
+                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                             ]
                             ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
+                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                             ) = /Data/Result/Fail
                             ( EAppArg
                                 { eaaArg = Value /err -> /Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Data/Failure
+                                    ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
                                     ( EAppArg
-                                        { eaaArg = Value /reason -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the model replied with something other than a step"
+                                        { eaaArg = Value /reason ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "the model replied with something other than a step"
                                         }
                                     )
                                 }
@@ -2128,8 +2095,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/editsJoined
-                            ( EAppArg { eaaArg = Value /edits -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            ( EAppArg { eaaArg = Value /edits -> /Data/List/Nil = Value /Data/List/Nil } ) -> ( /Data/String/Text.. + /Catln/CStr ) = ""
                         , /Llm/editsJoined
                             ( EAppArg
                                 { eaaArg = Value /edits -> /Data/List/Cons[ /T=/Llm/AgentEdit.. ]
@@ -2200,8 +2166,8 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ", "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( ", " ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -2263,8 +2229,8 @@ Prgm
                                                                         { eaaArg = Value /l -> ∀/Data/String =
                                                                             ( /operator++
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "You are an agent working on the page above, where this request is written as `a> "
+                                                                                    { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                                        ( "You are an agent working on the page above, where this request is written as `a> " ↦ /Data/String/Text.. )
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
@@ -2274,9 +2240,9 @@ Prgm
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "`. The request is:
-                                                                          "
+                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                            ( "`. The request is:
+                                                                            " ↦ /Data/String/Text.. )
                                                                         }
                                                                     ) ↦ ∀/Data/String
                                                                 )
@@ -2289,10 +2255,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                    ( "
 
-                                                  You work by editing the page, which is both your working memory and your result. Each time you are asked, take one step: edit the page, after which you are asked again with the page as you left it, or respond, which ends your work. Edits are made to the text of the page as it is written, which is the page above without the `>>>` lines of what its examples evaluate to."
+                                                    You work by editing the page, which is both your working memory and your result. Each time you are asked, take one step: edit the page, after which you are asked again with the page as you left it, or respond, which ends your work. Edits are made to the text of the page as it is written, which is the page above without the `>>>` lines of what its examples evaluate to." ↦ /Data/String/Text.. )
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -2368,8 +2334,10 @@ Prgm
                                                     { eaaArg = Value /text -> ∀/Data/String =
                                                         ( /operator++
                                                             ( EAppArg
-                                                                { eaaArg = Value /l -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The agent stopped, as its step could not be taken: "
+                                                                { eaaArg = Value /l ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "The agent stopped, as its step could not be taken: "
                                                                 }
                                                             )
                                                             ( EAppArg
@@ -2427,8 +2395,10 @@ Prgm
                                                                                 { eaaArg = Value /l -> TVArg /history = ( Value /history ↦ TVArg /history ) }
                                                                             )
                                                                             ( EAppArg
-                                                                                { eaaArg = Value /r -> /Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                                                                                { eaaArg = Value /r ->
+                                                                                    ( /Data/String/Text
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                    ) = "
 
                                                                                   Your step was:
                                                                                   "
@@ -2444,8 +2414,10 @@ Prgm
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "
+                                                        { eaaArg = Value /r ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "
                                                           It could not be taken: "
                                                         }
                                                     ) ↦ ∀/Data/String
@@ -2782,7 +2754,13 @@ Prgm
                             ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } )
                             ( EAppArg { eaaArg = Value /tries -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
-                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /source ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /$db8f2a-arg -> /Context
                                     [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
@@ -2840,7 +2818,10 @@ Prgm
                                                                         ( /annotId=∀/Data/String
                                                                         , /page=/Catln/RawPrgm..
                                                                         , /input=∀/Data/String
-                                                                        , /source=∀/Data/String
+                                                                        , /source=
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                                                            )
                                                                         ) = /Llm/AgentAt
                                                                         ( EAppArg
                                                                             { eaaArg = Value /input -> TVArg /input = ( Value /input ↦ TVArg /input ) }
@@ -3033,8 +3014,8 @@ Prgm
                                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                                 ( /operator++
                                                                                     ( EAppArg
-                                                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the oldText "
+                                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                                            ( "the oldText " ↦ /Data/String/Text.. )
                                                                                         }
                                                                                     )
                                                                                     ( EAppArg
@@ -3050,8 +3031,8 @@ Prgm
                                                                             }
                                                                         )
                                                                         ( EAppArg
-                                                                            { eaaArg = Value /r -> /Data/String/Text
-                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is written "
+                                                                            { eaaArg = Value /r -> /Data/String/Text.. =
+                                                                                ( " is written " ↦ /Data/String/Text.. )
                                                                             }
                                                                         ) ↦ ∀/Data/String
                                                                     )
@@ -3070,8 +3051,8 @@ Prgm
                                                     }
                                                 )
                                                 ( EAppArg
-                                                    { eaaArg = Value /r -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " times on the page, not once"
+                                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                                        ( " times on the page, not once" ↦ /Data/String/Text.. )
                                                     }
                                                 ) ↦ ∀/Data/String
                                             )
@@ -3095,8 +3076,8 @@ Prgm
                                                     { eaaArg = Value /l -> ∀/Data/String =
                                                         ( /operator++
                                                             ( EAppArg
-                                                                { eaaArg = Value /l -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the oldText "
+                                                                { eaaArg = Value /l -> /Data/String/Text.. =
+                                                                    ( "the oldText " ↦ /Data/String/Text.. )
                                                                 }
                                                             )
                                                             ( EAppArg
@@ -3112,8 +3093,8 @@ Prgm
                                                     }
                                                 )
                                                 ( EAppArg
-                                                    { eaaArg = Value /r -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " is not written on the page"
+                                                    { eaaArg = Value /r -> /Data/String/Text.. =
+                                                        ( " is not written on the page" ↦ /Data/String/Text.. )
                                                     }
                                                 ) ↦ ∀/Data/String
                                             )
@@ -3293,8 +3274,24 @@ Prgm
                                 { eaaArg = Value /edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /edited -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/String } )
+                                { eaaArg = Value /edited -> /Data/Result/Ok
+                                    [ /T=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    ]
+                                    ( /value=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    ) = /Data/Result/Ok
+                                    ( EAppArg
+                                        { eaaArg = Value /value ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                            )
+                                        }
+                                    )
                                 }
                             ) -> ∀/Llm/AgentNext =
                             ( /Llm/agentParsed
@@ -3317,7 +3314,7 @@ Prgm
                                         ] =
                                         ( /Process/parsePage
                                             ( EAppArg
-                                                { eaaArg = Value /text -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                                { eaaArg = Value /text -> /Catln/CStr = ( Value /value ↦ /Catln/CStr ) }
                                             ) ↦ ∀/Data/Result
                                             [ /T=/Catln/RawPrgm..
                                             , /E=∀/Process/ParsePageErr
@@ -3398,14 +3395,23 @@ Prgm
                         [ /Llm/agentDone
                             ( EAppArg
                                 { eaaArg = Value /at -> /Llm/AgentAt
-                                    ( /annotId=∀/Data/String
+                                    ( /annotId=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
                                     , /page=/Catln/RawPrgm..
                                     , /input=∀/Data/String
                                     , /source=∀/Data/String
                                     ) = /Llm/AgentAt
                                     ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
                                     ( EAppArg { eaaArg = Value /page -> /Catln/RawPrgm.. } )
-                                    ( EAppArg { eaaArg = Value /annotId -> ∀/Data/String } )
+                                    ( EAppArg
+                                        { eaaArg = Value /annotId ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                            )
+                                        }
+                                    )
                                     ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
                                 }
                             )
@@ -3418,7 +3424,7 @@ Prgm
                                     { eaaArg = Value /page -> TVArg /page = ( Value /page ↦ TVArg /page ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /annotId -> TVArg /annotId = ( Value /annotId ↦ TVArg /annotId ) }
+                                    { eaaArg = Value /annotId -> /Catln/CStr = ( Value /annotId ↦ /Catln/CStr ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /annot -> /Llm/#agent
@@ -3516,8 +3522,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Agents working on a page
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Agents working on a page
                   A request for a model to work on the page it is written on can be written on the page itself, as
                   `a> ` and then the request. It is an [#agent], and is run by `catln process`. Where an agent
                   built on a conversation appends to it without end, this one works by editing the page: the page
@@ -3530,8 +3538,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[AgentStep] is what an agent does next. It is one of two steps:
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[AgentStep] is what an agent does next. It is one of two steps:
                   - [Respond] ends the work, answering the request with [text]. Respond once the request is done,
                     or when it cannot be done, saying why.
                   - [Edit] edits the page the request is written on with [edits], and continues the work: the
@@ -3541,8 +3551,10 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "### The steps of a turn
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "### The steps of a turn
                   Asking the model reaches outside the program, and so runs in the io ([agentAsk], [agentNext]).
                   What is made of each reply does not, and is worked out apart from it: the step taken leaves an
                   [AgentNext], which is either what the agent is done with, or that it is to be asked again."
@@ -3550,31 +3562,39 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[AgentNext] is what is next once a step is taken: the agent has [Finished] its turn with the
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "[AgentNext] is what is next once a step is taken: the agent has [Finished] its turn with the
                   [result] the page is to become, or it is to be asked [Again], having been asked [tries] times
                   before with the [history] of what went wrong with those."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "### Editing text
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "### Editing text
                   The edits of a step are made as pi's `edit` tool makes them: each is found once in the text as
                   it was before the step, none overlaps another, and each is replaced there."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Editing, without asking
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Editing, without asking
                   How the edits of a step are made is checked here without asking a model."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Each edit is matched against the text as it was before the step, so the edits of a step may be
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Each edit is matched against the text as it was before the step, so the edits of a step may be
                   given in any order."
                 }
             )
@@ -3589,57 +3609,53 @@ Prgm
                                 ] =
                                 ( /Llm/applyEdits
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two three"
+                                        { eaaArg = Value /text ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "one two three"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /edits -> /Data/List/Cons
                                             [ /T=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Cons
                                                 [ /T=/Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 ]
                                                 ( /head=/Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 )
                                             ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Llm/AgentEdit
                                                     ( EAppArg
-                                                        { eaaArg = Value /oldText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
+                                                        { eaaArg = Value /oldText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "one"
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /newText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                                                        { eaaArg = Value /newText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "1"
                                                         }
                                                     )
                                                 }
@@ -3647,35 +3663,33 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /tail -> /Data/List/Cons
                                                     [ /T=/Llm/AgentEdit
-                                                        ( /oldText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /newText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     ]
                                                     ( /head=/Llm/AgentEdit
-                                                        ( /oldText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /newText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     ) = /Data/List/Cons
                                                     ( EAppArg
                                                         { eaaArg = Value /head -> /Llm/AgentEdit
-                                                            ( /oldText=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            , /newText=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                             ) = /Llm/AgentEdit
                                                             ( EAppArg
-                                                                { eaaArg = Value /oldText -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "three"
+                                                                { eaaArg = Value /oldText ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "three"
                                                                 }
                                                             )
                                                             ( EAppArg
-                                                                { eaaArg = Value /newText -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                                                                { eaaArg = Value /newText ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "3"
                                                                 }
                                                             )
                                                         }
@@ -3695,8 +3709,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1 two 3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "1 two 3"
                 }
             )
         , /Catln/#print
@@ -3710,57 +3726,53 @@ Prgm
                                 ] =
                                 ( /Llm/applyEdits
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two three"
+                                        { eaaArg = Value /text ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "one two three"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /edits -> /Data/List/Cons
                                             [ /T=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Cons
                                                 [ /T=/Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 ]
                                                 ( /head=/Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 )
                                             ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Llm/AgentEdit
                                                     ( EAppArg
-                                                        { eaaArg = Value /oldText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "three"
+                                                        { eaaArg = Value /oldText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "three"
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /newText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                                                        { eaaArg = Value /newText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "3"
                                                         }
                                                     )
                                                 }
@@ -3768,35 +3780,33 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /tail -> /Data/List/Cons
                                                     [ /T=/Llm/AgentEdit
-                                                        ( /oldText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /newText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     ]
                                                     ( /head=/Llm/AgentEdit
-                                                        ( /oldText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /newText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     ) = /Data/List/Cons
                                                     ( EAppArg
                                                         { eaaArg = Value /head -> /Llm/AgentEdit
-                                                            ( /oldText=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            , /newText=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                             ) = /Llm/AgentEdit
                                                             ( EAppArg
-                                                                { eaaArg = Value /oldText -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one"
+                                                                { eaaArg = Value /oldText ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "one"
                                                                 }
                                                             )
                                                             ( EAppArg
-                                                                { eaaArg = Value /newText -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a longer one"
+                                                                { eaaArg = Value /newText ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "a longer one"
                                                                 }
                                                             )
                                                         }
@@ -3816,14 +3826,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a longer one two 3"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "a longer one two 3"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An edit of text that is not there once, or two edits of the same text, are not made."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "An edit of text that is not there once, or two edits of the same text, are not made."
                 }
             )
         , /Catln/#print
@@ -3837,42 +3851,42 @@ Prgm
                                 ] =
                                 ( /Llm/applyEdits
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two three"
+                                        { eaaArg = Value /text ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "one two three"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /edits -> /Data/List/Cons
                                             [ /T=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Llm/AgentEdit
                                                     ( EAppArg
-                                                        { eaaArg = Value /oldText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "four"
+                                                        { eaaArg = Value /oldText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "four"
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /newText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "4"
+                                                        { eaaArg = Value /newText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "4"
                                                         }
                                                     )
                                                 }
@@ -3890,8 +3904,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the oldText "four" is not written on the page"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: the oldText "four" is not written on the page"
                 }
             )
         , /Catln/#print
@@ -3905,42 +3921,42 @@ Prgm
                                 ] =
                                 ( /Llm/applyEdits
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two three"
+                                        { eaaArg = Value /text ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "one two three"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /edits -> /Data/List/Cons
                                             [ /T=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Llm/AgentEdit
                                                     ( EAppArg
-                                                        { eaaArg = Value /oldText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "o"
+                                                        { eaaArg = Value /oldText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "o"
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /newText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "0"
+                                                        { eaaArg = Value /newText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "0"
                                                         }
                                                     )
                                                 }
@@ -3958,8 +3974,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the oldText "o" is written 2 times on the page, not once"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: the oldText "o" is written 2 times on the page, not once"
                 }
             )
         , /Catln/#print
@@ -3973,57 +3991,53 @@ Prgm
                                 ] =
                                 ( /Llm/applyEdits
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two three"
+                                        { eaaArg = Value /text ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "one two three"
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /edits -> /Data/List/Cons
                                             [ /T=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             ]
                                             ( /head=/Llm/AgentEdit
-                                                ( /oldText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                , /newText=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                 )
                                             , /tail=/Data/List/Cons
                                                 [ /T=/Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 ]
                                                 ( /head=/Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 , /tail=/Data/List/Nil
                                                 )
                                             ) = /Data/List/Cons
                                             ( EAppArg
                                                 { eaaArg = Value /head -> /Llm/AgentEdit
-                                                    ( /oldText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    , /newText=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                     ) = /Llm/AgentEdit
                                                     ( EAppArg
-                                                        { eaaArg = Value /oldText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two"
+                                                        { eaaArg = Value /oldText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "one two"
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /newText -> /Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1 2"
+                                                        { eaaArg = Value /newText ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "1 2"
                                                         }
                                                     )
                                                 }
@@ -4031,35 +4045,33 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /tail -> /Data/List/Cons
                                                     [ /T=/Llm/AgentEdit
-                                                        ( /oldText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /newText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     ]
                                                     ( /head=/Llm/AgentEdit
-                                                        ( /oldText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        , /newText=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                         )
                                                     , /tail=/Data/List/Nil
                                                     ) = /Data/List/Cons
                                                     ( EAppArg
                                                         { eaaArg = Value /head -> /Llm/AgentEdit
-                                                            ( /oldText=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                            , /newText=/Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                                                             ) = /Llm/AgentEdit
                                                             ( EAppArg
-                                                                { eaaArg = Value /oldText -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "two three"
+                                                                { eaaArg = Value /oldText ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "two three"
                                                                 }
                                                             )
                                                             ( EAppArg
-                                                                { eaaArg = Value /newText -> /Data/String/Text
-                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2 3"
+                                                                { eaaArg = Value /newText ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "2 3"
                                                                 }
                                                             )
                                                         }
@@ -4079,8 +4091,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: two of the edits overlap; edits close together are to be one edit"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: two of the edits overlap; edits close together are to be one edit"
                 }
             )
         , /Catln/#print
@@ -4089,33 +4103,19 @@ Prgm
                     ( /Llm/AgentExample/editedShown
                         ( EAppArg
                             { eaaArg = Value /r -> /Data/Result/Fail
-                                [ /E=/Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
-                                ]
-                                ( /err=/Data/Failure
-                                    ( /reason=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    )
-                                ) =
+                                [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                                ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) =
                                 ( /Llm/applyEdits
                                     ( EAppArg
-                                        { eaaArg = Value /text -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "one two three"
+                                        { eaaArg = Value /text ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = "one two three"
                                         }
                                     )
                                     ( EAppArg { eaaArg = Value /edits -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ /Data/Result/Fail
-                                    [ /E=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
-                                    ]
-                                    ( /err=/Data/Failure
-                                        ( /reason=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        )
-                                    )
+                                    [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                                    ( /err=/Data/Failure( /reason=/Data/String/Text.. ) )
                                 )
                             }
                         ) ↦ ∀/Data/String
@@ -4123,14 +4123,18 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "error: the step has no edits"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "error: the step has no edits"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What the model is told of a step it gave that could not be taken is the step, written as a step."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "What the model is told of a step it gave that could not be taken is the step, written as a step."
                 }
             )
         , /Catln/#print
@@ -4140,35 +4144,33 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /edits -> /Data/List/Cons
                                 [ /T=/Llm/AgentEdit
-                                    ( /oldText=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /newText=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 ]
                                 ( /head=/Llm/AgentEdit
-                                    ( /oldText=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    , /newText=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                    , /newText=( /Data/String/Text.. + /Catln/CStr )
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Llm/AgentEdit
-                                        ( /oldText=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        , /newText=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                                         ) = /Llm/AgentEdit
                                         ( EAppArg
-                                            { eaaArg = Value /oldText -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "say "hi""
+                                            { eaaArg = Value /oldText ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = "say "hi""
                                             }
                                         )
                                         ( EAppArg
-                                            { eaaArg = Value /newText -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "line
+                                            { eaaArg = Value /newText ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = "line
                                               break"
                                             }
                                         )
@@ -4181,8 +4183,10 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= "say \"hi\"", newText= "line\nbreak")])"
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= "say \"hi\"", newText= "line\nbreak")])"
                 }
             )
         ]

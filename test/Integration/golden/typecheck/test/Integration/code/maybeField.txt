@@ -27,22 +27,16 @@ Prgm
                         [ /Dated( Value /name -> ∀/Data/String )
                             ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         , /Dated
-                            ( Value /name -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /name -> /Catln/CStr = CStr
                                 { csValue = "has one" }
                             )
-                            ( Value /due -> /Data/Maybe/Some
-                                ( /value=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Maybe/Some
-                                ( Value /value -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /due -> /Data/Maybe/Some( /value=/Catln/CStr ) = /Data/Maybe/Some
+                                ( Value /value -> /Catln/CStr = CStr
                                     { csValue = "2026-01-01" }
                                 )
                             )
                         , /Dated
-                            ( Value /name -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /name -> /Catln/CStr = CStr
                                 { csValue = "has none" }
                             )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
@@ -86,8 +80,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A field of a data type may be a [/Data/Maybe] of a concrete element.
                 A task read out of an Obsidian note has a due date or it has none, and having none is the
                 [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
@@ -99,13 +95,17 @@ Prgm
                 back in Catln is @bareDataDeclaration.ct@." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Shown as the value it is, with no display type standing in for it, as a task is." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Read back so that the values are evaluated and not only built: the [/Data/Maybe] field is
                 destructured and compared, which is a reading of the field the display would otherwise make." }
             )

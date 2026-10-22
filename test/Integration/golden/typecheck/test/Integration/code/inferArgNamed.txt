@@ -90,8 +90,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A function-typed argument beside a plain argument typed by the same type variable.
                 This is the shape a fold's signature needs — @fn@ produces a @$_B@ and @init@ already is one —
                 and it used to be rejected with
@@ -110,14 +112,18 @@ Prgm
                 slot — so it still infers by type, which @boxAccessor@ below covers." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A destructuring pattern still fills its slot by inference, with no name to go on. Kept in a
                 module of its own so its [unwrap] is not an arm of core's [/Data/Context/unwrap]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function." }
             )
         ]

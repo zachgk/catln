@@ -199,21 +199,18 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /l -> /Data/String/Text.. = CStr
                                             { csValue = "/Llm/AgentEdit(oldText= " }
                                         )
                                         ( Value /r -> ∀/Data/String = /Llm/quoted( Value /s -> TVArg /oldText = Value /oldText ) )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r -> /Data/String/Text.. = CStr
                                         { csValue = ", newText= " }
                                     )
                                 )
                                 ( Value /r -> ∀/Data/String = /Llm/quoted( Value /s -> TVArg /newText = Value /newText ) )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = ")" }
                             )
                         ]
@@ -232,14 +229,12 @@ Prgm
                         [ /Llm/editsShown
                             ( Value /edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l -> /Data/String/Text.. = CStr
                                     { csValue = "/Llm/AgentStep/Edit(edits= [" }
                                 )
                                 ( Value /r -> ∀/Data/String = /Llm/editsJoined( Value /edits -> TVArg /edits = Value /edits ) )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = "])" }
                             )
                         ]
@@ -396,8 +391,7 @@ Prgm
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Llm/agentAsk
-                                    ( /history=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /history=( /Data/String/Text.. + /Catln/CStr )
                                     , /at=/Llm/AgentAt
                                         ( /annotId=∀/Data/String
                                         , /page=/Catln/RawPrgm..
@@ -416,8 +410,10 @@ Prgm
                                     ( Value /tries -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
                                     )
-                                    ( Value /history -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /history ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "" }
                                     )
                                 )
@@ -444,7 +440,10 @@ Prgm
                                     ( /annotId=∀/Data/String
                                     , /page=/Catln/RawPrgm..
                                     , /input=∀/Data/String
-                                    , /source=∀/Data/String
+                                    , /source=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
                                     )
                                 , /tries=/Data/Primitive/Integer
                                 ) = /Llm/agentAsk
@@ -452,8 +451,16 @@ Prgm
                                     ( /annotId=∀/Data/String
                                     , /page=/Catln/RawPrgm..
                                     , /input=∀/Data/String
-                                    , /source=∀/Data/String
-                                    ) = /Llm/AgentAt( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )( Value /source -> ∀/Data/String )
+                                    , /source=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    ) = /Llm/AgentAt( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )
+                                    ( Value /source ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
+                                    )
                                 )( Value /tries -> /Data/Primitive/Integer )( Value /history -> ∀/Data/String )
                             )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
@@ -505,7 +512,10 @@ Prgm
                                         , []
                                         )
                                     , /input=∀/Data/String
-                                    , /source=∀/Data/String
+                                    , /source=
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        )
                                     ) = /Llm/tlcm
                                     ( Value /input -> ∀/Data/String = /Llm/agentPrompt( Value /input -> TVArg /input = Value /input )( Value /history -> TVArg /history = Value /history ) )
                                     ( Value /type -> UnionType
@@ -667,8 +677,7 @@ Prgm
                             ( Value /r -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok( Value /value -> ∀/Data/String ) ) -> ∀/Data/String = Value /value
                         , /Llm/AgentExample/editedShown
                             ( Value /r -> /Data/Result/Fail[ /E=∀/Data/Err ]( /err=∀/Data/Err ) = /Data/Result/Fail( Value /err -> ∀/Data/Err ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /l -> /Data/String/Text.. = CStr
                                 { csValue = "error: " }
                             )
                             ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /err = Value /err ) )
@@ -689,22 +698,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Llm/applyEdits( Value /text -> ∀/Data/String )( Value /edits -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Result/Fail
-                            [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
-                            ( Value /err -> /Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Failure
-                                ( Value /reason -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                            ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Data/Result/Fail
+                            ( Value /err -> /Data/Failure( /reason=/Data/String/Text.. ) = /Data/Failure
+                                ( Value /reason -> /Data/String/Text.. = CStr
                                     { csValue = "the step has no edits" }
                                 )
                             )
@@ -761,29 +758,14 @@ Prgm
                                 , /newText=∀/Data/String
                                 ) = /Llm/AgentEdit( Value /oldText -> ∀/Data/String )( Value /newText -> ∀/Data/String )
                             ) | /isEmpty( Value /this -> TVArg /oldText = Value /oldText ) -> /Data/Result/Fail
-                            [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
-                            ( Value /err -> /Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Failure
-                                ( Value /reason -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                            ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Data/Result/Fail
+                            ( Value /err -> /Data/Failure( /reason=/Data/String/Text.. ) = /Data/Failure
+                                ( Value /reason -> /Data/String/Text.. = CStr
                                     { csValue = "an edit has an empty oldText" }
                                 )
                             )
-                        , /Llm/findEdit
-                            ( Value /text -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            )
+                        , /Llm/findEdit( Value /text -> ∀/Data/String )
                             ( Value /e -> /Llm/AgentEdit
                                 ( /oldText=∀/Data/String
                                 , /newText=∀/Data/String
@@ -815,51 +797,38 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/quoted
-                            ( Value /s -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            ) -> ∀/Data/String = /operator++
+                        [ /Llm/quoted( Value /s -> ∀/Data/String ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /l -> /Data/String/Text.. = CStr
                                     { csValue = """ }
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/replace
-                                    ( Value /old -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> ∀/Data/String = /Data/String/replace
+                                    ( Value /old -> /Data/String/Text.. = CStr
                                         { csValue = "
                                         " }
                                     )
-                                    ( Value /new -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /new -> /Data/String/Text.. = CStr
                                         { csValue = "\n" }
                                     )
-                                    ( Value /this -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/replace
-                                        ( Value /old -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /this -> ∀/Data/String = /Data/String/replace
+                                        ( Value /old -> /Data/String/Text.. = CStr
                                             { csValue = """ }
                                         )
-                                        ( Value /new -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /new -> /Data/String/Text.. = CStr
                                             { csValue = "\"" }
                                         )
                                         ( Value /this -> ∀/Data/String = /Data/String/replace
-                                            ( Value /old -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /old -> /Data/String/Text.. = CStr
                                                 { csValue = "\" }
                                             )
-                                            ( Value /new -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /new -> /Data/String/Text.. = CStr
                                                 { csValue = "\\" }
                                             )( Value /this -> TVArg /s = Value /s )
                                         )
                                     )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /r -> /Data/String/Text.. = CStr
                                 { csValue = """ }
                             )
                         ]
@@ -913,22 +882,10 @@ Prgm
                                 ( /value=∀/Data/List[ /T=/Llm/EditAt.. ] ) = /Data/Result/Ok
                                 ( Value /value@Value /ats -> ∀/Data/List[ /T=/Llm/EditAt.. ] )
                             ) | /Llm/editsOverlap( Value /ats -> TVArg /ats = Value /ats ) -> /Data/Result/Fail
-                            [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ]
-                            ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
-                            ) = /Data/Result/Fail
-                            ( Value /err -> /Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Failure
-                                ( Value /reason -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                            ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Data/Result/Fail
+                            ( Value /err -> /Data/Failure( /reason=/Data/String/Text.. ) = /Data/Failure
+                                ( Value /reason -> /Data/String/Text.. = CStr
                                     { csValue = "two of the edits overlap; edits close together are to be one edit" }
                                 )
                             )
@@ -1007,21 +964,17 @@ Prgm
                         , /Llm/agentFailed
                             ( Value /reply -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] ) -> /Data/Result/Fail
                             [ /E=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
+                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                             ]
                             ( /err=/Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                )
+                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) )
                             ) = /Data/Result/Fail
                             ( Value /err -> /Data/Failure
-                                ( /reason=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                ) = /Data/Failure
-                                ( Value /reason -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( /reason=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Failure
+                                ( Value /reason ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "the model replied with something other than a step" }
                                 )
                             )
@@ -1062,8 +1015,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/editsJoined( Value /edits -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        [ /Llm/editsJoined( Value /edits -> /Data/List/Nil = Value /Data/List/Nil ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Llm/editsJoined
                             ( Value /edits -> /Data/List/Cons[ /T=/Llm/AgentEdit.. ]
@@ -1104,8 +1056,7 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Llm/agentEditShown( Value /e -> TVArg /head = Value /head ) )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = ", " }
                                 )
                             )
@@ -1137,20 +1088,17 @@ Prgm
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
                                         ( Value /l -> ∀/Data/String = /operator++
-                                            ( Value /l -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /l -> /Data/String/Text.. = CStr
                                                 { csValue = "You are an agent working on the page above, where this request is written as `a> " }
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /r -> /Data/String/Text.. = CStr
                                             { csValue = "`. The request is:
                                             " }
                                         )
                                     )( Value /r -> TVArg /input = Value /input )
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /r -> /Data/String/Text.. = CStr
                                     { csValue = "
 
                                     You work by editing the page, which is both your working memory and your result. Each time you are asked, take one step: edit the page, after which you are asked again with the page as you left it, or respond, which ends your work. Edits are made to the text of the page as it is written, which is the page above without the `>>>` lines of what its examples evaluate to." }
@@ -1199,8 +1147,10 @@ Prgm
                                     , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
                                     ).. = /Llm/agentDone( Value /at -> TVArg /at = Value /at )
                                     ( Value /text -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "The agent stopped, as its step could not be taken: " }
                                         )( Value /r -> TVArg /why = Value /why )
                                     )
@@ -1220,8 +1170,10 @@ Prgm
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
                                         ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /history = Value /history )
-                                            ( Value /r -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /r ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "
 
                                                 Your step was:
@@ -1229,8 +1181,10 @@ Prgm
                                             )
                                         )( Value /r -> TVArg /attempt = Value /attempt )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "
                                         It could not be taken: " }
                                     )
@@ -1414,7 +1368,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/agentAsk.$db8f2a( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /source -> ∀/Data/String )
+                        [ /Llm/agentAsk.$db8f2a( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )
+                            ( Value /source ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            )
                             ( Value /$db8f2a-arg -> /Context
                                 [ /V=∀/Data/Result[ /E=∀/Llm/LlmErr ] ]
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
@@ -1457,7 +1416,10 @@ Prgm
                                             ( /annotId=∀/Data/String
                                             , /page=/Catln/RawPrgm..
                                             , /input=∀/Data/String
-                                            , /source=∀/Data/String
+                                            , /source=
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                                )
                                             ) = /Llm/AgentAt( Value /input -> TVArg /input = Value /input )( Value /page -> TVArg /page = Value /page )( Value /annotId -> TVArg /annotId = Value /annotId )( Value /source -> TVArg /source = Value /source )
                                         )( Value /tries -> TVArg /tries = Value /tries )( Value /history -> TVArg /history = Value /history )( Value /reply -> TVArg /reply = Value /reply )
                                     )
@@ -1528,21 +1490,18 @@ Prgm
                                     ( Value /l -> ∀/Data/String = /operator++
                                         ( Value /l -> ∀/Data/String = /operator++
                                             ( Value /l -> ∀/Data/String = /operator++
-                                                ( Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                                ( Value /l -> /Data/String/Text.. = CStr
                                                     { csValue = "the oldText " }
                                                 )
                                                 ( Value /r -> ∀/Data/String = /Llm/quoted( Value /s -> TVArg /oldText = Value /oldText ) )
                                             )
-                                            ( Value /r -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                            ( Value /r -> /Data/String/Text.. = CStr
                                                 { csValue = " is written " }
                                             )
                                         )
                                         ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /count = Value /count ) )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r -> /Data/String/Text.. = CStr
                                         { csValue = " times on the page, not once" }
                                     )
                                 )
@@ -1553,14 +1512,12 @@ Prgm
                             ( Value /err -> /Data/Failure( /reason=∀/Data/String ) = /Data/Failure
                                 ( Value /reason -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /l -> /Data/String/Text.. = CStr
                                             { csValue = "the oldText " }
                                         )
                                         ( Value /r -> ∀/Data/String = /Llm/quoted( Value /s -> TVArg /oldText = Value /oldText ) )
                                     )
-                                    ( Value /r -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /r -> /Data/String/Text.. = CStr
                                         { csValue = " is not written on the page" }
                                     )
                                 )
@@ -1660,7 +1617,23 @@ Prgm
                     , omiDefs =
                         [ /Llm/agentEdited( Value /at -> /Llm/AgentAt.. )( Value /tries -> /Data/Primitive/Integer )( Value /history -> ∀/Data/String )
                             ( Value /edits -> ∀/Data/List[ /T=/Llm/AgentEdit.. ] )
-                            ( Value /edited -> /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Result/Ok( Value /value -> ∀/Data/String ) ) -> ∀/Llm/AgentNext = /Llm/agentParsed( Value /at -> TVArg /at = Value /at )( Value /tries -> TVArg /tries = Value /tries )( Value /history -> TVArg /history = Value /history )( Value /edits -> TVArg /edits = Value /edits )
+                            ( Value /edited -> /Data/Result/Ok
+                                [ /T=
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                ]
+                                ( /value=
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                ) = /Data/Result/Ok
+                                ( Value /value ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                )
+                            ) -> ∀/Llm/AgentNext = /Llm/agentParsed( Value /at -> TVArg /at = Value /at )( Value /tries -> TVArg /tries = Value /tries )( Value /history -> TVArg /history = Value /history )( Value /edits -> TVArg /edits = Value /edits )
                             ( Value /parsed -> ∀/Data/Result
                                 [ /T=/Catln/RawPrgm..
                                 , /E=∀/Process/ParsePageErr
@@ -1694,11 +1667,19 @@ Prgm
                     , omiDefs =
                         [ /Llm/agentDone
                             ( Value /at -> /Llm/AgentAt
-                                ( /annotId=∀/Data/String
+                                ( /annotId=
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
                                 , /page=/Catln/RawPrgm..
                                 , /input=∀/Data/String
                                 , /source=∀/Data/String
-                                ) = /Llm/AgentAt( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /annotId -> ∀/Data/String )( Value /source -> ∀/Data/String )
+                                ) = /Llm/AgentAt( Value /input -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )
+                                ( Value /annotId ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                )( Value /source -> ∀/Data/String )
                             )( Value /text -> ∀/Data/String ) -> /Catln/RawPrgm
                             ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
                             , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
@@ -1786,8 +1767,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Agents working on a page
                 A request for a model to work on the page it is written on can be written on the page itself, as
                 `a> ` and then the request. It is an [#agent], and is run by `catln process`. Where an agent
@@ -1799,8 +1782,10 @@ Prgm
                 [#q] is, and an agent with a response is done: it is not run again." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[AgentStep] is what an agent does next. It is one of two steps:
                 - [Respond] ends the work, answering the request with [text]. Respond once the request is done,
                   or when it cannot be done, saying why.
@@ -1809,36 +1794,46 @@ Prgm
                   result, so notes and plans may be written on it too." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "### The steps of a turn
                 Asking the model reaches outside the program, and so runs in the io ([agentAsk], [agentNext]).
                 What is made of each reply does not, and is worked out apart from it: the step taken leaves an
                 [AgentNext], which is either what the agent is done with, or that it is to be asked again." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "[AgentNext] is what is next once a step is taken: the agent has [Finished] its turn with the
                 [result] the page is to become, or it is to be asked [Again], having been asked [tries] times
                 before with the [history] of what went wrong with those." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "### Editing text
                 The edits of a step are made as pi's `edit` tool makes them: each is found once in the text as
                 it was before the step, none overlaps another, and each is replaced there." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Editing, without asking
                 How the edits of a step are made is checked here without asking a model." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Each edit is matched against the text as it was before the step, so the edits of a step may be
                 given in any order." }
             )
@@ -1848,84 +1843,78 @@ Prgm
                     [ /T=∀/Data/String
                     , /E=∀/Data/Err
                     ] = /Llm/applyEdits
-                    ( Value /text -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /text ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "one two three" }
                     )
                     ( Value /edits -> /Data/List/Cons
                         [ /T=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
                         ( Value /head -> /Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             ) = /Llm/AgentEdit
-                            ( Value /oldText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /oldText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "one" }
                             )
-                            ( Value /newText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /newText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "1" }
                             )
                         )
                         ( Value /tail -> /Data/List/Cons
                             [ /T=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( Value /head -> /Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 ) = /Llm/AgentEdit
-                                ( Value /oldText -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /oldText ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "three" }
                                 )
-                                ( Value /newText -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /newText ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "3" }
                                 )
                             )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -1933,8 +1922,10 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "1 two 3" }
             )
         , /Catln/#print
@@ -1943,84 +1934,78 @@ Prgm
                     [ /T=∀/Data/String
                     , /E=∀/Data/Err
                     ] = /Llm/applyEdits
-                    ( Value /text -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /text ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "one two three" }
                     )
                     ( Value /edits -> /Data/List/Cons
                         [ /T=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
                         ( Value /head -> /Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             ) = /Llm/AgentEdit
-                            ( Value /oldText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /oldText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "three" }
                             )
-                            ( Value /newText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /newText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "3" }
                             )
                         )
                         ( Value /tail -> /Data/List/Cons
                             [ /T=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( Value /head -> /Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 ) = /Llm/AgentEdit
-                                ( Value /oldText -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /oldText ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "one" }
                                 )
-                                ( Value /newText -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /newText ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "a longer one" }
                                 )
                             )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -2028,13 +2013,17 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "a longer one two 3" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "An edit of text that is not there once, or two edits of the same text, are not made." }
             )
         , /Catln/#print
@@ -2043,46 +2032,48 @@ Prgm
                     [ /T=∀/Data/String
                     , /E=∀/Data/Err
                     ] = /Llm/applyEdits
-                    ( Value /text -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /text ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "one two three" }
                     )
                     ( Value /edits -> /Data/List/Cons
                         [ /T=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
                         ( Value /head -> /Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             ) = /Llm/AgentEdit
-                            ( Value /oldText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /oldText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "four" }
                             )
-                            ( Value /newText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /newText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "4" }
                             )
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: the oldText "four" is not written on the page" }
             )
         , /Catln/#print
@@ -2091,46 +2082,48 @@ Prgm
                     [ /T=∀/Data/String
                     , /E=∀/Data/Err
                     ] = /Llm/applyEdits
-                    ( Value /text -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /text ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "one two three" }
                     )
                     ( Value /edits -> /Data/List/Cons
                         [ /T=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
                         ( Value /head -> /Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             ) = /Llm/AgentEdit
-                            ( Value /oldText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /oldText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "o" }
                             )
-                            ( Value /newText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /newText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "0" }
                             )
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: the oldText "o" is written 2 times on the page, not once" }
             )
         , /Catln/#print
@@ -2139,84 +2132,78 @@ Prgm
                     [ /T=∀/Data/String
                     , /E=∀/Data/Err
                     ] = /Llm/applyEdits
-                    ( Value /text -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    ( Value /text ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "one two three" }
                     )
                     ( Value /edits -> /Data/List/Cons
                         [ /T=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         ]
                         ( /head=/Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
                         ( Value /head -> /Llm/AgentEdit
-                            ( /oldText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                            , /newText=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                            , /newText=( /Data/String/Text.. + /Catln/CStr )
                             ) = /Llm/AgentEdit
-                            ( Value /oldText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /oldText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "one two" }
                             )
-                            ( Value /newText -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            ( Value /newText ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "1 2" }
                             )
                         )
                         ( Value /tail -> /Data/List/Cons
                             [ /T=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( Value /head -> /Llm/AgentEdit
-                                ( /oldText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                , /newText=/Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                                , /newText=( /Data/String/Text.. + /Catln/CStr )
                                 ) = /Llm/AgentEdit
-                                ( Value /oldText -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /oldText ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "two three" }
                                 )
-                                ( Value /newText -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                ( Value /newText ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "2 3" }
                                 )
                             )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -2224,76 +2211,76 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: two of the edits overlap; edits close together are to be one edit" }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Llm/AgentExample/editedShown
                 ( Value /r -> /Data/Result/Fail
-                    [ /E=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
-                    ]
-                    ( /err=/Data/Failure
-                        ( /reason=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        )
-                    ) = /Llm/applyEdits
-                    ( Value /text -> /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    [ /E=/Data/Failure( /reason=/Data/String/Text.. ) ]
+                    ( /err=/Data/Failure( /reason=/Data/String/Text.. ) ) = /Llm/applyEdits
+                    ( Value /text ->
+                        ( /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                        ) = CStr
                         { csValue = "one two three" }
                     )( Value /edits -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "error: the step has no edits" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "What the model is told of a step it gave that could not be taken is the step, written as a step." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/String = /Llm/editsShown
                 ( Value /edits -> /Data/List/Cons
                     [ /T=/Llm/AgentEdit
-                        ( /oldText=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /newText=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                         )
                     ]
                     ( /head=/Llm/AgentEdit
-                        ( /oldText=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /newText=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                         )
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
                     ( Value /head -> /Llm/AgentEdit
-                        ( /oldText=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                        , /newText=/Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        ( /oldText=( /Data/String/Text.. + /Catln/CStr )
+                        , /newText=( /Data/String/Text.. + /Catln/CStr )
                         ) = /Llm/AgentEdit
-                        ( Value /oldText -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( Value /oldText ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "say "hi"" }
                         )
-                        ( Value /newText -> /Data/String/Text
-                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        ( Value /newText ->
+                            ( /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                            ) = CStr
                             { csValue = "line
                             break" }
                         )
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "/Llm/AgentStep/Edit(edits= [/Llm/AgentEdit(oldText= "say \"hi\"", newText= "line\nbreak")])" }
             )
         ]

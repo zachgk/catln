@@ -26,12 +26,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> ∀/Data/Primitive/Boolean = /startsA
                                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                                 ( /head=/Data/Char
@@ -92,12 +88,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> ∀/Data/Primitive/Boolean = /isZero
                                             ( Value /x -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 0 }
@@ -235,12 +227,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> ∀/Data/Primitive/Boolean = /isZero
                                             ( Value /x -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 5 }
@@ -347,12 +335,8 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println
-                                    ( /msg=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ) = /Catln/println
-                                    ( Value /msg -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
                                         ( Value /this -> ∀/Data/Primitive/Boolean = /startsA
                                             ( Value /cs -> /Data/List/Cons[ /T=/Data/Char ]
                                                 ( /head=/Data/Char
@@ -403,8 +387,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Arms that match a constant, directly and inside a constructor.
                 [isZero] answers for the one Integer [0] by its own arm, and [startsA] for a list whose first item is
                 the character @a@. Each arm must be chosen for exactly the value it names and for no other." }

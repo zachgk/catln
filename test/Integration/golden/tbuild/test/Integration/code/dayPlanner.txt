@@ -145,8 +145,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a /Data/Calendar/#dayPlanner over the vault running the Day Planner plugin, which
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests a /Data/Calendar/#dayPlanner over the vault running the Day Planner plugin, which
                   obsidianPlanner.ct reads. A day planner is the calendar's own answer drawn as the blocks of a day,
                   so it reaches what a calendar written here would and answers what it would.
                   The vault is named note by note for the reason obsidianPlanner.ct names it so. What the planner

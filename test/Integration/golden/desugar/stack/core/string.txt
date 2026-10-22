@@ -95,7 +95,8 @@ Prgm
                         [ /Data/String/Text
                             ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/Text( Value chars ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -577,6 +578,15 @@ Prgm
                         , /Data/toStringBase( Value base )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = String/Text
                             ( Value chars= /Data/toStringBase.digitsOnto( Value /base= Value /base )( Value n= Value this )( Value acc= Value /Data/List/Nil ) )
                         ]
+                    }
+                )
+            ,
+                ( "/Catln/CStr"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/CStr ]
+                    , omiRuntimeDecls = [ Value /Catln/CStr -> /Data/String/Text.. ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -1867,10 +1877,12 @@ Prgm
                     }
                 )
             ]
-        , omDecls = []
+        , omDecls =
+            [ Hole ∀/Data/String HoleActive { haName = Nothing } -> /Data/String/Text.. ]
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -1981,11 +1993,11 @@ Prgm
               yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
             }
         , CGClass
-            { cgcSealed = True
+            { cgcSealed = False
             , cgcPartial = /Data/String
             , cgcExtends =
-                [ /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                [ /Data/String/Text..
+                , /Catln/CStr
                 ]
             , cgcDoc = Just ""
             }
@@ -2000,17 +2012,22 @@ Prgm
         [ /Catln/#md
             ( Value /text= CStr
                 { csValue = "# Strings
-                A [String] is a list of characters: a [String/Text], whose one field [chars] holds them in
-                order. So a string is taken apart and built up the way any list is, character by character.
-                It is a type of its own holding a list rather than the list itself. A list is displayed as its
-                items in brackets and a string as its text, and an empty string is not an empty list of
-                anything else — neither of which could be told apart at runtime were a string only its list.
-                [String] is a class with the one member rather than a data type so that [String] written as a
-                type means every string: a data type's bare name means its argument-less form, which a string
-                with characters is not.
-                Everything a string does is written here over the list of its characters. The operations
-                recur over the characters directly rather than through the list operations of @core/list.ct@,
-                which builds a list's text out of strings and so imports this page." }
+                A [String] is every string, held in any of the ways a string can be held. It is an open class
+                of those representations, and two of them are declared here.
+                A [String/Text] is a list of characters, whose one field [chars] holds them in order. So a
+                string is taken apart and built up the way any list is, character by character. It is a type of
+                its own holding a list rather than the list itself. A list is displayed as its items in
+                brackets and a string as its text, and an empty string is not an empty list of anything else —
+                neither of which could be told apart at runtime were a string only its list.
+                A [/Catln/CStr] is a string as the interpreter holds one: packed, with nothing in it Catln can
+                take apart. Every string written in a program is one, and so is every string a runtime
+                primitive answers with, which is what lets a long string cost what its text does rather than a
+                list cell per character.
+                Every string converts to a [String/Text], so everything a string does is written here once,
+                over the list of its characters, and works on any string: the tree build converts a [CStr] on
+                the way into such a definition. The operations recur over the characters directly rather than
+                through the list operations of @core/list.ct@, which builds a list's text out of strings and so
+                imports this page." }
             )
         , /Catln/#print
             ( Value /p= toString

@@ -304,18 +304,21 @@ singleLeaf _ = Nothing
 -- | What a declaration's definitions leave undefined, with the target they were compared as, or
 -- 'Nothing' where they fulfill it. The definitions' input types are given universalized
 -- ('universalizeBindingArgs'), with their union.
-declUndefined :: FEnvTypeEnv -> [Type] -> Type -> ObjArr Expr TypedMetaDat -> Maybe (Type, Type)
-declUndefined prgmTypeEnv defInputTypesU defUnionU oa
+declUndefined :: FEnvTypeEnv -> [(Type, Type)] -> [Type] -> Type -> ObjArr Expr TypedMetaDat -> Maybe (Type, Type)
+declUndefined prgmTypeEnv classArrows defInputTypesU defUnionU oa
   | receiverFulfilled || isSubtypeOf prgmTypeEnv checkType target = Nothing
   | otherwise = Just (target, snd $ differenceTypeWithEnv prgmTypeEnv H.empty checkType target)
   where
-    declType = getMetaType $ getExprMeta $ oaObjExpr oa
+    -- What the definitions must take: the declaration with each class an arrow converts on the way
+    -- in replaced by what it converts to ('narrowByClassArrows').
+    declType = narrowByClassArrows prgmTypeEnv classArrows $ getMetaType $ getExprMeta $ oaObjExpr oa
     -- A diagonal declaration (every argument typed by one shared variable, e.g.
     -- @operator==($T l, $T r)@) is fulfilled iff the variable's bound is covered by the
     -- diagonal projection of the definitions, not by the full product. Checking the product
     -- would spuriously demand off-diagonal pairs like @(Integer, Float)@.
     (checkType, target) = case diagonalVar oa =<< singleLeaf declType of
-      Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypesU))
+      -- The variable's bound is what every argument it types takes, so it narrows as a slot does.
+      Just (varBound, varArgs) -> (narrowSlotByClassArrows prgmTypeEnv classArrows varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypesU))
       Nothing                  -> (declType, defUnionU)
     -- A class-parameter method is fulfilled by covering its receiver dimension alone (every
     -- class member must have a definition); its parameter-typed arguments are per-member and
@@ -376,9 +379,7 @@ verifyObjMapItem solvedTypeEnv name importedDecls (ObjectMapItem decls runtimeDe
       -- the definition-within-declaration check, which needs the precise (non-widened) type.
       let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph feTypeEnv
       let definedNames = (S.map makeAbsoluteName $ H.keysSet objTg) <> feLocalDefNames
-      -- An argument a class arrow converts on the way in is taken as the whole class
-      -- ('widenByClassArrows'), for coverage only as well.
-      let defInputTypesU = map (widenByClassArrows prgmTypeEnv (classArrowsOf solvedTypeEnv) . universalizeBindingArgs definedNames) defInputTypes
+      let defInputTypesU = map (universalizeBindingArgs definedNames) defInputTypes
       let defUnionU = unionAllTypes feTypeEnv defInputTypesU
 
       -- Check each definition (including runtime declarations) against declUnion
@@ -394,7 +395,7 @@ verifyObjMapItem solvedTypeEnv name importedDecls (ObjectMapItem decls runtimeDe
       -- fulfillment check (they still bound definitions via declUnion above).
       let fulfillableDecls = filter fulfillable decls
       forM_ fulfillableDecls $ \oa ->
-        forM_ (declUndefined prgmTypeEnv defInputTypesU defUnionU oa) $ \(target, notDefined) -> do
+        forM_ (declUndefined prgmTypeEnv (classArrowsOf solvedTypeEnv) defInputTypesU defUnionU oa) $ \(target, notDefined) -> do
           let declType = getMetaType $ getExprMeta $ oaObjExpr oa
           let declLoc = getMetaPos $ getExprMeta $ oaObjExpr oa
           lift $ TypeCheckResult [UnfulfilledDeclaration name declType target notDefined declLoc] ()
@@ -470,25 +471,22 @@ classArrowResult _                         = PTopType
 --
 -- The arrow says every member converts to its result, so a member holds it when it is within the
 -- result already (@String\/Text@ is a @String\/Text@) or when its own arrows convert all of it there:
--- the definitions and runtime declarations written from the member, whose results are within the
--- result, taking together every value of the member. A member reached by expanding the class is
+-- the definitions and runtime declarations written from the member that produce the result, taking
+-- together every value of the member. An arrow produces the result where its own result meets it:
+-- an arrow's result is everything the value it answers with may still be rewritten to, so where the
+-- result converts back (@String\/Text -> \/Catln\/CStr@ beside @\/Catln\/CStr -> String\/Text..@) it
+-- holds the member again beside what the arrow answers with. A member reached by expanding the class is
 -- expanded in turn where it is a class itself, so the members asked about are the data ones.
 classArrowUnfollowed :: FEnvTypeEnv -> H.HashMap TypeName (ObjectMapItem Expr TypedMetaDat) -> ObjArr Expr TypedMetaDat -> [PartialType]
-classArrowUnfollowed typeEnv items oa = filter (not . follows) (dataMembers (10 :: Int) (getMetaType $ getExprMeta $ oaObjExpr oa))
+classArrowUnfollowed typeEnv items oa = filter (not . follows) (classMemberLeaves typeEnv (getMetaType $ getExprMeta $ oaObjExpr oa))
   where
     res = classArrowResult oa
     inputType = getMetaType . getExprMeta . oaObjExpr
-    dataMembers fuel t@(UnionType mTop leafs _) = concatMap (dataMembers (fuel - 1)) expanded ++ splitUnionType leafs
-      where
-        expanded = case mTop of
-          Just (preds, _, _) | fuel > 0, let e = expandPredicates typeEnv H.empty preds, e /= t -> [e]
-          _                                                                                    -> []
-    dataMembers _ _ = []
     follows p = isSubtypeOf typeEnv (singletonType p) res || coveredByArrows p
     coveredByArrows p = case [ a
                                   | item <- maybe [] pure (H.lookup (ptName p) items)
                                   , a@ObjArr{oaArr=Just (_, am)} <- omiDefs item ++ omiRuntimeDecls item
-                                  , isSubtypeOf typeEnv (getMetaType am) res ] of
+                                  , not (isBottomType (intersectTypes typeEnv (getMetaType am) res)) ] of
       []     -> False
       arrows -> isSubtypeOf typeEnv (singletonType p) (unionAllTypes typeEnv (map inputType arrows))
 
@@ -528,7 +526,7 @@ verifyAddedMembers (ClassGraph pageCg) deps solved = do
   let envNow = feTypeEnv{tePrgmEnv = True}
   let envBefore = (mkTypeEnv (mconcat (map (mapMetaPrgm clearMetaDat) deps))){tePrgmEnv = True}
   let inputType = getMetaType . getExprMeta . oaObjExpr
-  let universalized env defined oas = let ts = map (widenByClassArrows env (classArrowsOf env) . universalizeBindingArgs defined . inputType) oas in (ts, unionAllTypes env ts)
+  let universalized env defined oas = let ts = map (universalizeBindingArgs defined . inputType) oas in (ts, unionAllTypes env ts)
   let definedIn env extra = let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph env in S.map makeAbsoluteName (H.keysSet objTg) <> extra
   unless (S.null addedTo) $
     forM_ (H.toList depItems) $ \(name, ObjectMapItem decls depRuntime _ depDefs) -> do
@@ -537,8 +535,8 @@ verifyAddedMembers (ClassGraph pageCg) deps solved = do
       let (nowTs, nowU) = universalized envNow (definedIn envNow feLocalDefNames) (depDefs ++ depRuntime ++ pageDefs)
       let (beforeTs, beforeU) = universalized envBefore (definedIn envBefore S.empty) (depDefs ++ depRuntime)
       forM_ affected $ \oa ->
-        forM_ (declUndefined envNow nowTs nowU oa) $ \(target, notNow) -> do
-          let notBefore = maybe BottomType snd (declUndefined envBefore beforeTs beforeU oa)
+        forM_ (declUndefined envNow (classArrowsOf envNow) nowTs nowU oa) $ \(target, notNow) -> do
+          let notBefore = maybe BottomType snd (declUndefined envBefore (classArrowsOf envBefore) beforeTs beforeU oa)
           let added = snd $ differenceTypeWithEnv envNow H.empty notNow notBefore
           unless (isBottomType added) $
             lift $ TypeCheckResult [UnfulfilledDeclaration name (inputType oa) target added (getMetaPos $ getExprMeta $ oaObjExpr oa)] ()

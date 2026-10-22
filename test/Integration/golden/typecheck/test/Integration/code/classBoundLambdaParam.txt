@@ -89,8 +89,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
                 A declaration's function-typed argument slot holds its INPUT OBJECT, with @w@ annotated by the
                 declaration's own variable (@headTo[/A](/fn=/fn[/A=$^A](/w=$/A))@). A call meets that declaration,
@@ -105,8 +107,10 @@ Prgm
                 one that does not need the bound is what says the traversal was never the problem." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Bound through a container's class parameter
                 @$A@ is pinned only by @lst@, and it is pinned through a class PARAMETER rather than by being the
                 argument's whole type. A parameter that points at a variable is not itself one, so meeting
@@ -118,8 +122,10 @@ Prgm
                 binds directly and always worked." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Called from inside a generic definition
                 The same call made where the element type is not yet concrete. In @viaGeneric@'s frame @$_A@
                 reads as its own bound @∀Eq@, and the parameter was refused because it was not FULLY CONCRETE.
@@ -128,16 +134,20 @@ Prgm
                 instance. What stays out is a symbolic variable, which may still resolve to anything." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## The control: the variable IS the argument's type
                 Nothing points anywhere, so @$A@ binds directly from @x@. This passed before either fix and is
                 the passing half of the pair that pinned the cause on how the variable is bound rather than on
                 the class bound itself." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "Both examples for each function are the same call; only the lambda's body differs, and the one
                 that does not need the bound is what says the traversal was never the problem." }
             )

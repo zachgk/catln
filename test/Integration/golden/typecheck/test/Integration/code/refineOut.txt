@@ -219,8 +219,7 @@ Prgm
     , prgmAnnots =
         [ Value /#noCore
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text -> /Catln/CStr = CStr
                 { csValue = "A result type's condition written over [$out], the value the arrow produces, and over [$this],
                 the value of the type it refines: both name the one value a predicate is decided on, so
                 [Nat | $out.isZ == True] is [Nat_isZ] written in full. [h], [hFn] and [hThis] return a [Z], on

@@ -226,7 +226,7 @@ underVault vault path
 queryTask :: FilePath -> Val -> Either String QueryTask
 queryTask within (TupleVal name args)
   | name == noteSimpleTaskPath = do
-      says <- valStrArg name noteTaskContents args
+      says <- valAnyStrArg name noteTaskContents args
       done <- valDoneArg name args
       return (emptyQueryTask within){
         qtStatusKind = if done then KDone else KTodo,
@@ -235,14 +235,14 @@ queryTask within (TupleVal name args)
         qtTags = tags says
                                     }
   | name == noteObsidianTaskPath = do
-      description <- valStrArg name noteTaskDescription args
+      description <- valAnyStrArg name noteTaskDescription args
       kind <- valMemberArg name noteTaskStatusType statusTypeKind "a status type" args
       priority <- valMemberArg name noteTaskPriority memberPriority "a priority" args
       start <- valMaybeArg valDate name noteTaskStart args
       scheduled <- valMaybeArg valDate name noteTaskScheduled args
       due <- valMaybeArg valDate name noteTaskDue args
       recurrence <- valMaybeStrArg name noteTaskRecurrence args
-      rest <- readRest =<< valStrArg name noteTaskRest args
+      rest <- readRest =<< valAnyStrArg name noteTaskRest args
       return QueryTask{
         qtStatusKind = kind,
         qtStatusName = fromMaybe "" (trStatusName rest),

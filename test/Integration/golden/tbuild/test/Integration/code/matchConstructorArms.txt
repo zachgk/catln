@@ -251,8 +251,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [match] or [case] arm written as a constructor selects only the values of that constructor.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [match] or [case] arm written as a constructor selects only the values of that constructor.
                   This is a regression test for a gap that made every such arm answer for every value: the last
                   arm of a [match] over a [Comparison] was taken whatever the comparison was.
                   The branch preprocessors (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrite each arm into an arm
@@ -266,14 +268,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The scrutinee may be computed, and the enclosing definition may be generic."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "The scrutinee may be computed, and the enclosing definition may be generic."
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A [case] tries its arms in order, and a constructor arm is skipped for another constructor."
                 }
             )
         ]

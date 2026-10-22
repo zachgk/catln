@@ -139,8 +139,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A guard on an arm of a [case] or a [match] selects that arm only when its condition holds.
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A guard on an arm of a [case] or a [match] selects that arm only when its condition holds.
                   This is a regression test for a gap that made both forms answer with the guarded arm whether or
                   not its guard was true: @abs(x= -5)@ answered @-5@, having run the arm guarded by @x2 >= 0@ on an
                   input that is not.

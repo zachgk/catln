@@ -199,9 +199,9 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=∀/Data/String ) = /Catln/println
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> ∀/Data/String =
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
                                                             ( /Data/toString
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> /Data/Primitive/Integer =
@@ -230,7 +230,7 @@ Prgm
                                                                             ) ↦ /Data/Primitive/Integer
                                                                         )
                                                                     }
-                                                                ) ↦ ∀/Data/String
+                                                                ) ↦ /Catln/CStr
                                                             )
                                                         }
                                                     )
@@ -344,8 +344,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A pattern destructuring a record inside a [/Data/Maybe/Some].
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "A pattern destructuring a record inside a [/Data/Maybe/Some].
                   [sumOf] takes a [/Data/Maybe] of a [Pair] and matches the [Pair] in the same pattern as the
                   [/Data/Maybe/Some] holding it. The [Some] spells no element type of its own; its element is what
                   its [value] field holds, so it is a [/Data/Maybe] of [Pair]s and inside the declaration."

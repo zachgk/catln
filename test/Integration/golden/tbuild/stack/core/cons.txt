@@ -62,36 +62,30 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Lists
-                  A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
-                  operations every list supports without fixing how the items are stored. Concrete list types
-                  implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
-                  be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
-                  on one concrete type, every list type reuses those same declarations just by being a [List]. The
-                  [List] interface lives here directly under [Data]; the [ConsList] implementation and the
-                  operations all live in the [Data/List] namespace it opens.
-                  Only the types are declared on this page, and it imports nothing. Everything a list does is on
-                  @core/list.ct@, which imports what those operations need (@ord@, @functor@, @monad@). The types
-                  are split out so that a page every program compiles can name a list without reaching that: a
-                  [String] is a list of [Char], and @core/string.ct@ is such a page (see @core/result.ct@ for what
-                  reaching @core/list.ct@ from one costs)."
-                }
+                { eaaArg = Value /text -> /Catln/CStr = "# Lists
+                A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
+                operations every list supports without fixing how the items are stored. Concrete list types
+                implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
+                be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
+                on one concrete type, every list type reuses those same declarations just by being a [List]. The
+                [List] interface lives here directly under [Data]; the [ConsList] implementation and the
+                operations all live in the [Data/List] namespace it opens.
+                Only the types are declared on this page, and it imports nothing. Everything a list does is on
+                @core/list.ct@, which imports what those operations need (@ord@, @functor@, @monad@). The types
+                are split out so that a page every program compiles can name a list without reaching that: a
+                [String] is a list of [Char], and @core/string.ct@ is such a page (see @core/result.ct@ for what
+                reaching @core/list.ct@ from one costs)." }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-                  smaller list ([tail]). Almost every operation on @core/list.ct@ is a two-arm recursion — a
-                  base case for [Nil], and a step that consumes the [head] and recurses on the [tail]."
-                }
+                { eaaArg = Value /text -> /Catln/CStr = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
+                smaller list ([tail]). Almost every operation on @core/list.ct@ is a two-arm recursion — a
+                base case for [Nil], and a step that consumes the [head] and recurses on the [tail]." }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms of
-                  @core/list.ct@."
-                }
+                { eaaArg = Value /text -> /Catln/CStr = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms of
+                @core/list.ct@." }
             )
         ]
     }

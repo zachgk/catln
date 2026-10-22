@@ -121,14 +121,18 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Exercises the bind operator ([<-]) routing through [bindap]'s [ap] arm. The continuation consumes"
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Exercises the bind operator ([<-]) routing through [bindap]'s [ap] arm. The continuation consumes"
                 }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the whole [Maybe] rather than its element, so neither the [fmap] nor the [mmap] arm can accept it."
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "the whole [Maybe] rather than its element, so neither the [fmap] nor the [mmap] arm can accept it."
                 }
             )
         ]

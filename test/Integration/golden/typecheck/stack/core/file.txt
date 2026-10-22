@@ -54,8 +54,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "# Files
                 A [FileOrDir] is a tree of files: a [File], which is a name and what is written in it, or a
                 [Dir], which is a name and the entries beneath it. It is the shape a directory has, written as a
@@ -66,8 +68,10 @@ Prgm
                 other, which says that the second use is a kind of the first when it is not." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "A [File] carries its writing itself, rather than the path it was read from or is to be written
                 to. A tree says where each thing is by where it is in the tree, so a name is the one part of a
                 path a file holds, and the rest of it is the names of the directories above it. This is what
@@ -78,8 +82,10 @@ Prgm
                 bytes it cannot say anything about." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Read by destructuring
                 Nothing uses this yet, but it does work. A [Dir] holding both a [File] and a [Dir] can be
                 written and can be walked, by arms matching the two constructors — which is how every other
@@ -96,8 +102,10 @@ Prgm
                 thing, and the tree is said by the @/@ in each path." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Naming
                 The name of an entry is the one it has under its parent, not a path: a [Dir] named `notes`
                 holding a [File] named `a.md` is the file `notes/a.md`. Nothing here checks that a name is one a

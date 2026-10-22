@@ -134,7 +134,7 @@ evalProcessFile env ioVal os annot page = do
     TupleVal name args | name == ctResultFail, Just err <- H.lookup (runtimeArgKey ctResultFailErr) args -> do
       msg <- evalStateT (evalExpr =<< lift (asCResT $ errMsgTree err)) env
       case msg of
-        StrVal msg' -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s could not be processed: %s" (show $ exprPath annot) msg']
+        AnyStrVal msg' -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s could not be processed: %s" (show $ exprPath annot) msg']
         _ -> asCResT $ CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "%s could not be processed: %s" (show $ exprPath annot) (show err)]
     _ -> notPage (show val) "it is not a /Data/Result"
   where
@@ -218,6 +218,6 @@ evalProcessPage session file prgm = do
         return Nothing
       Nothing -> return $ Just val
     processFailure (TupleVal _ args) = case H.lookup (runtimeArgKey processFailureText) args of
-      Just (StrVal failure) -> Just failure
-      _                     -> Nothing
+      Just (AnyStrVal failure) -> Just failure
+      _                        -> Nothing
     processFailure _ = Nothing
