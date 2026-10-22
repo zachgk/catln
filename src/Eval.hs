@@ -571,7 +571,7 @@ evalEnv session prgm@Prgm{prgmObjMap} = Env {
 -- | The primitives an evaluation supplies itself, because answering them evaluates more of the
 -- program ('EEvalPrim'): they are written over the evaluator, which the other primitives are beneath.
 evalPrims :: ResBuildPrims
-evalPrims = H.fromList [(mkName (ePrimName p), Left p) | p <- [llmShowPage, parseExprPrim]]
+evalPrims = H.fromList [(mkName (ePrimName p), Left p) | p <- [llmShowPage, parseExprPrim, isOfPrim]]
 
 -- | Backs @\/Llm\/showPage@: a page as it was written, with each of its annotations a language model
 -- can be shown given what it is shown as ('llmshowClass'), and what is wrong with the page written
@@ -631,6 +631,20 @@ llmShowPage = EEvalPrim "llmShowPage" prim
     -- The page a page was read from is the one its statements say they were written in.
     pageFile (RawPrgm _ trees) = listToMaybe [sourceName start | tree <- trees, Just start <- [treeStart tree]]
     treeStart (RawStatementTree st subs) = statementStart st <|> asum (map treeStart subs)
+
+-- | Backs @\/Catln\/isOf@: whether a value is one of a type, the type given as a value
+-- (@\/Catln\/typeOf[$T -> ...]@). It is the check 'parseExprPrim' makes once its text is a value
+-- ('valWithinType'), on a value the program already has.
+isOfPrim :: EPrim
+isOfPrim = EEvalPrim "isOf" prim
+  where
+    prim args = case (H.lookup "/value" args, H.lookup "/type" args) of
+      (Just v, Just tpVal) -> case fromCt tpVal of
+        Right tp -> do
+          within <- valWithinType v tp
+          return $ if within then true else false
+        Left err -> evalError $ printf "isOf was given %s, which is not a type: %s" (show tpVal) err
+      _ -> evalError $ printf "isOf takes the /value and the /type it may be of, and was given %s" (show $ H.keys args)
 
 -- | Backs @\/Catln\/parseExprIn@: the value of a Catln expression written as text, required to be a
 -- value of a type, with the names in it meaning what they mean on the page @source@.

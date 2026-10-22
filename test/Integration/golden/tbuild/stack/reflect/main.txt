@@ -26,6 +26,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/isOf"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/isOf
+                            ( EAppArg { eaaArg = Value /value } )
+                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ParseExprErr/Type"
                 , ObjectMapItem
                     { omiDecls =
@@ -420,6 +433,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/ParseExprErr
@@ -785,6 +799,148 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /result -> /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "data(Point(x -> Integer, y -> Integer))"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Asking whether a value is of a type
+                  [/Catln/isOf] asks of a value what [parseExpr] asks of its text's value."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /Catln/isOf
+                        ( EAppArg
+                            { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /type -> ∀/Catln/Type = TupleVal /Catln/Type/UnionType
+                                ( /leafs = TupleVal /Data/List/Cons
+                                    ( /head = TupleVal /Catln/Pair
+                                        ( /first = "/Data/Primitive/Integer"
+                                        , /second = TupleVal /Data/List/Cons
+                                            ( /head = TupleVal /Catln/PartialArgsOption
+                                                ( /argMode = TupleVal /Catln/PtArgMode
+                                                    ( /argLb = TupleVal /Data/Primitive/True
+                                                    , /argOpt = TupleVal /Data/List/Nil
+                                                    , /argUb = TupleVal /Data/Primitive/True
+                                                    )
+                                                , /args = TupleVal /Data/List/Nil
+                                                , /vars = TupleVal /Data/List/Nil
+                                                , /preds = TupleVal /Catln/TypePredicates/PredsAnd( /preds = TupleVal /Data/List/Nil )
+                                                )
+                                            , /tail = TupleVal /Data/List/Nil
+                                            )
+                                        )
+                                    , /tail = TupleVal /Data/List/Nil
+                                    )
+                                , /top = TupleVal /Data/Maybe/Nothing
+                                , /consts = TupleVal /Data/List/Nil
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /Catln/isOf
+                        ( EAppArg
+                            { eaaArg = Value /value -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /type -> ∀/Catln/Type = TupleVal /Catln/Type/UnionType
+                                ( /leafs = TupleVal /Data/List/Cons
+                                    ( /head = TupleVal /Catln/Pair
+                                        ( /first = "/Data/Primitive/Integer"
+                                        , /second = TupleVal /Data/List/Cons
+                                            ( /head = TupleVal /Catln/PartialArgsOption
+                                                ( /argMode = TupleVal /Catln/PtArgMode
+                                                    ( /argLb = TupleVal /Data/Primitive/True
+                                                    , /argOpt = TupleVal /Data/List/Nil
+                                                    , /argUb = TupleVal /Data/Primitive/True
+                                                    )
+                                                , /args = TupleVal /Data/List/Nil
+                                                , /vars = TupleVal /Data/List/Nil
+                                                , /preds = TupleVal /Catln/TypePredicates/PredsAnd( /preds = TupleVal /Data/List/Nil )
+                                                )
+                                            , /tail = TupleVal /Data/List/Nil
+                                            )
+                                        )
+                                    , /tail = TupleVal /Data/List/Nil
+                                    )
+                                , /top = TupleVal /Data/Maybe/Nothing
+                                , /consts = TupleVal /Data/List/Nil
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /Catln/isOf
+                        ( EAppArg
+                            { eaaArg = Value /value -> /Catln/ReflectExample/Point
+                                ( /x=/Data/Primitive/Integer
+                                , /y=/Data/Primitive/Integer
+                                ) = /Catln/ReflectExample/Point
+                                ( EAppArg
+                                    { eaaArg = Value /x -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /y -> /Data/Primitive/Integer = 2 }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /type -> ∀/Catln/Type = TupleVal /Catln/Type/UnionType
+                                ( /leafs = TupleVal /Data/List/Cons
+                                    ( /head = TupleVal /Catln/Pair
+                                        ( /first = "/Catln/ReflectExample/Point"
+                                        , /second = TupleVal /Data/List/Cons
+                                            ( /head = TupleVal /Catln/PartialArgsOption
+                                                ( /argMode = TupleVal /Catln/PtArgMode
+                                                    ( /argLb = TupleVal /Data/Primitive/True
+                                                    , /argOpt = TupleVal /Data/List/Nil
+                                                    , /argUb = TupleVal /Data/Primitive/False
+                                                    )
+                                                , /args = TupleVal /Data/List/Nil
+                                                , /vars = TupleVal /Data/List/Nil
+                                                , /preds = TupleVal /Catln/TypePredicates/PredsAnd( /preds = TupleVal /Data/List/Nil )
+                                                )
+                                            , /tail = TupleVal /Data/List/Nil
+                                            )
+                                        )
+                                    , /tail = TupleVal /Data/List/Nil
+                                    )
+                                , /top = TupleVal /Data/Maybe/Nothing
+                                , /consts = TupleVal /Data/List/Nil
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
                 }
             )
         ]

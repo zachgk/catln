@@ -32,6 +32,12 @@ module(Catln)
       language a reader of Catln already reads.
     #runtime("typeDecls")
 
+  isOf(value, type -> /Catln/Type) -> Boolean
+    # [isOf] is whether [value] is one of [type]. It is the check [parseExpr] makes of the value its
+      text came to, made of a value the program already holds: one kept where its type is a value
+      too, as a [/Data/Memory/Var] keeps the type its values must be.
+    #runtime("isOf")
+
   class(ParseExprErr, [ParseExprErr/Syntax(message -> String), ParseExprErr/Type(message -> String), ParseExprErr/NotOf(found), ParseExprErr/Eval(message -> String)], isa= [/Data/Err])
     # [ParseExprErr] is why text is not a value of a type: it is not an expression ([Syntax]), it
       does not typecheck as a value of the type ([Type]), its value is [found] and that is not one
@@ -92,6 +98,14 @@ module(Catln/ReflectExample)
     >>> /Catln/ReflectExample/Point
   > /Catln/typeDecls(type= /Catln/typeOf[$T -> Point..])
     >>> data(Point(x -> Integer, y -> Integer))
+  # ## Asking whether a value is of a type
+    [/Catln/isOf] asks of a value what [parseExpr] asks of its text's value.
+  > /Catln/isOf(value= 3, type= /Catln/typeOf[$T -> Integer])
+    >>> True
+  > /Catln/isOf(value= "a", type= /Catln/typeOf[$T -> Integer])
+    >>> False
+  > /Catln/isOf(value= Point(x= 1, y= 2), type= /Catln/typeOf[$T -> Point..])
+    >>> True
 module(Data)
   :/Catln/ParseExprErr/Syntax(message).msg= "the text is not a Catln expression: " ++ message
   :/Catln/ParseExprErr/Type(message).msg= "the expression is not of the type asked for: " ++ message

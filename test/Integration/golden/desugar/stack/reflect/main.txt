@@ -22,6 +22,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/isOf"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/isOf( Value value )( Value type -> ∀/Catln/Type ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ParseExprErr/Type"
                 , ObjectMapItem
                     { omiDecls =
@@ -206,6 +216,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/ParseExprErr
@@ -332,6 +343,46 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "data(Point(x -> Integer, y -> Integer))" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Asking whether a value is of a type
+                [/Catln/isOf] asks of a value what [parseExpr] asks of its text's value." }
+            )
+        , /Catln/#print
+            ( Value /p= /Catln/isOf
+                ( Value value= CInt
+                    { ciValue = 3 }
+                )
+                ( Value type= /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /Catln/isOf
+                ( Value value= CStr
+                    { csValue = "a" }
+                )
+                ( Value type= /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= /Catln/isOf
+                ( Value value= Point
+                    ( Value x= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value y= CInt
+                        { ciValue = 2 }
+                    )
+                )
+                ( Value type= /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
             )
         ]
     }

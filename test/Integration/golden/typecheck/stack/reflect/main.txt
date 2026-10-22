@@ -22,6 +22,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/isOf"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/isOf( Value /value )( Value /type -> ∀/Catln/Type ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ParseExprErr/Type"
                 , ObjectMapItem
                     { omiDecls =
@@ -259,6 +269,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/ParseExprErr
@@ -400,6 +411,54 @@ Prgm
             ( Value /result -> /Data/String/Text
                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "data(Point(x -> Integer, y -> Integer))" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Asking whether a value is of a type
+                [/Catln/isOf] asks of a value what [parseExpr] asks of its text's value." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Catln/isOf
+                ( Value /value -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
+                ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Catln/isOf
+                ( Value /value -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "a" }
+                )
+                ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Catln/isOf
+                ( Value /value -> /Catln/ReflectExample/Point
+                    ( /x=/Data/Primitive/Integer
+                    , /y=/Data/Primitive/Integer
+                    ) = /Catln/ReflectExample/Point
+                    ( Value /x -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /y -> /Data/Primitive/Integer = CInt
+                        { ciValue = 2 }
+                    )
+                )
+                ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
             )
         ]
     }
